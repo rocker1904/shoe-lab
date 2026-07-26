@@ -1,0 +1,531 @@
+{
+  "groups": {
+    "1": "Breathability",
+    "2": "Durability",
+    "3": "Cushioning",
+    "4": "Flexibility / Stiffness",
+    "5": "Stability",
+    "6": "Size and fit",
+    "7": "Traction / Grip",
+    "8": "Misc",
+    "9": "Comfort",
+    "10": "Weight",
+    "11": "Price"
+  },
+  "scrapedAt": "2026-07-26T21:54:18.920Z",
+  "seedSlug": "saucony-endorphin-azura",
+  "tests": [
+    {
+      "groupId": "1",
+      "id": 1,
+      "name": "Breathability",
+      "slug": "breathability",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": "2",
+      "id": 2,
+      "name": "Toebox durability",
+      "slug": "toebox-durability",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": "2",
+      "id": 3,
+      "name": "Heel padding durability",
+      "slug": "heel-padding-durability",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": "2",
+      "id": 4,
+      "name": "Outsole durability",
+      "slug": "outsole-durability",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "3",
+      "id": 5,
+      "name": "Forefoot stack",
+      "slug": "forefoot-stack",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "3",
+      "id": 6,
+      "name": "Heel stack",
+      "slug": "heel-stack",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "3",
+      "id": 8,
+      "name": "Drop",
+      "slug": "drop",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "2",
+      "id": 9,
+      "name": "Outsole thickness",
+      "slug": "outsole-thickness",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": null,
+      "id": 10,
+      "name": "Outsole hardness",
+      "slug": "outsole-hardness",
+      "type": "float",
+      "units": "HC"
+    },
+    {
+      "groupId": null,
+      "id": 11,
+      "name": "Midsole softness",
+      "slug": "midsole-softness",
+      "type": "float",
+      "units": "HA"
+    },
+    {
+      "groupId": null,
+      "id": 12,
+      "name": "Midsole softness in cold",
+      "slug": "midsole-softness-in-cold",
+      "type": "float",
+      "units": "HA"
+    },
+    {
+      "groupId": "8",
+      "id": 13,
+      "name": "Midsole softness in cold (%)",
+      "slug": "difference-in-midsole-softness-in-cold",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 14,
+      "name": "Flexibility / Stiffness",
+      "slug": "stiffness",
+      "type": "float",
+      "units": "N"
+    },
+    {
+      "groupId": null,
+      "id": 15,
+      "name": "Stiffness in cold",
+      "slug": "stiffness-in-cold",
+      "type": "float",
+      "units": "N"
+    },
+    {
+      "groupId": null,
+      "id": 16,
+      "name": "Stiffness in cold (%)",
+      "slug": "difference-in-stiffness-in-cold",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 17,
+      "name": "Torsional rigidity",
+      "slug": "torsional-rigidity",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": "5",
+      "id": 19,
+      "name": "Heel counter stiffness",
+      "slug": "heel-counter-stiffness",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 20,
+      "name": "Lateral stability test",
+      "slug": "lateral-stability-test",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 23,
+      "name": "Tested size",
+      "slug": "tested-size",
+      "type": "text",
+      "units": ""
+    },
+    {
+      "groupId": "10",
+      "id": 24,
+      "name": "Weight",
+      "slug": "weight",
+      "type": "float",
+      "units": "g"
+    },
+    {
+      "groupId": "5",
+      "id": 25,
+      "name": "Midsole width - forefoot",
+      "slug": "midsole-width-in-the-forefoot",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "5",
+      "id": 26,
+      "name": "Midsole width - heel",
+      "slug": "midsole-width-in-the-heel",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": null,
+      "id": 27,
+      "name": "Width / Fit",
+      "slug": "toebox-width-at-the-widest-part",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": null,
+      "id": 29,
+      "name": "Toebox width",
+      "slug": "toebox-width-at-the-big-toe",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "6",
+      "id": 32,
+      "name": "Internal length",
+      "slug": "internal-length",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": null,
+      "id": 33,
+      "name": "Length",
+      "slug": "length",
+      "type": "option",
+      "units": ""
+    },
+    {
+      "groupId": "8",
+      "id": 37,
+      "name": "Insole thickness",
+      "slug": "insole-thickness",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "8",
+      "id": 38,
+      "name": "Tongue padding",
+      "slug": "tongue-padding",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "8",
+      "id": 39,
+      "name": "Tongue: gusset type",
+      "slug": "tongue-gusset-type",
+      "type": "option",
+      "units": ""
+    },
+    {
+      "groupId": "8",
+      "id": 40,
+      "name": "Heel tab",
+      "slug": "heel-tab",
+      "type": "option",
+      "units": ""
+    },
+    {
+      "groupId": "8",
+      "id": 41,
+      "name": "Removable insole",
+      "slug": "removable-insole",
+      "type": "bool",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 42,
+      "name": "Lug depth",
+      "slug": "lug-depth",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "8",
+      "id": 45,
+      "name": "Reflective elements",
+      "slug": "reflective-elements",
+      "type": "bool",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 48,
+      "name": "Secondary foam softness",
+      "slug": "secondary-foam-softness",
+      "type": "float",
+      "units": "HA"
+    },
+    {
+      "groupId": null,
+      "id": 49,
+      "name": "Midsole softness in the forefoot",
+      "slug": "midsole-softness-in-the-forefoot",
+      "type": "float",
+      "units": "HA"
+    },
+    {
+      "groupId": null,
+      "id": 50,
+      "name": "Leather/Suede quality",
+      "slug": "leather-suede-quality",
+      "type": "option",
+      "units": ""
+    },
+    {
+      "groupId": "8",
+      "id": 52,
+      "name": "Price",
+      "slug": "price",
+      "type": "float",
+      "units": "£"
+    },
+    {
+      "groupId": null,
+      "id": 53,
+      "name": "Toe guard durability",
+      "slug": "toe-guard-durability",
+      "type": "score",
+      "units": ""
+    },
+    {
+      "groupId": "6",
+      "id": 54,
+      "name": "Size",
+      "slug": "size-rating",
+      "type": "rating",
+      "units": ""
+    },
+    {
+      "groupId": "6",
+      "id": 55,
+      "name": "Width / Fit",
+      "slug": "toebox-width-widest-part",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "6",
+      "id": 56,
+      "name": "Toebox width",
+      "slug": "toebox-width-big-toe",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": "6",
+      "id": 57,
+      "name": "Toebox height",
+      "slug": "toebox-height",
+      "type": "float",
+      "units": "mm"
+    },
+    {
+      "groupId": null,
+      "id": 58,
+      "name": "Rocker",
+      "slug": "rocker",
+      "type": "float",
+      "units": "°"
+    },
+    {
+      "groupId": "4",
+      "id": 59,
+      "name": "Flexibility / Stiffness",
+      "slug": "flexibility-stiffness",
+      "type": "float",
+      "units": "N"
+    },
+    {
+      "groupId": "7",
+      "id": 60,
+      "name": "Forefoot traction",
+      "slug": "forefoot-traction",
+      "type": "float",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 61,
+      "name": "Heel traction",
+      "slug": "heel-traction",
+      "type": "float",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 62,
+      "name": "Forefoot traction",
+      "slug": "forefoot-traction-stop",
+      "type": "float",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 64,
+      "name": "Outsole design",
+      "slug": "outsole-design",
+      "type": "text",
+      "units": ""
+    },
+    {
+      "groupId": "3",
+      "id": 65,
+      "name": "Energy return heel",
+      "slug": "energy-return-heel",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 66,
+      "name": "Energy return forefoot",
+      "slug": "energy-return-forefoot",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": "3",
+      "id": 67,
+      "name": "Shock absorption heel",
+      "slug": "shock-absorption-heel",
+      "type": "float",
+      "units": "SA"
+    },
+    {
+      "groupId": null,
+      "id": 68,
+      "name": "Shock absorption forefoot",
+      "slug": "shock-absorption-forefoot",
+      "type": "float",
+      "units": "SA"
+    },
+    {
+      "groupId": null,
+      "id": 69,
+      "name": "Plate",
+      "slug": "plate",
+      "type": "bool",
+      "units": ""
+    },
+    {
+      "groupId": "3",
+      "id": 70,
+      "name": "Midsole softness",
+      "slug": "midsole-softness-22",
+      "type": "float",
+      "units": "AC"
+    },
+    {
+      "groupId": "8",
+      "id": 71,
+      "name": "Midsole softness in cold",
+      "slug": "midsole-softness-in-cold-22",
+      "type": "float",
+      "units": "AC"
+    },
+    {
+      "groupId": null,
+      "id": 72,
+      "name": "Secondary foam softness",
+      "slug": "secondary-foam-softness-22",
+      "type": "float",
+      "units": "AC"
+    },
+    {
+      "groupId": null,
+      "id": 73,
+      "name": "Midsole softness in the forefoot",
+      "slug": "midsole-softness-in-the-forefoot-22",
+      "type": "float",
+      "units": "AC"
+    },
+    {
+      "groupId": "5",
+      "id": 74,
+      "name": "Torsional rigidity",
+      "slug": "torsional-rigidity-23",
+      "type": "float",
+      "units": "Nm"
+    },
+    {
+      "groupId": null,
+      "id": 75,
+      "name": "Insulation",
+      "slug": "insulation",
+      "type": "float",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 76,
+      "name": "Breathability",
+      "slug": "breathability-25",
+      "type": "float",
+      "units": "BR"
+    },
+    {
+      "groupId": null,
+      "id": 77,
+      "name": "Sweat on skin",
+      "slug": "sweat-on-skin",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 78,
+      "name": "Sweat in shoe",
+      "slug": "sweat-in-shoe",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 79,
+      "name": "Sweat evaporated",
+      "slug": "sweat-evaporated",
+      "type": "percent",
+      "units": ""
+    },
+    {
+      "groupId": null,
+      "id": 80,
+      "name": "Drying potential",
+      "slug": "drying-potential",
+      "type": "percent",
+      "units": ""
+    }
+  ]
+}
