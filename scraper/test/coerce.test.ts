@@ -20,6 +20,10 @@ describe('coerceValue', () => {
     expect(() => coerceValue('maybe', 'bool')).toThrow(CoercionError);
     expect(() => coerceValue('', 'score')).toThrow(CoercionError);
   });
+  it('throws on whitespace-only numerics rather than coercing to 0', () => {
+    expect(() => coerceValue(' ', 'float')).toThrow(CoercionError);
+    expect(() => coerceValue('\t', 'score')).toThrow(CoercionError);
+  });
   it('isEmptyValue', () => {
     expect(isEmptyValue(null)).toBe(true);
     expect(isEmptyValue(undefined)).toBe(true);

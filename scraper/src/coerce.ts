@@ -14,8 +14,14 @@ export function coerceValue(raw: unknown, type: TestType): MetricValue {
     case 'score':
     case 'percent':
     case 'rating': {
-      const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
-      if (isEmptyValue(raw) || !Number.isFinite(n)) throw new CoercionError(`not a number: ${String(raw)}`);
+      if (typeof raw === 'number') {
+        if (!Number.isFinite(raw)) throw new CoercionError(`not a number: ${String(raw)}`);
+        return raw;
+      }
+      const s = String(raw).trim();
+      if (isEmptyValue(raw) || s === '') throw new CoercionError(`not a number: ${String(raw)}`);
+      const n = Number(s);
+      if (!Number.isFinite(n)) throw new CoercionError(`not a number: ${String(raw)}`);
       return n;
     }
     case 'bool': {
