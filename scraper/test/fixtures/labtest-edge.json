@@ -1,0 +1,9 @@
+{
+  "headers": ["X", "Name"],
+  "rows": [
+    [{ "value": "10.5" }, { "text": "Shoe A", "url": "https://runrepeat.com/shoe-a" }],
+    [{ "value": null }, { "text": "Shoe B", "url": "https://runrepeat.com/shoe-b" }],
+    [{ "value": "3" }, { "text": "No URL" }],
+    [{ "value": "11" }, { "text": "Shoe A again", "url": "https://runrepeat.com/uk/shoe-a" }]
+  ]
+}

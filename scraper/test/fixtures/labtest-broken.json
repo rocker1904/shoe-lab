@@ -1,0 +1,4 @@
+{
+  "noRows": { "nope": true },
+  "malformedRow": { "rows": [["only-one-cell"]] }
+}
