@@ -1,0 +1,88 @@
+import { fireEvent, render, screen } from '@testing-library/svelte';
+import { describe, expect, it, vi } from 'vitest';
+import ShoeTable from './ShoeTable.svelte';
+import { defaultView, type ViewState } from '../lib/urlstate';
+import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
+import type { Shoe, ShoesFile } from '../../../shared/types.js';
+
+const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
+
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState> } = {}) {
+  const onchange = vi.fn();
+  const view = { ...defaultView(), ...over.view };
+  view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
+  const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange } });
+  return Object.assign(onchange, { rendered });
+}
+
+describe('ShoeTable', () => {
+  it('renders a row per shoe and headers for chosen columns', () => {
+    setup();
+    expect(screen.getAllByRole('row')).toHaveLength(1 + FLEET.length);
+    expect(screen.getByRole('columnheader', { name: /Heel stack/ })).toBeInTheDocument();
+  });
+  it('clicking a header emits sort change, clicking again flips direction', async () => {
+    const onchange = setup();
+    const th = screen.getByRole('columnheader', { name: /Heel stack/ });
+    await fireEvent.click(th.querySelector('button')!);
+    expect(onchange.mock.lastCall![0].sort).toEqual({ key: 'heel-stack', dir: 'desc' });
+  });
+  it('flips an already-descending column to ascending', async () => {
+    const onchange = setup({ view: { sort: { key: 'heel-stack', dir: 'desc' } } });
+    await fireEvent.click(screen.getByRole('columnheader', { name: /Heel stack/ }).querySelector('button')!);
+    expect(onchange.mock.lastCall![0].sort).toEqual({ key: 'heel-stack', dir: 'asc' });
+    expect(onchange.mock.lastCall![0].columns).toEqual(['score', 'heel-stack', 'plate']);
+  });
+  it('marks the sorted column with an indicator and aria-sort', () => {
+    setup({ view: { sort: { key: 'heel-stack', dir: 'asc' } } });
+    const th = screen.getByRole('columnheader', { name: /Heel stack/ });
+    expect(th).toHaveAttribute('aria-sort', 'ascending');
+    expect(th.textContent).toContain('▲');
+  });
+  it('row click expands the detail panel', async () => {
+    setup();
+    const row = screen.getByText('cushy').closest('tr')!;
+    await fireEvent.click(row);
+    expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
+  });
+  it('expands and collapses a row from the keyboard', async () => {
+    setup();
+    const row = screen.getByText('cushy').closest('tr')!;
+    expect(row).toHaveAttribute('tabindex', '0');
+    await fireEvent.keyDown(row, { key: 'Enter' });
+    expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
+    expect(row).toHaveAttribute('aria-expanded', 'true');
+    await fireEvent.keyDown(row, { key: 'Enter' });
+    expect(screen.queryByText(/Full review on RunRepeat/)).not.toBeInTheDocument();
+  });
+  it('hides the detail panel when the expanded shoe leaves the list', async () => {
+    const onchange = setup();
+    await fireEvent.click(screen.getByText('cushy').closest('tr')!);
+    expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
+    await onchange.rendered.rerender({ shoes: FLEET.filter((s) => s.slug !== 'cushy') });
+    expect(screen.queryByText(/Full review on RunRepeat/)).not.toBeInTheDocument();
+  });
+  it('tints numeric cells by percentile and leaves non-numeric cells untinted', () => {
+    const { container } = setup().rendered;
+    const cells = [...container.querySelectorAll('tbody tr:first-child td')];
+    const heel = cells[2]!; // name, score, heel-stack, plate
+    expect(heel.className).toContain('tinted');
+    expect(heel.getAttribute('style')).toContain('--p:');
+    expect(cells[3]!.className).not.toContain('tinted'); // plate is not numeric
+  });
+  it('missing values render as em dash', () => {
+    setup();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+  });
+  it('shows only the year when the release date is not precise', () => {
+    setup({
+      shoes: [
+        shoe({ slug: 'yearly', releasedAt: '2024-01-01', preciseReleaseDate: false }),
+        shoe({ slug: 'exact', releasedAt: '2025-03-14' }),
+      ],
+      view: { columns: ['releasedAt'] },
+    });
+    expect(screen.getByText('2024')).toBeInTheDocument();
+    expect(screen.getByText('2025-03-14')).toBeInTheDocument();
+  });
+});
