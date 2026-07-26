@@ -1,11 +1,15 @@
-import type { Shoe } from '../../../shared/types.js';
+import type { Plate, Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
 
 export interface SortState { key: string; dir: 'asc' | 'desc' }
 
+/** Plate is ordinal, not numeric: ranking it lets 'more plate' sort descending like every other column. */
+const PLATE_RANK: Record<Plate, number> = { none: 0, 'plated-other': 1, carbon: 2 };
+
 function keyValue(s: Shoe, key: string, idx: TestIndex): number | string | undefined {
   if (key === 'name') return s.name.toLowerCase();
   if (key === 'brand') return s.brand?.toLowerCase();
+  if (key === 'plate') return PLATE_RANK[s.plate];
   if (key === 'releasedAt') return s.releasedAt ?? undefined;
   return numericValue(s, key, idx);
 }

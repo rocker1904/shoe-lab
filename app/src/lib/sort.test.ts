@@ -59,6 +59,14 @@ describe('sortShoes edge cases', () => {
     expect(slugs(sortShoes([anon, FLEET[3]!, FLEET[0]!], { key: 'brand', dir: 'desc' }, idx)))
       .toEqual(['oldie', 'cushy', 'anon']);
   });
+  it('ranks plates none < plated-other < carbon, so descending leads with carbon', () => {
+    expect(slugs(sortShoes(FLEET, { key: 'plate', dir: 'desc' }, idx)))
+      .toEqual(['racer', 'trainer', 'cushy', 'oldie', 'mystery']);
+    // ascending starts with the unplated shoes, tie-broken by score desc — an unscored shoe is last of its rank,
+    // not last overall: every shoe has a plate, so no shoe counts as missing.
+    expect(slugs(sortShoes(FLEET, { key: 'plate', dir: 'asc' }, idx)))
+      .toEqual(['cushy', 'oldie', 'mystery', 'trainer', 'racer']);
+  });
   it('compares names case-insensitively', () => {
     // Raw ASCII would sort every capitalised name ahead of every lowercase one.
     const upper = shoe({ slug: 'zoom', name: 'Zoom Fly' });

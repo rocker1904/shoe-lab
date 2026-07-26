@@ -10,7 +10,7 @@ export const DEFAULT_COLUMNS: string[] = [
   'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight',
 ];
 const PLATES = new Set(['none', 'plated', 'carbon']);
-const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp']);
+const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate']);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 

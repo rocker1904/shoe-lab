@@ -70,6 +70,14 @@ describe('ShoeTable', () => {
     expect(heel.getAttribute('style')).toContain('--p:');
     expect(cells[3]!.className).not.toContain('tinted'); // plate is not numeric
   });
+  it('maps each plate value in the plate column', () => {
+    setup();
+    // index 3 of [name, score, heel-stack, plate] — scoped to the row so the em dash cannot be matched elsewhere
+    const plateCell = (name: string) => screen.getByText(name).closest('tr')!.querySelectorAll('td')[3]!;
+    expect(plateCell('racer').textContent).toBe('carbon');
+    expect(plateCell('trainer').textContent).toBe('plated');
+    expect(plateCell('cushy').textContent).toBe('—');
+  });
   it('missing values render as em dash', () => {
     setup();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);

@@ -108,6 +108,13 @@ describe('urlstate hostile input', () => {
     expect(v.filters.ranges['score']).toEqual({ min: 1e26 });
     expect(parseView(serializeView(v), idx)).toEqual(v);
   });
+  it('round-trips a plate sort', () => {
+    expect(parseView('sort=-plate', idx).sort).toEqual({ key: 'plate', dir: 'desc' });
+    const v = defaultView();
+    v.sort = { key: 'plate', dir: 'asc' };
+    expect(serializeView(v)).toBe('sort=plate');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
   it('rejects sort keys that are not numerically sortable', () => {
     expect(parseView('sort=tongue-gusset-type', idx).sort).toEqual(defaultView().sort);
     expect(parseView('sort=-', idx).sort).toEqual(defaultView().sort);
