@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest';
+import { HttpStatusError, PoliteHttp } from '../src/http.js';
+
+function harness(responses: Array<{ status: number; body?: string } | Error>) {
+  const calls: Array<{ url: string; ua: string | undefined }> = [];
+  const sleeps: number[] = [];
+  let clock = 0;
+  const http = new PoliteHttp({
+    fetchImpl: (async (url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(url), ua: new Headers(init?.headers).get('user-agent') ?? undefined });
+      const next = responses.shift();
+      if (!next) throw new Error('unexpected extra request');
+      if (next instanceof Error) throw next;
+      return new Response(next.body ?? 'ok', { status: next.status });
+    }) as typeof fetch,
+    sleep: async (ms) => { sleeps.push(ms); clock += ms; },
+    now: () => clock,
+  });
+  return { http, calls, sleeps, tick: (ms: number) => { clock += ms; } };
+}
+
+describe('PoliteHttp', () => {
+  it('sends the user-agent and returns text', async () => {
+    const { http, calls } = harness([{ status: 200, body: 'hello' }]);
+    expect(await http.getText('https://x/a')).toBe('hello');
+    expect(calls[0]?.ua).toContain('shoe-lab/');
+  });
+  it('spaces consecutive requests by at least minIntervalMs', async () => {
+    const { http, sleeps, tick } = harness([{ status: 200 }, { status: 200 }, { status: 200 }]);
+    await http.getText('https://x/1');
+    tick(200);
+    await http.getText('https://x/2'); // only 200ms elapsed -> sleep 800
+    await http.getText('https://x/3'); // no time elapsed -> sleep 1000
+    expect(sleeps).toEqual([800, 1000]);
+  });
+  it('retries 5xx with backoff schedule then succeeds', async () => {
+    const { http, sleeps } = harness([{ status: 500 }, { status: 502 }, { status: 200, body: 'ok' }]);
+    expect(await http.getText('https://x/a')).toBe('ok');
+    expect(sleeps).toEqual([5000, 25000]);
+  });
+  it('retries network errors and fails after exhausting retries', async () => {
+    const { http } = harness([new Error('boom'), new Error('boom'), new Error('boom'), new Error('boom')]);
+    await expect(http.getText('https://x/a')).rejects.toThrow('boom');
+  });
+  it('fails 4xx immediately without retry', async () => {
+    const { http, calls } = harness([{ status: 404 }]);
+    await expect(http.getText('https://x/a')).rejects.toThrow(HttpStatusError);
+    expect(calls.length).toBe(1);
+  });
+  it('parses JSON', async () => {
+    const { http } = harness([{ status: 200, body: '{"a":1}' }]);
+    expect(await http.getJson<{ a: number }>('https://x/a')).toEqual({ a: 1 });
+  });
+});
