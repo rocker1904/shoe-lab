@@ -56,6 +56,48 @@ describe('FilterSidebar', () => {
   });
 });
 
+// Every cleared control must round-trip back to the default filter state, not to a falsy stand-in:
+// an empty string or a `false` would serialise into the URL and stop the view equalling defaultView().
+describe('FilterSidebar text and toggle controls', () => {
+  it('emits the search term, and undefined once cleared', async () => {
+    const onchange = setup();
+    const box = screen.getByLabelText('Search');
+
+    await fireEvent.input(box, { target: { value: 'racer' } });
+    expect(onchange.mock.lastCall![0].filters.search).toBe('racer');
+
+    await fireEvent.input(box, { target: { value: '' } });
+    expect(onchange.mock.lastCall![0].filters.search).toBeUndefined();
+    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
+  });
+
+  it('emits the released-after date, and undefined once cleared', async () => {
+    const onchange = setup();
+    const date = screen.getByLabelText('Released after');
+
+    await fireEvent.input(date, { target: { value: '2024-03-01' } });
+    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-03-01');
+
+    await fireEvent.input(date, { target: { value: '' } });
+    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
+    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
+  });
+
+  it('emits hide-discontinued as true, and undefined once unchecked', async () => {
+    const onchange = setup();
+    await fireEvent.click(screen.getByLabelText('Hide discontinued'));
+    expect(onchange.mock.lastCall![0].filters.hideDiscontinued).toBe(true);
+
+    const checked = defaultView();
+    checked.filters.hideDiscontinued = true;
+    const off = vi.fn();
+    render(FilterSidebar, { props: { data, view: checked, onchange: off, hiddenMissing: 0 } });
+    await fireEvent.click(screen.getAllByLabelText('Hide discontinued').at(-1)!);
+    expect(off.mock.lastCall![0].filters.hideDiscontinued).toBeUndefined();
+    expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
+  });
+});
+
 const extraTest = { id: 99, slug: 'stiffness', name: 'Stiffness', type: 'float', units: 'N', groupId: null } as const;
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 
