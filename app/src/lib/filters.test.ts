@@ -46,6 +46,15 @@ describe('applyFilters edge cases', () => {
     expect(slugs(r)).toEqual(['cushy', 'racer', 'trainer']);
     expect(r.hiddenMissing).toBe(2); // oldie (no softness) and mystery (nothing), once each
   });
+  it('counts missing values independently of range key order', () => {
+    // oldie fails heel-stack on value AND has no midsole-softness reading: missing wins either way.
+    const missFirst = applyFilters([FLEET[3]!], { ranges: { 'midsole-softness-22': { min: 1 }, 'heel-stack': { min: 35 } } }, idx);
+    const failFirst = applyFilters([FLEET[3]!], { ranges: { 'heel-stack': { min: 35 }, 'midsole-softness-22': { min: 1 } } }, idx);
+    expect(missFirst.visible).toEqual([]);
+    expect(failFirst.visible).toEqual([]);
+    expect(failFirst.hiddenMissing).toBe(missFirst.hiddenMissing);
+    expect(missFirst.hiddenMissing).toBe(1);
+  });
   it('empty range bounds are not a filter and hide nothing', () => {
     const r = applyFilters(FLEET, { ranges: { 'heel-stack': {}, 'midsole-softness-22': {} } }, idx);
     expect(slugs(r)).toHaveLength(5);

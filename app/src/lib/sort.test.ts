@@ -21,6 +21,12 @@ describe('sortShoes', () => {
     const b = shoe({ slug: 'b', values: { '6': 35 }, score: 60 });
     expect(slugs(sortShoes([b, a], { key: 'heel-stack', dir: 'asc' }, idx))).toEqual(['a', 'b']);
   });
+  it('preserves input order when the key and the score both tie', () => {
+    const first = shoe({ slug: 'first', values: { '6': 35 }, score: 80 });
+    const second = shoe({ slug: 'second', values: { '6': 35 }, score: 80 });
+    expect(slugs(sortShoes([second, first], { key: 'heel-stack', dir: 'asc' }, idx))).toEqual(['second', 'first']);
+    expect(slugs(sortShoes([first, second], { key: 'heel-stack', dir: 'desc' }, idx))).toEqual(['first', 'second']);
+  });
   it('does not mutate input', () => {
     const input = [...FLEET];
     sortShoes(input, { key: 'score', dir: 'desc' }, idx);

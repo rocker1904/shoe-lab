@@ -49,7 +49,8 @@ describe('dataset edge cases', () => {
       // Local accessors would read 2025-03-01T00:00Z as Feb 28 and 2025-03-15T00:00Z as Mar 14 -> 1 month.
       expect(ageMonths('2025-03-01', new Date('2025-03-15'))).toBe(0);
     } finally {
-      process.env.TZ = tz;
+      if (tz === undefined) delete process.env.TZ;
+      else process.env.TZ = tz;
     }
   });
 });

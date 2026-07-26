@@ -17,6 +17,7 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
   const visible: Shoe[] = [];
   let hiddenMissing = 0;
   const search = f.search?.toLowerCase();
+  const active = Object.entries(f.ranges).filter(([, b]) => b.min !== undefined || b.max !== undefined);
   outer: for (const s of shoes) {
     if (f.hideDiscontinued && s.discontinued) continue;
     if (search && !s.name.toLowerCase().includes(search)) continue;
@@ -25,13 +26,17 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
       if (f.plate === 'plated' ? s.plate === 'none' : s.plate !== f.plate) continue;
     }
     if (f.releasedAfter && (!s.releasedAt || s.releasedAt < f.releasedAfter)) continue;
-    for (const [key, bound] of Object.entries(f.ranges)) {
-      if (bound.min === undefined && bound.max === undefined) continue;
+    // Missing-ness is settled across every active range before any bound is applied, so hiddenMissing
+    // does not depend on the order the range keys happen to be iterated in.
+    const readings: { bound: RangeBound; v: number }[] = [];
+    for (const [key, bound] of active) {
       const v = numericValue(s, key, idx);
       if (v === undefined) { hiddenMissing++; continue outer; }
-      if (bound.min !== undefined && v < bound.min) continue outer;
-      if (bound.max !== undefined && v > bound.max) continue outer;
+      readings.push({ bound, v });
     }
+    const outOfRange = readings.some(({ bound, v }) =>
+      (bound.min !== undefined && v < bound.min) || (bound.max !== undefined && v > bound.max));
+    if (outOfRange) continue;
     visible.push(s);
   }
   return { visible, hiddenMissing };
