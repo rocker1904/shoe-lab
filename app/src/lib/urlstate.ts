@@ -19,7 +19,8 @@ export function defaultView(): ViewState {
   return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: [...DEFAULT_COLUMNS] };
 }
 
-const bound = (n: number | undefined) => (typeof n === 'number' && Number.isFinite(n) ? String(n) : '');
+/** A present-but-non-finite bound is unserialisable; dropping just that side would silently widen the range. */
+const finite = (n: number | undefined) => n === undefined || (typeof n === 'number' && Number.isFinite(n));
 
 /** '' -> undefined (open-ended); unparseable or non-finite -> null (reject); otherwise the number. */
 function parseBound(s: string): number | undefined | null {
@@ -32,10 +33,9 @@ function parseBound(s: string): number | undefined | null {
 export function serializeView(v: ViewState): string {
   const p = new URLSearchParams();
   for (const [key, b] of Object.entries(v.filters.ranges)) {
-    const min = bound(b.min);
-    const max = bound(b.max);
-    if (!min && !max) continue;
-    p.set(`r.${key}`, `${min}~${max}`);
+    if (b.min === undefined && b.max === undefined) continue;
+    if (!finite(b.min) || !finite(b.max)) continue;
+    p.set(`r.${key}`, `${b.min ?? ''}~${b.max ?? ''}`);
   }
   if (v.filters.plate) p.set('plate', v.filters.plate);
   if (v.filters.releasedAfter) p.set('after', v.filters.releasedAfter);
@@ -77,7 +77,9 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     } else if (key === 'after' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
       v.filters.releasedAfter = raw;
     } else if (key === 'brands' && raw) {
-      v.filters.brands = raw.split(',').filter(Boolean);
+      // an all-separator value (",,,") must stay absent, not become an empty array that no longer equals the default
+      const brands = raw.split(',').filter(Boolean);
+      if (brands.length) v.filters.brands = brands;
     } else if (key === 'q' && raw) {
       v.filters.search = raw;
     } else if (key === 'nodisc' && raw === '1') {

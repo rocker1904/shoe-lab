@@ -58,11 +58,16 @@ describe('urlstate hostile input', () => {
     expect(parseView('?sort=name', idx).sort).toEqual({ key: 'name', dir: 'asc' });
   });
   it('defaultView hands out fresh objects', () => {
+    // inline literal, not the live DEFAULT_COLUMNS reference: a leaked array would otherwise mutate the expectation too
+    const columns = ['releasedAt', 'score', 'msrpGbp', 'heel-stack', 'midsole-softness-22',
+      'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight'];
+    expect(DEFAULT_COLUMNS).toEqual(columns);
     const a = defaultView();
     a.filters.ranges['weight'] = { min: 1 };
     a.columns.push('bogus');
     a.sort.key = 'weight';
-    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns: DEFAULT_COLUMNS });
+    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns });
+    expect(DEFAULT_COLUMNS).toEqual(columns);
   });
   it('resolves repeated keys to the last valid occurrence', () => {
     expect(parseView('r.heel-stack=10~&r.heel-stack=20~', idx).filters.ranges['heel-stack']).toEqual({ min: 20 });
@@ -108,21 +113,31 @@ describe('urlstate hostile input', () => {
     expect(parseView('sort=-', idx).sort).toEqual(defaultView().sort);
     expect(parseView('sort=', idx).sort).toEqual(defaultView().sort);
   });
-  it.each(['nodisc=0', 'nodisc=true', 'nodisc=', 'brands=', 'q=', 'after=26-07-2024', 'plate=NONE'])(
+  it.each(['nodisc=0', 'nodisc=true', 'nodisc=', 'brands=', 'brands=,,,', 'q=', 'after=26-07-2024', 'plate=NONE'])(
     'ignores %s', (qs) => { expect(parseView(qs, idx)).toEqual(defaultView()); });
   it('filters, dedupes and falls back on column lists', () => {
     // non-numeric tests are legitimate columns even though they are not rangeable
     expect(parseView('cols=score,score,bogus,tongue-gusset-type,plate', idx).columns)
       .toEqual(['score', 'tongue-gusset-type', 'plate']);
-    expect(parseView('cols=bogus,alsobogus', idx).columns).toEqual(DEFAULT_COLUMNS);
+    const fallback = parseView('cols=bogus,alsobogus', idx).columns;
+    fallback.push('leaked'); // the fallback must be a copy, so mutating it cannot corrupt DEFAULT_COLUMNS
+    expect(parseView('cols=bogus,alsobogus', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
+      'midsole-softness-22', 'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
     expect(serializeView(parseView(`cols=${DEFAULT_COLUMNS.join(',')}`, indexTests([...TESTS,
       { id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', type: 'float', units: 'mm', groupId: null }]))))
       .toBe('');
   });
-  it('omits bounds that are empty or not finite', () => {
+  it('omits ranges that are empty or not finite', () => {
     const v = defaultView();
     v.filters.ranges['weight'] = {};
     v.filters.ranges['score'] = { min: Number.NaN, max: Number.POSITIVE_INFINITY };
+    expect(serializeView(v)).toBe('');
+  });
+  it('drops the whole range when one bound is non-finite, rather than widening it', () => {
+    const v = defaultView();
+    v.filters.ranges['weight'] = { min: Number.NaN, max: 5 };
+    expect(serializeView(v)).toBe('');
+    v.filters.ranges['weight'] = { min: 5, max: Number.POSITIVE_INFINITY };
     expect(serializeView(v)).toBe('');
   });
 });
