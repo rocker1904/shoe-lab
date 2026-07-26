@@ -35,6 +35,15 @@ describe('sanitizeHtml hardening', () => {
       '<a href="https://x.com/&gt;&lt;img src=x onerror=alert(1)&gt;" rel="noopener" target="_blank">x</a>',
     );
   });
+  it('removes media/fallback elements including their inner text', () => {
+    expect(sanitizeHtml('a<video controls><p>Your browser does not support the video tag.</p></video>b')).toBe('ab');
+    expect(sanitizeHtml('a<audio><p>no audio</p></audio><iframe src="//x">frame</iframe>b')).toBe('ab');
+    expect(sanitizeHtml('a<noscript><p>enable js</p></noscript>b')).toBe('ab');
+  });
+  it('removes stripped elements whose closing tag has trailing whitespace', () => {
+    expect(sanitizeHtml('<style>body{x}</style >tail')).toBe('tail');
+    expect(sanitizeHtml('a<script>alert(1)</script\n>b')).toBe('ab');
+  });
   it('leaves entities in the href alone rather than double-encoding them', () => {
     expect(sanitizeHtml('<a href="https://x.com/?a=1&amp;b=2">x</a>')).toBe(
       '<a href="https://x.com/?a=1&amp;b=2" rel="noopener" target="_blank">x</a>',

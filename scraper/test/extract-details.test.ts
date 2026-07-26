@@ -29,6 +29,7 @@ describe('extractDetails', () => {
     expect(rec.whoShouldBuy).toContain('<');           // sanitised HTML, not plain text
     expect(rec.whoShouldBuy).not.toContain('<img');
     expect(rec.whoShouldNotBuy).toBeTruthy();
+    expect(rec.whoShouldNotBuy).not.toContain('does not support the video tag');
     expect(rec.features).toContain('Removable insole');
   });
   it('throws PayloadError when product is missing', () => {

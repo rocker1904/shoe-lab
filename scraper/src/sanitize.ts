@@ -7,7 +7,9 @@ function escapeAttr(value: string): string {
 }
 
 export function sanitizeHtml(html: string): string {
-  let out = html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
+  // Inner text of these is machinery or browser fallback boilerplate, never editorial copy,
+  // so it goes with the tag. Trailing whitespace in the closing tag is legal HTML.
+  let out = html.replace(/<(script|style|video|audio|iframe|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '');
   out = out.replace(/<!--[\s\S]*?-->/g, '');
   // Either a well-formed tag (replaced by its sanitised form, or dropped) or a bare `<`,
   // which is escaped so malformed markup can never reach the browser as a tag.
