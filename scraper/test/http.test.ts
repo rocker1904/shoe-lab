@@ -39,8 +39,28 @@ describe('PoliteHttp', () => {
     expect(sleeps).toEqual([5000, 25000]);
   });
   it('retries network errors and fails after exhausting retries', async () => {
-    const { http } = harness([new Error('boom'), new Error('boom'), new Error('boom'), new Error('boom')]);
+    const { http, sleeps } = harness([new Error('boom'), new Error('boom'), new Error('boom'), new Error('boom')]);
     await expect(http.getText('https://x/a')).rejects.toThrow('boom');
+    expect(sleeps).toEqual([5000, 25000, 120000]);
+  });
+  it('fails with HttpStatusError after exhausting retries on 5xx', async () => {
+    const { http, calls, sleeps } = harness([
+      { status: 500 }, { status: 500 }, { status: 500 }, { status: 500 },
+    ]);
+    const err = await http.getText('https://x/a').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(HttpStatusError);
+    expect((err as HttpStatusError).status).toBe(500);
+    expect(calls.length).toBe(4);
+    expect(sleeps).toEqual([5000, 25000, 120000]);
+  });
+  it('reports the final status on the exhausted-retry HttpStatusError', async () => {
+    const { http } = harness([
+      { status: 500 }, { status: 500 }, { status: 500 }, { status: 503 },
+    ]);
+    await expect(http.getText('https://x/a')).rejects.toMatchObject({
+      status: 503,
+      url: 'https://x/a',
+    });
   });
   it('fails 4xx immediately without retry', async () => {
     const { http, calls } = harness([{ status: 404 }]);
