@@ -35,7 +35,7 @@
 
 <style>
   .picker { position: relative; }
-  summary { cursor: pointer; padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; }
+  summary { cursor: pointer; padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; white-space: nowrap; }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.2rem; min-width: 16rem; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }
   h4 { margin: 0.5rem 0 0.15rem; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
   label { font-size: 0.85rem; }

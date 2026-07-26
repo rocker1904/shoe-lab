@@ -1,17 +1,33 @@
 :root {
+  color-scheme: light dark;
   --bg: #fafaf8; --surface: #ffffff; --text: #1a1d21; --text-dim: #5c6470;
   --border: #e3e5e8; --accent: #2563eb; --accent-dim: #dbeafe;
-  --good: #16a34a; --bad: #dc2626; --tint-max: 210 80% 50%;
+  --good: #15803d; --bad: #dc2626;
+  /* Chart ink, contrast-checked per mode: histogram bars are data marks, so the inactive state
+     clears 3:1 on the surface rather than fading into the border colour; the percentile wash tops
+     out where the ramp is legible against the surface (light 50% -> 2.1:1, dark 56% -> 2.5:1) while
+     the cell text over it still clears 4.5:1 (7.9:1 and 5.6:1). */
+  --hist-dim: #8b929d;
+  --tint-strength: 50%;
+  /* Row hover paints as a translucent layer so the percentile tint underneath survives it. */
+  --hover-wash: color-mix(in oklab, var(--accent) 10%, transparent);
   font-family: system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
+    color-scheme: dark;
     --bg: #14161a; --surface: #1c1f24; --text: #e8eaed; --text-dim: #9aa2ad;
-    --border: #2c313a; --accent: #60a5fa; --accent-dim: #1e3a5f;
+    --border: #2c313a; --accent: #4a90e2; --accent-dim: #1e3a5f;
+    --good: #22c55e; --bad: #f87171;
+    --hist-dim: #717b88; --tint-strength: 56%;
   }
 }
+:root[data-theme='light'] { color-scheme: light; }
 :root[data-theme='dark'] {
+  color-scheme: dark;
   --bg: #14161a; --surface: #1c1f24; --text: #e8eaed; --text-dim: #9aa2ad;
-  --border: #2c313a; --accent: #60a5fa; --accent-dim: #1e3a5f;
+  --border: #2c313a; --accent: #4a90e2; --accent-dim: #1e3a5f;
+  --good: #22c55e; --bad: #f87171;
+  --hist-dim: #717b88; --tint-strength: 56%;
 }
 body { margin: 0; background: var(--bg); color: var(--text); }

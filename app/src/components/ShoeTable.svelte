@@ -82,11 +82,15 @@
   th button { background: none; border: none; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; padding: 0; }
   td { border-bottom: 1px solid var(--border); padding: 0.4rem 0.5rem; }
   tr.shoe { cursor: pointer; }
-  tr.shoe:hover td { background: var(--accent-dim); }
+  /* A background *image* layers over the cell's background colour, so hovering a tinted cell
+     dims it rather than replacing the percentile tint with a flat wash. */
+  tr.shoe:hover td { background-image: linear-gradient(var(--hover-wash), var(--hover-wash)); }
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   td.name { display: flex; gap: 0.6rem; align-items: center; min-width: 14rem; }
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: 4px; }
-  td.num.tinted { background: color-mix(in oklab, var(--accent) calc(var(--p) * 22%), transparent); }
+  /* Squared so the wash stays out of the way in the middle of the pack and only the leaders read as
+     tinted — a linear ramp over every numeric column turns the whole table blue. */
+  td.num.tinted { background-color: color-mix(in oklab, var(--accent) calc(var(--p) * var(--p) * var(--tint-strength)), transparent); }
   .disc-tag { margin-left: 0.4rem; font-size: 0.7rem; color: var(--bad); border: 1px solid var(--bad); border-radius: 999px; padding: 0 0.35rem; }
   small { color: var(--text-dim); }
 </style>

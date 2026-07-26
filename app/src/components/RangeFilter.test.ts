@@ -9,7 +9,7 @@ const props = { label: 'Heel stack', units: 'mm', hist, onchange: vi.fn() };
 it('highlights only the histogram bars inside the bound', () => {
   const { container } = render(RangeFilter, { props: { ...props, bound: { min: 38 } } });
   const fills = [...container.querySelectorAll('rect')].map((r) => r.getAttribute('fill'));
-  expect(fills[0]).toBe('var(--border)');
+  expect(fills[0]).toBe('var(--hist-dim)');
   expect(fills.at(-1)).toBe('var(--accent)');
 });
 
