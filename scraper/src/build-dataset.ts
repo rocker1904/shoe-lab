@@ -1,4 +1,4 @@
-import type { DetailsFile, MetricsFile, MetricValue, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
+import type { DetailsFile, MetricsFile, MetricValue, Plate, ReleaseYearsFile, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { csvLine } from './csv.js';
 import { validateShoesFile } from './validate.js';
@@ -12,7 +12,9 @@ export function derivePlate(features: string[], plateTestValue: MetricValue | un
   return 'none';
 }
 
-export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile): { shoesFile: ShoesFile; csv: string } {
+// `releaseYears` deliberately does not feed builtAt: it is refreshed on its own rare schedule,
+// and the same three core files must keep producing byte-identical output.
+export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile): { shoesFile: ShoesFile; csv: string } {
   let builtAt = metrics.scrapedAt;
   for (const rec of Object.values(details.shoes)) {
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;
@@ -23,12 +25,15 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
     const rec = details.shoes[slug];
     const det = rec && !isTombstone(rec) ? rec : null;
     const features = det?.features ?? [];
+    const year = releaseYears?.years[slug];
+    const releasedAt = det?.releasedAt ?? (year === undefined ? null : `${year}-01-01`);
     return {
       slug,
       name: det?.name ?? m.name,
       brand: det?.brand ?? null,
       url: det?.runrepeatUrl ?? m.url,
-      releasedAt: det?.releasedAt ?? null,
+      releasedAt,
+      preciseReleaseDate: det?.releasedAt != null && det.preciseReleaseDate,
       score: det?.score ?? null,
       msrpGbp: det?.msrpGbp ?? null,
       discontinued: det?.discontinued ?? false,

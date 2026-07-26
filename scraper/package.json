@@ -8,6 +8,7 @@
     "test:coverage": "vitest run --coverage",
     "scrape:metrics": "tsx src/scrape-metrics.ts",
     "scrape:details": "tsx src/scrape-details.ts",
+    "scrape:releases": "tsx src/scrape-releases.ts",
     "build:dataset": "tsx src/build-dataset-cli.ts",
     "check:live": "tsx src/check-live.ts"
   },

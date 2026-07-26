@@ -11,7 +11,7 @@ export const TESTS: LabTest[] = [
 export function shoe(overrides: Partial<Shoe> & { slug: string }): Shoe {
   return {
     name: overrides.slug, brand: 'Brand', url: `https://runrepeat.com/${overrides.slug}`,
-    releasedAt: '2025-01-01', score: 80, msrpGbp: 140, discontinued: false,
+    releasedAt: '2025-01-01', preciseReleaseDate: true, score: 80, msrpGbp: 140, discontinued: false,
     plate: 'none', imageUrl: null, values: {}, details: null,
     ...overrides,
   };
@@ -22,5 +22,5 @@ export const FLEET: Shoe[] = [
   shoe({ slug: 'racer', values: { '6': 39, '65': 75, '70': 42 }, plate: 'carbon', releasedAt: '2026-01-01', score: 90, msrpGbp: 250 }),
   shoe({ slug: 'trainer', values: { '6': 35, '65': 60, '70': 30 }, plate: 'plated-other', releasedAt: '2023-05-01', score: 85 }),
   shoe({ slug: 'oldie', values: { '6': 30, '65': 55 }, releasedAt: '2021-01-01', score: 70, discontinued: true, brand: 'Other' }),
-  shoe({ slug: 'mystery', values: {}, releasedAt: null, score: null, msrpGbp: null }),
+  shoe({ slug: 'mystery', values: {}, releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null }),
 ];

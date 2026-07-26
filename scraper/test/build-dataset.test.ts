@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildDataset, derivePlate } from '../src/build-dataset.js';
-import type { DetailsFile, MetricsFile, TestsFile } from '../../shared/types.js';
+import type { DetailsFile, MetricsFile, ReleaseYearsFile, TestsFile } from '../../shared/types.js';
 
 const tests: TestsFile = {
   scrapedAt: '2026-07-20T00:00:00Z', seedSlug: 's',
@@ -155,6 +155,69 @@ describe('buildDataset determinism', () => {
   it('falls back to metrics.scrapedAt when details is empty', () => {
     const { metrics } = baseInputs();
     expect(buildDataset(tests, metrics, { shoes: {} }).shoesFile.builtAt).toBe('2026-07-20T00:00:00Z');
+  });
+});
+
+// The category API only knows release *years* (task 23), so year-derived dates are marked
+// imprecise and must never overwrite a real date scraped from a shoe page.
+describe('buildDataset release-year supplement', () => {
+  function releaseYears(years: Record<string, number>): ReleaseYearsFile {
+    return { scrapedAt: '2026-07-26T12:00:00Z', years };
+  }
+
+  it('fills releasedAt from the year bucket and marks it imprecise', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile, csv } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-005': 2025 }));
+    const five = shoesFile.shoes.find((s) => s.slug === 'shoe-005')!;
+    expect(five.releasedAt).toBe('2025-01-01');
+    expect(five.preciseReleaseDate).toBe(false);
+    expect(csv.split('\n').find((l) => l.startsWith('shoe-005,'))).toContain('2025-01-01');
+  });
+
+  it('prefers the details date over the year bucket', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-000': 2019 }));
+    const zero = shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
+    expect(zero.releasedAt).toBe('2025-06-01');
+    expect(zero.preciseReleaseDate).toBe(true);
+  });
+
+  it('uses the year when the details record has no date of its own', () => {
+    const { metrics, details } = baseInputs();
+    const rec = details.shoes['shoe-000']!;
+    if (!('gone' in rec)) rec.releasedAt = null;
+    const { shoesFile } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-000': 2022, 'shoe-001': 2020 }));
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-000')!.releasedAt).toBe('2022-01-01');
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-000')!.preciseReleaseDate).toBe(false);
+    // tombstoned details record: the year still applies
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-001')!.releasedAt).toBe('2020-01-01');
+  });
+
+  it('keeps an imprecise details date imprecise', () => {
+    const { metrics, details } = baseInputs();
+    const rec = details.shoes['shoe-000']!;
+    if (!('gone' in rec)) rec.preciseReleaseDate = false;
+    const zero = buildDataset(tests, metrics, details).shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
+    expect(zero.releasedAt).toBe('2025-06-01');
+    expect(zero.preciseReleaseDate).toBe(false);
+  });
+
+  it('leaves shoes with neither source null and imprecise', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-005': 2025 }));
+    const two = shoesFile.shoes.find((s) => s.slug === 'shoe-002')!;
+    expect(two.releasedAt).toBeNull();
+    expect(two.preciseReleaseDate).toBe(false);
+    // omitting the argument entirely behaves the same
+    expect(buildDataset(tests, metrics, details).shoesFile.shoes.find((s) => s.slug === 'shoe-005')!.releasedAt).toBeNull();
+  });
+
+  it('stays deterministic and does not let the years file move builtAt', () => {
+    const years = releaseYears({ 'shoe-005': 2025, 'shoe-006': 2024 });
+    const a = buildDataset(tests, baseInputs().metrics, baseInputs().details, years);
+    const b = buildDataset(tests, baseInputs().metrics, baseInputs().details, releaseYears({ 'shoe-006': 2024, 'shoe-005': 2025 }));
+    expect(JSON.stringify(b)).toBe(JSON.stringify(a));
+    expect(a.shoesFile.builtAt).toBe('2026-07-22T00:00:00Z'); // not the 2026-07-26 years scrapedAt
   });
 });
 

@@ -5,7 +5,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**'],
-      exclude: ['src/scrape-metrics.ts', 'src/scrape-details.ts', 'src/build-dataset-cli.ts', 'src/check-live.ts'],
+      exclude: ['src/scrape-metrics.ts', 'src/scrape-details.ts', 'src/scrape-releases.ts', 'src/build-dataset-cli.ts', 'src/check-live.ts'],
       thresholds: { lines: 90, branches: 85 },
     },
   },

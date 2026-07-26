@@ -109,7 +109,7 @@ describe('validateDetailsRecord', () => {
 describe('validateShoesFile', () => {
   const good: ShoesFile = {
     builtAt: '2026-07-26T00:00:00Z', source: 'RunRepeat', groups: {}, tests: tests.tests,
-    shoes: [{ slug: 'a', name: 'A', brand: null, url: 'https://runrepeat.com/a', releasedAt: null, score: null, msrpGbp: null, discontinued: false, plate: 'none', imageUrl: null, values: { '5': 1 }, details: null }],
+    shoes: [{ slug: 'a', name: 'A', brand: null, url: 'https://runrepeat.com/a', releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: false, plate: 'none', imageUrl: null, values: { '5': 1 }, details: null }],
   };
   it('passes a valid file and rejects bad plate', () => {
     expect(() => validateShoesFile(good)).not.toThrow();

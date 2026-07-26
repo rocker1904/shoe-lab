@@ -20,6 +20,8 @@ export interface DetailRecord {
 }
 export interface Tombstone { gone: true; scrapedAt: string }
 export interface DetailsFile { shoes: Record<string, DetailRecord | Tombstone> }
+/** Year-level release buckets from the category API, keyed by slug. */
+export interface ReleaseYearsFile { scrapedAt: string; years: Record<string, number> }
 export type Plate = 'carbon' | 'plated-other' | 'none';
 export interface ShoeDetails {
   pros: string[]; cons: string[]; intro: string;
@@ -27,7 +29,8 @@ export interface ShoeDetails {
 }
 export interface Shoe {
   slug: string; name: string; brand: string | null; url: string;
-  releasedAt: string | null; score: number | null; msrpGbp: number | null;
+  releasedAt: string | null; preciseReleaseDate: boolean;
+  score: number | null; msrpGbp: number | null;
   discontinued: boolean; plate: Plate; imageUrl: string | null;
   values: Record<string, MetricValue>;
   details: ShoeDetails | null;
