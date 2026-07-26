@@ -44,6 +44,27 @@ describe('scrapeMetrics', () => {
     const azura = metrics.shoes['saucony-endorphin-azura']!;
     expect(azura.values['5']).toBe(32.7);
   });
+  it('writes nothing when validation fails', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    // Two shoes only: validateMetrics rejects anything under 300. '1' coerces for every
+    // metric type (numeric 1, bool true), so one payload shape serves all tests.
+    const thin = JSON.stringify({ headers: ['X', 'Name'], rows: [
+      [{ value: '1' }, { text: 'Azura', url: 'https://runrepeat.com/saucony-endorphin-azura' }],
+      [{ value: '1' }, { text: 'Other', url: 'https://runrepeat.com/other-shoe' }],
+    ] });
+    const fetchImpl = (async (url: RequestInfo | URL) => {
+      const u = String(url);
+      if (u.endsWith('/robots.txt')) return new Response('User-agent: *\nDisallow: /search*\n');
+      if (u.includes('/uk/saucony-endorphin-azura')) return new Response(azuraHtml);
+      if (u.includes('/api/product/lab-test-list/')) return new Response(thin);
+      throw new Error(`unexpected url ${u}`);
+    }) as typeof fetch;
+    const http = new PoliteHttp({ fetchImpl, sleep: async () => {}, now: (() => { let t = 0; return () => (t += 2000); })() });
+    await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' })).rejects.toThrow(/<300/);
+    expect(dir.read('tests.json')).toBeNull();
+    expect(dir.read('metrics.json')).toBeNull();
+  });
+
   it('aborts before any scraping when robots disallows our paths', async () => {
     const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
     const fetchImpl = (async (url: RequestInfo | URL) => {
