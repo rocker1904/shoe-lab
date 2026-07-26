@@ -1,0 +1,192 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildDataset, derivePlate } from '../src/build-dataset.js';
+import type { DetailsFile, MetricsFile, TestsFile } from '../../shared/types.js';
+
+const tests: TestsFile = {
+  scrapedAt: '2026-07-20T00:00:00Z', seedSlug: 's',
+  groups: { '3': 'Cushioning' },
+  tests: [
+    { id: 6, slug: 'heel-stack', name: 'Heel stack', type: 'float', units: 'mm', groupId: '3' },
+    { id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', units: '', groupId: null },
+    { id: 69, slug: 'plate', name: 'Plate', type: 'bool', units: '', groupId: null },
+    ...Array.from({ length: 52 }, (_, i) => ({ id: 100 + i, slug: `t${i}`, name: `T${i}`, type: 'float' as const, units: '', groupId: null })),
+  ],
+};
+
+function baseInputs(): { metrics: MetricsFile; details: DetailsFile } {
+  const metrics: MetricsFile = { scrapedAt: '2026-07-20T00:00:00Z', shoes: {} };
+  for (let i = 0; i < 320; i++) {
+    metrics.shoes[`shoe-${String(i).padStart(3, '0')}`] = {
+      name: `Shoe ${i}`, url: `https://runrepeat.com/shoe-${i}`, values: { '6': 30 + (i % 10), '69': i % 2 === 0 },
+    };
+  }
+  const details: DetailsFile = { shoes: {
+    'shoe-000': {
+      scrapedAt: '2026-07-22T00:00:00Z', productId: 1, name: 'Shoe Zero Deluxe', brand: 'Brand', releasedAt: '2025-06-01',
+      preciseReleaseDate: true, score: 90, msrpGbp: 150, discontinued: false, imageUrl: null,
+      runrepeatUrl: 'https://runrepeat.com/uk/shoe-000', features: ['Carbon plate', 'Rocker'],
+      pros: ['good'], cons: ['bad'], intro: 'intro', whoShouldBuy: '<p>you</p>', whoShouldNotBuy: null,
+    },
+    'shoe-001': { gone: true, scrapedAt: '2026-07-21T00:00:00Z' },
+    'ghost-shoe': {
+      scrapedAt: '2026-07-19T00:00:00Z', productId: 9, name: 'Ghost', brand: null, releasedAt: null,
+      preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: true, imageUrl: null,
+      runrepeatUrl: 'https://runrepeat.com/uk/ghost-shoe', features: [], pros: [], cons: [], intro: '',
+      whoShouldBuy: null, whoShouldNotBuy: null,
+    },
+  } };
+  return { metrics, details };
+}
+
+describe('derivePlate', () => {
+  it('covers the full truth table', () => {
+    expect(derivePlate(['Carbon plate'], false)).toBe('carbon');
+    expect(derivePlate(['carbon PLATE x'], undefined)).toBe('carbon');
+    expect(derivePlate(['Nylon plate'], false)).toBe('plated-other');
+    expect(derivePlate([], true)).toBe('plated-other');
+    expect(derivePlate([], false)).toBe('none');
+    expect(derivePlate([], undefined)).toBe('none');
+    expect(derivePlate(['Rocker'], undefined)).toBe('none');
+  });
+});
+
+describe('buildDataset', () => {
+  it('joins details onto metrics, keeps metrics-only shoes, drops details-only', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(shoesFile.shoes).toHaveLength(320);
+    const zero = shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
+    expect(zero.name).toBe('Shoe Zero Deluxe');
+    expect(zero.plate).toBe('carbon');
+    expect(zero.details?.pros).toEqual(['good']);
+    const one = shoesFile.shoes.find((s) => s.slug === 'shoe-001')!;
+    expect(one.details).toBeNull();          // tombstone -> no details
+    expect(one.name).toBe('Shoe 1');         // falls back to metrics name
+    expect(shoesFile.shoes.find((s) => s.slug === 'ghost-shoe')).toBeUndefined();
+  });
+  it('is deterministic and time-independent', () => {
+    const a = buildDataset(tests, baseInputs().metrics, baseInputs().details);
+    const b = buildDataset(tests, baseInputs().metrics, baseInputs().details);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(a.shoesFile.builtAt).toBe('2026-07-22T00:00:00Z'); // max scrapedAt of inputs
+    expect(a.shoesFile.shoes.map((s) => s.slug)).toEqual([...a.shoesFile.shoes.map((s) => s.slug)].sort());
+  });
+  it('emits CSV with fixed + numeric-test columns only', () => {
+    const { metrics, details } = baseInputs();
+    const { csv } = buildDataset(tests, metrics, details);
+    const lines = csv.trimEnd().split('\n');
+    const header = lines[0]!.split(',');
+    expect(header.slice(0, 8)).toEqual(['slug', 'name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate', 'discontinued']);
+    expect(header).toContain('heel-stack');
+    expect(header).not.toContain('tongue-gusset-type'); // option type excluded
+    expect(header).not.toContain('plate,plate');
+    expect(lines).toHaveLength(1 + 320);
+    const zeroLine = lines.find((l) => l.startsWith('shoe-000,'))!;
+    expect(zeroLine).toContain('Shoe Zero Deluxe');
+    expect(zeroLine).toContain('carbon');
+  });
+});
+
+// Determinism is load-bearing: the weekly CI job commits shoes.json/shoes.csv, so
+// unchanged inputs must produce byte-identical outputs regardless of key order,
+// wall-clock time, or repeated invocation.
+describe('buildDataset determinism', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function reverseKeys<T extends object>(o: Record<string, T>): Record<string, T> {
+    const out: Record<string, T> = {};
+    for (const k of Object.keys(o).reverse()) out[k] = o[k]!;
+    return out;
+  }
+
+  it('is independent of input key insertion order', () => {
+    const straight = baseInputs();
+    const shuffled = baseInputs();
+    shuffled.metrics.shoes = reverseKeys(shuffled.metrics.shoes);
+    shuffled.details.shoes = reverseKeys(shuffled.details.shoes);
+    // also reverse the per-shoe value key order
+    for (const slug of Object.keys(shuffled.metrics.shoes)) {
+      const s = shuffled.metrics.shoes[slug]!;
+      s.values = reverseKeys(s.values as unknown as Record<string, never>) as typeof s.values;
+    }
+
+    const a = buildDataset(tests, straight.metrics, straight.details);
+    const b = buildDataset(tests, shuffled.metrics, shuffled.details);
+    expect(b.csv).toBe(a.csv);
+    expect(JSON.stringify(b.shoesFile)).toBe(JSON.stringify(a.shoesFile));
+  });
+
+  it('does not read the wall clock', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2020-01-01T00:00:00Z'));
+    const a = buildDataset(tests, baseInputs().metrics, baseInputs().details);
+    vi.setSystemTime(new Date('2031-12-31T23:59:59Z'));
+    const b = buildDataset(tests, baseInputs().metrics, baseInputs().details);
+    expect(b.shoesFile.builtAt).toBe(a.shoesFile.builtAt);
+    expect(JSON.stringify(b)).toBe(JSON.stringify(a));
+  });
+
+  it('does not mutate its inputs', () => {
+    // The shared `tests` const may already have been passed through buildDataset by
+    // earlier cases, so clone AND re-establish the id-ascending order a catalogue is
+    // built with; otherwise an in-place reorder would look idempotent and hide itself.
+    const freshTests = structuredClone(tests);
+    freshTests.tests.sort((a, b) => a.id - b.id);
+    const { metrics, details } = baseInputs();
+    const testsBefore = JSON.stringify(freshTests);
+    const metricsBefore = JSON.stringify(metrics);
+    const detailsBefore = JSON.stringify(details);
+    const { shoesFile } = buildDataset(freshTests, metrics, details);
+    expect(JSON.stringify(freshTests)).toBe(testsBefore);
+    expect(JSON.stringify(metrics)).toBe(metricsBefore);
+    expect(JSON.stringify(details)).toBe(detailsBefore);
+    // the catalogue is passed through in its original (id-ascending) order
+    expect(shoesFile.tests.map((t) => t.id)).toEqual(freshTests.tests.map((t) => t.id));
+  });
+
+  it('takes builtAt from tombstone scrapedAt when it is the newest', () => {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-001'] = { gone: true, scrapedAt: '2026-07-25T00:00:00Z' };
+    expect(buildDataset(tests, metrics, details).shoesFile.builtAt).toBe('2026-07-25T00:00:00Z');
+  });
+
+  it('falls back to metrics.scrapedAt when details is empty', () => {
+    const { metrics } = baseInputs();
+    expect(buildDataset(tests, metrics, { shoes: {} }).shoesFile.builtAt).toBe('2026-07-20T00:00:00Z');
+  });
+});
+
+describe('buildDataset CSV cells', () => {
+  it('emits empty cells for missing metric values and escapes fixed columns', () => {
+    const { metrics, details } = baseInputs();
+    metrics.shoes['shoe-000']!.name = 'Comma, "Quoted" Shoe';
+    const det = details.shoes['shoe-000']!;
+    if (!('gone' in det)) det.name = 'Comma, "Quoted" Shoe';
+
+    const { csv } = buildDataset(tests, metrics, details);
+    const lines = csv.split('\n');
+    expect(lines.at(-1)).toBe(''); // trailing newline, no CRLF
+    expect(csv).not.toContain('\r');
+
+    const header = lines[0]!.split(',');
+    expect(header).toHaveLength(8 + 53); // heel-stack + 52 synthetic float tests
+    expect(new Set(header).size).toBe(header.length); // no duplicate column names
+
+    const zero = lines.find((l) => l.startsWith('shoe-000,'))!;
+    expect(zero).toContain('"Comma, ""Quoted"" Shoe"');
+    // 6 fixed cells after the escaped name, heel-stack=30, then 52 empty cells
+    expect(zero.endsWith(',30' + ','.repeat(52))).toBe(true);
+  });
+
+  it('leaves brand/releasedAt/score/msrpGbp empty and discontinued false for metrics-only shoes', () => {
+    const { metrics, details } = baseInputs();
+    const { csv } = buildDataset(tests, metrics, details);
+    const one = csv.split('\n').find((l) => l.startsWith('shoe-001,'))!;
+    expect(one.startsWith('shoe-001,Shoe 1,,,,,none,false,')).toBe(true);
+    // odd-indexed shoes have test 69 = false and no features -> plate none
+    const two = csv.split('\n').find((l) => l.startsWith('shoe-002,'))!;
+    expect(two.startsWith('shoe-002,Shoe 2,,,,,plated-other,false,')).toBe(true);
+  });
+});
