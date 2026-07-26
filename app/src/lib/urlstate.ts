@@ -1,6 +1,6 @@
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
-import { NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
+import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
 
 export interface ViewState { filters: FilterState; sort: SortState; columns: string[] }
 
@@ -9,7 +9,6 @@ export const DEFAULT_COLUMNS: string[] = [
   'releasedAt', 'score', 'msrpGbp', 'heel-stack', 'midsole-softness-22',
   'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight',
 ];
-const FIELD_RANGE_KEYS = new Set(['score', 'msrpGbp']);
 const PLATES = new Set(['none', 'plated', 'carbon']);
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp']);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
