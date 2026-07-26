@@ -18,9 +18,10 @@ describe('decodeDevalue', () => {
     expect(decodeDevalue(payload)).toEqual({ s: ['a'], m: { k: 9 }, d: '2026-01-01T00:00:00Z' });
   });
   it('maps negative special indices', () => {
-    const payload = [{ u: -1, n: -2, p: -3, m: -4, z: -5 }];
+    const payload = [{ u: -1, h: -2, n: -3, p: -4, m: -5, z: -6 }];
     const out = decodeDevalue(payload) as Record<string, unknown>;
     expect(out.u).toBeUndefined();
+    expect(out.h).toBeUndefined();
     expect(out.n).toBeNaN();
     expect(out.p).toBe(Infinity);
     expect(out.m).toBe(-Infinity);
@@ -29,7 +30,7 @@ describe('decodeDevalue', () => {
   it('throws DevalueError on cycles, bad indices, empty payload', () => {
     expect(() => decodeDevalue([{ self: 0 }])).toThrow(DevalueError);
     expect(() => decodeDevalue([{ a: 99 }])).toThrow(DevalueError);
-    expect(() => decodeDevalue([{ a: -6 }])).toThrow(DevalueError);
+    expect(() => decodeDevalue([{ a: -7 }])).toThrow(DevalueError);
     expect(() => decodeDevalue([])).toThrow(DevalueError);
     expect(() => decodeDevalue([{ a: 'nope' as unknown as number }])).toThrow(DevalueError);
   });
@@ -37,6 +38,6 @@ describe('decodeDevalue', () => {
     const payload = [{ x: 1, y: 1 }, { deep: 2 }, 'v'];
     const out = decodeDevalue(payload) as { x: object; y: object };
     expect(out.x).toEqual({ deep: 'v' });
-    expect(out.y).toEqual(out.x);
+    expect(out.y).toBe(out.x);
   });
 });

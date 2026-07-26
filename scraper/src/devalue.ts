@@ -1,10 +1,14 @@
 const WRAPPERS = new Set(['Reactive', 'ShallowReactive', 'Ref', 'ShallowRef', 'EmptyRef', 'EmptyShallowRef']);
+// Index values per upstream devalue 5.1.1 src/constants.js:
+// UNDEFINED -1, HOLE -2, NAN -3, POSITIVE_INFINITY -4, NEGATIVE_INFINITY -5, NEGATIVE_ZERO -6.
+// A HOLE is a sparse-array gap, which reads back as undefined.
 const SPECIALS = new Map<number, unknown>([
   [-1, undefined],
-  [-2, NaN],
-  [-3, Infinity],
-  [-4, -Infinity],
-  [-5, -0],
+  [-2, undefined],
+  [-3, NaN],
+  [-4, Infinity],
+  [-5, -Infinity],
+  [-6, -0],
 ]);
 
 export class DevalueError extends Error {}
