@@ -1,0 +1,28 @@
+import type { Shoe } from '../../../shared/types.js';
+import { numericValue, type TestIndex } from './dataset';
+
+function esc(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function cell(shoe: Shoe, col: string, idx: TestIndex): unknown {
+  if (col === 'plate') return shoe.plate;
+  if (col === 'releasedAt') return shoe.releasedAt;
+  if (col === 'name') return shoe.name;
+  if (col === 'brand') return shoe.brand;
+  const n = numericValue(shoe, col, idx);
+  if (n !== undefined) return n;
+  const test = idx.bySlug.get(col);
+  return test ? shoe.values[String(test.id)] : undefined;
+}
+
+export function exportCsv(shoes: Shoe[], columns: string[], idx: TestIndex): string {
+  const header = ['slug', 'name', 'brand', ...columns];
+  const lines = [header.map(esc).join(',')];
+  for (const s of shoes) {
+    lines.push([s.slug, s.name, s.brand, ...columns.map((c) => cell(s, c, idx))].map(esc).join(','));
+  }
+  return lines.join('\n') + '\n';
+}

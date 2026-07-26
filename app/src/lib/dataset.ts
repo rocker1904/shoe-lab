@@ -1,6 +1,7 @@
 import type { LabTest, Shoe } from '../../../shared/types.js';
 
-const NUMERIC_TYPES = new Set(['float', 'score', 'percent', 'rating']);
+/** Test types whose values are comparable numbers (so rangeable and sortable). */
+export const NUMERIC_TEST_TYPES = new Set(['float', 'score', 'percent', 'rating']);
 const FIELD_KEYS = new Set(['score', 'msrpGbp']);
 
 export interface TestIndex { bySlug: Map<string, LabTest>; byId: Map<string, LabTest> }
@@ -18,7 +19,7 @@ export function numericValue(shoe: Shoe, key: string, idx: TestIndex): number | 
     return typeof v === 'number' ? v : undefined;
   }
   const test = idx.bySlug.get(key);
-  if (!test || !NUMERIC_TYPES.has(test.type)) return undefined;
+  if (!test || !NUMERIC_TEST_TYPES.has(test.type)) return undefined;
   const v = shoe.values[String(test.id)];
   return typeof v === 'number' ? v : undefined;
 }
