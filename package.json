@@ -2,8 +2,13 @@
   "name": "shoe-lab",
   "private": true,
   "type": "module",
-  "workspaces": ["scraper", "app"],
-  "engines": { "node": ">=22" },
+  "workspaces": [
+    "scraper",
+    "app"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
@@ -14,6 +19,8 @@
   },
   "devDependencies": {
     "eslint": "^9.20.0",
+    "eslint-plugin-svelte": "^3.22.0",
+    "svelte-eslint-parser": "^1.8.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.24.0"
   }

@@ -49,7 +49,7 @@
   <thead>
     <tr>
       <th class="name">Shoe</th>
-      {#each view.columns as col}
+      {#each view.columns as col (col)}
         <th aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
             {headerFor(col)}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}
@@ -66,7 +66,7 @@
           {#if s.imageUrl}<img src={s.imageUrl} alt="" loading="lazy" />{/if}
           <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}<br /><small>{s.brand ?? ''}</small></div>
         </td>
-        {#each view.columns as col}
+        {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
           <td class="num" style:--p={p ?? 0} class:tinted={p !== undefined}>{cellText(s, col)}</td>
         {/each}

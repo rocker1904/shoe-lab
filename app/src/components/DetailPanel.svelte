@@ -25,19 +25,27 @@
           <p class="note">RunRepeat published this review in {LANGUAGE_NAMES[shoe.reviewLanguage] ?? shoe.reviewLanguage}.</p>
         {/if}
         {#if shoe.details.intro}<p class="intro">{shoe.details.intro}</p>{/if}
+        <!-- Keyed by index, not by value: 85 of 450 shoes repeat a pro and 27 repeat a con, and a
+             duplicate key is a runtime error. These lists are positional and hold no per-item
+             state, so the index is the honest key. Do not "improve" this to `(p)`. -->
         <div class="proscons">
-          <ul class="pros">{#each shoe.details.pros as p}<li>{p}</li>{/each}</ul>
-          <ul class="cons">{#each shoe.details.cons as c}<li>{c}</li>{/each}</ul>
+          <ul class="pros">{#each shoe.details.pros as p, i (i)}<li>{p}</li>{/each}</ul>
+          <ul class="cons">{#each shoe.details.cons as c, i (i)}<li>{c}</li>{/each}</ul>
         </div>
+        <!-- The only two {@html} sinks in the app. Both fields are sanitised at build time by the
+             allowlist in scraper/src/sanitize.ts; adding a third is a security decision, not a
+             formatting one (docs/app.md §Sanitised-HTML boundary). -->
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {#if shoe.details.whoShouldBuy}<h4>Who should buy</h4><div>{@html shoe.details.whoShouldBuy}</div>{/if}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {#if shoe.details.whoShouldNotBuy}<h4>Who should NOT buy</h4><div>{@html shoe.details.whoShouldNotBuy}</div>{/if}
         {#if shoe.details.features.length}
-          <div class="tags">{#each shoe.details.features as f}<span class="tag">{f}</span>{/each}</div>
+          <div class="tags">{#each shoe.details.features as f, i (i)}<span class="tag">{f}</span>{/each}</div>
         {/if}
         <!-- `?? {}` covers the deploy lag: the bundle and shoes.json are fetched separately, so a
              new build can briefly meet a cached dataset written before the field existed. -->
-        {#each Object.entries(shoe.facts ?? {}) as [name, values]}
-          <div class="fact"><span class="fact-name">{name.replace(/-/g, ' ')}</span>{#each values as v}<span class="tag">{v.text}</span>{/each}</div>
+        {#each Object.entries(shoe.facts ?? {}) as [name, values] (name)}
+          <div class="fact"><span class="fact-name">{name.replace(/-/g, ' ')}</span>{#each values as v (v.slug)}<span class="tag">{v.text}</span>{/each}</div>
         {/each}
       </div>
     </div>

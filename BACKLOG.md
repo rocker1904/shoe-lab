@@ -7,9 +7,8 @@ Ordered roughly by priority. Items marked *(final review)* came out of the pre-m
 3. **Harvest the option-typed tests.** `tongue-gusset-type` and `heel-tab` are populated on nearly every shoe page but are never fetched, so they drop out as empty (docs/scraping.md §Empty tests). The details crawl already has the page; reading them there costs no requests. Needs a home for non-numeric per-shoe readings, which the app has no column type for today.
 4. **CSV date-precision column.** *(final review)* `shoes.csv` and the in-app export emit year-derived dates with nothing marking them imprecise; add a `preciseReleaseDate` column (schema addition — semantics in docs/scraping.md §Release-year supplement).
 5. **Back/forward navigation.** `popstate` is unhandled, so Back doesn't restore the previous view. Must be worked through against docs/app.md §View and URL ownership rather than around it.
-6. **Svelte component linting.** `.svelte` files are typechecked (svelte-check) but outside eslint's scope. Decide whether `eslint-plugin-svelte` is worth the extra dependency (docs/decisions.md §Fewer dependencies).
-7. **Accessibility polish.** Mobile filter drawer has no focus trap/Escape handling; range inputs all announce as "min"/"max" without their metric name; expanded rows lack `aria-controls`.
-8. **Head-to-head compare view.** *(spec §11)* Select 2–4 shoes for a side-by-side metric comparison.
-9. **Other categories.** *(spec §11)* Trail/hiking/sneakers — the pipeline is parameterised by seed shoe already; needs a category switcher in the UI and per-category datasets. Each details record already carries the per-shoe `categorySlug` this would key on (docs/scraping.md §Non-running shoes), which currently only ever excludes.
-10. **Price/deal tracking.** *(spec §11)* MSRP history is implicit in git history of `data/`; surface it.
-11. **Public refresh trigger.** *(spec §11)* Currently refresh buttons need repo access; an issue-ops trigger would let friends request one.
+6. **Accessibility polish.** Mobile filter drawer has no focus trap/Escape handling; range inputs all announce as "min"/"max" without their metric name; expanded rows lack `aria-controls`.
+7. **Head-to-head compare view.** *(spec §11)* Select 2–4 shoes for a side-by-side metric comparison.
+8. **Other categories.** *(spec §11)* Trail/hiking/sneakers — the pipeline is parameterised by seed shoe already; needs a category switcher in the UI and per-category datasets. Each details record already carries the per-shoe `categorySlug` this would key on (docs/scraping.md §Non-running shoes), which currently only ever excludes.
+9. **Price/deal tracking.** *(spec §11)* MSRP history is implicit in git history of `data/`; surface it.
+10. **Public refresh trigger.** *(spec §11)* Currently refresh buttons need repo access; an issue-ops trigger would let friends request one.

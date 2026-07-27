@@ -49,9 +49,19 @@ only sanctioned recurring live check besides refreshes.
 Scraper has zero runtime dependencies (devalue decoder and robots parser are
 vendored); the app ships Svelte only. Adding a dependency is a decision, not
 a convenience — record it here or in the owning doc's Decisions section.
-Current deliberate consequence: `.svelte` files are typechecked by
-svelte-check but not eslint-linted (eslint-plugin-svelte not adopted;
-BACKLOG.md item).
+
+### eslint-plugin-svelte is adopted, tuned rather than wholesale (2026-07-27)
+`.svelte` files are linted as well as typechecked. The plugin was weighed
+against §Fewer dependencies and adopted on cost, not on findings: it caught no
+existing bug, but it costs 12 dev-only packages, ships nothing to users, and
+its steady-state noise is zero once tuned. It contributes nothing to
+accessibility — the recommended set has no a11y rules and Svelte's own compiler
+already emits those through svelte-check — so do not reach for it there.
+`svelte/prefer-svelte-reactivity` is off: it cannot see that a `Map` built and
+consumed inside one `$derived.by` is never mutated afterwards.
+`svelte/no-at-html-tags` is on with two inline disables at the sanctioned sinks,
+which is deliberate — it makes a binding invariant machine-checked and puts
+docs/app.md §Sanitised-HTML boundary at the code site.
 
 ### Free tools only (2026-07-27)
 Every moving part runs on a free tier: GitHub Actions, GitHub Pages, and

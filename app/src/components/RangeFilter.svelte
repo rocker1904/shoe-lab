@@ -24,7 +24,7 @@
   <legend>{label}{units ? ` (${units})` : ''}</legend>
   {#if hist}
     <svg viewBox="0 0 {hist.counts.length * 4} 24" preserveAspectRatio="none" aria-hidden="true">
-      {#each hist.counts as c, i}
+      {#each hist.counts as c, i (i)}
         <rect x={i * 4} y={24 - (c / maxCount) * 24} width="3.4" height={(c / maxCount) * 24}
               fill={barActive(i) ? 'var(--accent)' : 'var(--hist-dim)'} />
       {/each}

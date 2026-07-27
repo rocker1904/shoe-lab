@@ -72,7 +72,7 @@
     <input type="date" aria-label="Released after" value={view.filters.releasedAfter ?? ''}
            oninput={(e) => patch((v) => { v.filters.releasedAfter = e.currentTarget.value || undefined; })} />
     <div class="chips">
-      {#each [1, 2, 3] as y}
+      {#each [1, 2, 3] as y (y)}
         <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = isoYearsAgo(new Date(), y); })}>{y}y</button>
       {/each}
     </div>

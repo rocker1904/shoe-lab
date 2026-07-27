@@ -21,10 +21,10 @@
 <details class="picker">
   <summary>Columns ({columns.length})</summary>
   <div class="panel">
-    {#each FIXED as [key, label]}
+    {#each FIXED as [key, label] (key)}
       <label><input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} /> {label}</label>
     {/each}
-    {#each grouped as [group, ts]}
+    {#each grouped as [group, ts] (group)}
       <h4>{group}</h4>
       {#each ts as t (t.slug)}
         <label><input type="checkbox" checked={columns.includes(t.slug)} onchange={() => toggle(t.slug)} /> {t.name}</label>
