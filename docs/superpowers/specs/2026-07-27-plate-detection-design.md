@@ -4,7 +4,7 @@
 
 **Date:** 2026-07-27
 **Status:** Approved design, pending implementation plan
-**Supersedes:** BACKLOG.md item 2, whose premise ("extract the per-shoe Plate fact") is disproven below.
+**Supersedes:** BACKLOG.md item 1, and the premise still recorded in docs/scraping.md §Data quirks — "extracting the per-shoe Plate fact" — which is disproven below.
 
 ## 1. Problem
 
@@ -27,6 +27,10 @@ justification for every rule below.
 - **`features` carbon and fact carbon are the same 70 shoes**, exactly, with
   zero difference in either direction. Switching signals would gain nothing;
   `features` stays the carbon source.
+- **No shoe carries a `plate` feature string other than "Carbon plate"** —
+  0 of 464. Today's rule has a `/plate/i` fallback to `plated-other` for any
+  other plate word; it is unreachable on real data, so §3 drops it along with
+  test 69.
 - **A per-shoe "Plate" review section (`section_id === 'plate'`) is the missing
   signal.** Cross-tabulated against the fact:
 
@@ -96,8 +100,8 @@ The lab content tree is walked for the first section whose `section_id` is
 `derivePlate` stays in `build-dataset.ts`, so a rule change costs a
 `build:dataset` run and never a crawl (docs/scraping.md §Determinism). Its
 signature becomes `derivePlate(features, hasPlateSection)` with overrides
-applied inside. `PLATE_TEST_ID` and the `plateTestValue` parameter are deleted
-per §2.
+applied inside. `PLATE_TEST_ID`, the `plateTestValue` parameter and the
+`/plate/i` features fallback are all deleted per §2.
 
 A details record that is a tombstone, or absent, yields `hasPlateSection: false`
 and therefore `none` — unchanged from today's behaviour for those shoes.
@@ -142,7 +146,15 @@ run the identical extractor, write the identical record shape.
 - **Zero live requests.** The flag must not construct a `PoliteHttp` at all, so
   it cannot silently hit the network (docs/scraping.md §Politeness).
 - A slug with no file in the corpus is skipped, not failed — the corpus is a
-  convenience, not a source of truth.
+  convenience, not a source of truth. A missing corpus *directory* is the
+  opposite: it aborts, because skipping all 464 shoes and exiting 0 is
+  indistinguishable from a successful backfill.
+- **Re-extraction preserves each record's `scrapedAt`**, falling back to the
+  clock only for a slug with no prior record. The field dates the fetch, and
+  reading disk is not a fetch; because it is the only input to `builtAt`, and
+  `builtAt` is what the app shows as "updated", stamping the clock here would
+  advertise a stale corpus as fresh — mildly today, badly the next time the
+  flag is used against an older corpus.
 - Documented in CLAUDE.md's command list and docs/scraping.md as a non-network
   path, so the "live requests happen only in the four CLIs" rule stays true and
   precise.
@@ -181,7 +193,7 @@ Required tests, failing first:
 - docs/scraping.md §Decisions — new entry for why overrides exist, why they
   live in source, and that they are hand-maintained.
 - **CLAUDE.md** — `--from-corpus` in the command list.
-- **BACKLOG.md** — item 2 removed on completion.
+- **BACKLOG.md** — item 1 removed on completion.
 - **No app or schema change.** The `Plate` enum is unchanged, so filters, the
   sort ordinal, URL state and CSV are untouched.
 

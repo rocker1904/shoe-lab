@@ -279,6 +279,13 @@ export const PLATE_OVERRIDES: Record<string, PlateOverride> = {
 
 - [ ] **Step 4: Rewrite the rule**
 
+This deletes **two** inputs, not one. Alongside `PLATE_TEST_ID`, today's rule also has
+`|| features.some((f) => /plate/i.test(f))` → `plated-other`, which the spec never
+discusses. Dropping it is safe and checked: across all 464 corpus pages, **zero shoes
+carry a `plate` feature string other than "Carbon plate"**, so the branch is
+unreachable on real data and the fleet counts in Task 5 Step 3 would catch it if that
+ever stopped being true.
+
 In `scraper/src/build-dataset.ts`, delete line 6 (`export const PLATE_TEST_ID = '69';`) and replace the whole `derivePlate` function with:
 
 ```ts
@@ -346,12 +353,27 @@ git commit -m "Derive plate from the review section, with hand-maintained overri
 
 **Files:**
 - Modify: `scraper/src/validate.ts` (new exported function, after `validateShoesFile`)
-- Modify: `scraper/src/build-dataset.ts` (collect rule values, call the gate)
-- Test: `scraper/test/validate.test.ts`
+- Modify: `scraper/src/build-dataset.ts` (collect rule values, return them)
+- Modify: `scraper/src/build-dataset-cli.ts` (run the gate before writing)
+- Test: `scraper/test/validate.test.ts`, `scraper/test/build-dataset.test.ts`
 
 **Interfaces:**
 - Consumes: `PLATE_OVERRIDES` and `plateFromRules` from Task 2.
-- Produces: `validatePlateOverrides(ruleDerived: Map<string, Plate>): void`, throwing `ValidationError`.
+- Produces:
+  - `validatePlateOverrides(ruleDerived: Map<string, Plate>): void`, throwing `ValidationError`.
+  - `buildDataset` gains a third return key, `ruleDerived: Map<string, Plate>`.
+
+**The gate runs in the CLI, not inside `buildDataset`.** The stale check fails any
+override slug the dataset does not contain, and all 20 `buildDataset` call sites in
+`build-dataset.test.ts` build a synthetic fleet (`shoe-000`…, `ghost-shoe`) holding
+none of the three override slugs — gating inside `buildDataset` would fail every one
+of them. Padding the fixtures does not rescue it: give the three slugs metrics rows
+with no details and `anta-zone-2-90` derives `none`, tripping the *redundancy* branch
+instead, and any fixture that encodes today's override list breaks the next time an
+override is added or removed. So `buildDataset` stays pure and returns the rule-only
+values; the CLI gates on them before it writes, which is where
+docs/scraping.md §Validation gates puts a gate anyway ("run before anything is
+written, so a failed gate means … untouched `data/`").
 
 - [ ] **Step 1: Write the failing test**
 
@@ -400,11 +422,17 @@ Expected: FAIL — `validatePlateOverrides` is not exported.
 
 - [ ] **Step 3: Implement the gate**
 
-Append to `scraper/src/validate.ts`:
+Add `PLATE_OVERRIDES` to the imports at the **top** of `scraper/src/validate.ts` —
+every other file in `scraper/src` keeps its imports there, and a mid-file import
+reads as an accident even though ESM allows it:
 
 ```ts
 import { PLATE_OVERRIDES } from './plate-overrides.js';
+```
 
+Then append the function itself:
+
+```ts
 // Both cases are fatal rather than warnings: a silently stale override is the failure mode the
 // override list exists to avoid (docs/scraping.md §Decisions).
 export function validatePlateOverrides(ruleDerived: Map<string, Plate>): void {
@@ -421,7 +449,7 @@ export function validatePlateOverrides(ruleDerived: Map<string, Plate>): void {
 
 Add `Plate` to the type import on line 1 of that file.
 
-- [ ] **Step 4: Wire it into the build**
+- [ ] **Step 4: Return the rule-only values from `buildDataset`**
 
 In `scraper/src/build-dataset.ts`, inside `buildDataset`, collect the rule-only value per shoe while mapping. Immediately before the existing `const shoes: Shoe[] = ...` add:
 
@@ -435,23 +463,59 @@ Inside the `.map((slug) => {` body, directly after `const features = det?.featur
     ruleDerived.set(slug, plateFromRules(features, det?.hasPlateSection === true));
 ```
 
-Then directly after the existing `validateShoesFile(shoesFile);` call add:
+Widen the return type and the final `return` to carry it:
 
 ```ts
-  validatePlateOverrides(ruleDerived);
+export function buildDataset(...): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate> } {
 ```
 
-Update the import from `./validate.js` to include `validatePlateOverrides`, and add `Plate` to the type import if not already present.
+```ts
+  return { shoesFile, csv: lines.join('\n') + '\n', ruleDerived };
+```
 
-- [ ] **Step 5: Run the full suite**
+Existing callers destructure only the keys they want, so nothing else breaks.
+
+- [ ] **Step 5: Run the gate in the CLI**
+
+In `scraper/src/build-dataset-cli.ts`, take the third key and gate on it *before* either write:
+
+```ts
+  const { shoesFile, csv, ruleDerived } = buildDataset(tests, metrics, details, releaseYears);
+  validatePlateOverrides(ruleDerived);
+  dir.write('shoes.json', shoesFile);
+```
+
+Add the import:
+
+```ts
+import { validatePlateOverrides } from './validate.js';
+```
+
+The CLI is outside the coverage `include` (`scraper/vitest.config.ts`), so this wiring carries no coverage cost — Step 6 is what proves `buildDataset` hands over the right map.
+
+- [ ] **Step 6: Cover the handover**
+
+`ruleDerived` is the only untested seam between the two halves. Append to the `describe('buildDataset', ...)` block in `scraper/test/build-dataset.test.ts`:
+
+```ts
+  it('returns the rule-only plate for every shoe, before overrides', () => {
+    const { metrics, details } = baseInputs();
+    const { ruleDerived } = buildDataset(tests, metrics, details);
+    expect(ruleDerived.size).toBe(320);
+    expect(ruleDerived.get('shoe-000')).toBe('carbon'); // its 'Carbon plate' feature
+    expect(ruleDerived.get('shoe-002')).toBe('none');   // no details record, so no section
+  });
+```
+
+- [ ] **Step 7: Run the full suite**
 
 Run: `npm run verify`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add scraper/src/validate.ts scraper/src/build-dataset.ts scraper/test/validate.test.ts
+git add scraper/src/validate.ts scraper/src/build-dataset.ts scraper/src/build-dataset-cli.ts scraper/test/validate.test.ts scraper/test/build-dataset.test.ts
 git commit -m "Fail the build on a stale or redundant plate override"
 ```
 
@@ -496,9 +560,38 @@ Append inside the existing `describe('scrapeDetails', ...)` block in `scraper/te
     expect(res.fetched).toEqual([]);
     expect(res.failed).toEqual([]);
   });
+
+  it('throws when the corpus directory itself is absent', async () => {
+    const { dir } = setup();
+    // a missing *file* is a skip; a missing *directory* is a typo, and skipping 464 shoes
+    // silently would look exactly like a successful backfill
+    await expect(scrapeDetails({ dataDir: dir, corpusDir: join(tmpdir(), 'shoe-corpus-nope'), forceAll: true, now: () => 'T7' }))
+      .rejects.toThrow(/corpus directory/i);
+  });
+
+  it('refuses to run with neither http nor corpusDir', async () => {
+    const { dir } = setup();
+    await expect(scrapeDetails({ dataDir: dir, forceAll: true, now: () => 'T8' }))
+      .rejects.toThrow(/http or corpusDir/i);
+  });
+
+  it('keeps the original scrapedAt when re-extracting the same page from the corpus', async () => {
+    const { dir, http } = setup();
+    await scrapeDetails({ http, dataDir: dir, now: () => 'T0' });
+    const corpus = mkdtempSync(join(tmpdir(), 'shoe-corpus-'));
+    writeFileSync(join(corpus, 'saucony-endorphin-azura.html'), azuraHtml);
+
+    await scrapeDetails({ dataDir: dir, corpusDir: corpus, forceAll: true, now: () => 'T9' });
+
+    const rec = dir.read<DetailsFile>('details.json')!.shoes['saucony-endorphin-azura'] as any;
+    expect(rec.scrapedAt).toBe('T0');        // the page was fetched then; re-reading disk is not a fetch
+    expect(rec.hasPlateSection).toBe(false); // but the extractor really did re-run
+  });
 ```
 
 Extend the `node:fs` import at the top of the file to `import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';`.
+
+The last three tests exist because `scrape-details-main.ts` is inside the coverage `include` and each adds a branch: the two guards that keep the zero-requests promise structural rather than incidental, and the `scrapedAt` fallback.
 
 - [ ] **Step 2: Run the test and watch it fail**
 
@@ -528,6 +621,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 ```
 
+and add `isTombstone` to the existing `shared/types.js` import, which is currently type-only — Step 4 needs it as a value.
+
 - [ ] **Step 4: Branch the page source**
 
 In `scrape-details-main.ts`, replace the robots-gate block and the body of the `for` loop's fetch. The robots gate becomes:
@@ -535,25 +630,46 @@ In `scrape-details-main.ts`, replace the robots-gate block and the body of the `
 ```ts
   // The corpus path reads from disk and must never construct a request, so the robots gate —
   // which exists to permit live crawling — does not apply to it (docs/scraping.md §Politeness).
-  if (targets.length > 0 && !opts.corpusDir) {
+  if (opts.corpusDir) {
+    if (!existsSync(opts.corpusDir)) throw new Error(`corpus directory not found: ${opts.corpusDir}`);
+  } else if (targets.length > 0) {
     if (!http) throw new Error('scrapeDetails needs either http or corpusDir');
     const rules = parseRobots(await http.getText(`${BASE}/robots.txt`));
     if (!isPathAllowed(rules, '/uk/example-shoe')) throw new Error('robots.txt disallows shoe pages; aborting politely');
   }
 ```
 
+The directory check is an addition to the design spec's §8, which only says a *slug*
+with no file is skipped. A mistyped or wrongly-relative `--from-corpus` would
+otherwise skip all 464 shoes, exit 0, and print a line that reads like a clean run.
+Missing file → skip; missing directory → stop.
+
 Inside the loop, replace `const html = await http.getText(...)` with:
 
 ```ts
       let html: string;
+      let scrapedAt = now();
       if (opts.corpusDir) {
         const file = join(opts.corpusDir, `${slug}.html`);
         if (!existsSync(file)) { result.skipped++; continue; }
         html = readFileSync(file, 'utf8');
+        // `scrapedAt` records when RunRepeat was read, and re-reading disk is not reading
+        // RunRepeat — so the original timestamp stands (docs/scraping.md §Determinism).
+        const prior = details.shoes[slug];
+        if (prior && !isTombstone(prior)) scrapedAt = prior.scrapedAt;
       } else {
         html = await http!.getText(`${BASE}/uk/${slug}`);
       }
 ```
+
+and pass it through, replacing the `now()` argument on the next line:
+
+```ts
+      const rec = extractDetails(extractPagePayload(html).pageData, slug, scrapedAt);
+```
+
+Leave the 404-tombstone `now()` at line 56 alone: a tombstone records when the 404 was
+*observed*, which only ever happens on the live path.
 
 - [ ] **Step 5: Plumb the flag**
 
@@ -582,13 +698,34 @@ In `CLAUDE.md`, in the **Commands** bullet, change the scraper command list so `
 scrape:details (--from-corpus <dir> re-extracts from local pages, no network)
 ```
 
-In `docs/scraping.md`, at the end of the §Politeness bullet list, add:
+In `docs/scraping.md` §Politeness, the **Request budget** bullet currently claims
+`--force-all` ≈ 465 unconditionally, which the new flag makes false. Amend that
+clause to:
+
+```markdown
+  `--force-all` ≈ 465 (one page per catalogued shoe) or 0 with `--from-corpus`,
+```
+
+Then add, at the end of the same bullet list:
 
 ```markdown
 - **`scrape:details --from-corpus <dir>` makes no requests at all.** It re-extracts
   from pages already on disk and never constructs a client, so an extractor change
   costs a local re-run rather than a crawl. It is not an exception to the rule above;
-  it is outside it.
+  it is outside it. The directory must exist — a missing page is skipped, a missing
+  corpus aborts, so a mistyped path cannot look like a clean run. Records keep their
+  original `scrapedAt` (§Determinism).
+```
+
+Finally, in `docs/scraping.md` §Determinism, after the paragraph defining `builtAt`,
+add:
+
+```markdown
+`scrapedAt` dates the *fetch*, not the record, so `--from-corpus` re-extraction
+preserves whatever the live crawl stamped. `builtAt` therefore answers "how old is
+the data" rather than "when did the extractor last run" — the latter is what git
+already records. A re-extraction that changed only derived fields moves no dates,
+which is also what keeps its data commit legible.
 ```
 
 - [ ] **Step 8: Commit**
@@ -613,13 +750,15 @@ git commit -m "Re-extract details from a local page corpus without crawling"
 
 - [ ] **Step 1: Re-extract every record from the corpus**
 
-Run from the repo root:
+`npm -w scraper` runs the script with cwd `<repo>/scraper`, not the repo root, so a
+relative `--from-corpus` resolves against `scraper/`. The corpus lives at the repo
+root. Run from the repo root:
 
 ```bash
-npm -w scraper run scrape:details -- --force-all --from-corpus .corpus/pages
+npm -w scraper run scrape:details -- --force-all --from-corpus ../.corpus/pages
 ```
 
-Expected: `fetched=464 tombstoned=0 skipped=0 failed=0`. This makes **zero** network requests. If the corpus directory is missing, stop — do not fall back to crawling; ask first.
+Expected: `fetched=464 tombstoned=0 skipped=0 failed=0`. This makes **zero** network requests. Task 4's directory check means a wrong path aborts rather than skipping all 464 silently — if it aborts, fix the path; do not fall back to crawling, ask first.
 
 - [ ] **Step 2: Rebuild the dataset**
 
@@ -704,7 +843,13 @@ git add data docs/scraping.md BACKLOG.md
 git commit -m "Backfill plate detection across the fleet"
 ```
 
-Note the data commit will be large: every record gains `hasPlateSection` and a fresh `scrapedAt`, so `builtAt` moves too. That is expected — the records really were re-extracted.
+Expect the data commit to touch every record but say something narrow: all 464 gain
+`hasPlateSection`, 35 shoes change `plate` in `shoes.json`/`shoes.csv`, and **`builtAt`
+does not move** — no page was refetched, so no date changes. Four records also drift a
+second field (`features` ×3, `whoShouldNotBuy` ×1) because the corpus snapshot is not
+byte-identical to the original crawl; that is real and worth a glance in the diff, which
+is exactly what preserving `scrapedAt` keeps visible. If `builtAt` *does* move, the
+corpus path fell back to `now()` somewhere — find out why before committing.
 
 ---
 
@@ -713,8 +858,12 @@ Note the data commit will be large: every record gains `hasPlateSection` and a f
 Run before declaring the plan complete:
 
 - [ ] `npm run verify` passes.
-- [ ] `npm -w app run e2e` passes — the app is untouched, but the dataset it fixtures against changed shape.
+- [ ] `npm -w app run e2e` passes. It cannot observe this change — e2e serves its own
+      committed `app/e2e/fixtures/shoes.json`, and the `Shoe` shape is unchanged — so
+      run it as a regression check on CI's one step outside `verify`, not as evidence
+      that the backfill worked. Task 5 Steps 3–4 are that evidence.
 - [ ] `data/shoes.json` reads `none: 358, carbon: 72, plated-other: 34`.
 - [ ] Running `build:dataset` twice produces no diff.
-- [ ] The backfill made zero network requests.
+- [ ] The backfill made zero network requests, and `builtAt` is unchanged — the two
+      are the same claim seen from either end.
 - [ ] `grep -rn "PLATE_TEST_ID" scraper/` returns nothing.
