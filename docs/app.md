@@ -169,6 +169,26 @@ as tinted — a linear ramp across every numeric column turns the whole table
 blue — and row hover paints as a translucent layer so the tint underneath
 survives it.
 
+## Coverage
+
+A metric's coverage is the share of shoes carrying a reading among the shoes
+passing every **non-range** filter — the population `applyFilters` reports as
+`considered`. Non-range is load-bearing: if range filters counted, a metric's
+own bound would move its own denominator as the user typed it. The number
+answers "of the shoes I am considering", not "of the shoes I can still see".
+
+Sparse means below `SPARSE_BELOW`, a fraction of that population rather than a
+fixed age. `torsional-rigidity-23` covers 30% of the whole fleet but two thirds
+of shoes released in the last two years: someone browsing everything needs the
+warning and someone already filtered to recent shoes does not. A fixed
+time-depth rule cannot express that, and would clear `breathability-25` — 2.6
+years deep, 9% covered — while flagging metrics that are fine.
+
+`oldestReading` is the *explanation* shown alongside, never the measure: a
+metric sparse because the method is new reads differently from one sparse
+because it is rarely run. Why generations exist at all is
+docs/scraping.md §Test lineage.
+
 ## Decisions
 
 ### Every row links back to RunRepeat
