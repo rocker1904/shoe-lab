@@ -8,7 +8,7 @@
 
 <div class="seg" role="group" aria-label="Plate">
   {#each options as o}
-    <button type="button" class:active={value === o.v} onclick={() => onchange(o.v)}>{o.label}</button>
+    <button type="button" class:active={value === o.v} aria-pressed={value === o.v} onclick={() => onchange(o.v)}>{o.label}</button>
   {/each}
 </div>
 

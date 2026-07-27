@@ -109,6 +109,9 @@ npm -w scraper run check:live        # 3 requests; contract drift check
 Nothing but the four `scrape:*`/`check:live` commands touches the network. The whole test suite
 runs offline against committed fixtures.
 
+`.svelte` files are typechecked by `svelte-check` but sit outside eslint's scope — deliberate, to
+avoid a plugin dependency for rules `svelte-check` and the compiler already cover.
+
 ## CSV column names
 
 `data/shoes.csv` (and the in-app **Export CSV**) name their metric columns by **test slug**, not by
@@ -207,3 +210,6 @@ Recorded for honesty; none of them change what the tool does.
 - **Most release dates are year-only**, supplied by the release-year supplement and stored as
   `YYYY-01-01`; the table shows the year alone unless RunRepeat published a precise date
   (`preciseReleaseDate`).
+- **Plate detection is derived from RunRepeat's carbon-plate feature flag** (plus a rarely-populated
+  lab test), so non-carbon plates — nylon, PEBA — are mostly classified as `none`; a follow-up will
+  extract the per-shoe "Plate" fact during the details crawl.

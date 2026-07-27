@@ -134,6 +134,9 @@ describe('urlstate hostile input', () => {
       { id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', type: 'float', units: 'mm', groupId: null }]))))
       .toBe('');
   });
+  it('rejects name and brand as columns — they are sort fields, and the table renders them itself', () => {
+    expect(parseView('cols=name,brand,score', idx).columns).toEqual(['score']);
+  });
   it('omits ranges that are empty or not finite', () => {
     const v = defaultView();
     v.filters.ranges['weight'] = {};

@@ -11,6 +11,8 @@ export const DEFAULT_COLUMNS: string[] = [
 ];
 const PLATES = new Set(['none', 'plated', 'carbon']);
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate']);
+/** Sort fields minus name/brand: those two are rendered by the table itself, and ShoeTable has no cell for them. */
+const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
@@ -88,7 +90,7 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       const k = raw.replace(/^-/, '');
       if (SORT_FIELDS.has(k) || numericTest(k)) v.sort = { key: k, dir };
     } else if (key === 'cols' && raw) {
-      const cols = [...new Set(raw.split(','))].filter((c) => c === 'plate' || SORT_FIELDS.has(c) || idx.bySlug.has(c));
+      const cols = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c));
       if (cols.length) v.columns = cols;
     }
   }

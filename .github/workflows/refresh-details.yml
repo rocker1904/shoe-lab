@@ -37,7 +37,10 @@ jobs:
           if [ "$FORCE_ALL" = 'true' ]; then args+=(--force-all); fi
           if [ -n "$SLUG" ]; then args+=(--slug "$SLUG"); fi
           npm -w scraper run scrape:details -- "${args[@]}"
+      # Non-fatal: a drifted supplement must not discard a completed ~460-request details crawl — build:dataset
+      # works without release-years.json, and the shoes it dates stay on their previous values.
       - run: npm -w scraper run scrape:releases # release-year supplement, refreshed with details
+        continue-on-error: true
       - run: npm -w scraper run build:dataset
       - name: Commit if changed
         id: commit
