@@ -1,3 +1,5 @@
+> **Frozen build-time artifact — history, not reference.** Where this disagrees with the docs/ set, docs/ wins.
+
 # Shoe Lab — RunRepeat running-shoe comparison tool
 
 **Date:** 2026-07-26

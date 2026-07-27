@@ -1,0 +1,50 @@
+# Project-wide decisions
+
+Only decisions that shape the whole project live here. Subsystem decisions
+live in the owning doc's `## Decisions` section — enumerate them all with
+`grep -rn '^## Decisions' docs/`.
+
+## Decisions
+
+### Git is the database
+Datasets are committed JSON/CSV under `data/`, canonically serialised
+(sorted keys, stable ordering) so refreshes diff meaningfully and history is
+free. Refresh = scrape → validate → commit → deploy; a failed validation
+means a red workflow and untouched data, never a partial write. Agents must
+not hand-edit `data/` — fix the pipeline and re-run it.
+
+### Be a good citizen toward RunRepeat (2026-07-26)
+This project exists on top of RunRepeat's affiliate-funded lab work, so the
+posture is: minimum requests, honest identification, visible attribution.
+All live traffic goes through one throttled client with a contact URL in the
+User-Agent (docs/scraping.md §Politeness). `api.runrepeat.com` robots.txt is
+`Disallow: /`; the user decided to use the API anyway, on the reasoning that
+it is the same public unauthenticated endpoint the site's own frontend calls
+for every visitor, `Disallow: /` on an API subdomain conventionally means
+index-hygiene rather than access policy, and the robots-literal alternative
+(page scraping) is ~7x more load on them. The main site's robots.txt IS
+honoured and re-checked before every crawl. Agents must not raise request
+rates, add concurrency, or widen scraping scope without a user decision.
+
+### Testing bar: adversarial, no live network
+Every module has tests that attack its failure modes (hostile URL states,
+sanitiser breakouts, boundary-exact gates), not just happy paths. Coverage
+thresholds (lines ≥90, branches ≥85 on scraper src and app lib) are enforced
+by `test:coverage` in CI. No test may touch the live site — fixtures were
+captured once and are committed; the monthly contract-drift workflow is the
+only sanctioned recurring live check besides refreshes.
+
+### Fewer dependencies
+Scraper has zero runtime dependencies (devalue decoder and robots parser are
+vendored); the app ships Svelte only. Adding a dependency is a decision, not
+a convenience — record it here or in the owning doc's Decisions section.
+Current deliberate consequence: `.svelte` files are typechecked by
+svelte-check but not eslint-linted (eslint-plugin-svelte not adopted;
+BACKLOG.md item).
+
+### Doc system (2026-07-27)
+Docs follow an agent-first contract (docs/README.md), deliberately small:
+three domain docs; no separate live-state doc because `main` deploys
+continuously (merged == live, deploy lag ~1 min); aspiration consolidated in
+BACKLOG.md. The build-time spec and plan under `docs/superpowers/` are
+frozen artifacts — docs/ wins on any disagreement.

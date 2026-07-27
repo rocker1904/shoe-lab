@@ -21,6 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm run check:docs
       - run: npm run test:coverage # both workspaces, coverage thresholds enforced
       - run: npx playwright install chromium --with-deps
       - run: npm -w app run e2e

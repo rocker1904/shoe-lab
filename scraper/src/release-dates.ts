@@ -3,13 +3,9 @@ import type { DataDir } from './data-files.js';
 import type { PoliteHttp } from './http.js';
 import { ValidationError } from './validate.js';
 
-// No robots gate for api.runrepeat.com — project decision, 2026-07-26. That host serves
-// `Disallow: /` for every agent, but it is the JSON backend the site's own category pages
-// call from the browser (this exact endpoint, these exact params), and it hosts no crawlable
-// documents; we read the blanket rule as index hygiene for an API host rather than a refusal
-// to serve. Usage stays deliberately small and attended: ~70 throttled requests, run by hand
-// alongside the rare details refresh, never in the weekly job. The document hosts we actually
-// crawl (runrepeat.com pages) keep their robots checks in scrape-metrics-main/scrape-details-main.
+// No robots gate for api.runrepeat.com — deliberate, and argued in full in
+// docs/decisions.md §Be a good citizen toward RunRepeat. The document host we actually crawl
+// (runrepeat.com pages) keeps its robots check in scrape-metrics-main/scrape-details-main.
 const API = 'https://api.runrepeat.com';
 const PAGE_SIZE = 30;
 const MAX_PAGES = 100;
