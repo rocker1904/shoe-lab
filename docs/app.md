@@ -28,6 +28,18 @@ presence — `structuredClone` keeps own properties whose value is `undefined`,
 so every cleared field leaves its key behind and a key count would never let a
 derived control re-open.
 
+`persist.ts` stores the view between visits as **the exact output of
+`serializeView`** and nothing else — no bespoke JSON shape. Restoring runs the
+string back through `parseView`, so it inherits the hostile-input handling that
+already exists and is already adversarially tested: a test slug that has since
+left the catalogue is dropped by machinery that exists today, and no second
+parser can drift from the first. The storage key carries a hand-maintained
+schema version, bumped when the URL encoding changes; a value under any other
+key is never read, and there are **no migrations, ever**. It is deliberately
+not derived from the build, because `main` deploys continuously and a
+build-derived version would discard state on every push. Storage access is
+wrapped in both directions (docs/app.md §Theming).
+
 `popstate` is deliberately unhandled: Back does not restore the previous view.
 Wiring it up means re-entering the view from outside `setView` and needs the
 above worked through — BACKLOG.md item, not an oversight to patch casually.
