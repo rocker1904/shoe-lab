@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
-  import { indexTests, numericValue } from '../lib/dataset';
+  import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { percentileMap } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
@@ -30,8 +30,10 @@
     // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
     if (col === 'releasedAt') return s.releasedAt ? (s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4)) : '—';
     if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'carbon' : 'plated';
-    const v = col === 'score' || col === 'msrpGbp' ? s[col] : numericValue(s, col, idx);
-    return v === null || v === undefined ? '—' : String(v);
+    // msrpGbp goes through numericValue so the cell shows the same resolved price the
+    // filter and the sort use (docs/app.md §Resolved price).
+    const v = col === 'score' ? s.score : numericValue(s, col, idx);
+    return v === null || v === undefined ? '—' : displayNumber(v);
   }
   function toggle(slug: string) {
     expanded = expanded === slug ? null : slug;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ageMonths, indexTests, isoYearsAgo, numericValue } from './dataset';
-import { FLEET, TESTS, shoe } from './test-fixtures';
+import { ageMonths, displayNumber, indexTests, isoYearsAgo, numericValue, priceOf } from './dataset';
+import { FLEET, PRICE_TEST, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -77,5 +77,45 @@ describe('isoYearsAgo', () => {
       if (tz === undefined) delete process.env.TZ;
       else process.env.TZ = tz;
     }
+  });
+});
+
+// The catalogue carries the same GBP list price twice; a column that disagrees with the filter
+// beside it is the failure this guards (docs/app.md §Resolved price).
+describe('priceOf', () => {
+  const idx = indexTests([...TESTS, PRICE_TEST]);
+  it('prefers the lab-test price, which refreshes weekly', () => {
+    const s = shoe({ slug: 'both', msrpGbp: 140, values: { '52': 150 } });
+    expect(priceOf(s, idx)).toBe(150);
+    expect(numericValue(s, 'msrpGbp', idx)).toBe(150);
+  });
+  it('falls back to the details field when the test has no reading', () => {
+    const s = shoe({ slug: 'field-only', msrpGbp: 140, values: {} });
+    expect(priceOf(s, idx)).toBe(140);
+    expect(numericValue(s, 'msrpGbp', idx)).toBe(140);
+  });
+  it('reads undefined when neither source has a price', () => {
+    expect(priceOf(shoe({ slug: 'none', msrpGbp: null }), idx)).toBeUndefined();
+  });
+  it('keeps a zero from the test rather than falling through to the field', () => {
+    expect(priceOf(shoe({ slug: 'free', msrpGbp: 140, values: { '52': 0 } }), idx)).toBe(0);
+  });
+  it('sorts and filters through the same resolved number', () => {
+    const cheap = shoe({ slug: 'cheap', msrpGbp: 300, values: { '52': 100 } });
+    const dear = shoe({ slug: 'dear', msrpGbp: 100, values: { '52': 300 } });
+    expect([cheap, dear].map((s) => numericValue(s, 'msrpGbp', idx))).toEqual([100, 300]);
+  });
+});
+
+describe('displayNumber', () => {
+  it('trims the twelve-figure shock-absorption readings to two decimals', () => {
+    expect(displayNumber(131.57894736842)).toBe('131.58');
+    expect(displayNumber(23.634348271029)).toBe('23.63');
+  });
+  it('leaves values that are already short alone', () => {
+    expect(displayNumber(32.7)).toBe('32.7');
+    expect(displayNumber(250)).toBe('250');
+    expect(displayNumber(0)).toBe('0');
+    expect(displayNumber(-0.8)).toBe('-0.8');
   });
 });
