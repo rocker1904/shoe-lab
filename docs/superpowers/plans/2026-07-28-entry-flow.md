@@ -63,6 +63,8 @@ Verified by applying the changes, not by guessing. Fix each in the task that bre
 | `app/src/lib/dataset.ts` — the `isoYearsAgo` comment | says presets and chips must agree; no preset will use it. The function stays for the chips | 3 |
 | `app/src/components/FilterSidebar.test.ts` — test named "…the same UTC cut-off the presets use" | passes while asserting a relationship that no longer exists | 3 |
 | `docs/app.md` — the "median of the live fleet" paragraph | that threshold is gone | 3 |
+| `app/src/lib/stats.ts` — `median` and its tests | `presets.ts` was its only production caller | 3 |
+| `app/e2e/smoke.spec.ts` — the preset-chip click Task 3 writes | Task 6 replaces the chip row with the band on a default view, so an exact-name `getByRole` stops resolving | **6** |
 
 **Task 2 breaks nothing.** The whole change was applied and the suite stayed green at
 242 tests: `getByRole('button', { name: 'Carbon' })` is an exact match so a "No carbon"
@@ -124,11 +126,9 @@ describe('quantile', () => {
 
 Sort a copy ascending; return `null` for empty input or a non-finite `p`; otherwise clamp `p` to `0..1` and index `Math.floor(p * (len - 1))`. Floor-of-rank, not interpolated — a threshold landing on a real shoe's value is easier to reason about.
 
-- [ ] **Step 3: Delete `median`**
+**Leave `median` alone in this task.** It becomes dead only once Task 3 stops importing it; deleting it here would break typecheck and would also strand the docs/app.md paragraph that still describes it. Task 3 removes both together.
 
-After Task 3 its only caller is its own test (`presets.ts` is the sole production use today). Delete the function and its tests rather than leaving dead code.
-
-- [ ] **Step 4: Verify and commit**
+- [ ] **Step 3: Verify and commit**
 
 ```bash
 npm run verify
@@ -139,8 +139,6 @@ Add a fleet percentile helper
 Co-Authored-By: <your model> <noreply@anthropic.com>
 EOF
 ```
-
-If `verify` fails here because `presets.ts` still imports `median`, do Step 3 as part of Task 3 instead and commit the helper alone now. Never commit red.
 
 ---
 
@@ -204,18 +202,19 @@ EOF
 
 ### Task 3: The three stories
 
-**Files:** `app/src/lib/presets.ts`, `app/src/lib/presets.test.ts`, `app/src/Page.svelte`, `app/src/Page.test.ts`, `app/src/lib/dataset.ts`, `app/src/lib/test-fixtures.ts`, `app/src/components/FilterSidebar.test.ts`, `app/scripts/prepare-e2e.mjs`, `app/e2e/smoke.spec.ts`, `docs/app.md`, `docs/shoe-stories.md`, `BACKLOG.md`
+**Files:** `app/src/lib/presets.ts`, `app/src/lib/presets.test.ts`, `app/src/lib/stats.ts`, `app/src/lib/stats.test.ts`, `app/src/Page.svelte`, `app/src/Page.test.ts`, `app/src/lib/dataset.ts`, `app/src/lib/test-fixtures.ts`, `app/src/components/FilterSidebar.test.ts`, `app/scripts/prepare-e2e.mjs`, `app/e2e/smoke.spec.ts`, `docs/app.md`, `docs/shoe-stories.md`, `BACKLOG.md`
 
 **Produces:** `PRESETS` of `easy` / `tempo` / `race`; `applyPreset(id, shoes, idx)` — the `now: Date` parameter goes.
 
 | preset | filters | sort | columns |
 |---|---|---|---|
-| `easy` | `heel-stack` ≥ 36; `plate: 'not-carbon'`; price ≤ `quantile(prices, 0.8)` | `score` desc | releasedAt, score, msrpGbp, heel-stack, weight, plate |
+| `easy` | `heel-stack` ≥ 36; `plate: 'not-carbon'`; price ≤ `quantile(prices, 0.8)` | `score` desc | releasedAt, score, msrpGbp, heel-stack, toebox-width-widest-part, weight, plate |
 | `tempo` | `energy-return-heel` ≥ 65; `weight` ≤ `quantile(weights, 0.3)`; price ≤ `quantile(prices, 0.8)` | `energy-return-heel` desc | releasedAt, score, msrpGbp, energy-return-heel, weight, plate |
 | `race` | `weight` ≤ 230; `energy-return-heel` ≥ 70 | `energy-return-heel` desc | releasedAt, score, msrpGbp, energy-return-heel, weight, plate |
 
 - **No preset sets `releasedAfter`.** Recency is a strategy, not a story.
-- **No preset populates `generations`** — none of `heel-stack` (6), `weight` (24) or `energy-return-heel` (65) is half of a superseded pair. Assert it; it is acceptance criterion 9.
+- **No preset populates `generations`** — none of `heel-stack` (6), `weight` (24) or `energy-return-heel` (65) is half of a superseded pair. Assert it; this is spec §4, not criterion 9.
+- **Easy keeps a toebox column.** Dropping `wide-toebox` as a *preset* is not a decision to drop toebox width as a *column* — spec §4 uses exactly this as its worked example.
 - **Easy sorts by score, not energy return.** The story makes explosiveness a bonus, so sorting by it would contradict the filter set. Deliberate change from today.
 - Prices come through `numericValue(s, 'msrpGbp', idx)`, which resolves the fresher of two sources (docs/app.md §Resolved price) — never `shoe.msrpGbp` directly.
 - `wide-toebox` is deleted; toebox width stays a filter anyone can set.
@@ -230,11 +229,25 @@ Cover: each preset returns a complete `ViewState`; the three ids and labels; **n
 
 The price cap must track the fleet: build two fleets whose price distributions differ and assert the resulting bound differs. A test that only checks "some number" passes against a hard-coded constant.
 
-Acceptance criterion 9 as an executable guard: for each preset, apply it, then for every bounded key assert `coverageOf(result.considered, key, idx).fraction >= SPARSE_BELOW`. Measure over `considered`, not the raw fleet — that is what docs/app.md §Coverage defines, and Easy's plate filter changes its denominator.
+Acceptance criterion 9 as an executable guard. `applyPreset` returns a `ViewState`, which has no population on it, so the shape is:
+
+```ts
+const view = applyPreset(id, FLEET, idx);
+const { considered } = applyFilters(FLEET, view.filters, idx);
+for (const key of Object.keys(view.filters.ranges)) {
+  expect(isSparse(coverageOf(considered, key, idx))).toBe(false);
+}
+```
+
+Use `isSparse` from `./coverage` rather than open-coding `fraction >= SPARSE_BELOW` — the threshold has one owner, and the two disagree on an empty population.
+
+**Add a negative control in the same block**, or the guard is a tautology: over a small fixture every metric looks well covered, so a regression re-adding a softness ceiling to Easy would sail through while tripping the real app's warning. Build a `ViewState` bounding a deliberately sparse fixture metric, run it through the same helper, and assert it *is* caught. A guard that has never been shown to fail is not a guard.
 
 - [ ] **Step 3: Run, watch fail, implement, and fix every caller**
 
 `Page.svelte` drops the `new Date()` argument. `Page.test.ts`, `smoke.spec.ts` and `FilterSidebar.test.ts` all reference labels or relationships that no longer exist — see the breakage table. `prepare-e2e.mjs` loses the `cushy.releasedAt` mutation and the comment justifying it. `dataset.ts`'s `isoYearsAgo` comment must stop claiming presets use it; the function stays, because the sidebar chips do.
+
+**Delete `median` here**, now that its last production caller is gone. In `stats.test.ts` one case is mixed — it asserts histogram behaviour *and* median in the same test — so edit that one rather than deleting it wholesale.
 
 - [ ] **Step 4: Update the docs**
 
@@ -279,24 +292,36 @@ describe('isDefaultView', () => {
     expect(serializeView(v)).toBe('');     // the trap
     expect(isDefaultView(v)).toBe(false);
   });
-  it('is false for a changed sort, changed columns, or any active filter', () => {
+  it('is false for a changed sort, changed columns, or a generation choice', () => {
     const sort = defaultView(); sort.sort = { key: 'weight', dir: 'asc' };
     const cols = defaultView(); cols.columns = ['score'];
-    const plate = defaultView(); plate.filters.plate = 'carbon';
     const gen = defaultView(); gen.generations['midsole-softness-22'] = 'midsole-softness';
-    for (const v of [sort, cols, plate, gen]) expect(isDefaultView(v)).toBe(false);
+    for (const v of [sort, cols, gen]) expect(isDefaultView(v)).toBe(false);
   });
-  it('does not care about column order changing back and forth', () => {
-    const v = defaultView();
-    v.columns = [...v.columns];
-    expect(isDefaultView(v)).toBe(true);
+  it('is false for every filter field, not just the ones someone remembered', () => {
+    // each of these is settable from the sidebar; a hand-enumerated implementation
+    // that forgets one leaves the band open after the user has touched a filter
+    const cases: Array<(f: FilterState) => void> = [
+      (f) => { f.plate = 'carbon'; },
+      (f) => { f.search = 'nike'; },
+      (f) => { f.brands = ['ASICS']; },
+      (f) => { f.releasedAfter = '2024-01-01'; },
+      (f) => { f.hideDiscontinued = true; },
+      (f) => { f.showMissing = true; },
+      (f) => { f.ranges['weight'] = {}; },
+    ];
+    for (const mutate of cases) {
+      const v = defaultView();
+      mutate(v.filters);
+      expect(isDefaultView(v)).toBe(false);
+    }
   });
 });
 ```
 
 - [ ] **Step 2: Run, watch fail, implement**
 
-Compare structurally against `defaultView()`: no range keys at all, no other filter set, sort equal, columns equal element-wise, `generations` empty. Do not stringify — key order would make it fragile.
+Compare `v.filters` **wholesale** against `defaultView().filters` rather than picking fields off it by hand — `FilterState` gains fields over time, and the failure mode of a hand-enumerated check is silent. Ranges compare by key count, everything else by value; sort by both members; columns element-wise; `generations` by key count. Do not stringify — key order would make it fragile.
 
 - [ ] **Step 3: Document it** in docs/app.md §View and URL ownership: an empty range is view state that does not serialise, so "serialises to nothing" and "is the default" are different questions.
 
@@ -324,7 +349,7 @@ The stored value is the output of `serializeView` and nothing else, so restoring
 
 - [ ] **Step 1: Write the failing test**
 
-Cover: a written value reads back; a value stored under a different key version is not read; a blocked `localStorage` makes both a no-op rather than throwing (assign a throwing stub, as `theme.test.ts` does, in both directions); reading nothing returns `null`; **an empty query string round-trips as `''`, not `null`** — the default view is a legitimate thing to have stored, and conflating the two would make a deliberate reset un-restorable.
+Cover: a written value reads back; a value stored under a different key version is not read; a blocked `localStorage` makes both a no-op rather than throwing (assign a throwing stub, as `theme.test.ts` does, in both directions); reading nothing returns `null`; an empty query string round-trips as `''` rather than `null`, keeping the two states distinguishable at this layer even though Task 6 happens to treat them alike.
 
 - [ ] **Step 2: Run, watch fail, implement**
 
@@ -348,7 +373,7 @@ EOF
 
 ### Task 6: The entry band
 
-**Files:** `app/src/components/EntryBand.svelte`, `app/src/components/EntryBand.test.ts`, `app/src/Page.svelte`, `app/src/Page.test.ts`, `docs/app.md`
+**Files:** `app/src/components/EntryBand.svelte`, `app/src/components/EntryBand.test.ts`, `app/src/Page.svelte`, `app/src/Page.test.ts`, `app/e2e/smoke.spec.ts`, `docs/app.md`
 
 **Props:** `{ counts: Map<string, number>, total: number, onapply: (id: string) => void }`. The component imports `PRESETS` itself; the counts come in because only the Page has the dataset.
 
@@ -356,27 +381,35 @@ EOF
 
 `EntryBand.test.ts`: renders all three stories with name, description and count; clicking a card calls `onapply` with that id; **Browse all N shoes** is present and reachable; a story returning zero shoes still renders its card showing zero rather than hiding.
 
-`Page.test.ts`: the band shows on a default view and the chip row does not; applying a preset replaces the band with the chip row; **adding an empty range from the Add-filter menu also collapses the band** — this is the case the shortcut in Task 4 would have got wrong, so it is the test that matters; a URL carrying filters renders chips, not the band.
+**jsdom has no `scrollIntoView`** — `typeof el.scrollIntoView === 'undefined'` in this repo's environment, so any test that clicks Browse all throws unless you plant a stub, the way `Page.test.ts` already plants `URL.createObjectURL`. Stub it in the test rather than guarding the call site.
+
+`Page.test.ts`: the band shows on a default view and the chip row does not; applying a preset replaces the band with the chip row; **adding an empty range from the Add-filter menu also collapses the band** — the case Task 4 exists for, so it is the test that matters; a URL carrying filters renders chips, not the band.
+
+Also the precedence rule, which nothing else covers: seed `localStorage` with one serialised view, render with a **different** `location.search`, and assert the URL wins. Spec §5 makes that rule 1, and acceptance criterion 5 depends on it.
 
 - [ ] **Step 2: Implement**
 
 The band renders **above the table**, not inside the `.toolbar` div where `PresetChips` lives. It is shown when `isDefaultView(view)` and replaced by `PresetChips` otherwise.
 
-**Browse all changes no state.** The default view already shows every shoe, so there is nothing to apply — the control moves focus to the table and scrolls it into view. It must not be styled as a lesser option (spec §3). Do not make it set the default view: that is what the band's own condition already means, so it would be a no-op.
+**Browse all changes no state, and that is not an oversight.** The default view already shows every shoe, so there is nothing to apply; the control moves focus to the table and scrolls it into view. It cannot collapse the band either, because spec §3.1 makes the collapse purely derived from view state — collapsing on Browse-all would need a stored dismissal flag, which §3.1 forbids. Leave a comment saying so at the call site, or a later reader will "fix" a button that looks inert. It must not be styled as a lesser option (spec §3).
 
 Counts come from applying each preset and running `applyFilters`, derived in `Page.svelte`. Three preset applications over 450 shoes at load is cheap; do not memoise prematurely.
 
-Wire persistence: on init, use `location.search` when non-empty, else `readStoredView()`, else defaults — all inside the existing single `untrack` call. **A view restored from storage must be written to the URL once**, or a returning visitor sees a filtered table behind a bare URL and copying the link shares the default view, which quietly breaks shareable filter URLs. Call `writeStoredView(serializeView(v))` inside `setView`.
+Wire persistence: on init, use `location.search` when non-empty, else `readStoredView()`, else defaults — all inside the existing single `untrack` call. Call `writeStoredView(serializeView(v))` inside `setView`.
 
-- [ ] **Step 3: Update the Presets section**
+**A view restored from storage must reach the URL once**, or a returning visitor sees a filtered table behind a bare URL and copying the link shares the default view — which quietly breaks the shareable-filter-URL promise. Pick one mechanism and name it in the code: the least surprising is a single `setView(restored)` immediately after init, because it reuses the one write path that already exists rather than adding a second. Whatever you choose, `docs/app.md §View and URL ownership` currently says *every* change goes through `setView`; if you add a second write site, that sentence changes in this commit.
 
-Record the band's collapse rule and where the counts come from, in docs/app.md §Presets.
+- [ ] **Step 3: Update the docs**
+
+Record the band's collapse rule and where the counts come from, in docs/app.md §Presets. If you added a second URL write site, update docs/app.md §View and URL ownership in the same commit.
 
 - [ ] **Step 4: Verify and commit**
 
+The band replaces the chip row, so the smoke spec Task 3 wrote no longer resolves its button. Fix it here — and run e2e, which `verify` does not.
+
 ```bash
-npm run verify
-git add app/src/components/EntryBand.svelte app/src/components/EntryBand.test.ts app/src/Page.svelte app/src/Page.test.ts docs/app.md
+npm run verify && npm -w app run e2e
+git add app/src/components/EntryBand.svelte app/src/components/EntryBand.test.ts app/src/Page.svelte app/src/Page.test.ts app/e2e/smoke.spec.ts docs/app.md
 git commit -F - <<'EOF'
 Open on the three stories, with a way past them
 
@@ -417,7 +450,7 @@ EOF
 - [ ] `npm run verify` and `npm -w app run e2e` both pass.
 - [ ] The three presets return roughly 150 / 19 / 39 shoes against `data/shoes.json`.
 - [ ] No preset sets `releasedAfter`; none populates `generations`.
-- [ ] No preset bounds a metric below `SPARSE_BELOW` coverage of its own `considered` population.
+- [ ] No preset bounds a metric `isSparse` flags over its own `considered` population, and the guard proving it has been shown able to fail.
 - [ ] The price cap moves when the fleet's price distribution moves.
 - [ ] Adding an empty range from the Add-filter menu collapses the band.
 - [ ] A shared link with filters opens collapsed and matches the link, ignoring stored state.
