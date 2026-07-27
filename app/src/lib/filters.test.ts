@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { applyFilters, EMPTY_FILTERS } from './filters';
+import { applyFilters, EMPTY_FILTERS, type FilterState } from './filters';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -90,5 +90,46 @@ describe('applyFilters edge cases', () => {
     const r = applyFilters(input, { ranges: { 'heel-stack': { min: 30 } } }, idx);
     expect(slugs(r)).toEqual(['cushy', 'racer', 'trainer', 'oldie']);
     expect(input.map((s) => s.slug)).toEqual(FLEET.map((s) => s.slug));
+  });
+});
+
+describe('applyFilters accounting', () => {
+  it('reconciles across every filter state we exercise', () => {
+    const states: FilterState[] = [
+      { ranges: {} },
+      { ranges: { 'heel-stack': { min: 36 } } },
+      { ranges: { 'heel-stack': { min: 36 }, score: { max: 90 } } },
+      { ranges: { 'heel-stack': { min: 999 } }, plate: 'carbon' },
+      { ranges: {}, search: 'x', hideDiscontinued: true },
+    ];
+    for (const f of states) {
+      const r = applyFilters(FLEET, f, idx);
+      expect(r.visible.length + r.outsideBounds + r.hiddenMissing).toBe(r.considered.length);
+    }
+  });
+  it('considered is the population left by the non-range filters alone', () => {
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 999 } }, plate: 'carbon' }, idx);
+    expect(r.considered).toEqual(FLEET.filter((s) => s.plate === 'carbon'));
+    expect(r.visible).toEqual([]);
+  });
+  it('counts a shoe once even when it fails several bounds', () => {
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 999 }, score: { min: 999 } } }, idx);
+    // a shoe with no reading at all exits at the missing gate and is never outsideBounds
+    expect(r.outsideBounds).toBe(r.considered.length - r.hiddenMissing);
+  });
+});
+
+describe('applyFilters showMissing', () => {
+  it('admits shoes with no reading instead of hiding them', () => {
+    const bounded = { ranges: { 'heel-stack': { min: 30 } } };
+    const strict = applyFilters(FLEET, bounded, idx);
+    const relaxed = applyFilters(FLEET, { ...bounded, showMissing: true }, idx);
+    expect(strict.hiddenMissing).toBeGreaterThan(0);
+    expect(relaxed.visible.length).toBe(strict.visible.length + strict.hiddenMissing);
+    expect(relaxed.hiddenMissing).toBe(0);
+  });
+  it('still excludes shoes that have a reading and fail the bound', () => {
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 999 } }, showMissing: true }, idx);
+    expect(r.visible.every((s) => typeof s.values['6'] !== 'number')).toBe(true);
   });
 });

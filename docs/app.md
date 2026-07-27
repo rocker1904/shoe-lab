@@ -74,14 +74,24 @@ non-curated key already active, so an active filter is always visible and
 clearable; a cleared curated slider drops out of state entirely, a cleared
 extra row keeps an empty entry so its row survives.
 
+`applyFilters` accounts for every shoe it drops: `considered` is the
+population surviving the non-range filters alone, and
+`visible + outsideBounds + hiddenMissing === considered.length` holds for any
+filter state. Each excluded shoe is counted exactly once, missing-ness first.
+
 `hiddenMissing` is a deterministic count of shoes that pass every non-range
 filter but have **no data** for at least one active range filter. Missingness
 is settled across all active ranges before any bound is applied, so the count
 does not depend on key iteration order. It deliberately over-counts against
 "would otherwise be visible" — a shoe with no midsole reading might have
-failed the weight bound anyway — and the sidebar copy is written to match:
-"N shoes have no data for the active filters", never "N would otherwise
-match".
+failed the weight bound anyway — and the copy is written to match: "N shoes
+have no data for the active filters", never "N would otherwise match".
+
+`showMissing` is the escape from that: a missing reading stops excluding the
+shoe and stops being counted, while a shoe that *has* a reading and fails the
+bound is still dropped. It is one flag over the whole filter set rather than
+per range — the receipt offers one control, so one flag is what the user can
+actually address.
 
 Range inputs are a histogram plus min/max number fields rather than a
 dual-thumb slider: same capability, keyboard-accessible, no drag maths.
