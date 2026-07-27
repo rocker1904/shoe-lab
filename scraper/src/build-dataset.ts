@@ -31,9 +31,9 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;
   }
 
-  // Populated inside the map, so it covers the surviving fleet only: an override naming an
-  // excluded shoe is genuinely stale and validatePlateOverrides should say so (§Decisions
-  // in docs/scraping.md).
+  // Populated inside the map, so it covers the surviving fleet only: an override naming a
+  // category-excluded shoe is genuinely stale and the gate should say so
+  // (docs/scraping.md §Decisions).
   const ruleDerived = new Map<string, Plate>();
   const shoes: Shoe[] = Object.keys(metrics.shoes).sort().filter((slug) => isRunningShoe(details.shoes[slug])).map((slug) => {
     const m = metrics.shoes[slug]!;

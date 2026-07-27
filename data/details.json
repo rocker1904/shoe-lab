@@ -2,6 +2,7 @@
   "shoes": {
     "adidas-adistar-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "No more Continental",
         "Lacks energy return",
@@ -38,6 +39,7 @@
     },
     "adidas-adistar-4": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not enough bounce",
         "Poor breathability",
@@ -75,6 +77,7 @@
     },
     "adidas-adistar-byd": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Bad upper durability",
         "Weight could be lower",
@@ -115,6 +118,7 @@
     },
     "adidas-adizero-adios-8": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Could be lighter",
         "Not for harsh winter days",
@@ -152,6 +156,7 @@
     },
     "adidas-adizero-adios-9": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not stable at all",
         "Tapered toebox",
@@ -190,6 +195,7 @@
     },
     "adidas-adizero-adios-pro-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Risk of heel slippage",
         "Lacing can be tricky",
@@ -229,6 +235,7 @@
     },
     "adidas-adizero-adios-pro-4": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Unstable for every heel striker",
         "Narrow, tapered toebox",
@@ -270,6 +277,7 @@
     },
     "adidas-adizero-adios-pro-evo-2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Crazy high price",
         "Extremely narrow toebox",
@@ -308,6 +316,7 @@
     },
     "adidas-adizero-adios-pro-evo-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Extremely expensive for most runners",
         "Not for heel strikers",
@@ -347,6 +356,7 @@
     },
     "adidas-adizero-boston-12": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Upper durability falls short",
         "Tongue and heel could benefit from extra padding",
@@ -387,6 +397,7 @@
     },
     "adidas-adizero-boston-13": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow heel limits stability",
         "Pointy toebox restricts toe splay",
@@ -426,6 +437,7 @@
     },
     "adidas-adizero-evo-sl": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor-quality laces",
         "Short, non-gusseted tongue",
@@ -465,6 +477,7 @@
     },
     "adidas-adizero-evo-sl-atr": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Noticeably heavier than the regular EVO SL",
         "Virtually no ventilation",
@@ -505,6 +518,7 @@
     },
     "adidas-adizero-prime-x-2-strung": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Simply too heavy",
         "Exorbitantly priced at $300",
@@ -546,6 +560,7 @@
     },
     "adidas-adizero-prime-x-3-strung": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Crazy expensive",
         "Heavier than all supershoes",
@@ -587,6 +602,7 @@
     },
     "adidas-adizero-sl": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lightstrike feels like a brick",
         "Low energy return in the heel",
@@ -626,6 +642,7 @@
     },
     "adidas-adizero-sl2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tongue design needs enhancement",
         "Outsole durability",
@@ -665,6 +682,7 @@
     },
     "adidas-adizero-takumi-sen-10": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for heel strikers",
         "Durability concerns",
@@ -704,6 +722,7 @@
     },
     "adidas-adizero-takumi-sen-11": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very limited heel stability",
         "Not for beginners",
@@ -744,6 +763,7 @@
     },
     "adidas-alpha-bounce": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very heavy for a road shoe",
         "Breathability could be better",
@@ -780,6 +800,7 @@
     },
     "adidas-duramo-10": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Break-in period for wide feet",
         "Lacks spring for fast runs"
@@ -818,6 +839,7 @@
     },
     "adidas-duramo-speed": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Somewhat limited versatility",
         "Lacing system",
@@ -857,6 +879,7 @@
     },
     "adidas-duramo-speed-2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very low energy return",
         "Not much shock absorption in the forefoot",
@@ -895,6 +918,7 @@
     },
     "adidas-fluidflow-20": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Could be lighter",
         "Limited arch support for flat feet",
@@ -931,6 +955,7 @@
     },
     "adidas-galaxy-6": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Subpar breathability",
         "Excessively heavy",
@@ -969,6 +994,7 @@
     },
     "adidas-galaxy-7": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "But still very heavy!",
         "Poor durability scores",
@@ -1007,6 +1033,7 @@
     },
     "adidas-hyperboost-edge": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited breathability",
         "Aesthetics may not appeal to everyone",
@@ -1047,6 +1074,7 @@
     },
     "adidas-hyperboost-run": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very poor breathability",
         "Limited vertical toebox space",
@@ -1086,6 +1114,7 @@
     },
     "adidas-pureboost-23": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Insufficient shock absorption",
         "Excessively heavy considering its low stack height",
@@ -1126,6 +1155,7 @@
     },
     "adidas-pureboost-5": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low toebox height",
         "Not for long runs",
@@ -1164,6 +1194,7 @@
     },
     "adidas-questar": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "A no-no for wide feet",
         "Hard to put on for some"
@@ -1199,6 +1230,7 @@
     },
     "adidas-questar-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Rigid build",
         "Needs to lose some weight",
@@ -1236,6 +1268,7 @@
     },
     "adidas-racer-tr21": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Only for casual runs",
         "Offers limited arch support",
@@ -1272,6 +1305,7 @@
     },
     "adidas-runfalcon": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firm cushioning",
         "Not for fast runs"
@@ -1306,6 +1340,7 @@
     },
     "adidas-runfalcon-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks cushioning in the forefoot area",
         "Weighs more than v1 and v2",
@@ -1343,6 +1378,7 @@
     },
     "adidas-runfalcon-5": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Shockingly poor durability",
         "Insufficient forefoot cushioning",
@@ -1381,6 +1417,7 @@
     },
     "adidas-solarboost-5": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not summer-friendly",
         "Outsole durability concerns",
@@ -1418,6 +1455,7 @@
     },
     "adidas-supernova-2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for long or tempo runs",
         "Lacking in overall durability",
@@ -1456,6 +1494,7 @@
     },
     "adidas-supernova-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Midsole is firm and provides low energy return",
         "Outsole shows limited durability",
@@ -1492,6 +1531,7 @@
     },
     "adidas-supernova-plus": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wet roads",
         "Not for hot weather",
@@ -1528,6 +1568,7 @@
     },
     "adidas-supernova-prima": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Durability concerns",
         "Not for narrow feet",
@@ -1566,6 +1607,7 @@
     },
     "adidas-supernova-prima-2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel landings may feel awkward to some runners",
         "Outsole durability is a concern",
@@ -1605,6 +1647,7 @@
     },
     "adidas-supernova-rise": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "No Continental rubber anymore",
         "Tongue lacks gusset",
@@ -1646,6 +1689,7 @@
     },
     "adidas-supernova-rise-2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Outsole lacks Continental",
         "Not cushioned for forefoot strikers",
@@ -1684,6 +1728,7 @@
     },
     "adidas-supernova-rise-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Weak heel padding durability",
         "Energy return lower than v2",
@@ -1723,6 +1768,7 @@
     },
     "adidas-supernova-solution": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Non-gusseted tongue",
         "Limited forefoot cushioning",
@@ -1761,6 +1807,7 @@
     },
     "adidas-supernova-solution-2": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited forefoot cushioning",
         "Heel flare can feel awkward",
@@ -1799,6 +1846,7 @@
     },
     "adidas-supernova-solution-3": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "A bit heavy",
         "Energy return is unexpectedly low",
@@ -1835,6 +1883,7 @@
     },
     "adidas-terrex-trailmaker": {
       "brand": "adidas",
+      "categorySlug": "hiking-shoes",
       "cons": [
         "Outsole lacks durability",
         "Not enough grip on wet terrain",
@@ -1873,6 +1922,7 @@
     },
     "adidas-ultra-boost": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "It's too heavy",
         "Insufficient cushioning in the forefoot",
@@ -1910,6 +1960,7 @@
     },
     "adidas-ultraboost-22": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wider feet",
         "No energy return"
@@ -1946,6 +1997,7 @@
     },
     "adidas-ultraboost-5": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Could still be lighter",
         "Not suitable for fast paces",
@@ -1984,6 +2036,7 @@
     },
     "adidas-ultraboost-5-x": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Steep price",
         "Ventilation falls short of expectations",
@@ -2024,6 +2077,7 @@
     },
     "adidas-ultraboost-light": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Thin forefoot cushioning",
         "Could be lighter",
@@ -2067,6 +2121,7 @@
     },
     "adidas-ultrabounce": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too heavy for long distances or speedwork",
         "Not for forefoot strikers",
@@ -2105,6 +2160,7 @@
     },
     "adidas-ultrarun-5": {
       "brand": "adidas",
+      "categorySlug": "running-shoes",
       "cons": [
         "Feels bulky and bottom-heavy",
         "Lacks an energetic ride",
@@ -2142,6 +2198,7 @@
     },
     "allbirds-tree-dasher-2-0": {
       "brand": "Allbirds",
+      "categorySlug": "running-shoes",
       "cons": [
         "Might be excessively firm",
         "Overly spacious for those with narrow feet",
@@ -2181,6 +2238,7 @@
     },
     "allbirds-tree-flyer-2": {
       "brand": "Allbirds",
+      "categorySlug": "running-shoes",
       "cons": [
         "Quite heavy",
         "Pricey for a daily trainer",
@@ -2219,6 +2277,7 @@
     },
     "allswifit-active-5-k": {
       "brand": "ALLSWIFIT",
+      "categorySlug": "running-shoes",
       "cons": [
         "Feels heavy underfoot",
         "Poor toebox durability",
@@ -2258,6 +2317,7 @@
     },
     "altra-escalante-3": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than before",
         "Tight midfoot for wide feet"
@@ -2294,6 +2354,7 @@
     },
     "altra-escalante-4": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor ventilation",
         "Non-gusseted tongue",
@@ -2330,6 +2391,7 @@
     },
     "altra-escalante-racer": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Minimal energy return",
         "Not the best for winter",
@@ -2367,6 +2429,7 @@
     },
     "altra-escalante-racer-2": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than previous version",
         "Lacks heel padding durability"
@@ -2403,6 +2466,7 @@
     },
     "altra-experience-flow": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks energy return",
         "Not for fast paces at all",
@@ -2441,6 +2505,7 @@
     },
     "altra-experience-flow-2": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor outsole durability",
         "Not ideal for heel strikers",
@@ -2479,6 +2544,7 @@
     },
     "altra-experience-flow-3": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited energy return",
         "Breathability is below expectations",
@@ -2518,6 +2584,7 @@
     },
     "altra-experience-form": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs a better foam",
         "Not for long runs",
@@ -2556,6 +2623,7 @@
     },
     "altra-fwd-via": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Underwhelming energy return",
         "Midsole feels firmer than expected",
@@ -2594,6 +2662,7 @@
     },
     "altra-fwd-via-2": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Small price increase",
         "Higher than expected drop",
@@ -2632,6 +2701,7 @@
     },
     "altra-paradigm-7": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Becomes uncomfortably firm and stiff in cold weather",
         "Priced on the higher end of the spectrum at $170",
@@ -2669,6 +2739,7 @@
     },
     "altra-paradigm-8": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low energy return",
         "Not for heel strikers",
@@ -2707,6 +2778,7 @@
     },
     "altra-provision-8": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel padding durability",
         "Weight increase from v7",
@@ -2742,6 +2814,7 @@
     },
     "altra-rivera-4": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Runs a little warm",
         "Unruly laces",
@@ -2780,6 +2853,7 @@
     },
     "altra-torin-7": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not ideal for heel strikers",
         "Outsole could be more durable",
@@ -2822,6 +2896,7 @@
     },
     "altra-torin-8": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Weight gain compared to v7",
         "Not for rearfoot strikers",
@@ -2861,6 +2936,7 @@
     },
     "altra-vanish-carbon": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Expensive",
         "Outsole is extremely flimsy",
@@ -2903,6 +2979,7 @@
     },
     "altra-vanish-carbon-2": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Insufficient energy return",
         "Not a real zero-drop shoe",
@@ -2942,6 +3019,7 @@
     },
     "altra-via-olympus": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Cushioning on the firm side, but a toss-up on how firm",
         "Doesn&rsquo;t feel like a zero-drop shoe",
@@ -2980,6 +3058,7 @@
     },
     "altra-via-olympus-2": {
       "brand": "Altra",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited ventilation",
         "Tongue not gusseted",
@@ -3015,6 +3094,7 @@
     },
     "anta-mach-6-pro": {
       "brand": "ANTA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited support in the heel area",
         "Thin outsole",
@@ -3054,6 +3134,7 @@
     },
     "anta-zone-2-90": {
       "brand": "ANTA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited availability outside Asia",
         "Only for neutral runners with good form",
@@ -3093,6 +3174,7 @@
     },
     "ardiles-runergize": {
       "brand": "Ardiles",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not enough energy return",
         "Extreme high drop",
@@ -3134,6 +3216,7 @@
     },
     "asics-dynablast-4": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wide feet",
         "Almost no airflow",
@@ -3176,6 +3259,7 @@
     },
     "asics-dynablast-5": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Moderate-to-low energy return",
         "Heavier than Novablast 3",
@@ -3215,6 +3299,7 @@
     },
     "asics-gel-contend-8": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not very responsive",
         "Narrow toebox",
@@ -3250,6 +3335,7 @@
     },
     "asics-gel-contend-9": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Upper lacks durability",
         "Still low energy return",
@@ -3289,6 +3375,7 @@
     },
     "asics-gel-cumulus-25": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too high stacked for some",
         "Feels flat underfoot",
@@ -3330,6 +3417,7 @@
     },
     "asics-gel-cumulus-26": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Outsole durability issues",
         "Limited traction off-road",
@@ -3369,6 +3457,7 @@
     },
     "asics-gel-cumulus-27": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Breathability needs improvement",
         "Outsole durability concerns",
@@ -3407,6 +3496,7 @@
     },
     "asics-gel-cumulus-28": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low energy return despite foam upgrade",
         "Outsole durability is a real concern",
@@ -3447,6 +3537,7 @@
     },
     "asics-gel-excite-10": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not ideal for tempo training or long distances",
         "Ride feels dull",
@@ -3490,6 +3581,7 @@
     },
     "asics-gel-excite-11": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited breathability",
         "Low toebox durability",
@@ -3528,6 +3620,7 @@
     },
     "asics-gel-excite-9": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks upper durability",
         "Not for wide feet"
@@ -3563,6 +3656,7 @@
     },
     "asics-gel-kayano-29": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks breathability",
         "Expensive",
@@ -3600,6 +3694,7 @@
     },
     "asics-gel-kayano-30": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Actual drop exceeds stated measurement",
         "Midsole might require a break-in period",
@@ -3639,6 +3734,7 @@
     },
     "asics-gel-kayano-31": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Big and clunky",
         "Not versatile at all",
@@ -3678,6 +3774,7 @@
     },
     "asics-gel-kayano-32": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for soft-foam lovers",
         "Bad energy return",
@@ -3716,6 +3813,7 @@
     },
     "asics-gel-kayano-33": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "But still delivers low energy return",
         "Less stable for extreme overpronators",
@@ -3754,6 +3852,7 @@
     },
     "asics-gel-kinsei-max": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavyweight build",
         "Not the most spacious toebox",
@@ -3792,6 +3891,7 @@
     },
     "asics-gel-nimbus-25": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacklustre breathability",
         "Not for wide feet",
@@ -3832,6 +3932,7 @@
     },
     "asics-gel-nimbus-26": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Increased weight",
         "Limited energy return",
@@ -3871,6 +3972,7 @@
     },
     "asics-gel-nimbus-27": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Feels bulky and heavy",
         "Minor price increase",
@@ -3911,6 +4013,7 @@
     },
     "asics-gel-nimbus-28": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor energy return",
         "Second price hike in a row",
@@ -3952,6 +4055,7 @@
     },
     "asics-gel-pulse-15": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Breathability",
         "Subpar energy return even for a cheap shoe",
@@ -3990,6 +4094,7 @@
     },
     "asics-gel-pulse-16": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Upper needs improvements",
         "Very low energy return",
@@ -4027,6 +4132,7 @@
     },
     "asics-glideride-max": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Pricey for its performance",
         "Stiffer build limits comfort",
@@ -4067,6 +4173,7 @@
     },
     "asics-glideride-max-2": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Premium price, modest bounce",
         "Stack and drop vary vs ASICS",
@@ -4106,6 +4213,7 @@
     },
     "asics-gt-1000-12": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Flytefoam could offer better energy return",
         "Upper lacks durability"
@@ -4142,6 +4250,7 @@
     },
     "asics-gt-1000-13": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price increase",
         "Lacklustre bounce",
@@ -4181,6 +4290,7 @@
     },
     "asics-gt-1000-14": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Bad breathability",
         "Still lacks energy return",
@@ -4218,6 +4328,7 @@
     },
     "asics-gt-1000-15": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks bounce",
         "Not ideal for long runs",
@@ -4257,6 +4368,7 @@
     },
     "asics-gt-2000-11": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrower-than-expected toebox",
         "Overly padded tongue"
@@ -4293,6 +4405,7 @@
     },
     "asics-gt-2000-12": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Breathability could be improved",
         "Might require a brief break-in period",
@@ -4333,6 +4446,7 @@
     },
     "asics-gt-2000-13": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for speedy runs",
         "Insufficiently padded tongue",
@@ -4372,6 +4486,7 @@
     },
     "asics-gt-2000-14": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tapered toebox may feel restrictive",
         "Still lacks a truly energetic ride",
@@ -4411,6 +4526,7 @@
     },
     "asics-jolt-4": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Could be lighter",
         "Cushioning on the firm side",
@@ -4448,6 +4564,7 @@
     },
     "asics-magic-speed-3": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Likely too narrow for some",
         "Midsole could use more energy return",
@@ -4488,6 +4605,7 @@
     },
     "asics-magic-speed-4": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited stability",
         "Low bounce",
@@ -4529,6 +4647,7 @@
     },
     "asics-magic-speed-5": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Energy return limited by FF Blast+",
         "Maybe too extreme for heel strikers",
@@ -4570,6 +4689,7 @@
     },
     "asics-megablast": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Extremely expensive for a training shoe",
         "Limited outsole coverage",
@@ -4609,6 +4729,7 @@
     },
     "asics-metaspeed-edge-tokyo": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price increase",
         "Narrow fit",
@@ -4649,6 +4770,7 @@
     },
     "asics-metaspeed-ray": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Extremely unstable underfoot",
         "Not for heel strikers",
@@ -4690,6 +4812,7 @@
     },
     "asics-metaspeed-sky-paris": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not suitable for heel strikers",
         "Less stable than Sky+",
@@ -4729,6 +4852,7 @@
     },
     "asics-metaspeed-sky-plus": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Stiffer than before",
         "Outsole lacks durability",
@@ -4768,6 +4892,7 @@
     },
     "asics-metaspeed-sky-tokyo": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Higher price tag",
         "Narrow toebox",
@@ -4807,6 +4932,7 @@
     },
     "asics-noosa-tri-14": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firm at first",
         "Not as grippy on wet and dirt"
@@ -4845,6 +4971,7 @@
     },
     "asics-noosa-tri-15": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Underwhelming energy return",
         "Tongue might be too thin for some",
@@ -4886,6 +5013,7 @@
     },
     "asics-noosa-tri-16": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Upper longevity",
         "Minimal tongue padding",
@@ -4925,6 +5053,7 @@
     },
     "asics-novablast-3": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "For narrow-to-medium feet only",
         "Stack heights higher than advertised",
@@ -4966,6 +5095,7 @@
     },
     "asics-novablast-4": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not the best for hot summer runs",
         "Minor weight increase compared to v3",
@@ -5006,6 +5136,7 @@
     },
     "asics-novablast-5": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Breathability could be improved",
         "Toebox durability",
@@ -5045,6 +5176,7 @@
     },
     "asics-novablast-6": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Less stable than predecessor",
         "Heel strikers may prefer other options",
@@ -5086,6 +5218,7 @@
     },
     "asics-s-4-yogiri": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not a real super shoe",
         "Ride feels firm",
@@ -5127,6 +5260,7 @@
     },
     "asics-sonicblast": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wide feet",
         "Stiff build limits versatility",
@@ -5166,6 +5300,7 @@
     },
     "asics-superblast": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "$200 for a daily trainer, wow!",
         "Subpar breathability",
@@ -5206,6 +5341,7 @@
     },
     "asics-superblast-2": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slight weight gain",
         "Fit remains tight",
@@ -5247,6 +5383,7 @@
     },
     "asics-superblast-3": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "FF Blast+ limits energy return",
         "Unexpected price bump",
@@ -5285,6 +5422,7 @@
     },
     "asics-versablast-4": {
       "brand": "ASICS",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for summer",
         "Upper durability concerns",
@@ -5323,6 +5461,7 @@
     },
     "brooks-addiction-gts-15": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks flexibility",
         "Quite heavy",
@@ -5360,6 +5499,7 @@
     },
     "brooks-adrenaline-gts-22": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price point for stability aimed at beginners",
         "Midsole is too hard for some"
@@ -5392,6 +5532,7 @@
     },
     "brooks-adrenaline-gts-23": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "The engineered mesh upper lacks durability",
         "Lacks cushion for forefoot strikers"
@@ -5428,6 +5569,7 @@
     },
     "brooks-adrenaline-gts-24": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firmer-than-expected midsole",
         "High drop may feel too steep",
@@ -5467,6 +5609,7 @@
     },
     "brooks-adrenaline-gts-25": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs to lose weight ASAP",
         "Modest energy return in the heel",
@@ -5505,6 +5648,7 @@
     },
     "brooks-beast-gts-24": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited breathability",
         "Not for forefoot strikers",
@@ -5543,6 +5687,7 @@
     },
     "brooks-ghost-14": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks breathability for hot summer days",
         "Not the best for long distances"
@@ -5579,6 +5724,7 @@
     },
     "brooks-ghost-15": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavier than its predecessor",
         "Could use some improvements in breathability",
@@ -5618,6 +5764,7 @@
     },
     "brooks-ghost-16": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Leng&uuml;eta sin refuerzo",
         "Contrafuerte del tal&oacute;n r&iacute;gido",
@@ -5657,6 +5804,7 @@
     },
     "brooks-ghost-17": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Outdated foam tech with low energy return",
         "Non-gusseted tongue despite price hike",
@@ -5698,6 +5846,7 @@
     },
     "brooks-ghost-17-gtx": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavy build",
         "Energy return clearly below lab average",
@@ -5734,6 +5883,7 @@
     },
     "brooks-ghost-18": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs a foam upgrade",
         "Feels heavy",
@@ -5773,6 +5923,7 @@
     },
     "brooks-ghost-max": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tongue is not fixed to the sides",
         "Lacks energy return",
@@ -5813,6 +5964,7 @@
     },
     "brooks-ghost-max-2": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Would benefit from softer foam",
         "Clunky for heel strikers",
@@ -5852,6 +6004,7 @@
     },
     "brooks-ghost-max-3": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most rivals",
         "Foam lacks energy and responsiveness",
@@ -5891,6 +6044,7 @@
     },
     "brooks-ghost-max-4": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not energetic at all",
         "Non-gusseted tongue",
@@ -5932,6 +6086,7 @@
     },
     "brooks-glycerin-20": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Laces don't stay tied",
         "Heel drop higher than advertised",
@@ -5971,6 +6126,7 @@
     },
     "brooks-glycerin-21": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly warm",
         "Minor price hike",
@@ -6008,6 +6164,7 @@
     },
     "brooks-glycerin-22": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs to lose some weight",
         "Low toebox height",
@@ -6047,6 +6204,7 @@
     },
     "brooks-glycerin-23": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavy compared to most rivals",
         "Lacks energy return",
@@ -6087,6 +6245,7 @@
     },
     "brooks-glycerin-flex": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Less flex than we expected",
         "Narrow toebox limits toe splay",
@@ -6126,6 +6285,7 @@
     },
     "brooks-glycerin-gts-20": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Midsole may feel overly firm for some runners",
         "Pricier than many alternatives",
@@ -6162,6 +6322,7 @@
     },
     "brooks-glycerin-gts-21": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Knit upper lacks ventilation",
         "Not suitable for faster paces",
@@ -6197,6 +6358,7 @@
     },
     "brooks-glycerin-gts-22": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavy",
         "EVA-based foam lacks energy return",
@@ -6236,6 +6398,7 @@
     },
     "brooks-glycerin-max": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too heavy",
         "Midsole lacks bounce﻿",
@@ -6275,6 +6438,7 @@
     },
     "brooks-glycerin-max-2": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price",
         "Disappointing energy return",
@@ -6314,6 +6478,7 @@
     },
     "brooks-glycerin-stealthfit-21": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs more breathability",
         "Lacks energy return"
@@ -6350,6 +6515,7 @@
     },
     "brooks-hyperion": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Much higher heel drop than expected",
         "Average at best breathability",
@@ -6389,6 +6555,7 @@
     },
     "brooks-hyperion-2": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited versatility",
         "Not a stable ride",
@@ -6427,6 +6594,7 @@
     },
     "brooks-hyperion-3": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Much heavier than its predecessor",
         "Needs more energy return",
@@ -6465,6 +6633,7 @@
     },
     "brooks-hyperion-elite-4": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow toebox and heel",
         "Foam lacks energy return",
@@ -6505,6 +6674,7 @@
     },
     "brooks-hyperion-elite-4-pb": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not ideal for forefoot strikers",
         "Narrow, tapered toebox",
@@ -6545,6 +6715,7 @@
     },
     "brooks-hyperion-elite-5": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not very stable",
         "Limited outsole durability",
@@ -6585,6 +6756,7 @@
     },
     "brooks-hyperion-gts-2": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for long runs",
         "Foam lacks excitement",
@@ -6624,6 +6796,7 @@
     },
     "brooks-hyperion-max": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price tag at $170",
         "Not for wide feet",
@@ -6665,6 +6838,7 @@
     },
     "brooks-hyperion-max-2": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Still lacks energy return",
         "Significant increase in weight",
@@ -6705,6 +6879,7 @@
     },
     "brooks-hyperion-max-3": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavy",
         "Could be a bit cheaper",
@@ -6745,6 +6920,7 @@
     },
     "brooks-hyperion-max-4": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Maybe a bit expensive for its features",
         "Heavier than most rivals",
@@ -6784,6 +6960,7 @@
     },
     "brooks-hyperion-tempo": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel could benefit from more energy return",
         "Not suitable for long runs at all",
@@ -6822,6 +6999,7 @@
     },
     "brooks-launch-10": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Breathability needs improvement",
         "Foam becomes too stiff in cold winter temperatures",
@@ -6860,6 +7038,7 @@
     },
     "brooks-launch-11": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price increase from v10",
         "Low-volume toebox",
@@ -6898,6 +7077,7 @@
     },
     "brooks-launch-12": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow and tapered fit won't work for many",
         "Stiff heel counter may irritate Achilles",
@@ -6936,6 +7116,7 @@
     },
     "brooks-levitate-stealthfit-6": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too toasty for summer runs",
         "Rubs the heel",
@@ -6977,6 +7158,7 @@
     },
     "brooks-revel-7": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Ride lacks excitement",
         "Low energy return",
@@ -7014,6 +7196,7 @@
     },
     "brooks-revel-8": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Still not very energetic",
         "Not ideal for forefoot strikers",
@@ -7051,6 +7234,7 @@
     },
     "brooks-trace-3": {
       "brand": "Brooks",
+      "categorySlug": "running-shoes",
       "cons": [
         "Upper downgrade",
         "Slight weight gain from v2",
@@ -7090,6 +7274,7 @@
     },
     "danner-cascade-crest": {
       "brand": "Danner",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Much heavier than average",
         "Very expensive",
@@ -7129,6 +7314,7 @@
     },
     "darimati-br-001": {
       "brand": "Darimati",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than expected",
         "Limited breathability",
@@ -7167,6 +7353,7 @@
     },
     "diadora-atomo-star": {
       "brand": "Diadora",
+      "categorySlug": "running-shoes",
       "cons": [
         "Snug, low-volume toebox",
         "Lacks energy return",
@@ -7207,6 +7394,7 @@
     },
     "diadora-cellula": {
       "brand": "Diadora",
+      "categorySlug": "running-shoes",
       "cons": [
         "Pricier than competitors",
         "Lacks flexibility",
@@ -7245,6 +7433,7 @@
     },
     "diadora-frequenza-2": {
       "brand": "Diadora",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow toebox",
         "Limited stability",
@@ -7284,6 +7473,7 @@
     },
     "diadora-gara-carbon": {
       "brand": "Diadora",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most rivals",
         "Narrow fit",
@@ -7324,6 +7514,7 @@
     },
     "diadora-mythos-blushield-volo-5": {
       "brand": "Diadora",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low energy return",
         "Tight fit",
@@ -7362,6 +7553,7 @@
     },
     "diadora-nucleo-2": {
       "brand": "Diadora",
+      "categorySlug": "running-shoes",
       "cons": [
         "Pricey compared to mainstream options",
         "Low-energy EVA foam",
@@ -7401,6 +7593,7 @@
     },
     "hoka-arahi-7": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited breathability",
         "Low energy return",
@@ -7440,6 +7633,7 @@
     },
     "hoka-arahi-8": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very poor breathability",
         "Grip needs to improve",
@@ -7480,6 +7674,7 @@
     },
     "hoka-bondi-8": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tight midfoot",
         "Narrow toebox",
@@ -7518,6 +7713,7 @@
     },
     "hoka-bondi-9": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wide feet",
         "Still feels heavy and clunky underfoot",
@@ -7558,6 +7754,7 @@
     },
     "hoka-carbon-x-3": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wide feet",
         "Rigid knit upper",
@@ -7596,6 +7793,7 @@
     },
     "hoka-cielo-x-1-2-0": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Pricier than most rivals",
         "Rocker can feel too aggressive",
@@ -7636,6 +7834,7 @@
     },
     "hoka-cielo-x-1-3-0": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited versatility",
         "Could be too rockered for some",
@@ -7677,6 +7876,7 @@
     },
     "hoka-cielo-x1": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "A bit heavy",
         "Some stability issues",
@@ -7718,6 +7918,7 @@
     },
     "hoka-clifton-10": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs a better foam ASAP",
         "Notable weight gain from v9",
@@ -7758,6 +7959,7 @@
     },
     "hoka-clifton-9": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Snug fit",
         "Not enough bounce from EVA foam",
@@ -7799,6 +8001,7 @@
     },
     "hoka-clifton-9-gtx": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "May be too narrow for many",
         "Heel-to-toe drop significantly differs from HOKA's claims",
@@ -7839,6 +8042,7 @@
     },
     "hoka-gaviota-5": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low drop might pose issues for heel strikers",
         "Performs poorly in colder conditions",
@@ -7877,6 +8081,7 @@
     },
     "hoka-gaviota-6": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Average shock absorption",
         "High price for performance offered",
@@ -7916,6 +8121,7 @@
     },
     "hoka-kaha-3-gtx": {
       "brand": "HOKA",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Lugs got much shallower",
         "Heavier than average",
@@ -7953,6 +8159,7 @@
     },
     "hoka-kawana-2": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Bulky heel",
         "Narrow toebox",
@@ -7992,6 +8199,7 @@
     },
     "hoka-mach-5": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Really lacks outsole durability",
         "Underperforms in cold weather﻿"
@@ -8032,6 +8240,7 @@
     },
     "hoka-mach-6": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Drop varies from stated",
         "Tapered toebox",
@@ -8071,6 +8280,7 @@
     },
     "hoka-mach-7": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Snug fit can be a problem for some",
         "Stiff heel counter may irritate some Achilles tendons",
@@ -8109,6 +8319,7 @@
     },
     "hoka-mach-x": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Official drop measurement (5 mm) is inaccurate",
         "The $180 price point might be steep for some"
@@ -8146,6 +8357,7 @@
     },
     "hoka-mach-x-2": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel collar causes Achilles discomfort",
         "Price increase",
@@ -8185,6 +8397,7 @@
     },
     "hoka-mach-x-3": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Terrible tongue",
         "Heavier than version 2",
@@ -8224,6 +8437,7 @@
     },
     "hoka-rincon-3": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "A blister magnet for wide feet",
         "Thin tongue doesn&rsquo;t stay in place",
@@ -8263,6 +8477,7 @@
     },
     "hoka-rincon-4": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor durability",
         "Low volume upper",
@@ -8301,6 +8516,7 @@
     },
     "hoka-rocket-x-2": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Bloody narrow toebox",
         "Heavier than the competition"
@@ -8339,6 +8555,7 @@
     },
     "hoka-rocket-x-3": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most competitors",
         "Tight, tapered toebox",
@@ -8380,6 +8597,7 @@
     },
     "hoka-skyflow": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited flex",
         "Could be a bit lighter",
@@ -8417,6 +8635,7 @@
     },
     "hoka-skyward-x": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Excessively heavy",
         "Narrow fit",
@@ -8456,6 +8675,7 @@
     },
     "hoka-skyward-x-2": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks versatility",
         "Stiff build may limit comfort for some",
@@ -8496,6 +8716,7 @@
     },
     "hoka-solimar": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too firm for some",
         "Narrow toebox",
@@ -8534,6 +8755,7 @@
     },
     "hoka-transport-x": {
       "brand": "HOKA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Prohibitively expensive at $200",
         "Unnecessary carbon plate",
@@ -8572,6 +8794,7 @@
     },
     "hylo-athletics-axis": {
       "brand": "Hylo Athletics",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavy weight compared to most competitors",
         "Tapered toebox",
@@ -8612,6 +8835,7 @@
     },
     "inov-8-roadfly": {
       "brand": "Inov8",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not the best for forefoot strikers",
         "Drop varies too much from stated specs",
@@ -8650,6 +8874,7 @@
     },
     "k-swiss-shad-x": {
       "brand": "K-Swiss",
+      "categorySlug": "running-shoes",
       "cons": [
         "Energy return limits speed",
         "Not ideal for wide feet",
@@ -8688,6 +8913,7 @@
     },
     "keen-nxis-speed": {
       "brand": "KEEN",
+      "categorySlug": "hiking-shoes",
       "cons": [
         "Unruly shoestrings",
         "Too airy for cold temperatures",
@@ -8728,6 +8954,7 @@
     },
     "keen-pyrenees": {
       "brand": "KEEN",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Too bulky and heavy",
         "Tongue edges dig into shins",
@@ -8767,6 +8994,7 @@
     },
     "keen-targhee-iii-waterproof-mid": {
       "brand": "KEEN",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Lacklustre outsole durability",
         "Not ideal for narrow feet",
@@ -8810,6 +9038,7 @@
     },
     "kiprun-kipstorm-elite": {
       "brand": "KIPRUN",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most rivals",
         "Heel padding comfort is a hit or miss",
@@ -8851,6 +9080,7 @@
     },
     "kuru-atom-2": {
       "brand": "KURU",
+      "categorySlug": "running-shoes",
       "cons": [
         "Feels dull due to low energy return",
         "Less shock absorption than expected",
@@ -8889,6 +9119,7 @@
     },
     "kuru-ridge-motion": {
       "brand": "KURU",
+      "categorySlug": "hiking-shoes",
       "cons": [
         "Only moderate shock absorption",
         "Heavier than average",
@@ -8926,6 +9157,7 @@
     },
     "kuru-triple-max-ion": {
       "brand": "KURU",
+      "categorySlug": "running-shoes",
       "cons": [
         "H-E-A-V-Y",
         "Poor energy return",
@@ -8964,6 +9196,7 @@
     },
     "merrell-vapor-glove-6": {
       "brand": "Merrell",
+      "categorySlug": "running-shoes",
       "cons": [
         "Overly spacious for those with narrow feet",
         "Outsole shows wear quickly",
@@ -9002,6 +9235,7 @@
     },
     "mizuno-neo-vista": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited heel stability",
         "Rock-catching outsole",
@@ -9043,6 +9277,7 @@
     },
     "mizuno-neo-vista-2": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not enough energy return",
         "Price hike feels unjustified",
@@ -9082,6 +9317,7 @@
     },
     "mizuno-neo-vista-3": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks the expected bounce",
         "Expensive for its performance",
@@ -9123,6 +9359,7 @@
     },
     "mizuno-neo-zen": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Wobbly for those needing support",
         "Heel sink slows rearfoot strikers",
@@ -9162,6 +9399,7 @@
     },
     "mizuno-neo-zen-2": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Major downgrade in energy return",
         "Poor upper durability",
@@ -9201,6 +9439,7 @@
     },
     "mizuno-wave-horizon-7": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "H-E-A-V-Y",
         "Ride lacks excitement",
@@ -9239,6 +9478,7 @@
     },
     "mizuno-wave-inspire-20": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "12.6 mm drop may not suit all runners",
         "A little wide for narrow feet",
@@ -9281,6 +9521,7 @@
     },
     "mizuno-wave-inspire-21": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "But still feels a bit heavy...",
         "Sky-high drop not for everyone",
@@ -9320,6 +9561,7 @@
     },
     "mizuno-wave-inspire-22": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low bounce",
         "A bit heavy for its size﻿",
@@ -9358,6 +9600,7 @@
     },
     "mizuno-wave-rebellion": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Potentially overpriced at $180",
         "Lacks outsole durability",
@@ -9394,6 +9637,7 @@
     },
     "mizuno-wave-rebellion-flash-2": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Absolutely not for heel strikers",
         "Non-removable insole",
@@ -9432,6 +9676,7 @@
     },
     "mizuno-wave-rebellion-flash-3": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for heel strikers",
         "Bad fit for wide feet runners",
@@ -9470,6 +9715,7 @@
     },
     "mizuno-wave-rebellion-pro-2": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Energy return is low compared to other supershoes",
         "Stability issues",
@@ -9509,6 +9755,7 @@
     },
     "mizuno-wave-rebellion-pro-3": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Suited only to a specific footstrike",
         "Energy return still lags behind top rivals",
@@ -9550,6 +9797,7 @@
     },
     "mizuno-wave-rider-27": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "A bit on the heavier side",
         "13.2-mm drop may be a drawback for forefoot strikers",
@@ -9588,6 +9836,7 @@
     },
     "mizuno-wave-rider-28": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Sky-high drop",
         "Outsole durability could be better",
@@ -9626,6 +9875,7 @@
     },
     "mizuno-wave-rider-29": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price increase",
         "Ride is not very exciting",
@@ -9665,6 +9915,7 @@
     },
     "mizuno-wave-sky-8": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs better breathability",
         "Not very stable",
@@ -9704,6 +9955,7 @@
     },
     "mizuno-wave-sky-9": {
       "brand": "Mizuno",
+      "categorySlug": "running-shoes",
       "cons": [
         "Overpriced for a daily beater",
         "Downgraded energy return",
@@ -9740,6 +9992,7 @@
     },
     "mount-to-coast-c-1": {
       "brand": "Mount to Coast",
+      "categorySlug": "running-shoes",
       "cons": [
         "Premium price hurts overall value",
         "Not as fast as we hoped due to EVA layer",
@@ -9779,6 +10032,7 @@
     },
     "new-balance-1080-v-15": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slight price increase",
         "Ultra-plush foam will not suit everyone",
@@ -9819,6 +10073,7 @@
     },
     "new-balance-ellipse": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited stability",
         "Lifestyle-oriented look may not suit everyone",
@@ -9859,6 +10114,7 @@
     },
     "new-balance-fresh-foam-680-v8": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for speedwork",
         "Limited to neutral runners",
@@ -9897,6 +10153,7 @@
     },
     "new-balance-fresh-foam-680-v9": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not very breathable",
         "Only for neutral runners",
@@ -9936,6 +10193,7 @@
     },
     "new-balance-fresh-foam-arishi-v4": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks arch support",
         "Heel rubs",
@@ -9973,6 +10231,7 @@
     },
     "new-balance-fresh-foam-more-v-4": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Easily feels hot",
         "Chunky and clunky",
@@ -10012,6 +10271,7 @@
     },
     "new-balance-fresh-foam-roav-v2": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for wide feet",
         "Durability is not great",
@@ -10048,6 +10308,7 @@
     },
     "new-balance-fresh-foam-x-1080-v-12": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for narrow feet",
         "Bottom-heavy for fast runs",
@@ -10089,6 +10350,7 @@
     },
     "new-balance-fresh-foam-x-1080-v-13": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "The EVA-based midsole falls short in energy return",
         "Lacks stability",
@@ -10129,6 +10391,7 @@
     },
     "new-balance-fresh-foam-x-1080-v14": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Noticeable weight increase",
         "Tapered toebox limits toe splay",
@@ -10168,6 +10431,7 @@
     },
     "new-balance-fresh-foam-x-860-v-15": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Surprisingly hefty weight limits versatility",
         "Below-average outsole durability",
@@ -10207,6 +10471,7 @@
     },
     "new-balance-fresh-foam-x-860-v14": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited breathability",
         "Upper lacks durability",
@@ -10245,6 +10510,7 @@
     },
     "new-balance-fresh-foam-x-880-v-14": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited airflow",
         "Midsole gets firm in winter",
@@ -10284,6 +10550,7 @@
     },
     "new-balance-fresh-foam-x-880-v-15": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Much heavier than previous version",
         "Not the best for walking or casual use",
@@ -10324,6 +10591,7 @@
     },
     "new-balance-fresh-foam-x-880-v14-gtx": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price bump from 880 v14",
         "Gore-Tex integration could be better",
@@ -10363,6 +10631,7 @@
     },
     "new-balance-fresh-foam-x-balos": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low-volume toebox",
         "Price feels a bit excessive",
@@ -10404,6 +10673,7 @@
     },
     "new-balance-fresh-foam-x-evoz-v-4": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lower drop won't suit everyone",
         "Noticeably heavier and stiffer than its predecessor",
@@ -10441,6 +10711,7 @@
     },
     "new-balance-fresh-foam-x-evoz-v3": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks breathability",
         "Reduced outsole coverage",
@@ -10479,6 +10750,7 @@
     },
     "new-balance-fresh-foam-x-kaiha-road": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacking in upper durability",
         "Needs some breaking in",
@@ -10518,6 +10790,7 @@
     },
     "new-balance-fresh-foam-x-more-v-6": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow, low-volume interior fit",
         "Still a heavy shoe",
@@ -10558,6 +10831,7 @@
     },
     "new-balance-fresh-foam-x-more-v5": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than its predecessor",
         "Snug fit",
@@ -10599,6 +10873,7 @@
     },
     "new-balance-fresh-foam-x-tempo-v-2": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for long distance training",
         "Lacks stability",
@@ -10639,6 +10914,7 @@
     },
     "new-balance-fresh-foam-x-vongo-v-6": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Noticeably heavy",
         "Limited breathability",
@@ -10676,6 +10952,7 @@
     },
     "new-balance-fuel-cell-rebel-v-3": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not great on wet surfaces",
         "Durability could be improved",
@@ -10713,6 +10990,7 @@
     },
     "new-balance-fuel-cell-rebel-v-5": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Runs warm on hot summer days",
         "Upper durability is a concern",
@@ -10753,6 +11031,7 @@
     },
     "new-balance-fuel-cell-super-comp-elite-v-4": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs to lose weight",
         "Subpar tongue",
@@ -10793,6 +11072,7 @@
     },
     "new-balance-fuel-cell-super-comp-elite-v-5": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Still not among the fastest supershoes",
         "Narrow heel reduces stability",
@@ -10833,6 +11113,7 @@
     },
     "new-balance-fuel-cell-super-comp-pacer-v-2": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Teniendo en cuenta la altura de su suela, deber&iacute;an ser m&aacute;s ligeras",
         "Puede que te rocen en el tend&oacute;n de Aquiles",
@@ -10872,6 +11153,7 @@
     },
     "new-balance-fuel-cell-super-comp-trainer-v-2": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "The upper lacks breathability and durability",
         "Energy return falls short compared to other supershoes",
@@ -10911,6 +11193,7 @@
     },
     "new-balance-fuel-cell-super-comp-trainer-v-3": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Increased weight",
         "Still not 100% PEBA foam",
@@ -10951,6 +11234,7 @@
     },
     "new-balance-fuelcell-propel-v4": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not the best for heel strikers",
         "Stability concerns"
@@ -10987,6 +11271,7 @@
     },
     "new-balance-fuelcell-propel-v5": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor durability",
         "Not the best for heel strikers",
@@ -11026,6 +11311,7 @@
     },
     "new-balance-fuelcell-rebel-v4": {
       "brand": "New Balance",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel lock needs improvement",
         "Now it's even... too wide!"
@@ -11063,6 +11349,7 @@
     },
     "nike-air-zoom-alphafly-next-2": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Expensive for sure",
         "Still slightly unstable on corners",
@@ -11101,6 +11388,7 @@
     },
     "nike-air-zoom-pegasus-39": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow toe box for wide feet",
         "Warm upper",
@@ -11139,6 +11427,7 @@
     },
     "nike-alphafly-3": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel strikers might wear down the outsole quickly",
         "The arch could still be a challenge for some",
@@ -11176,6 +11465,7 @@
     },
     "nike-downshifter-12": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Subpar grip",
         "On the heavier side",
@@ -11214,6 +11504,7 @@
     },
     "nike-downshifter-13": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited energy return",
         "Forefoot stack is a bit low",
@@ -11252,6 +11543,7 @@
     },
     "nike-downshifter-14": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too heavy for its size",
         "Narrow fit",
@@ -11291,6 +11583,7 @@
     },
     "nike-flex-experience-run-12": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Minimal, firm cushioning",
         "Unsuitable for long runs",
@@ -11328,6 +11621,7 @@
     },
     "nike-free-rn-nn": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too toasty for warm weather",
         "Not ideal for speedwork or long distances",
@@ -11369,6 +11663,7 @@
     },
     "nike-free-run-50": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Short runs only",
         "Lack of proper outsole",
@@ -11404,6 +11699,7 @@
     },
     "nike-infinityrn-4": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Average-at-best breathability",
         "On the heavier side",
@@ -11444,6 +11740,7 @@
     },
     "nike-interact-run": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not very bouncy﻿",
         "Outsole lacks grip",
@@ -11481,6 +11778,7 @@
     },
     "nike-journey-run": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Minimal energy return",
         "Not as soft as marketed",
@@ -11519,6 +11817,7 @@
     },
     "nike-pegasus-40": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "A generally narrow fit",
         "Heavier than the v39",
@@ -11558,6 +11857,7 @@
     },
     "nike-pegasus-41": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price increased by $10",
         "Worse than the v40 in cold temperatures",
@@ -11599,6 +11899,7 @@
     },
     "nike-pegasus-41-gtx": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tapered toebox",
         "Heavy",
@@ -11640,6 +11941,7 @@
     },
     "nike-pegasus-42": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Feels heavy",
         "Lacks forefoot shock absorption",
@@ -11679,6 +11981,7 @@
     },
     "nike-pegasus-easyon": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Stability reduced by EasyOn design",
         "Low toebox durability",
@@ -11718,6 +12021,7 @@
     },
     "nike-pegasus-plus": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited stability",
         "Narrow, tapered toebox",
@@ -11756,6 +12060,7 @@
     },
     "nike-pegasus-premium": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow fit excludes many runners",
         "Needs to lose some weight",
@@ -11796,6 +12101,7 @@
     },
     "nike-quest-5": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low energy return",
         "Not for wide feet",
@@ -11833,6 +12139,7 @@
     },
     "nike-quest-6": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Modest energy return and firm foam",
         "Steep heel-to-toe drop",
@@ -11870,6 +12177,7 @@
     },
     "nike-react-infinity-run-flyknit-3": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks responsiveness",
         "A tad heavy",
@@ -11908,6 +12216,7 @@
     },
     "nike-react-miler-3": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Definitely warm",
         "On the heavy side",
@@ -11944,6 +12253,7 @@
     },
     "nike-revolution-7": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Stiff cushioning",
         "Poor ventilation",
@@ -11980,6 +12290,7 @@
     },
     "nike-revolution-7-easyon": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited durability of toebox mesh",
         "Firm midsole",
@@ -12019,6 +12330,7 @@
     },
     "nike-revolution-8": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks forefoot cushioning",
         "Still a narrow fit",
@@ -12058,6 +12370,7 @@
     },
     "nike-run-swift-2": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Stiff ride",
         "Narrow midfoot",
@@ -12090,6 +12403,7 @@
     },
     "nike-streakfly-2": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for heel strikers",
         "Only for short distances",
@@ -12128,6 +12442,7 @@
     },
     "nike-structure-25": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Quite heavy",
         "Average breathability at best",
@@ -12166,6 +12481,7 @@
     },
     "nike-structure-26": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited breathability",
         "Small price bump",
@@ -12203,6 +12519,7 @@
     },
     "nike-structure-plus": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavy",
         "Still feels muted despite ZoomX",
@@ -12241,6 +12558,7 @@
     },
     "nike-vaporfly-4": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Less ideal for marathon racing",
         "Still lacks the snappy feel of the Vaporfly 1&amp;2",
@@ -12281,6 +12599,7 @@
     },
     "nike-vomero-17": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks bounce in the heel",
         "Possible heel slippage",
@@ -12319,6 +12638,7 @@
     },
     "nike-vomero-18": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs to lose some weight",
         "Narrow toebox",
@@ -12358,6 +12678,7 @@
     },
     "nike-vomero-plus": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low breathability﻿",
         "Snug fit and narrow toebox",
@@ -12397,6 +12718,7 @@
     },
     "nike-vomero-premium": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lower energy return than expected",
         "Limited versatility",
@@ -12438,6 +12760,7 @@
     },
     "nike-winflo-10": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "May not suit forefoot strikers",
         "Could benefit from increased energy return"
@@ -12475,6 +12798,7 @@
     },
     "nike-winflo-11": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Small price increase from v10",
         "Notable weight gain",
@@ -12514,6 +12838,7 @@
     },
     "nike-winflo-11-gtx": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not very stable",
         "Midsole firmens significantly in cold temperatures",
@@ -12554,6 +12879,7 @@
     },
     "nike-winflo-12": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavy build",
         "Small price bump",
@@ -12592,6 +12918,7 @@
     },
     "nike-zoom-fly-6": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Toebox is narrow and restrictive",
         "SR-02 foam lacks bounce",
@@ -12631,6 +12958,7 @@
     },
     "nike-zoom-x-invincible-run-flyknit-3": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel slippage",
         "Heel clip can be irritating when cornering",
@@ -12667,6 +12995,7 @@
     },
     "nike-zoom-x-streakfly": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow-footed runners may experience poor lockdown",
         "Insanely thin laces",
@@ -12707,6 +13036,7 @@
     },
     "nike-zoom-x-vaporfly-next-2": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not ideal for wide feet",
         "Unstable",
@@ -12742,6 +13072,7 @@
     },
     "nike-zoom-x-vaporfly-next-3": {
       "brand": "Nike",
+      "categorySlug": "running-shoes",
       "cons": [
         "Uncomfortably large tongue",
         "The heel is still too narrow",
@@ -12779,6 +13110,7 @@
     },
     "nobull-allday-knit": {
       "brand": "NOBULL",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks stability",
         "Not for wide feet",
@@ -12814,6 +13146,7 @@
     },
     "nobull-allday-ripstop": {
       "brand": "NOBULL",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs lengthy break-in",
         "Not for wide feet",
@@ -12851,6 +13184,7 @@
     },
     "on-cloud-waterproof": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks breathability",
         "Low-volume toebox",
@@ -12886,6 +13220,7 @@
     },
     "on-cloud-x": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "On the pricier side",
         "Lacks cushioning",
@@ -12924,6 +13259,7 @@
     },
     "on-cloudboom-echo-3": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Exorbitantly high price",
         "Likely too narrow for most runners",
@@ -12964,6 +13300,7 @@
     },
     "on-cloudboom-max": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most competitors",
         "Very expensive",
@@ -13004,6 +13341,7 @@
     },
     "on-cloudboom-strike": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Potential heel slippage",
         "Not for heel strikers",
@@ -13046,6 +13384,7 @@
     },
     "on-cloudeclipse": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Helion foam lacks energy return",
         "Seems overpriced, like other On models",
@@ -13084,6 +13423,7 @@
     },
     "on-cloudflow-4-0": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Likely too expensive for the features provided",
         "The foam may be excessively firm",
@@ -13121,6 +13461,7 @@
     },
     "on-cloudflow-5": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Terrible energy return",
         "Extremely firm midsole",
@@ -13159,6 +13500,7 @@
     },
     "on-cloudflyer-4": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Could be lighter",
         "Pricier compared to other daily trainers",
@@ -13194,6 +13536,7 @@
     },
     "on-cloudflyer-5": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Pricey for its performance",
         "Firm midsole",
@@ -13230,6 +13573,7 @@
     },
     "on-cloudgo": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too firm for longer runs",
         "Average at best breathability",
@@ -13269,6 +13613,7 @@
     },
     "on-cloudmonster": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firm for recovery days",
         "Not for wide feet",
@@ -13312,6 +13657,7 @@
     },
     "on-cloudmonster-2": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Breathability needs improvement",
         "Tongue lacks enough cushion",
@@ -13351,6 +13697,7 @@
     },
     "on-cloudmonster-3": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price hurts overall value",
         "Still a heavy shoe",
@@ -13392,6 +13739,7 @@
     },
     "on-cloudmonster-3-hyper": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavier than key competitors",
         "Limited breathability",
@@ -13433,6 +13781,7 @@
     },
     "on-cloudmonster-hyper": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price",
         "Not the best for heel strikers",
@@ -13471,6 +13820,7 @@
     },
     "on-cloudmonster-void": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for performance-focused runners",
         "Firm ride may feel unforgiving",
@@ -13509,6 +13859,7 @@
     },
     "on-cloudrunner": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not for severe overpronation",
         "Firm ride",
@@ -13550,6 +13901,7 @@
     },
     "on-cloudrunner-2": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Outsole durability",
         "Remains somewhat firm",
@@ -13587,6 +13939,7 @@
     },
     "on-cloudrunner-2-waterproof": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Unnecessarily heavy",
         "Heel durability issues",
@@ -13625,6 +13978,7 @@
     },
     "on-cloudrunner-3": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low energy return",
         "Heavy build limits faster paces",
@@ -13665,6 +14019,7 @@
     },
     "on-cloudstratus": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "High price point at $170",
         "Questionable outsole durability",
@@ -13701,6 +14056,7 @@
     },
     "on-cloudstratus-3": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Higher than advertised drop",
         "Stiff speedboard feels apparent at low speeds",
@@ -13741,6 +14097,7 @@
     },
     "on-cloudsurfer-2": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price tag exceeds performance value",
         "Not for faster paces",
@@ -13782,6 +14139,7 @@
     },
     "on-cloudsurfer-7": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Overall issues with durability",
         "Somewhat unstable at longer distances",
@@ -13826,6 +14184,7 @@
     },
     "on-cloudsurfer-max": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very low energy return",
         "Feels heavy",
@@ -13864,6 +14223,7 @@
     },
     "on-cloudsurfer-next": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heel padding may wear quickly",
         "Needs better breathability",
@@ -13902,6 +14262,7 @@
     },
     "on-cloudswift-3": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly firm underfoot",
         "Not advisable for long runs",
@@ -13944,6 +14305,7 @@
     },
     "on-cloudswift-4": {
       "brand": "On",
+      "categorySlug": "running-shoes",
       "cons": [
         "Extremely firm ride",
         "Tight toebox",
@@ -13983,6 +14345,7 @@
     },
     "ortuseight-solar-2-0": {
       "brand": "Ortuseight",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not the most stable ride",
         "Less energetic than many competitors",
@@ -14023,6 +14386,7 @@
     },
     "puma-deviate-nitro": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Loose around ankles",
         "Not for cold weather"
@@ -14060,6 +14424,7 @@
     },
     "puma-deviate-nitro-2": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than other similar shoes",
         "Not many colours available",
@@ -14098,6 +14463,7 @@
     },
     "puma-deviate-nitro-3": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs better energy return",
         "Minor increase in weight",
@@ -14137,6 +14503,7 @@
     },
     "puma-deviate-nitro-4": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Stiff plate kills some comfort",
         "Heel energy return is a letdown",
@@ -14174,6 +14541,7 @@
     },
     "puma-deviate-nitro-elite": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Scratchy upper with subpar durability",
         "Narrow fit",
@@ -14216,6 +14584,7 @@
     },
     "puma-deviate-nitro-elite-3": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not the best for heel strikers",
         "Durability concerns",
@@ -14257,6 +14626,7 @@
     },
     "puma-deviate-nitro-elite-4": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow heel limits stability",
         "Less exciting than Fast-R series",
@@ -14296,6 +14666,7 @@
     },
     "puma-fast-r-nitro-elite-2": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Excessively heavy",
         "Not for heel strikers at all",
@@ -14333,6 +14704,7 @@
     },
     "puma-fast-r-nitro-elite-3": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Higher price than before",
         "Extremely unstable",
@@ -14372,6 +14744,7 @@
     },
     "puma-forever-run-nitro": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Fast-wearing outsole",
         "Low-volume forefoot",
@@ -14410,6 +14783,7 @@
     },
     "puma-foreverrun-nitro-2": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than the previous version",
         "Rocker mainly benefits heel strikers",
@@ -14449,6 +14823,7 @@
     },
     "puma-mag-max-nitro-2": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks bounce",
         "Narrow toebox limits toe splay",
@@ -14487,6 +14862,7 @@
     },
     "puma-magmax-nitro": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most competitors",
         "Outsole shows fast wear",
@@ -14526,6 +14902,7 @@
     },
     "puma-magnify-nitro-2": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks snap",
         "Could benefit from being slightly lighter",
@@ -14563,6 +14940,7 @@
     },
     "puma-magnify-nitro-3": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Forefoot shock absorption should be higher",
         "High drop limits versatility",
@@ -14602,6 +14980,7 @@
     },
     "puma-velocity-nitro-2": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Runs a little long",
         "Poor durability in the upper"
@@ -14634,6 +15013,7 @@
     },
     "puma-velocity-nitro-3": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow toebox",
         "Firmer EVA carrier foam",
@@ -14673,6 +15053,7 @@
     },
     "puma-velocity-nitro-4": {
       "brand": "PUMA",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not ideal for long runs",
         "Fit leans toward the narrow side",
@@ -14712,6 +15093,7 @@
     },
     "reebok-floatride-energy-5": {
       "brand": "Reebok",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor breathability",
         "Some break-in period needed",
@@ -14750,6 +15132,7 @@
     },
     "reebok-floatzig-1": {
       "brand": "Reebok",
+      "categorySlug": "running-shoes",
       "cons": [
         "Snug midfoot and tapered toebox",
         "On the heavier side",
@@ -14791,6 +15174,7 @@
     },
     "reebok-lite-3": {
       "brand": "Reebok",
+      "categorySlug": "running-shoes",
       "cons": [
         "Laces are short",
         "Poor outsole durability",
@@ -14823,6 +15207,7 @@
     },
     "reebok-zig-dynamica-5": {
       "brand": "Reebok",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tapered, low-height toebox",
         "Lacks any speed",
@@ -14860,6 +15245,7 @@
     },
     "salomon-aero-glide": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "Somewhat overpriced",
         "Forefoot cushioning insufficient",
@@ -14897,6 +15283,7 @@
     },
     "salomon-aero-glide-2": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "Excessively rigid",
         "Still lacks a gusseted tongue",
@@ -14937,6 +15324,7 @@
     },
     "salomon-aero-glide-3": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "Pricier than most competitors",
         "Tight fit and tapered toebox",
@@ -14975,6 +15363,7 @@
     },
     "salomon-aero-glide-4": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "High drop may bother forefoot strikers",
         "Oversized tongue won't work for everyone",
@@ -15013,6 +15402,7 @@
     },
     "salomon-s-lab-phantasm-2": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "Disappointing energy return",
         "Heavier than expected",
@@ -15052,6 +15442,7 @@
     },
     "salomon-s-lab-spectur": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "Disappointing energy return for the price",
         "Could be lighter for a supershoe",
@@ -15089,6 +15480,7 @@
     },
     "salomon-spectur-2": {
       "brand": "Salomon",
+      "categorySlug": "running-shoes",
       "cons": [
         "Subpar energy return for the price",
         "Blocky heel and narrow midfoot can feel odd",
@@ -15127,6 +15519,7 @@
     },
     "salomon-x-ultra-360-edge": {
       "brand": "Salomon",
+      "categorySlug": "hiking-shoes",
       "cons": [
         "Not much shock absorption",
         "Not for wide feet",
@@ -15165,6 +15558,7 @@
     },
     "salomon-x-ultra-5-mid-gtx": {
       "brand": "Salomon",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Limited cushioning and shock absorption",
         "Not for deep mud",
@@ -15204,6 +15598,7 @@
     },
     "saucony-axon-2": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firm for long miles and recovery days",
         "Squeaky noise on pavement",
@@ -15242,6 +15637,7 @@
     },
     "saucony-axon-3": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Probably too stiff for very relaxed runs",
         "Slightly narrower forefoot than before"
@@ -15278,6 +15674,7 @@
     },
     "saucony-endorphin-azura": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firm ride won't suit everyone",
         "SpeedRoll rocker can feel intrusive",
@@ -15317,6 +15714,7 @@
     },
     "saucony-endorphin-elite": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Priced on the higher side at $275",
         "Not the best pick for heel strikers",
@@ -15357,6 +15755,7 @@
     },
     "saucony-endorphin-elite-2": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "A touch heavy for being an elite supershoe",
         "Budget-crushing price",
@@ -15398,6 +15797,7 @@
     },
     "saucony-endorphin-elite-3": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than rivals",
         "Still a very unstable ride",
@@ -15441,6 +15841,7 @@
     },
     "saucony-endorphin-pro-4": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavier than v3",
         "Less suited for forefoot strikers",
@@ -15479,6 +15880,7 @@
     },
     "saucony-endorphin-pro-5": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most super shoes",
         "Maybe a bit stiffer than it should",
@@ -15518,6 +15920,7 @@
     },
     "saucony-endorphin-shift-3": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very big",
         "Not for wide feet"
@@ -15554,6 +15957,7 @@
     },
     "saucony-endorphin-speed-2": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Learning curve needed for heel strikers or slower paces",
         "Slipper on wet surfaces"
@@ -15593,6 +15997,7 @@
     },
     "saucony-endorphin-speed-3": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Rubs the heel",
         "Not for narrow feet",
@@ -15633,6 +16038,7 @@
     },
     "saucony-endorphin-speed-4": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavier than predecessor",
         "Could be a bit firm for some"
@@ -15672,6 +16078,7 @@
     },
     "saucony-endorphin-speed-5": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Small price hike",
         "Less agile than predecessors",
@@ -15712,6 +16119,7 @@
     },
     "saucony-endorphin-trainer": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow toebox",
         "Heavier than key rivals",
@@ -15752,6 +16160,7 @@
     },
     "saucony-freedom-4": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not a running shoe per se",
         "Stiff ride",
@@ -15789,6 +16198,7 @@
     },
     "saucony-guide-16": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Uncomfortable for going sockless",
         "Firm cushioning",
@@ -15830,6 +16240,7 @@
     },
     "saucony-guide-17": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Grip could be better",
         "Less agile than before",
@@ -15866,6 +16277,7 @@
     },
     "saucony-guide-18": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Too much exposed foam on outsole",
         "Feels bulky and not agile",
@@ -15904,6 +16316,7 @@
     },
     "saucony-guide-19": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs to lose weight",
         "Not for extreme heel strikers",
@@ -15944,6 +16357,7 @@
     },
     "saucony-hurricane-24": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Non-gusseted tongue",
         "Upper lacks durability",
@@ -15983,6 +16397,7 @@
     },
     "saucony-hurricane-25": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price hike from previous version",
         "Poor breathability",
@@ -16021,6 +16436,7 @@
     },
     "saucony-kinvara-14": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "A bit on the firm side",
         "Less outsole rubber means less mileage",
@@ -16062,6 +16478,7 @@
     },
     "saucony-kinvara-15": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited to short runs",
         "Not ideal for heel strikers",
@@ -16101,6 +16518,7 @@
     },
     "saucony-kinvara-16": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price hike",
         "Low energy return",
@@ -16138,6 +16556,7 @@
     },
     "saucony-kinvara-pro": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow toebox",
         "Breathability falls below average",
@@ -16179,6 +16598,7 @@
     },
     "saucony-omni-22": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Limited shock absorption in the heel",
         "Upper durability may be an issue",
@@ -16217,6 +16637,7 @@
     },
     "saucony-ride-17": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Tapered toebox",
         "Subpar breathability",
@@ -16255,6 +16676,7 @@
     },
     "saucony-ride-18": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow for wide-footer runners",
         "Low outsole coverage",
@@ -16294,6 +16716,7 @@
     },
     "saucony-ride-19": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than previous version",
         "Limited rubber coverage",
@@ -16335,6 +16758,7 @@
     },
     "saucony-sinister": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Falls short in durability",
         "Insufficient cushioning for longer distances",
@@ -16372,6 +16796,7 @@
     },
     "saucony-tempus": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Causes heel rubs",
         "Expensive"
@@ -16410,6 +16835,7 @@
     },
     "saucony-tempus-2": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor breathability",
         "Feels a bit too firm",
@@ -16448,6 +16874,7 @@
     },
     "saucony-triumph-20": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price is way up there",
         "Rocker geometry isn't as pronounced"
@@ -16484,6 +16911,7 @@
     },
     "saucony-triumph-21": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not suitable for those with narrow feet",
         "Drop might be too high for forefoot strikers"
@@ -16522,6 +16950,7 @@
     },
     "saucony-triumph-22": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "A bit clunky",
         "Lacks breathability",
@@ -16559,6 +16988,7 @@
     },
     "saucony-triumph-23": {
       "brand": "Saucony",
+      "categorySlug": "running-shoes",
       "cons": [
         "Price increase",
         "PWRRUN PB may feel firm to some",
@@ -16599,6 +17029,7 @@
     },
     "scarpa-boreas-gtx": {
       "brand": "Scarpa",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Not for wide feet",
         "Needs breaking-in"
@@ -16636,6 +17067,7 @@
     },
     "scarpa-rush-trk-gtx": {
       "brand": "Scarpa",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Not for narrow feet",
         "Break-in needed",
@@ -16674,6 +17106,7 @@
     },
     "scarpa-terra-gtx": {
       "brand": "Scarpa",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Quite heavy",
         "Cushioning could be better",
@@ -16714,6 +17147,7 @@
     },
     "skechers-aero-burst": {
       "brand": "Skechers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most competitors",
         "Narrow fit with a low toebox",
@@ -16752,6 +17186,7 @@
     },
     "skechers-aero-razor": {
       "brand": "Skechers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Bad upper durability",
         "Narrow fit limits wider-foot comfort",
@@ -16792,6 +17227,7 @@
     },
     "skechers-aero-tempo": {
       "brand": "Skechers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Narrow fit won't work for everyone",
         "Heel energy return is underwhelming",
@@ -16832,6 +17268,7 @@
     },
     "skechers-go-run-max-road-6": {
       "brand": "Skechers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Noticeably heavy",
         "Struggles at faster paces",
@@ -16869,6 +17306,7 @@
     },
     "skechers-go-run-ride-11": {
       "brand": "Skechers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than average",
         "Not ideal for wide feet",
@@ -16909,6 +17347,7 @@
     },
     "skechers-max-cushioning-elite-2-0": {
       "brand": "Skechers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Only for narrow feet",
         "Lacks energy return",
@@ -16948,6 +17387,7 @@
     },
     "teva-grandview-gtx-low": {
       "brand": "Teva",
+      "categorySlug": "hiking-shoes",
       "cons": [
         "Heavier than average",
         "Not for narrow feet",
@@ -16985,6 +17425,7 @@
     },
     "topo-athletic-atmos": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Lacks energy return",
         "Not for narrow-footed runners",
@@ -17023,6 +17464,7 @@
     },
     "topo-athletic-cyclone-2": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Not ideal for narrow-footed runners",
         "Limited cushioning",
@@ -17064,6 +17506,7 @@
     },
     "topo-athletic-phantom-3": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Needs a better foam﻿",
         "Firmer feel",
@@ -17104,6 +17547,7 @@
     },
     "topo-athletic-specter-2": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Midsole feel may be too firm for some",
         "Doesn't work for narrow feet",
@@ -17143,6 +17587,7 @@
     },
     "topo-phantom-4": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Minor price increase",
         "Still low energy return",
@@ -17181,6 +17626,7 @@
     },
     "topo-st-5": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Only for short distances",
         "Low energy return from EVA foam",
@@ -17218,6 +17664,7 @@
     },
     "topo-ultrafly-5": {
       "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
       "cons": [
         "Low energy return",
         "Not for long runs",
@@ -17255,6 +17702,7 @@
     },
     "tyr-maverick-v-1-runner": {
       "brand": "TYR",
+      "categorySlug": "running-shoes",
       "cons": [
         "Only moderate energy return",
         "Major stack and drop mismatch",
@@ -17291,6 +17739,7 @@
     },
     "under-armour-charged-assert-10": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Ride leans towards the firm side, lacking in bounce",
         "A bit on the heavy side",
@@ -17328,6 +17777,7 @@
     },
     "under-armour-charged-assert-9": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Falls short in breathability",
         "Heel lockdown leaves room for improvement",
@@ -17363,6 +17813,7 @@
     },
     "under-armour-charged-pursuit-3": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Firm midsole",
         "Limited vertical room in the toebox",
@@ -17399,6 +17850,7 @@
     },
     "under-armour-hovr-phantom-3": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Excessively heavy",
         "Not suitable for long-distance running",
@@ -17434,6 +17886,7 @@
     },
     "under-armour-hovr-sonic-6": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Poor breathability",
         "Firm midsole",
@@ -17471,6 +17924,7 @@
     },
     "under-armour-infinite-elite": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Noticeably heavy underfoot",
         "Poor breathability",
@@ -17510,6 +17964,7 @@
     },
     "under-armour-infinite-elite-2": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Toebox is a bit narrow",
         "Still not a lightweight shoe",
@@ -17548,6 +18003,7 @@
     },
     "under-armour-infinite-pro": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavy weight",
         "Upper durability issues",
@@ -17586,6 +18042,7 @@
     },
     "under-armour-slipspeed-mega": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than a brick",
         "Slippery on rainy days",
@@ -17626,6 +18083,7 @@
     },
     "under-armour-surge-4": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Very low energy return",
         "Weak shock absorption",
@@ -17664,6 +18122,7 @@
     },
     "under-armour-velociti-elite-2": {
       "brand": "Under Armour",
+      "categorySlug": "running-shoes",
       "cons": [
         "Heavier than most rivals",
         "Midsole lacks top-tier energy return",
@@ -17705,6 +18164,7 @@
     },
     "vibram-five-fingers-v-run": {
       "brand": "Vibram FiveFingers",
+      "categorySlug": "running-shoes",
       "cons": [
         "Demands strong feet, calves, and Achilles",
         "Toe pocket length will be long for some",
@@ -17741,6 +18201,7 @@
     },
     "xero-shoes-hfs-ii": {
       "brand": "Xero Shoes",
+      "categorySlug": "running-shoes",
       "cons": [
         "Midsole lacks energy return",
         "Heavier than most minimalist shoes",
@@ -17779,6 +18240,7 @@
     },
     "xero-shoes-prio": {
       "brand": "Xero Shoes",
+      "categorySlug": "running-shoes",
       "cons": [
         "Warm upper lacks airflow",
         "Heavier than it should be!",
@@ -17816,6 +18278,7 @@
     },
     "xero-shoes-speed-force-ii": {
       "brand": "Xero Shoes",
+      "categorySlug": "running-shoes",
       "cons": [
         "Slightly heavy for its size",
         "Outsole durability could be better",
@@ -17855,6 +18318,7 @@
     },
     "zamberlan-320-trail-lite-evo-gtx": {
       "brand": "Zamberlan",
+      "categorySlug": "hiking-boots",
       "cons": [
         "Not for very soft and technical terrain",
         "Expensive",

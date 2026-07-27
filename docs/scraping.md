@@ -151,7 +151,7 @@ renders the year alone when the flag is false (docs/app.md).
 Expensive to discover, invisible in the code:
 
 - **Most shoes have no page-level `released_at`** — hence the supplement.
-  After it, roughly 437 of 464 shoes are dated and only ~24 precisely.
+  After it, roughly 433 of 450 shoes are dated and only ~24 precisely.
 - **Plate detection reads the review section, not the vocabulary.** RunRepeat's
   structured plate fact and its features list both name carbon and nothing else —
   across the whole fleet the fact takes only `carbon-plate`, `false` or absent, so
