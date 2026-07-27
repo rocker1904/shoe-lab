@@ -60,5 +60,7 @@ not reference; where they disagree with docs/, docs/ wins.
 - **Commits**: concise single-line subjects, no embedded measurements;
   trailer `Co-Authored-By: <authoring model> <noreply@anthropic.com>` naming
   the model that wrote the commit (e.g. `Claude Opus 5 (1M context)`), on
-  commits, never in PR descriptions.
+  commits, never in PR descriptions. Branches rebase onto `main` and land by
+  fast-forward — no merge commits
+  (docs/decisions.md §Linear history, no merge commits).
 - **Comments are WHY-only** — docs/README.md §Rules, rule 5.

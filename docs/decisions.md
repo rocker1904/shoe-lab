@@ -13,6 +13,17 @@ free. Refresh = scrape → validate → commit → deploy; a failed validation
 means a red workflow and untouched data, never a partial write. Agents must
 not hand-edit `data/` — fix the pipeline and re-run it.
 
+### Linear history, no merge commits (2026-07-27)
+`main` is a straight line: branches rebase onto it and land by fast-forward,
+never `git merge` producing a merge commit. The reason is the same one that
+makes `data/` a database — history is the audit trail. A data commit is only
+legible as "these shoes changed" if it sits in a sequence where every commit
+has one parent; merge commits fold two dataset states together and
+`git log -- data/` stops answering when a value changed. It also keeps
+`git bisect` meaningful across a refresh. Rebase the branch, resolve conflicts
+there, run `npm run verify` on the rebased tip, then fast-forward. Do not
+"preserve context" with a merge commit — the branch's own commits carry it.
+
 ### Be a good citizen toward RunRepeat (2026-07-26)
 This project exists on top of RunRepeat's affiliate-funded lab work, so the
 posture is: minimum requests, honest identification, visible attribution.
