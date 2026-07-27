@@ -80,10 +80,11 @@ Range filters and the Add-filter menu offer **numeric-typed tests only**
 (`float`, `score`, `percent`, `rating`, plus the `score`/`msrpGbp` shoe
 fields). A range over an `option`, `bool` or `text` test reads as missing for
 every shoe and would empty the whole fleet in one click, so both the UI and
-`parseView` refuse them. The sidebar shows a curated key list plus any
-non-curated key already active, so an active filter is always visible and
-clearable; a cleared curated slider drops out of state entirely, a cleared
-extra row keeps an empty entry so its row survives.
+`parseView` refuse them. The sidebar shows the entries holding a curated key
+plus any entry with a key already active, so an active filter is always visible
+and clearable; a cleared curated slider drops out of state entirely, a cleared
+extra row keeps an empty entry so its row survives. Each row is titled by its
+`MetricRow` rather than by the fieldset legend, so the name is stated once.
 
 `applyFilters` accounts for every shoe it drops: `considered` is the
 population surviving the non-range filters alone, and
@@ -111,10 +112,24 @@ dual-thumb slider: same capability, keyboard-accessible, no drag maths.
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
 `msrpGbp`, `plate`) plus any test slug; `name` and `brand` are rendered by the
-table itself and have no cell, so they are sortable but never columns. The
-picker offers numeric tests grouped by the dataset's test groups, with the
-roughly half that carry no `groupId` collected under **Other**. That gap is
-upstream's shape, not a bug here (docs/scraping.md §Data quirks).
+table itself and have no cell, so they are sortable but never columns.
+
+The picker and the sidebar both offer `metricEntries` (`app/src/lib/lineage.ts`)
+rather than the raw catalogue, so a superseded pair is one entry and a
+heel/forefoot split is one entry. The picker groups by the dataset's test
+groups, with the tests carrying no `groupId` collected under **Other** — that
+gap is upstream's shape, not a bug here (docs/scraping.md §Data quirks). A
+colocated entry takes its **primary's** group, which is what moves the forefoot
+halves beside their heel counterparts. Both halves stay separately checkable
+and separately sortable: a forefoot striker wants the forefoot number, and
+merging them would destroy the distinction.
+
+A pair offers exactly one generation — the chosen one, current by default. The
+click path enforces that: choosing a generation drops the sibling's range and
+its column in the same `setView` call, matching what `parseView` does to a URL
+(docs/app.md §URL encoding). `metricEntries` takes `LabTest[]`, so the sidebar
+constructs `score` and `msrpGbp` as entries itself; they are shoe fields, and
+without that the price filter would disappear.
 
 Sorting reads numbers, with missing values always last and score as the
 tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as

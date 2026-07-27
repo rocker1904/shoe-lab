@@ -66,12 +66,13 @@
   <PresetChips onapply={onPreset} />
   <span class="spacer"></span>
   <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
+                population={filtered.considered} {idx} generations={view.generations}
                 onchange={(cols) => setView({ ...($state.snapshot(view) as ViewState), columns: cols })} />
 </div>
 
 <div class="layout" class:show-filters={showFilters}>
   <div class="sidebar" id="filter-sidebar">
-    <FilterSidebar {data} {view} onchange={setView} />
+    <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>
   <div class="content">
     <Receipt shown={visibleSorted.length} total={filtered.considered.length}

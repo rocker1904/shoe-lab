@@ -8,7 +8,7 @@
 <!-- Always present: an absent receipt would have to be read as "nothing hidden", which is a guess.
      `total` is the population the range filters were applied to, so the three counts sum to it. -->
 <p class="receipt" data-testid="receipt" aria-live="polite">
-  Showing <strong>{shown}</strong> of {total} shoes left by your other filters ·
+  Showing <strong>{shown}</strong> of the {total} shoes left by your other filters ·
   {outsideBounds} outside your bounds ·
   {#if showingMissing}
     shoes with no data for the active filters are included

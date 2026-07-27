@@ -40,12 +40,28 @@
       "type": "percent",
       "units": "",
       "groupId": "3",
-      "chartLabel": null,
+      "chartLabel": "Energy return",
       "isNew": false,
       "previousId": null,
       "updateId": null,
       "primaryTestId": null,
-      "secondaryTestIds": []
+      "secondaryTestIds": [
+        66
+      ]
+    },
+    {
+      "type": "float",
+      "units": "HA",
+      "groupId": "3",
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": 70,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
+      "id": 11,
+      "slug": "midsole-softness",
+      "name": "Midsole softness"
     },
     {
       "id": 70,
@@ -56,7 +72,7 @@
       "groupId": "3",
       "chartLabel": null,
       "isNew": false,
-      "previousId": null,
+      "previousId": 11,
       "updateId": null,
       "primaryTestId": null,
       "secondaryTestIds": []
@@ -74,6 +90,20 @@
       "updateId": null,
       "primaryTestId": null,
       "secondaryTestIds": []
+    },
+    {
+      "type": "percent",
+      "units": "",
+      "groupId": null,
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": 65,
+      "secondaryTestIds": [],
+      "id": 66,
+      "slug": "energy-return-forefoot",
+      "name": "Energy return forefoot"
     }
   ],
   "shoes": [
@@ -92,7 +122,9 @@
       "values": {
         "6": 40,
         "65": 70,
-        "70": 40
+        "70": 40,
+        "11": 25,
+        "66": 62
       },
       "details": {
         "pros": [
@@ -139,7 +171,9 @@
       "values": {
         "6": 39,
         "65": 75,
-        "70": 42
+        "70": 42,
+        "11": 27,
+        "66": 68
       },
       "details": null,
       "facts": {},
@@ -163,7 +197,9 @@
       "values": {
         "6": 35,
         "65": 60,
-        "70": 30
+        "70": 30,
+        "11": 30,
+        "66": 51
       },
       "details": null,
       "facts": {},
@@ -186,7 +222,8 @@
       "imageUrl": null,
       "values": {
         "6": 30,
-        "65": 55
+        "65": 55,
+        "66": 45
       },
       "details": null,
       "facts": {},

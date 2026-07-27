@@ -2,9 +2,11 @@
   import type { Histogram } from '../lib/stats';
   import type { RangeBound } from '../lib/filters';
 
-  let { label, units, hist, bound, onchange }: {
+  let { label, units, hist, bound, onchange, name }: {
     label: string; units: string; hist: Histogram | null; bound: RangeBound;
     onchange: (b: RangeBound) => void;
+    /** Accessible name for callers that title the row above the fieldset instead of in its legend. */
+    name?: string;
   } = $props();
 
   function update(part: 'min' | 'max', raw: string) {
@@ -20,8 +22,8 @@
   const maxCount = $derived(hist ? Math.max(...hist.counts) : 1);
 </script>
 
-<fieldset class="range">
-  <legend>{label}{units ? ` (${units})` : ''}</legend>
+<fieldset class="range" aria-label={name}>
+  {#if label}<legend>{label}{units ? ` (${units})` : ''}</legend>{/if}
   {#if hist}
     <svg viewBox="0 0 {hist.counts.length * 4} 24" preserveAspectRatio="none" aria-hidden="true">
       {#each hist.counts as c, i (i)}

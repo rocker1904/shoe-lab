@@ -10,7 +10,7 @@ const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: 
 
 function setup(view = defaultView()) {
   const onchange = vi.fn();
-  render(FilterSidebar, { props: { data, view, onchange } });
+  render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
   return onchange;
 }
 
@@ -56,7 +56,7 @@ describe('FilterSidebar', () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.ranges['heel-stack'] = { min: 36 };
-    render(FilterSidebar, { props: { data, view, onchange } });
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
     await fireEvent.click(screen.getByRole('button', { name: /reset/i }));
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
   });
@@ -97,7 +97,7 @@ describe('FilterSidebar text and toggle controls', () => {
     const checked = defaultView();
     checked.filters.hideDiscontinued = true;
     const off = vi.fn();
-    render(FilterSidebar, { props: { data, view: checked, onchange: off } });
+    render(FilterSidebar, { props: { data, view: checked, onchange: off, population: FLEET } });
     await fireEvent.click(screen.getAllByLabelText('Hide discontinued').at(-1)!);
     expect(off.mock.lastCall![0].filters.hideDiscontinued).toBeUndefined();
     expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
@@ -110,12 +110,11 @@ const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 describe('FilterSidebar filter set management', () => {
   it('offers only numeric tests in the Add filter select and adds the chosen one', async () => {
     const onchange = vi.fn();
-    render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange } });
+    render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, population: FLEET } });
     const select = screen.getByLabelText('Add filter');
-    // curated keys and the option-typed test are both absent
+    // curated keys, the option-typed test and both retired generations are all absent
     expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
-      .toEqual(['', 'midsole-softness', 'toebox-width-at-the-widest-part', 'stiffness']);
-    expect([...select.querySelectorAll('option')].map((o) => o.textContent)).toContain('Stiffness');
+      .toEqual(['', 'stiffness', 'score']);
 
     await fireEvent.change(select, { target: { value: 'stiffness' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
@@ -124,7 +123,7 @@ describe('FilterSidebar filter set management', () => {
   it('renders an already-active non-curated filter and stops offering it', () => {
     const view = defaultView();
     view.filters.ranges['stiffness'] = { min: 5 };
-    render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn() } });
+    render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByText(/Stiffness/)).toBeInTheDocument();
     expect([...screen.getByLabelText('Add filter').querySelectorAll('option')].map((o) => o.getAttribute('value')))
       .not.toContain('stiffness');
@@ -136,7 +135,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.search = 'racer';
     view.filters.brands = ['Brand'];
     view.filters.ranges['energy-return-heel'] = { max: 80 };
-    render(FilterSidebar, { props: { data, view, onchange } });
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
     await fireEvent.input(screen.getAllByLabelText('min')[0]!, { target: { value: '36' } });
     const next = onchange.mock.lastCall![0];
@@ -152,7 +151,7 @@ describe('FilterSidebar filter set management', () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.ranges['stiffness'] = { min: 5 };
-    render(FilterSidebar, { props: { data: dataPlus, view, onchange } });
+    render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
 
     await fireEvent.input(screen.getAllByLabelText('min').at(-1)!, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
@@ -162,9 +161,56 @@ describe('FilterSidebar filter set management', () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.ranges['heel-stack'] = { min: 36 };
-    render(FilterSidebar, { props: { data, view, onchange } });
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
     await fireEvent.input(screen.getAllByLabelText('min')[0]!, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
+  });
+});
+
+describe('FilterSidebar metric entries', () => {
+  it('renders a superseded pair once, as one heading with two generations', () => {
+    setup();
+    expect(screen.getAllByRole('heading', { name: /^Midsole softness/ })).toHaveLength(1);
+    const gens = screen.getAllByRole('radio', { name: /Midsole softness/ });
+    expect(gens).toHaveLength(2);
+    expect(gens[0]).toHaveAttribute('aria-checked', 'true'); // current generation by default
+  });
+  it('gives no two range groups the same accessible name', () => {
+    setup();
+    const names = screen.getAllByRole('group').map((g) => g.getAttribute('aria-label') ?? g.textContent ?? '');
+    expect(new Set(names).size).toBe(names.length);
+  });
+  it('keeps the price row, and the score row once it is active', () => {
+    setup();
+    expect(screen.getByRole('group', { name: /Price/ })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /^Score/ })).not.toBeInTheDocument();
+
+    const view = defaultView();
+    view.filters.ranges['score'] = { min: 80 };
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    expect(screen.getByRole('group', { name: /^Score/ })).toBeInTheDocument();
+  });
+  it('choosing a generation releases the range and column its sibling held', async () => {
+    const onchange = vi.fn();
+    const view = defaultView();
+    view.filters.ranges['midsole-softness-22'] = { min: 30 };
+    view.columns = ['midsole-softness-22', 'score'];
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+
+    await fireEvent.click(screen.getAllByRole('radio', { name: /Midsole softness/ })[1]!);
+    const next = onchange.mock.lastCall![0];
+    expect(next.generations).toEqual({ 'midsole-softness-22': 'midsole-softness' });
+    expect(next.filters.ranges['midsole-softness-22']).toBeUndefined();
+    expect(next.columns).toEqual(['score']);
+    // the entry keeps a row so the pair does not vanish from the sidebar mid-switch
+    expect(next.filters.ranges['midsole-softness']).toEqual({});
+  });
+  it('shows the chosen generation rather than the current one once it is chosen', () => {
+    const view = defaultView();
+    view.generations['midsole-softness-22'] = 'midsole-softness';
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    expect(screen.getByRole('group', { name: /Midsole softness — original/ })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /Midsole softness — 2022 method/ })).not.toBeInTheDocument();
   });
 });
