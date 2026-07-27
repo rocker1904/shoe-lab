@@ -57,10 +57,20 @@ not reference; where they disagree with docs/, docs/ wins.
   typecheck, lint green before every commit.
 - **Docs ride the change**: a behaviour-changing commit updates the owning
   doc in the same commit.
+- **Feature work happens in a worktree**: `~/dev/shoe-lab-<branch>`, landed in
+  local `main` before anything is pushed, so `main` is only ever pushed having
+  been built and verified as a whole. Land it by rebasing the branch onto
+  `main` and fast-forwarding — no merge commits
+  (docs/decisions.md §Linear history, no merge commits) — then remove the
+  worktree and delete the branch. **Regenerate `data/` once, in the primary
+  checkout, after landing** — never on the branch. A regeneration rewrites
+  every record, so two branches each carrying one conflict as whole files and
+  the rebase becomes unresolvable; a code-only branch rebases cleanly. This is
+  a sequencing rule, not an access one — `.corpus/` is gitignored and lives in
+  the primary checkout, but a worktree can read it by path
+  (`--from-corpus ../shoe-lab/.corpus/pages`).
 - **Commits**: concise single-line subjects, no embedded measurements;
   trailer `Co-Authored-By: <authoring model> <noreply@anthropic.com>` naming
   the model that wrote the commit (e.g. `Claude Opus 5 (1M context)`), on
-  commits, never in PR descriptions. Branches rebase onto `main` and land by
-  fast-forward — no merge commits
-  (docs/decisions.md §Linear history, no merge commits).
+  commits, never in PR descriptions.
 - **Comments are WHY-only** — docs/README.md §Rules, rule 5.
