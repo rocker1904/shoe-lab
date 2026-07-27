@@ -102,7 +102,7 @@ Create `scraper/test/fixtures/plate-payloads.json`:
 
 - [ ] **Step 2: Write the failing test**
 
-First extend the existing helpers import on line 4 — do **not** add a second import of the same module, lint will reject it:
+First extend the existing helpers import on line 4 rather than adding a second import of the same module:
 
 ```ts
 import { loadAzuraPageData, loadJsonFixture } from './helpers.js';
@@ -358,7 +358,7 @@ git commit -m "Derive plate from the review section, with hand-maintained overri
 - Test: `scraper/test/validate.test.ts`, `scraper/test/build-dataset.test.ts`
 
 **Interfaces:**
-- Consumes: `PLATE_OVERRIDES` and `plateFromRules` from Task 2.
+- Consumes: `PLATE_OVERRIDES` from Task 2 in `validate.ts`; `plateFromRules` from Task 2 in `build-dataset.ts`.
 - Produces:
   - `validatePlateOverrides(ruleDerived: Map<string, Plate>): void`, throwing `ValidationError`.
   - `buildDataset` gains a third return key, `ruleDerived: Map<string, Plate>`.
@@ -507,6 +507,16 @@ The CLI is outside the coverage `include` (`scraper/vitest.config.ts`), so this 
   });
 ```
 
+`ruleDerived` is a `Map`, and the three determinism cases compare
+`JSON.stringify(buildDataset(...))`, which renders a Map as `{}` — so the new key would
+sit outside the determinism net that the rest of the return value is held to. Close it in
+`describe('buildDataset determinism')`, in the `is independent of input key insertion order`
+case, by adding after the two existing assertions:
+
+```ts
+    expect([...b.ruleDerived]).toEqual([...a.ruleDerived]); // JSON.stringify would render a Map as {}
+```
+
 - [ ] **Step 7: Run the full suite**
 
 Run: `npm run verify`
@@ -621,7 +631,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 ```
 
-and add `isTombstone` to the existing `shared/types.js` import, which is currently type-only — Step 4 needs it as a value.
+Step 4 also needs `isTombstone` as a **value**, and line 1 is currently `import type`. Widening
+the existing statement means per-specifier `type` markers:
+
+```ts
+import { type DetailsFile, type MetricsFile, isTombstone } from '../../shared/types.js';
+```
+
+A separate value import beside the type one is equally fine — `build-dataset.ts:1-2` already
+does exactly that, and nothing in `eslint.config.js` forbids it.
 
 - [ ] **Step 4: Branch the page source**
 
@@ -673,7 +691,8 @@ Leave the 404-tombstone `now()` at line 56 alone: a tombstone records when the 4
 
 - [ ] **Step 5: Plumb the flag**
 
-In `scraper/src/scrape-details.ts`, replace the `scrapeDetails({...})` call's first two option lines with:
+In `scraper/src/scrape-details.ts`, replace **only** the `http:` line (line 13) of the
+`scrapeDetails({...})` call, and hoist the flag above it:
 
 ```ts
 const corpusDir = argOf('--from-corpus');
@@ -683,7 +702,8 @@ scrapeDetails({
   corpusDir,
 ```
 
-Keep the rest of the call unchanged.
+Keep every other option line, `dataDir:` included — it is required and dropping it is the
+easy mistake here.
 
 - [ ] **Step 6: Run the tests and watch them pass**
 
@@ -786,11 +806,16 @@ Expected: `plated-other` for the first three; `none` for Azura and Pegasus 41; `
 
 - [ ] **Step 4: Confirm the build is still deterministic**
 
+`git diff` is useless here: Step 2 already rewrote `data/`, so a diff against HEAD shows the
+whole backfill and would look like failure whatever the second run did. Snapshot and compare:
+
 ```bash
-npm -w scraper run build:dataset && git diff --stat -- data/shoes.json
+cp data/shoes.json /tmp/shoes-a.json && cp data/shoes.csv /tmp/shoes-a.csv
+npm -w scraper run build:dataset
+diff /tmp/shoes-a.json data/shoes.json && diff /tmp/shoes-a.csv data/shoes.csv
 ```
 
-Expected: no diff from the second run — running the build twice changes nothing.
+Expected: both `diff`s silent — running the build twice changes nothing.
 
 - [ ] **Step 5: Update the owning doc**
 
@@ -824,11 +849,28 @@ corrected by hand when new shoes are reviewed, and `build:dataset` fails if an
 entry goes stale or becomes redundant, so it cannot rot silently. Do not grow it
 into a general data-patching mechanism: if a whole class of shoes is wrong, fix
 the rule.
+
+The `anta-zone-2-90` entry does double duty and must not be deleted as noise.
+Detection matches `section_id === 'plate'` at one or two levels only, because
+that is where all 89 sections sit today; if RunRepeat ever nests them deeper,
+every shoe silently reads unplated and no count is checked at build time. That
+entry is the one override whose rule value depends on a section being found, so
+the redundancy gate fires when detection stops working — the nearest thing to a
+drift alarm this rule has.
 ```
 
 - [ ] **Step 6: Remove the finished backlog item**
 
-In `BACKLOG.md`, delete item 1 ("Fix non-carbon plate detection") and renumber the remaining items so they run 1..10 with no gaps or repeats. Item 2 becomes item 1; update the intro line "items 1–2 fix what the dataset says" to "item 1 fixes what the dataset says". Check the reference in the new item 8 ("Item 2 extracts the per-shoe `category_slug`") and renumber it to match.
+In `BACKLOG.md`, delete item 1 ("Fix non-carbon plate detection") and renumber the remaining items so they run 1..10 with no gaps or repeats. Item 2 becomes item 1; update the intro line "items 1–2 fix what the dataset says" to "item 1 fixes what the dataset says".
+
+Two cross-references move with the renumber:
+
+- the new item 8 says "Item 2 extracts the per-shoe `category_slug`" — that item is now
+  item 1.
+- the new item 1 ends "Shares the extraction and corpus-backfill path with item 1", which
+  after the renumber points at itself. The path it shared is now shipped, so replace that
+  clause with a pointer to the flag: "Re-extraction runs offline via
+  `scrape:details --from-corpus` (docs/scraping.md §Politeness), so it costs no requests."
 
 - [ ] **Step 7: Verify and commit**
 
