@@ -1,15 +1,19 @@
-import type { DetailsFile, MetricsFile, MetricValue, Plate, ReleaseYearsFile, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
+import type { DetailsFile, MetricsFile, Plate, ReleaseYearsFile, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { csvLine } from './csv.js';
+import { PLATE_OVERRIDES } from './plate-overrides.js';
 import { validateShoesFile } from './validate.js';
 
-export const PLATE_TEST_ID = '69';
 const CSV_TEST_TYPES = new Set(['float', 'score', 'percent', 'rating']);
 
-export function derivePlate(features: string[], plateTestValue: MetricValue | undefined): Plate {
+export function plateFromRules(features: string[], hasPlateSection: boolean): Plate {
   if (features.some((f) => /carbon plate/i.test(f))) return 'carbon';
-  if (plateTestValue === true || features.some((f) => /plate/i.test(f))) return 'plated-other';
+  if (hasPlateSection) return 'plated-other';
   return 'none';
+}
+
+export function derivePlate(slug: string, features: string[], hasPlateSection: boolean): Plate {
+  return PLATE_OVERRIDES[slug]?.plate ?? plateFromRules(features, hasPlateSection);
 }
 
 // `releaseYears` deliberately does not feed builtAt (docs/scraping.md §Determinism).
@@ -36,7 +40,7 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
       score: det?.score ?? null,
       msrpGbp: det?.msrpGbp ?? null,
       discontinued: det?.discontinued ?? false,
-      plate: derivePlate(features, m.values[PLATE_TEST_ID]),
+      plate: derivePlate(slug, features, det?.hasPlateSection === true),
       imageUrl: det?.imageUrl ?? null,
       values: m.values,
       details: det ? {

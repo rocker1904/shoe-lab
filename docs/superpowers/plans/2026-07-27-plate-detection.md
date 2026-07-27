@@ -233,7 +233,10 @@ describe('derivePlate overrides', () => {
   });
   it('every override cites its evidence', () => {
     for (const [slug, o] of Object.entries(PLATE_OVERRIDES)) {
-      expect(o.note, `${slug} must explain itself`).toMatch(/\S{20,}/);
+      // A quoted review sentence is what lets a later reader audit the entry without refetching
+      // the page (docs/scraping.md §Decisions). Do not weaken this to a length check: `\S{20,}`
+      // looks equivalent and is not — prose has no 20-character run without a space.
+      expect(o.note, `${slug} must quote the review it rests on`).toMatch(/"[^"]{20,}"/);
     }
   });
 });

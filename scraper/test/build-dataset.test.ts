@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildDataset, derivePlate } from '../src/build-dataset.js';
+import { buildDataset, derivePlate, plateFromRules } from '../src/build-dataset.js';
+import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
 import type { DetailsFile, MetricsFile, ReleaseYearsFile, TestsFile } from '../../shared/types.js';
 
 const tests: TestsFile = {
@@ -40,15 +41,37 @@ function baseInputs(): { metrics: MetricsFile; details: DetailsFile } {
   return { metrics, details };
 }
 
-describe('derivePlate', () => {
+describe('plateFromRules', () => {
   it('covers the full truth table', () => {
-    expect(derivePlate(['Carbon plate'], false)).toBe('carbon');
-    expect(derivePlate(['carbon PLATE x'], undefined)).toBe('carbon');
-    expect(derivePlate(['Nylon plate'], false)).toBe('plated-other');
-    expect(derivePlate([], true)).toBe('plated-other');
-    expect(derivePlate([], false)).toBe('none');
-    expect(derivePlate([], undefined)).toBe('none');
-    expect(derivePlate(['Rocker'], undefined)).toBe('none');
+    expect(plateFromRules(['Carbon plate'], false)).toBe('carbon');
+    expect(plateFromRules(['carbon PLATE x'], false)).toBe('carbon');
+    expect(plateFromRules(['Carbon plate'], true)).toBe('carbon');   // carbon wins over the section
+    expect(plateFromRules([], true)).toBe('plated-other');
+    expect(plateFromRules([], false)).toBe('none');
+    expect(plateFromRules(['Rocker'], false)).toBe('none');
+  });
+  it('ignores plate words other than carbon, which the vocabulary never emits', () => {
+    // "Carbon plate" is the only plate string RunRepeat uses; a section is what marks the rest
+    expect(plateFromRules(['Nylon plate'], false)).toBe('none');
+  });
+});
+
+describe('derivePlate overrides', () => {
+  it('lets an override beat the rules in both directions', () => {
+    expect(derivePlate('salomon-s-lab-spectur', [], true)).toBe('carbon');
+    expect(derivePlate('anta-zone-2-90', [], true)).toBe('none');
+  });
+  it('falls through to the rules for every other shoe', () => {
+    expect(derivePlate('some-other-shoe', [], true)).toBe('plated-other');
+    expect(derivePlate('some-other-shoe', ['Carbon plate'], false)).toBe('carbon');
+    expect(derivePlate('some-other-shoe', [], false)).toBe('none');
+  });
+  it('every override cites its evidence', () => {
+    for (const [slug, o] of Object.entries(PLATE_OVERRIDES)) {
+      // A quoted review sentence is what lets a later reader audit the entry without refetching
+      // the page (docs/scraping.md §Decisions).
+      expect(o.note, `${slug} must quote the review it rests on`).toMatch(/"[^"]{20,}"/);
+    }
   });
 });
 
@@ -249,8 +272,8 @@ describe('buildDataset CSV cells', () => {
     const { csv } = buildDataset(tests, metrics, details);
     const one = csv.split('\n').find((l) => l.startsWith('shoe-001,'))!;
     expect(one.startsWith('shoe-001,Shoe 1,,,,,none,false,')).toBe(true);
-    // odd-indexed shoes have test 69 = false and no features -> plate none
+    // no details record means no plate section, so a metrics-only shoe reads none
     const two = csv.split('\n').find((l) => l.startsWith('shoe-002,'))!;
-    expect(two.startsWith('shoe-002,Shoe 2,,,,,plated-other,false,')).toBe(true);
+    expect(two.startsWith('shoe-002,Shoe 2,,,,,none,false,')).toBe(true);
   });
 });
