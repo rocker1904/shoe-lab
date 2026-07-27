@@ -59,10 +59,10 @@ describe('Page', () => {
   });
   it('applying a preset filters the table and updates the URL', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: 'Easy-day cruiser' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Easy' }));
     expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument(); // only 'cushy' passes on fixture fleet
-    expect(location.search).toContain('plate=none');
-    expect(location.search).toContain('sort=-energy-return-heel');
+    expect(location.search).toContain('plate=not-carbon');
+    expect(location.search).toContain('r.heel-stack=36%7E');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });

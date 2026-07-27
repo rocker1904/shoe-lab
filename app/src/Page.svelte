@@ -32,7 +32,7 @@
     history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
   }
   function onPreset(id: string) {
-    setView(applyPreset(id, data.shoes, idx, new Date()));
+    setView(applyPreset(id, data.shoes, idx));
   }
   function onShowMissing() {
     const next = structuredClone($state.snapshot(view)) as ViewState;

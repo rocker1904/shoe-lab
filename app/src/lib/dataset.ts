@@ -49,7 +49,8 @@ export function displayNumber(v: number): string {
   return String(Math.round(v * 100) / 100);
 }
 
-/** The one "released after" cut-off: preset thresholds and the sidebar chips must agree. */
+/** Resolves the sidebar's released-after chips. No preset uses it: recency is a strategy rather
+ *  than a story, so a preset takes no position on it (docs/shoe-stories.md). */
 export function isoYearsAgo(now: Date, years: number): string {
   const d = new Date(now);
   // UTC accessors so the cut-off does not shift with the viewer's timezone.

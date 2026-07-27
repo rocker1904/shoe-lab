@@ -183,19 +183,29 @@ review link.
 
 Preset chips are canned view states: `applyPreset` builds a complete
 `ViewState` from the defaults, so applying one **replaces** the view rather
-than layering on it. Every threshold lives in one constants block at the top
-of `app/src/lib/presets.ts` — tuning is a one-line edit there, and new presets
-are cheap (BACKLOG.md).
+than layering on it. A preset sets its own **columns** as well as its filters
+and sort, which makes it the single place a story is expressed — Race showing
+toebox width is noise, Easy showing it is not. Every threshold lives in one
+constants block at the top of `app/src/lib/presets.ts` — tuning is a one-line
+edit there, and new presets are cheap (BACKLOG.md).
 
 This section owns the mechanism only. What each preset is *for*, and why its
 thresholds are what they are, is docs/shoe-stories.md — read it before changing
 a number.
 
-One threshold is not a constant: easy-day-cruiser's softness ceiling is the
-**median of the live fleet**, computed at click time from the loaded dataset.
-That keeps "softer than average" true as the catalogue grows, at the cost of
-the same click producing different URLs across refreshes — which is fine,
-because the URL records the resolved number, not the preset.
+Thresholds are a mix, and the split is deliberate. Where the story is relative
+to the market — "affordable", "light for the fleet" — the bound is a
+`quantile` of the loaded dataset resolved **at click time**, so it moves as the
+catalogue moves. Where the story is a property of a shoe — a 36 mm stack — it
+is an absolute constant. A resolved percentile means the same click produces
+different URLs across refreshes, which is fine: the URL records the resolved
+number, not the preset. A fleet with no readings for a percentile bound omits
+that bound rather than inventing one.
+
+A preset must never bound a metric whose coverage over its own `considered`
+population would trip the sparse warning (docs/app.md §Coverage) — a preset
+that recommends against itself is self-inflicted. `presets.test.ts` asserts it
+in both directions.
 
 ## Theming
 

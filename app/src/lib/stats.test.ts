@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { histogram, median, percentileMap, quantile } from './stats';
+import { histogram, percentileMap, quantile } from './stats';
 import { FLEET, TESTS } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -32,12 +32,9 @@ describe('stats', () => {
     expect(h.counts[1]).toBe(2); // 2,3 fall in [2,4)
     expect(h.counts[4]).toBe(1); // max value lands in last bin
   });
-  it('histogram null for degenerate input; median', () => {
+  it('histogram null for degenerate input', () => {
     expect(histogram([5, 5, 5])).toBeNull();
     expect(histogram([])).toBeNull();
-    expect(median([1, 2, 3, 4])).toBe(2.5);
-    expect(median([7])).toBe(7);
-    expect(median([])).toBeNull();
   });
 });
 
@@ -66,11 +63,6 @@ describe('stats edge cases', () => {
     const h = histogram([-10, -5, 0], 2)!;
     expect([h.min, h.max]).toEqual([-10, 0]);
     expect(h.counts).toEqual([1, 2]);
-  });
-  it('median does not mutate its input', () => {
-    const values = [3, 1, 2];
-    expect(median(values)).toBe(2);
-    expect(values).toEqual([3, 1, 2]);
   });
 });
 

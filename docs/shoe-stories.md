@@ -104,8 +104,13 @@ week**, and that frequency is what separates a tempo shoe from a race shoe:
   science does not support and would force the user to make the call anyway. One
   preset, plate unconstrained, and a runner with a view filters on it.
 
-**Open:** the current threshold set does not express "light", which the session
-implies. Energy return and a price cap alone admit too many ordinary daily trainers.
+**Light** is expressed as the **30th percentile of fleet weight**, resolved at click time.
+Energy return and a price cap alone admitted too many ordinary daily trainers; a relative
+bound rather than an absolute one because "light" is a claim about this fleet, not about
+shoes in general. It is the least settled number here — provisional, and the first thing
+to score against the `pace` fact after real use (BACKLOG.md item 1). Tempo is deliberately
+the narrowest of the three, and the receipt says loudly how many shoes it drops for having
+no energy-return reading at all.
 
 ## Race
 

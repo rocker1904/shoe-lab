@@ -40,7 +40,7 @@ describe('FilterSidebar', () => {
     await fireEvent.click(screen.getByLabelText(/Other \(1\)/));
     expect(onchange.mock.lastCall![0].filters.brands).toEqual(['Other']);
   });
-  it('released-after chips set the same UTC cut-off the presets use', async () => {
+  it('released-after chips set a UTC cut-off that does not shift with the time of day', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
     try {

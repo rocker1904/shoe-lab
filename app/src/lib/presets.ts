@@ -1,44 +1,62 @@
 import type { Shoe } from '../../../shared/types.js';
-import { isoYearsAgo, numericValue, type TestIndex } from './dataset';
-import { median } from './stats';
+import { numericValue, type TestIndex } from './dataset';
+import { quantile } from './stats';
 import { defaultView, type ViewState } from './urlstate';
 
-const EASY_DAY_MIN_HEEL_STACK = 36;
-const TEMPO_MAX_WEIGHT = 250;
-const WIDE_MIN_TOEBOX = 98;
-const RECENT_YEARS = 2;
+// Every threshold lives here (docs/app.md §Presets). Percentiles where the story is relative to
+// the market, absolute values where it is a property of a shoe — docs/shoe-stories.md owns which
+// is which, and why. Read it before changing a number.
+const EASY_MIN_HEEL_STACK = 36;
+const PRICE_PERCENTILE = 0.8;
+const TEMPO_MIN_ENERGY_RETURN = 65;
+const TEMPO_WEIGHT_PERCENTILE = 0.3;
+const RACE_MAX_WEIGHT = 230;
+const RACE_MIN_ENERGY_RETURN = 70;
+
+const EASY_COLUMNS = ['releasedAt', 'score', 'msrpGbp', 'heel-stack', 'toebox-width-widest-part', 'weight', 'plate'];
+const FAST_COLUMNS = ['releasedAt', 'score', 'msrpGbp', 'energy-return-heel', 'weight', 'plate'];
 
 export interface Preset { id: string; label: string; describe: string }
 
 export const PRESETS: Preset[] = [
-  { id: 'easy-day-cruiser', label: 'Easy-day cruiser', describe: 'Max cushion, no plate, recent, sorted by energy return' },
-  { id: 'tempo-plated', label: 'Tempo (plated)', describe: 'Plated, light, recent, sorted by energy return' },
-  { id: 'wide-toebox', label: 'Wide toebox', describe: 'Roomiest toeboxes, sorted by score' },
+  { id: 'easy', label: 'Easy', describe: 'The bulk of the week — cushioned, no carbon, and cheap enough to put the miles through' },
+  { id: 'tempo', label: 'Tempo', describe: 'Fast twice a week — light and lively, at a price you can repeat' },
+  { id: 'race', label: 'Race', describe: 'One day, one goal — the lightest, liveliest shoes in the fleet' },
 ];
 
-export function applyPreset(id: string, shoes: Shoe[], idx: TestIndex, now: Date): ViewState {
+/** A bound the market decides rather than the story: resolved against the loaded fleet at click time. */
+function fleetCap(shoes: Shoe[], key: string, idx: TestIndex, p: number): number | null {
+  return quantile(shoes.map((s) => numericValue(s, key, idx)).filter((x): x is number => x !== undefined), p);
+}
+
+export function applyPreset(id: string, shoes: Shoe[], idx: TestIndex): ViewState {
   const v = defaultView();
+  // Prices resolve through numericValue, which prefers the weekly test over the field
+  // (docs/app.md §Resolved price) — reading shoe.msrpGbp here would disagree with the column.
+  const price = fleetCap(shoes, 'msrpGbp', idx, PRICE_PERCENTILE);
   switch (id) {
-    case 'easy-day-cruiser': {
-      const softness = shoes.map((s) => numericValue(s, 'midsole-softness-22', idx)).filter((x): x is number => x !== undefined);
-      const m = median(softness);
-      v.filters.ranges['heel-stack'] = { min: EASY_DAY_MIN_HEEL_STACK };
-      if (m !== null) v.filters.ranges['midsole-softness-22'] = { max: Math.round(m * 10) / 10 };
-      v.filters.plate = 'none';
-      v.filters.releasedAfter = isoYearsAgo(now, RECENT_YEARS);
-      v.sort = { key: 'energy-return-heel', dir: 'desc' };
-      return v;
-    }
-    case 'tempo-plated': {
-      v.filters.plate = 'plated';
-      v.filters.ranges['weight'] = { max: TEMPO_MAX_WEIGHT };
-      v.filters.releasedAfter = isoYearsAgo(now, RECENT_YEARS);
-      v.sort = { key: 'energy-return-heel', dir: 'desc' };
-      return v;
-    }
-    case 'wide-toebox': {
-      v.filters.ranges['toebox-width-widest-part'] = { min: WIDE_MIN_TOEBOX };
+    case 'easy': {
+      v.filters.ranges['heel-stack'] = { min: EASY_MIN_HEEL_STACK };
+      v.filters.plate = 'not-carbon';
+      if (price !== null) v.filters.ranges['msrpGbp'] = { max: price };
       v.sort = { key: 'score', dir: 'desc' };
+      v.columns = [...EASY_COLUMNS];
+      return v;
+    }
+    case 'tempo': {
+      v.filters.ranges['energy-return-heel'] = { min: TEMPO_MIN_ENERGY_RETURN };
+      const weight = fleetCap(shoes, 'weight', idx, TEMPO_WEIGHT_PERCENTILE);
+      if (weight !== null) v.filters.ranges['weight'] = { max: weight };
+      if (price !== null) v.filters.ranges['msrpGbp'] = { max: price };
+      v.sort = { key: 'energy-return-heel', dir: 'desc' };
+      v.columns = [...FAST_COLUMNS];
+      return v;
+    }
+    case 'race': {
+      v.filters.ranges['weight'] = { max: RACE_MAX_WEIGHT };
+      v.filters.ranges['energy-return-heel'] = { min: RACE_MIN_ENERGY_RETURN };
+      v.sort = { key: 'energy-return-heel', dir: 'desc' };
+      v.columns = [...FAST_COLUMNS];
       return v;
     }
     default:

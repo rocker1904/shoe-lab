@@ -46,10 +46,3 @@ export function quantile(values: number[], p: number): number | null {
   const clamped = Math.min(1, Math.max(0, p));
   return s[Math.floor(clamped * (s.length - 1))]!;
 }
-
-export function median(values: number[]): number | null {
-  if (values.length === 0) return null;
-  const s = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid]! : (s[mid - 1]! + s[mid]!) / 2;
-}

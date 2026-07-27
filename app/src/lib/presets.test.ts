@@ -1,100 +1,167 @@
 import { describe, expect, it } from 'vitest';
-import { indexTests } from './dataset';
+import { coverageOf, isSparse } from './coverage';
+import { indexTests, type TestIndex } from './dataset';
 import { applyPreset, PRESETS } from './presets';
 import { applyFilters } from './filters';
-import { FLEET, TESTS, shoe, labTest } from './test-fixtures';
-import { parseView, serializeView } from './urlstate';
+import { FLEET, TESTS, shoe } from './test-fixtures';
+import { DEFAULT_COLUMNS, defaultView, parseView, serializeView, type ViewState } from './urlstate';
+import type { Shoe } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
-const NOW = new Date('2026-07-26');
+
+/**
+ * Acceptance criterion 9 as a function rather than an inline loop, so it can be pointed at a
+ * counter-example as well as at the presets. Uses `isSparse` rather than open-coding the
+ * threshold: it has one owner, and the two disagree on an empty population.
+ */
+function sparseBoundKeys(view: ViewState, fleet: Shoe[], index: TestIndex): string[] {
+  const { considered } = applyFilters(fleet, view.filters, index);
+  return Object.keys(view.filters.ranges).filter((k) => isSparse(coverageOf(considered, k, index)));
+}
 
 describe('presets', () => {
-  it('declares at least the three built-ins', () => {
-    expect(PRESETS.map((p) => p.id)).toEqual(expect.arrayContaining(['easy-day-cruiser', 'tempo-plated', 'wide-toebox']));
+  it('declares exactly the three stories, with unique ids and labels', () => {
+    expect(PRESETS.map((p) => p.id)).toEqual(['easy', 'tempo', 'race']);
+    expect(PRESETS.map((p) => p.label)).toEqual(['Easy', 'Tempo', 'Race']);
+    expect(PRESETS.every((p) => p.describe.length > 0)).toBe(true);
   });
-  it('easy-day-cruiser reproduces the user story on the fixture fleet', () => {
-    const view = applyPreset('easy-day-cruiser', FLEET, idx, NOW);
-    expect(view.filters.plate).toBe('none');
-    expect(view.filters.releasedAfter).toBe('2024-07-26');
+  it('returns a complete ViewState for every id', () => {
+    for (const p of PRESETS) {
+      const v = applyPreset(p.id, FLEET, idx);
+      expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'sort']);
+      expect(v.columns.length).toBeGreaterThan(0);
+      expect(v.sort.dir).toBe('desc');
+    }
+  });
+  it('throws on an unknown id', () => {
+    expect(() => applyPreset('nope', FLEET, idx)).toThrow();
+  });
+  // Recency is a strategy, not a story: buying last season's model cheap and buying the newest
+  // thing are both valid, and neither is implied by the session (docs/shoe-stories.md).
+  it('never sets releasedAfter', () => {
+    for (const p of PRESETS) expect(applyPreset(p.id, FLEET, idx).filters.releasedAfter).toBeUndefined();
+  });
+  // None of the metrics the stories bound is half of a superseded pair, so there is no generation
+  // to choose — spec §4 requires a preset to populate it only for a pair it bounds.
+  it('never populates generations', () => {
+    for (const p of PRESETS) expect(applyPreset(p.id, FLEET, idx).generations).toEqual({});
+  });
+  it('sets its own columns rather than the global defaults', () => {
+    for (const p of PRESETS) {
+      expect(applyPreset(p.id, FLEET, idx).columns).not.toEqual(DEFAULT_COLUMNS);
+    }
+  });
+  it('keeps a toebox column on Easy and leaves it off the fast stories', () => {
+    expect(applyPreset('easy', FLEET, idx).columns).toContain('toebox-width-widest-part');
+    expect(applyPreset('tempo', FLEET, idx).columns).not.toContain('toebox-width-widest-part');
+    expect(applyPreset('race', FLEET, idx).columns).not.toContain('toebox-width-widest-part');
+  });
+});
+
+describe('preset stories on the fixture fleet', () => {
+  it('easy wants stack and affordability, and excludes carbon without excluding plates', () => {
+    const view = applyPreset('easy', FLEET, idx);
+    expect(view.filters.plate).toBe('not-carbon');
     expect(view.filters.ranges['heel-stack']).toEqual({ min: 36 });
-    // fleet softness values: 40, 42, 30 -> median 40
-    expect(view.filters.ranges['midsole-softness-22']).toEqual({ max: 40 });
-    expect(view.sort).toEqual({ key: 'energy-return-heel', dir: 'desc' });
-    const { visible } = applyFilters(FLEET, view.filters, idx);
-    expect(visible.map((s) => s.slug)).toEqual(['cushy']);
+    // fixture prices 140, 250, 140, 140 -> 80th percentile 140
+    expect(view.filters.ranges['msrpGbp']).toEqual({ max: 140 });
+    // explosiveness is a bonus, not the point, so sorting by it would contradict the filters
+    expect(view.sort).toEqual({ key: 'score', dir: 'desc' });
+    expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug)).toEqual(['cushy']);
   });
-  it('throws on unknown preset id', () => {
-    expect(() => applyPreset('nope', FLEET, idx, NOW)).toThrow();
+  it('easy keeps a non-carbon plated shoe that the none token would drop', () => {
+    const fleet = [
+      shoe({ slug: 'nylon-daily', plate: 'plated-other', values: { '6': 38 } }),
+      shoe({ slug: 'carbon-racer', plate: 'carbon', values: { '6': 38 } }),
+    ];
+    const view = applyPreset('easy', fleet, idx);
+    expect(applyFilters(fleet, view.filters, idx).visible.map((s) => s.slug)).toEqual(['nylon-daily']);
+  });
+  it('tempo wants energy return, light weight and a price it can repeat', () => {
+    const view = applyPreset('tempo', FLEET, idx);
+    expect(view.filters.ranges['energy-return-heel']).toEqual({ min: 65 });
+    // fixture weights 210, 220, 280, 300 -> 30th percentile 210
+    expect(view.filters.ranges['weight']).toEqual({ max: 210 });
+    expect(view.filters.ranges['msrpGbp']).toEqual({ max: 140 });
+    expect(view.filters.plate).toBeUndefined(); // carbon is deliberately left to the runner
+    expect(view.sort).toEqual({ key: 'energy-return-heel', dir: 'desc' });
+    expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug)).toEqual(['cushy']);
+  });
+  it('race is speed alone: no price cap and no plate requirement', () => {
+    const view = applyPreset('race', FLEET, idx);
+    expect(view.filters.ranges).toEqual({ weight: { max: 230 }, 'energy-return-heel': { min: 70 } });
+    expect(view.filters.plate).toBeUndefined();
+    expect(view.sort).toEqual({ key: 'energy-return-heel', dir: 'desc' });
+    expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug)).toEqual(['cushy', 'racer']);
+  });
+});
+
+describe('preset thresholds track the fleet', () => {
+  const priced = (slug: string, price: number) => shoe({ slug, msrpGbp: price, values: { '6': 40, '24': 200, '65': 80 } });
+
+  it('moves the price cap when the fleet\'s price distribution moves', () => {
+    const cheap = [100, 110, 120, 130, 140].map((p, i) => priced(`c${i}`, p));
+    const dear = [300, 310, 320, 330, 340].map((p, i) => priced(`d${i}`, p));
+    const capOf = (fleet: Shoe[]) => applyPreset('easy', fleet, idx).filters.ranges['msrpGbp']?.max;
+    expect(capOf(cheap)).toBe(130);
+    expect(capOf(dear)).toBe(330);
+    expect(capOf(cheap)).not.toBe(capOf(dear));
+  });
+  it('moves tempo\'s weight ceiling when the fleet gets heavier', () => {
+    const light = [180, 190, 200, 210, 220].map((w, i) => shoe({ slug: `l${i}`, values: { '24': w } }));
+    const heavy = [280, 290, 300, 310, 320].map((w, i) => shoe({ slug: `h${i}`, values: { '24': w } }));
+    const capOf = (fleet: Shoe[]) => applyPreset('tempo', fleet, idx).filters.ranges['weight']?.max;
+    expect(capOf(light)).toBe(190);
+    expect(capOf(heavy)).toBe(290);
+  });
+  it('omits a bound it cannot compute rather than throwing on an empty fleet', () => {
+    for (const p of PRESETS) {
+      expect(() => applyPreset(p.id, [], idx)).not.toThrow();
+      expect(applyPreset(p.id, [], idx).filters.ranges['msrpGbp']).toBeUndefined();
+    }
+    // the absolute bounds are properties of a shoe, not of the market, so they survive
+    expect(applyPreset('easy', [], idx).filters.ranges['heel-stack']).toEqual({ min: 36 });
+    expect(applyPreset('race', [], idx).filters.ranges).toEqual({ weight: { max: 230 }, 'energy-return-heel': { min: 70 } });
+    expect(applyPreset('tempo', [], idx).filters.ranges['weight']).toBeUndefined();
   });
 });
 
 describe('preset determinism', () => {
-  it('declares unique ids, all of which apply', () => {
-    expect(new Set(PRESETS.map((p) => p.id)).size).toBe(PRESETS.length);
-    for (const p of PRESETS) expect(() => applyPreset(p.id, FLEET, idx, NOW)).not.toThrow();
-  });
   it('returns an equal but independent view on every call', () => {
     for (const p of PRESETS) {
-      const a = applyPreset(p.id, FLEET, idx, NOW);
-      const b = applyPreset(p.id, FLEET, idx, NOW);
+      const a = applyPreset(p.id, FLEET, idx);
+      const b = applyPreset(p.id, FLEET, idx);
       expect(a).toEqual(b);
       a.filters.ranges['weight'] = { min: 999 };
       a.columns.push('bogus');
-      expect(applyPreset(p.id, FLEET, idx, NOW)).toEqual(b);
+      expect(applyPreset(p.id, FLEET, idx)).toEqual(b);
     }
   });
   it('survives a URL round trip', () => {
-    // the real dataset has toebox-width-widest-part; the shared fixture does not
-    const full = indexTests([...TESTS,
-      labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox width', units: 'mm' })]);
+    // the only place asserting that plate=not-carbon survives parseView's allowlist and that each
+    // preset's columns survive the column allowlist
     for (const p of PRESETS) {
-      const v = applyPreset(p.id, FLEET, full, NOW);
-      expect(parseView(serializeView(v), full)).toEqual(v);
+      const v = applyPreset(p.id, FLEET, idx);
+      expect(parseView(serializeView(v), idx)).toEqual(v);
     }
   });
-  it('derives the cut-off date in UTC, independent of the time of day', () => {
-    expect(applyPreset('tempo-plated', FLEET, idx, new Date('2026-07-26T23:59:59Z')).filters.releasedAfter).toBe('2024-07-26');
-    expect(applyPreset('tempo-plated', FLEET, idx, new Date('2026-07-26T00:00:00Z')).filters.releasedAfter).toBe('2024-07-26');
-    // 29 Feb has no counterpart two years earlier; rolling into March is the safe direction (never too old)
-    expect(applyPreset('tempo-plated', FLEET, idx, new Date('2028-02-29T12:00:00Z')).filters.releasedAfter).toBe('2026-03-01');
+});
+
+describe('no preset bounds a metric its own coverage warning would flag', () => {
+  it('holds for every preset over the fixture fleet', () => {
+    for (const p of PRESETS) {
+      expect(sparseBoundKeys(applyPreset(p.id, FLEET, idx), FLEET, idx)).toEqual([]);
+    }
   });
-  it('rounds a fractional softness median to one decimal place', () => {
-    const fleet = [40, 42.5, 41, 30].map((v, i) => shoe({ slug: `s${i}`, values: { '70': v } }));
-    // sorted 30, 40, 41, 42.5 -> median 40.5
-    expect(applyPreset('easy-day-cruiser', fleet, idx, NOW).filters.ranges['midsole-softness-22']).toEqual({ max: 40.5 });
-    const odd = [1, 2.24, 2.26].map((v, i) => shoe({ slug: `o${i}`, values: { '70': v } }));
-    expect(applyPreset('easy-day-cruiser', odd, idx, NOW).filters.ranges['midsole-softness-22']).toEqual({ max: 2.2 });
-  });
-  it('omits the softness bound when no shoe has a reading', () => {
-    const v = applyPreset('easy-day-cruiser', [shoe({ slug: 'bare' })], idx, NOW);
-    expect(v.filters.ranges['midsole-softness-22']).toBeUndefined();
-    expect(v.filters.ranges['heel-stack']).toEqual({ min: 36 });
-  });
-  it('tempo-plated keeps light plated shoes and drops heavy or unplated ones', () => {
-    const fleet = [
-      shoe({ slug: 'light-carbon', plate: 'carbon', values: { '24': 220 }, releasedAt: '2026-01-01' }),
-      shoe({ slug: 'light-other', plate: 'plated-other', values: { '24': 249 }, releasedAt: '2026-01-01' }),
-      shoe({ slug: 'heavy-carbon', plate: 'carbon', values: { '24': 280 }, releasedAt: '2026-01-01' }),
-      shoe({ slug: 'light-unplated', plate: 'none', values: { '24': 200 }, releasedAt: '2026-01-01' }),
-      shoe({ slug: 'old-carbon', plate: 'carbon', values: { '24': 200 }, releasedAt: '2023-01-01' }),
-    ];
-    const view = applyPreset('tempo-plated', fleet, idx, NOW);
-    expect(view.filters).toMatchObject({ plate: 'plated', releasedAfter: '2024-07-26', ranges: { weight: { max: 250 } } });
-    expect(view.sort).toEqual({ key: 'energy-return-heel', dir: 'desc' });
-    expect(applyFilters(fleet, view.filters, idx).visible.map((s) => s.slug)).toEqual(['light-carbon', 'light-other']);
-  });
-  it('wide-toebox filters on toebox width and sorts by score', () => {
-    const full = indexTests([...TESTS,
-      labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox width', units: 'mm' })]);
-    const fleet = [
-      shoe({ slug: 'roomy', values: { '900': 101 } }),
-      shoe({ slug: 'exact', values: { '900': 98 } }),
-      shoe({ slug: 'narrow', values: { '900': 95 } }),
-    ];
-    const view = applyPreset('wide-toebox', fleet, full, NOW);
-    expect(view.filters.ranges).toEqual({ 'toebox-width-widest-part': { min: 98 } });
-    expect(view.filters.plate).toBeUndefined();
-    expect(view.sort).toEqual({ key: 'score', dir: 'desc' });
-    expect(applyFilters(fleet, view.filters, full).visible.map((s) => s.slug)).toEqual(['roomy', 'exact']);
+  it('the guard can fail: it names a bound whose metric covers only 40% of the population', () => {
+    // Borderline on purpose. A control built on a 0%-covered metric proves only that isSparse works
+    // at zero, and the regression this exists to catch is a softness ceiling, whose real coverage
+    // sits just *above* the threshold rather than nowhere near it.
+    const fleet = Array.from({ length: 10 }, (_, i) =>
+      shoe({ slug: `s${i}`, values: i < 4 ? { '70': 30 } : {} }));
+    expect(coverageOf(fleet, 'midsole-softness-22', idx).fraction).toBeCloseTo(0.4);
+    const view = defaultView();
+    view.filters.ranges['midsole-softness-22'] = { max: 35 };
+    expect(sparseBoundKeys(view, fleet, idx)).toEqual(['midsole-softness-22']);
   });
 });

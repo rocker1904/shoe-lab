@@ -35,10 +35,12 @@ export function shoe(overrides: Partial<Shoe> & { slug: string }): Shoe {
   };
 }
 
+/** Weights (test 24) are spread so a fleet-percentile bound admits some shoes and excludes others;
+ *  `mystery` stays bare because it exists to be the shoe with no reading at all. */
 export const FLEET: Shoe[] = [
-  shoe({ slug: 'cushy', values: { '6': 40, '65': 70, '70': 40 }, plate: 'none', releasedAt: '2025-06-01', score: 92 }),
-  shoe({ slug: 'racer', values: { '6': 39, '65': 75, '70': 42 }, plate: 'carbon', releasedAt: '2026-01-01', score: 90, msrpGbp: 250 }),
-  shoe({ slug: 'trainer', values: { '6': 35, '65': 60, '70': 30 }, plate: 'plated-other', releasedAt: '2023-05-01', score: 85 }),
-  shoe({ slug: 'oldie', values: { '6': 30, '65': 55 }, releasedAt: '2021-01-01', score: 70, discontinued: true, brand: 'Other' }),
+  shoe({ slug: 'cushy', values: { '6': 40, '24': 210, '65': 70, '70': 40 }, plate: 'none', releasedAt: '2025-06-01', score: 92 }),
+  shoe({ slug: 'racer', values: { '6': 39, '24': 220, '65': 75, '70': 42 }, plate: 'carbon', releasedAt: '2026-01-01', score: 90, msrpGbp: 250 }),
+  shoe({ slug: 'trainer', values: { '6': 35, '24': 280, '65': 60, '70': 30 }, plate: 'plated-other', releasedAt: '2023-05-01', score: 85 }),
+  shoe({ slug: 'oldie', values: { '6': 30, '24': 300, '65': 55 }, releasedAt: '2021-01-01', score: 70, discontinued: true, brand: 'Other' }),
   shoe({ slug: 'mystery', values: {}, releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null }),
 ];

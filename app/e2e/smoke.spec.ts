@@ -4,9 +4,9 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await page.goto('/');
   await expect(page.getByText('5 of 5 shoes')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Easy-day cruiser' }).click();
+  await page.getByRole('button', { name: 'Easy' }).click();
   await expect(page.getByText('1 of 5 shoes')).toBeVisible();
-  await expect(page).toHaveURL(/plate=none/);
+  await expect(page).toHaveURL(/plate=not-carbon/);
   await expect(page.getByRole('row').filter({ hasText: 'cushy' })).toBeVisible();
 
   await page.getByText('cushy').first().click();
