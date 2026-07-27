@@ -1,0 +1,96 @@
+{
+  "builtAt": "2026-07-20T00:00:00Z",
+  "source": "RunRepeat",
+  "groups": { "3": "Cushioning" },
+  "tests": [
+    { "id": 6, "slug": "heel-stack", "name": "Heel stack", "type": "float", "units": "mm", "groupId": "3" },
+    { "id": 24, "slug": "weight", "name": "Weight", "type": "float", "units": "g", "groupId": "10" },
+    { "id": 65, "slug": "energy-return-heel", "name": "Energy return (heel)", "type": "percent", "units": "", "groupId": "3" },
+    { "id": 70, "slug": "midsole-softness-22", "name": "Midsole softness", "type": "float", "units": "AC", "groupId": "3" },
+    { "id": 39, "slug": "tongue-gusset-type", "name": "Tongue gusset", "type": "option", "units": "", "groupId": null }
+  ],
+  "shoes": [
+    {
+      "slug": "cushy",
+      "name": "cushy",
+      "brand": "Brand",
+      "url": "https://runrepeat.com/cushy",
+      "releasedAt": "2025-06-01",
+      "preciseReleaseDate": true,
+      "score": 92,
+      "msrpGbp": 140,
+      "discontinued": false,
+      "plate": "none",
+      "imageUrl": null,
+      "values": { "6": 40, "65": 70, "70": 40 },
+      "details": {
+        "pros": ["Bouncy"],
+        "cons": ["Pricey"],
+        "intro": "Great shoe.",
+        "whoShouldBuy": "<p>Everyone</p>",
+        "whoShouldNotBuy": null,
+        "features": ["Rocker"]
+      }
+    },
+    {
+      "slug": "racer",
+      "name": "racer",
+      "brand": "Brand",
+      "url": "https://runrepeat.com/racer",
+      "releasedAt": "2026-01-01",
+      "preciseReleaseDate": true,
+      "score": 90,
+      "msrpGbp": 250,
+      "discontinued": false,
+      "plate": "carbon",
+      "imageUrl": null,
+      "values": { "6": 39, "65": 75, "70": 42 },
+      "details": null
+    },
+    {
+      "slug": "trainer",
+      "name": "trainer",
+      "brand": "Brand",
+      "url": "https://runrepeat.com/trainer",
+      "releasedAt": "2023-05-01",
+      "preciseReleaseDate": true,
+      "score": 85,
+      "msrpGbp": 140,
+      "discontinued": false,
+      "plate": "plated-other",
+      "imageUrl": null,
+      "values": { "6": 35, "65": 60, "70": 30 },
+      "details": null
+    },
+    {
+      "slug": "oldie",
+      "name": "oldie",
+      "brand": "Other",
+      "url": "https://runrepeat.com/oldie",
+      "releasedAt": "2021-01-01",
+      "preciseReleaseDate": true,
+      "score": 70,
+      "msrpGbp": 140,
+      "discontinued": true,
+      "plate": "none",
+      "imageUrl": null,
+      "values": { "6": 30, "65": 55 },
+      "details": null
+    },
+    {
+      "slug": "mystery",
+      "name": "mystery",
+      "brand": "Brand",
+      "url": "https://runrepeat.com/mystery",
+      "releasedAt": null,
+      "preciseReleaseDate": false,
+      "score": null,
+      "msrpGbp": null,
+      "discontinued": false,
+      "plate": "none",
+      "imageUrl": null,
+      "values": {},
+      "details": null
+    }
+  ]
+}
