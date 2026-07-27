@@ -93,6 +93,18 @@ describe('Page', () => {
     // the fieldset's legend names the group, so this is the slider row rather than the column-picker entry
     expect(screen.getByRole('group', { name: /Stiffness/ })).toBeInTheDocument();
   });
+  it('accounts for hidden shoes in the receipt and can admit the ones missing data', async () => {
+    history.replaceState(null, '', '/?r.heel-stack=36~');
+    render(Page, { props: { data } });
+    // cushy and racer pass, trainer and oldie are out of bounds, mystery has no reading at all
+    expect(screen.getByTestId('receipt')).toHaveTextContent('2 outside your bounds');
+    expect(screen.getByTestId('receipt')).toHaveTextContent('1 shoe has no data for the active filters');
+
+    await fireEvent.click(screen.getByRole('button', { name: /show them anyway/i }));
+    expect(location.search).toContain('missing=1');
+    expect(screen.getByText(/3 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent(/no data for the active filters are included/);
+  });
   it('exports the visible rows as a CSV download', async () => {
     const blobs: Blob[] = [];
     const revoke = vi.fn();

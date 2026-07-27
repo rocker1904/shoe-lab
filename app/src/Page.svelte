@@ -5,6 +5,7 @@
   import FilterSidebar from './components/FilterSidebar.svelte';
   import Header from './components/Header.svelte';
   import PresetChips from './components/PresetChips.svelte';
+  import Receipt from './components/Receipt.svelte';
   import ShoeTable from './components/ShoeTable.svelte';
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
@@ -32,6 +33,11 @@
   }
   function onPreset(id: string) {
     setView(applyPreset(id, data.shoes, idx, new Date()));
+  }
+  function onShowMissing() {
+    const next = structuredClone($state.snapshot(view)) as ViewState;
+    next.filters.showMissing = next.filters.showMissing ? undefined : true;
+    setView(next);
   }
   function onExport() {
     const blob = new Blob([exportCsv(visibleSorted, view.columns, idx)], { type: 'text/csv' });
@@ -65,9 +71,12 @@
 
 <div class="layout" class:show-filters={showFilters}>
   <div class="sidebar" id="filter-sidebar">
-    <FilterSidebar {data} {view} onchange={setView} hiddenMissing={filtered.hiddenMissing} />
+    <FilterSidebar {data} {view} onchange={setView} />
   </div>
   <div class="content">
+    <Receipt shown={visibleSorted.length} total={filtered.considered.length}
+             outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
+             showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
     <ShoeTable shoes={visibleSorted} {data} {view} onchange={setView} />
     {#if visibleSorted.length === 0}
       <!-- The table still renders: its headers keep the sort controls reachable. -->

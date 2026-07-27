@@ -15,8 +15,8 @@
   import PlateFilter from './PlateFilter.svelte';
   import RangeFilter from './RangeFilter.svelte';
 
-  let { data, view, onchange, hiddenMissing }: {
-    data: ShoesFile; view: ViewState; onchange: (v: ViewState) => void; hiddenMissing: number;
+  let { data, view, onchange }: {
+    data: ShoesFile; view: ViewState; onchange: (v: ViewState) => void;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
@@ -108,12 +108,6 @@
     </select>
   {/if}
 
-  {#if hiddenMissing > 0}
-    <p class="note">
-      {hiddenMissing} {hiddenMissing === 1 ? 'shoe has' : 'shoes have'} no data for the active filters.
-    </p>
-  {/if}
-
   <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; })}>Reset filters</button>
 </aside>
 
@@ -123,7 +117,6 @@
   .search { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
   .chips { display: flex; gap: 0.35rem; margin-top: 0.35rem; }
   .chips button { padding: 0.15rem 0.6rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-dim); cursor: pointer; }
-  .note { font-size: 0.8rem; color: var(--text-dim); }
   .reset { align-self: flex-start; padding: 0.3rem 0.8rem; cursor: pointer; }
   .disc { font-size: 0.85rem; }
 </style>

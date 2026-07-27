@@ -10,7 +10,7 @@ const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: 
 
 function setup(view = defaultView()) {
   const onchange = vi.fn();
-  render(FilterSidebar, { props: { data, view, onchange, hiddenMissing: 0 } });
+  render(FilterSidebar, { props: { data, view, onchange } });
   return onchange;
 }
 
@@ -52,12 +52,11 @@ describe('FilterSidebar', () => {
       vi.useRealTimers();
     }
   });
-  it('shows the missing-data note and resets', async () => {
+  it('resets every filter at once', async () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.ranges['heel-stack'] = { min: 36 };
-    render(FilterSidebar, { props: { data, view, onchange, hiddenMissing: 3 } });
-    expect(screen.getByText(/3 shoes have no data for the active filters/)).toBeInTheDocument();
+    render(FilterSidebar, { props: { data, view, onchange } });
     await fireEvent.click(screen.getByRole('button', { name: /reset/i }));
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
   });
@@ -98,7 +97,7 @@ describe('FilterSidebar text and toggle controls', () => {
     const checked = defaultView();
     checked.filters.hideDiscontinued = true;
     const off = vi.fn();
-    render(FilterSidebar, { props: { data, view: checked, onchange: off, hiddenMissing: 0 } });
+    render(FilterSidebar, { props: { data, view: checked, onchange: off } });
     await fireEvent.click(screen.getAllByLabelText('Hide discontinued').at(-1)!);
     expect(off.mock.lastCall![0].filters.hideDiscontinued).toBeUndefined();
     expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
@@ -111,7 +110,7 @@ const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 describe('FilterSidebar filter set management', () => {
   it('offers only numeric tests in the Add filter select and adds the chosen one', async () => {
     const onchange = vi.fn();
-    render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, hiddenMissing: 0 } });
+    render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange } });
     const select = screen.getByLabelText('Add filter');
     // curated keys and the option-typed test are both absent
     expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
@@ -125,7 +124,7 @@ describe('FilterSidebar filter set management', () => {
   it('renders an already-active non-curated filter and stops offering it', () => {
     const view = defaultView();
     view.filters.ranges['stiffness'] = { min: 5 };
-    render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), hiddenMissing: 0 } });
+    render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn() } });
     expect(screen.getByText(/Stiffness/)).toBeInTheDocument();
     expect([...screen.getByLabelText('Add filter').querySelectorAll('option')].map((o) => o.getAttribute('value')))
       .not.toContain('stiffness');
@@ -137,7 +136,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.search = 'racer';
     view.filters.brands = ['Brand'];
     view.filters.ranges['energy-return-heel'] = { max: 80 };
-    render(FilterSidebar, { props: { data, view, onchange, hiddenMissing: 0 } });
+    render(FilterSidebar, { props: { data, view, onchange } });
 
     await fireEvent.input(screen.getAllByLabelText('min')[0]!, { target: { value: '36' } });
     const next = onchange.mock.lastCall![0];
@@ -153,7 +152,7 @@ describe('FilterSidebar filter set management', () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.ranges['stiffness'] = { min: 5 };
-    render(FilterSidebar, { props: { data: dataPlus, view, onchange, hiddenMissing: 0 } });
+    render(FilterSidebar, { props: { data: dataPlus, view, onchange } });
 
     await fireEvent.input(screen.getAllByLabelText('min').at(-1)!, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
@@ -163,7 +162,7 @@ describe('FilterSidebar filter set management', () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.ranges['heel-stack'] = { min: 36 };
-    render(FilterSidebar, { props: { data, view, onchange, hiddenMissing: 0 } });
+    render(FilterSidebar, { props: { data, view, onchange } });
 
     await fireEvent.input(screen.getAllByLabelText('min')[0]!, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
