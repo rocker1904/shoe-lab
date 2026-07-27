@@ -8,8 +8,7 @@ Ordered roughly by priority. Items marked *(final review)* came out of the pre-m
 4. **Back/forward navigation.** `popstate` is unhandled, so Back doesn't restore the previous view. Must be worked through against docs/app.md §View and URL ownership rather than around it.
 5. **Svelte component linting.** `.svelte` files are typechecked (svelte-check) but outside eslint's scope. Decide whether `eslint-plugin-svelte` is worth the extra dependency (docs/decisions.md §Fewer dependencies).
 6. **Accessibility polish.** Mobile filter drawer has no focus trap/Escape handling; range inputs all announce as "min"/"max" without their metric name; expanded rows lack `aria-controls`.
-7. **Claude digest.** *(spec §11)* Build-time pass over each shoe's pros/cons + lab commentary producing a one-line verdict and tags ("easy-day cruiser", "tempo workhorse") to make the table scannable. Adds an API key + cost to the refresh pipeline.
-8. **Head-to-head compare view.** *(spec §11)* Select 2–4 shoes for a side-by-side metric comparison.
-9. **Other categories.** *(spec §11)* Trail/hiking/sneakers — the pipeline is parameterised by seed shoe already; needs a category switcher in the UI and per-category datasets.
-10. **Price/deal tracking.** *(spec §11)* MSRP history is implicit in git history of `data/`; surface it.
-11. **Public refresh trigger.** *(spec §11)* Currently refresh buttons need repo access; an issue-ops trigger would let friends request one.
+7. **Head-to-head compare view.** *(spec §11)* Select 2–4 shoes for a side-by-side metric comparison.
+8. **Other categories.** *(spec §11)* Trail/hiking/sneakers — the pipeline is parameterised by seed shoe already; needs a category switcher in the UI and per-category datasets.
+9. **Price/deal tracking.** *(spec §11)* MSRP history is implicit in git history of `data/`; surface it.
+10. **Public refresh trigger.** *(spec §11)* Currently refresh buttons need repo access; an issue-ops trigger would let friends request one.

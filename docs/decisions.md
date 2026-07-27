@@ -42,6 +42,16 @@ Current deliberate consequence: `.svelte` files are typechecked by
 svelte-check but not eslint-linted (eslint-plugin-svelte not adopted;
 BACKLOG.md item).
 
+### Free tools only (2026-07-27)
+Every moving part runs on a free tier: GitHub Actions, GitHub Pages, and
+RunRepeat's public endpoints. The project holds no API keys, has no runtime
+cost, and nothing about it should ever need a card. Claude Code is the one
+paid tool involved, and it belongs to the author, not the pipeline — an agent
+may use it to *author* a change, never to *run* one. So a proposal that adds
+per-run cost — an LLM pass over the dataset, hosted storage, a paid data
+source — is out of scope by default. If one is ever worth it, that is a user
+decision recorded here first.
+
 ### Doc system (2026-07-27)
 Docs follow an agent-first contract (docs/README.md), deliberately small:
 three domain docs; no separate live-state doc because `main` deploys
