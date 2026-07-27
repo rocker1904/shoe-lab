@@ -12,8 +12,7 @@ export function derivePlate(features: string[], plateTestValue: MetricValue | un
   return 'none';
 }
 
-// `releaseYears` deliberately does not feed builtAt: it is refreshed on its own rare schedule,
-// and the same three core files must keep producing byte-identical output.
+// `releaseYears` deliberately does not feed builtAt (docs/scraping.md §Determinism).
 export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile): { shoesFile: ShoesFile; csv: string } {
   let builtAt = metrics.scrapedAt;
   for (const rec of Object.values(details.shoes)) {

@@ -27,16 +27,14 @@
     const t = idx.bySlug.get(key);
     return { label: t?.name ?? key, units: t?.units ?? '' };
   };
-  // Only numeric tests are offered: a range over an option/text/bool test reads as missing for every shoe
-  // and would silently empty the fleet.
+  // Numeric tests only: a range over any other type reads as missing for every shoe (docs/app.md §Filters).
   const rangeable = (key: string): boolean => {
     if (FIELD_RANGE_KEYS.has(key)) return true;
     const t = idx.bySlug.get(key);
     return !!t && NUMERIC_TEST_TYPES.has(t.type);
   };
   const availableRangeKeys = $derived(CURATED_RANGE_KEYS.filter(rangeable));
-  // Non-curated keys already in the view (added here, or restored from the URL) keep their own row so an
-  // active filter is always visible and clearable.
+  // A non-curated key already in the view needs its own row, or its filter could never be cleared.
   const extraKeys = $derived(Object.keys(view.filters.ranges).filter((k) => !availableRangeKeys.includes(k)));
   const addableKeys = $derived(data.tests
     .filter((t) => NUMERIC_TEST_TYPES.has(t.type) && !availableRangeKeys.includes(t.slug) && !extraKeys.includes(t.slug))
@@ -54,8 +52,8 @@
       const next: RangeBound = {};
       if (b.min !== undefined) next.min = b.min;
       if (b.max !== undefined) next.max = b.max;
-      // A cleared curated slider drops out of state entirely (its row renders regardless); a cleared extra
-      // filter keeps an empty entry, or its row would vanish the moment both inputs were emptied.
+      // A curated row renders regardless, so clearing it can drop the key; an extra row exists only while
+      // its key does, so it keeps an empty entry (docs/app.md §Filters).
       if (next.min === undefined && next.max === undefined && availableRangeKeys.includes(key)) {
         delete v.filters.ranges[key];
       } else {

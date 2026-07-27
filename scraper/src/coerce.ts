@@ -19,6 +19,8 @@ export function coerceValue(raw: unknown, type: TestType): MetricValue {
         return raw;
       }
       const s = String(raw).trim();
+      // `s === ''` is not redundant: it catches whitespace-only, which `Number()` would read as 0
+      // (docs/scraping.md §Whitespace-only numerics are rejected, not zeroed).
       if (isEmptyValue(raw) || s === '') throw new CoercionError(`not a number: ${String(raw)}`);
       const n = Number(s);
       if (!Number.isFinite(n)) throw new CoercionError(`not a number: ${String(raw)}`);

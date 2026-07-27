@@ -26,8 +26,7 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
       if (f.plate === 'plated' ? s.plate === 'none' : s.plate !== f.plate) continue;
     }
     if (f.releasedAfter && (!s.releasedAt || s.releasedAt < f.releasedAfter)) continue;
-    // Missing-ness is settled across every active range before any bound is applied, so hiddenMissing
-    // does not depend on the order the range keys happen to be iterated in.
+    // Missing-ness is settled across every active range before any bound is applied (docs/app.md §Filters).
     const readings: { bound: RangeBound; v: number }[] = [];
     for (const [key, bound] of active) {
       const v = numericValue(s, key, idx);

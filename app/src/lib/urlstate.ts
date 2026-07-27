@@ -11,7 +11,7 @@ export const DEFAULT_COLUMNS: string[] = [
 ];
 const PLATES = new Set(['none', 'plated', 'carbon']);
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate']);
-/** Sort fields minus name/brand: those two are rendered by the table itself, and ShoeTable has no cell for them. */
+/** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
 const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
@@ -23,7 +23,6 @@ export function defaultView(): ViewState {
 /** A present-but-non-finite bound is unserialisable; dropping just that side would silently widen the range. */
 const finite = (n: number | undefined) => n === undefined || (typeof n === 'number' && Number.isFinite(n));
 
-/** '' -> undefined (open-ended); unparseable or non-finite -> null (reject); otherwise the number. */
 function parseBound(s: string): number | undefined | null {
   if (!s) return undefined;
   if (!NUMBER_RE.test(s)) return null;
@@ -53,8 +52,8 @@ export function serializeView(v: ViewState): string {
 export function parseView(qs: string, idx: TestIndex): ViewState {
   const v = defaultView();
   const p = new URLSearchParams(qs);
-  // A range only makes sense against something numeric; an option/text test would hide the whole fleet as
-  // "missing". Same for sorting, which reads numeric values only. Columns stay permissive — any test can be shown.
+  // Ranges and sorts take numeric keys only while columns stay permissive
+  // (docs/app.md §Columns are permissive, ranges and sorts are strict).
   const numericTest = (k: string) => {
     const test = idx.bySlug.get(k);
     return !!test && NUMERIC_TEST_TYPES.has(test.type);

@@ -20,7 +20,7 @@ export interface DetailRecord {
 }
 export interface Tombstone { gone: true; scrapedAt: string }
 export interface DetailsFile { shoes: Record<string, DetailRecord | Tombstone> }
-/** Year-level release buckets from the category API, keyed by slug. */
+/** The year-only fallback behind every imprecise `releasedAt` (docs/scraping.md §Release-year supplement). */
 export interface ReleaseYearsFile { scrapedAt: string; years: Record<string, number> }
 export type Plate = 'carbon' | 'plated-other' | 'none';
 export interface ShoeDetails {

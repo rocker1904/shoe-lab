@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  actions: write # to dispatch deploy — GITHUB_TOKEN pushes do NOT trigger push-event workflows
+  actions: write # to dispatch deploy.yml (docs/operations.md §The refresh chain)
 concurrency:
   group: scrape
   cancel-in-progress: false
@@ -22,16 +22,11 @@ jobs:
       - run: npm ci
       - run: npm -w scraper run scrape:metrics
       - name: Scrape details for newly listed shoes
-        # Non-fatal on purpose: metrics are the primary product of this job, and scrape:details
-        # exits 1 if any single slug fails. One permanently-broken page must not discard a
-        # completed metrics scrape every Monday. Failed slugs stay absent from details.json and
-        # are retried next week; the step still shows as failed in the run.
+        # Non-fatal on purpose (docs/operations.md §Where failures are contained).
         continue-on-error: true
         run: npm -w scraper run scrape:details
       - name: Release supplement (only if new shoes appeared)
-        # The supplement is deliberately not a weekly cost: in the common case details.json is
-        # unchanged and we skip it, keeping the weekly footprint at ~65 requests. When
-        # scrape:details did fetch newly listed shoes, run it so they are never left dateless.
+        # Deliberately not a weekly cost (docs/operations.md §The weekly release supplement).
         run: |
           if ! git diff --quiet -- data/details.json; then
             npm -w scraper run scrape:releases

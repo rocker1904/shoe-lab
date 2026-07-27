@@ -46,6 +46,7 @@ export class PoliteHttp {
       const wait = this.last + this.minInterval - this.now();
       if (wait > 0) await this.sleep(wait);
     }
+    // Stamped before the request, never after it: the gap is start-to-start (docs/scraping.md §Politeness).
     this.last = this.now();
   }
 

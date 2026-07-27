@@ -7,8 +7,8 @@ permissions:
   contents: read
   issues: write
 concurrency:
-  # Shared with the refresh workflows: one crawler against RunRepeat at a time, structurally.
-  # Also stops two drift runs racing to file duplicate issues.
+  # Shared with the refresh workflows (docs/operations.md §Concurrency); also stops two drift
+  # runs racing to file duplicate issues.
   group: scrape
   cancel-in-progress: false
 jobs:

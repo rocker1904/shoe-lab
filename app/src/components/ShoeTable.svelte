@@ -27,7 +27,7 @@
     onchange(next);
   }
   function cellText(s: Shoe, col: string): string {
-    // Most release dates are derived from a release year, so the day part is fiction — show the year alone.
+    // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
     if (col === 'releasedAt') return s.releasedAt ? (s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4)) : '—';
     if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'carbon' : 'plated';
     const v = col === 'score' || col === 'msrpGbp' ? s[col] : numericValue(s, col, idx);
@@ -88,8 +88,7 @@
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   td.name { display: flex; gap: 0.6rem; align-items: center; min-width: 14rem; }
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: 4px; }
-  /* Squared so the wash stays out of the way in the middle of the pack and only the leaders read as
-     tinted — a linear ramp over every numeric column turns the whole table blue. */
+  /* Squared so only the leaders read as tinted (docs/app.md §Theming). */
   td.num.tinted { background-color: color-mix(in oklab, var(--accent) calc(var(--p) * var(--p) * var(--tint-strength)), transparent); }
   .disc-tag { margin-left: 0.4rem; font-size: 0.7rem; color: var(--bad); border: 1px solid var(--bad); border-radius: 999px; padding: 0 0.35rem; }
   small { color: var(--text-dim); }

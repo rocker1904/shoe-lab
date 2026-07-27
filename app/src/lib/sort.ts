@@ -3,7 +3,7 @@ import { numericValue, type TestIndex } from './dataset';
 
 export interface SortState { key: string; dir: 'asc' | 'desc' }
 
-/** Plate is ordinal, not numeric: ranking it lets 'more plate' sort descending like every other column. */
+/** Ordinal so plate sorts like every other column (docs/app.md §Columns and sorting). */
 const PLATE_RANK: Record<Plate, number> = { none: 0, 'plated-other': 1, carbon: 2 };
 
 function keyValue(s: Shoe, key: string, idx: TestIndex): number | string | undefined {

@@ -13,10 +13,12 @@ export function parseLabTestList(json: unknown, test: LabTest): Map<string, LabT
     if (!Array.isArray(row) || row.length < 2) throw new PayloadError(`lab-test-list ${test.id}: malformed row`);
     const [valCell, nameCell] = row as [any, any];
     const url = nameCell?.url;
-    if (typeof url !== 'string' || url === '') continue; // cannot key without a url
+    // The order of these three skips is load-bearing
+    // (docs/scraping.md §Empty values are skipped before duplicates are resolved).
+    if (typeof url !== 'string' || url === '') continue;
     if (isEmptyValue(valCell?.value)) continue;
     const slug = slugFromUrl(url);
-    if (out.has(slug)) continue; // keep first occurrence
+    if (out.has(slug)) continue;
     out.set(slug, { name: String(nameCell?.text ?? slug), url, value: coerceValue(valCell.value, test.type) });
   }
   return out;

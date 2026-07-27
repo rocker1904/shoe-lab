@@ -19,8 +19,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # verify = check:docs + typecheck + lint + test:coverage; the sequence
-      # has one owner (root package.json) so local runs mirror CI exactly
+      # One step on purpose: the verify sequence has a single owner in package.json,
+      # so a local run mirrors CI exactly.
       - run: npm run verify
       - run: npx playwright install chromium --with-deps
       - run: npm -w app run e2e

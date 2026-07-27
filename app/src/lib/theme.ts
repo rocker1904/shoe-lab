@@ -15,8 +15,8 @@ export function currentTheme(): Theme {
   return t === 'light' || t === 'dark' ? t : 'auto';
 }
 
-// Storage access throws where it is blocked (embedded frames, hard privacy settings) rather than returning
-// null, and this module runs at boot — an unguarded read would take the whole app down with it.
+// Storage access throws where it is blocked (embedded frames, hard privacy settings) rather than
+// returning null, and this module runs at boot — an unguarded read would take the whole app down.
 function read(): string | null {
   try {
     return localStorage.getItem(KEY);

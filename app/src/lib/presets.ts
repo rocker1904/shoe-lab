@@ -3,7 +3,6 @@ import { numericValue, type TestIndex } from './dataset';
 import { median } from './stats';
 import { defaultView, type ViewState } from './urlstate';
 
-// Tunable thresholds, all in one place.
 const EASY_DAY_MIN_HEEL_STACK = 36;
 const TEMPO_MAX_WEIGHT = 250;
 const WIDE_MIN_TOEBOX = 98;

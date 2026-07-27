@@ -87,9 +87,8 @@ describe('buildDataset', () => {
   });
 });
 
-// Determinism is load-bearing: the weekly CI job commits shoes.json/shoes.csv, so
-// unchanged inputs must produce byte-identical outputs regardless of key order,
-// wall-clock time, or repeated invocation.
+// Byte-identical output over unchanged inputs is what makes a refresh commit readable
+// (docs/scraping.md §Determinism), so key order, the clock and repeat runs are all attacked here.
 describe('buildDataset determinism', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -158,8 +157,8 @@ describe('buildDataset determinism', () => {
   });
 });
 
-// The category API only knows release *years* (task 23), so year-derived dates are marked
-// imprecise and must never overwrite a real date scraped from a shoe page.
+// A year-derived date must never overwrite a real one scraped from a shoe page
+// (docs/scraping.md §Release-year supplement).
 describe('buildDataset release-year supplement', () => {
   function releaseYears(years: Record<string, number>): ReleaseYearsFile {
     return { scrapedAt: '2026-07-26T12:00:00Z', years };

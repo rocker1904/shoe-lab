@@ -1,6 +1,6 @@
 import type { LabTest, Shoe } from '../../../shared/types.js';
 
-/** Test types whose values are comparable numbers (so rangeable and sortable). */
+/** Narrower than the scraper's METRIC_TYPES: `bool` is scraped but is not rangeable (docs/app.md §Filters). */
 export const NUMERIC_TEST_TYPES = new Set(['float', 'score', 'percent', 'rating']);
 /** Numeric keys that live on the shoe itself rather than in the test catalogue. */
 export const FIELD_RANGE_KEYS = new Set(['score', 'msrpGbp']);

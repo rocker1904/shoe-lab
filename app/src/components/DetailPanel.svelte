@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Shoe } from '../../../shared/types.js';
-  // Only `whoShouldBuy`/`whoShouldNotBuy` are sanitised at build time, so they are the only fields rendered
-  // with {@html}. Every other field is untrusted scrape text and must stay plain interpolation.
+  // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
+  // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
   let { shoe }: { shoe: Shoe } = $props();
 </script>
 

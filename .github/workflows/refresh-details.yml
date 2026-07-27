@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       force_all:
-        description: Re-crawl every shoe page (slow, ~450 requests)
+        description: Re-crawl every shoe page (slow — one request per catalogued shoe)
         type: boolean
         default: false
       slug:
@@ -12,7 +12,7 @@ on:
         required: false
 permissions:
   contents: write
-  actions: write # to dispatch deploy — GITHUB_TOKEN pushes do NOT trigger push-event workflows
+  actions: write # to dispatch deploy.yml (docs/operations.md §The refresh chain)
 concurrency:
   group: scrape
   cancel-in-progress: false
@@ -37,9 +37,9 @@ jobs:
           if [ "$FORCE_ALL" = 'true' ]; then args+=(--force-all); fi
           if [ -n "$SLUG" ]; then args+=(--slug "$SLUG"); fi
           npm -w scraper run scrape:details -- "${args[@]}"
-      # Non-fatal: a drifted supplement must not discard a completed ~460-request details crawl — build:dataset
-      # works without release-years.json, and the shoes it dates stay on their previous values.
-      - run: npm -w scraper run scrape:releases # release-year supplement, refreshed with details
+      # Non-fatal: a drifted supplement must not discard a completed details crawl
+      # (docs/operations.md §Where failures are contained).
+      - run: npm -w scraper run scrape:releases
         continue-on-error: true
       - run: npm -w scraper run build:dataset
       - name: Commit if changed

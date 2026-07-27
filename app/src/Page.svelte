@@ -17,8 +17,8 @@
   let { data }: { data: ShoesFile } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  // Read once. The view is the source of truth from here on: re-deriving it from the URL would drop state
-  // that does not serialise (an added-but-open-ended range), turning those interactions into no-ops.
+  // Parsed once; from here the view is the source of truth and the URL is write-only
+  // (docs/app.md §View and URL ownership).
   let view = $state<ViewState>(untrack(() => parseView(location.search.replace(/^\?/, ''), indexTests(data.tests))));
   let showFilters = $state(false);
 
@@ -44,7 +44,7 @@
     // reference to the blob; yielding once is enough.
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
-  // The saved theme is applied at boot in main.ts, before the dataset fetch that gates this component.
+  // Reads back what main.ts already put on the DOM at boot (docs/app.md §Theming).
   let theme = $state<Theme>(currentTheme());
   function onTheme() {
     theme = cycleTheme();

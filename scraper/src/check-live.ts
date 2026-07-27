@@ -1,7 +1,5 @@
-// Live contract check: exercises the three things that would silently break the
-// scraper if RunRepeat changed them — robots.txt permissions, the __NUXT_DATA__
-// page payload (test catalogue + detail fields), and the lab-test-list API shape.
-// Run monthly by .github/workflows/contract-drift.yml. Makes 3 polite requests.
+// The monthly live drift check — what a failure here means is
+// docs/operations.md §Contract-drift runbook.
 import { extractDetails } from './extract-details.js';
 import { PoliteHttp } from './http.js';
 import { parseLabTestList } from './lab-test-list.js';
@@ -16,7 +14,7 @@ const SEED = 'saucony-endorphin-azura';
 
 const http = new PoliteHttp();
 try {
-  // Same two path classes the metrics crawl gates on; drift here means we must stop crawling.
+  // The same two path classes the metrics crawl gates on.
   const rules = parseRobots(await http.getText(`${BASE}/robots.txt`));
   for (const path of [`/uk/${SEED}`, '/api/product/lab-test-list/1']) {
     if (!isPathAllowed(rules, path)) throw new Error(`robots.txt now disallows ${path}`);

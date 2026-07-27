@@ -10,7 +10,7 @@ permissions:
   id-token: write
 concurrency:
   group: pages
-  # Never cancel a deployment mid-flight; queued runs coalesce to the latest.
+  # A deployment is never killed mid-flight (docs/operations.md §Concurrency).
   cancel-in-progress: false
 jobs:
   deploy:
