@@ -78,8 +78,10 @@ bound would change its own denominator, and the number would move as the user dr
 it. The denominator answers "of the shoes I am considering", not "of the shoes I can
 still see".
 
-Coverage is displayed as a bar plus a percentage wherever a metric can be chosen: the
-filter sidebar, the add-filter menu, and the column picker.
+Coverage is displayed wherever a metric can be chosen: the filter sidebar, the
+add-filter menu, and the column picker. A bar plus a percentage in the sidebar and
+picker; **percentage only in the add-filter menu**, which is a native `select` whose
+`option` elements cannot contain a bar.
 
 ## 4. Superseded pairs
 
@@ -124,8 +126,15 @@ collapsing the two would destroy the distinction that makes the metric useful. T
 dataset now carries `strike-pattern` as a fact on 449 shoes, which is exactly the axis
 that decides which half matters.
 
-`forefoot-traction` (#60) carries a secondary but no `chartLabel`; it colocates under
-its own name.
+`forefoot-traction` (#60) names #61 as a secondary, but #61 is **not in the published
+catalogue** — it was dropped for having no readings anywhere
+(docs/scraping.md §Empty tests). A reference to an absent test is ignored and the
+metric degrades to a single. Energy return and shock absorption are therefore the only
+colocated entries in today's data.
+
+A colocated entry takes the **primary's** `groupId`. That moves
+`energy-return-forefoot` and `shock-absorption-forefoot` out of Other and under
+Cushioning beside their primaries, which is the point of colocating them.
 
 ## 6. Facts stay in the expanded row
 
@@ -141,9 +150,11 @@ sort key.
 
 ## 7. Column picker
 
-The **Other** group is retained. It now holds 7 of 49 tests rather than 32 of 64, so it
-is no longer a dumping ground, but those 7 still need somewhere to live and removing the
-group would hide them.
+The **Other** group is retained. It holds 7 of the 46 numeric tests today, and §5 moves
+two of those under Cushioning, leaving **5**: `stiffness-in-cold`,
+`difference-in-stiffness-in-cold`, and the three `sweat-*` tests. It is no longer a
+dumping ground, but those 5 still need somewhere to live and removing the group would
+hide them.
 
 Groups list superseded pairs as one entry per §4 and colocated halves per §5.
 
