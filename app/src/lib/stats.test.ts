@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { histogram, median, percentileMap } from './stats';
+import { histogram, median, percentileMap, quantile } from './stats';
 import { FLEET, TESTS } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -71,5 +71,32 @@ describe('stats edge cases', () => {
     const values = [3, 1, 2];
     expect(median(values)).toBe(2);
     expect(values).toEqual([3, 1, 2]);
+  });
+});
+
+describe('quantile', () => {
+  it('takes the value at the floor of the fractional rank', () => {
+    const v = [10, 20, 30, 40, 50];
+    expect(quantile(v, 0)).toBe(10);
+    expect(quantile(v, 0.5)).toBe(30);
+    expect(quantile(v, 1)).toBe(50);
+  });
+  it('does not care about input order and does not mutate', () => {
+    const v = [50, 10, 30, 20, 40];
+    expect(quantile(v, 0.5)).toBe(30);
+    expect(v).toEqual([50, 10, 30, 20, 40]);
+  });
+  it('is null-safe on empty input', () => {
+    expect(quantile([], 0.5)).toBeNull();
+  });
+  it('handles a single value at any fraction', () => {
+    expect(quantile([7], 0)).toBe(7);
+    expect(quantile([7], 1)).toBe(7);
+  });
+  it('clamps a fraction outside 0..1 rather than reading off the end', () => {
+    // a caller passing a percentage by mistake must not get undefined typed as number
+    expect(quantile([10, 20, 30], 2)).toBe(30);
+    expect(quantile([10, 20, 30], -1)).toBe(10);
+    expect(quantile([10, 20, 30], Number.NaN)).toBeNull();
   });
 });

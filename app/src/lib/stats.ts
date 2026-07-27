@@ -35,6 +35,18 @@ export function histogram(values: number[], bins = 24): Histogram | null {
   return { min, max, counts };
 }
 
+/**
+ * Floor-of-rank rather than interpolated: the result is always a value some shoe actually has,
+ * which is easier to reason about as a threshold. `p` is clamped so a caller passing a percentage
+ * cannot index off the end and get `undefined` typed as `number`.
+ */
+export function quantile(values: number[], p: number): number | null {
+  if (values.length === 0 || !Number.isFinite(p)) return null;
+  const s = [...values].sort((a, b) => a - b);
+  const clamped = Math.min(1, Math.max(0, p));
+  return s[Math.floor(clamped * (s.length - 1))]!;
+}
+
 export function median(values: number[]): number | null {
   if (values.length === 0) return null;
   const s = [...values].sort((a, b) => a - b);
