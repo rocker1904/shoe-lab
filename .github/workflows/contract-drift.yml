@@ -7,7 +7,9 @@ permissions:
   contents: read
   issues: write
 concurrency:
-  group: contract-drift # one at a time, so two runs can't file duplicate issues
+  # Shared with the refresh workflows: one crawler against RunRepeat at a time, structurally.
+  # Also stops two drift runs racing to file duplicate issues.
+  group: scrape
   cancel-in-progress: false
 jobs:
   check:
