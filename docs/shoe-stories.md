@@ -20,6 +20,45 @@ threshold looks arbitrary, the answer is here.
   evidence does not settle a question, the preset takes no position and leaves the
   filter free. Carbon plates in a tempo shoe are the standing example.
 
+## How a story becomes a threshold
+
+Each story names a quality; the fleet only measures metrics. The mapping is a
+judgement, so it is recorded here rather than left implicit in
+`app/src/lib/presets.ts`.
+
+| quality | metric | why this one |
+|---|---|---|
+| comfort for long miles | heel stack | the best-covered cushioning proxy the fleet has, and it separates cleanly |
+| softness | *nothing* | see below — deliberately unbounded |
+| speed | weight **and** energy return | the two things a fast shoe is; measured directly rather than inferred from a plate |
+| repeatability | price | cost per mile, with a real durability metric available but unused (see Easy) |
+| plate character | plate | only ever to exclude carbon, never to require it |
+
+**Softness is deliberately not bounded**, even in Easy, where comfort is the whole
+point. Two reasons, and both would otherwise be rediscovered the hard way. The current
+softness method covers about half the fleet, so bounding it silently discards the
+other half — and it is sparse enough to trip the app's own coverage warning
+(docs/app.md §Coverage), which makes a preset that bounds it self-defeating. Bounding
+it also does not measurably improve the shortlist: the shoes it removes are not the
+shoes a runner would call wrong for the session. Stack does the work.
+
+**A plate is never a requirement.** Requiring carbon for Race is *measurably worse*
+than defining Race by weight and energy return: it lets in heavy carbon max-cushion
+trainers and shuts out genuinely fast unplated flats. Plate earns its place in Easy
+only as an exclusion.
+
+## Checking a threshold set
+
+RunRepeat labels each shoe with a `pace` fact — daily, tempo, competition, or a
+combination (docs/scraping.md §Editorial facts). It is one editor's judgement, not a
+lab reading, so it is **never a filter**. As a scoring function for a candidate
+threshold set it is excellent: apply the thresholds, then look at what fraction of the
+shortlist carries the label you would expect.
+
+Easy and Race both score highly this way. Tempo does not yet, which is the evidence
+behind its open question below. A change to any threshold should be scored this way
+before it lands, and a change that lowers the score needs an argument.
+
 ## Easy
 
 The bulk of the training week. The point is time on feet — building the aerobic
