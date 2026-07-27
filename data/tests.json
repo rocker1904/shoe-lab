@@ -16,516 +16,906 @@
   "seedSlug": "saucony-endorphin-azura",
   "tests": [
     {
+      "chartLabel": null,
       "groupId": "1",
       "id": 1,
+      "isNew": false,
       "name": "Breathability",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "breathability",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": 76
     },
     {
+      "chartLabel": null,
       "groupId": "2",
       "id": 2,
+      "isNew": false,
       "name": "Toebox durability",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toebox-durability",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "2",
       "id": 3,
+      "isNew": false,
       "name": "Heel padding durability",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "heel-padding-durability",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Outsole wear",
       "groupId": "2",
       "id": 4,
+      "isNew": false,
       "name": "Outsole durability",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "outsole-durability",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "3",
       "id": 5,
+      "isNew": false,
       "name": "Forefoot stack",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "forefoot-stack",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "3",
       "id": 6,
+      "isNew": false,
       "name": "Heel stack",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "heel-stack",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "3",
       "id": 8,
+      "isNew": false,
       "name": "Drop",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "drop",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "2",
       "id": 9,
+      "isNew": false,
       "name": "Outsole thickness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "outsole-thickness",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 10,
+      "isNew": false,
       "name": "Outsole hardness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "outsole-hardness",
       "type": "float",
-      "units": "HC"
+      "units": "HC",
+      "updateId": null
     },
     {
+      "chartLabel": "Midsole softness (soft to firm)",
       "groupId": null,
       "id": 11,
+      "isNew": false,
       "name": "Midsole softness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-softness",
       "type": "float",
-      "units": "HA"
+      "units": "HA",
+      "updateId": 70
     },
     {
+      "chartLabel": "Midsole softness in cold (soft to firm)",
       "groupId": null,
       "id": 12,
+      "isNew": false,
       "name": "Midsole softness in cold",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-softness-in-cold",
       "type": "float",
-      "units": "HA"
+      "units": "HA",
+      "updateId": 71
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 13,
+      "isNew": false,
       "name": "Midsole softness in cold (%)",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "difference-in-midsole-softness-in-cold",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Flexibility ←→ Stiffness",
       "groupId": null,
       "id": 14,
+      "isNew": false,
       "name": "Flexibility / Stiffness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "stiffness",
       "type": "float",
-      "units": "N"
+      "units": "N",
+      "updateId": 59
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 15,
+      "isNew": false,
       "name": "Stiffness in cold",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "stiffness-in-cold",
       "type": "float",
-      "units": "N"
+      "units": "N",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 16,
+      "isNew": false,
       "name": "Stiffness in cold (%)",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "difference-in-stiffness-in-cold",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 17,
+      "isNew": false,
       "name": "Torsional rigidity",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "torsional-rigidity",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": 74
     },
     {
+      "chartLabel": null,
       "groupId": "5",
       "id": 19,
+      "isNew": false,
       "name": "Heel counter stiffness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "heel-counter-stiffness",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 20,
+      "isNew": false,
       "name": "Lateral stability test",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "lateral-stability-test",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 23,
+      "isNew": false,
       "name": "Tested size",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "tested-size",
       "type": "text",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "10",
       "id": 24,
+      "isNew": false,
       "name": "Weight",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "weight",
       "type": "float",
-      "units": "g"
+      "units": "g",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "5",
       "id": 25,
+      "isNew": false,
       "name": "Midsole width - forefoot",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-width-in-the-forefoot",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "5",
       "id": 26,
+      "isNew": false,
       "name": "Midsole width - heel",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-width-in-the-heel",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 27,
+      "isNew": false,
       "name": "Width / Fit",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toebox-width-at-the-widest-part",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": 55
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 29,
+      "isNew": false,
       "name": "Toebox width",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toebox-width-at-the-big-toe",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": 56
     },
     {
+      "chartLabel": null,
       "groupId": "6",
       "id": 32,
+      "isNew": false,
       "name": "Internal length",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "internal-length",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 33,
+      "isNew": false,
       "name": "Length",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "length",
       "type": "option",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 37,
+      "isNew": false,
       "name": "Insole thickness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "insole-thickness",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 38,
+      "isNew": false,
       "name": "Tongue padding",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "tongue-padding",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 39,
+      "isNew": false,
       "name": "Tongue: gusset type",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "tongue-gusset-type",
       "type": "option",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 40,
+      "isNew": false,
       "name": "Heel tab",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "heel-tab",
       "type": "option",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 41,
+      "isNew": false,
       "name": "Removable insole",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "removable-insole",
       "type": "bool",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 42,
+      "isNew": false,
       "name": "Lug depth",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "lug-depth",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 45,
+      "isNew": false,
       "name": "Reflective elements",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "reflective-elements",
       "type": "bool",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Secondary foam softness (soft to firm)",
       "groupId": null,
       "id": 48,
+      "isNew": false,
       "name": "Secondary foam softness",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "secondary-foam-softness",
       "type": "float",
-      "units": "HA"
+      "units": "HA",
+      "updateId": 72
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 49,
+      "isNew": false,
       "name": "Midsole softness in the forefoot",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-softness-in-the-forefoot",
       "type": "float",
-      "units": "HA"
+      "units": "HA",
+      "updateId": 73
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 50,
+      "isNew": false,
       "name": "Leather/Suede quality",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "leather-suede-quality",
       "type": "option",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "8",
       "id": 52,
+      "isNew": false,
       "name": "Price",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "price",
       "type": "float",
-      "units": "£"
+      "units": "£",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 53,
+      "isNew": false,
       "name": "Toe guard durability",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toe-guard-durability",
       "type": "score",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "6",
       "id": 54,
+      "isNew": false,
       "name": "Size",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "size-rating",
       "type": "rating",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "6",
       "id": 55,
+      "isNew": false,
       "name": "Width / Fit",
+      "previousId": 27,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toebox-width-widest-part",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "6",
       "id": 56,
+      "isNew": false,
       "name": "Toebox width",
+      "previousId": 29,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toebox-width-big-toe",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "6",
       "id": 57,
+      "isNew": false,
       "name": "Toebox height",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "toebox-height",
       "type": "float",
-      "units": "mm"
+      "units": "mm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 58,
+      "isNew": false,
       "name": "Rocker",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "rocker",
       "type": "float",
-      "units": "°"
+      "units": "°",
+      "updateId": null
     },
     {
+      "chartLabel": "Flexibility ←→ Stiffness",
       "groupId": "4",
       "id": 59,
+      "isNew": false,
       "name": "Flexibility / Stiffness",
+      "previousId": 14,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "flexibility-stiffness",
       "type": "float",
-      "units": "N"
+      "units": "N",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "7",
       "id": 60,
+      "isNew": false,
       "name": "Forefoot traction",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [
+        61
+      ],
       "slug": "forefoot-traction",
       "type": "float",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 61,
+      "isNew": false,
       "name": "Heel traction",
+      "previousId": null,
+      "primaryTestId": 60,
+      "secondaryTestIds": [],
       "slug": "heel-traction",
       "type": "float",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 62,
+      "isNew": false,
       "name": "Forefoot traction",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "forefoot-traction-stop",
       "type": "float",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 64,
+      "isNew": false,
       "name": "Outsole design",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "outsole-design",
       "type": "text",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Energy return",
       "groupId": "3",
       "id": 65,
+      "isNew": false,
       "name": "Energy return heel",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [
+        66
+      ],
       "slug": "energy-return-heel",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Energy return",
       "groupId": null,
       "id": 66,
+      "isNew": false,
       "name": "Energy return forefoot",
+      "previousId": null,
+      "primaryTestId": 65,
+      "secondaryTestIds": [],
       "slug": "energy-return-forefoot",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Shock absorption",
       "groupId": "3",
       "id": 67,
+      "isNew": false,
       "name": "Shock absorption heel",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [
+        68
+      ],
       "slug": "shock-absorption-heel",
       "type": "float",
-      "units": "SA"
+      "units": "SA",
+      "updateId": null
     },
     {
+      "chartLabel": "Shock absorption",
       "groupId": null,
       "id": 68,
+      "isNew": false,
       "name": "Shock absorption forefoot",
+      "previousId": null,
+      "primaryTestId": 67,
+      "secondaryTestIds": [],
       "slug": "shock-absorption-forefoot",
       "type": "float",
-      "units": "SA"
+      "units": "SA",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 69,
+      "isNew": false,
       "name": "Plate",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "plate",
       "type": "bool",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": "Midsole softness (soft to firm)",
       "groupId": "3",
       "id": 70,
+      "isNew": true,
       "name": "Midsole softness",
+      "previousId": 11,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-softness-22",
       "type": "float",
-      "units": "AC"
+      "units": "AC",
+      "updateId": null
     },
     {
+      "chartLabel": "Midsole softness in cold (soft to firm)",
       "groupId": "8",
       "id": 71,
+      "isNew": true,
       "name": "Midsole softness in cold",
+      "previousId": 12,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-softness-in-cold-22",
       "type": "float",
-      "units": "AC"
+      "units": "AC",
+      "updateId": null
     },
     {
+      "chartLabel": "Secondary foam (soft to firm)",
       "groupId": null,
       "id": 72,
+      "isNew": true,
       "name": "Secondary foam softness",
+      "previousId": 48,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "secondary-foam-softness-22",
       "type": "float",
-      "units": "AC"
+      "units": "AC",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 73,
+      "isNew": true,
       "name": "Midsole softness in the forefoot",
+      "previousId": 49,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "midsole-softness-in-the-forefoot-22",
       "type": "float",
-      "units": "AC"
+      "units": "AC",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": "5",
       "id": 74,
+      "isNew": true,
       "name": "Torsional rigidity",
+      "previousId": 17,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "torsional-rigidity-23",
       "type": "float",
-      "units": "Nm"
+      "units": "Nm",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 75,
+      "isNew": true,
       "name": "Insulation",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "insulation",
       "type": "float",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 76,
+      "isNew": true,
       "name": "Breathability",
+      "previousId": 1,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "breathability-25",
       "type": "float",
-      "units": "BR"
+      "units": "BR",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 77,
+      "isNew": true,
       "name": "Sweat on skin",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "sweat-on-skin",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 78,
+      "isNew": true,
       "name": "Sweat in shoe",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "sweat-in-shoe",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 79,
+      "isNew": true,
       "name": "Sweat evaporated",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "sweat-evaporated",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     },
     {
+      "chartLabel": null,
       "groupId": null,
       "id": 80,
+      "isNew": true,
       "name": "Drying potential",
+      "previousId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
       "slug": "drying-potential",
       "type": "percent",
-      "units": ""
+      "units": "",
+      "updateId": null
     }
   ]
 }
