@@ -17,12 +17,33 @@ const readBlob = (b: Blob) => new Promise<string>((resolve, reject) => {
   fr.readAsText(b);
 });
 
+/**
+ * jsdom implements neither `URL.createObjectURL` nor `URL.revokeObjectURL`, so they have to be planted
+ * rather than spied on. Restore whatever was there (usually nothing) so test order cannot matter.
+ */
+function stubObjectUrls(stubs: Partial<typeof URL>): () => void {
+  const saved = Object.keys(stubs).map((k) => [k, Object.getOwnPropertyDescriptor(URL, k)] as const);
+  Object.assign(URL, stubs);
+  return () => {
+    for (const [k, desc] of saved) {
+      if (desc) Object.defineProperty(URL, k, desc);
+      else delete (URL as unknown as Record<string, unknown>)[k];
+    }
+  };
+}
+
+let restoreUrls: (() => void) | null = null;
+
 beforeEach(() => {
   history.replaceState(null, '', '/');
   localStorage.clear();
   delete document.documentElement.dataset.theme;
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  restoreUrls?.();
+  restoreUrls = null;
+  vi.restoreAllMocks();
+});
 
 describe('Page', () => {
   it('renders count, attribution and table', () => {
@@ -74,8 +95,11 @@ describe('Page', () => {
   });
   it('exports the visible rows as a CSV download', async () => {
     const blobs: Blob[] = [];
-    URL.createObjectURL = vi.fn((b: Blob) => { blobs.push(b); return 'blob:mock'; }) as unknown as typeof URL.createObjectURL;
-    URL.revokeObjectURL = vi.fn();
+    const revoke = vi.fn();
+    restoreUrls = stubObjectUrls({
+      createObjectURL: vi.fn((b: Blob) => { blobs.push(b); return 'blob:mock'; }) as typeof URL.createObjectURL,
+      revokeObjectURL: revoke,
+    });
     const clicked: HTMLAnchorElement[] = [];
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
       clicked.push(this);
@@ -86,7 +110,11 @@ describe('Page', () => {
     await fireEvent.click(screen.getByRole('button', { name: /Export CSV/ }));
 
     expect(clicked[0]?.download).toBe('shoe-lab-export.csv');
-    expect(URL.revokeObjectURL).toHaveBeenCalled();
+    expect(clicked[0]?.href).toBe('blob:mock');
+    // the revoke is deferred a tick so the browser can take its own reference to the blob first
+    expect(revoke).not.toHaveBeenCalled();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(revoke).toHaveBeenCalledWith('blob:mock');
     const text = await readBlob(blobs[0]!);
     expect(text).toMatch(/^slug,name,brand,/);
     expect(text).toContain('racer');

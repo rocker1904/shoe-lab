@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applySavedTheme, currentTheme, cycleTheme } from './theme';
 
 beforeEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.theme;
 });
+afterEach(() => vi.restoreAllMocks());
 
 describe('theme', () => {
   it('defaults to auto with no attribute set', () => {
@@ -31,5 +32,17 @@ describe('theme', () => {
     expect(cycleTheme()).toBe('auto');
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem('theme')).toBe('auto');
+  });
+  // Storage access throws outright where it is blocked (embedded frames, hard privacy settings), and this
+  // runs at boot: an unguarded read would blank the whole app.
+  it('falls back to auto when reading storage throws', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+    expect(applySavedTheme()).toBe('auto');
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+  });
+  it('still switches the theme when writing storage throws', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    expect(cycleTheme()).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 });

@@ -35,11 +35,14 @@
   }
   function onExport() {
     const blob = new Blob([exportCsv(visibleSorted, view.columns, idx)], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = 'shoe-lab-export.csv';
     a.click();
-    URL.revokeObjectURL(a.href);
+    // Revoking in the same tick can cancel the download before the browser has taken its own
+    // reference to the blob; yielding once is enough.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
   // The saved theme is applied at boot in main.ts, before the dataset fetch that gates this component.
   let theme = $state<Theme>(currentTheme());

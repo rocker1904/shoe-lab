@@ -15,14 +15,32 @@ export function currentTheme(): Theme {
   return t === 'light' || t === 'dark' ? t : 'auto';
 }
 
+// Storage access throws where it is blocked (embedded frames, hard privacy settings) rather than returning
+// null, and this module runs at boot — an unguarded read would take the whole app down with it.
+function read(): string | null {
+  try {
+    return localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+}
+function write(theme: Theme): void {
+  try {
+    localStorage.setItem(KEY, theme);
+  } catch {
+    // Losing the preference between sessions beats losing the click.
+  }
+}
+
 /** Called at boot rather than on mount: the dataset fetch is slow enough to flash the wrong theme. */
 export function applySavedTheme(): Theme {
-  const saved = localStorage.getItem(KEY);
+  const saved = read();
   return set(saved === 'light' || saved === 'dark' ? saved : 'auto');
 }
 
 export function cycleTheme(): Theme {
-  const next = NEXT[currentTheme()];
-  localStorage.setItem(KEY, next);
-  return set(next);
+  // Apply first, persist second: a throwing write must not cost the visible switch.
+  const next = set(NEXT[currentTheme()]);
+  write(next);
+  return next;
 }
