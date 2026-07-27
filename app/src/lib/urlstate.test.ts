@@ -17,6 +17,7 @@ describe('urlstate', () => {
       },
       sort: { key: 'energy-return-heel', dir: 'desc' },
       columns: ['score', 'heel-stack'],
+      generations: {},
     };
     expect(parseView(serializeView(v), idx)).toEqual(v);
   });
@@ -66,7 +67,7 @@ describe('urlstate hostile input', () => {
     a.filters.ranges['weight'] = { min: 1 };
     a.columns.push('bogus');
     a.sort.key = 'weight';
-    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns });
+    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {} });
     expect(DEFAULT_COLUMNS).toEqual(columns);
   });
   it('resolves repeated keys to the last valid occurrence', () => {
@@ -149,5 +150,39 @@ describe('urlstate hostile input', () => {
     expect(serializeView(v)).toBe('');
     v.filters.ranges['weight'] = { min: 5, max: Number.POSITIVE_INFINITY };
     expect(serializeView(v)).toBe('');
+  });
+});
+
+describe('generation choice', () => {
+  it('round-trips a non-default generation', () => {
+    const v = defaultView();
+    v.generations['midsole-softness-22'] = 'midsole-softness';
+    expect(parseView(serializeView(v), idx).generations).toEqual({ 'midsole-softness-22': 'midsole-softness' });
+  });
+  it('omits a choice that equals its key', () => {
+    const v = defaultView();
+    v.generations['midsole-softness-22'] = 'midsole-softness-22';
+    expect(serializeView(v)).toBe('');
+  });
+  it('drops a choice naming a test that does not exist', () => {
+    expect(parseView('gen.midsole-softness-22=made-up', idx).generations).toEqual({});
+  });
+  it('drops a choice keyed on a test that does not exist', () => {
+    expect(parseView('gen.made-up=midsole-softness', idx).generations).toEqual({});
+  });
+  it('round-trips show-missing and omits it when unset', () => {
+    const v = defaultView();
+    v.filters.showMissing = true;
+    expect(serializeView(v)).toContain('missing=1');
+    expect(parseView(serializeView(v), idx).filters.showMissing).toBe(true);
+    expect(serializeView(defaultView())).not.toContain('missing');
+  });
+  it('never admits both generations of a pair as ranges at once', () => {
+    const v = parseView('r.midsole-softness=1~&r.midsole-softness-22=1~', idx);
+    expect(Object.keys(v.filters.ranges)).toHaveLength(1);
+  });
+  it('never admits both generations of a pair as columns at once', () => {
+    const v = parseView('cols=midsole-softness,midsole-softness-22', idx);
+    expect(v.columns).toEqual(['midsole-softness-22']);
   });
 });

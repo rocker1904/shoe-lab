@@ -50,9 +50,11 @@ boundary, and needs the decision above.
 
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
-`plate`, `after`, `brands` (comma-joined), `q`, `nodisc=1`, `sort`
-(`-` prefix means descending), `cols` (comma-joined). A value equal to the
-default is not written at all.
+`plate`, `after`, `brands` (comma-joined), `q`, `nodisc=1`, `missing=1`,
+`sort` (`-` prefix means descending), `cols` (comma-joined), and
+`gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
+default is not written at all — a generation choice naming its own key is the
+default and never appears.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, always falling back to the default rather than throwing:
@@ -60,8 +62,17 @@ range and sort keys must name a numeric test or a numeric shoe field, a
 malformed bound voids that whole range (dropping one side would silently widen
 it), `plate` and `after` are pattern-checked, an all-separator `brands` stays
 absent instead of becoming an empty array, and `cols` is deduped and filtered
-against the column allowlist. Bound serialisation accepts everything
-`String(number)` emits, exponent form included, so round-trips are lossless.
+against the column allowlist. A `gen.` choice survives only when its key names
+the current generation of a resolved pair and its value names that pair's
+retired generation. Bound serialisation accepts everything `String(number)`
+emits, exponent form included, so round-trips are lossless.
+
+The two generations of a pair are mutually exclusive, and `parseView` is where
+that is enforced for URLs — the one place both can arrive together. When a
+range or a column names both, the current generation is kept and the other is
+dropped. Only about 40% of shoes carry both readings, so ANDing them collapses
+the fleet for no visible reason. The click path enforces the same invariant
+itself (docs/app.md §Columns and sorting).
 
 ## Filters
 
