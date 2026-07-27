@@ -5,3 +5,4 @@ coverage/
 app/public/shoes.json
 playwright-report/
 test-results/
+.notes/
