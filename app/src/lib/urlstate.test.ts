@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { DEFAULT_COLUMNS, defaultView, parseView, serializeView, type ViewState } from './urlstate';
-import { TESTS } from './test-fixtures';
+import { TESTS, labTest } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -131,7 +131,7 @@ describe('urlstate hostile input', () => {
     expect(parseView('cols=bogus,alsobogus', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
       'midsole-softness-22', 'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
     expect(serializeView(parseView(`cols=${DEFAULT_COLUMNS.join(',')}`, indexTests([...TESTS,
-      { id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', type: 'float', units: 'mm', groupId: null }]))))
+      labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', units: 'mm' })]))))
       .toBe('');
   });
   it('rejects name and brand as columns — they are sort fields, and the table renders them itself', () => {

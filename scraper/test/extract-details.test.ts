@@ -3,9 +3,9 @@ import { extractDetails } from '../src/extract-details.js';
 import { PayloadError } from '../src/page-payload.js';
 import { loadAzuraPageData, loadJsonFixture } from './helpers.js';
 
-describe('extractDetails', () => {
-  const rec = extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', '2026-07-26T00:00:00Z');
+const rec = extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', '2026-07-26T00:00:00Z');
 
+describe('extractDetails', () => {
   it('extracts core product fields from the real fixture', () => {
     expect(rec).toMatchObject({
       productId: 41068,
@@ -69,6 +69,94 @@ describe('extractDetails plate section', () => {
   });
   it('is false for the real unplated Azura fixture', () => {
     expect(extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', 't').hasPlateSection).toBe(false);
+  });
+});
+
+// The three plain-text editorial fields reach the reader through plain interpolation, so an
+// entity that survives extraction is rendered verbatim (docs/app.md §Sanitised-HTML boundary).
+describe('extractDetails plain text', () => {
+  const withText = (c: Record<string, unknown>) => extractDetails({ product: { id: 1, name: 'X' }, content: c }, 'x', 't');
+
+  it('decodes entities in intro, pros and cons', () => {
+    const rec = withText({
+      intro_clean: 'we&rsquo;ve tested it&mdash;a lot',
+      pros_clean: ['Grips both wet &amp; dry tarmac'],
+      cons_clean: ['Doesn&rsquo;t stay in place'],
+    });
+    expect(rec.intro).toBe('we’ve tested it—a lot');
+    expect(rec.pros).toEqual(['Grips both wet & dry tarmac']);
+    expect(rec.cons).toEqual(['Doesn’t stay in place']);
+  });
+  it('decodes entities in the product and version names', () => {
+    const rec = extractDetails({
+      product: { id: 1, name: 'Nike Zoom&trade;', brand_name: 'Nike&reg;', previous_version: { slug: 'p', name: 'Zoom&trade; 1' } },
+    }, 'x', 't');
+    expect(rec.name).toBe('Nike Zoom™');
+    expect(rec.brand).toBe('Nike®');
+    expect(rec.previousVersion).toEqual({ slug: 'p', name: 'Zoom™ 1' });
+  });
+  it('leaves the sanitised-HTML fields alone, where entities are correct markup', () => {
+    const rec = extractDetails({
+      product: { id: 1, name: 'X' },
+      content: { lab: { sections: [{ title: 'Who should buy', content: '<p>runners &amp; walkers</p>' }] } },
+    }, 'x', 't');
+    expect(rec.whoShouldBuy).toContain('&amp;');
+  });
+  it('decodes the real fixture rather than passing entities through', () => {
+    expect(rec.intro).not.toMatch(/&[a-z]+;/);
+    for (const line of [...rec.pros, ...rec.cons]) expect(line).not.toMatch(/&[a-z]+;/);
+  });
+});
+
+describe('extractDetails facts', () => {
+  const factPayload = (facts: unknown) => extractDetails({ product: { id: 1, name: 'X' }, features: facts }, 'x', 't');
+
+  it('reads the kept facts from the real fixture with slugs and labels', () => {
+    // A shoe carries as many pace labels as RunRepeat gave it; the Azura is both
+    expect(rec.facts['pace']).toEqual([{ slug: 'tempo', text: 'Tempo' }, { slug: 'daily-running', text: 'Daily running' }]);
+    expect(rec.facts['arch-support']).toEqual([{ slug: 'neutral', text: 'Neutral' }]);
+    expect(rec.facts['strike-pattern']?.map((v) => v.slug)).toEqual(['heel-strike', 'forefoot-strike']);
+    // width is the list of SKU widths on offer, not a measurement of this shoe
+    expect(rec.facts['width']?.map((v) => v.text)).toContain('Normal');
+  });
+  it('never emits "[object Object]" from the nested link shape', () => {
+    // The old String(v.text) cast produced this for every fact whose values nest one level
+    const nested = [{ slug: 'pace', values: [{ slug: 'pace', text: [{ slug: 'tempo', text: 'Tempo' }] }] }];
+    expect(factPayload(nested).facts['pace']).toEqual([{ slug: 'tempo', text: 'Tempo' }]);
+    const junk = [{ slug: 'features', values: [{ text: [{}, {}] }] }];
+    expect(factPayload(junk).features).toEqual([]);
+  });
+  it('keeps only the facts it was asked for, and omits empty ones', () => {
+    const payload = [
+      { slug: 'pace', values: [{ slug: 'tempo', text: 'Tempo' }] },
+      { slug: 'season', values: [{ slug: 'winter', text: 'Winter' }] },
+      { slug: 'width', values: [] },
+    ];
+    expect(Object.keys(factPayload(payload).facts)).toEqual(['pace']);
+  });
+  it('reads an empty fact map from a payload with no facts', () => {
+    expect(factPayload(undefined).facts).toEqual({});
+    expect(factPayload('nope').facts).toEqual({});
+  });
+});
+
+// `last_version` names the newest model in the line and skips generations, so it is kept
+// distinct from the direct predecessor rather than merged (docs/scraping.md §Model lineage).
+describe('extractDetails model lineage', () => {
+  it('reads both references when the payload carries them', () => {
+    const r = extractDetails({
+      product: { id: 1, name: 'X', previous_version: { id: 9, name: 'ASICS Gel Cumulus 25', slug: 'asics-gel-cumulus-25', score: 88 } },
+      last_version: { id: 3, slug: 'asics-gel-cumulus-28', name: 'ASICS Gel Cumulus 28', url: '/uk/asics-gel-cumulus-28' },
+    }, 'x', 't');
+    expect(r.previousVersion).toEqual({ slug: 'asics-gel-cumulus-25', name: 'ASICS Gel Cumulus 25' });
+    expect(r.latestVersion).toEqual({ slug: 'asics-gel-cumulus-28', name: 'ASICS Gel Cumulus 28' });
+  });
+  it('reads null for every shape that is not a usable reference', () => {
+    for (const v of [undefined, null, {}, { slug: 'a' }, { name: 'B' }, { slug: '', name: 'B' }, { slug: 'a', name: 42 }]) {
+      const r = extractDetails({ product: { id: 1, name: 'X', previous_version: v }, last_version: v }, 'x', 't');
+      expect(r.previousVersion).toBeNull();
+      expect(r.latestVersion).toBeNull();
+    }
   });
 });
 

@@ -38,10 +38,12 @@ not reference; where they disagree with docs/, docs/ wins.
 - **Commands**: root `npm run verify` is the CI gate (check:docs + typecheck
   + lint + test:coverage — the sequence has one owner; run it before pushing)
   plus `npm run test` (no coverage, safe for filtered runs); scraper
-  `npm -w scraper run scrape:metrics | scrape:details (--from-corpus <dir>
-  re-extracts from local pages, no network) | scrape:releases | build:dataset |
-  check:live`; app `npm -w app run dev | build | e2e` (e2e is CI's only step
-  outside `verify` — needs the Playwright browser).
+  `npm -w scraper run scrape:metrics | scrape:details | scrape:releases |
+  build:dataset | check:live` — both scrapers take `--from-corpus <dir>` to
+  re-extract from local pages with no network, `scrape:metrics` rewriting the
+  catalogue only (docs/scraping.md §Re-extracting from a corpus); app
+  `npm -w app run dev | build | e2e` (e2e is CI's only step outside `verify` —
+  needs the Playwright browser).
 - **No live network in tests, ever.** Live requests happen only in the four
   scraper CLIs and `check:live`, all via `PoliteHttp` (docs/scraping.md
   §Politeness). Never call fetch directly against runrepeat.com.

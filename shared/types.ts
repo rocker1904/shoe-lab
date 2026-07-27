@@ -1,6 +1,14 @@
 export type TestType = 'float' | 'score' | 'percent' | 'bool' | 'rating' | 'option' | 'text';
+/**
+ * `previousId`/`updateId` are RunRepeat's own supersession chain and `primaryTestId`/
+ * `secondaryTestIds` its heel/forefoot pairing; both are carried raw for a later presentation
+ * pass (docs/scraping.md §Test lineage). Readings are **not** comparable across a supersession.
+ */
 export interface LabTest {
   id: number; slug: string; name: string; type: TestType; units: string; groupId: string | null;
+  chartLabel: string | null; isNew: boolean;
+  previousId: number | null; updateId: number | null;
+  primaryTestId: number | null; secondaryTestIds: number[];
 }
 export interface TestsFile {
   scrapedAt: string; seedSlug: string;
@@ -10,6 +18,10 @@ export interface TestsFile {
 export type MetricValue = number | string | boolean;
 export interface MetricsShoe { name: string; url: string; values: Record<string, MetricValue> }
 export interface MetricsFile { scrapedAt: string; shoes: Record<string, MetricsShoe> }
+/** One value of one editorial fact, slug-keyed so display text can change without breaking state. */
+export interface FactValue { slug: string; text: string }
+/** A sibling model. Every reference RunRepeat emits names a shoe the catalogue also covers. */
+export interface VersionRef { slug: string; name: string }
 export interface DetailRecord {
   scrapedAt: string; productId: number; name: string; brand: string | null;
   releasedAt: string | null; preciseReleaseDate: boolean;
@@ -20,9 +32,18 @@ export interface DetailRecord {
   whoShouldBuy: string | null; whoShouldNotBuy: string | null;
   /** RunRepeat's own category; null when the page did not state one (docs/scraping.md §Non-running shoes). */
   categorySlug: string | null;
+  /** Editorial facts keyed by fact slug — RunRepeat's labels, not measurements (docs/scraping.md §Editorial facts). */
+  facts: Record<string, FactValue[]>;
+  /** The immediately preceding model. `latestVersion` is the newest in the line and may skip generations. */
+  previousVersion: VersionRef | null;
+  latestVersion: VersionRef | null;
 }
 export interface Tombstone { gone: true; scrapedAt: string }
-export interface DetailsFile { shoes: Record<string, DetailRecord | Tombstone> }
+export interface DetailsFile {
+  shoes: Record<string, DetailRecord | Tombstone>;
+  /** Test id (as string) to group id, unioned over every page crawled (docs/scraping.md §Test groups). */
+  testGroups?: Record<string, string>;
+}
 /** The year-only fallback behind every imprecise `releasedAt` (docs/scraping.md §Release-year supplement). */
 export interface ReleaseYearsFile { scrapedAt: string; years: Record<string, number> }
 export type Plate = 'carbon' | 'plated-other' | 'none';
@@ -37,6 +58,16 @@ export interface Shoe {
   discontinued: boolean; plate: Plate; imageUrl: string | null;
   values: Record<string, MetricValue>;
   details: ShoeDetails | null;
+  facts: Record<string, FactValue[]>;
+  /** `nextVersion` is derived by inverting the fleet's `previousVersion` links, not scraped. */
+  previousVersion: VersionRef | null;
+  nextVersion: VersionRef | null;
+  latestVersion: VersionRef | null;
+  /**
+   * BCP-47 tag of the editorial prose when it is not the page's own en-GB — RunRepeat has
+   * published a handful of reviews in the wrong language (docs/scraping.md §Review language).
+   */
+  reviewLanguage: string | null;
 }
 export interface ShoesFile {
   builtAt: string; source: 'RunRepeat';

@@ -5,6 +5,7 @@ import type { DataDir } from './data-files.js';
 import { HttpStatusError, type PoliteHttp } from './http.js';
 import { extractDetails } from './extract-details.js';
 import { extractPagePayload } from './page-payload.js';
+import { extractTestGroups } from './test-catalogue.js';
 import { isPathAllowed, parseRobots } from './robots.js';
 import { validateDetailsRecord } from './validate.js';
 
@@ -67,9 +68,13 @@ export async function scrapeDetails(opts: ScrapeDetailsOptions): Promise<ScrapeD
       } else {
         html = await http!.getText(`${BASE}/uk/${slug}`);
       }
-      const rec = extractDetails(extractPagePayload(html).pageData, slug, scrapedAt);
+      const pageData = extractPagePayload(html).pageData;
+      const rec = extractDetails(pageData, slug, scrapedAt);
       validateDetailsRecord(rec, slug);
       details.shoes[slug] = rec;
+      // Unioned across runs rather than replaced: an incremental crawl sees only new shoes, and
+      // a group learned from an earlier page stays true (docs/scraping.md §Test groups).
+      details.testGroups = { ...details.testGroups, ...extractTestGroups(pageData) };
       result.fetched.push(slug);
     } catch (e) {
       if (e instanceof HttpStatusError && e.status === 404) {

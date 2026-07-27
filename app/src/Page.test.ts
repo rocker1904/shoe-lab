@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from './Page.svelte';
-import { FLEET, TESTS } from './lib/test-fixtures';
+import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 // An extra numeric test that is not in the sidebar's curated list, so the "Add filter…" select renders.
-const EXTRA: LabTest = { id: 99, slug: 'stiffness', name: 'Stiffness', type: 'float', units: 'N', groupId: null };
+const EXTRA: LabTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' });
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, EXTRA] };
 
 /** jsdom's Blob has no `.text()`, so read it the long way round. */

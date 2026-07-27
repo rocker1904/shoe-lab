@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { MetricsFile, TestsFile } from '../../shared/types.js';
 import { dataDir } from '../src/data-files.js';
@@ -74,5 +75,38 @@ describe('scrapeMetrics', () => {
     const http = new PoliteHttp({ fetchImpl, sleep: async () => {} });
     await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' })).rejects.toThrow(/robots/i);
     expect(dir.read('tests.json')).toBeNull();
+  });
+});
+
+// Catalogue-only, offline: the readings live behind the API and cannot be replayed from disk,
+// so metrics.json must come through untouched (docs/scraping.md §Re-extracting from a corpus).
+describe('scrapeMetrics from a corpus', () => {
+  const corpus = fileURLToPath(new URL('./fixtures/raw', import.meta.url));
+
+  it('rewrites tests.json from the local seed page without any request', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const res = await scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: corpus });
+    expect(res.testCount).toBeGreaterThanOrEqual(50);
+    const tests = dir.read<TestsFile>('tests.json')!;
+    expect(tests.tests.find((t) => t.id === 11)?.updateId).toBe(70);
+    expect(dir.read<MetricsFile>('metrics.json')).toBeNull();
+  });
+  it('leaves an existing metrics.json and its scrapedAt alone', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const metrics: MetricsFile = { scrapedAt: '2026-01-01T00:00:00Z', shoes: { a: { name: 'A', url: 'u', values: {} } } };
+    dir.write('metrics.json', metrics);
+    dir.write('tests.json', { scrapedAt: '2026-02-02T00:00:00Z', seedSlug: 'azura', groups: {}, tests: [] });
+    const res = await scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: corpus });
+    expect(res.shoeCount).toBe(1);
+    expect(dir.read<MetricsFile>('metrics.json')).toEqual(metrics);
+    expect(dir.read<TestsFile>('tests.json')!.scrapedAt).toBe('2026-02-02T00:00:00Z');
+  });
+  it('throws rather than falling back to the network when the seed is not in the corpus', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    await expect(scrapeMetrics({ dataDir: dir, seed: 'no-such-shoe', corpusDir: corpus })).rejects.toThrow(/not in corpus/);
+  });
+  it('needs one of http or corpusDir', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    await expect(scrapeMetrics({ dataDir: dir, seed: 'azura' })).rejects.toThrow(/either http or corpusDir/);
   });
 });

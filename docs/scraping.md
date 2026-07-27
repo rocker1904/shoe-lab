@@ -163,14 +163,143 @@ Expensive to discover, invisible in the code:
   ("rather than carbon fibre"), so a regex that catches the real ones catches more
   false ones. Roughly three shoes in the fleet are tagged wrongly at source and are
   corrected by hand (§Decisions).
-- **`lab_tests.groups` covers only the seed shoe's own test run**, so about
-  half the catalogue has `groupId: null` and lands in the app's "Other" column
-  group (docs/app.md §Columns and sorting). Not corruption; a multi-seed merge
-  would be needed to fill it.
 - **Display names are neither unique nor stable.** RunRepeat revised test
-  methods in 2022 and kept the old names, so tests 11 and 70 are both
-  "Midsole softness" (`midsole-softness` / `midsole-softness-22`). Slugs
-  disambiguate; anything user-visible that must round-trip uses the slug.
+  methods and kept the old names, so tests 11 and 70 are both "Midsole
+  softness" (`midsole-softness` / `midsole-softness-22`). Slugs disambiguate;
+  anything user-visible that must round-trip uses the slug. §Test lineage is
+  what says which of a same-named pair supersedes the other.
+- **Editorial prose arrives HTML-escaped.** `intro`, `pros` and `cons` are
+  plain-text fields carrying `&rsquo;`, `&mdash;` and friends; two shoes in five
+  have at least one. `scraper/src/page-text.ts` decodes them at extraction,
+  because the app renders these by interpolation and would otherwise print the
+  escape verbatim (docs/app.md §Sanitised-HTML boundary). The two sanitised-HTML
+  fields are deliberately left encoded — there an entity is correct markup.
+- **Two readings arrive unrounded.** Shock absorption heel and forefoot come
+  through with twelve significant figures where every other test gives one or
+  two decimals. Stored as received; trimmed for display only
+  (docs/app.md §Number display).
+
+## Fact values
+
+`page_data.features` is a list of editorial facts, each with a `values` array.
+A value's `text` is a bare string on some facts (`terrain`, `features`) and an
+**array of link objects** on others (`pace`, `width`, `material`, `collection`)
+— the nested form carries the useful slugs one level down. `factValues` in
+`scraper/src/page-text.ts` flattens the nested form onto its own entries and
+dedupes, because values repeat: the `width` fact lists a SKU width once per
+size run. A `String(value.text)` cast yields `"[object Object]"` on the nested
+shape, which is why every fact read goes through that helper.
+
+## Editorial facts
+
+`KEPT_FACTS` in `extract-details.ts` names the facts stored per shoe. These are
+RunRepeat's **labels**, not measurements, and cost no requests — they ride on
+the page the details crawl already fetches. Widening the list is one array
+entry plus a rebuild.
+
+- `pace` — daily-running / tempo / competition, multi-valued, on every shoe.
+- `arch-support` — neutral or stability.
+- `strike-pattern` — heel and/or forefoot.
+- `width` — the **SKU widths sold**, not a measurement of this shoe. It does
+  not track measured toebox width at all: median widest-part is flat across
+  every combination of the fact. Presenting it beside a toebox measurement
+  needs that distinction made, or it reads as a contradiction.
+
+Do not treat any of these as ground truth for a filter preset — they are one
+editor's classification, not a lab reading (BACKLOG.md).
+
+## Test lineage
+
+The catalogue entry for each test carries RunRepeat's own relationships, kept
+raw for a later presentation pass:
+
+- **`previousId` / `updateId`** — the supersession chain, consistent in both
+  directions, over nine pairs. **Readings are not comparable across it.** The
+  unit changes on most (HA→AC durometer scales) and even the same-unit pairs
+  shift systematically: 27→55 moves the mean 3.4 mm, 14→59 moves it 12 N.
+  Coalescing or averaging the two generations invents measurements. What the
+  chain is for is saying which column is the current method and pairing the two
+  in the UI.
+- **`primaryTestId` / `secondaryTestIds`** — the heel/forefoot halves of one
+  measurement (traction, energy return, shock absorption).
+- **`chartLabel`** — the shared family name for such a pair ("Shock
+  absorption", "Energy return"). It does **not** disambiguate a supersession:
+  both generations of a pair carry the same label, or none.
+- **`isNew` is unreliable and must not be read as "current method".** Tests 59
+  and 55 are the current generation of their pairs — 14 and 27 name them in
+  `updateId` — yet both report `isNew: false`, exactly as their superseded
+  predecessors do. Only `previousId`/`updateId` settle which reading is
+  current. Pinned in `scraper/test/test-catalogue.test.ts`, so if upstream ever
+  fixes this the assertion fails and the claim can be retired.
+
+## Test groups
+
+A page groups only the tests its own shoe was run for, so any single page —
+the seed included — leaves about half the catalogue with `groupId: null`, in
+the app's "Other" column group (docs/app.md §Columns and sorting). Every page
+carries its own map and the details crawl fetches them all, so
+`scrape:details` unions them into `details.json`'s `testGroups` and
+`build:dataset` overlays that onto the catalogue. The overlay never overwrites
+a group the catalogue already states. Free in requests, and it cuts the
+ungrouped set to the handful nobody groups.
+
+The union is monotone across incremental runs: a group learned from an earlier
+page stays. Re-running `scrape:details --from-corpus` rebuilds it from scratch.
+
+## Empty tests
+
+RunRepeat's catalogue is the same on every page and lists tests it does not
+run for road shoes — retired methods, trail-only measurements. `build:dataset`
+drops any test with no reading anywhere from the published `tests[]` and from
+the CSV header, so they stop filling the column picker, the filter menu and the
+export with dead entries.
+
+Dropped at **build** time rather than skipped at fetch time, so a test returns
+by itself the moment RunRepeat runs it again — no list to maintain, no
+`metrics.json` change. Emptiness is relative to the surviving fleet: excluding
+non-running shoes emptied `lug-depth` and `insulation`, which only hiking boots
+ever carried.
+
+Two of the dropped tests are not empty upstream: `tongue-gusset-type` and
+`heel-tab` are populated on nearly every page but are `option`-typed, so
+§Which tests are fetched never requests them. They are recoverable from the
+details crawl at zero request cost if they are ever wanted (BACKLOG.md).
+
+## Model lineage
+
+`product.previous_version` names the **immediately preceding** model;
+`last_version` names the **newest in the line** and may skip generations
+(Cumulus 25's `last_version` is Cumulus 28). They are stored separately for
+that reason.
+
+The forward link is derived, not scraped: `build:dataset` inverts the fleet's
+`previousVersion` map, which yields far more successor links than
+`last_version` does and cannot disagree with the backward one. Every reference
+names a shoe RunRepeat also reviewed. Inversion runs after category exclusion,
+so a link never points at a shoe the dataset dropped, and slug order settles
+the winner if two shoes ever claim the same predecessor.
+
+## Review language
+
+RunRepeat has published a few reviews in the wrong language: the prose is
+Spanish while the canonical URL, the `lang` attribute and the section headings
+are all English. **There is no other page to fetch** — the `/uk/` page is the
+one already crawled and carries no alternate. `scraper/src/review-language-overrides.ts`
+records the language by slug and the app labels it
+(docs/app.md §Review language), so nothing is hidden and nothing is
+translated. Hand-maintained
+source rather than a `data/` edit, for the reasons in §Decisions.
+
+## Re-extracting from a corpus
+
+Both crawlers take `--from-corpus <dir>` and read saved pages instead of the
+network, which is how a new extracted **field** is backfilled across the fleet
+without spending a crawl. `scrape:details` re-extracts every record;
+`scrape:metrics` re-extracts the **catalogue only** and deliberately leaves
+`metrics.json` untouched, because the readings live behind the API and cannot
+be replayed from a page. Neither path constructs a request, so neither passes
+through the robots gate. Recorded `scrapedAt` values stand: re-reading disk is
+not reading RunRepeat (§Determinism).
 
 ## Decisions
 

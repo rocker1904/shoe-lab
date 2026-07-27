@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ValidationError, validateDetailsRecord, validateMetrics, validatePlateOverrides, validateShoesFile } from '../src/validate.js';
 import type { MetricsFile, Plate, ShoesFile, TestsFile } from '../../shared/types.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
+import { labTest, shoe } from './helpers.js';
 
 function makeMetrics(shoeCount: number, testIds: number[] = [5, 6]): MetricsFile {
   const shoes: MetricsFile['shoes'] = {};
@@ -15,7 +16,7 @@ function makeMetrics(shoeCount: number, testIds: number[] = [5, 6]): MetricsFile
 }
 const tests: TestsFile = {
   scrapedAt: '2026-07-26T00:00:00Z', seedSlug: 's', groups: {},
-  tests: Array.from({ length: 55 }, (_, i) => ({ id: i + 1, slug: `t${i + 1}`, name: `T${i + 1}`, type: 'float' as const, units: 'mm', groupId: null })),
+  tests: Array.from({ length: 55 }, (_, i) => labTest({ id: i + 1, slug: `t${i + 1}`, name: `T${i + 1}`, units: 'mm' })),
 };
 
 describe('validateMetrics', () => {
@@ -110,7 +111,7 @@ describe('validateDetailsRecord', () => {
 describe('validateShoesFile', () => {
   const good: ShoesFile = {
     builtAt: '2026-07-26T00:00:00Z', source: 'RunRepeat', groups: {}, tests: tests.tests,
-    shoes: [{ slug: 'a', name: 'A', brand: null, url: 'https://runrepeat.com/a', releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: false, plate: 'none', imageUrl: null, values: { '5': 1 }, details: null }],
+    shoes: [shoe({ slug: 'a', name: 'A', url: 'https://runrepeat.com/a', values: { '5': 1 } })],
   };
   it('passes a valid file and rejects bad plate', () => {
     expect(() => validateShoesFile(good)).not.toThrow();

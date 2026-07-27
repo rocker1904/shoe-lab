@@ -99,6 +99,38 @@ means *any* plate — it keeps carbon and non-carbon alike and excludes only
 `none` 0, `plated-other` 1, `carbon` 2, so descending reads "most plate
 first" like every other column. The table renders `plated-other` as "plated".
 
+## Number display
+
+`displayNumber` rounds to two decimals at the cell. The dataset stores every
+reading exactly as RunRepeat computed it — the two shock-absorption tests
+arrive with twelve significant figures (docs/scraping.md §Data quirks) — and
+trimming belongs to the view, not the record. The in-app CSV export therefore
+writes full precision: it is a data export, not a rendering.
+
+## Resolved price
+
+Lab test 52 and the `msrpGbp` field are the same GBP list price from two
+sources. `priceOf` prefers the test, which refreshes with every weekly metrics
+run, and falls back to the field, which only changes when a shoe's page is
+re-crawled. `numericValue` routes the `msrpGbp` key through it, so the column,
+the sort and the range filter cannot disagree with each other. Both fields stay
+in the dataset; this is a view-layer resolution, not a build-time merge.
+
+## Model lineage
+
+The expanded row links a shoe's predecessor, its successor and — only when it
+is not the successor repeated — the newest model in its line
+(docs/scraping.md §Model lineage). Links go to RunRepeat: shoe-lab has no
+per-shoe page of its own to point at.
+
+## Review language
+
+`reviewLanguage` is non-null only for the handful of reviews RunRepeat
+published in the wrong language (docs/scraping.md §Review language). The panel
+names the language above the prose. The text is shown, not hidden — it is
+RunRepeat's copy either way, and a reader who wants it translated has the
+review link.
+
 ## Presets
 
 Preset chips are canned view states: `applyPreset` builds a complete

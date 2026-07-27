@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import FilterSidebar from './FilterSidebar.svelte';
 import { isoYearsAgo } from '../lib/dataset';
 import { defaultView } from '../lib/urlstate';
-import { FLEET, TESTS } from '../lib/test-fixtures';
+import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
@@ -105,7 +105,7 @@ describe('FilterSidebar text and toggle controls', () => {
   });
 });
 
-const extraTest = { id: 99, slug: 'stiffness', name: 'Stiffness', type: 'float', units: 'N', groupId: null } as const;
+const extraTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' });
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 
 describe('FilterSidebar filter set management', () => {

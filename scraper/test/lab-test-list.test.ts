@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PayloadError } from '../src/page-payload.js';
 import { parseLabTestList } from '../src/lab-test-list.js';
-import { loadJsonFixture } from './helpers.js';
+import { labTest, loadJsonFixture } from './helpers.js';
 import type { LabTest } from '../../shared/types.js';
 
-const forefootStack: LabTest = { id: 5, slug: 'forefoot-stack', name: 'Forefoot stack', type: 'float', units: 'mm', groupId: '3' };
+const forefootStack: LabTest = labTest({ id: 5, slug: 'forefoot-stack', name: 'Forefoot stack', units: 'mm', groupId: '3' });
 
 describe('parseLabTestList', () => {
   it('parses the real fixture into slug-keyed rows', () => {

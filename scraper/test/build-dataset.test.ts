@@ -1,17 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildDataset, derivePlate, plateFromRules } from '../src/build-dataset.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
+import { REVIEW_LANGUAGE_OVERRIDES } from '../src/review-language-overrides.js';
 import { ValidationError } from '../src/validate.js';
 import type { DetailRecord, DetailsFile, MetricsFile, ReleaseYearsFile, ShoesFile, TestsFile } from '../../shared/types.js';
+import { detailRecord, labTest } from './helpers.js';
 
 const tests: TestsFile = {
   scrapedAt: '2026-07-20T00:00:00Z', seedSlug: 's',
-  groups: { '3': 'Cushioning' },
+  groups: { '3': 'Cushioning', '5': 'Stability' },
   tests: [
-    { id: 6, slug: 'heel-stack', name: 'Heel stack', type: 'float', units: 'mm', groupId: '3' },
-    { id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', units: '', groupId: null },
-    { id: 69, slug: 'plate', name: 'Plate', type: 'bool', units: '', groupId: null },
-    ...Array.from({ length: 52 }, (_, i) => ({ id: 100 + i, slug: `t${i}`, name: `T${i}`, type: 'float' as const, units: '', groupId: null })),
+    labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm', groupId: '3' }),
+    labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option' }),
+    labTest({ id: 69, slug: 'plate', name: 'Plate', type: 'bool' }),
+    // Ungrouped by the seed but grouped by other pages, and never read by any shoe: the two
+    // build-time catalogue rules (group overlay, empty-test drop) both bite here.
+    labTest({ id: 17, slug: 'torsional-rigidity', name: 'Torsional rigidity', type: 'score' }),
+    ...Array.from({ length: 52 }, (_, i) => labTest({ id: 100 + i, slug: `t${i}`, name: `T${i}` })),
   ],
 };
 
@@ -19,26 +24,25 @@ function baseInputs(): { metrics: MetricsFile; details: DetailsFile } {
   const metrics: MetricsFile = { scrapedAt: '2026-07-20T00:00:00Z', shoes: {} };
   for (let i = 0; i < 320; i++) {
     metrics.shoes[`shoe-${String(i).padStart(3, '0')}`] = {
-      name: `Shoe ${i}`, url: `https://runrepeat.com/shoe-${i}`, values: { '6': 30 + (i % 10), '69': i % 2 === 0 },
+      // t0 is read by odd shoes only, so it survives the empty-test drop while still being
+      // absent from some rows — that is what an empty CSV cell has to come from now.
+      name: `Shoe ${i}`, url: `https://runrepeat.com/shoe-${i}`,
+      values: i % 2 === 1 ? { '6': 30 + (i % 10), '69': false, '100': i } : { '6': 30 + (i % 10), '69': true },
     };
   }
   const details: DetailsFile = { shoes: {
-    'shoe-000': {
+    'shoe-000': detailRecord({
       scrapedAt: '2026-07-22T00:00:00Z', productId: 1, name: 'Shoe Zero Deluxe', brand: 'Brand', releasedAt: '2025-06-01',
-      preciseReleaseDate: true, score: 90, msrpGbp: 150, discontinued: false, imageUrl: null,
+      preciseReleaseDate: true, score: 90, msrpGbp: 150,
       runrepeatUrl: 'https://runrepeat.com/uk/shoe-000', features: ['Carbon plate', 'Rocker'],
-      hasPlateSection: false,
-      pros: ['good'], cons: ['bad'], intro: 'intro', whoShouldBuy: '<p>you</p>', whoShouldNotBuy: null,
+      pros: ['good'], cons: ['bad'], intro: 'intro', whoShouldBuy: '<p>you</p>',
       categorySlug: 'running-shoes',
-    },
+    }),
     'shoe-001': { gone: true, scrapedAt: '2026-07-21T00:00:00Z' },
-    'ghost-shoe': {
-      scrapedAt: '2026-07-19T00:00:00Z', productId: 9, name: 'Ghost', brand: null, releasedAt: null,
-      preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: true, imageUrl: null,
-      runrepeatUrl: 'https://runrepeat.com/uk/ghost-shoe', features: [], hasPlateSection: false,
-      pros: [], cons: [], intro: '',
-      whoShouldBuy: null, whoShouldNotBuy: null, categorySlug: null,
-    },
+    'ghost-shoe': detailRecord({
+      scrapedAt: '2026-07-19T00:00:00Z', productId: 9, name: 'Ghost', discontinued: true,
+      runrepeatUrl: 'https://runrepeat.com/uk/ghost-shoe',
+    }),
   } };
   return { metrics, details };
 }
@@ -176,8 +180,10 @@ describe('buildDataset determinism', () => {
     expect(JSON.stringify(freshTests)).toBe(testsBefore);
     expect(JSON.stringify(metrics)).toBe(metricsBefore);
     expect(JSON.stringify(details)).toBe(detailsBefore);
-    // the catalogue is passed through in its original (id-ascending) order
-    expect(shoesFile.tests.map((t) => t.id)).toEqual(freshTests.tests.map((t) => t.id));
+    // the published catalogue keeps the original (id-ascending) order of the tests it keeps
+    const publishedIds = shoesFile.tests.map((t) => t.id);
+    expect(publishedIds).toEqual([...publishedIds].sort((a, b) => a - b));
+    expect(publishedIds).toEqual(freshTests.tests.map((t) => t.id).filter((id) => publishedIds.includes(id)));
   });
 
   it('takes builtAt from tombstone scrapedAt when it is the newest', () => {
@@ -259,13 +265,7 @@ describe('buildDataset release-year supplement', () => {
 // rides in on it (docs/scraping.md §Non-running shoes).
 describe('buildDataset non-running exclusion', () => {
   function detail(slug: string, categorySlug: string | null): DetailRecord {
-    return {
-      scrapedAt: '2026-07-21T00:00:00Z', productId: 7, name: `Real ${slug}`, brand: 'B', releasedAt: null,
-      preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: false, imageUrl: null,
-      runrepeatUrl: `https://runrepeat.com/uk/${slug}`, features: [], hasPlateSection: false,
-      pros: [], cons: [], intro: '',
-      whoShouldBuy: null, whoShouldNotBuy: null, categorySlug,
-    };
+    return detailRecord({ name: `Real ${slug}`, brand: 'B', runrepeatUrl: `https://runrepeat.com/uk/${slug}`, categorySlug });
   }
   const slugs = (f: ShoesFile): Set<string> => new Set(f.shoes.map((s) => s.slug));
 
@@ -330,13 +330,14 @@ describe('buildDataset CSV cells', () => {
     expect(csv).not.toContain('\r');
 
     const header = lines[0]!.split(',');
-    expect(header).toHaveLength(8 + 53); // heel-stack + 52 synthetic float tests
+    // heel-stack and t0: every other catalogue test is either non-numeric or read by no shoe
+    expect(header.slice(8)).toEqual(['heel-stack', 't0']);
     expect(new Set(header).size).toBe(header.length); // no duplicate column names
 
     const zero = lines.find((l) => l.startsWith('shoe-000,'))!;
     expect(zero).toContain('"Comma, ""Quoted"" Shoe"');
-    // 6 fixed cells after the escaped name, heel-stack=30, then 52 empty cells
-    expect(zero.endsWith(',30' + ','.repeat(52))).toBe(true);
+    // 6 fixed cells after the escaped name, heel-stack=30, then t0's empty cell
+    expect(zero.endsWith(',30,')).toBe(true);
   });
 
   it('leaves brand/releasedAt/score/msrpGbp empty and discontinued false for metrics-only shoes', () => {
@@ -347,5 +348,119 @@ describe('buildDataset CSV cells', () => {
     // no details record means no plate section, so a metrics-only shoe reads none
     const two = csv.split('\n').find((l) => l.startsWith('shoe-002,'))!;
     expect(two.startsWith('shoe-002,Shoe 2,,,,,none,false,')).toBe(true);
+  });
+});
+
+// A test nobody was measured for is noise in the column picker, the CSV header and the
+// filter menu alike (docs/scraping.md §Empty tests).
+describe('buildDataset empty-test drop', () => {
+  it('publishes only the tests some surviving shoe was read for', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(shoesFile.tests.map((t) => t.id)).toEqual([6, 69, 100]);
+  });
+  it('brings a test back by itself once a reading appears', () => {
+    const { metrics, details } = baseInputs();
+    metrics.shoes['shoe-000']!.values['17'] = 4;
+    expect(buildDataset(tests, metrics, details).shoesFile.tests.map((t) => t.id)).toContain(17);
+  });
+  it('ignores readings that belong only to an excluded shoe', () => {
+    // insulation was populated by hiking boots alone, so dropping them empties it
+    const { metrics, details } = baseInputs();
+    metrics.shoes['shoe-010']!.values['17'] = 4;
+    details.shoes['shoe-010'] = detailRecord({ categorySlug: 'hiking-boots' });
+    expect(buildDataset(tests, metrics, details).shoesFile.tests.map((t) => t.id)).not.toContain(17);
+  });
+});
+
+// A page groups only the tests its own shoe was run for, so the seed alone leaves about half
+// the catalogue in the app's "Other" bucket (docs/scraping.md §Test groups).
+describe('buildDataset test-group overlay', () => {
+  it('fills a groupId the seed catalogue left null', () => {
+    const { metrics, details } = baseInputs();
+    metrics.shoes['shoe-000']!.values['17'] = 4;
+    details.testGroups = { '17': '5' };
+    const t17 = buildDataset(tests, metrics, details).shoesFile.tests.find((t) => t.id === 17)!;
+    expect(t17.groupId).toBe('5');
+  });
+  it('never overwrites a groupId the catalogue already states', () => {
+    const { metrics, details } = baseInputs();
+    details.testGroups = { '6': '9' };
+    const t6 = buildDataset(tests, metrics, details).shoesFile.tests.find((t) => t.id === 6)!;
+    expect(t6.groupId).toBe('3');
+  });
+  it('leaves groupId null when neither source knows', () => {
+    const { metrics, details } = baseInputs();
+    expect(buildDataset(tests, metrics, details).shoesFile.tests.find((t) => t.id === 69)!.groupId).toBeNull();
+    expect(buildDataset(tests, metrics, { ...details, testGroups: undefined }).shoesFile.tests.find((t) => t.id === 69)!.groupId).toBeNull();
+  });
+  it('does not mutate the catalogue it was handed', () => {
+    const { metrics, details } = baseInputs();
+    details.testGroups = { '6': '9', '69': '3' };
+    const before = JSON.stringify(tests);
+    buildDataset(tests, metrics, details);
+    expect(JSON.stringify(tests)).toBe(before);
+  });
+});
+
+describe('buildDataset model lineage', () => {
+  function withVersions(): { metrics: MetricsFile; details: DetailsFile } {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-003'] = detailRecord({ name: 'Shoe Three', previousVersion: { slug: 'shoe-002', name: 'Shoe Two' } });
+    details.shoes['shoe-004'] = detailRecord({ name: 'Shoe Four', previousVersion: { slug: 'shoe-003', name: 'Shoe Three' }, latestVersion: { slug: 'shoe-009', name: 'Shoe Nine' } });
+    return { metrics, details };
+  }
+  const find = (f: ShoesFile, slug: string) => f.shoes.find((s) => s.slug === slug)!;
+
+  it('derives nextVersion by inverting the fleet previousVersion links', () => {
+    const { metrics, details } = withVersions();
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(find(shoesFile, 'shoe-002').nextVersion).toEqual({ slug: 'shoe-003', name: 'Shoe Three' });
+    expect(find(shoesFile, 'shoe-003').nextVersion).toEqual({ slug: 'shoe-004', name: 'Shoe Four' });
+    expect(find(shoesFile, 'shoe-004').nextVersion).toBeNull();   // nothing supersedes it
+    expect(find(shoesFile, 'shoe-003').previousVersion).toEqual({ slug: 'shoe-002', name: 'Shoe Two' });
+  });
+  it('keeps latestVersion separate, since it may skip generations', () => {
+    const { metrics, details } = withVersions();
+    const four = find(buildDataset(tests, metrics, details).shoesFile, 'shoe-004');
+    expect(four.latestVersion).toEqual({ slug: 'shoe-009', name: 'Shoe Nine' });
+    expect(four.nextVersion).toBeNull();
+  });
+  it('resolves two claimants on the same predecessor deterministically', () => {
+    const { metrics, details } = withVersions();
+    details.shoes['shoe-005'] = detailRecord({ name: 'Shoe Five', previousVersion: { slug: 'shoe-002', name: 'Shoe Two' } });
+    const a = buildDataset(tests, metrics, details).shoesFile;
+    const b = buildDataset(tests, baseInputs().metrics, structuredClone(details)).shoesFile;
+    expect(find(a, 'shoe-002').nextVersion).toEqual({ slug: 'shoe-003', name: 'Shoe Three' }); // lowest slug wins
+    expect(find(b, 'shoe-002').nextVersion).toEqual(find(a, 'shoe-002').nextVersion);
+  });
+  it('never links to an excluded shoe it cannot show', () => {
+    const { metrics, details } = withVersions();
+    details.shoes['shoe-003'] = detailRecord({ name: 'Shoe Three', categorySlug: 'hiking-boots', previousVersion: { slug: 'shoe-002', name: 'Shoe Two' } });
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(find(shoesFile, 'shoe-002').nextVersion).toBeNull();
+  });
+});
+
+describe('buildDataset facts and review language', () => {
+  it('carries the fact map through from the details record', () => {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-003'] = detailRecord({ facts: { pace: [{ slug: 'tempo', text: 'Tempo' }] } });
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-003')!.facts).toEqual({ pace: [{ slug: 'tempo', text: 'Tempo' }] });
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-002')!.facts).toEqual({}); // no details record
+  });
+  it('flags the reviews RunRepeat published in the wrong language', () => {
+    const { metrics, details } = baseInputs();
+    metrics.shoes['brooks-ghost-16'] = { name: 'Brooks Ghost 16', url: 'https://runrepeat.com/uk/brooks-ghost-16', values: { '6': 34 } };
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(shoesFile.shoes.find((s) => s.slug === 'brooks-ghost-16')!.reviewLanguage).toBe('es');
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-000')!.reviewLanguage).toBeNull();
+  });
+  it('every language override cites the prose it rests on', () => {
+    for (const [slug, o] of Object.entries(REVIEW_LANGUAGE_OVERRIDES)) {
+      expect(o.note, `${slug} must quote the review it rests on`).toMatch(/"[^"]{20,}"/);
+      expect(o.language).toMatch(/^[a-z]{2}(-[A-Za-z0-9]+)*$/);
+    }
   });
 });

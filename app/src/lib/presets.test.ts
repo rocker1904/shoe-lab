@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { applyPreset, PRESETS } from './presets';
 import { applyFilters } from './filters';
-import { FLEET, TESTS, shoe } from './test-fixtures';
+import { FLEET, TESTS, shoe, labTest } from './test-fixtures';
 import { parseView, serializeView } from './urlstate';
 
 const idx = indexTests(TESTS);
@@ -46,7 +46,7 @@ describe('preset determinism', () => {
   it('survives a URL round trip', () => {
     // the real dataset has toebox-width-widest-part; the shared fixture does not
     const full = indexTests([...TESTS,
-      { id: 900, slug: 'toebox-width-widest-part', name: 'Toebox width', type: 'float', units: 'mm', groupId: null }]);
+      labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox width', units: 'mm' })]);
     for (const p of PRESETS) {
       const v = applyPreset(p.id, FLEET, full, NOW);
       expect(parseView(serializeView(v), full)).toEqual(v);
@@ -85,7 +85,7 @@ describe('preset determinism', () => {
   });
   it('wide-toebox filters on toebox width and sorts by score', () => {
     const full = indexTests([...TESTS,
-      { id: 900, slug: 'toebox-width-widest-part', name: 'Toebox width', type: 'float', units: 'mm', groupId: null }]);
+      labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox width', units: 'mm' })]);
     const fleet = [
       shoe({ slug: 'roomy', values: { '900': 101 } }),
       shoe({ slug: 'exact', values: { '900': 98 } }),
