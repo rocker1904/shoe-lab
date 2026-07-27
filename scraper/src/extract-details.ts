@@ -25,6 +25,10 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     s?.section_id === 'plate'
     || (Array.isArray(s?.sections) && s.sections.some((n: any) => n?.section_id === 'plate')));
 
+  // Anything but a non-empty string is "unknown", never a category in its own right:
+  // build-dataset drops foreign categories, so a coerced junk value would drop a shoe.
+  const category = pageData?.category?.slug;
+
   return {
     scrapedAt,
     productId: p.id,
@@ -44,5 +48,6 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     intro: String(c.intro_clean ?? c.intro ?? ''),
     whoShouldBuy: findSection(/who should buy/i, /\bnot\b/i),
     whoShouldNotBuy: findSection(/who should not buy/i),
+    categorySlug: typeof category === 'string' && category !== '' ? category : null,
   };
 }

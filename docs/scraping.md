@@ -109,7 +109,9 @@ means a red workflow and untouched `data/` — never a partial write.
   found.
 - **Post-join:** `build:dataset` re-validates the assembled `shoes.json`
   (builtAt present, arrays, slug/name present, plate within the enum) before
-  writing, so a bad join cannot reach the app either.
+  writing, so a bad join cannot reach the app either. The absolute shoe floor is
+  re-applied after the category exclusion (§Non-running shoes), so a renamed
+  category fails the run instead of quietly emptying the dataset.
 
 ## Determinism
 
@@ -179,6 +181,18 @@ last-wins or an error: the endpoint is ordered by relevance, and a duplicate
 is not a data problem worth failing a 60-request run over. Do not "fix" this
 into a merge or a conflict check — with one value per (slug, test) there is
 nothing to merge, and the validation gates already catch mass value loss.
+
+### Non-running shoes
+A `lab-test-list` response is the whole lab-tested catalogue rather than one
+category, so RunRepeat's hiking footwear rides in with the running shoes — 14 of
+464, 9 `hiking-boots` and 5 `hiking-shoes`. The shoe page's top-level
+`pageData.category.slug` is the authoritative per-shoe category, captured as
+`categorySlug`, and `build:dataset` drops a shoe whose details record carries one
+that is present and not `running-shoes`. Absence keeps the shoe: no details
+record, a tombstone, or a null `categorySlug` all stay, because "not crawled yet"
+is not "not a running shoe". Do not swap the discriminator for absence from
+`release-years.json` — 53 shoes are missing from that file, mostly discontinued,
+and dropping them would take genuine racing shoes with them.
 
 ### Tombstones are records, not gaps
 A 404 during the details crawl writes `{ gone: true, scrapedAt }` rather than

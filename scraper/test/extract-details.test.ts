@@ -41,7 +41,7 @@ describe('extractDetails', () => {
     expect(min).toMatchObject({
       productId: 1, name: 'Minimal', brand: null, releasedAt: null, score: null,
       msrpGbp: null, imageUrl: null, pros: [], cons: [], intro: '',
-      whoShouldBuy: null, whoShouldNotBuy: null, features: [],
+      whoShouldBuy: null, whoShouldNotBuy: null, features: [], categorySlug: null,
     });
   });
 });
@@ -69,5 +69,25 @@ describe('extractDetails plate section', () => {
   });
   it('is false for the real unplated Azura fixture', () => {
     expect(extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', 't').hasPlateSection).toBe(false);
+  });
+});
+
+// The category is what keeps hiking footwear out of the dataset
+// (docs/scraping.md §Non-running shoes), so both sides of the split are pinned
+// against real payloads, and every shape that is not a usable slug reads null.
+describe('extractDetails categorySlug', () => {
+  it('reads running-shoes from the real running-shoe fixture', () => {
+    expect(extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', 't').categorySlug).toBe('running-shoes');
+  });
+  it('reads hiking-boots from a real hiking-boot payload', () => {
+    const rec = extractDetails(loadJsonFixture('pagedata-hiking-boot.json'), 'danner-cascade-crest', 't');
+    expect(rec.categorySlug).toBe('hiking-boots');
+    expect(rec.name).toBe('Danner Cascade Crest');
+  });
+  it('reads null for every shape that is not a usable slug', () => {
+    const product = { id: 1, name: 'Minimal' };
+    for (const category of [undefined, null, {}, { slug: null }, { slug: '' }, { slug: 42 }, 'running-shoes']) {
+      expect(extractDetails({ product, category }, 'x', 't').categorySlug).toBeNull();
+    }
   });
 });

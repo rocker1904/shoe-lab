@@ -6,9 +6,12 @@ export class ValidationError extends Error {}
 
 const NUMERIC = new Set(['float', 'score', 'percent', 'rating']);
 
+/** The absolute shoe-count floor, applied both before and after the join (docs/scraping.md §Validation gates). */
+export const MIN_SHOES = 300;
+
 export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tests: TestsFile): void {
   const count = Object.keys(next.shoes).length;
-  if (count < 300) throw new ValidationError(`only ${count} shoes (<300)`);
+  if (count < MIN_SHOES) throw new ValidationError(`only ${count} shoes (<${MIN_SHOES})`);
   if (tests.tests.length < 50) throw new ValidationError(`only ${tests.tests.length} tests (<50)`);
   const typeOf = new Map(tests.tests.map((t) => [String(t.id), t.type]));
   for (const [slug, shoe] of Object.entries(next.shoes)) {

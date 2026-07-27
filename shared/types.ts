@@ -18,6 +18,8 @@ export interface DetailRecord {
   features: string[]; pros: string[]; cons: string[]; intro: string;
   hasPlateSection: boolean;
   whoShouldBuy: string | null; whoShouldNotBuy: string | null;
+  /** RunRepeat's own category; null when the page did not state one (docs/scraping.md §Non-running shoes). */
+  categorySlug: string | null;
 }
 export interface Tombstone { gone: true; scrapedAt: string }
 export interface DetailsFile { shoes: Record<string, DetailRecord | Tombstone> }

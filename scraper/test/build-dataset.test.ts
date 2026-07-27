@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildDataset, derivePlate, plateFromRules } from '../src/build-dataset.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
-import type { DetailsFile, MetricsFile, ReleaseYearsFile, TestsFile } from '../../shared/types.js';
+import { ValidationError } from '../src/validate.js';
+import type { DetailRecord, DetailsFile, MetricsFile, ReleaseYearsFile, ShoesFile, TestsFile } from '../../shared/types.js';
 
 const tests: TestsFile = {
   scrapedAt: '2026-07-20T00:00:00Z', seedSlug: 's',
@@ -28,6 +29,7 @@ function baseInputs(): { metrics: MetricsFile; details: DetailsFile } {
       runrepeatUrl: 'https://runrepeat.com/uk/shoe-000', features: ['Carbon plate', 'Rocker'],
       hasPlateSection: false,
       pros: ['good'], cons: ['bad'], intro: 'intro', whoShouldBuy: '<p>you</p>', whoShouldNotBuy: null,
+      categorySlug: 'running-shoes',
     },
     'shoe-001': { gone: true, scrapedAt: '2026-07-21T00:00:00Z' },
     'ghost-shoe': {
@@ -35,7 +37,7 @@ function baseInputs(): { metrics: MetricsFile; details: DetailsFile } {
       preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: true, imageUrl: null,
       runrepeatUrl: 'https://runrepeat.com/uk/ghost-shoe', features: [], hasPlateSection: false,
       pros: [], cons: [], intro: '',
-      whoShouldBuy: null, whoShouldNotBuy: null,
+      whoShouldBuy: null, whoShouldNotBuy: null, categorySlug: null,
     },
   } };
   return { metrics, details };
@@ -250,6 +252,68 @@ describe('buildDataset release-year supplement', () => {
     const b = buildDataset(tests, baseInputs().metrics, baseInputs().details, releaseYears({ 'shoe-006': 2024, 'shoe-005': 2025 }));
     expect(JSON.stringify(b)).toBe(JSON.stringify(a));
     expect(a.shoesFile.builtAt).toBe('2026-07-22T00:00:00Z'); // not the 2026-07-26 years scrapedAt
+  });
+});
+
+// A lab-test-list response is the whole lab-tested catalogue, so hiking footwear
+// rides in on it (docs/scraping.md §Non-running shoes).
+describe('buildDataset non-running exclusion', () => {
+  function detail(slug: string, categorySlug: string | null): DetailRecord {
+    return {
+      scrapedAt: '2026-07-21T00:00:00Z', productId: 7, name: `Real ${slug}`, brand: 'B', releasedAt: null,
+      preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: false, imageUrl: null,
+      runrepeatUrl: `https://runrepeat.com/uk/${slug}`, features: [], hasPlateSection: false,
+      pros: [], cons: [], intro: '',
+      whoShouldBuy: null, whoShouldNotBuy: null, categorySlug,
+    };
+  }
+  const slugs = (f: ShoesFile): Set<string> => new Set(f.shoes.map((s) => s.slug));
+
+  it('drops shoes whose details record names a foreign category', () => {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-010'] = detail('shoe-010', 'hiking-boots');
+    details.shoes['shoe-011'] = detail('shoe-011', 'hiking-shoes');
+    details.shoes['shoe-012'] = detail('shoe-012', 'running-shoes');
+    const { shoesFile, csv } = buildDataset(tests, metrics, details);
+    expect(shoesFile.shoes).toHaveLength(318);
+    expect(slugs(shoesFile).has('shoe-010')).toBe(false);
+    expect(slugs(shoesFile).has('shoe-011')).toBe(false);
+    expect(slugs(shoesFile).has('shoe-012')).toBe(true);
+    expect(csv.split('\n').filter((l) => /^shoe-01[012],/.test(l)).map((l) => l.split(',')[0])).toEqual(['shoe-012']);
+  });
+
+  it('keeps a shoe with no details record, a tombstone, or a null category', () => {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-010'] = detail('shoe-010', null);
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(shoesFile.shoes).toHaveLength(320);
+    expect(slugs(shoesFile).has('shoe-010')).toBe(true);   // null category -> absence of evidence
+    expect(slugs(shoesFile).has('shoe-001')).toBe(true);   // tombstone
+    expect(slugs(shoesFile).has('shoe-002')).toBe(true);   // no details record at all
+  });
+
+  it('matches the category exactly rather than by substring', () => {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-010'] = detail('shoe-010', 'trail-running-shoes');
+    details.shoes['shoe-011'] = detail('shoe-011', 'Running-Shoes');
+    const { shoesFile } = buildDataset(tests, metrics, details);
+    expect(slugs(shoesFile).has('shoe-010')).toBe(false);
+    expect(slugs(shoesFile).has('shoe-011')).toBe(false);
+  });
+
+  it('fails the run rather than writing a gutted dataset when the category vocabulary moves', () => {
+    const { metrics, details } = baseInputs();
+    for (let i = 10; i < 300; i++) {
+      const slug = `shoe-${String(i).padStart(3, '0')}`;
+      details.shoes[slug] = detail(slug, 'road-running-shoes');
+    }
+    expect(() => buildDataset(tests, metrics, details)).toThrow(ValidationError);
+  });
+
+  it('leaves builtAt on the newest details record even when that shoe is excluded', () => {
+    const { metrics, details } = baseInputs();
+    details.shoes['shoe-010'] = { ...detail('shoe-010', 'hiking-boots'), scrapedAt: '2026-07-30T00:00:00Z' };
+    expect(buildDataset(tests, metrics, details).shoesFile.builtAt).toBe('2026-07-30T00:00:00Z');
   });
 });
 

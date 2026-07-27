@@ -1,10 +1,18 @@
-import type { DetailsFile, MetricsFile, Plate, ReleaseYearsFile, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
+import type { DetailRecord, DetailsFile, MetricsFile, Plate, ReleaseYearsFile, Shoe, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { csvLine } from './csv.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
-import { validateShoesFile } from './validate.js';
+import { MIN_SHOES, ValidationError, validateShoesFile } from './validate.js';
 
+const RUNNING_CATEGORY = 'running-shoes';
 const CSV_TEST_TYPES = new Set(['float', 'score', 'percent', 'rating']);
+
+// Only an explicit foreign category excludes; unknown stays in
+// (docs/scraping.md §Non-running shoes).
+function isRunningShoe(rec: DetailRecord | Tombstone | undefined): boolean {
+  if (rec === undefined || isTombstone(rec)) return true;
+  return rec.categorySlug === null || rec.categorySlug === RUNNING_CATEGORY;
+}
 
 export function plateFromRules(features: string[], hasPlateSection: boolean): Plate {
   if (features.some((f) => /carbon plate/i.test(f))) return 'carbon';
@@ -23,8 +31,11 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;
   }
 
+  // Populated inside the map, so it covers the surviving fleet only: an override naming an
+  // excluded shoe is genuinely stale and validatePlateOverrides should say so (§Decisions
+  // in docs/scraping.md).
   const ruleDerived = new Map<string, Plate>();
-  const shoes: Shoe[] = Object.keys(metrics.shoes).sort().map((slug) => {
+  const shoes: Shoe[] = Object.keys(metrics.shoes).sort().filter((slug) => isRunningShoe(details.shoes[slug])).map((slug) => {
     const m = metrics.shoes[slug]!;
     const rec = details.shoes[slug];
     const det = rec && !isTombstone(rec) ? rec : null;
@@ -51,6 +62,11 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
       } : null,
     };
   });
+
+  // A renamed category would otherwise exclude the whole catalogue silently.
+  if (shoes.length < MIN_SHOES) {
+    throw new ValidationError(`only ${shoes.length} shoes left after category exclusion (<${MIN_SHOES})`);
+  }
 
   const shoesFile: ShoesFile = { builtAt, source: 'RunRepeat', groups: tests.groups, tests: tests.tests, shoes };
   validateShoesFile(shoesFile);

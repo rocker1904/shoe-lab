@@ -1,0 +1,80 @@
+{
+  "product": {
+    "id": 40264,
+    "name": "Danner Cascade Crest",
+    "brand_name": "Danner",
+    "released_at": null,
+    "precise_released_at": false,
+    "score": 84,
+    "price": 350,
+    "discontinued": false,
+    "image": {
+      "url": "https://cdn.runrepeat.com/storage/gallery/product_primary/40264/danner-cascade-crest-lab-test-and-review-21817994-{SIZE}.jpg"
+    }
+  },
+  "category": {
+    "id": 9,
+    "name": "Hiking boots",
+    "slug": "hiking-boots",
+    "ga_slug": "hiking-footwear",
+    "user_definition": "hiker",
+    "user_definition_pl": "hikers",
+    "product_definition": "hiking boot",
+    "product_definition_pl": "hiking boots",
+    "products_count": 197,
+    "score_penalty": 9,
+    "score_users_threshold": 50,
+    "score_reviews_threshold": 5,
+    "score_show_reviews": true
+  },
+  "features": [
+    {
+      "slug": "features",
+      "values": [
+        {
+          "text": "Removable insole"
+        },
+        {
+          "text": [
+            {
+              "url": "",
+              "text": "Heel brake",
+              "slug": "heel-brake"
+            },
+            {
+              "url": "",
+              "text": "Red lace",
+              "slug": "red-lace"
+            }
+          ]
+        },
+        {
+          "text": "Orthotic friendly"
+        }
+      ]
+    }
+  ],
+  "content": {
+    "pros_clean": [
+      "Excellent materials and craftsmanship (made in USA)",
+      "Hard-wearing and durable build"
+    ],
+    "cons_clean": [
+      "Much heavier than average",
+      "Very expensive"
+    ],
+    "intro_clean": "Named after the Oregon mountain range, the Cascade Crest took us from the rocky trail to the town streets without feeling out of place in either scenario. We found it to be a perfect do-it-all boot th",
+    "lab": {
+      "sections": [
+        {
+          "title": "Who should buy",
+          "content": "<p>If you've been eyeballing lumberjack-style hiking boots for a while now, we believe that the Cascade Crest is one of the best options in this niche. Here are a few solid reasons to choose it:</p>\n<ul>\n<li>its leather and craftsmanship quality make it hard to beat</li>\n<li>the boot can tackle a variety of challenging conditions be it on the trail or in the forest</li>\n<li>it has a spacious toebo"
+        },
+        {
+          "title": "Who should NOT buy",
+          "content": "<p>If you love the visual appeal of Danner boots but can't imagine spending £320 on a pair of boots, consider the more affordable options like the <a href=\"https://runrepeat.com/uk/danner-mountain-600\">Danner Mountain 600</a> (if you plan a lot of hiking) or the <a href=\"https://runrepeat.com/uk/danner-jag\">Danner Jag</a> (if it's primarily for casual wear and light trail walks).</p>\n<figure class"
+        }
+      ]
+    }
+  }
+}
