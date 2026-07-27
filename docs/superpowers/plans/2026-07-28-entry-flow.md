@@ -65,6 +65,7 @@ Verified by applying the changes, not by guessing. Fix each in the task that bre
 | `docs/app.md` — the "median of the live fleet" paragraph | that threshold is gone | 3 |
 | `app/src/lib/stats.ts` — `median` and its tests | `presets.ts` was its only production caller | 3 |
 | `app/e2e/smoke.spec.ts` — the preset-chip click Task 3 writes | Task 6 replaces the chip row with the band on a default view, so an exact-name `getByRole` stops resolving | **6** |
+| `app/src/Page.test.ts` — "applying a preset filters the table and updates the URL" | same cause: on a default view the band renders and `PresetChips` does not | **6** |
 
 **Task 2 breaks nothing.** The whole change was applied and the suite stayed green at
 242 tests: `getByRole('button', { name: 'Carbon' })` is an exact match so a "No carbon"
@@ -229,6 +230,8 @@ Cover: each preset returns a complete `ViewState`; the three ids and labels; **n
 
 The price cap must track the fleet: build two fleets whose price distributions differ and assert the resulting bound differs. A test that only checks "some number" passes against a hard-coded constant.
 
+**Keep two tests from the existing suite** — `survives a URL round trip` and `returns an equal but independent view on every call`. The round trip matters more after this change, not less: it is the only place asserting that `plate: 'not-carbon'` survives `parseView`'s allowlist and that each preset's new `cols` survives the column allowlist. `TESTS` already contains id 55 `toebox-width-widest-part`, so the `id: 900` shim in the current version of that test is stale and can go.
+
 Acceptance criterion 9 as an executable guard. `applyPreset` returns a `ViewState`, which has no population on it, so the shape is:
 
 ```ts
@@ -241,7 +244,11 @@ for (const key of Object.keys(view.filters.ranges)) {
 
 Use `isSparse` from `./coverage` rather than open-coding `fraction >= SPARSE_BELOW` — the threshold has one owner, and the two disagree on an empty population.
 
-**Add a negative control in the same block**, or the guard is a tautology: over a small fixture every metric looks well covered, so a regression re-adding a softness ceiling to Easy would sail through while tripping the real app's warning. Build a `ViewState` bounding a deliberately sparse fixture metric, run it through the same helper, and assert it *is* caught. A guard that has never been shown to fail is not a guard.
+**Extract that into a named helper in the test file** — something like `sparseBoundKeys(view, fleet, idx): string[]`, returning the offending keys — and drive it in both directions. An inline `for` loop cannot be pointed at a counter-example.
+
+**Then add a negative control, and make it borderline.** A control built on a 0%-covered metric proves only that `isSparse` works at zero. The regression this guard exists to catch is a softness ceiling on Easy, and `midsole-softness-22` sits at 0.503 over Easy's `considered` — just *above* the threshold, so it would not be caught. Build a small fleet where the bounded metric lands around 40% and assert `sparseBoundKeys` names it. A guard never shown to fail is not a guard.
+
+Do **not** reach for this by editing `FLEET`'s softness readings: `filters.test.ts` pins `hiddenMissing` and an exact visible-slug list on exactly those values.
 
 - [ ] **Step 3: Run, watch fail, implement, and fix every caller**
 
@@ -298,22 +305,37 @@ describe('isDefaultView', () => {
     const gen = defaultView(); gen.generations['midsole-softness-22'] = 'midsole-softness';
     for (const v of [sort, cols, gen]) expect(isDefaultView(v)).toBe(false);
   });
+  // Keyed by field name, not an array: a new FilterState field then fails typecheck —
+  // which runs in verify — instead of silently going untested.
+  const setters: Record<keyof FilterState, (f: FilterState) => void> = {
+    ranges: (f) => { f.ranges['weight'] = {}; },
+    plate: (f) => { f.plate = 'carbon'; },
+    search: (f) => { f.search = 'nike'; },
+    brands: (f) => { f.brands = ['ASICS']; },
+    releasedAfter: (f) => { f.releasedAfter = '2024-01-01'; },
+    hideDiscontinued: (f) => { f.hideDiscontinued = true; },
+    showMissing: (f) => { f.showMissing = true; },
+  };
+
   it('is false for every filter field, not just the ones someone remembered', () => {
-    // each of these is settable from the sidebar; a hand-enumerated implementation
-    // that forgets one leaves the band open after the user has touched a filter
-    const cases: Array<(f: FilterState) => void> = [
-      (f) => { f.plate = 'carbon'; },
-      (f) => { f.search = 'nike'; },
-      (f) => { f.brands = ['ASICS']; },
-      (f) => { f.releasedAfter = '2024-01-01'; },
-      (f) => { f.hideDiscontinued = true; },
-      (f) => { f.showMissing = true; },
-      (f) => { f.ranges['weight'] = {}; },
-    ];
-    for (const mutate of cases) {
+    for (const mutate of Object.values(setters)) {
       const v = defaultView();
       mutate(v.filters);
       expect(isDefaultView(v)).toBe(false);
+    }
+  });
+
+  it('is true again once a field is cleared, even though the key remains', () => {
+    // `patch` structuredClones the snapshot, and structured clone keeps own properties
+    // whose value is undefined — every sidebar clear path leaves the key behind. A
+    // key-count comparison would never let the band re-expand.
+    for (const [field, mutate] of Object.entries(setters)) {
+      if (field === 'ranges') continue;              // ranges clear by deletion, not by undefined
+      const v = defaultView();
+      mutate(v.filters);
+      (v.filters as Record<string, unknown>)[field] = undefined;
+      expect(Object.keys(v.filters)).toContain(field);   // the key really is still there
+      expect(isDefaultView(v)).toBe(true);
     }
   });
 });
@@ -321,7 +343,9 @@ describe('isDefaultView', () => {
 
 - [ ] **Step 2: Run, watch fail, implement**
 
-Compare `v.filters` **wholesale** against `defaultView().filters` rather than picking fields off it by hand — `FilterState` gains fields over time, and the failure mode of a hand-enumerated check is silent. Ranges compare by key count, everything else by value; sort by both members; columns element-wise; `generations` by key count. Do not stringify — key order would make it fragile.
+Compare `v.filters` **wholesale** against `defaultView().filters` rather than picking fields off it by hand — `FilterState` gains fields over time, and the failure mode of a hand-enumerated check is silent.
+
+**Compare by value, never by key presence.** A cleared field keeps its key with an `undefined` value, so `Object.keys(filters).length` is not a usable signal for anything except `ranges` (which clears by deletion). Sort compares by both members; columns element-wise; `generations` by key count. Do not stringify — key order would make it fragile.
 
 - [ ] **Step 3: Document it** in docs/app.md §View and URL ownership: an empty range is view state that does not serialise, so "serialises to nothing" and "is the default" are different questions.
 
@@ -355,7 +379,9 @@ Cover: a written value reads back; a value stored under a different key version 
 
 Wrap both directions in `try`/`catch` exactly as `theme.ts` does: storage throws rather than returning null where it is blocked, and losing a saved view must never cost the page (docs/app.md §Theming).
 
-- [ ] **Step 3: Document it** in docs/app.md §View and URL ownership — all three of: precedence (URL, then storage, then defaults); why the stored shape is a query string rather than JSON; and that the version is hand-maintained, deliberately not derived from the build because `main` deploys continuously, with no migrations ever.
+- [ ] **Step 3: Document it** in docs/app.md §View and URL ownership: why the stored shape is a query string rather than JSON, and that the version is hand-maintained, deliberately not derived from the build because `main` deploys continuously, with no migrations ever.
+
+Do **not** document the precedence order here — nothing reads storage until Task 6, and a committed doc describing behaviour that does not exist yet is exactly what docs/README.md rule 6 forbids. Task 6 adds it.
 
 - [ ] **Step 4: Verify and commit**
 
@@ -386,6 +412,10 @@ EOF
 `Page.test.ts`: the band shows on a default view and the chip row does not; applying a preset replaces the band with the chip row; **adding an empty range from the Add-filter menu also collapses the band** — the case Task 4 exists for, so it is the test that matters; a URL carrying filters renders chips, not the band.
 
 Also the precedence rule, which nothing else covers: seed `localStorage` with one serialised view, render with a **different** `location.search`, and assert the URL wins. Spec §5 makes that rule 1, and acceptance criterion 5 depends on it.
+
+And the other half, which is criterion 6 and currently has no test anywhere: seed `localStorage`, render with an **empty** `location.search`, and assert both that the view was restored *and* that `location.search` now carries it. The whole argument for writing a restored view to the URL is that copying the link must share what is on screen — untested, that is just a paragraph.
+
+**Browse all deserves an assertion, not just a comment.** The plan predicts a later reader will "fix" the inert button; a comment is the weakest possible guard. Assert that clicking it calls no `onapply` and leaves `location.search` and the row count unchanged. Note also that `.focus()` on a `<table>` is a silent no-op without `tabindex="-1"` — if you assert focus moved, give the target a tabindex.
 
 - [ ] **Step 2: Implement**
 
@@ -426,6 +456,8 @@ EOF
 - [ ] **Step 1: Grow the fixture**
 
 It declares test `24` (weight) in its `tests` array but **no shoe carries a weight reading**, so Race returns nothing and Tempo's weight bound silently vanishes. Add weight readings to every shoe except `mystery`, which exists to be missing. Check the shoes straddle the heel-stack, price and energy-return bounds, and keep at least one `carbon` shoe so `not-carbon` has something to exclude.
+
+Add `toebox-width-widest-part` to the fixture's `tests` too. From Task 3 the Easy preset sets it as a column, and without the test in the catalogue `ShoeTable.headerFor` falls back to the raw slug — a column headed `toebox-width-widest-part` full of em-dashes. Not a failure, just ugly in the one place a human looks at the rendered page.
 
 - [ ] **Step 2: Write the failing test**
 

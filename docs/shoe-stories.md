@@ -35,12 +35,14 @@ judgement, so it is recorded here rather than left implicit in
 | plate character | plate | only ever to exclude carbon, never to require it |
 
 **Softness is deliberately not bounded**, even in Easy, where comfort is the whole
-point. Two reasons, and both would otherwise be rediscovered the hard way. The current
-softness method covers about half the fleet, so bounding it silently discards the
-other half — and it is sparse enough to trip the app's own coverage warning
-(docs/app.md §Coverage), which makes a preset that bounds it self-defeating. Bounding
-it also does not measurably improve the shortlist: the shoes it removes are not the
-shoes a runner would call wrong for the session. Stack does the work.
+point. The current softness method covers a hair over half the fleet, so bounding it
+silently discards nearly half the candidates — and it does not measurably improve the
+shortlist in return: the shoes it removes are not the ones a runner would call wrong
+for the session. Stack does that work instead, at full coverage.
+
+Its coverage also sits a whisker above the threshold that triggers the app's sparse
+warning (docs/app.md §Coverage), so a preset bounding it is one quiet refresh away from
+recommending against itself.
 
 **A plate is never a requirement.** Requiring carbon for Race is *measurably worse*
 than defining Race by weight and energy return: it lets in heavy carbon max-cushion
