@@ -28,7 +28,7 @@ the scraper's User-Agent on every request — please open an issue and it will b
 
 ## Live site
 
-<!-- TODO: pages url after first deploy -->
+https://rocker1904.github.io/shoe-lab/
 
 ## How it works
 
