@@ -22,6 +22,16 @@ jobs:
       - run: npm ci
       - run: npm -w scraper run scrape:metrics
       - run: npm -w scraper run scrape:details # picks up newly listed shoes
+      - name: Release supplement (only if new shoes appeared)
+        # The supplement is deliberately not a weekly cost: in the common case details.json is
+        # unchanged and we skip it, keeping the weekly footprint at ~65 requests. When
+        # scrape:details did fetch newly listed shoes, run it so they are never left dateless.
+        run: |
+          if ! git diff --quiet data/details.json; then
+            npm -w scraper run scrape:releases
+          else
+            echo 'details.json unchanged — skipping release supplement'
+          fi
       - run: npm -w scraper run build:dataset
       - name: Commit if changed
         id: commit
