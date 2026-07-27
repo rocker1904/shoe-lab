@@ -16,6 +16,7 @@ export interface DetailRecord {
   score: number | null; msrpGbp: number | null; discontinued: boolean;
   imageUrl: string | null; runrepeatUrl: string;
   features: string[]; pros: string[]; cons: string[]; intro: string;
+  hasPlateSection: boolean;
   whoShouldBuy: string | null; whoShouldNotBuy: string | null;
 }
 export interface Tombstone { gone: true; scrapedAt: string }

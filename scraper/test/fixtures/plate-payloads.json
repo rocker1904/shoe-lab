@@ -1,0 +1,37 @@
+{
+  "unplated": {
+    "product": { "id": 1001, "name": "Plain Trainer" },
+    "features": [{ "slug": "features", "values": [{ "text": "Rocker" }] }],
+    "content": { "lab": { "sections": [
+      { "section_id": "cushioning", "title": "Cushioning", "sections": [
+        { "section_id": "midsole-softness", "title": "Midsole softness", "content": "<p>soft</p>" }
+      ] }
+    ] } }
+  },
+  "carbonNoSection": {
+    "product": { "id": 1002, "name": "Carbon Racer" },
+    "features": [{ "slug": "features", "values": [{ "text": "Carbon plate" }, { "text": "Rocker" }] }],
+    "content": { "lab": { "sections": [
+      { "section_id": "cushioning", "title": "Cushioning", "sections": [] }
+    ] } }
+  },
+  "platedOther": {
+    "product": { "id": 1003, "name": "Nylon Trainer" },
+    "features": [{ "slug": "features", "values": [{ "text": "Rocker" }] }],
+    "content": { "lab": { "sections": [
+      { "section_id": "cushioning", "title": "Cushioning", "sections": [
+        { "section_id": "plate", "title": "Plate", "content": "<p>features a nylon plate</p>" }
+      ] }
+    ] } }
+  },
+  "plateUnderStability": {
+    "product": { "id": 1004, "name": "Stability Plated" },
+    "features": [{ "slug": "features", "values": [] }],
+    "content": { "lab": { "sections": [
+      { "section_id": "cushioning", "title": "Cushioning", "sections": [] },
+      { "section_id": "stability", "title": "Stability", "sections": [
+        { "section_id": "plate", "title": "Plate", "content": "<p>a plastic plate</p>" }
+      ] }
+    ] } }
+  }
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { extractDetails } from '../src/extract-details.js';
 import { PayloadError } from '../src/page-payload.js';
-import { loadAzuraPageData } from './helpers.js';
+import { loadAzuraPageData, loadJsonFixture } from './helpers.js';
 
 describe('extractDetails', () => {
   const rec = extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', '2026-07-26T00:00:00Z');
@@ -43,5 +43,31 @@ describe('extractDetails', () => {
       msrpGbp: null, imageUrl: null, pros: [], cons: [], intro: '',
       whoShouldBuy: null, whoShouldNotBuy: null, features: [],
     });
+  });
+});
+
+describe('extractDetails plate section', () => {
+  const payloads = loadJsonFixture('plate-payloads.json');
+  const extract = (key: string) => extractDetails(payloads[key], key, 't');
+
+  it('is false when no plate section exists', () => {
+    expect(extract('unplated').hasPlateSection).toBe(false);
+  });
+  it('is false for a carbon shoe with no plate section', () => {
+    // 18 of the 70 carbon shoes have no section; carbon must not depend on this flag
+    expect(extract('carbonNoSection').hasPlateSection).toBe(false);
+    expect(extract('carbonNoSection').features).toContain('Carbon plate');
+  });
+  it('is true when a nested plate section exists', () => {
+    expect(extract('platedOther').hasPlateSection).toBe(true);
+  });
+  it('finds the section under any parent, not just cushioning', () => {
+    expect(extract('plateUnderStability').hasPlateSection).toBe(true);
+  });
+  it('is false when the lab content is missing entirely', () => {
+    expect(extractDetails({ product: { id: 1, name: 'Minimal' } }, 'minimal', 't').hasPlateSection).toBe(false);
+  });
+  it('is false for the real unplated Azura fixture', () => {
+    expect(extractDetails(loadAzuraPageData(), 'saucony-endorphin-azura', 't').hasPlateSection).toBe(false);
   });
 });

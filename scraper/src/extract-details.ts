@@ -19,6 +19,12 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
 
   const featuresFact = (Array.isArray(pageData?.features) ? pageData.features : []).find((f: any) => f?.slug === 'features');
 
+  // The plate section sits one level inside a parent section, and the parent varies by shoe
+  // (docs/scraping.md §Data quirks).
+  const hasPlateSection = sections.some((s: any) =>
+    s?.section_id === 'plate'
+    || (Array.isArray(s?.sections) && s.sections.some((n: any) => n?.section_id === 'plate')));
+
   return {
     scrapedAt,
     productId: p.id,
@@ -32,6 +38,7 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     imageUrl: p.image?.url ? String(p.image.url).replace('{SIZE}', '400') : null,
     runrepeatUrl: `https://runrepeat.com/uk/${slug}`,
     features: (featuresFact?.values ?? []).map((v: any) => String(v?.text ?? '')).filter(Boolean),
+    hasPlateSection,
     pros: (Array.isArray(c.pros_clean) ? c.pros_clean : []).map(String),
     cons: (Array.isArray(c.cons_clean) ? c.cons_clean : []).map(String),
     intro: String(c.intro_clean ?? c.intro ?? ''),

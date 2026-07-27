@@ -25,13 +25,15 @@ function baseInputs(): { metrics: MetricsFile; details: DetailsFile } {
       scrapedAt: '2026-07-22T00:00:00Z', productId: 1, name: 'Shoe Zero Deluxe', brand: 'Brand', releasedAt: '2025-06-01',
       preciseReleaseDate: true, score: 90, msrpGbp: 150, discontinued: false, imageUrl: null,
       runrepeatUrl: 'https://runrepeat.com/uk/shoe-000', features: ['Carbon plate', 'Rocker'],
+      hasPlateSection: false,
       pros: ['good'], cons: ['bad'], intro: 'intro', whoShouldBuy: '<p>you</p>', whoShouldNotBuy: null,
     },
     'shoe-001': { gone: true, scrapedAt: '2026-07-21T00:00:00Z' },
     'ghost-shoe': {
       scrapedAt: '2026-07-19T00:00:00Z', productId: 9, name: 'Ghost', brand: null, releasedAt: null,
       preciseReleaseDate: false, score: null, msrpGbp: null, discontinued: true, imageUrl: null,
-      runrepeatUrl: 'https://runrepeat.com/uk/ghost-shoe', features: [], pros: [], cons: [], intro: '',
+      runrepeatUrl: 'https://runrepeat.com/uk/ghost-shoe', features: [], hasPlateSection: false,
+      pros: [], cons: [], intro: '',
       whoShouldBuy: null, whoShouldNotBuy: null,
     },
   } };
