@@ -19,10 +19,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run check:docs
-      - run: npm run test:coverage # both workspaces, coverage thresholds enforced
+      # verify = check:docs + typecheck + lint + test:coverage; the sequence
+      # has one owner (root package.json) so local runs mirror CI exactly
+      - run: npm run verify
       - run: npx playwright install chromium --with-deps
       - run: npm -w app run e2e
       - if: failure()

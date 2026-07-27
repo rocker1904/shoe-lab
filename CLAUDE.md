@@ -35,11 +35,12 @@ not reference; where they disagree with docs/, docs/ wins.
 
 ## Conventions
 
-- **Commands**: root `npm run typecheck | lint | test | test:coverage |
-  check:docs`; scraper `npm -w scraper run scrape:metrics | scrape:details |
-  scrape:releases | build:dataset | check:live`; app `npm -w app run dev |
-  build | e2e`. `test` has no coverage (safe for filtered runs);
-  `test:coverage` enforces thresholds and is what CI runs.
+- **Commands**: root `npm run verify` is the CI gate (check:docs + typecheck
+  + lint + test:coverage — the sequence has one owner; run it before pushing)
+  plus `npm run test` (no coverage, safe for filtered runs); scraper
+  `npm -w scraper run scrape:metrics | scrape:details | scrape:releases |
+  build:dataset | check:live`; app `npm -w app run dev | build | e2e` (e2e is
+  CI's only step outside `verify` — needs the Playwright browser).
 - **No live network in tests, ever.** Live requests happen only in the four
   scraper CLIs and `check:live`, all via `PoliteHttp` (docs/scraping.md
   §Politeness). Never call fetch directly against runrepeat.com.
