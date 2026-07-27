@@ -9,8 +9,11 @@ const argOf = (flag: string): string | undefined => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 
+const corpusDir = argOf('--from-corpus');
+
 scrapeDetails({
-  http: new PoliteHttp(),
+  http: corpusDir ? undefined : new PoliteHttp(),
+  corpusDir,
   dataDir: dataDir(argOf('--data-dir') ?? fileURLToPath(new URL('../../data', import.meta.url))),
   forceAll: args.includes('--force-all'),
   slug: argOf('--slug'),

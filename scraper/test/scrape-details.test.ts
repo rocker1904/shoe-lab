@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -79,5 +79,54 @@ describe('scrapeDetails', () => {
     const http = new PoliteHttp({ fetchImpl, sleep: async () => {} });
     await expect(scrapeDetails({ http, dataDir: dir, now: () => 'T4' })).rejects.toThrow(/robots/i);
     expect(urls).toHaveLength(1);
+  });
+
+  it('reads pages from a corpus directory and makes no network call at all', async () => {
+    const { dir } = setup();
+    const corpus = mkdtempSync(join(tmpdir(), 'shoe-corpus-'));
+    writeFileSync(join(corpus, 'saucony-endorphin-azura.html'), azuraHtml);
+
+    // no `http` is passed: if the corpus path touched the network it would throw
+    const res = await scrapeDetails({ dataDir: dir, corpusDir: corpus, forceAll: true, now: () => 'T5' });
+
+    expect(res.fetched).toEqual(['saucony-endorphin-azura']);
+    const rec = dir.read<DetailsFile>('details.json')!.shoes['saucony-endorphin-azura'] as any;
+    expect(rec.productId).toBe(41068);
+    expect(rec.hasPlateSection).toBe(false);
+  });
+
+  it('skips corpus slugs with no file instead of failing them', async () => {
+    const { dir } = setup();
+    const corpus = mkdtempSync(join(tmpdir(), 'shoe-corpus-'));
+    const res = await scrapeDetails({ dataDir: dir, corpusDir: corpus, forceAll: true, now: () => 'T6' });
+    expect(res.fetched).toEqual([]);
+    expect(res.failed).toEqual([]);
+  });
+
+  it('throws when the corpus directory itself is absent', async () => {
+    const { dir } = setup();
+    // a missing *file* is a skip; a missing *directory* is a typo, and skipping 464 shoes
+    // silently would look exactly like a successful backfill
+    await expect(scrapeDetails({ dataDir: dir, corpusDir: join(tmpdir(), 'shoe-corpus-nope'), forceAll: true, now: () => 'T7' }))
+      .rejects.toThrow(/corpus directory/i);
+  });
+
+  it('refuses to run with neither http nor corpusDir', async () => {
+    const { dir } = setup();
+    await expect(scrapeDetails({ dataDir: dir, forceAll: true, now: () => 'T8' }))
+      .rejects.toThrow(/http or corpusDir/i);
+  });
+
+  it('keeps the original scrapedAt when re-extracting the same page from the corpus', async () => {
+    const { dir, http } = setup();
+    await scrapeDetails({ http, dataDir: dir, now: () => 'T0' });
+    const corpus = mkdtempSync(join(tmpdir(), 'shoe-corpus-'));
+    writeFileSync(join(corpus, 'saucony-endorphin-azura.html'), azuraHtml);
+
+    await scrapeDetails({ dataDir: dir, corpusDir: corpus, forceAll: true, now: () => 'T9' });
+
+    const rec = dir.read<DetailsFile>('details.json')!.shoes['saucony-endorphin-azura'] as any;
+    expect(rec.scrapedAt).toBe('T0');        // the page was fetched then; re-reading disk is not a fetch
+    expect(rec.hasPlateSection).toBe(false); // but the extractor really did re-run
   });
 });

@@ -80,8 +80,15 @@ robots.txt, is docs/decisions.md §Be a good citizen toward RunRepeat.
   user-agent lines share a group) and fails closed by aborting the run.
 - **Request budget**, today: metrics ≈ 60 (1 robots + 1 seed page + 58 tests),
   details incremental = 1 robots + one page per uncrawled slug,
-  `--force-all` ≈ 465 (one page per catalogued shoe), releases ≈ 21 (20 full
-  pages + the empty one that stops the loop), `check:live` = 3.
+  `--force-all` ≈ 465 (one page per catalogued shoe) or 0 with `--from-corpus`,
+  releases ≈ 21 (20 full pages + the empty one that stops the loop),
+  `check:live` = 3.
+- **`scrape:details --from-corpus <dir>` makes no requests at all.** It re-extracts
+  from pages already on disk and never constructs a client, so an extractor change
+  costs a local re-run rather than a crawl. It is not an exception to the rule above;
+  it is outside it. The directory must exist — a missing page is skipped, a missing
+  corpus aborts, so a mistyped path cannot look like a clean run. Records keep their
+  original `scrapedAt` (§Determinism).
 
 ## Validation gates
 
@@ -114,6 +121,12 @@ would otherwise churn `builtAt` without any shoe changing. Ordering is fixed:
 sort by test id. Re-running the build over unchanged inputs produces no git
 diff, which is what makes a data commit a readable diff
 (docs/decisions.md §Git is the database).
+
+`scrapedAt` dates the *fetch*, not the record, so `--from-corpus` re-extraction
+preserves whatever the live crawl stamped. `builtAt` therefore answers "how old is
+the data" rather than "when did the extractor last run" — the latter is what git
+already records. A re-extraction that changed only derived fields moves no dates,
+which is also what keeps its data commit legible.
 
 `ageMonths` is computed in the app at load rather than stored, for the same
 reason: storing it would make the build depend on the wall clock.
