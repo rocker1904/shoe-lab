@@ -150,12 +150,17 @@ Expensive to discover, invisible in the code:
 
 - **Most shoes have no page-level `released_at`** — hence the supplement.
   After it, roughly 437 of 464 shoes are dated and only ~24 precisely.
-- **Plate detection is carbon-shaped.** RunRepeat's features vocabulary
-  reliably flags carbon plates and little else, so `derivePlate` reads
-  `carbon plate` → `carbon`, else lab test 69 (rarely populated) or any other
-  `plate` feature → `plated-other`, else `none`. Nylon and PEBA plated shoes
-  mostly read `none`. Fixing this means extracting the per-shoe Plate fact
-  during the details crawl — BACKLOG.md, not a quick patch.
+- **Plate detection reads the review section, not the vocabulary.** RunRepeat's
+  structured plate fact and its features list both name carbon and nothing else —
+  across the whole fleet the fact takes only `carbon-plate`, `false` or absent, so
+  nylon and PEBA shoes are untagged. What distinguishes them is that plated shoes
+  get a per-shoe "Plate" review section, nested one level inside a parent section
+  that varies by shoe. So: carbon feature wins, else a plate section means
+  `plated-other`, else `none`. The review prose names the material but cannot be
+  parsed for it — most carbon mentions in those sections are negations
+  ("rather than carbon fibre"), so a regex that catches the real ones catches more
+  false ones. Roughly three shoes in the fleet are tagged wrongly at source and are
+  corrected by hand (§Decisions).
 - **`lab_tests.groups` covers only the seed shoe's own test run**, so about
   half the catalogue has `groupId: null` and lands in the app's "Other" column
   group (docs/app.md §Columns and sorting). Not corruption; a multi-seed merge
@@ -196,3 +201,23 @@ is `0` and a spurious zero in a lab metric is worse than a failed run: it
 sorts to an extreme and looks like a measurement. The same reasoning covers
 `null`/`undefined`/`''`, which are filtered upstream as empty. Do not
 "simplify" the numeric path to a bare `Number()` cast.
+
+### Plate overrides are hand-maintained source, not data
+`scraper/src/plate-overrides.ts` corrects the handful of shoes RunRepeat tags
+wrongly — a carbon plate its own review describes but its fact omits, or a plate
+section that describes an absence. It lives in source rather than `data/` because
+`data/` is machine-generated and must not be hand-edited
+(docs/decisions.md §Git is the database); in source it gets review, typechecking
+and tests. Each entry cites the review sentence justifying it. The list is
+corrected by hand when new shoes are reviewed, and `build:dataset` fails if an
+entry goes stale or becomes redundant, so it cannot rot silently. Do not grow it
+into a general data-patching mechanism: if a whole class of shoes is wrong, fix
+the rule.
+
+The `anta-zone-2-90` entry does double duty and must not be deleted as noise.
+Detection matches `section_id === 'plate'` at one or two levels only, because
+that is where all 89 sections sit today; if RunRepeat ever nests them deeper,
+every shoe silently reads unplated and no count is checked at build time. That
+entry is the one override whose rule value depends on a section being found, so
+the redundancy gate fires when detection stops working — the nearest thing to a
+drift alarm this rule has.
