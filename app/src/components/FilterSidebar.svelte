@@ -7,7 +7,7 @@
 
 <script lang="ts">
   import type { ShoesFile } from '../../../shared/types.js';
-  import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, indexTests, numericValue } from '../lib/dataset';
+  import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import type { RangeBound } from '../lib/filters';
   import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
@@ -61,11 +61,6 @@
       }
     });
   }
-  function chipDate(years: number): string {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - years);
-    return d.toISOString().slice(0, 10);
-  }
 </script>
 
 <aside>
@@ -78,7 +73,7 @@
            oninput={(e) => patch((v) => { v.filters.releasedAfter = e.currentTarget.value || undefined; })} />
     <div class="chips">
       {#each [1, 2, 3] as y}
-        <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = chipDate(y); })}>{y}y</button>
+        <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = isoYearsAgo(new Date(), y); })}>{y}y</button>
       {/each}
     </div>
   </section>

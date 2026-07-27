@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import FilterSidebar from './FilterSidebar.svelte';
+import { isoYearsAgo } from '../lib/dataset';
 import { defaultView } from '../lib/urlstate';
 import { FLEET, TESTS } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
@@ -39,11 +40,17 @@ describe('FilterSidebar', () => {
     await fireEvent.click(screen.getByLabelText(/Other \(1\)/));
     expect(onchange.mock.lastCall![0].filters.brands).toEqual(['Other']);
   });
-  it('released-after chips set the date', async () => {
-    const onchange = setup();
-    await fireEvent.click(screen.getByRole('button', { name: '2y' }));
-    const after = onchange.mock.lastCall![0].filters.releasedAfter;
-    expect(after).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  it('released-after chips set the same UTC cut-off the presets use', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
+    try {
+      const onchange = setup();
+      await fireEvent.click(screen.getByRole('button', { name: '2y' }));
+      expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(isoYearsAgo(new Date(), 2));
+      expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-07-28');
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('shows the missing-data note and resets', async () => {
     const onchange = vi.fn();

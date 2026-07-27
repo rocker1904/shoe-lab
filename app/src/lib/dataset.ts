@@ -25,6 +25,14 @@ export function numericValue(shoe: Shoe, key: string, idx: TestIndex): number | 
   return typeof v === 'number' ? v : undefined;
 }
 
+/** The one "released after" cut-off: preset thresholds and the sidebar chips must agree. */
+export function isoYearsAgo(now: Date, years: number): string {
+  const d = new Date(now);
+  // UTC accessors so the cut-off does not shift with the viewer's timezone.
+  d.setUTCFullYear(d.getUTCFullYear() - years);
+  return d.toISOString().slice(0, 10);
+}
+
 export function ageMonths(releasedAt: string | null, now: Date): number | null {
   if (!releasedAt) return null;
   const d = new Date(releasedAt);

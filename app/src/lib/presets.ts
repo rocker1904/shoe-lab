@@ -1,5 +1,5 @@
 import type { Shoe } from '../../../shared/types.js';
-import { numericValue, type TestIndex } from './dataset';
+import { isoYearsAgo, numericValue, type TestIndex } from './dataset';
 import { median } from './stats';
 import { defaultView, type ViewState } from './urlstate';
 
@@ -15,13 +15,6 @@ export const PRESETS: Preset[] = [
   { id: 'tempo-plated', label: 'Tempo (plated)', describe: 'Plated, light, recent, sorted by energy return' },
   { id: 'wide-toebox', label: 'Wide toebox', describe: 'Roomiest toeboxes, sorted by score' },
 ];
-
-function isoYearsAgo(now: Date, years: number): string {
-  const d = new Date(now);
-  // UTC accessors so the cut-off date does not shift with the viewer's timezone.
-  d.setUTCFullYear(d.getUTCFullYear() - years);
-  return d.toISOString().slice(0, 10);
-}
 
 export function applyPreset(id: string, shoes: Shoe[], idx: TestIndex, now: Date): ViewState {
   const v = defaultView();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageMonths, indexTests, numericValue } from './dataset';
+import { ageMonths, indexTests, isoYearsAgo, numericValue } from './dataset';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -48,6 +48,31 @@ describe('dataset edge cases', () => {
     try {
       // Local accessors would read 2025-03-01T00:00Z as Feb 28 and 2025-03-15T00:00Z as Mar 14 -> 1 month.
       expect(ageMonths('2025-03-01', new Date('2025-03-15'))).toBe(0);
+    } finally {
+      if (tz === undefined) delete process.env.TZ;
+      else process.env.TZ = tz;
+    }
+  });
+});
+
+describe('isoYearsAgo', () => {
+  it('subtracts whole years and returns a date-only string', () => {
+    expect(isoYearsAgo(new Date('2026-07-26T12:00:00Z'), 2)).toBe('2024-07-26');
+    expect(isoYearsAgo(new Date('2026-07-26T12:00:00Z'), 1)).toBe('2025-07-26');
+  });
+  it('does not shift with the time of day', () => {
+    expect(isoYearsAgo(new Date('2026-07-26T00:00:00Z'), 2)).toBe('2024-07-26');
+    expect(isoYearsAgo(new Date('2026-07-26T23:59:59Z'), 2)).toBe('2024-07-26');
+  });
+  it('rolls 29 Feb into March rather than back into February', () => {
+    expect(isoYearsAgo(new Date('2028-02-29T12:00:00Z'), 2)).toBe('2026-03-01');
+  });
+  it('reads the UTC calendar date, not the viewer local one', () => {
+    const tz = process.env.TZ;
+    process.env.TZ = 'America/Los_Angeles';
+    try {
+      // 2026-07-28T02:00Z is still the 27th in Los Angeles; the cut-off follows UTC.
+      expect(isoYearsAgo(new Date('2026-07-28T02:00:00Z'), 2)).toBe('2024-07-28');
     } finally {
       if (tz === undefined) delete process.env.TZ;
       else process.env.TZ = tz;
