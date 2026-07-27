@@ -1,0 +1,57 @@
+name: Refresh details
+on:
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: Re-crawl every shoe page (slow, ~450 requests)
+        type: boolean
+        default: false
+      slug:
+        description: Re-crawl a single shoe slug
+        type: string
+        required: false
+permissions:
+  contents: write
+  actions: write # to dispatch deploy — GITHUB_TOKEN pushes do NOT trigger push-event workflows
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Scrape details
+        # Inputs go through env, never string-interpolated into the shell.
+        env:
+          FORCE_ALL: ${{ inputs.force_all }}
+          SLUG: ${{ inputs.slug }}
+        run: |
+          args=()
+          if [ "$FORCE_ALL" = 'true' ]; then args+=(--force-all); fi
+          if [ -n "$SLUG" ]; then args+=(--slug "$SLUG"); fi
+          npm -w scraper run scrape:details -- "${args[@]}"
+      - run: npm -w scraper run scrape:releases # release-year supplement, refreshed with details
+      - run: npm -w scraper run build:dataset
+      - name: Commit if changed
+        id: commit
+        run: |
+          git add -A data
+          if ! git diff --cached --quiet -- data; then
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git commit -m "data: details refresh $(date -u +%F)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Trigger deploy
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
