@@ -57,6 +57,7 @@ not reference; where they disagree with docs/, docs/ wins.
 - **Docs ride the change**: a behaviour-changing commit updates the owning
   doc in the same commit.
 - **Commits**: concise single-line subjects, no embedded measurements;
-  trailer `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>` on
+  trailer `Co-Authored-By: <authoring model> <noreply@anthropic.com>` naming
+  the model that wrote the commit (e.g. `Claude Opus 5 (1M context)`), on
   commits, never in PR descriptions.
 - **Comments are WHY-only** — docs/README.md §Rules, rule 5.
