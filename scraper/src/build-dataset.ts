@@ -17,17 +17,19 @@ export function derivePlate(slug: string, features: string[], hasPlateSection: b
 }
 
 // `releaseYears` deliberately does not feed builtAt (docs/scraping.md §Determinism).
-export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile): { shoesFile: ShoesFile; csv: string } {
+export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate> } {
   let builtAt = metrics.scrapedAt;
   for (const rec of Object.values(details.shoes)) {
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;
   }
 
+  const ruleDerived = new Map<string, Plate>();
   const shoes: Shoe[] = Object.keys(metrics.shoes).sort().map((slug) => {
     const m = metrics.shoes[slug]!;
     const rec = details.shoes[slug];
     const det = rec && !isTombstone(rec) ? rec : null;
     const features = det?.features ?? [];
+    ruleDerived.set(slug, plateFromRules(features, det?.hasPlateSection === true));
     const year = releaseYears?.years[slug];
     const releasedAt = det?.releasedAt ?? (year === undefined ? null : `${year}-01-01`);
     return {
@@ -62,5 +64,5 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
       ...csvTests.map((t) => s.values[String(t.id)]),
     ]));
   }
-  return { shoesFile, csv: lines.join('\n') + '\n' };
+  return { shoesFile, csv: lines.join('\n') + '\n', ruleDerived };
 }

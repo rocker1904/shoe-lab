@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ValidationError, validateDetailsRecord, validateMetrics, validateShoesFile } from '../src/validate.js';
-import type { MetricsFile, ShoesFile, TestsFile } from '../../shared/types.js';
+import { ValidationError, validateDetailsRecord, validateMetrics, validatePlateOverrides, validateShoesFile } from '../src/validate.js';
+import type { MetricsFile, Plate, ShoesFile, TestsFile } from '../../shared/types.js';
+import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
 
 function makeMetrics(shoeCount: number, testIds: number[] = [5, 6]): MetricsFile {
   const shoes: MetricsFile['shoes'] = {};
@@ -141,5 +142,31 @@ describe('validateShoesFile', () => {
   });
   it('accepts a file with no shoes yet still checks structure', () => {
     expect(() => validateShoesFile({ ...good, shoes: [] })).not.toThrow();
+  });
+});
+
+describe('validatePlateOverrides', () => {
+  // every override slug present, and none agreeing with the rules
+  const healthy = (): Map<string, Plate> => {
+    const m = new Map<string, Plate>();
+    for (const [slug, o] of Object.entries(PLATE_OVERRIDES)) {
+      m.set(slug, o.plate === 'none' ? 'plated-other' : 'none');
+    }
+    return m;
+  };
+
+  it('passes when every override is present and still needed', () => {
+    expect(() => validatePlateOverrides(healthy())).not.toThrow();
+  });
+  it('rejects an override whose shoe is no longer in the dataset', () => {
+    const m = healthy();
+    m.delete(Object.keys(PLATE_OVERRIDES)[0]!);
+    expect(() => validatePlateOverrides(m)).toThrow(/no longer in the dataset|stale/i);
+  });
+  it('rejects an override the rules now derive on their own', () => {
+    const m = healthy();
+    const [slug, o] = Object.entries(PLATE_OVERRIDES)[0]!;
+    m.set(slug, o.plate);
+    expect(() => validatePlateOverrides(m)).toThrow(/redundant/i);
   });
 });

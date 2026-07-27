@@ -1,5 +1,6 @@
-import type { DetailRecord, MetricsFile, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
+import type { DetailRecord, MetricsFile, Plate, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
+import { PLATE_OVERRIDES } from './plate-overrides.js';
 
 export class ValidationError extends Error {}
 
@@ -54,5 +55,18 @@ export function validateShoesFile(f: ShoesFile): void {
     if (!s.slug || !s.name) throw new ValidationError(`shoe missing slug/name: ${JSON.stringify(s.slug)}`);
     if (!s.values || typeof s.values !== 'object') throw new ValidationError(`${s.slug}: values missing`);
     if (!PLATES.has(s.plate)) throw new ValidationError(`${s.slug}: bad plate ${String(s.plate)}`);
+  }
+}
+
+// Both cases are fatal rather than warnings: a silently stale override is the failure mode the
+// override list exists to avoid (docs/scraping.md §Decisions).
+export function validatePlateOverrides(ruleDerived: Map<string, Plate>): void {
+  for (const [slug, o] of Object.entries(PLATE_OVERRIDES)) {
+    if (!ruleDerived.has(slug)) {
+      throw new ValidationError(`plate override for ${slug} is stale: no longer in the dataset`);
+    }
+    if (ruleDerived.get(slug) === o.plate) {
+      throw new ValidationError(`plate override for ${slug} is redundant: the rules already derive ${o.plate}`);
+    }
   }
 }

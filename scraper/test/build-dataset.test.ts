@@ -110,6 +110,13 @@ describe('buildDataset', () => {
     expect(zeroLine).toContain('Shoe Zero Deluxe');
     expect(zeroLine).toContain('carbon');
   });
+  it('returns the rule-only plate for every shoe, before overrides', () => {
+    const { metrics, details } = baseInputs();
+    const { ruleDerived } = buildDataset(tests, metrics, details);
+    expect(ruleDerived.size).toBe(320);
+    expect(ruleDerived.get('shoe-000')).toBe('carbon'); // its 'Carbon plate' feature
+    expect(ruleDerived.get('shoe-002')).toBe('none');   // no details record, so no section
+  });
 });
 
 // Byte-identical output over unchanged inputs is what makes a refresh commit readable
@@ -140,6 +147,7 @@ describe('buildDataset determinism', () => {
     const b = buildDataset(tests, shuffled.metrics, shuffled.details);
     expect(b.csv).toBe(a.csv);
     expect(JSON.stringify(b.shoesFile)).toBe(JSON.stringify(a.shoesFile));
+    expect([...b.ruleDerived]).toEqual([...a.ruleDerived]); // JSON.stringify would render a Map as {}
   });
 
   it('does not read the wall clock', () => {
