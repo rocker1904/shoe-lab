@@ -39,6 +39,13 @@ requires the field to be sanitised in the scraper first, and tests on both
 sides. Removing the sanitiser and "escaping in the component" is not
 equivalent — these fields are meant to render as markup.
 
+Two mechanisms enforce this, and they fail on different mistakes.
+`svelte/no-at-html-tags` errors on a careless sink but is silenced by an inline
+disable, so it cannot see a deliberate one added with a disable attached;
+`app/src/html-boundary.test.ts` pins the exact two expressions and catches that.
+Neither is redundant — a change satisfying only one of them is a change to this
+boundary, and needs the decision above.
+
 ## URL encoding
 
 Compact and default-omitting, so a shared link carries only what was changed:
