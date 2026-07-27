@@ -1,4 +1,4 @@
-export const USER_AGENT = 'shoe-lab/0.1 (personal comparison tool; contact: https://github.com/OWNER/shoe-lab)';
+export const USER_AGENT = 'shoe-lab/0.1 (personal comparison tool; contact: https://github.com/rocker1904/shoe-lab)';
 
 export class HttpStatusError extends Error {
   constructor(public status: number, public url: string) {
