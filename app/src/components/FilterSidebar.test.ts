@@ -114,7 +114,9 @@ describe('FilterSidebar filter set management', () => {
     render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, hiddenMissing: 0 } });
     const select = screen.getByLabelText('Add filter');
     // curated keys and the option-typed test are both absent
-    expect([...select.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['Add filter…', 'Stiffness']);
+    expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
+      .toEqual(['', 'midsole-softness', 'toebox-width-at-the-widest-part', 'stiffness']);
+    expect([...select.querySelectorAll('option')].map((o) => o.textContent)).toContain('Stiffness');
 
     await fireEvent.change(select, { target: { value: 'stiffness' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
@@ -125,7 +127,8 @@ describe('FilterSidebar filter set management', () => {
     view.filters.ranges['stiffness'] = { min: 5 };
     render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), hiddenMissing: 0 } });
     expect(screen.getByText(/Stiffness/)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Add filter')).not.toBeInTheDocument();
+    expect([...screen.getByLabelText('Add filter').querySelectorAll('option')].map((o) => o.getAttribute('value')))
+      .not.toContain('stiffness');
   });
 
   it('preserves sibling filters and leaves the view prop unmutated', async () => {

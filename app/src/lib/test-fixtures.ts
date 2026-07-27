@@ -12,8 +12,13 @@ export const TESTS: LabTest[] = [
   labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm', groupId: '3' }),
   labTest({ id: 24, slug: 'weight', name: 'Weight', units: 'g', groupId: '10' }),
   labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return (heel)', type: 'percent', groupId: '3' }),
+  labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', groupId: '3', updateId: 70 }),
   labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', groupId: '3', previousId: 11 }),
   labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option' }),
+  // A pair carrying no method year on either side and sharing both name and units — the case the
+  // generation label cannot derive from a slug (docs/scraping.md §Test lineage).
+  labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', updateId: 55 }),
+  labTest({ id: 55, slug: 'toebox-width-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', previousId: 27 }),
 ];
 
 /** Kept out of TESTS: it is the one test that resolves against a shoe field, so it belongs to
