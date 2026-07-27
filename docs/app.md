@@ -182,6 +182,10 @@ than layering on it. Every threshold lives in one constants block at the top
 of `app/src/lib/presets.ts` — tuning is a one-line edit there, and new presets
 are cheap (BACKLOG.md).
 
+This section owns the mechanism only. What each preset is *for*, and why its
+thresholds are what they are, is docs/shoe-stories.md — read it before changing
+a number.
+
 One threshold is not a constant: easy-day-cruiser's softness ceiling is the
 **median of the live fleet**, computed at click time from the loaded dataset.
 That keeps "softer than average" true as the catalogue grows, at the cost of

@@ -74,8 +74,17 @@ source — is out of scope by default. If one is ever worth it, that is a user
 decision recorded here first.
 
 ### Doc system (2026-07-27)
-Docs follow an agent-first contract (docs/README.md), deliberately small:
-three domain docs; no separate live-state doc because `main` deploys
-continuously (merged == live, deploy lag ~1 min); aspiration consolidated in
-BACKLOG.md. The build-time spec and plan under `docs/superpowers/` are
-frozen artifacts — docs/ wins on any disagreement.
+Docs follow an agent-first contract (docs/README.md), deliberately small: no
+separate live-state doc because `main` deploys continuously (merged == live,
+deploy lag ~1 min); aspiration consolidated in BACKLOG.md. The build-time
+spec and plan under `docs/superpowers/` are frozen artifacts — docs/ wins on
+any disagreement.
+
+Four domain docs, not the original three. docs/shoe-stories.md earns its own
+file because the reasoning behind a preset threshold is neither a frontend
+contract nor a scraping fact — it is what a runner means by an easy or a tempo
+session. It took real effort to articulate, every threshold in the app descends
+from it, and folding it into docs/app.md would put training physiology inside a
+document about view state. A fifth doc needs the same test: a body of knowledge
+that is expensive to reconstruct and that no existing doc can own without
+distorting its own subject.
