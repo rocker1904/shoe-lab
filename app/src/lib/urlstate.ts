@@ -26,6 +26,35 @@ export function defaultView(): ViewState {
   return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: [...DEFAULT_COLUMNS], generations: {} };
 }
 
+/**
+ * Structural equality with `undefined` treated as absent, so a cleared field that keeps its key
+ * (structuredClone preserves own properties whose value is `undefined`) still compares equal.
+ */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => sameValue(x, b[i]));
+  }
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    return [...keys].every((k) => sameValue((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+  }
+  return false;
+}
+
+/**
+ * Whether the view is untouched — what the entry band's collapse is derived from (docs/app.md
+ * §Presets). Deliberately not `serializeView(v) === ''`: an empty range row is view state that
+ * does not serialise, so a view with a filter added from the Add-filter menu serialises to
+ * nothing and is still not the default (docs/app.md §View and URL ownership).
+ *
+ * Compared wholesale rather than field by field so a new `FilterState` field cannot silently go
+ * unchecked, and **by value rather than by key presence** — see `sameValue`.
+ */
+export function isDefaultView(v: ViewState): boolean {
+  return sameValue(v, defaultView());
+}
+
 /** Current-generation slug to retired-generation slug, for every pair the catalogue resolves. */
 function pairsOf(idx: TestIndex): Map<string, string> {
   const pairs = new Map<string, string>();

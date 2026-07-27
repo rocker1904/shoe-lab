@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { DEFAULT_COLUMNS, defaultView, parseView, serializeView, type ViewState } from './urlstate';
+import { DEFAULT_COLUMNS, defaultView, isDefaultView, parseView, serializeView, type ViewState } from './urlstate';
+import type { FilterState } from './filters';
 import { TESTS, labTest } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -190,5 +191,56 @@ describe('generation choice', () => {
   it('never admits both generations of a pair as columns at once', () => {
     const v = parseView('cols=midsole-softness,midsole-softness-22', idx);
     expect(v.columns).toEqual(['midsole-softness-22']);
+  });
+});
+
+describe('isDefaultView', () => {
+  it('is true for a freshly built default', () => {
+    expect(isDefaultView(defaultView())).toBe(true);
+  });
+  it('is false once an empty range has been added, though it serialises to nothing', () => {
+    const v = defaultView();
+    v.filters.ranges['weight'] = {};
+    expect(serializeView(v)).toBe('');     // the trap
+    expect(isDefaultView(v)).toBe(false);
+  });
+  it('is false for a changed sort, changed columns, or a generation choice', () => {
+    const sort = defaultView(); sort.sort = { key: 'weight', dir: 'asc' };
+    const cols = defaultView(); cols.columns = ['score'];
+    const gen = defaultView(); gen.generations['midsole-softness-22'] = 'midsole-softness';
+    for (const v of [sort, cols, gen]) expect(isDefaultView(v)).toBe(false);
+  });
+  // Keyed by field name, not an array: a new FilterState field then fails typecheck —
+  // which runs in verify — instead of silently going untested.
+  const setters: Record<keyof FilterState, (f: FilterState) => void> = {
+    ranges: (f) => { f.ranges['weight'] = {}; },
+    plate: (f) => { f.plate = 'carbon'; },
+    search: (f) => { f.search = 'nike'; },
+    brands: (f) => { f.brands = ['ASICS']; },
+    releasedAfter: (f) => { f.releasedAfter = '2024-01-01'; },
+    hideDiscontinued: (f) => { f.hideDiscontinued = true; },
+    showMissing: (f) => { f.showMissing = true; },
+  };
+
+  it('is false for every filter field, not just the ones someone remembered', () => {
+    for (const mutate of Object.values(setters)) {
+      const v = defaultView();
+      mutate(v.filters);
+      expect(isDefaultView(v)).toBe(false);
+    }
+  });
+
+  it('is true again once a field is cleared, even though the key remains', () => {
+    // `patch` structuredClones the snapshot, and structured clone keeps own properties
+    // whose value is undefined — every sidebar clear path leaves the key behind. A
+    // key-count comparison would never let the band re-expand.
+    for (const [field, mutate] of Object.entries(setters)) {
+      if (field === 'ranges') continue;              // ranges clear by deletion, not by undefined
+      const v = defaultView();
+      mutate(v.filters);
+      (v.filters as unknown as Record<string, unknown>)[field] = undefined;
+      expect(Object.keys(v.filters)).toContain(field);   // the key really is still there
+      expect(isDefaultView(v)).toBe(true);
+    }
   });
 });

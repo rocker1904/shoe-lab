@@ -19,6 +19,15 @@ round trip. An Add-filter row with both bounds empty is exactly that case, and
 re-deriving would turn adding a filter into a no-op. The accepted cost is that
 an empty range row does not survive a reload.
 
+"Serialises to nothing" and "is the default" are therefore different questions,
+and `isDefaultView` answers the second. An empty range row is the case that
+separates them: it is real view state that `serializeView` omits, so
+`serializeView(v) === ''` would call a view default after the user had already
+added a filter. It compares the whole `ViewState` **by value**, never by key
+presence — `structuredClone` keeps own properties whose value is `undefined`,
+so every cleared field leaves its key behind and a key count would never let a
+derived control re-open.
+
 `popstate` is deliberately unhandled: Back does not restore the previous view.
 Wiring it up means re-entering the view from outside `setView` and needs the
 above worked through — BACKLOG.md item, not an oversight to patch casually.
