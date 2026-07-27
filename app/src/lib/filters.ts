@@ -4,7 +4,7 @@ import { numericValue, type TestIndex } from './dataset';
 export interface RangeBound { min?: number; max?: number }
 export interface FilterState {
   ranges: Record<string, RangeBound>;
-  plate?: 'none' | 'plated' | 'carbon';
+  plate?: 'none' | 'plated' | 'carbon' | 'not-carbon';
   releasedAfter?: string;
   brands?: string[];
   search?: string;
@@ -29,7 +29,12 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
     if (search && !s.name.toLowerCase().includes(search)) continue;
     if (f.brands?.length && !f.brands.includes(s.brand ?? '')) continue;
     if (f.plate) {
-      if (f.plate === 'plated' ? s.plate === 'none' : s.plate !== f.plate) continue;
+      // `plated` and `not-carbon` are the two inexact tokens; everything else is an exact match
+      // (docs/app.md §Columns and sorting).
+      const dropped = f.plate === 'plated' ? s.plate === 'none'
+        : f.plate === 'not-carbon' ? s.plate === 'carbon'
+        : s.plate !== f.plate;
+      if (dropped) continue;
     }
     if (f.releasedAfter && (!s.releasedAt || s.releasedAt < f.releasedAfter)) continue;
     considered.push(s);

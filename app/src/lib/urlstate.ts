@@ -15,7 +15,7 @@ export const DEFAULT_COLUMNS: string[] = [
   'releasedAt', 'score', 'msrpGbp', 'heel-stack', 'midsole-softness-22',
   'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight',
 ];
-const PLATES = new Set(['none', 'plated', 'carbon']);
+const PLATES = new Set(['none', 'plated', 'carbon', 'not-carbon']);
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate']);
 /** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
 const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);

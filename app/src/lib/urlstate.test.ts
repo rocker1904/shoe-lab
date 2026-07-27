@@ -26,6 +26,12 @@ describe('urlstate', () => {
     expect(parseView('r.heel-stack=~40', idx).filters.ranges['heel-stack']).toEqual({ max: 40 });
     expect(parseView('r.heel-stack=36~40', idx).filters.ranges['heel-stack']).toEqual({ min: 36, max: 40 });
   });
+  it('round-trips the not-carbon plate token', () => {
+    const v = defaultView();
+    v.filters.plate = 'not-carbon';
+    expect(serializeView(v)).toBe('plate=not-carbon');
+    expect(parseView('plate=not-carbon', idx).filters.plate).toBe('not-carbon');
+  });
   it('ignores unknown keys, unknown range targets, and garbage values', () => {
     const v = parseView('r.nonsense=1~2&bogus=1&r.heel-stack=abc~def&plate=titanium&sort=-nope', idx);
     expect(v).toEqual(defaultView());

@@ -93,6 +93,26 @@ describe('applyFilters edge cases', () => {
   });
 });
 
+describe('plate not-carbon', () => {
+  it('keeps unplated and non-carbon plated shoes, drops carbon', () => {
+    const r = applyFilters(FLEET, { ranges: {}, plate: 'not-carbon' }, idx);
+    expect(r.visible.length).toBeGreaterThan(0);          // an empty result would make every() vacuous
+    expect(r.visible.map((s) => s.plate)).not.toContain('carbon');
+    expect(r.visible.some((s) => s.plate === 'none')).toBe(true);
+    expect(r.visible.some((s) => s.plate === 'plated-other')).toBe(true);
+  });
+  it('is a strictly larger set than none', () => {
+    const notCarbon = applyFilters(FLEET, { ranges: {}, plate: 'not-carbon' }, idx).visible;
+    const none = applyFilters(FLEET, { ranges: {}, plate: 'none' }, idx).visible;
+    expect(notCarbon.length).toBeGreaterThan(none.length);
+    expect(none.every((s) => notCarbon.includes(s))).toBe(true);
+  });
+  it('still accounts for every shoe when combined with a range', () => {
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 36 } }, plate: 'not-carbon' }, idx);
+    expect(r.visible.length + r.outsideBounds + r.hiddenMissing).toBe(r.considered.length);
+  });
+});
+
 describe('applyFilters accounting', () => {
   it('reconciles across every filter state we exercise', () => {
     const states: FilterState[] = [

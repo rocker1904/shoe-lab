@@ -1,8 +1,10 @@
 <script lang="ts">
-  let { value, onchange }: { value: 'none' | 'plated' | 'carbon' | undefined; onchange: (v: 'none' | 'plated' | 'carbon' | undefined) => void } = $props();
+  type Plate = 'none' | 'plated' | 'carbon' | 'not-carbon';
+  let { value, onchange }: { value: Plate | undefined; onchange: (v: Plate | undefined) => void } = $props();
   const options = [
     { v: undefined, label: 'Any' }, { v: 'none', label: 'None' },
     { v: 'plated', label: 'Plated' }, { v: 'carbon', label: 'Carbon' },
+    { v: 'not-carbon', label: 'No carbon' },
   ] as const;
 </script>
 

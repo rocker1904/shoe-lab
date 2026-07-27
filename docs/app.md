@@ -136,9 +136,14 @@ tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
 an ISO string; year-derived dates therefore sit at 1 January, and the table
 prints the year alone unless `preciseReleaseDate` is set.
 
-Plate has two different token sets, on purpose. As a **filter**, `plated`
-means *any* plate — it keeps carbon and non-carbon alike and excludes only
-`none` — while `carbon` and `none` are exact. As a **sort**, plate is ordinal:
+Plate has two different token sets, on purpose. As a **filter**, `plated` and
+`not-carbon` are inexact and `carbon` and `none` are exact: `plated` means
+*any* plate, keeping carbon and non-carbon alike and excluding only `none`,
+while `not-carbon` excludes only `carbon` and keeps nylon- and plastic-plated
+shoes alongside unplated ones. The two are not opposites and neither is
+redundant — excluding carbon is not the same as excluding every plate, and a
+great many ordinary daily trainers carry a non-carbon plate. As a **sort**,
+plate is ordinal:
 `none` 0, `plated-other` 1, `carbon` 2, so descending reads "most plate
 first" like every other column. The table renders `plated-other` as "plated".
 
