@@ -6,7 +6,7 @@
 **Status:** Approved design, pending implementation plan
 **Scope note:** Second of two specs from the UX review. The first, metric legibility,
 made the metric surface honest. This one answers "where do I start?". Preset
-*thresholds* are not here — they are docs/shoe-stories.md and BACKLOG.md item 2.
+*thresholds* are not here — they are docs/shoe-stories.md and BACKLOG.md item 1.
 
 ## 1. Problem
 
@@ -98,12 +98,12 @@ null in blocked contexts, and losing a saved view must never cost the page
 - The URL stays write-only; the Page keeps owning view state
   (docs/app.md §View and URL ownership).
 - `popstate` stays unhandled — Back still does not restore the previous view. That is
-  BACKLOG.md item 6 and wants working through on its own terms.
+  BACKLOG.md item 5 and wants working through on its own terms.
 - The receipt, coverage bars and generation switching are untouched.
 
 ## 7. Non-goals
 
-- **Preset thresholds.** docs/shoe-stories.md owns the reasoning; BACKLOG.md item 2
+- **Preset thresholds.** docs/shoe-stories.md owns the reasoning; BACKLOG.md item 1
   owns the numbers and the three things the app still lacks — a not-carbon plate
   token, a fleet percentile helper, and a Tempo weight bound.
 - **The value / last-generation axis.** `previousVersion` and `latestVersion` exist and
