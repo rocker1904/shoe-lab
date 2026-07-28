@@ -80,8 +80,11 @@ Strike serialises like everything else, so a shared link shows the recipient wha
 sender saw, and persists so a returning runner is not asked twice. It survives a Clear
 and every filter change; only the runner sets it, or a link that carries one.
 
-The toggle sits beside the story cards — it is a peer of the story, not a filter, and
-never lives in the filter sidebar.
+The toggle lives in the **toolbar**, as a peer of the story chips, so it is present
+whether the band is open or collapsed. Beside the story cards alone would put it inside a
+surface that disappears the moment a filter is touched — a runner who typed a search term
+could no longer state their strike, which inverts the premise of this section. It is a
+peer of the story, not a filter, and never lives in the filter sidebar.
 
 ### 4.1.1 What flipping it does to the rest of the view
 
@@ -175,7 +178,9 @@ is not published at all, and a rename upstream would silently regroup the sideba
 
 - **Cards lose their description line.** Name and count only.
 - **The selected story is highlighted.**
-- **A Clear control** returns to `defaultView(strike)`.
+- **A Clear control** returns to `defaultView(strike)`. It lives in the **toolbar**
+  beside the strike toggle, not in the band — a control that resets a hand-edited view
+  must be reachable *from* a hand-edited view, and the band is gone by then.
 
 ### 5.1 The band stays open while the view is clean
 
@@ -235,6 +240,14 @@ empty entry so the row survives — exists only because removal had no control o
 own. With one, clear always means clear and remove always means remove, for every row.
 
 ### 7.1 Which rows are shown is its own state
+
+A row can be on screen for four reasons: it is curated, it is a half of a side pair, it
+holds an active bound, or it is in the hand-added row list. **Clearing a row that is only
+on screen because it is active must add it to the row list**, or clear silently means
+remove for exactly the rows that arrived by link. Equivalently, seed the row list from
+every active non-curated key at parse time — which is safe, because every key a story
+binds is curated, so a story still round-trips unchanged.
+
 
 Splitting the two actions needs somewhere to record that a hand-added row is *shown*,
 independently of whether it currently holds a bound. Deriving the row list from the bound

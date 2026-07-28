@@ -50,7 +50,7 @@ Verified against the tree: `test-fixtures.ts` `TESTS` has ids 6, 24, 65, 11, 70,
 | `ColumnPicker.test.ts` `/Energy return forefoot/` | only if `parts[].label` is repurposed — it must not be | 3 |
 | `Page.svelte` `applyPreset(...)` call sites | the signature takes the strike | 4 |
 | `presets.test.ts`, `urlstate.test.ts` default-columns assertions | `DEFAULT_COLUMNS` becomes a function | 4 |
-| `persist.ts` `VIEW_STORAGE_KEY` | the URL encoding changes three times; bump to `v2` **once**, in Task 4 | 4 |
+| `persist.ts` `VIEW_STORAGE_KEY` | the URL encoding changes four times; bump to `v2` **once**, in Task 5, the last of them | 5 |
 | `FilterSidebar.test.ts` "no two range groups share an accessible name" | side-only labels would collide | 5 |
 | `Page.test.ts` band/chip assertions | the band gains a strike toggle and a Clear | 6 |
 
@@ -117,7 +117,7 @@ describe('plate as a set', () => {
 
 `presets.ts`: Easy's plate becomes `['none', 'plated-other']`.
 
-`PlateFilter.svelte`: three checkboxes in a `role="group"` — **not** a radiogroup. `ShoeTable.svelte`: the plate cell says "Non-carbon plate".
+`PlateFilter.svelte`: three checkboxes in a `role="group"` — **not** a radiogroup. **It must emit in declared `PLATES` order**: story selection is a positional `sameValue` comparison, so a hand-built `['plated-other', 'none']` would never match a preset's `['none', 'plated-other']`. `ShoeTable.svelte`: the plate cell says "Non-carbon plate".
 
 - [ ] **Step 3: Update the docs**
 
@@ -149,7 +149,7 @@ docs/app.md §Columns and sorting: the filter takes a set of real values; the tw
 
 **Files:** `lineage.ts`, `lineage.test.ts`, `MetricRow.test.ts`, `FilterSidebar.test.ts`, `test-fixtures.ts`, `docs/app.md`, `docs/operations.md`
 
-**Produces:** colocated parts gain `side: 'heel' | 'forefoot' | null`, ordered forefoot first; `SIDE_PAIRS`; `sideKey(label, strike)`.
+**Produces:** colocated parts gain `side: 'heel' | 'forefoot' | null`, ordered forefoot first; `SIDE_PAIRS`; `sideKey(label, strike)`; and **`swapSide(slug, strike)`** — slug to the other half — which Task 6's column and sort swap needs and should not have to reopen this file for.
 
 ```ts
 /** Heel/forefoot pairs and the side of each half. The catalogue links only two of these four and
@@ -226,11 +226,14 @@ This is the task the spec's §4 is about. Read §4.0–4.2 before starting.
 
 `defaultView` and `applyPreset` take the strike; `sideKey` from Task 3 resolves the half. `EASY_COLUMNS` and `FAST_COLUMNS` are parameterised by strike too, not just `DEFAULT_COLUMNS`.
 
-**Two bounds convert, not one.** Easy's stack is the obvious case. **Race's energy-return floor of 70 is also side-swappable** — it sits at the 85th percentile on heel and the 80th on forefoot — so it becomes `RACE_ENERGY_RETURN_PERCENTILE = 0.85`, which preserves production behaviour. Missing it ships a violation of spec §4.2 and acceptance criterion 7. Only Race's weight ceiling stays absolute, because weight has no sides.
+**Two bounds convert, not one.** Both get a named constant, because an unnamed percentile cannot be asserted against:
+
+- `EASY_STACK_PERCENTILE = 0.5`. The spec's "36 mm is the 49th percentile" is an ECDF reading, not the inverse `quantile` computes — and `quantile(heel-stack, 0.49)` is 35.9 against `0.5`'s 36, while both give 35 on the fixture. No test could tell them apart, so name it.
+- `RACE_ENERGY_RETURN_PERCENTILE = 0.85`. Race's floor of 70 is side-swappable — the 85th percentile on heel, the 80th on forefoot. The resolved bound becomes 69.47 rather than 70, which leaves the Race count unchanged at 39; do not claim it preserves the number.
+
+Missing either ships a violation of spec §4.2 and acceptance criterion 7. Only Race's weight ceiling stays absolute, because weight has no sides.
 
 **`parseView` must read `strike` before it builds the baseline.** It currently opens with `const v = defaultView()` and fills from the parameter loop, so `?strike=forefoot` with no `cols` would leave heel columns — a shared forefoot link would load heel-shaped and, worse, open with the band already collapsed because the view no longer equals its own baseline. `serializeView`'s default-columns comparison must likewise use `defaultColumns(v.strike)`.
-
-**Bump `VIEW_STORAGE_KEY` to `v2` here, once.** Tasks 1, 2 and 4 all change the encoding; one bump covers all three, and its own comment says it moves when the encoding does.
 
 - [ ] **Step 3: Update docs/app.md §Presets and §View and URL ownership**, and add the runner layer to docs/shoe-stories.md — which half a story uses follows the runner's strike, because that is the half describing their landing.
 
@@ -263,18 +266,20 @@ Assert that as a test — **every slug in `SIDE_PAIRS` appears in `CURATED_RANGE
 
 **Delete the clear/remove conflation and `alwaysShown`.** Clearing a range deletes its key — leaving `{}` behind would mean `isDefaultView` never returns true again and the band could never re-open.
 
-That needs somewhere to record which hand-added rows are *shown*, or clearing and removing are the same action however they are labelled (spec §7.1). `ViewState` gains the row list; it serialises, needs an entry in `defaultView`, and is covered by the same value comparison as everything else. Land it **before** Task 4's storage-key bump so one bump still covers every encoding change.
+That needs somewhere to record which hand-added rows are *shown*, or clearing and removing are the same action however they are labelled (spec §7.1). `ViewState` gains the row list; it serialises, needs an entry in `defaultView`, and is covered by the same value comparison as everything else. This is the last encoding change of the plan, which is why the storage-key bump belongs here.
 
 Settle the semantics, all four of which an implementation could get wrong silently:
 
 - **URL key and validation.** Name the key, dedupe it, drop unknown slugs, and treat an all-separator value as absent — `brands` is the precedent. Add a round-trip test; the row list is an encoding change and nothing else tests it.
 - **Remove deletes the bound too.** "Assert the row is gone" alone passes against an implementation that drops the row entry and keeps the range key — an invisible active filter, and a view that can never be default again. Assert the bound is gone *and* `isDefaultView` is true afterwards.
-- **A link-borne active row.** A URL with a range on a non-curated key but no row entry: the row shows because it is active. It must still offer remove, or clearing is its only exit and the old conflation is back for exactly those rows.
+- **A link-borne active row.** A URL with a range on a non-curated key but no row entry shows because it is *active*. Clearing it would delete the key, making it neither active nor listed — so the row vanishes and **clear silently means remove** for exactly those rows, which is the conflation this task exists to delete. Seed the row list from every active non-curated key in `parseView`; that is safe because every key a story binds is curated, so `applyPreset` still round-trips. It must offer remove too. Test it: clear a link-borne row, assert the row is still rendered and the key is gone.
 - **`applyPreset` returns an empty row list.** It falls out of `defaultView`, but selection derivation depends on it, so state it and test it.
 
 Then test both halves: clear a hand-added row and assert **the row is still rendered** with its key gone; remove it and assert row, bound and non-default-ness are all gone.
 
 `FilterSidebar`'s `if (held) v.filters.ranges[key] ??= {}` in the generation-switch path is the same keep-a-row-with-a-hollow-key trick. It goes too, replaced by the row list.
+
+**And so does a third instance the Deletions table missed**: `choose`'s non-`pair` branch, `v.filters.ranges[key] ??= {}`, is what the colocated part buttons call. Once every part of a colocated entry always renders, that button's only effect is to write an empty range key — which flips `isDefaultView` false, collapses the band and drops the story highlight while **nothing visible changes in the sidebar**. Delete the branch, drop `onchoose` from `MetricRow`'s colocated arm so those rows are labelled coverage rows carrying the in-use marker, and rewrite the `MetricRow.test.ts` case that asserts the button still fires.
 
 A side pair renders as one heading with two rows. A method pair keeps its radiogroup — the two must not look alike, because they behave differently (spec §4.3).
 
@@ -291,7 +296,7 @@ In docs/app.md §Filters the asymmetry paragraph goes; the order and the clear/r
 - [ ] **Step 1: Write the failing tests**
 
 - Cards show name and count and **no description**.
-- **The band stays open when a story is applied**, with **exactly one** story marked — an implementation that marks all three passes a looser assertion — spec §5.1. This is the change from today, where applying a story collapsed the band and left the selection nowhere to show.
+- **The band stays open when a story is applied**, with **exactly one** story marked — an implementation that marks all three passes a looser assertion. Put this in `Page.test.ts`: selection is derived in `Page.svelte`, so asserting it in `EntryBand.test.ts` with `selected` handed in as a prop only tests prop plumbing — spec §5.1. This is the change from today, where applying a story collapsed the band and left the selection nowhere to show.
 - The band collapses to the chip row once the view is hand-edited into something no story describes; editing a bound also clears the mark.
 - **Clear** returns to `defaultView(currentStrike)` — assert explicitly that **strike survives a Clear** and that no story is marked afterwards.
 - **Flipping strike does not collapse the band**, and does change the columns. Flip it twice from Easy and get the same view back.
@@ -301,11 +306,17 @@ In docs/app.md §Filters the asymmetry paragraph goes; the order and the clear/r
 
 Selection is derived: a story is selected when the view equals `applyPreset(id, shoes, idx, view.strike)` computed now. Export the existing `sameValue` from `urlstate.ts` rather than writing a second comparator — it is module-private today, so `urlstate.ts` is in this task's file list.
 
-**Band visibility widens** (spec §5.1): shown while the view equals `defaultView(strike)` **or** equals some story. `Page.svelte`'s `{#if atDefault}` becomes that predicate. Without this, neither the selection marker nor Clear can ever be seen, and both of this task's component tests would pass against an app that shows neither.
+**Band visibility widens** (spec §5.1): shown while the view equals `defaultView(strike)` **or** equals some story. `Page.svelte`'s `{#if atDefault}` becomes that predicate.
+
+**`StrikeToggle` and Clear go in the toolbar, not the band** (spec §4.1, §5). The band disappears as soon as the view is hand-edited, so a control inside it cannot reset a hand-edited view, cannot let a runner who typed a search term state their strike, and cannot trigger §4.1.1's hand-edited branch at all — which would make the dedupe test below unwritable as specified. In the toolbar they are peers of `PresetChips` and present in both states.
+
+**Resolve the two reset controls** with that in mind: the toolbar Clear returns to `defaultView(strike)`, so the sidebar's "Reset filters" is either dropped or relabelled to say it clears filters only. Update the docs/app.md §Presets paragraph saying Reset filters does not re-open the band — with Clear in the toolbar, something now does.
 
 **Flipping strike re-derives the view** (spec §4.1.1), it does not just set a field. From the default view → `defaultView(next)`; from a view equal to a story → `applyPreset(story, …, next)`; from a hand-edited view → swap side-keyed **columns and the sort key**, leaving bounds alone. Setting the field alone leaves heel columns behind, which makes the view stop equalling its own baseline and collapses the band on the very control this protects.
 
-**Dedupe the swapped columns, preserving order.** A hand-edited view can hold both halves of a pair — `smoke.spec.ts` navigates to exactly that — and mapping both onto one slug duplicates the key `ShoeTable`'s `{#each}` block uses. Test it from that URL.
+**Dedupe the swapped columns, preserving order.** A hand-edited view can hold both halves of a pair — `smoke.spec.ts` navigates to exactly that — and mapping both onto one slug duplicates the key `ShoeTable`'s `{#each}` block uses.
+
+The swap maps **each side-keyed column onto the new strike's half**; it is not a heel↔forefoot exchange. Under the exchange reading `[forefoot-stack, heel-stack]` becomes `[heel-stack, forefoot-stack]` — no duplicate, so a "no duplicates" assertion passes while the columns are wrong. **Assert the resulting list equals the expected forefoot-only list**, not merely that it has no duplicates.
 
 **Both consumers of `atDefault` change.** `Page.svelte` renders the chip row on `!atDefault` as well as the band on `atDefault`; widening only one shows band and chips together.
 
