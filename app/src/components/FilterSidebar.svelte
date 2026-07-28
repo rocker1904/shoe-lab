@@ -6,6 +6,7 @@
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
   import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
+  import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
   import DiscontinuedFilter from './DiscontinuedFilter.svelte';
   import MetricRow from './MetricRow.svelte';
@@ -76,13 +77,14 @@
     return p.units ? `${p.label} (${p.units})` : p.label;
   };
 
-  const pctOf = (key: string) => `${Math.round(coverageOf(population, key, idx).fraction * 100)}%`;
-  const addable = $derived(entries.flatMap((e) => {
+  const pctOf = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);
+  const addable: AddFilterOption[] = $derived(entries.flatMap((e) => {
     const rows = shown.includes(e) ? rowKeysOf(e) : [];
     return (e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)])
       .filter((k) => !rows.includes(k))
-      .map((k) => ({ key: k, label: `${nameFor(e, k)} — ${pctOf(k)}` }));
+      .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId, coverage: pctOf(k) }));
   }));
+  let adding = $state(false);
 
   const histFor = (key: string) => histogram(data.shoes.map((s) => numericValue(s, key, idx)).filter((v): v is number => v !== undefined));
   const brandCounts = $derived(data.shoes.reduce((m, s) => (s.brand ? m.set(s.brand, (m.get(s.brand) ?? 0) + 1) : m), new Map<string, number>()));
@@ -179,15 +181,15 @@
     </section>
   {/each}
 
+  <!-- Choosing among forty-odd metrics is a different task from tuning three, so it gets a dialog
+       with room for grouping, search and coverage bars (docs/app.md §Filters). -->
   {#if addable.length}
-    <!-- A bar cannot render inside an `option`, so the menu carries the percentage alone (docs/app.md §Coverage). -->
-    <select aria-label="Add filter"
-            onchange={(e) => { const k = e.currentTarget.value; e.currentTarget.value = ''; if (k) addRow(k); }}>
-      <option value="">Add filter…</option>
-      {#each addable as a (a.key)}
-        <option value={a.key}>{a.label}</option>
-      {/each}
-    </select>
+    <button type="button" class="add" onclick={() => (adding = true)}>Add filter</button>
+  {/if}
+  {#if adding}
+    <AddFilterDialog options={addable} groups={data.groups}
+                     onchoose={(k) => { adding = false; addRow(k); }}
+                     onclose={() => (adding = false)} />
   {/if}
 
   <!-- Named for what it does. The toolbar's Clear returns the whole view to this runner's
@@ -202,5 +204,5 @@
   .chips { display: flex; gap: 0.35rem; margin-top: 0.35rem; }
   .chips button { padding: 0.15rem 0.6rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-dim); cursor: pointer; }
   .metric { display: flex; flex-direction: column; gap: 0.3rem; }
-  .reset { align-self: flex-start; padding: 0.3rem 0.8rem; cursor: pointer; }
+  .reset, .add { align-self: flex-start; padding: 0.3rem 0.8rem; cursor: pointer; }
 </style>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
@@ -52,6 +52,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** jsdom's synthetic click does not move focus the way a real one does, and the dialog hands focus
+ *  back to whatever held it — so the trigger has to actually hold it first. */
+async function openAddFilter() {
+  const trigger = screen.getByRole('button', { name: 'Add filter' });
+  trigger.focus();
+  await fireEvent.click(trigger);
+  return trigger;
+}
+async function addFilter(name: string) {
+  await openAddFilter();
+  await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: new RegExp(name) }));
+}
+
 describe('Page', () => {
   it('renders count, attribution and table', () => {
     render(Page, { props: { data } });
@@ -96,7 +109,7 @@ describe('Page', () => {
   });
   it('keeps an added row with no bound, and carries it in the URL', async () => {
     render(Page, { props: { data: dataPlus } });
-    await fireEvent.change(screen.getByLabelText('Add filter'), { target: { value: 'stiffness' } });
+    await addFilter('Stiffness');
     // which rows are shown is its own state now, so a shared link shows the same controls
     expect(location.search).toContain('rows=stiffness');
     // the fieldset's aria-label names the group, so this is the slider row rather than the column-picker entry
@@ -173,6 +186,18 @@ describe('Page', () => {
     await fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
+  // Under 800px the sidebar is itself the drawer, so one Escape must not dismiss both.
+  it('closes the Add-filter dialog on Escape and leaves the drawer open', async () => {
+    render(Page, { props: { data: dataPlus } });
+    const drawer = screen.getByRole('button', { name: 'Filters' });
+    await fireEvent.click(drawer);
+    const trigger = await openAddFilter();
+
+    await fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(drawer).toHaveAttribute('aria-expanded', 'true');
+    expect(trigger).toHaveFocus();
+  });
 });
 
 const band = () => screen.queryByTestId('entry-band');
@@ -210,7 +235,7 @@ describe('Page entry band', () => {
   it('collapses when a filter is added even though nothing is bounded yet', async () => {
     render(Page, { props: { data: dataPlus } });
     expect(band()).toBeInTheDocument();
-    await fireEvent.change(screen.getByLabelText('Add filter'), { target: { value: 'stiffness' } });
+    await addFilter('Stiffness');
     expect(band()).not.toBeInTheDocument();
     expect(chips()).toBeInTheDocument();
   });

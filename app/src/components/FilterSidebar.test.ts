@@ -16,6 +16,13 @@ function setup(view = defaultView('heel')) {
   return onchange;
 }
 
+/** jsdom's synthetic click does not move focus the way a real one does, and the dialog hands focus
+ *  back to whatever held it — so the trigger has to actually hold it first. */
+const open = (trigger: HTMLElement) => {
+  trigger.focus();
+  return fireEvent.click(trigger);
+};
+
 /** Scoped to its own row: side pairs put several range groups on screen, so an index would drift. */
 const boundOf = (name: RegExp, part: 'min' | 'max' = 'min') =>
   within(screen.getAllByRole('group', { name }).at(-1)!).getByLabelText(part);
@@ -136,27 +143,29 @@ const extraTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units:
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 
 describe('FilterSidebar filter set management', () => {
-  it('offers only numeric tests in the Add filter select and adds the chosen one', async () => {
+  it('offers only what is not already on screen, and adds the chosen one', async () => {
     const onchange = vi.fn();
-    render(FilterSidebar, { props: { data: dataPlus, view: defaultView('heel'), onchange, population: FLEET } });
-    const select = screen.getByLabelText('Add filter');
+    const { container } = render(FilterSidebar, { props: { data: dataPlus, view: defaultView('heel'), onchange, population: FLEET } });
+    await open(within(container).getByRole('button', { name: 'Add filter' }));
     // curated keys, the option-typed test and both retired generations are all absent
-    expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
-      .toEqual(['', 'stiffness', 'score']);
+    expect(within(screen.getByRole('dialog')).getAllByRole('button').map((b) => b.textContent?.trim().split(/\s+/)[0]))
+      .toEqual(['Stiffness', 'Score', 'Close']);
 
     // a row, not a hollow range key: the two are different state, and only the row survives a clear
-    await fireEvent.change(select, { target: { value: 'stiffness' } });
+    await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Stiffness/ }));
     expect(onchange.mock.lastCall![0].rows).toEqual(['stiffness']);
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(within(container).getByRole('button', { name: 'Add filter' })).toHaveFocus();
   });
 
-  it('renders an already-active non-curated filter and stops offering it', () => {
+  it('renders an already-active non-curated filter and stops offering it', async () => {
     const view = defaultView('heel');
     view.filters.ranges['stiffness'] = { min: 5 };
-    render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET } });
-    expect(screen.getByText(/Stiffness/)).toBeInTheDocument();
-    expect([...screen.getByLabelText('Add filter').querySelectorAll('option')].map((o) => o.getAttribute('value')))
-      .not.toContain('stiffness');
+    const { container } = render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET } });
+    expect(within(container).getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
+    await open(within(container).getByRole('button', { name: 'Add filter' }));
+    expect(within(screen.getByRole('dialog')).queryByRole('button', { name: /Stiffness/ })).not.toBeInTheDocument();
   });
 
   it('renders a listed row that holds no bound at all', () => {

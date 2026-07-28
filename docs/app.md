@@ -114,7 +114,7 @@ itself (docs/app.md §Columns and sorting).
 
 ## Filters
 
-Range filters and the Add-filter menu offer **numeric-typed tests only**
+Range filters and the Add-filter dialog offer **numeric-typed tests only**
 (`float`, `score`, `percent`, `rating`, plus the `score`/`msrpGbp` shoe
 fields). A range over an `option`, `bool` or `text` test reads as missing for
 every shoe and would empty the whole fleet in one click, so both the UI and
@@ -141,6 +141,16 @@ bound keys is exactly what made clearing and removing the same action. A row
 that arrived by link holding a non-curated bound is seeded into the list by
 `parseView`, or clearing it would silently remove it. Released after is unset
 from an **Any** chip: a chip that sets a date cannot also clear it.
+
+The sidebar stays for the filters in use — filtering is a tuning loop, and a
+modal over the table breaks the feedback that makes it work. **Choosing which
+filters those are is a dialog**, because picking among forty-odd metrics is a
+different task and wants room for grouping, search and coverage bars. It is
+built from a positioned element rather than `<dialog>`: jsdom implements
+neither `showModal` nor the top layer, and the focus handling is the part that
+has to be right anyway — focus enters on the search box and returns to whatever
+held it. Escape stops propagating, because under 800px the sidebar is itself a
+drawer and one Escape must not dismiss both.
 
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half
