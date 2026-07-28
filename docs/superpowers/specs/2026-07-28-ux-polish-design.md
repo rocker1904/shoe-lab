@@ -145,6 +145,12 @@ which matters because it is the units line under every column header.
 - **`class:discontinued` is deleted.** It is styled by nothing today. The `disc-tag`
   chip already carries the message in text, and dimming the row would argue against the
   `discontinued=only` filter, which exists because those shoes are worth finding.
+- **The brand line is deleted.** `ShoeTable.svelte:67` prints `s.brand` under `s.name`,
+  and **442 of 450 names already begin with their brand** — "ASICS Megablast", "Nike
+  Vaporfly 4". The 8 exceptions are `Topo Athletic` and `Hylo Athletics` rendered as
+  "Topo" and "Hylo", so the brand is still present, just shortened. It is duplication on
+  every row of both renderings. `brand` stays in the data: it is still filtered and
+  sorted on.
 
 ### 4.2 Below 700px the table is two-tier
 
@@ -160,6 +166,33 @@ same column set renders differently.
   edge. Full-bleed cells at this density read as a solid band of colour — far louder than
   the desktop table, where borders and wider cells break the wash up. Verified by
   rendering both.
+- **`table-layout: fixed` with `border-collapse: separate` and `border-spacing: 2px 0`.**
+  Content-sized columns made every chip a different width and detached each header from
+  the values it labels — the single biggest source of the "alignment is all over the
+  place" reading. Fixed widths plus spacing-derived gaps make every chip one box.
+- **Values right-aligned, never centred.** Centring looks calmer but breaks digit
+  alignment down a column between `73`, `74.3` and `80.38` — and columns are the whole
+  reason for this layout.
+- **Text-valued columns move to the name line** as dim metadata after the name:
+  `› ASICS Megablast · 2025 · Carbon`. `releasedAt` renders as `2026-03-01` and `plate`
+  as `Non-carbon plate`; neither fits a ~50px grid cell, and neither is a thing you scan
+  down a column. The value row is then only ever numeric, which is what keeps the chips
+  uniform. The name line wraps rather than truncating, so nothing is lost on a long name.
+- **The header wraps** to two or three lines and carries the same name-over-units-and-
+  direction structure as the desktop header. Real names — "Energy return heel", "Midsole
+  softness" — cannot fit one line at this width at any size on the scale. It is sticky,
+  so the height is paid once rather than per row. Header padding is 2px, not the usual
+  step, because "softness" needs the full cell to fit at `--t-xs`.
+- **The header uses `--t-xs`**, not the ad-hoc `0.66rem` a first draft reached for, which
+  was below the scale's own floor.
+- **The chevron takes the name's font size**, not the metadata's.
+- Name at `--t-sm`: one step below `--t-md` keeps it distinct from the values without the
+  jarring jump to the header that a larger size produced.
+
+**Known limit.** Column count is the user's choice, and the header grows taller and the
+chips narrower as it rises. Seven numeric columns — the default — is comfortable. A dozen
+is not, and that is inherent rather than fixable: it should be allowed to be cramped
+rather than papered over by varying the columns (§4.3).
 - Rows are double height, so roughly half as many shoes per screen. That is the direct
   price of keeping the numbers in columns, and it is worth paying: columns are what make
   this a comparison tool rather than a list.
