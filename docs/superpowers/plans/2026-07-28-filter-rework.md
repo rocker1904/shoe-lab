@@ -144,7 +144,7 @@ docs/app.md §Columns and sorting: the filter takes a set of real values; the tw
 
 ### Task 3: Side pairs
 
-**Files:** `lineage.ts`, `lineage.test.ts`, `MetricRow.test.ts`, `test-fixtures.ts`, `docs/app.md`
+**Files:** `lineage.ts`, `lineage.test.ts`, `MetricRow.test.ts`, `FilterSidebar.test.ts`, `test-fixtures.ts`, `docs/app.md`, `docs/operations.md`
 
 **Produces:** colocated parts gain `side: 'heel' | 'forefoot' | null`, ordered forefoot first; `SIDE_PAIRS`; `sideKey(label, strike)`.
 
@@ -164,11 +164,23 @@ export const SIDE_PAIRS: { label: string; forefoot: string; heel: string }[] = [
 **Two decisions this plan settles, which the spec left open:**
 
 1. **The declaration is authoritative and must *agree* with the catalogue, not avoid it.** Two of the four are also catalogue-linked; that is not a conflict. Validation asserts agreement — where the catalogue links a declared pair, it must link the same two tests.
-2. **Validation is a test, not a runtime throw.** A throwing validator takes down every component test and the running app, because neither fixture carries all eight slugs. A pair whose slugs are absent is skipped silently at runtime; a **test** asserts the declaration matches `data/shoes.json`. That is where a drift should fail — in CI, not in a user's browser.
+2. **Validation is a test, not a runtime throw.** A throwing validator takes down every component test and the running app, because neither fixture carries all eight slugs. A pair whose slugs are absent is skipped silently at runtime; a **test** asserts the declaration matches `data/shoes.json`. Read it with `readFileSync` — `app/tsconfig.json` covers only `src`, `../shared` and `scripts`, and `resolveJsonModule` is unset, so an `import` will not compile.
+
+   Be honest about when that fires: the refresh workflows run scrape → build → commit and never `verify`, and their pushes use `GITHUB_TOKEN`, which triggers no push workflows. So an upstream rename surfaces on the next unrelated PR, not on the refresh that caused it. Add the failure mode to docs/operations.md §Contract-drift runbook so whoever meets a red `lineage.test.ts` on an unrelated branch knows why.
+
+3. **A declared pair takes its `groupId` from the heel half.** Neither declared pair has a catalogue primary, and both halves share a group anyway, so the rule just needs stating rather than deciding.
 
 **`parts[].label` keeps the full test name.** `side` is additive. `ColumnPicker` renders `label`; the sidebar renders `side`. Repurposing `label` would fill the column picker with four checkboxes called "Forefoot".
 
-- [ ] **Step 1: Grow the fixture** — add `labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', units: '', groupId: '3', primaryTestId: 65 })` to `TESTS`, and readings on the fixture shoes. Without it every strike test in Task 4 fails for an unrelated reason.
+- [ ] **Step 1: Grow the fixture** — three changes, all needed before Task 4 can assert anything:
+
+- add `labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', units: '', groupId: '3', primaryTestId: 65 })`;
+- add `forefoot-stack` (id 5), because `defaultColumns('forefoot')` names it and Easy under forefoot bounds it — `parseView` drops a column whose slug is not in the index;
+- give test 65 `secondaryTestIds: [66]`, mirroring the real catalogue. `ColumnPicker.test.ts` patches that in locally today precisely because the shared fixture lacks it.
+
+Give both new slugs readings on at least 3 of the 5 shoes, or the sparse guard trips under forefoot and the failure looks like a preset bug.
+
+`FilterSidebar.test.ts` asserts the Add-filter option list exactly; `energy-return-forefoot` will appear in it. Fix it in this task — it is in the file list for that reason.
 
 - [ ] **Step 2: Write the failing tests**
 
@@ -182,7 +194,9 @@ Fix `MetricRow.test.ts`'s part-order assertion here — it is this task that fli
 
 ### Task 4: The runner layer
 
-**Files:** `urlstate.ts`, `urlstate.test.ts`, `presets.ts`, `presets.test.ts`, `persist.ts`, `Page.svelte`, `Page.test.ts`, `docs/app.md`, `docs/shoe-stories.md`
+**Files:** `urlstate.ts`, `urlstate.test.ts`, `presets.ts`, `presets.test.ts`, `persist.ts`, `Page.svelte`, `Page.test.ts`, `app/e2e/smoke.spec.ts`, `docs/app.md`, `docs/shoe-stories.md`
+
+**Expect fixture counts to move.** Median heel stack on both fixtures is 35, not 36, so Easy returns **2** shoes there rather than 1 — `Page.test.ts`, `presets.test.ts` and `smoke.spec.ts` all assert the old count. Production is unaffected: the median over `data/shoes.json` is exactly 36.
 
 **Produces:** `ViewState['strike']: 'heel' | 'forefoot'`; `defaultView(strike)`; `defaultColumns(strike)`; `applyPreset(id, shoes, idx, strike)`.
 
@@ -194,12 +208,17 @@ This is the task the spec's §4 is about. Read §4.0–4.2 before starting.
 - **`isDefaultView` compares against `defaultView(v.strike)`** — so a view whose only difference is strike **is** default. Assert both: `isDefaultView({...defaultView('forefoot')})` is true, and a forefoot view with a filter set is false.
 - `defaultColumns('forefoot')` contains `energy-return-forefoot` and not `energy-return-heel`; `defaultColumns('heel')` the reverse.
 - Every preset under both strikes: bounds, sorts by and columns the side-appropriate half.
-- **No side-swappable bound is an absolute number.** Assert Easy's stack bound differs between strikes, and that each equals the median of *that side's* readings. A single hardcoded 36 would pass a naive "it has a bound" test while returning eleven shoes under forefoot.
+- **No side-swappable bound is an absolute number** — assert this over **every preset × both strikes**, not just Easy. For each bound on a side-keyed metric, assert it equals a quantile of *that side's own* readings. Testing Easy alone leaves Race's floor of 70 in place, which is exactly the bug this criterion exists to catch.
+- **A round trip through the URL preserves a non-default strike's columns**: `parseView(serializeView(defaultView('forefoot')), idx)` deep-equals `defaultView('forefoot')`, and `isDefaultView` of it is true. A test that only checks `.strike` survived passes against the bug in Step 2.
 - The existing "shows every column it sorts or filters by" guard holds under both strikes.
 
 - [ ] **Step 2: Implement**
 
-`defaultView` and `applyPreset` take the strike; `sideKey` from Task 3 resolves the half. Bounds that can swap sides become percentiles of that side's distribution — Easy's stack is the clearest case. Race's weight ceiling stays absolute; weight has no sides.
+`defaultView` and `applyPreset` take the strike; `sideKey` from Task 3 resolves the half. `EASY_COLUMNS` and `FAST_COLUMNS` are parameterised by strike too, not just `DEFAULT_COLUMNS`.
+
+**Two bounds convert, not one.** Easy's stack is the obvious case. **Race's energy-return floor of 70 is also side-swappable** — it sits at the 85th percentile on heel and the 80th on forefoot — so it becomes `RACE_ENERGY_RETURN_PERCENTILE = 0.85`, which preserves production behaviour. Missing it ships a violation of spec §4.2 and acceptance criterion 7. Only Race's weight ceiling stays absolute, because weight has no sides.
+
+**`parseView` must read `strike` before it builds the baseline.** It currently opens with `const v = defaultView()` and fills from the parameter loop, so `?strike=forefoot` with no `cols` would leave heel columns — a shared forefoot link would load heel-shaped and, worse, open with the band already collapsed because the view no longer equals its own baseline. `serializeView`'s default-columns comparison must likewise use `defaultColumns(v.strike)`.
 
 **Bump `VIEW_STORAGE_KEY` to `v2` here, once.** Tasks 1, 2 and 4 all change the encoding; one bump covers all three, and its own comment says it moves when the encoding does.
 
@@ -224,9 +243,15 @@ This is the task the spec's §4 is about. Read §4.0–4.2 before starting.
 
 - [ ] **Step 2: Implement**
 
-Order comes from one declared list, in the spec §6 sequence. **`CURATED_RANGE_KEYS` is rewritten**, and the rendering rule changes: *every part of a colocated entry renders always*; singles render when curated or active. The old rule — curated-or-active applied per part — is what would hide `energy-return-forefoot` and make the sidebar change shape with strike.
+Order comes from one declared list, in the spec §6 sequence. **Write the new `CURATED_RANGE_KEYS` literally into the plan-following code**: it must include all four side pairs, since `shock-absorption-*` and `midsole-width-*` are not curated today and would otherwise render nowhere, failing acceptance criteria 8 and 9. **`CURATED_RANGE_KEYS` is rewritten**, and the rendering rule changes: *every part of a colocated entry renders always*; singles render when curated or active. The old rule — curated-or-active applied per part — is what would hide `energy-return-forefoot` and make the sidebar change shape with strike.
 
-**Delete the clear/remove conflation and `alwaysShown`.** But note the consequence, which is the trap: `isDefaultView` treats an empty range row as non-default, so "clear leaves `{}` behind" would mean the view could never be default again and the band could never re-open. **Clearing a range deletes its key**; removing a hand-added row deletes the key *and* stops it rendering. The difference is which rows survive, not which keys do.
+**Delete the clear/remove conflation and `alwaysShown`.** Clearing a range deletes its key — leaving `{}` behind would mean `isDefaultView` never returns true again and the band could never re-open.
+
+That needs somewhere to record which hand-added rows are *shown*, or clearing and removing are the same action however they are labelled (spec §7.1). `ViewState` gains the row list; it serialises, needs an entry in `defaultView`, and is covered by the same value comparison as everything else. Land it **before** Task 4's storage-key bump so one bump still covers every encoding change.
+
+Test both halves explicitly: clear a hand-added row and assert **the row is still rendered** with its key gone; then remove it and assert the row is gone.
+
+`FilterSidebar`'s `if (held) v.filters.ranges[key] ??= {}` in the generation-switch path is the same keep-a-row-with-a-hollow-key trick. It goes too, replaced by the row list.
 
 A side pair renders as one heading with two rows. A method pair keeps its radiogroup — the two must not look alike, because they behave differently (spec §4.3).
 
@@ -238,19 +263,24 @@ In docs/app.md §Filters the asymmetry paragraph goes; the order and the clear/r
 
 ### Task 6: The entry band
 
-**Files:** `EntryBand.svelte`, `EntryBand.test.ts`, `PresetChips.svelte`, `StrikeToggle.svelte`, `Page.svelte`, `Page.test.ts`, `FilterSidebar.svelte`, `urlstate.ts`, `docs/app.md`
+**Files:** `EntryBand.svelte`, `EntryBand.test.ts`, `PresetChips.svelte`, `StrikeToggle.svelte`, `Page.svelte`, `Page.test.ts`, `FilterSidebar.svelte`, `urlstate.ts`, `app/e2e/smoke.spec.ts`, `docs/app.md`
 
 - [ ] **Step 1: Write the failing tests**
 
 - Cards show name and count and **no description**.
-- Applying a story marks it selected; editing a bound clears the mark; applying another moves it.
-- **Clear** returns to `defaultView(currentStrike)` — asserting explicitly that **strike survives a Clear** and the band re-opens.
-- **Flipping strike does not collapse the band**, and does change the columns.
-- The strike toggle is reachable from both the band and the chip row.
+- **The band stays open when a story is applied**, with that story marked — spec §5.1. This is the change from today, where applying a story collapsed the band and left the selection nowhere to show.
+- The band collapses to the chip row once the view is hand-edited into something no story describes; editing a bound also clears the mark.
+- **Clear** returns to `defaultView(currentStrike)` — assert explicitly that **strike survives a Clear** and that no story is marked afterwards.
+- **Flipping strike does not collapse the band**, and does change the columns. Flip it twice from Easy and get the same view back.
+- The band's three counts change with strike, since the bounds do.
 
 - [ ] **Step 2: Implement**
 
-Selection is derived: a story is selected when the view equals `applyPreset(id, shoes, idx, view.strike)` computed now. Export the existing `sameValue` from `urlstate.ts` rather than writing a second comparator.
+Selection is derived: a story is selected when the view equals `applyPreset(id, shoes, idx, view.strike)` computed now. Export the existing `sameValue` from `urlstate.ts` rather than writing a second comparator — it is module-private today, so `urlstate.ts` is in this task's file list.
+
+**Band visibility widens** (spec §5.1): shown while the view equals `defaultView(strike)` **or** equals some story. `Page.svelte`'s `{#if atDefault}` becomes that predicate. Without this, neither the selection marker nor Clear can ever be seen, and both of this task's component tests would pass against an app that shows neither.
+
+**Flipping strike re-derives the view** (spec §4.1.1), it does not just set a field. From the default view → `defaultView(next)`; from a view equal to a story → `applyPreset(story, …, next)`; from a hand-edited view → swap side-keyed **columns** only and leave bounds alone, because a bound's number does not transfer between sides. Setting the field alone leaves heel columns behind, which makes the view stop equalling its own baseline and collapses the band on the very control this protects.
 
 `Preset.describe` stays on the type and is used as the card's `title`/tooltip and by `PresetChips`; only the visible description line goes.
 
@@ -272,7 +302,7 @@ jsdom does not implement `HTMLDialogElement.showModal`. Check first; if absent, 
 
 Under 800px the sidebar is itself a drawer (`Page.svelte`), so **Escape must close the dialog without also closing the drawer**. Assert it.
 
-- [ ] **Step 2: Implement, delete the `<select>`, remove the §Coverage note** that a bar cannot render in an `option` — no longer true. Verify, e2e, commit.
+- [ ] **Step 2: Implement, delete the `<select>`, and remove the comment** in `FilterSidebar.svelte` saying a bar cannot render inside an `option` — it is a source comment, not a docs/app.md sentence, and it is no longer true. Verify, e2e, commit.
 
 ---
 
@@ -291,7 +321,7 @@ Under 800px the sidebar is itself a drawer (`Page.svelte`), so **Escape must clo
 ## Verification checklist
 
 - [ ] `npm run verify` and `npm -w app run e2e` pass.
-- [ ] `grep -rn "not-carbon\|'plated'\|hideDiscontinued\|nodisc" app/src app/e2e docs/*.md README.md BACKLOG.md CLAUDE.md` returns nothing. **Scoped deliberately**: `docs/superpowers/` is frozen history and matches by design.
+- [ ] `grep -rniE "not-carbon|[\"']plated[\"']|hideDiscontinued|nodisc" app/src app/e2e docs/*.md README.md BACKLOG.md CLAUDE.md` returns nothing. **Scoped deliberately**: `docs/superpowers/` is frozen history and matches by design.
 - [ ] Plate multi-select round-trips; an empty selection filters nothing; the table says "Non-carbon plate".
 - [ ] `disc=only` returns exactly the discontinued shoes.
 - [ ] All four side pairs render both halves, forefoot first, under one heading.
