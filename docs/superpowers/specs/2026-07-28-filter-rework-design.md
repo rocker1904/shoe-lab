@@ -93,12 +93,18 @@ exists to protect. Flipping strike **re-derives** the view:
 |---|---|
 | the default view | `defaultView(next)` |
 | a view equal to a story | `applyPreset(story, …, next)` |
-| a hand-edited view | side-keyed **columns** swap to the other side; **bounds are left alone** |
+| a hand-edited view | side-keyed **columns and the sort key** swap to the other side; **bounds are left alone** |
 
-The last row is the careful one. A bound's *number* does not transfer between sides —
-36 mm is the median heel stack and the 98th percentile of forefoot stack — so silently
+The last row is the careful one, and the line falls where a *number* does. A bound carries
+one — 36 mm is the median heel stack and the 98th percentile of forefoot stack — so
 rewriting a hand-set bound onto the other side would hand the runner a filter they never
-chose. Columns are presentation and swap safely; bounds are intent and do not.
+chose. A column and a sort key carry no number: "sorted by energy return" means the same
+thing on either side, so both swap. Leaving the sort behind would strand the view sorted
+by a key with no column, and the sort control lives in the column header.
+
+Swapping columns must **dedupe, preserving order**: a hand-edited view can already hold
+both halves of a pair as columns, and mapping both onto one slug would duplicate a key
+that `ShoeTable` uses to key its `each` block.
 
 Flipping twice returns the original view for the first two rows, which is the property
 worth testing.
@@ -271,7 +277,7 @@ those are.
 2. No `plated` or `not-carbon` token survives anywhere — code, URL, tests or docs.
 3. Plate multi-select round-trips through the URL, and selecting none of the boxes is
    the same as not filtering.
-4. `discontinued=only` returns exactly the discontinued shoes.
+4. `disc=only` returns exactly the discontinued shoes.
 5. Applying a story highlights it; editing any bound afterwards removes the highlight;
    Clear returns to the default view and re-opens the band.
 6. The strike toggle changes which half of a side pair a story bounds, sorts by and
