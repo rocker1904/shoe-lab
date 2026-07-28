@@ -2,12 +2,17 @@
   import type { Histogram } from '../lib/stats';
   import type { RangeBound } from '../lib/filters';
 
-  let { label, units, hist, bound, onchange, name }: {
+  let { label, units, hist, bound, onchange, name, onremove }: {
     label: string; units: string; hist: Histogram | null; bound: RangeBound;
     onchange: (b: RangeBound) => void;
     /** Accessible name for callers that title the row above the fieldset instead of in its legend. */
     name?: string;
+    /** Present only on a hand-added row. Clearing a value and removing a row are different
+     *  actions, so they are different controls (docs/app.md §Filters). */
+    onremove?: () => void;
   } = $props();
+
+  const bounded = $derived(bound.min !== undefined || bound.max !== undefined);
 
   function update(part: 'min' | 'max', raw: string) {
     const n = raw === '' ? undefined : Number(raw);
@@ -38,6 +43,14 @@
     <span>–</span>
     <input type="number" aria-label="max" placeholder={hist ? String(hist.max) : 'max'}
            value={bound.max ?? ''} oninput={(e) => update('max', e.currentTarget.value)} />
+    <!-- Named after the row: several rows share this control, and two buttons called "Clear"
+         would be indistinguishable to anyone not looking at the screen. -->
+    {#if bounded}
+      <button type="button" class="act" aria-label="Clear {name}" onclick={() => onchange({})}>Clear</button>
+    {/if}
+    {#if onremove}
+      <button type="button" class="act" aria-label="Remove {name}" onclick={onremove}>Remove</button>
+    {/if}
   </div>
 </fieldset>
 
@@ -45,6 +58,8 @@
   .range { border: none; padding: 0; margin: 0 0 1rem; }
   legend { font-size: 0.8rem; color: var(--text-dim); padding: 0; margin-bottom: 0.25rem; }
   svg { width: 100%; height: 24px; display: block; margin-bottom: 0.25rem; }
-  .bounds { display: flex; align-items: center; gap: 0.35rem; }
+  .bounds { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
   input { width: 5rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.4rem; }
+  .act { padding: 0.15rem 0.45rem; font-size: 0.72rem; cursor: pointer; background: none; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; }
+  .act:hover { color: var(--text); border-color: var(--accent); }
 </style>

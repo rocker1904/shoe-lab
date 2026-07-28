@@ -32,18 +32,15 @@ That reuses the single write path rather than adding a second write site.
 
 The view is never re-derived from the URL. Not a shortcut — a correctness
 requirement: state that does not serialise would be silently dropped on the
-round trip. An Add-filter row with both bounds empty is exactly that case, and
-re-deriving would turn adding a filter into a no-op. The accepted cost is that
-an empty range row does not survive a reload.
+round trip. Every field of `ViewState` therefore serialises, `rows` included.
 
-"Serialises to nothing" and "is the default" are therefore different questions,
-and `isDefaultView` answers the second. An empty range row is the case that
-separates them: it is real view state that `serializeView` omits, so
-`serializeView(v) === ''` would call a view default after the user had already
-added a filter. It compares the whole `ViewState` **by value**, never by key
-presence — `structuredClone` keeps own properties whose value is `undefined`,
-so every cleared field leaves its key behind and a key count would never let a
-derived control re-open.
+"Serialises to nothing" and "is the default" are still different questions, and
+`isDefaultView` answers the second: a range key holding no bound at all is real
+view state that `serializeView` omits, so `serializeView(v) === ''` would call
+such a view default. It compares the whole `ViewState` **by value**, never by
+key presence — `structuredClone` keeps own properties whose value is
+`undefined`, so every cleared field leaves its key behind and a key count would
+never let a derived control re-open.
 
 `persist.ts` stores the view between visits as **the exact output of
 `serializeView`** and nothing else — no bespoke JSON shape. Restoring runs the
@@ -89,7 +86,8 @@ boundary, and needs the decision above.
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
 `plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
-`strike=forefoot`, `sort` (`-` prefix means descending), `cols` (comma-joined), and
+`strike=forefoot`, `rows` (comma-joined), `sort` (`-` prefix means descending),
+`cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
 default and never appears.
@@ -99,9 +97,10 @@ cannot vouch for, always falling back to the default rather than throwing:
 range and sort keys must name a numeric test or a numeric shoe field, a
 malformed bound voids that whole range (dropping one side would silently widen
 it), `after` and `disc` are pattern-checked, `plate` keeps only allowlisted members and is
-deduped into declared order, an all-separator `brands` or `plate` stays absent
-instead of becoming an empty array, and `cols` is deduped and filtered against
-the column allowlist. A `gen.` choice survives only when its key names
+deduped into declared order, an all-separator `brands`, `plate` or `rows` stays
+absent instead of becoming an empty array, `rows` keeps only rangeable
+non-curated keys, and `cols` is deduped and filtered against the column
+allowlist. A `gen.` choice survives only when its key names
 the current generation of a resolved pair and its value names that pair's
 retired generation. Bound serialisation accepts everything `String(number)`
 emits, exponent form included, so round-trips are lossless.
@@ -119,11 +118,29 @@ Range filters and the Add-filter menu offer **numeric-typed tests only**
 (`float`, `score`, `percent`, `rating`, plus the `score`/`msrpGbp` shoe
 fields). A range over an `option`, `bool` or `text` test reads as missing for
 every shoe and would empty the whole fleet in one click, so both the UI and
-`parseView` refuse them. The sidebar shows the entries holding a curated key
-plus any entry with a key already active, so an active filter is always visible
-and clearable; a cleared curated slider drops out of state entirely, a cleared
-extra row keeps an empty entry so its row survives. Each row is titled by its
-`MetricRow` rather than by the fieldset legend, so the name is stated once.
+`parseView` refuse them. Each row is titled by its `MetricRow` rather than by
+the fieldset legend, so the name is stated once — but the fieldset's accessible
+name carries heading **and** side, because two rows both called "Forefoot"
+would be indistinguishable to anyone not looking at the screen.
+
+The order is fixed and comes from one declared list, `CURATED_RANGE_KEYS`:
+search, released after, plate, brand, discontinued, price, then the metrics the
+stories bound, then the rest curated, then anything added by hand. It does not
+rearrange itself under the story or the strike — someone comparing two stories
+must not have the controls move underneath them. Both halves of every side pair
+are curated for that reason, and **every part of a side pair renders always**;
+a single renders when it is curated, active, or listed.
+
+**Clearing a value and removing a row are different actions.** Clearing empties
+both bounds in one click and deletes the key outright — leaving `{}` behind
+would mean `isDefaultView` never returned true again and the entry band could
+never re-open. Removing drops the row and its bound together, and is offered
+only on a hand-added row. That needs somewhere to record which rows are
+*shown*, so `ViewState.rows` carries the hand-added list; deriving it from the
+bound keys is exactly what made clearing and removing the same action. A row
+that arrived by link holding a non-curated bound is seeded into the list by
+`parseView`, or clearing it would silently remove it. Released after is unset
+from an **Any** chip: a chip that sets a date cannot also clear it.
 
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half

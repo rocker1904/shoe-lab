@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import FilterSidebar from './FilterSidebar.svelte';
-import { isoYearsAgo } from '../lib/dataset';
-import { defaultView } from '../lib/urlstate';
+import { indexTests, isoYearsAgo } from '../lib/dataset';
+import { applyPreset, PRESETS } from '../lib/presets';
+import { defaultView, isDefaultView, parseView } from '../lib/urlstate';
 import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
+import type { Side } from '../lib/lineage';
 import type { ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
@@ -21,14 +23,13 @@ const boundOf = (name: RegExp, part: 'min' | 'max' = 'min') =>
 describe('FilterSidebar', () => {
   it('renders curated range filters that exist in the dataset', () => {
     setup();
-    // regex matchers: legends render with units, e.g. "Heel stack (mm)"
-    expect(screen.getByText(/Heel stack/)).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Stack — Heel' })).toBeInTheDocument();
     expect(screen.getByText(/^Weight/)).toBeInTheDocument();
     expect(screen.queryByText(/Tongue gusset/)).not.toBeInTheDocument(); // option type: no slider
   });
   it('emits updated view when a range min changes', async () => {
     const onchange = setup();
-    await fireEvent.input(boundOf(/^Heel stack/), { target: { value: '36' } });
+    await fireEvent.input(boundOf(/^Stack — Heel/), { target: { value: '36' } });
     expect(onchange).toHaveBeenCalled();
     const v = onchange.mock.lastCall![0];
     expect(v.filters.ranges['heel-stack']).toEqual({ min: 36 });
@@ -137,10 +138,12 @@ describe('FilterSidebar filter set management', () => {
     const select = screen.getByLabelText('Add filter');
     // curated keys, the option-typed test and both retired generations are all absent
     expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
-      .toEqual(['', 'energy-return-forefoot', 'stiffness', 'score']);
+      .toEqual(['', 'stiffness', 'score']);
 
+    // a row, not a hollow range key: the two are different state, and only the row survives a clear
     await fireEvent.change(select, { target: { value: 'stiffness' } });
-    expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
+    expect(onchange.mock.lastCall![0].rows).toEqual(['stiffness']);
+    expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
   });
 
   it('renders an already-active non-curated filter and stops offering it', () => {
@@ -152,6 +155,13 @@ describe('FilterSidebar filter set management', () => {
       .not.toContain('stiffness');
   });
 
+  it('renders a listed row that holds no bound at all', () => {
+    const view = defaultView('heel');
+    view.rows = ['stiffness'];
+    render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET } });
+    expect(screen.getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
+  });
+
   it('preserves sibling filters and leaves the view prop unmutated', async () => {
     const onchange = vi.fn();
     const view = defaultView('heel');
@@ -160,7 +170,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.ranges['energy-return-heel'] = { max: 80 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
-    await fireEvent.input(boundOf(/^Heel stack/), { target: { value: '36' } });
+    await fireEvent.input(boundOf(/^Stack — Heel/), { target: { value: '36' } });
     const next = onchange.mock.lastCall![0];
     expect(next.filters).toEqual({
       search: 'racer', brands: ['Brand'],
@@ -170,14 +180,72 @@ describe('FilterSidebar filter set management', () => {
     expect(view.filters.ranges['heel-stack']).toBeUndefined();
   });
 
-  it('keeps a cleared non-curated filter so its row survives editing', async () => {
+  it('clears a hand-added row without removing it', async () => {
     const onchange = vi.fn();
     const view = defaultView('heel');
+    view.rows = ['stiffness'];
     view.filters.ranges['stiffness'] = { min: 5 };
-    render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
+    const { container } = render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
 
-    await fireEvent.input(boundOf(/^Stiffness/), { target: { value: '' } });
-    expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
+    await fireEvent.click(within(container).getByRole('button', { name: /^Clear Stiffness/ }));
+    const next = onchange.mock.lastCall![0];
+    // the key goes, or isDefaultView could never be true again; the row stays, because it is listed
+    expect(next.filters.ranges).toEqual({});
+    expect(next.rows).toEqual(['stiffness']);
+    const after = render(FilterSidebar, { props: { data: dataPlus, view: next, onchange: vi.fn(), population: FLEET } });
+    expect(within(after.container).getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
+  });
+
+  it('removes a hand-added row, its bound and its non-defaultness together', async () => {
+    const onchange = vi.fn();
+    const view = defaultView('heel');
+    view.rows = ['stiffness'];
+    view.filters.ranges['stiffness'] = { min: 5 };
+    const { container } = render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
+
+    await fireEvent.click(within(container).getByRole('button', { name: /^Remove Stiffness/ }));
+    const next = onchange.mock.lastCall![0];
+    expect(next.rows).toEqual([]);
+    expect(next.filters.ranges['stiffness']).toBeUndefined();
+    expect(isDefaultView(next)).toBe(true);
+  });
+
+  // A row that arrived by link is shown because it is active; clearing it would delete the key and
+  // leave it neither active nor listed, so clear would silently mean remove for exactly those rows.
+  it('keeps a link-borne row on screen once it is cleared, and offers to remove it', async () => {
+    const onchange = vi.fn();
+    const view = parseView('r.stiffness=5~', indexTests(dataPlus.tests));
+    expect(view.rows).toEqual(['stiffness']);      // seeded at parse time
+    const { container } = render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
+
+    expect(within(container).getByRole('button', { name: /^Remove Stiffness/ })).toBeInTheDocument();
+    await fireEvent.click(within(container).getByRole('button', { name: /^Clear Stiffness/ }));
+    const next = onchange.mock.lastCall![0];
+    expect(next.filters.ranges['stiffness']).toBeUndefined();
+    const after = render(FilterSidebar, { props: { data: dataPlus, view: next, onchange: vi.fn(), population: FLEET } });
+    expect(within(after.container).getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
+  });
+
+  it('clears a curated row in one action, and offers no remove', async () => {
+    const onchange = vi.fn();
+    const view = defaultView('heel');
+    view.filters.ranges['heel-stack'] = { min: 36, max: 45 };
+    const { container } = render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+    expect(within(container).queryByRole('button', { name: 'Remove Stack — Heel' })).not.toBeInTheDocument();
+
+    await fireEvent.click(within(container).getByRole('button', { name: 'Clear Stack — Heel' }));
+    expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});   // both bounds, one click
+    expect(isDefaultView(onchange.mock.lastCall![0])).toBe(true);
+  });
+
+  it('unsets released-after from a chip', async () => {
+    const onchange = vi.fn();
+    const view = defaultView('heel');
+    view.filters.releasedAfter = '2024-01-01';
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Any' }));
+    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
+    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView('heel').filters);
   });
 
   it('drops a curated range from state when its bounds are cleared', async () => {
@@ -186,7 +254,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.ranges['heel-stack'] = { min: 36 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
-    await fireEvent.input(boundOf(/^Heel stack/), { target: { value: '' } });
+    await fireEvent.input(boundOf(/^Stack — Heel/), { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
   });
 });
@@ -219,15 +287,29 @@ describe('FilterSidebar metric entries', () => {
     const view = defaultView('heel');
     view.filters.ranges['midsole-softness-22'] = { min: 30 };
     view.columns = ['midsole-softness-22', 'score'];
-    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+    const { container } = render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
-    await fireEvent.click(screen.getAllByRole('radio', { name: /Midsole softness/ })[1]!);
+    await fireEvent.click(within(container).getAllByRole('radio', { name: /Midsole softness/ })[1]!);
     const next = onchange.mock.lastCall![0];
     expect(next.generations).toEqual({ 'midsole-softness-22': 'midsole-softness' });
-    expect(next.filters.ranges['midsole-softness-22']).toBeUndefined();
+    // no hollow key left behind to prop the row up: the pair is curated, so it renders regardless
+    expect(next.filters.ranges).toEqual({});
     expect(next.columns).toEqual(['score']);
-    // the entry keeps a row so the pair does not vanish from the sidebar mid-switch
-    expect(next.filters.ranges['midsole-softness']).toEqual({});
+    const after = render(FilterSidebar, { props: { data, view: next, onchange: vi.fn(), population: FLEET } });
+    expect(within(after.container).getByRole('group', { name: /Midsole softness — original/ })).toBeInTheDocument();
+  });
+  it('moves a hand-added pair\'s row to the generation it switches to', async () => {
+    const pairPlus: ShoesFile = { ...data, tests: [
+      ...TESTS.filter((t) => t.id !== 70 && t.id !== 11),
+      labTest({ id: 11, slug: 'grip', name: 'Grip', updateId: 70 }),
+      labTest({ id: 70, slug: 'grip-22', name: 'Grip', previousId: 11 }),
+    ] };
+    const view = defaultView('heel');
+    view.rows = ['grip-22'];
+    const onchange = vi.fn();
+    const { container } = render(FilterSidebar, { props: { data: pairPlus, view, onchange, population: FLEET } });
+    await fireEvent.click(within(container).getAllByRole('radio', { name: /Grip/ })[1]!);
+    expect(onchange.mock.lastCall![0].rows).toEqual(['grip']);
   });
   it('shows the chosen generation rather than the current one once it is chosen', () => {
     const view = defaultView('heel');
@@ -235,5 +317,59 @@ describe('FilterSidebar metric entries', () => {
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByRole('group', { name: /Midsole softness — original/ })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /Midsole softness — 2022 method/ })).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The literal expected sequences, written out rather than derived from the exported list — deriving
+ * them would assert that a constant equals itself. Every fixed section carries a heading so its
+ * position is asserted too, and the group names carry heading *and* side so no two collide.
+ */
+const HEADINGS = [
+  'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
+  'Price (£)', 'Stack', 'Energy return', 'Weight (g)', 'Midsole softness', 'Width / Fit',
+];
+const GROUPS = [
+  'Plate', 'Brand',
+  'Price (£)',
+  'Stack — Forefoot', 'Stack — Heel',
+  'Energy return — Forefoot', 'Energy return — Heel',
+  'Weight (g)',
+  'Midsole softness — 2022 method',
+  'Width / Fit — current method',
+];
+
+const orderOf = (container: HTMLElement) => ({
+  headings: within(container).getAllByRole('heading').map((h) => h.textContent),
+  groups: within(container).getAllByRole('group').map((g) => g.getAttribute('aria-label')),
+});
+
+describe('FilterSidebar order', () => {
+  it('renders one fixed order, identical across every strike and story', () => {
+    const idx = indexTests(TESTS);
+    // The cross product is the only place the order can break: a story under forefoot is what would
+    // otherwise introduce a row the heel renders did not have.
+    for (const strike of ['heel', 'forefoot'] as Side[]) {
+      for (const view of [defaultView(strike), ...PRESETS.map((p) => applyPreset(p.id, FLEET, idx, strike))]) {
+        const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+        expect(orderOf(container).headings, `${strike} ${JSON.stringify(view.sort)}`).toEqual(HEADINGS);
+        expect(orderOf(container).groups, `${strike} ${JSON.stringify(view.sort)}`).toEqual(GROUPS);
+      }
+    }
+  });
+  it('renders both halves of a side pair under one heading, forefoot first', () => {
+    const { container } = render(FilterSidebar, { props: { data, view: defaultView('heel'), onchange: vi.fn(), population: FLEET } });
+    expect(within(container).getAllByRole('heading', { name: 'Stack' })).toHaveLength(1);
+    expect(orderOf(container).groups.filter((n) => n?.startsWith('Stack')))
+      .toEqual(['Stack — Forefoot', 'Stack — Heel']);
+  });
+  it('marks the half the strike puts in use, in text', () => {
+    const heel = render(FilterSidebar, { props: { data, view: defaultView('heel'), onchange: vi.fn(), population: FLEET } });
+    expect(within(heel.container).getAllByText('Heel · in use').length).toBe(2);   // stack and energy return
+    expect(within(heel.container).queryByText('Forefoot · in use')).not.toBeInTheDocument();
+
+    const fore = render(FilterSidebar, { props: { data, view: defaultView('forefoot'), onchange: vi.fn(), population: FLEET } });
+    expect(within(fore.container).getAllByText('Forefoot · in use').length).toBe(2);
+    expect(within(fore.container).queryByText('Heel · in use')).not.toBeInTheDocument();
   });
 });

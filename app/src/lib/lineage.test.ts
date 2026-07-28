@@ -3,7 +3,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
-import { generationLabel, metricEntries, SIDE_PAIRS, sideKey, swapSide, type ResolvedMetric } from './lineage';
+import {
+  CURATED_RANGE_KEYS, generationLabel, metricEntries, SIDE_PAIRS, sideKey, swapSide, type ResolvedMetric,
+} from './lineage';
 import { labTest } from './test-fixtures';
 import type { LabTest } from '../../../shared/types.js';
 
@@ -162,6 +164,20 @@ describe('side pairs', () => {
     // not an exchange: a slug already on the requested side stays put
     expect(swapSide('forefoot-stack', 'forefoot')).toBe('forefoot-stack');
     expect(swapSide('weight', 'forefoot')).toBe('weight');
+  });
+  // Criterion 8 says all four pairs render both halves, but neither fixture carries all eight
+  // slugs, so no render test can check it. This can, and it is the property the prose argues for.
+  it('curates both halves of every pair, so the sidebar cannot change shape with strike', () => {
+    for (const pair of SIDE_PAIRS) {
+      expect(CURATED_RANGE_KEYS, pair.label).toContain(pair.forefoot);
+      expect(CURATED_RANGE_KEYS, pair.label).toContain(pair.heel);
+    }
+  });
+  it('curates every key a story binds, so a story never seeds a hand-added row', () => {
+    for (const key of ['msrpGbp', 'weight']) expect(CURATED_RANGE_KEYS).toContain(key);
+  });
+  it('lists no key twice', () => {
+    expect(new Set(CURATED_RANGE_KEYS).size).toBe(CURATED_RANGE_KEYS.length);
   });
   it('lists each slug in exactly one pair', () => {
     const slugs = SIDE_PAIRS.flatMap((p) => [p.forefoot, p.heel]);

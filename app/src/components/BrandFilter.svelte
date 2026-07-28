@@ -8,8 +8,10 @@
   }
 </script>
 
-<details>
-  <summary>Brand{selected.length ? ` (${selected.length})` : ''}</summary>
+<!-- `details` maps to role=group, so it needs a name of its own or it joins the sidebar's
+     range groups as an unnamed one. -->
+<details aria-label="Brand">
+  <summary>{selected.length ? `${selected.length} selected` : 'Any brand'}</summary>
   <ul>
     {#each brands as [brand, n] (brand)}
       <li><label><input type="checkbox" checked={selected.includes(brand)} onchange={() => toggle(brand)} /> {brand} ({n})</label></li>

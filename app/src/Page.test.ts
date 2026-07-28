@@ -93,12 +93,13 @@ describe('Page', () => {
     await fireEvent.click(th.querySelector('button')!);
     expect(location.search).toContain('sort=-heel-stack');
   });
-  it('keeps an empty added range in the view even though it never reaches the URL', async () => {
+  it('keeps an added row with no bound, and carries it in the URL', async () => {
     render(Page, { props: { data: dataPlus } });
     await fireEvent.change(screen.getByLabelText('Add filter'), { target: { value: 'stiffness' } });
-    expect(location.search).toBe(''); // an open-ended range has nothing to serialise
-    // the fieldset's legend names the group, so this is the slider row rather than the column-picker entry
-    expect(screen.getByRole('group', { name: /Stiffness/ })).toBeInTheDocument();
+    // which rows are shown is its own state now, so a shared link shows the same controls
+    expect(location.search).toContain('rows=stiffness');
+    // the fieldset's aria-label names the group, so this is the slider row rather than the column-picker entry
+    expect(screen.getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
   });
   it('accounts for hidden shoes in the receipt and can admit the ones missing data', async () => {
     history.replaceState(null, '', '/?r.heel-stack=36~');
@@ -192,11 +193,9 @@ describe('Page entry band', () => {
     expect(chips()).toBeInTheDocument();
   });
   it('collapses when a filter is added even though nothing is bounded yet', async () => {
-    // the case isDefaultView exists for: an empty range row is view state that serialises to nothing
     render(Page, { props: { data: dataPlus } });
     expect(band()).toBeInTheDocument();
     await fireEvent.change(screen.getByLabelText('Add filter'), { target: { value: 'stiffness' } });
-    expect(location.search).toBe('');
     expect(band()).not.toBeInTheDocument();
     expect(chips()).toBeInTheDocument();
   });

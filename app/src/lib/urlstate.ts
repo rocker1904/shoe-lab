@@ -2,7 +2,7 @@ import type { Plate } from '../../../shared/types.js';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { metricEntries, sideKey, type Side } from './lineage';
+import { CURATED_RANGE_KEYS, metricEntries, sideKey, type Side } from './lineage';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
@@ -12,6 +12,10 @@ export interface ViewState {
   /** Which end of the shoe the runner lands on. The baseline itself takes it, so nothing
    *  downstream special-cases it (docs/app.md §View and URL ownership). */
   strike: Side;
+  /** Non-curated range rows the runner asked to see, independently of whether they hold a bound.
+   *  Deriving this from the bound keys is what would make clearing and removing the same action
+   *  however they were labelled (docs/app.md §Filters). */
+  rows: string[];
 }
 
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
@@ -34,7 +38,7 @@ const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 export function defaultView(strike: Side): ViewState {
-  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(strike), generations: {}, strike };
+  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(strike), generations: {}, strike, rows: [] };
 }
 
 /**
@@ -104,6 +108,7 @@ export function serializeView(v: ViewState): string {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
   }
   if (v.strike !== 'heel') p.set('strike', v.strike);
+  if (v.rows.length) p.set('rows', v.rows.join(','));
   if (v.columns.join(',') !== defaultColumns(v.strike).join(',')) p.set('cols', v.columns.join(','));
   for (const [key, chosen] of Object.entries(v.generations)) {
     if (chosen !== key) p.set(`gen.${key}`, chosen);
@@ -164,6 +169,12 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     } else if (key === 'cols' && raw) {
       const cols = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c));
       if (cols.length) v.columns = cols;
+    } else if (key === 'rows' && raw) {
+      // A curated key is on screen anyway and offers no remove, so listing one would be a row that
+      // could never be dropped — and a view that could never be default again.
+      const rows = [...new Set(raw.split(',').filter(Boolean))]
+        .filter((k) => validRangeKey(k) && !CURATED_RANGE_KEYS.includes(k));
+      if (rows.length) v.rows = rows;
     }
   }
   // A URL is the one place both generations of a pair can arrive together, so exclusion is settled
@@ -172,6 +183,13 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     if (genRaw.get(current) === retired) v.generations[current] = retired;
     if (v.filters.ranges[current] && v.filters.ranges[retired]) delete v.filters.ranges[retired];
     if (v.columns.includes(current) && v.columns.includes(retired)) v.columns = v.columns.filter((c) => c !== retired);
+  }
+  // A row on screen only because it is active must be listed, or clearing it would delete the key
+  // and leave it neither active nor listed — making clear silently mean remove for exactly the rows
+  // that arrived by link (docs/app.md §Filters). Safe for a story: every key a story binds is
+  // curated, so `applyPreset` still round-trips with an empty list.
+  for (const key of Object.keys(v.filters.ranges)) {
+    if (!CURATED_RANGE_KEYS.includes(key) && !v.rows.includes(key)) v.rows.push(key);
   }
   return v;
 }

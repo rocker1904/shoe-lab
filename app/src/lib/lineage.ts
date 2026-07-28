@@ -57,6 +57,25 @@ export function swapSide(slug: string, strike: Side): string {
 const DECLARED_BY_SLUG = new Map((SIDE_PAIRS as readonly { label: string; forefoot: string; heel: string }[])
   .flatMap((p) => [[p.forefoot, p] as const, [p.heel, p] as const]));
 
+/**
+ * The range filters the sidebar offers without being asked, **in the order it offers them**
+ * (docs/app.md §Filters). Price leads because every story bounds it; then the metrics the stories
+ * bound; then the rest. Both halves of every side pair are listed, because a pair renders both
+ * rows whichever strike is chosen — omitting one would make the sidebar change shape with strike.
+ * Lives here rather than in the sidebar because `parseView` needs it to tell a hand-added row from
+ * a curated one, and a lib module must not import a component.
+ */
+export const CURATED_RANGE_KEYS = [
+  'msrpGbp',
+  'heel-stack', 'forefoot-stack',
+  'energy-return-heel', 'energy-return-forefoot',
+  'weight',
+  'drop', 'midsole-softness-22',
+  'shock-absorption-heel', 'shock-absorption-forefoot',
+  'midsole-width-in-the-heel', 'midsole-width-in-the-forefoot',
+  'toebox-width-widest-part', 'toebox-width-big-toe', 'toebox-height',
+];
+
 /** RunRepeat suffixes a revised method with its two-digit year. 20–29 only: a bare trailing number is a body part or a size, not a year. */
 const METHOD_YEAR = /-(2\d)$/;
 

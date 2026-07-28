@@ -20,6 +20,7 @@ describe('urlstate', () => {
       columns: ['score', 'heel-stack'],
       generations: {},
       strike: 'heel',
+      rows: [],
     };
     expect(parseView(serializeView(v), idx)).toEqual(v);
   });
@@ -74,6 +75,8 @@ describe('urlstate', () => {
       for (const k of Object.keys(v.filters.ranges)) {
         if (v.filters.ranges[k]!.min === undefined && v.filters.ranges[k]!.max === undefined) delete v.filters.ranges[k];
       }
+      // `score` is the one non-curated key here, so parsing seeds it as a hand-added row
+      if (v.filters.ranges['score']) v.rows = ['score'];
       expect(parsed).toEqual(v);
     }
   });
@@ -93,7 +96,7 @@ describe('urlstate hostile input', () => {
     a.filters.ranges['weight'] = { min: 1 };
     a.columns.push('bogus');
     a.sort.key = 'weight';
-    expect(defaultView('heel')).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {}, strike: 'heel' });
+    expect(defaultView('heel')).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {}, strike: 'heel', rows: [] });
     expect(defaultColumns('heel')).toEqual(columns);
   });
   it('resolves repeated keys to the last valid occurrence', () => {
@@ -322,5 +325,39 @@ describe('the runner\'s strike', () => {
     v.columns = ['score'];
     expect(serializeView(v)).toContain('cols=score');
     expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+});
+
+// Which rows are shown is its own state, because clearing a value and removing a row are two
+// different actions (docs/app.md §Filters). It serialises, so a shared link shows the same controls.
+describe('the hand-added row list', () => {
+  it('round-trips, and stays absent when empty', () => {
+    const v = defaultView('heel');
+    v.rows = ['stiffness'];
+    const withStiffness = indexTests([...TESTS, labTest({ id: 99, slug: 'stiffness', name: 'Stiffness' })]);
+    expect(serializeView(v)).toBe('rows=stiffness');
+    expect(parseView(serializeView(v), withStiffness)).toEqual(v);
+    expect(serializeView(defaultView('heel'))).not.toContain('rows');
+  });
+  it('dedupes, drops keys that are not rangeable, and treats all-separator as absent', () => {
+    const withStiffness = indexTests([...TESTS, labTest({ id: 99, slug: 'stiffness', name: 'Stiffness' })]);
+    expect(parseView('rows=stiffness,stiffness', withStiffness).rows).toEqual(['stiffness']);
+    expect(parseView('rows=made-up,tongue-gusset-type', withStiffness).rows).toEqual([]);
+    expect(parseView('rows=,,', withStiffness)).toEqual(defaultView('heel'));
+  });
+  it('drops a curated key, which is on screen anyway and could never be removed', () => {
+    expect(parseView('rows=heel-stack', idx).rows).toEqual([]);
+  });
+  // Otherwise clearing a row that arrived by link would delete the key, leaving it neither active
+  // nor listed — so clear would silently mean remove for exactly those rows.
+  it('seeds itself from every active non-curated key', () => {
+    const withStiffness = indexTests([...TESTS, labTest({ id: 99, slug: 'stiffness', name: 'Stiffness' })]);
+    expect(parseView('r.stiffness=5~', withStiffness).rows).toEqual(['stiffness']);
+    expect(parseView('r.heel-stack=36~', idx).rows).toEqual([]);   // curated: already on screen
+  });
+  it('is part of what makes a view non-default', () => {
+    const v = defaultView('heel');
+    v.rows = ['stiffness'];
+    expect(isDefaultView(v)).toBe(false);
   });
 });

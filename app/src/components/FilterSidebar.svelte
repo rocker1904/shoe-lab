@@ -1,16 +1,9 @@
-<script lang="ts" module>
-  export const CURATED_RANGE_KEYS = [
-    'heel-stack', 'forefoot-stack', 'drop', 'midsole-softness-22', 'energy-return-heel',
-    'weight', 'toebox-width-widest-part', 'toebox-width-big-toe', 'toebox-height', 'msrpGbp',
-  ];
-</script>
-
 <script lang="ts">
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { coverageOf, oldestReading } from '../lib/coverage';
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import type { RangeBound } from '../lib/filters';
-  import { metricEntries, type ResolvedMetric } from '../lib/lineage';
+  import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
   import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
   import BrandFilter from './BrandFilter.svelte';
@@ -26,6 +19,7 @@
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
+  const SIDE_LABEL: Record<Side, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
   /** `score` and `msrpGbp` are shoe fields, not catalogue tests, so `metricEntries` cannot emit
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
@@ -38,6 +32,21 @@
     e.kind === 'single' ? [e.key] : e.kind === 'pair' ? [e.current.key, e.retired.key] : e.parts.map((p) => p.key);
   const byKey = $derived(new Map(entries.flatMap((e) => keysOf(e).map((k) => [k, e] as const))));
 
+  const held = (key: string) => key in view.filters.ranges || view.rows.includes(key);
+  const chosenKey = (e: ResolvedMetric): string => {
+    if (e.kind === 'single') return e.key;
+    if (e.kind === 'colocated') return e.parts[0]!.key;
+    const explicit = view.generations[e.current.key];
+    if (explicit) return explicit;
+    // A hand-written URL can carry a lone range on the retired generation; presenting the pair as
+    // switched to it is what keeps that filter visible and clearable.
+    return held(e.retired.key) && !held(e.current.key) ? e.retired.key : e.current.key;
+  };
+  /** **Every** part of a side pair gets a row, always: the sidebar must not change shape with the
+   *  strike (docs/app.md §Filters). A superseded pair still offers one generation at a time. */
+  const rowKeysOf = (e: ResolvedMetric): string[] =>
+    e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)];
+
   const curated = $derived.by(() => {
     const out: ResolvedMetric[] = [];
     for (const k of CURATED_RANGE_KEYS) {
@@ -46,10 +55,11 @@
     }
     return out;
   });
-  // A non-curated key already in the view needs its own row, or its filter could never be cleared.
+  // A hand-added row, or a non-curated key already bounded by a link, needs a row of its own or its
+  // filter could never be cleared. Curated first, so the order above is what the runner sees.
   const extras = $derived.by(() => {
     const out: ResolvedMetric[] = [];
-    for (const k of Object.keys(view.filters.ranges)) {
+    for (const k of [...view.rows, ...Object.keys(view.filters.ranges)]) {
       const e = byKey.get(k);
       if (e && !curated.includes(e) && !out.includes(e)) out.push(e);
     }
@@ -57,32 +67,18 @@
   });
   const shown = $derived([...curated, ...extras]);
 
-  const chosenKey = (e: ResolvedMetric): string => {
-    if (e.kind === 'single') return e.key;
-    if (e.kind === 'colocated') return e.parts[0]!.key;
-    const explicit = view.generations[e.current.key];
-    if (explicit) return explicit;
-    // A hand-written URL can carry a lone range on the retired generation; presenting the pair as
-    // switched to it is what keeps that filter visible and clearable.
-    return view.filters.ranges[e.retired.key] && !view.filters.ranges[e.current.key] ? e.retired.key : e.current.key;
-  };
-  // A pair offers one bound at a time; a colocated metric's halves stay independent, so each gets
-  // a row once it is curated or active.
-  const rowKeys = (e: ResolvedMetric): string[] =>
-    e.kind === 'colocated'
-      ? e.parts.map((p) => p.key).filter((k) => CURATED_RANGE_KEYS.includes(k) || k in view.filters.ranges)
-      : [chosenKey(e)];
+  /** Heading **and** side: two rows both called "Forefoot" would share an accessible name. */
   const nameFor = (e: ResolvedMetric, key: string): string => {
     if (e.kind === 'single') return e.units ? `${e.label} (${e.units})` : e.label;
     if (e.kind === 'pair') return `${e.label} — ${(key === e.current.key ? e.current : e.retired).generation}`;
     const p = e.parts.find((x) => x.key === key)!;
+    if (p.side) return `${e.label} — ${SIDE_LABEL[p.side]}`;
     return p.units ? `${p.label} (${p.units})` : p.label;
   };
 
-  const alwaysShown = $derived(new Set(curated.flatMap(rowKeys)));
   const pctOf = (key: string) => `${Math.round(coverageOf(population, key, idx).fraction * 100)}%`;
   const addable = $derived(entries.flatMap((e) => {
-    const rows = shown.includes(e) ? rowKeys(e) : [];
+    const rows = shown.includes(e) ? rowKeysOf(e) : [];
     return (e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)])
       .filter((k) => !rows.includes(k))
       .map((k) => ({ key: k, label: `${nameFor(e, k)} — ${pctOf(k)}` }));
@@ -101,40 +97,53 @@
       const next: RangeBound = {};
       if (b.min !== undefined) next.min = b.min;
       if (b.max !== undefined) next.max = b.max;
-      // A row that renders regardless can drop its key when cleared; a row that exists only while
-      // its key does keeps an empty entry (docs/app.md §Filters).
-      if (next.min === undefined && next.max === undefined && alwaysShown.has(key)) {
-        delete v.filters.ranges[key];
-      } else {
-        v.filters.ranges[key] = next;
-      }
+      // Clearing always deletes the key. Leaving `{}` behind would mean `isDefaultView` never
+      // returned true again and the entry band could never re-open; the row survives because it is
+      // listed in `view.rows`, not because a hollow key props it up (docs/app.md §Filters).
+      if (next.min === undefined && next.max === undefined) delete v.filters.ranges[key];
+      else v.filters.ranges[key] = next;
     });
   }
-  function choose(e: ResolvedMetric, key: string) {
+  const removable = (key: string) => view.rows.includes(key);
+  function removeRow(key: string) {
     patch((v) => {
-      if (e.kind !== 'pair') { v.filters.ranges[key] ??= {}; return; }
+      v.rows = v.rows.filter((k) => k !== key);
+      delete v.filters.ranges[key];
+    });
+  }
+  function addRow(key: string) {
+    patch((v) => { if (!v.rows.includes(key)) v.rows.push(key); });
+  }
+  function choose(e: ResolvedMetric, key: string) {
+    if (e.kind !== 'pair') return;
+    patch((v) => {
       const sibling = key === e.current.key ? e.retired.key : e.current.key;
       if (key === e.current.key) delete v.generations[e.current.key];
       else v.generations[e.current.key] = key;
       // Selecting one generation releases the other. Readings are not comparable across a
       // supersession, so the bound is dropped rather than carried over (docs/app.md §URL encoding).
-      const held = v.filters.ranges[sibling] !== undefined;
       delete v.filters.ranges[sibling];
       v.columns = v.columns.filter((c) => c !== sibling);
-      if (held) v.filters.ranges[key] ??= {};
+      // A hand-added pair follows its row across the switch; a curated one renders regardless.
+      v.rows = v.rows.map((k) => (k === sibling ? key : k));
     });
   }
 </script>
 
 <aside>
-  <input class="search" type="search" placeholder="Search shoes…" aria-label="Search"
-         value={view.filters.search ?? ''} oninput={(e) => patch((v) => { v.filters.search = e.currentTarget.value || undefined; })} />
+  <section>
+    <h3>Search</h3>
+    <input class="search" type="search" placeholder="Search shoes…" aria-label="Search"
+           value={view.filters.search ?? ''} oninput={(e) => patch((v) => { v.filters.search = e.currentTarget.value || undefined; })} />
+  </section>
 
   <section>
     <h3>Released after</h3>
     <input type="date" aria-label="Released after" value={view.filters.releasedAfter ?? ''}
            oninput={(e) => patch((v) => { v.filters.releasedAfter = e.currentTarget.value || undefined; })} />
     <div class="chips">
+      <!-- The only way to unset a date the chips set: a chip that sets one cannot also clear it. -->
+      <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = undefined; })}>Any</button>
       {#each [1, 2, 3] as y (y)}
         <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = isoYearsAgo(new Date(), y); })}>{y}y</button>
       {/each}
@@ -147,6 +156,7 @@
   </section>
 
   <section>
+    <h3>Brand</h3>
     <BrandFilter counts={brandCounts} selected={view.filters.brands ?? []}
                  onchange={(brands) => patch((v) => { v.filters.brands = brands.length ? brands : undefined; })} />
   </section>
@@ -158,12 +168,13 @@
 
   {#each shown as e (keysOf(e)[0])}
     <section class="metric">
-      <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)}
+      <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)} strike={view.strike}
                  coverage={(k) => coverageOf(population, k, idx)}
                  oldest={(k) => oldestReading(population, k, idx)} />
-      {#each rowKeys(e) as key (key)}
+      {#each rowKeysOf(e) as key (key)}
         <RangeFilter label="" units="" name={nameFor(e, key)} hist={histFor(key)}
-                     bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)} />
+                     bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
+                     onremove={removable(key) ? () => removeRow(key) : undefined} />
       {/each}
     </section>
   {/each}
@@ -171,7 +182,7 @@
   {#if addable.length}
     <!-- A bar cannot render inside an `option`, so the menu carries the percentage alone (docs/app.md §Coverage). -->
     <select aria-label="Add filter"
-            onchange={(e) => { const k = e.currentTarget.value; e.currentTarget.value = ''; if (k) patch((v) => { v.filters.ranges[k] ??= {}; }); }}>
+            onchange={(e) => { const k = e.currentTarget.value; e.currentTarget.value = ''; if (k) addRow(k); }}>
       <option value="">Add filter…</option>
       {#each addable as a (a.key)}
         <option value={a.key}>{a.label}</option>
@@ -179,13 +190,13 @@
     </select>
   {/if}
 
-  <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; })}>Reset filters</button>
+  <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Reset filters</button>
 </aside>
 
 <style>
   aside { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
   h3 { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 0.25rem; font-weight: 600; }
-  .search { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+  .search { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box; }
   .chips { display: flex; gap: 0.35rem; margin-top: 0.35rem; }
   .chips button { padding: 0.15rem 0.6rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-dim); cursor: pointer; }
   .metric { display: flex; flex-direction: column; gap: 0.3rem; }

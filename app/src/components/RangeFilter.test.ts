@@ -1,4 +1,4 @@
-import { render } from '@testing-library/svelte';
+import { fireEvent, render } from '@testing-library/svelte';
 import { expect, it, vi } from 'vitest';
 import RangeFilter from './RangeFilter.svelte';
 import { histogram } from '../lib/stats';
@@ -23,4 +23,23 @@ it('renders bounds without a histogram when the data cannot form one', () => {
   const { container, getByLabelText } = render(RangeFilter, { props: { ...props, hist: null, bound: {} } });
   expect(container.querySelector('svg')).toBeNull();
   expect(getByLabelText('min')).toHaveAttribute('placeholder', 'min');
+});
+
+it('empties both bounds in one action, and names the clear control after its row', async () => {
+  const onchange = vi.fn();
+  const { getByRole } = render(RangeFilter, {
+    props: { ...props, onchange, name: 'Stack — Heel', bound: { min: 36, max: 45 } },
+  });
+  await fireEvent.click(getByRole('button', { name: 'Clear Stack — Heel' }));
+  expect(onchange).toHaveBeenCalledExactlyOnceWith({});
+});
+
+it('offers nothing to clear on an empty bound, and remove only when it can be removed', () => {
+  const empty = render(RangeFilter, { props: { ...props, name: 'Stack — Heel', bound: {} } });
+  expect(empty.queryByRole('button', { name: /^Clear/ })).not.toBeInTheDocument();
+
+  const removable = render(RangeFilter, {
+    props: { ...props, name: 'Stiffness', bound: {}, onremove: vi.fn() },
+  });
+  expect(removable.getByRole('button', { name: 'Remove Stiffness' })).toBeInTheDocument();
 });

@@ -38,8 +38,11 @@ describe('presets', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, FLEET, idx, strike);
-        expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'sort', 'strike']);
+        expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'rows', 'sort', 'strike']);
         expect(v.strike).toBe(strike);
+        // Every key a story binds is curated, so a story never needs a hand-added row — and
+        // selection derivation compares this field like any other.
+        expect(v.rows).toEqual([]);
         expect(v.columns.length).toBeGreaterThan(0);
         expect(v.sort.dir).toBe('desc');
       }

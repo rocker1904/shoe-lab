@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import MetricRow from './MetricRow.svelte';
 import type { Coverage } from '../lib/coverage';
-import { metricEntries } from '../lib/lineage';
+import { metricEntries, type Side } from '../lib/lineage';
 import { labTest } from '../lib/test-fixtures';
 
 const cov = (fraction: number): Coverage => ({ n: Math.round(fraction * 100), total: 100, fraction });
@@ -26,7 +26,9 @@ const colocated = metricEntries([
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', primaryTestId: 65 }),
 ])[0]!;
 
-function setup(metric: typeof single, over: { chosen?: string; coverage?: (k: string) => Coverage; oldest?: (k: string) => string | null } = {}) {
+function setup(metric: typeof single, over: {
+  chosen?: string; coverage?: (k: string) => Coverage; oldest?: (k: string) => string | null; strike?: Side;
+} = {}) {
   const onchoose = vi.fn();
   render(MetricRow, {
     props: {
@@ -34,6 +36,7 @@ function setup(metric: typeof single, over: { chosen?: string; coverage?: (k: st
       coverage: over.coverage ?? flat(0.8),
       oldest: over.oldest ?? undated,
       chosen: over.chosen ?? 'heel-stack',
+      strike: over.strike ?? 'heel',
       onchoose,
     },
   });
@@ -113,15 +116,19 @@ describe('MetricRow sparse warning', () => {
 });
 
 describe('MetricRow colocated', () => {
-  it('renders one heading and each part as its own control', () => {
-    const onchoose = setup(colocated, { chosen: 'energy-return-heel' });
+  // Coverage rows, not controls: every part renders always, so a button here could only ever write
+  // an empty range key — invisible in the sidebar, and enough to collapse the entry band.
+  it('renders one heading and both halves as coverage rows, forefoot first', () => {
+    setup(colocated, { chosen: 'energy-return-heel', strike: 'heel' });
     expect(screen.getAllByRole('heading')).toHaveLength(1);
     expect(screen.getByRole('heading')).toHaveAccessibleName(/Energy return/);
-    const parts = screen.getAllByRole('button');
-    expect(parts.map((b) => b.getAttribute('aria-label')))
-      .toEqual(['Energy return, Energy return forefoot', 'Energy return, Energy return heel']);
-    return fireEvent.click(parts[0]!).then(() => {
-      expect(onchoose).toHaveBeenCalledWith('energy-return-forefoot');
-    });
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.getByText('Forefoot')).toBeInTheDocument();
+    expect(screen.getByText('Heel · in use')).toBeInTheDocument();
+  });
+  it('moves the in-use marker with the strike, without hiding the other half', () => {
+    setup(colocated, { chosen: 'energy-return-heel', strike: 'forefoot' });
+    expect(screen.getByText('Forefoot · in use')).toBeInTheDocument();
+    expect(screen.getByText('Heel')).toBeInTheDocument();
   });
 });

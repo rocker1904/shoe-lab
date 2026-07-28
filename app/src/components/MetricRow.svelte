@@ -1,17 +1,21 @@
 <script lang="ts">
   import { isSparse, type Coverage } from '../lib/coverage';
   import { ageMonths } from '../lib/dataset';
-  import type { ResolvedMetric } from '../lib/lineage';
+  import type { ResolvedMetric, Side } from '../lib/lineage';
 
   /** Deep enough that novelty stops being the explanation and rarity starts (docs/app.md §Coverage). */
   const YOUNG_METHOD_MONTHS = 24;
+  const SIDE_LABEL: Record<Side, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
-  let { metric, coverage, oldest, chosen, onchoose }: {
+  let { metric, coverage, oldest, chosen, onchoose, strike }: {
     metric: ResolvedMetric;
     coverage: (key: string) => Coverage;
     oldest: (key: string) => string | null;
     chosen: string;
     onchoose: (key: string) => void;
+    /** Which half of a side pair the stories use. It marks; it never hides or disables the other,
+     *  which stays filterable on its own (docs/app.md §Columns and sorting). */
+    strike: Side;
   } = $props();
 
   const generations = $derived(metric.kind === 'pair' ? [metric.current, metric.retired] : []);
@@ -29,6 +33,9 @@
   });
   const pct = (key: string) => `${Math.round(coverage(key).fraction * 100)}%`;
   const width = (key: string) => `${Math.round(coverage(key).fraction * 100)}%`;
+  /** A declared half reads as its side alone; the fieldset below carries heading and side both. */
+  const partLabel = (p: { label: string; units: string; side: Side | null }) =>
+    (p.side ? SIDE_LABEL[p.side] : p.label) + (p.side === strike ? ' · in use' : p.units ? ` (${p.units})` : '');
 </script>
 
 <div class="metric">
@@ -46,13 +53,16 @@
       {/each}
     </div>
   {:else if metric.kind === 'colocated'}
+    <!-- Coverage rows, not controls. Every part renders always, so a button here could only ever
+         write an empty range key — invisible in the sidebar, and enough to collapse the entry
+         band (docs/app.md §Filters). -->
     <div class="parts">
       {#each metric.parts as p (p.key)}
-        <button type="button" aria-label="{metric.label}, {p.label}" onclick={() => onchoose(p.key)}>
-          <span class="gen">{p.label}{p.units ? ` (${p.units})` : ''}</span>
+        <div class="part" class:on={p.side === strike}>
+          <span class="gen">{partLabel(p)}</span>
           <span class="bar"><span class="fill" style:width={width(p.key)}></span></span>
           <span class="pct">{pct(p.key)}</span>
-        </button>
+        </div>
       {/each}
     </div>
   {:else}
@@ -72,10 +82,12 @@
   .metric { display: flex; flex-direction: column; gap: 0.25rem; }
   h4 { font-size: 0.8rem; color: var(--text-dim); margin: 0; font-weight: 600; }
   .gens, .parts { display: flex; flex-direction: column; gap: 0.15rem; }
-  button { display: grid; grid-template-columns: 1fr 3rem 2.2rem; align-items: center; gap: 0.4rem; width: 100%;
+  button, .part { display: grid; grid-template-columns: 1fr 3rem 2.2rem; align-items: center; gap: 0.4rem; width: 100%;
            padding: 0.15rem 0.3rem; border: 1px solid transparent; border-radius: 4px;
-           background: none; color: var(--text-dim); cursor: pointer; font-size: 0.78rem; text-align: left; }
+           background: none; color: var(--text-dim); font-size: 0.78rem; text-align: left; }
+  button { cursor: pointer; }
   button.on { border-color: var(--accent); color: var(--text); font-weight: 600; }
+  .part.on { color: var(--text); font-weight: 600; }
   .solo { display: grid; grid-template-columns: 1fr 2.2rem; align-items: center; gap: 0.4rem; padding: 0 0.3rem; }
   .bar { display: block; height: 6px; border-radius: 3px; background: var(--hist-dim); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--accent); }
