@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { histogram, percentileMap, quantile } from './stats';
-import { FLEET, TESTS } from './test-fixtures';
+import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -90,5 +90,19 @@ describe('quantile', () => {
     expect(quantile([10, 20, 30], 2)).toBe(30);
     expect(quantile([10, 20, 30], -1)).toBe(10);
     expect(quantile([10, 20, 30], Number.NaN)).toBeNull();
+  });
+});
+
+describe('percentileMap polarity', () => {
+  it('inverts where a smaller reading is the better shoe', () => {
+    // Without this the tint marks the most expensive and heaviest shoes as their column's leaders.
+    const fleet = [10, 20, 30, 40].map((w, i) => shoe({ slug: `s${i}`, values: { '24': w } }));
+    const p = percentileMap(fleet, 'weight', idx);
+    expect(p.get('s0')!).toBeGreaterThan(p.get('s3')!);
+  });
+  it('leaves a bigger-is-better metric alone', () => {
+    const fleet = [30, 35, 39, 40].map((v, i) => shoe({ slug: `s${i}`, values: { '6': v } }));
+    const p = percentileMap(fleet, 'heel-stack', idx);
+    expect(p.get('s3')!).toBeGreaterThan(p.get('s0')!);
   });
 });

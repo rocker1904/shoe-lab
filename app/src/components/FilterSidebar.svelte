@@ -76,12 +76,28 @@
     if (p.side) return `${e.label} — ${SIDE_LABEL[p.side]}`;
     return p.units ? `${p.label} (${p.units})` : p.label;
   };
+  /**
+   * A colocated entry renders two controls under one heading, so each needs its side on screen.
+   * Without it the coverage rows above read as labels for the controls below and name the wrong
+   * one — the accessible name is right, so it misleads sighted users only.
+   */
+  const legendFor = (e: ResolvedMetric, key: string): string => {
+    if (e.kind !== 'colocated') return '';
+    const p = e.parts.find((x) => x.key === key)!;
+    return p.side ? SIDE_LABEL[p.side] : p.label;
+  };
 
   const pctOf = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);
+  /**
+   * Lab test 52 and the `msrpGbp` field are the same resolved price (docs/app.md §Resolved price),
+   * so offering the test as well would add a second, identically-labelled Price row that ANDs with
+   * the curated one — two controls a user cannot tell apart.
+   */
+  const ALIASED_BY_A_FIELD = new Set(['price']);
   const addable: AddFilterOption[] = $derived(entries.flatMap((e) => {
     const rows = shown.includes(e) ? rowKeysOf(e) : [];
     return (e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)])
-      .filter((k) => !rows.includes(k))
+      .filter((k) => !rows.includes(k) && !ALIASED_BY_A_FIELD.has(k))
       .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId, coverage: pctOf(k) }));
   }));
   let adding = $state(false);
@@ -178,7 +194,7 @@
                  coverage={(k) => coverageOf(population, k, idx)}
                  oldest={(k) => oldestReading(population, k, idx)} />
       {#each rowKeysOf(e) as key (key)}
-        <RangeFilter label="" units="" name={nameFor(e, key)} hist={histFor(key)}
+        <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} hist={histFor(key)}
                      bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
                      onremove={removable(key) ? () => removeRow(key) : undefined} />
       {/each}

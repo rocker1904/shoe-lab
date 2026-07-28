@@ -1,6 +1,13 @@
 import type { Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
 
+/**
+ * Metrics where a smaller reading is the better shoe, so the percentile wash has to be inverted.
+ * Without this the tint marks the most expensive and the heaviest shoes as the leaders of their
+ * column — a confident signal pointing exactly backwards (docs/app.md §Theming).
+ */
+const LOWER_IS_BETTER = new Set(['msrpGbp', 'price', 'weight', 'drop', 'stiffness', 'stiffness-in-cold']);
+
 export function percentileMap(shoes: Shoe[], key: string, idx: TestIndex): Map<string, number> {
   const entries = shoes
     .map((s) => ({ slug: s.slug, v: numericValue(s, key, idx) }))
@@ -15,7 +22,8 @@ export function percentileMap(shoes: Shoe[], key: string, idx: TestIndex): Map<s
       else if (x === v) equal++;
       else break;
     }
-    out.set(slug, (below + equal / 2) / values.length);
+    const pct = (below + equal / 2) / values.length;
+    out.set(slug, LOWER_IS_BETTER.has(key) ? 1 - pct : pct);
   }
   return out;
 }
