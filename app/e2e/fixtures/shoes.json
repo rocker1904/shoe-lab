@@ -104,6 +104,20 @@
       "id": 66,
       "slug": "energy-return-forefoot",
       "name": "Energy return forefoot"
+    },
+    {
+      "id": 55,
+      "slug": "toebox-width-widest-part",
+      "name": "Width / Fit",
+      "type": "float",
+      "units": "mm",
+      "groupId": "3",
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": []
     }
   ],
   "shoes": [
@@ -121,6 +135,8 @@
       "imageUrl": null,
       "values": {
         "6": 40,
+        "24": 210,
+        "55": 99,
         "65": 70,
         "70": 40,
         "11": 25,
@@ -170,6 +186,8 @@
       "imageUrl": null,
       "values": {
         "6": 39,
+        "24": 220,
+        "55": 96,
         "65": 75,
         "70": 42,
         "11": 27,
@@ -196,6 +214,8 @@
       "imageUrl": null,
       "values": {
         "6": 35,
+        "24": 280,
+        "55": 101,
         "65": 60,
         "70": 30,
         "11": 30,
@@ -222,6 +242,8 @@
       "imageUrl": null,
       "values": {
         "6": 30,
+        "24": 300,
+        "55": 94,
         "65": 55,
         "66": 45
       },

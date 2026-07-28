@@ -25,6 +25,26 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await expect(page.getByRole('row').filter({ hasText: 'racer' })).toBeVisible();
 });
 
+test('opens on the entry band and resumes the previous session across a reload', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('entry-band')).toBeVisible();
+  // counts are computed from the live dataset, not hard-coded in the band
+  await expect(page.getByRole('button', { name: 'Race' })).toContainText('2 shoes');
+  await expect(page.getByRole('button', { name: 'Browse all 5 shoes' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Easy' }).click();
+  await expect(page.getByText('1 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('entry-band')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Presets' })).toBeVisible();
+
+  // the only proof persistence works, because it spans a real page load
+  await page.goto('/');
+  await expect(page.getByText('1 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('entry-band')).toHaveCount(0);
+  // and the restored view reaches the URL, so copying the link shares what is on screen
+  await expect(page).toHaveURL(/plate=not-carbon/);
+});
+
 test('renders a superseded pair once and keeps colocated halves independently sortable', async ({ page }) => {
   await page.goto('/');
 
