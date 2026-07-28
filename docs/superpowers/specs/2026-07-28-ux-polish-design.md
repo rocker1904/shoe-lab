@@ -24,7 +24,10 @@ problem the polish item exposed and because they touch the same files:
 - **The entry band becomes a setup strip** (§6.3) — a replaced component and a changed
   model of how a session starts, not a restyled one.
 - **A second table rendering below 700px** (§4.2) — the phone stops being a narrow
-  desktop.
+  desktop, and brings a short-label map for the metric names (§4.3) and a change to the
+  default column set (§4.4).
+- **Debounced persistence in `setView`** (§7.2) — a documented invariant becomes
+  asynchronous, because drag-to-bound makes 60 view updates a second.
 
 Everything else is presentation. If the branch needs cutting, those are the seams.
 
@@ -170,9 +173,23 @@ same column set renders differently.
   Content-sized columns made every chip a different width and detached each header from
   the values it labels — the single biggest source of the "alignment is all over the
   place" reading. Fixed widths plus spacing-derived gaps make every chip one box.
-- **Values right-aligned, never centred.** Centring looks calmer but breaks digit
-  alignment down a column between `73`, `74.3` and `80.38` — and columns are the whole
-  reason for this layout.
+- **Values centred, not right-aligned.** Considered at length against right-alignment,
+  which keeps digits on one axis down a column. Centring wins on the grounds that with
+  fixed equal columns it is the more composed object and leaves no dead colour, and the
+  cost — `73`, `74.3` and `80.38` centring on different axes — was judged acceptable
+  after seeing both at real density. If this is ever revisited, right-alignment is the
+  rigorous choice and column-sized widths are its necessary partner.
+- **Each shoe is a card**: an identity strip carrying the name, then the value row on the
+  card surface beneath, with a gap between cards and the page recessed behind them. Still
+  **one table** underneath — per-card tables would break the shared column geometry.
+- **The value row uses symmetric vertical padding.** A first pass had `padding-bottom`
+  with no matching top, which pushed every chip upward in its band. It reads as a
+  rendering fault rather than a choice, and is invisible until drawn.
+- **Minimum column width 57px.** Six columns then fit any viewport from 358px up, so the
+  default never scrolls on any common phone — 360px is the usual Android width and is the
+  binding case, not the 375px the design was drawn at. Past six columns the min-width
+  holds and the value row scrolls, so every column always has the geometry the labels
+  were validated against.
 - **Text-valued columns move to the name line** as dim metadata after the name:
   `› ASICS Megablast · 2025 · Carbon`. `releasedAt` renders as `2026-03-01` and `plate`
   as `Non-carbon plate`; neither fits a ~50px grid cell, and neither is a thing you scan
@@ -189,26 +206,85 @@ same column set renders differently.
 - Name at `--t-sm`: one step below `--t-md` keeps it distinct from the values without the
   jarring jump to the header that a larger size produced.
 
-**Known limit.** Column count is the user's choice, and the header grows taller and the
-chips narrower as it rises. Seven numeric columns — the default — is comfortable. A dozen
-is not, and that is inherent rather than fixable: it should be allowed to be cramped
-rather than papered over by varying the columns (§4.3).
-- Rows are double height, so roughly half as many shoes per screen. That is the direct
-  price of keeping the numbers in columns, and it is worth paying: columns are what make
-  this a comparison tool rather than a list.
+### 4.3 Short metric labels, and the six-column bound
 
-**This is a rendering difference only.** Same columns, same `ViewState`, same URL — so a
-link shared from a phone opens identically on a desktop. `defaultColumns` must **not**
-vary by viewport (§4.4).
+Mobile headers need their own labels, and the map was authored by **measuring** rather
+than by taste: render each name in a real header cell and report the widest unbreakable
+word and the wrapped line count. `.superpowers/audit.mjs` does this and is reusable —
+any proposed wording can be checked against the bound in seconds.
 
-### 4.3 Columns never vary by viewport
+The bound: **six columns at 375px**, which is 57px per column and 56px of text. The
+narrowest common phone (360px) yields 53px, and the map is validated against **53px**,
+not 56 — designing for 375 alone would clip on a large share of Android devices.
+
+Three container decisions came out of the measurement, and together they matter more
+than the wording:
+
+- **`-0.02em` tracking on the header** — 0.24px per character at 12px. It moves survivors
+  from 37 to 44 of 53. Nearly free, and invisible.
+- **Up to three lines**, not two. A two-line rule was my own invention, not a
+  requirement; relaxing it keeps 8 more real names. Beyond three lines nothing improves,
+  because the remaining failures are *word* overflow, not line count.
+- **Six columns, not seven.** At seven columns the text space falls to 47px and only 19 of
+  53 names survive — the vocabulary would become codes. See below.
+
+**35 of 53 names are kept verbatim.** The 18-entry map:
+
+| slug | label | why |
+|---|---|---|
+| `breathability`, `-25` | Airflow | "Breathability" is 78px; a paraphrase, not an abbreviation |
+| `toebox-durability` | Toebox durab. | "durability" is 55.7px against 53 |
+| `heel-padding-durability` | Heel pad durab. | as above |
+| `outsole-durability` | **Outsole wear** | not a length problem: the test is Dremel dent depth in mm where lower is better, so "durability" contradicts its own units. Deliberate divergence from RunRepeat's name |
+| `outsole-thickness` | Outsole depth | "thickness" is 55.1px |
+| `insole-thickness` | Insole depth | as above |
+| `stiffness`, `flexibility-stiffness` | Stiffness | "Flexibility" is 55.4px; the group already says Flexibility / Stiffness |
+| `difference-in-midsole-softness-in-cold` | Cold softness Δ | wrapped to four lines |
+| `difference-in-stiffness-in-cold` | Cold stiffness Δ | for symmetry with the above |
+| `midsole-width-in-the-forefoot` | Forefoot midsole width | fits, but wraps with a dangling hyphen; side-first also matches Heel stack and Heel shock |
+| `midsole-width-in-the-heel` | Heel midsole width | as above |
+| `removable-insole` | Remv. insole | "Removable" is 66px |
+| `reflective-elements` | Hi-vis | "Reflective" is 60px; idiomatic for running |
+| `secondary-foam-softness`, `-22` | 2nd foam softness | "Secondary" is 62px |
+| `shock-absorption-heel` | Heel shock | "absorption" is 65px |
+| `shock-absorption-forefoot` | Forefoot shock | as above |
+| `sweat-evaporated` | Sweat evap. | "evaporated" is 68px |
+
+Superseded pairs may share a label safely — only one generation is ever shown — and a
+collision check confirms no two simultaneously-visible metrics share one.
+
+**`Size` must not show `/5`.** The type-derived unit rule maps `rating` → `/5`, but
+`size-rating` runs 2.1–3.9 where **3 is true-to-size**. It is not a five-point quality
+score and labelling it one invites the reading the direction audit exists to prevent. It
+carries **`3 = true`** instead.
+
+### 4.4 The default view loses a column
+
+`defaultColumns` drops **`midsole-softness-22`**, leaving six numeric columns once
+`releasedAt` and `plate` move to the name line.
+
+The default was the only view exceeding the bound: Easy shows five numeric columns, Tempo
+and Race four. Softness is the defensible one to lose — at **51% coverage** it is by far
+the sparsest of the seven, and it is the only default column no preset uses, because
+`docs/shoe-stories.md` argues softness should not drive a shortlist at all.
+
+This is a product change, not a mobile workaround: it changes what desktop shows too. A
+stored view from before the change simply reads as non-default and opens collapsed;
+shared links carry explicit `cols` and are unaffected.
+
+### 4.5 Columns never vary by viewport
 
 Tempting and wrong. `cols` serialises into the URL, so a viewport-dependent default would
 mean a link shared from a phone carried fewer columns than the sender saw, and the URL
 would stop describing the view (docs/app.md §View and URL ownership). Both renderings
-show whatever columns the view holds.
+show whatever columns the view holds; §4.4 changes the default for *everyone* rather than
+for phones.
 
-### 4.4 Detail panel
+Note also that rows are double height in the two-tier rendering, so roughly half as many
+shoes fit a screen. That is the direct price of keeping the numbers in columns, and it is
+worth paying: columns are what make this a comparison tool rather than a list.
+
+### 4.6 Detail panel
 
 `DetailPanel.svelte`'s image is `width: 220px` with no height, so it shifts layout on
 load. It gets an `aspect-ratio`. **The row image is to be verified in a browser before
@@ -324,6 +400,11 @@ once, then hands over to the bar for good.
   `margin-top:auto` leaves them ragged, because the descriptions wrap to different line
   counts.
 
+On mobile the strip becomes a **2×2 grid per group, cards at full size** — six equal
+cards in one row is a desktop layout. It costs the whole first screen, which is the
+complaint the usability review made about today's preset cards; that is accepted here
+because the strip appears only on a genuine first arrival and never again.
+
 **Clicking a pace card collapses the strip** into the toolbar, with a height transition
 that respects `prefers-reduced-motion`. Not "once both are chosen" — that would never
 fire, because the table cannot render without a strike and `defaultView(strike)`
@@ -398,9 +479,79 @@ reason either exists.
 - **`@media (hover: none)`: handles are permanently visible.** Hover never fires on
   touch, and the sidebar is a drawer on small screens where resting tidiness matters
   less.
-- **Dragged bounds snap** to a readable step derived from the range (£5, 1 g, 0.5%), so
-  the number field and the shared URL carry something a human would have typed.
 - The number fields remain authoritative and independently editable.
+
+#### The axis is trimmed to p2–p98
+
+A linear axis over the full range is unusable for dragging, and the numbers say why: on
+price, **79% of the axis is empty pixels and the densest single pixel holds 64 shoes**.
+The middle half of the fleet gets **23px of a 222px control**.
+
+That is not an outlier problem — trimming to p1–p99 barely moves it. **Price is
+effectively categorical**: 450 shoes across 47 distinct values, five of which (£140, £160,
+£180, £150, £170) hold 49% of the fleet. £140 alone accounts for 64 of them. Metrics range
+from 10% distinct (price) to 99% (shock absorption), so any rule has to serve both.
+
+The axis is clipped to **p2–p98** with the excluded readings drawn in hatched overflow
+bins at each end. It roughly doubles to triples the travel given to the middle half
+(price 23px → 45px) and fixes the chart's shape, which today is one spike and a long flat
+tail. p2–p98 is a compromise: symmetric, needs no per-metric tuning, and deliberately
+conservative — a wider trim buys more resolution but starts discarding real spread.
+
+#### Snapping is to values that exist, not to round numbers
+
+An earlier draft snapped to £5 / 1 g / 0.5%. Round numbers are arbitrary; **values present
+in the data** are not, and the rule self-adjusts across the two regimes with no constants:
+
+| metric | distinct | stops in axis | median gap |
+|---|---|---|---|
+| price | 10% | 43 | 5.0px |
+| weight | 29% | 117 | 1.3px |
+| energy return heel | 90% | 324 | 0.5px |
+
+Chunky, meaningful detents where the data is categorical; indistinguishable from free
+movement where it is continuous. Every stop is a real boundary between shoes, so no drag
+step is wasted.
+
+#### Crossed bounds clamp the drawing, never the value
+
+Dragging already clamps each handle against the other. The number fields do not, and a
+typed value outside the axis previously drew its edge off the side of the chart. **The fix
+is to clamp the rendered position to the axis and leave the stored value alone.**
+
+Bounds are allowed to cross. A crossed range honestly matches zero shoes and says so —
+the fields mark themselves and the count reads zero — and this is the behaviour the app
+already has today via the number fields. The alternatives were all rejected for mutating
+what the user typed, and **clamping on input is actively broken**: with max at 180, typing
+"200" into min rewrites the field to 180 at the third keystroke and further typing appends
+to that, making the bound unreachable.
+
+#### Persistence must be debounced
+
+`setView` writes `history.replaceState` and `localStorage` on every change. A drag fires
+about 60 view updates a second — **a 2-second drag makes 120 `replaceState` calls**,
+past Safari's ~100-per-30-seconds throttle in a single gesture, plus 120 synchronous
+storage writes.
+
+State assignment stays immediate, so the table filters live; the URL and storage write
+becomes **trailing-debounced (~200ms), flushed on `pagehide`**. Still one write path, now
+asynchronous. This also fixes the same latent problem in the search box, which writes on
+every keystroke today.
+
+Live filtering is affordable: `percentileMap` over 450 shoes and five columns measures
+**2.1ms**, well inside a 16.7ms frame — the sorted-values `break` keeps it far from its
+nominal O(n²). The expensive thing was never the recompute.
+
+#### Two details that are easy to get wrong
+
+- **The plot must not be a tab stop.** Giving it `tabindex` so `:focus-within` can reveal
+  the grips adds an empty tab stop, in the pass that adds a skip link *because* there are
+  already 49 of them. Hang the reveal off the row instead — `:hover` or `:focus-within` on
+  the fieldset — so tabbing into either number field reveals the handles, which also
+  connects the two input modes.
+- **Touch hit areas must be gap-aware.** A 44px target on a 222px plot is a fifth of the
+  width each; when the bounds sit close the areas overlap and the wrong handle grabs. Each
+  shrinks to half the gap once the handles are within 88px.
 
 ### 7.3 Relax counts
 
@@ -548,7 +699,8 @@ change:
 | `docs/app.md §Presets` | delete the "Browse all" paragraph; `Clear` → `All`; the band becomes a first-arrival setup strip with ephemeral visibility, and why that is not the stored dismissal flag the section rules out |
 | `docs/app.md §Columns and sorting` | the two table renderings and the 700px switch; that columns never vary by viewport |
 | `docs/shoe-stories.md §Which half a story uses` | the interface deliberately does not assert the runner *is* a heel or forefoot striker, though the code still calls it `strike` |
-| `docs/app.md §Columns and sorting` | direction as a declared property; where it lives and why it is declared |
+| `docs/app.md §Columns and sorting` | direction as a declared property; where it lives and why it is declared; short mobile labels and the six-column bound; `defaultColumns` loses softness |
+| `docs/app.md §View and URL ownership` | `setView` still the single write path, but persistence is debounced and flushed on `pagehide` — the section currently describes setting state, replacing the URL and storing as one act |
 | `docs/operations.md` | direction-map drift joins the contract-drift runbook |
 | `BACKLOG.md` | items 3 and 7 closed; new items for user-declared direction, method era, OG tags |
 
@@ -564,8 +716,17 @@ TDD throughout, per CLAUDE.md.
   returning zero still renders.
 - **Coverage** — silent at complete; counts track `considered` as non-range filters
   change.
-- **Drag** — pointer maths and snapping are pure functions, tested directly rather than
-  through the DOM. Bound-at-extreme serialises as absent.
+- **Drag** — axis trimming, snap-to-nearest-value and position clamping are pure
+  functions, tested directly rather than through the DOM. Bound-at-extreme serialises as
+  absent; a crossed pair stores what was typed and clamps only its drawn position; a typed
+  value outside the axis clamps its handle without altering the value.
+- **Short labels** — `.superpowers/audit.mjs` is the rig, and its assertion belongs in the
+  suite: every numeric test resolves to a label whose widest word fits 53px and which wraps
+  to at most three lines, so an upstream metric with a long name fails the build rather
+  than silently clipping on a phone. Collision check: no two simultaneously-visible
+  metrics share a label.
+- **Debounced persistence** — state updates immediately; the URL and storage write is
+  trailing and flushed on `pagehide`. Test with fake timers, not by waiting.
 - **Accessibility** — roving tabindex moves selection on arrow keys within each
   radiogroup; drawer traps focus and closes on Escape.
 - **Setup strip** — shows on a bare first arrival; hidden when a query string is present;
