@@ -67,9 +67,9 @@ describe('Page', () => {
     render(Page, { props: { data } });
     // on a default view the band renders and PresetChips does not, so the card carries the description too
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument(); // only 'cushy' passes on fixture fleet
+    expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument(); // cushy and trainer pass on the fixture fleet
     expect(location.search).toContain('plate=none%2Cplated-other');
-    expect(location.search).toContain('r.heel-stack=36%7E');
+    expect(location.search).toContain('r.heel-stack=35%7E');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });
@@ -181,7 +181,7 @@ describe('Page entry band', () => {
     render(Page, { props: { data } });
     expect(band()).toBeInTheDocument();
     expect(chips()).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('1 shoe');
+    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('2 shoes');
     expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2 shoes');
     expect(screen.getByRole('button', { name: /Browse all/ })).toHaveTextContent('5 shoes');
   });
@@ -253,6 +253,6 @@ describe('Page persistence', () => {
     render(Page, { props: { data } });
     expect(band()).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument();
   });
 });

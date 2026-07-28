@@ -13,6 +13,15 @@ components. Dataset shape and field semantics are docs/scraping.md.
 init, inside `untrack`; every change goes through `setView`, which sets the
 state, `history.replaceState`s the serialised form, and stores it.
 
+`ViewState` also carries the runner's `strike`, and **the baseline takes it**:
+`defaultView(strike)` and `defaultColumns(strike)` require one rather than
+defaulting to heel, so no call site can reinstate the old silent assumption by
+forgetting. `isDefaultView` compares against `defaultView(v.strike)`, which is
+what lets a runner state their strike without leaving the default view.
+`parseView` therefore resolves `strike` **before** it builds the baseline: read
+in the parameter loop instead, a link carrying a strike and no `cols` would open
+heel-shaped and already collapsed.
+
 Init takes the first of: a query string in the URL, a stored view, the
 defaults. A shared link must always beat a previous session, so the query
 string wins outright and storage is only read when there is none. A view
@@ -80,7 +89,7 @@ boundary, and needs the decision above.
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
 `plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
-`sort` (`-` prefix means descending), `cols` (comma-joined), and
+`strike=forefoot`, `sort` (`-` prefix means descending), `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
 default and never appears.
@@ -242,11 +251,17 @@ This section owns the mechanism only. What each preset is *for*, and why its
 thresholds are what they are, is docs/shoe-stories.md — read it before changing
 a number.
 
+`applyPreset` takes the runner's strike, so the mapping is `(story, strike) →
+view` with nothing special-cased: a story bounds, sorts by and shows the half
+of each side pair that the strike names — why, and why a side-swappable bound
+must be a percentile, is docs/shoe-stories.md §Which half a story uses.
+
 Thresholds are a mix, and the split is deliberate. Where the story is relative
-to the market — "affordable", "light for the fleet" — the bound is a
-`quantile` of the loaded dataset resolved **at click time**, so it moves as the
-catalogue moves. Where the story is a property of a shoe — a 36 mm stack — it
-is an absolute constant. A resolved percentile means the same click produces
+to the market — "affordable", "light for the fleet" — or where the bound could
+swap sides, it is a `quantile` of the loaded dataset resolved **at click
+time**, so it moves as the catalogue moves. Only a bound that is a property of
+a shoe *and* has no sides may be an absolute constant; Race's weight ceiling is
+the only one. A resolved percentile means the same click produces
 different URLs across refreshes, which is fine: the URL records the resolved
 number, not the preset. A fleet with no readings for a percentile bound omits
 that bound rather than inventing one.

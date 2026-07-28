@@ -28,7 +28,7 @@ judgement, so it is recorded here rather than left implicit in
 
 | quality | metric | why this one |
 |---|---|---|
-| comfort for long miles | heel stack | the best-covered cushioning proxy the fleet has, and it separates cleanly |
+| comfort for long miles | stack | the best-covered cushioning proxy the fleet has, and it separates cleanly |
 | softness | *nothing* | see below — deliberately unbounded |
 | speed | weight **and** energy return | the two things a fast shoe is; measured directly rather than inferred from a plate |
 | repeatability | price | cost per mile, with a real durability metric available but unused (see Easy) |
@@ -49,6 +49,26 @@ than defining Race by weight and energy return: it lets in heavy carbon max-cush
 trainers and shuts out genuinely fast unplated flats. Plate earns its place in Easy
 only as an exclusion.
 
+## Which half a story uses
+
+Four metrics are measured at both ends of the shoe — stack, energy return,
+shock absorption, midsole width. Which half a story bounds, sorts by and shows
+as a column follows the **runner's strike**, because that is the half
+describing their landing. It applies whether or not a story is chosen: a
+forefoot striker browsing with nothing selected still gets forefoot columns.
+Nothing about a story changes with it; only which number it reads.
+
+The two halves are not on one scale, so a threshold cannot simply move between
+them. 36 mm is the median heel stack and the **98th** percentile of forefoot
+stack; shock absorption runs a heel median of 131.6 against a forefoot median
+of 108.8. So **every bound that can swap sides is a percentile of that side's
+own distribution**, never a number — "as much stack as most of the fleet"
+transfers between sides, "36 mm" does not. It is the same rule as the shared
+one above, applied to a second axis.
+
+A bound on a metric with no sides may stay absolute. Race's weight ceiling is
+the only one left.
+
 ## Checking a threshold set
 
 RunRepeat labels each shoe with a `pace` fact — daily, tempo, competition, or a
@@ -68,7 +88,9 @@ adaptations (heart, lungs, mitochondrial density, blood volume) and running econ
 not teaching the legs to move fast. So:
 
 - **Comfort is the priority**, because the goal is to accumulate a lot of miles
-  without accumulating damage. High stack, nothing harsh.
+  without accumulating damage. Stack is floored at the **median** of the
+  fleet's readings on the runner's side — "as much cushioning as most of the
+  catalogue" — and nothing else about the ride is bounded.
 - **Explosiveness is a bonus, not a requirement.** A lively ride is fun and fun keeps
   you running, but it is not what the session is for.
 - **No carbon plate.** Not because plates are bad, but because a carbon racing plate
@@ -125,6 +147,11 @@ One day, one goal. Everything is subordinate to speed.
 
 - **No price cap.** Absolute performance is the point and cost per mile is irrelevant
   over a handful of race days.
+- **Energy return floors at the 85th percentile** of the runner's side, and
+  weight at an absolute 230 g. The energy-return floor was once 70, which sits
+  at the 85th percentile on heel and the 80th on forefoot — one number meaning
+  two different things, which is precisely what a side-swappable bound must not
+  do. Weight has no sides, so it stays a number.
 - **Carbon is not required.** A plate is a means to an end, and the end is speed —
   measured directly by weight and energy return. Gating on carbon is both less
   accurate and less honest: it admits heavy carbon max-cushion trainers while

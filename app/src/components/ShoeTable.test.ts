@@ -9,7 +9,7 @@ const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: 
 
 function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState> } = {}) {
   const onchange = vi.fn();
-  const view = { ...defaultView(), ...over.view };
+  const view = { ...defaultView('heel'), ...over.view };
   view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
   const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange } });
   return Object.assign(onchange, { rendered });

@@ -2,20 +2,25 @@ import type { Plate } from '../../../shared/types.js';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { metricEntries } from './lineage';
+import { metricEntries, sideKey, type Side } from './lineage';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
   /** Chosen generation of each superseded pair, keyed by the **current** generation's slug. A
    *  choice equal to its key is the default and never serialises (docs/app.md §URL encoding). */
   generations: Record<string, string>;
+  /** Which end of the shoe the runner lands on. The baseline itself takes it, so nothing
+   *  downstream special-cases it (docs/app.md §View and URL ownership). */
+  strike: Side;
 }
 
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
-export const DEFAULT_COLUMNS: string[] = [
-  'releasedAt', 'score', 'msrpGbp', 'heel-stack', 'midsole-softness-22',
-  'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight',
-];
+/** The strike is required rather than defaulted: a default would reinstate the silent heel
+ *  assumption invisibly, at whichever call site forgot to pass one. */
+export function defaultColumns(strike: Side): string[] {
+  return ['releasedAt', 'score', 'msrpGbp', sideKey('Stack', strike), 'midsole-softness-22',
+    'plate', sideKey('Energy return', strike), 'toebox-width-widest-part', 'weight'];
+}
 /**
  * Every value a shoe's `plate` can hold, in the order a selection is written. Both the filter UI
  * and `parseView` normalise to this order, so a link-borne selection still compares equal to the
@@ -28,8 +33,8 @@ const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
-export function defaultView(): ViewState {
-  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: [...DEFAULT_COLUMNS], generations: {} };
+export function defaultView(strike: Side): ViewState {
+  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(strike), generations: {}, strike };
 }
 
 /**
@@ -58,7 +63,9 @@ function sameValue(a: unknown, b: unknown): boolean {
  * unchecked, and **by value rather than by key presence** — see `sameValue`.
  */
 export function isDefaultView(v: ViewState): boolean {
-  return sameValue(v, defaultView());
+  // Against **this runner's** baseline, so a view differing only in strike is still default and the
+  // entry band survives a strike flip (docs/app.md §Presets).
+  return sameValue(v, defaultView(v.strike));
 }
 
 /** Current-generation slug to retired-generation slug, for every pair the catalogue resolves. */
@@ -96,7 +103,8 @@ export function serializeView(v: ViewState): string {
   if (v.sort.key !== DEFAULT_SORT.key || v.sort.dir !== DEFAULT_SORT.dir) {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
   }
-  if (v.columns.join(',') !== DEFAULT_COLUMNS.join(',')) p.set('cols', v.columns.join(','));
+  if (v.strike !== 'heel') p.set('strike', v.strike);
+  if (v.columns.join(',') !== defaultColumns(v.strike).join(',')) p.set('cols', v.columns.join(','));
   for (const [key, chosen] of Object.entries(v.generations)) {
     if (chosen !== key) p.set(`gen.${key}`, chosen);
   }
@@ -104,8 +112,11 @@ export function serializeView(v: ViewState): string {
 }
 
 export function parseView(qs: string, idx: TestIndex): ViewState {
-  const v = defaultView();
   const p = new URLSearchParams(qs);
+  // Read before the baseline is built, not in the loop below: the baseline is the runner's, so a
+  // link carrying `strike=forefoot` and no `cols` would otherwise open heel-shaped — and, worse,
+  // open with the band collapsed, because the view no longer equals its own baseline.
+  const v = defaultView(p.getAll('strike').at(-1) === 'forefoot' ? 'forefoot' : 'heel');
   // Ranges and sorts take numeric keys only while columns stay permissive
   // (docs/app.md §Columns are permissive, ranges and sorts are strict).
   const numericTest = (k: string) => {

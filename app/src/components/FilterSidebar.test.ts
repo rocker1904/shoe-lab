@@ -8,7 +8,7 @@ import type { ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(view = defaultView()) {
+function setup(view = defaultView('heel')) {
   const onchange = vi.fn();
   render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
   return onchange;
@@ -38,18 +38,18 @@ describe('FilterSidebar', () => {
     await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
     expect(onchange.mock.lastCall![0].filters.plate).toEqual(['carbon']);
 
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.plate = ['carbon'];
     const off = vi.fn();
     render(FilterSidebar, { props: { data, view, onchange: off, population: FLEET } });
     await fireEvent.click(screen.getAllByRole('checkbox', { name: 'Carbon' }).at(-1)!);
     expect(off.mock.lastCall![0].filters.plate).toBeUndefined();
-    expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
+    expect(off.mock.lastCall![0].filters).toEqual(defaultView('heel').filters);
   });
   // Story selection is a positional value comparison, so a hand-built selection that ordered its
   // members by click would never equal a preset's.
   it('emits plate values in the declared order however they were clicked', async () => {
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.plate = ['carbon'];
     const onchange = vi.fn();
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
@@ -75,7 +75,7 @@ describe('FilterSidebar', () => {
   });
   it('resets every filter at once', async () => {
     const onchange = vi.fn();
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.ranges['heel-stack'] = { min: 36 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
     await fireEvent.click(screen.getByRole('button', { name: /reset/i }));
@@ -84,7 +84,7 @@ describe('FilterSidebar', () => {
 });
 
 // Every cleared control must round-trip back to the default filter state, not to a falsy stand-in:
-// an empty string or a `false` would serialise into the URL and stop the view equalling defaultView().
+// an empty string or a `false` would serialise into the URL and stop the view equalling defaultView('heel').
 describe('FilterSidebar text and toggle controls', () => {
   it('emits the search term, and undefined once cleared', async () => {
     const onchange = setup();
@@ -95,7 +95,7 @@ describe('FilterSidebar text and toggle controls', () => {
 
     await fireEvent.input(box, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.search).toBeUndefined();
-    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
+    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView('heel').filters);
   });
 
   it('emits the released-after date, and undefined once cleared', async () => {
@@ -107,7 +107,7 @@ describe('FilterSidebar text and toggle controls', () => {
 
     await fireEvent.input(date, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
-    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
+    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView('heel').filters);
   });
 
   it('emits the discontinued choice, and undefined for Any', async () => {
@@ -116,14 +116,14 @@ describe('FilterSidebar text and toggle controls', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'Only discontinued' }));
     expect(onchange.mock.lastCall![0].filters.discontinued).toBe('only');
 
-    const chosen = defaultView();
+    const chosen = defaultView('heel');
     chosen.filters.discontinued = 'hide';
     const off = vi.fn();
     render(FilterSidebar, { props: { data, view: chosen, onchange: off, population: FLEET } });
     expect(screen.getAllByRole('radio', { name: 'Hide discontinued' }).at(-1)!).toBeChecked();
     await fireEvent.click(screen.getAllByRole('radio', { name: 'Any' }).at(-1)!);
     expect(off.mock.lastCall![0].filters.discontinued).toBeUndefined();
-    expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
+    expect(off.mock.lastCall![0].filters).toEqual(defaultView('heel').filters);
   });
 });
 
@@ -133,7 +133,7 @@ const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 describe('FilterSidebar filter set management', () => {
   it('offers only numeric tests in the Add filter select and adds the chosen one', async () => {
     const onchange = vi.fn();
-    render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, population: FLEET } });
+    render(FilterSidebar, { props: { data: dataPlus, view: defaultView('heel'), onchange, population: FLEET } });
     const select = screen.getByLabelText('Add filter');
     // curated keys, the option-typed test and both retired generations are all absent
     expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
@@ -144,7 +144,7 @@ describe('FilterSidebar filter set management', () => {
   });
 
   it('renders an already-active non-curated filter and stops offering it', () => {
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.ranges['stiffness'] = { min: 5 };
     render(FilterSidebar, { props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByText(/Stiffness/)).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('FilterSidebar filter set management', () => {
 
   it('preserves sibling filters and leaves the view prop unmutated', async () => {
     const onchange = vi.fn();
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.search = 'racer';
     view.filters.brands = ['Brand'];
     view.filters.ranges['energy-return-heel'] = { max: 80 };
@@ -172,7 +172,7 @@ describe('FilterSidebar filter set management', () => {
 
   it('keeps a cleared non-curated filter so its row survives editing', async () => {
     const onchange = vi.fn();
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.ranges['stiffness'] = { min: 5 };
     render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
 
@@ -182,7 +182,7 @@ describe('FilterSidebar filter set management', () => {
 
   it('drops a curated range from state when its bounds are cleared', async () => {
     const onchange = vi.fn();
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.ranges['heel-stack'] = { min: 36 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
@@ -209,14 +209,14 @@ describe('FilterSidebar metric entries', () => {
     expect(screen.getByRole('group', { name: /Price/ })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /^Score/ })).not.toBeInTheDocument();
 
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.ranges['score'] = { min: 80 };
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByRole('group', { name: /^Score/ })).toBeInTheDocument();
   });
   it('choosing a generation releases the range and column its sibling held', async () => {
     const onchange = vi.fn();
-    const view = defaultView();
+    const view = defaultView('heel');
     view.filters.ranges['midsole-softness-22'] = { min: 30 };
     view.columns = ['midsole-softness-22', 'score'];
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
@@ -230,7 +230,7 @@ describe('FilterSidebar metric entries', () => {
     expect(next.filters.ranges['midsole-softness']).toEqual({});
   });
   it('shows the chosen generation rather than the current one once it is chosen', () => {
-    const view = defaultView();
+    const view = defaultView('heel');
     view.generations['midsole-softness-22'] = 'midsole-softness';
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByRole('group', { name: /Midsole softness — original/ })).toBeInTheDocument();

@@ -37,7 +37,7 @@
   // Three preset applications over the fleet, and only when the band is on screen — $derived is
   // pull-based, so a collapsed band computes nothing.
   const presetCounts = $derived(new Map(PRESETS.map((p) =>
-    [p.id, applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx).filters, idx).visible.length])));
+    [p.id, applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, view.strike).filters, idx).visible.length])));
 
   function setView(v: ViewState) {
     view = v;
@@ -51,7 +51,7 @@
   if (initial.restored) setView(initial.view);
 
   function onPreset(id: string) {
-    setView(applyPreset(id, data.shoes, idx));
+    setView(applyPreset(id, data.shoes, idx, view.strike));
   }
   function onShowMissing() {
     const next = structuredClone($state.snapshot(view)) as ViewState;

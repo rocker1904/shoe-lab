@@ -7,7 +7,7 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   // a bare first visit opens on the band, so this is a story card rather than a chip
   await expect(page.getByTestId('entry-band')).toBeVisible();
   await page.getByRole('button', { name: 'Easy' }).click();
-  await expect(page.getByText('1 of 5 shoes')).toBeVisible();
+  await expect(page.getByText('2 of 5 shoes')).toBeVisible();
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
   await expect(page.getByTestId('entry-band')).toHaveCount(0);
   await expect(page.getByRole('row').filter({ hasText: 'cushy' })).toBeVisible();
@@ -33,13 +33,13 @@ test('opens on the entry band and resumes the previous session across a reload',
   await expect(page.getByRole('button', { name: 'Browse all 5 shoes' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Easy' }).click();
-  await expect(page.getByText('1 of 5 shoes')).toBeVisible();
+  await expect(page.getByText('2 of 5 shoes')).toBeVisible();
   await expect(page.getByTestId('entry-band')).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Presets' })).toBeVisible();
 
   // the only proof persistence works, because it spans a real page load
   await page.goto('/');
-  await expect(page.getByText('1 of 5 shoes')).toBeVisible();
+  await expect(page.getByText('2 of 5 shoes')).toBeVisible();
   await expect(page.getByTestId('entry-band')).toHaveCount(0);
   // and the restored view reaches the URL, so copying the link shares what is on screen
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
