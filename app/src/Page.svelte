@@ -89,14 +89,17 @@
                 onchange={(cols) => setView({ ...($state.snapshot(view) as ViewState), columns: cols })} />
 </div>
 
+<!-- Outside .layout so it precedes the sidebar in the tab order. The band is the default path
+     into the tool; inside .content a keyboard user reaches it only after every filter control. -->
+{#if atDefault}
+  <EntryBand counts={presetCounts} total={data.shoes.length} onapply={onPreset} />
+{/if}
+
 <div class="layout" class:show-filters={showFilters}>
   <div class="sidebar" id="filter-sidebar">
     <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>
   <div class="content">
-    {#if atDefault}
-      <EntryBand counts={presetCounts} total={data.shoes.length} onapply={onPreset} />
-    {/if}
     <Receipt shown={visibleSorted.length} total={filtered.considered.length}
              outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />

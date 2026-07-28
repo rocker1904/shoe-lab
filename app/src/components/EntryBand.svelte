@@ -20,7 +20,8 @@
     // a stored dismissal flag the design rules out. Do not "fix" this into a filter.
     const table = document.getElementById(TABLE_ANCHOR_ID);
     table?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    table?.focus();
+    // preventScroll or focus() jumps instantly and cancels the smooth scroll above.
+    table?.focus({ preventScroll: true });
   }
 </script>
 

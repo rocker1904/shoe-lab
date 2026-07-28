@@ -51,6 +51,17 @@ describe('presets', () => {
       expect(applyPreset(p.id, FLEET, idx).columns).not.toEqual(DEFAULT_COLUMNS);
     }
   });
+  // Without this, dropping a key from a column set leaves a story sorted or filtered by a
+  // number the table never shows, and every other assertion here still passes.
+  it('shows every column it sorts or filters by', () => {
+    for (const p of PRESETS) {
+      const v = applyPreset(p.id, FLEET, idx);
+      expect(v.columns, `${p.id} sorts by a hidden column`).toContain(v.sort.key);
+      for (const key of Object.keys(v.filters.ranges)) {
+        expect(v.columns, `${p.id} bounds ${key} without showing it`).toContain(key);
+      }
+    }
+  });
   it('keeps a toebox column on Easy and leaves it off the fast stories', () => {
     expect(applyPreset('easy', FLEET, idx).columns).toContain('toebox-width-widest-part');
     expect(applyPreset('tempo', FLEET, idx).columns).not.toContain('toebox-width-widest-part');

@@ -241,9 +241,15 @@ carrying its live count — `Page.svelte` applies every preset and runs
 `applyFilters` to get them, which is three passes over a dataset already in
 memory. The band is shown when `isDefaultView(view)` and the chip row replaces
 it otherwise, so the collapse is **derived from view state and never stored**:
-a link carrying filters opens collapsed, a bare link opens expanded, and
-clearing every filter re-opens it. Touching a filter at all collapses it, empty
-range row included.
+a link carrying filters opens collapsed and a bare link opens expanded.
+Touching a filter at all collapses it, empty range row included.
+
+**Reset filters does not re-open the band**, because a preset sets columns and
+sort as well as filters and the reset button clears only filters. That follows
+from the rule rather than contradicting it — the view genuinely is not the
+default any more — but it means the reset button no longer returns the table to
+its default shape, which it did before presets carried columns. The chip row
+stays available for re-choosing a story.
 
 **Browse all** changes no state, and that is not an oversight. The default view
 already shows every shoe, so there is nothing to apply; and collapsing the band
