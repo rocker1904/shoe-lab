@@ -14,6 +14,7 @@
   import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
   import BrandFilter from './BrandFilter.svelte';
+  import DiscontinuedFilter from './DiscontinuedFilter.svelte';
   import MetricRow from './MetricRow.svelte';
   import PlateFilter from './PlateFilter.svelte';
   import RangeFilter from './RangeFilter.svelte';
@@ -151,8 +152,8 @@
   </section>
 
   <section>
-    <label class="disc"><input type="checkbox" checked={view.filters.hideDiscontinued ?? false}
-      onchange={(e) => patch((v) => { v.filters.hideDiscontinued = e.currentTarget.checked || undefined; })} /> Hide discontinued</label>
+    <h3>Discontinued</h3>
+    <DiscontinuedFilter value={view.filters.discontinued} onchange={(d) => patch((v) => { v.filters.discontinued = d; })} />
   </section>
 
   {#each shown as e (keysOf(e)[0])}
@@ -189,5 +190,4 @@
   .chips button { padding: 0.15rem 0.6rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-dim); cursor: pointer; }
   .metric { display: flex; flex-direction: column; gap: 0.3rem; }
   .reset { align-self: flex-start; padding: 0.3rem 0.8rem; cursor: pointer; }
-  .disc { font-size: 0.85rem; }
 </style>

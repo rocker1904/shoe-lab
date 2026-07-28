@@ -14,7 +14,7 @@ describe('urlstate', () => {
     const v: ViewState = {
       filters: {
         ranges: { 'heel-stack': { min: 36 }, msrpGbp: { max: 200 }, weight: { min: 200, max: 250 } },
-        plate: ['none'], releasedAfter: '2024-07-26', brands: ['Nike', 'New Balance'], search: 'peg', hideDiscontinued: true,
+        plate: ['none'], releasedAfter: '2024-07-26', brands: ['Nike', 'New Balance'], search: 'peg', discontinued: 'hide',
       },
       sort: { key: 'energy-return-heel', dir: 'desc' },
       columns: ['score', 'heel-stack'],
@@ -146,8 +146,18 @@ describe('urlstate hostile input', () => {
     expect(parseView('sort=-', idx).sort).toEqual(defaultView().sort);
     expect(parseView('sort=', idx).sort).toEqual(defaultView().sort);
   });
-  it.each(['nodisc=0', 'nodisc=true', 'nodisc=', 'brands=', 'brands=,,,', 'q=', 'after=26-07-2024', 'plate=NONE'])(
+  it.each(['disc=0', 'disc=true', 'disc=', 'disc=HIDE', 'brands=', 'brands=,,,', 'q=', 'after=26-07-2024', 'plate=NONE'])(
     'ignores %s', (qs) => { expect(parseView(qs, idx)).toEqual(defaultView()); });
+  it.each(['hide', 'only'] as const)('round-trips disc=%s', (value) => {
+    const v = defaultView();
+    v.filters.discontinued = value;
+    expect(serializeView(v)).toBe(`disc=${value}`);
+    expect(parseView(serializeView(v), idx).filters.discontinued).toBe(value);
+  });
+  // The boolean this replaced could only ever hide; a stale link carrying it is not half-honoured.
+  it('ignores the retired nodisc key', () => {
+    expect(parseView('nodisc=1', idx)).toEqual(defaultView());
+  });
   it('filters, dedupes and falls back on column lists', () => {
     // non-numeric tests are legitimate columns even though they are not rangeable
     expect(parseView('cols=score,score,bogus,tongue-gusset-type,plate', idx).columns)
@@ -236,7 +246,7 @@ describe('isDefaultView', () => {
     search: (f) => { f.search = 'nike'; },
     brands: (f) => { f.brands = ['ASICS']; },
     releasedAfter: (f) => { f.releasedAfter = '2024-01-01'; },
-    hideDiscontinued: (f) => { f.hideDiscontinued = true; },
+    discontinued: (f) => { f.discontinued = 'only'; },
     showMissing: (f) => { f.showMissing = true; },
   };
 

@@ -9,7 +9,8 @@ export interface FilterState {
   releasedAfter?: string;
   brands?: string[];
   search?: string;
-  hideDiscontinued?: boolean;
+  /** Absent means both, which a boolean could not express (docs/app.md §Filters). */
+  discontinued?: 'hide' | 'only';
   /** Admit shoes with no reading for an active range rather than hiding them. Lives here because
    *  `applyFilters` receives a FilterState and nothing else (docs/app.md §Filters). */
   showMissing?: boolean;
@@ -26,7 +27,7 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
   const search = f.search?.toLowerCase();
   const active = Object.entries(f.ranges).filter(([, b]) => b.min !== undefined || b.max !== undefined);
   outer: for (const s of shoes) {
-    if (f.hideDiscontinued && s.discontinued) continue;
+    if (f.discontinued && s.discontinued !== (f.discontinued === 'only')) continue;
     if (search && !s.name.toLowerCase().includes(search)) continue;
     if (f.brands?.length && !f.brands.includes(s.brand ?? '')) continue;
     if (f.plate?.length && !f.plate.includes(s.plate)) continue;

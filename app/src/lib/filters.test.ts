@@ -30,7 +30,7 @@ describe('applyFilters', () => {
   it('brand, search, discontinued filters', () => {
     expect(slugs(applyFilters(FLEET, { ranges: {}, brands: ['Other'] }, idx))).toEqual(['oldie']);
     expect(slugs(applyFilters(FLEET, { ranges: {}, search: 'RAC' }, idx))).toEqual(['racer']);
-    expect(slugs(applyFilters(FLEET, { ranges: {}, hideDiscontinued: true }, idx))).not.toContain('oldie');
+    expect(slugs(applyFilters(FLEET, { ranges: {}, discontinued: 'hide' }, idx))).not.toContain('oldie');
   });
   it('filters combine with AND semantics', () => {
     const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 35 } }, plate: ['none'], releasedAfter: '2025-01-01' }, idx);
@@ -93,6 +93,24 @@ describe('applyFilters edge cases', () => {
   });
 });
 
+describe('discontinued is three-valued', () => {
+  it('hide excludes every discontinued shoe', () => {
+    const r = applyFilters(FLEET, { ranges: {}, discontinued: 'hide' }, idx);
+    expect(r.visible.length).toBe(FLEET.length - 1);
+    expect(r.visible.every((s) => !s.discontinued)).toBe(true);
+  });
+  it('only returns exactly the discontinued shoes', () => {
+    const r = applyFilters(FLEET, { ranges: {}, discontinued: 'only' }, idx);
+    expect(slugs(r)).toEqual(['oldie']);                  // non-empty, so every() below is not vacuous
+    expect(r.visible.every((s) => s.discontinued)).toBe(true);
+  });
+  it('absent returns both', () => {
+    const r = applyFilters(FLEET, { ranges: {} }, idx);
+    expect(r.visible.some((s) => s.discontinued)).toBe(true);
+    expect(r.visible.some((s) => !s.discontinued)).toBe(true);
+  });
+});
+
 describe('plate as a set', () => {
   it('keeps only the selected plate values', () => {
     const r = applyFilters(FLEET, { ranges: {}, plate: ['none', 'plated-other'] }, idx);
@@ -128,7 +146,7 @@ describe('applyFilters accounting', () => {
       { ranges: { 'heel-stack': { min: 36 } } },
       { ranges: { 'heel-stack': { min: 36 }, score: { max: 90 } } },
       { ranges: { 'heel-stack': { min: 999 } }, plate: ['carbon'] },
-      { ranges: {}, search: 'x', hideDiscontinued: true },
+      { ranges: {}, search: 'x', discontinued: 'hide' },
     ];
     for (const f of states) {
       const r = applyFilters(FLEET, f, idx);

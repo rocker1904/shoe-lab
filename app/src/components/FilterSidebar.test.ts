@@ -107,17 +107,19 @@ describe('FilterSidebar text and toggle controls', () => {
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
 
-  it('emits hide-discontinued as true, and undefined once unchecked', async () => {
+  it('emits the discontinued choice, and undefined for Any', async () => {
     const onchange = setup();
-    await fireEvent.click(screen.getByLabelText('Hide discontinued'));
-    expect(onchange.mock.lastCall![0].filters.hideDiscontinued).toBe(true);
+    expect(screen.getByRole('radio', { name: 'Any' })).toBeChecked();
+    await fireEvent.click(screen.getByRole('radio', { name: 'Only discontinued' }));
+    expect(onchange.mock.lastCall![0].filters.discontinued).toBe('only');
 
-    const checked = defaultView();
-    checked.filters.hideDiscontinued = true;
+    const chosen = defaultView();
+    chosen.filters.discontinued = 'hide';
     const off = vi.fn();
-    render(FilterSidebar, { props: { data, view: checked, onchange: off, population: FLEET } });
-    await fireEvent.click(screen.getAllByLabelText('Hide discontinued').at(-1)!);
-    expect(off.mock.lastCall![0].filters.hideDiscontinued).toBeUndefined();
+    render(FilterSidebar, { props: { data, view: chosen, onchange: off, population: FLEET } });
+    expect(screen.getAllByRole('radio', { name: 'Hide discontinued' }).at(-1)!).toBeChecked();
+    await fireEvent.click(screen.getAllByRole('radio', { name: 'Any' }).at(-1)!);
+    expect(off.mock.lastCall![0].filters.discontinued).toBeUndefined();
     expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
 });

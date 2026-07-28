@@ -79,7 +79,7 @@ boundary, and needs the decision above.
 
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
-`plate` and `brands` (comma-joined), `after`, `q`, `nodisc=1`, `missing=1`,
+`plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
 `sort` (`-` prefix means descending), `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
@@ -89,7 +89,7 @@ default and never appears.
 cannot vouch for, always falling back to the default rather than throwing:
 range and sort keys must name a numeric test or a numeric shoe field, a
 malformed bound voids that whole range (dropping one side would silently widen
-it), `after` is pattern-checked, `plate` keeps only allowlisted members and is
+it), `after` and `disc` are pattern-checked, `plate` keeps only allowlisted members and is
 deduped into declared order, an all-separator `brands` or `plate` stays absent
 instead of becoming an empty array, and `cols` is deduped and filtered against
 the column allowlist. A `gen.` choice survives only when its key names
@@ -115,6 +115,10 @@ plus any entry with a key already active, so an active filter is always visible
 and clearable; a cleared curated slider drops out of state entirely, a cleared
 extra row keeps an empty entry so its row survives. Each row is titled by its
 `MetricRow` rather than by the fieldset legend, so the name is stated once.
+
+Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
+boolean could only ever hide, and "only the last-generation models" is half
+the value strategy in docs/shoe-stories.md.
 
 `applyFilters` accounts for every shoe it drops: `considered` is the
 population surviving the non-range filters alone, and

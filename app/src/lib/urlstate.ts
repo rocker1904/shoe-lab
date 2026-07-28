@@ -91,7 +91,7 @@ export function serializeView(v: ViewState): string {
   if (v.filters.releasedAfter) p.set('after', v.filters.releasedAfter);
   if (v.filters.brands?.length) p.set('brands', v.filters.brands.join(','));
   if (v.filters.search) p.set('q', v.filters.search);
-  if (v.filters.hideDiscontinued) p.set('nodisc', '1');
+  if (v.filters.discontinued) p.set('disc', v.filters.discontinued);
   if (v.filters.showMissing) p.set('missing', '1');
   if (v.sort.key !== DEFAULT_SORT.key || v.sort.dir !== DEFAULT_SORT.dir) {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
@@ -142,8 +142,8 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       if (brands.length) v.filters.brands = brands;
     } else if (key === 'q' && raw) {
       v.filters.search = raw;
-    } else if (key === 'nodisc' && raw === '1') {
-      v.filters.hideDiscontinued = true;
+    } else if (key === 'disc' && (raw === 'hide' || raw === 'only')) {
+      v.filters.discontinued = raw;
     } else if (key === 'missing' && raw === '1') {
       v.filters.showMissing = true;
     } else if (key === 'sort') {
