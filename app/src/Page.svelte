@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import type { ShoesFile } from '../../shared/types.js';
   import ColumnPicker from './components/ColumnPicker.svelte';
+  import EntryBand, { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
   import FilterSidebar from './components/FilterSidebar.svelte';
   import Header from './components/Header.svelte';
   import PresetChips from './components/PresetChips.svelte';
@@ -10,27 +11,45 @@
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
   import { applyFilters } from './lib/filters';
-  import { applyPreset } from './lib/presets';
+  import { readStoredView, writeStoredView } from './lib/persist';
+  import { applyPreset, PRESETS } from './lib/presets';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
-  import { parseView, serializeView, type ViewState } from './lib/urlstate';
+  import { isDefaultView, parseView, serializeView, type ViewState } from './lib/urlstate';
 
   let { data }: { data: ShoesFile } = $props();
 
   const idx = $derived(indexTests(data.tests));
   // Parsed once; from here the view is the source of truth and the URL is write-only
-  // (docs/app.md §View and URL ownership).
-  let view = $state<ViewState>(untrack(() => parseView(location.search.replace(/^\?/, ''), indexTests(data.tests))));
+  // (docs/app.md §View and URL ownership). A shared link always beats a previous session, so the
+  // query string wins outright and storage is only consulted when there is none.
+  const initial = untrack(() => {
+    const qs = location.search.replace(/^\?/, '');
+    const stored = qs ? null : readStoredView();
+    return { view: parseView(qs || stored || '', indexTests(data.tests)), restored: stored !== null };
+  });
+  let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx));
+  const atDefault = $derived(isDefaultView($state.snapshot(view) as ViewState));
+  // Three preset applications over the fleet, and only when the band is on screen — $derived is
+  // pull-based, so a collapsed band computes nothing.
+  const presetCounts = $derived(new Map(PRESETS.map((p) =>
+    [p.id, applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx).filters, idx).visible.length])));
 
   function setView(v: ViewState) {
     view = v;
     const qs = serializeView(v);
     history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+    writeStoredView(qs);
   }
+  // A view restored from storage has to reach the URL, or a returning visitor sees a filtered
+  // table behind a bare URL and copying the link shares the default view instead. Routed through
+  // the one existing write path rather than adding a second URL write site.
+  if (initial.restored) setView(initial.view);
+
   function onPreset(id: string) {
     setView(applyPreset(id, data.shoes, idx));
   }
@@ -63,7 +82,7 @@
 <div class="toolbar">
   <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
           onclick={() => (showFilters = !showFilters)}>Filters</button>
-  <PresetChips onapply={onPreset} />
+  {#if !atDefault}<PresetChips onapply={onPreset} />{/if}
   <span class="spacer"></span>
   <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
                 population={filtered.considered} {idx} generations={view.generations}
@@ -75,10 +94,16 @@
     <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>
   <div class="content">
+    {#if atDefault}
+      <EntryBand counts={presetCounts} total={data.shoes.length} onapply={onPreset} />
+    {/if}
     <Receipt shown={visibleSorted.length} total={filtered.considered.length}
              outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
-    <ShoeTable shoes={visibleSorted} {data} {view} onchange={setView} />
+    <!-- tabindex so Browse all can move focus here: .focus() on a plain container is a no-op. -->
+    <div id={TABLE_ANCHOR_ID} tabindex="-1">
+      <ShoeTable shoes={visibleSorted} {data} {view} onchange={setView} />
+    </div>
     {#if visibleSorted.length === 0}
       <!-- The table still renders: its headers keep the sort controls reachable. -->
       <p class="empty">No shoes match these filters.</p>

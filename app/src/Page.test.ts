@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from './Page.svelte';
+import { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
+import { VIEW_STORAGE_KEY } from './lib/persist';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
@@ -38,10 +40,14 @@ beforeEach(() => {
   history.replaceState(null, '', '/');
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  // jsdom implements no layout, so Element.prototype has no scrollIntoView and Browse all would
+  // throw. Planted rather than guarded at the call site.
+  Element.prototype.scrollIntoView = vi.fn();
 });
 afterEach(() => {
   restoreUrls?.();
   restoreUrls = null;
+  delete (Element.prototype as Partial<Element>).scrollIntoView;
   vi.restoreAllMocks();
 });
 
@@ -59,7 +65,8 @@ describe('Page', () => {
   });
   it('applying a preset filters the table and updates the URL', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: 'Easy' }));
+    // on a default view the band renders and PresetChips does not, so the card carries the description too
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument(); // only 'cushy' passes on fixture fleet
     expect(location.search).toContain('plate=not-carbon');
     expect(location.search).toContain('r.heel-stack=36%7E');
@@ -163,5 +170,89 @@ describe('Page', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+});
+
+const band = () => screen.queryByTestId('entry-band');
+const chips = () => screen.queryByRole('group', { name: 'Presets' });
+
+describe('Page entry band', () => {
+  it('opens on the band, with the live count of each story', () => {
+    render(Page, { props: { data } });
+    expect(band()).toBeInTheDocument();
+    expect(chips()).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('1 shoe');
+    expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2 shoes');
+    expect(screen.getByRole('button', { name: /Browse all/ })).toHaveTextContent('5 shoes');
+  });
+  it('collapses to the chip row once a story is applied', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    expect(band()).not.toBeInTheDocument();
+    expect(chips()).toBeInTheDocument();
+  });
+  it('collapses when a filter is added even though nothing is bounded yet', async () => {
+    // the case isDefaultView exists for: an empty range row is view state that serialises to nothing
+    render(Page, { props: { data: dataPlus } });
+    expect(band()).toBeInTheDocument();
+    await fireEvent.change(screen.getByLabelText('Add filter'), { target: { value: 'stiffness' } });
+    expect(location.search).toBe('');
+    expect(band()).not.toBeInTheDocument();
+    expect(chips()).toBeInTheDocument();
+  });
+  it('opens collapsed when the link carries filters', () => {
+    history.replaceState(null, '', '/?plate=carbon');
+    render(Page, { props: { data } });
+    expect(band()).not.toBeInTheDocument();
+    expect(chips()).toBeInTheDocument();
+  });
+  it('Browse all leaves the view exactly as it was', async () => {
+    render(Page, { props: { data } });
+    const rows = screen.getAllByRole('row').length;
+    await fireEvent.click(screen.getByRole('button', { name: /Browse all/ }));
+    expect(location.search).toBe('');
+    expect(screen.getAllByRole('row').length).toBe(rows);
+    // deliberately does not collapse: the collapse is derived from view state, which is unchanged
+    expect(band()).toBeInTheDocument();
+    expect(document.getElementById(TABLE_ANCHOR_ID)).toBe(document.activeElement);
+  });
+});
+
+describe('Page persistence', () => {
+  it('lets a shared link beat a previous session', () => {
+    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=plated'); // would show 2 shoes
+    history.replaceState(null, '', '/?plate=carbon');
+    render(Page, { props: { data } });
+    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    expect(location.search).toContain('plate=carbon');
+  });
+  it('restores a stored view on a bare URL and writes it back to the URL', () => {
+    // without the write-back a returning visitor sees a filtered table behind a bare URL, and
+    // copying the link shares the default view instead of what is on screen
+    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon');
+    render(Page, { props: { data } });
+    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    expect(location.search).toContain('plate=carbon');
+    expect(band()).not.toBeInTheDocument();
+  });
+  it('stores the view on every change', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Carbon' }));
+    expect(localStorage.getItem(VIEW_STORAGE_KEY)).toContain('plate=carbon');
+  });
+  it('opens at defaults when the stored value is under another schema version', () => {
+    localStorage.setItem(VIEW_STORAGE_KEY.replace(/\d+$/, (n) => String(Number(n) - 1)), 'plate=carbon');
+    render(Page, { props: { data } });
+    expect(screen.getByText(/5 of 5 shoes/)).toBeInTheDocument();
+    expect(location.search).toBe('');
+    expect(band()).toBeInTheDocument();
+  });
+  it('opens normally when storage is blocked in both directions', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    render(Page, { props: { data } });
+    expect(band()).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
   });
 });

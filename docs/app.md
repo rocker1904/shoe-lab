@@ -11,7 +11,15 @@ components. Dataset shape and field semantics are docs/scraping.md.
 `Page.svelte` holds the whole view — filters, sort, columns — as one local
 `$state` object. The URL is **write-only**: `parseView` runs exactly once, at
 init, inside `untrack`; every change goes through `setView`, which sets the
-state and then `history.replaceState`s the serialised form.
+state, `history.replaceState`s the serialised form, and stores it.
+
+Init takes the first of: a query string in the URL, a stored view, the
+defaults. A shared link must always beat a previous session, so the query
+string wins outright and storage is only read when there is none. A view
+restored from storage is passed straight back through `setView` once, which is
+what puts it in the URL — otherwise a returning visitor would see a filtered
+table behind a bare URL and copying the link would share the default view.
+That reuses the single write path rather than adding a second write site.
 
 The view is never re-derived from the URL. Not a shortcut — a correctness
 requirement: state that does not serialise would be silently dropped on the
@@ -227,6 +235,21 @@ A preset must never bound a metric whose coverage over its own `considered`
 population would trip the sparse warning (docs/app.md §Coverage) — a preset
 that recommends against itself is self-inflicted. `presets.test.ts` asserts it
 in both directions.
+
+`EntryBand.svelte` offers the presets as cards above the table on arrival, each
+carrying its live count — `Page.svelte` applies every preset and runs
+`applyFilters` to get them, which is three passes over a dataset already in
+memory. The band is shown when `isDefaultView(view)` and the chip row replaces
+it otherwise, so the collapse is **derived from view state and never stored**:
+a link carrying filters opens collapsed, a bare link opens expanded, and
+clearing every filter re-opens it. Touching a filter at all collapses it, empty
+range row included.
+
+**Browse all** changes no state, and that is not an oversight. The default view
+already shows every shoe, so there is nothing to apply; and collapsing the band
+from it would need the stored dismissal flag the derived rule exists to avoid.
+It moves focus to the table and scrolls it into view, and it is styled as a
+peer of the story cards rather than as a lesser option.
 
 ## Theming
 
