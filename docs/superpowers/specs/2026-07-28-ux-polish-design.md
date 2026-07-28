@@ -21,9 +21,18 @@ problem the polish item exposed and because they touch the same files:
 - **Leave-one-out relax counts** (§7.3) — new computation over `applyFilters`.
 - **Metric direction as a declared property** (§5) — new data, and a correctness fix:
   the percentile tint currently points the wrong way for several columns.
+- **The entry band becomes a setup strip** (§6.3) — a replaced component and a changed
+  model of how a session starts, not a restyled one.
+- **A second table rendering below 700px** (§4.2) — the phone stops being a narrow
+  desktop.
 
-Everything else is presentation. If the branch needs cutting, those three are the
-seams.
+Everything else is presentation. If the branch needs cutting, those are the seams.
+
+**On method.** The responsive behaviour in §6.4 and the mobile table in §4.2 were
+settled by rendering them in a real browser at fixed widths and looking, not by
+reasoning about CSS. That found three layout bugs and one wash-density problem that
+were invisible in the written design. Anything in this spec described as "verified by
+rendering" should be re-verified the same way rather than trusted.
 
 ## 2. What is out of scope
 
@@ -91,7 +100,7 @@ The doc must state which obligation governs which kind of mark:
 |---|---|
 | spacing | `--s1` 0.25rem, `--s2` 0.5rem, `--s3` 0.75rem, `--s4` 1rem, `--s5` 1.5rem, `--s6` 2rem |
 | radius | `--r-sm` 4px (inputs, small buttons), `--r-md` 8px (panels, cards), `--r-full` 999px (pills, segmented controls) |
-| type | `--t-xs` 0.7rem (units, sub-labels), `--t-sm` 0.78rem (secondary), `--t-md` 0.85rem (cells, controls), `--t-lg` 1.05rem (card titles), `--t-xl` 1.25rem (h1) |
+| type | `--t-xs` 0.75rem (units, sub-labels), `--t-sm` 0.83rem (secondary), `--t-md` 0.92rem (cells, controls), `--t-lg` 1.05rem (card titles), `--t-xl` 1.2rem (h1) |
 | elevation | `--shadow-sticky` (pinned chrome only), `--shadow-dialog` |
 
 Today the app uses radii of 3/4/6/8/10/999px and nine distinct font sizes between
@@ -101,6 +110,13 @@ in the same branch rather than after it, or every file is edited twice.
 
 Elevation is deliberately thin: with a flat table surface there is nothing to raise
 except the pinned chrome and the Add-filter dialog.
+
+The type steps were chosen by rendering the whole surface at three candidate scales
+and comparing. A tighter scale was rejected because it shrank the table from 0.90 to
+0.88rem — the app's primary reading surface, reduced as a side effect of tidying rather
+than as a decision. Every step above lands at or just over today's equivalent, so
+nothing gets smaller, and the smallest text rises from 0.72 to 0.75rem (11.5 → 12px),
+which matters because it is the units line under every column header.
 
 ## 4. The table
 
@@ -119,8 +135,8 @@ except the pinned chrome and the Add-filter dialog.
   and `£` for `msrpGbp`.
 - **Sticky `thead`**, offset below the sticky header and toolbar (§6.2), carrying
   `--shadow-sticky`.
-- **Sticky first column** (shoe name). Ten columns already overflow on a laptop; scroll
-  right today and the row loses its identity. Same mechanism as the header, used twice.
+- **Sticky first column** (shoe name), **above 700px only** — below that the table is a
+  different rendering entirely and has no horizontal scroll to pin against (§4.3).
 - **Chevron affordance** in the name cell. Expandability is signalled by `cursor:
   pointer` alone today.
 - **Multiple rows expand at once.** `expanded` becomes a `Set<string>`.
@@ -130,7 +146,36 @@ except the pinned chrome and the Add-filter dialog.
   chip already carries the message in text, and dimming the row would argue against the
   `discontinued=only` filter, which exists because those shoes are worth finding.
 
-### 4.2 Detail panel
+### 4.2 Below 700px the table is two-tier
+
+A pinned name column with nine columns scrolling behind it is not a design: at 375px it
+spends 40% of the width on the name and shows about two numeric columns. Below 700px the
+same column set renders differently.
+
+- **The shoe name takes its own full-width row**, on a banded background, with the
+  chevron. The numbers get the whole viewport width on the row beneath, in true columns
+  under **one** shared sticky header. Seven columns fit at 375px with no horizontal
+  scrolling and no pinning.
+- **The wash is inset** as a rounded chip inside each cell rather than filling it edge to
+  edge. Full-bleed cells at this density read as a solid band of colour — far louder than
+  the desktop table, where borders and wider cells break the wash up. Verified by
+  rendering both.
+- Rows are double height, so roughly half as many shoes per screen. That is the direct
+  price of keeping the numbers in columns, and it is worth paying: columns are what make
+  this a comparison tool rather than a list.
+
+**This is a rendering difference only.** Same columns, same `ViewState`, same URL — so a
+link shared from a phone opens identically on a desktop. `defaultColumns` must **not**
+vary by viewport (§4.4).
+
+### 4.3 Columns never vary by viewport
+
+Tempting and wrong. `cols` serialises into the URL, so a viewport-dependent default would
+mean a link shared from a phone carried fewer columns than the sender saw, and the URL
+would stop describing the view (docs/app.md §View and URL ownership). Both renderings
+show whatever columns the view holds.
+
+### 4.4 Detail panel
 
 `DetailPanel.svelte`'s image is `width: 220px` with no height, so it shifts layout on
 load. It gets an `aspect-ratio`. **The row image is to be verified in a browser before
@@ -189,7 +234,7 @@ some runners a great deal and to others not at all, and there is no fleet-wide a
 Stack is the borderline call — Easy floors it, so it is directional *inside a story* —
 and is classified neutral because it is not directional outside one.
 
-## 6. Toolbar and entry band
+## 6. How a session starts: setup strip and toolbar
 
 ### 6.1 Two radiogroups, one language
 
@@ -215,18 +260,78 @@ Header + toolbar + `thead` all stay pinned; the receipt scrolls. Filtering is a 
 loop, and every control that changes the view has to be reachable from anywhere in a
 25,000px table.
 
-### 6.3 Entry band
+### 6.3 The entry band becomes a setup strip
 
-- Preset cards gain a visible one-line description, replacing the `title` tooltip that
-  does not exist on mobile. Copy, deliberately cheap because BACKLOG.md item 1 may
-  change the presets and therefore the text:
-  - Easy — *Cushioned, no carbon, affordable*
-  - Tempo — *Light, fast, affordable*
-  - Race — *Lightest, fastest, price no object*
-- **The "Browse all N shoes" card is removed.** `All` in the toolbar now owns that
-  affordance, and two similarly-named controls with different behaviours (one resets,
-  one only scrolls) is worse than one.
+`EntryBand.svelte` is replaced. The band showed three story cards and reappeared
+whenever the view returned to a clean state; the new surface asks **both** questions
+once, then hands over to the bar for good.
+
+**Six equal cards in one row**, two groups divided:
+
+| | cards | each card carries |
+|---|---|---|
+| **Use measurements from the** | Heel · Forefoot | name only, centred |
+| **Built for** | All · Easy · Tempo · Race | name, live count, one-line description |
+
+- **Neither label makes a claim about the person.** "I land on my heel" tells a curious
+  browser they are being mislabelled; "Use measurements from the" describes what the
+  control does to the table, and "Built for" puts the claim on the shoe. This is a
+  deliberate stance and must be recorded, or it will be "fixed" back to something
+  friendlier (§10).
+- **Strike cards carry no count** — strike does not change how many shoes exist. The
+  count slot is reserved rather than removed, so every card is the same height.
+- **A `?` beside each label** opens the fuller explanation: tooltip on desktop, small
+  sheet on mobile. It is the right home for the paragraph neither label should carry.
+- Descriptions: All — *Everything in the catalogue*; Easy — *Cushioned, no carbon,
+  affordable*; Tempo — *Light, fast, affordable*; Race — *Lightest, fastest, price no
+  object*. Deliberately cheap, because BACKLOG.md item 1 may change the presets.
+- The group divider is drawn **in the grid gap**, so it separates without resizing any
+  card. It needs a colour above `--border`, which is invisible against `--chrome`.
+- Card descriptions must align to a common baseline. Bottom-aligning them with
+  `margin-top:auto` leaves them ragged, because the descriptions wrap to different line
+  counts.
+
+**Clicking a pace card collapses the strip** into the toolbar, with a height transition
+that respects `prefers-reduced-motion`. Not "once both are chosen" — that would never
+fire, because the table cannot render without a strike and `defaultView(strike)`
+requires one. Strike is pre-set and changeable either here or in the bar afterwards.
+
+**The strip never returns**, and nothing is lost by that: the bar carries the counts, so
+the only thing the cards held exclusively is the descriptions, which are a
+first-encounter need. This is the split that makes the whole model work — **descriptions
+at first encounter, counts permanently**.
+
+**Visibility needs no new state.** The strip shows when there was no query string *and*
+no stored view — a genuine first arrival, which `Page.svelte` already knows at init. It
+is then ephemeral `$state`, cleared on the first pace click, never serialised and never
+persisted. `docs/app.md §Presets` rules out a *stored* dismissal flag; this does not add
+one, and the property that section actually protects — bare link opens expanded, filtered
+link opens collapsed — is preserved exactly.
+
+- **"Browse all N shoes" is deleted.** `All` owns that affordance now.
 - `TABLE_ANCHOR_ID` survives with a new owner: the skip link (§10).
+
+### 6.4 Toolbar responsive cascade
+
+Three groups: strike, pace, and actions (Filters, Columns). The rule is driven by
+whether all three fit on one line, **not** by phone-versus-desktop — checked by rendering
+at 900, 820, 620, 480 and 375px.
+
+| width | layout |
+|---|---|
+| ≥880px | one line; actions right-aligned via `margin-left:auto` |
+| 560–880px | actions ride up beside strike on line 1; pace takes line 2, shrink-wrapped |
+| <560px | as above, pace stretched to fill the width, pills `flex:1` |
+
+Three implementation notes, each of which was a bug found by looking at it:
+
+- **The divider must be removed** whenever the two groups stop sharing a line, or it
+  wraps with the strike group and dangles after Forefoot.
+- **`flex-basis:100%` belongs on a wrapper, not on the segment.** Put it on the segment
+  and the bordered pill container stretches across the full width with its pills
+  clustered at the left.
+- The middle tier matters: without it, 620px puts the groups on line 1 with a large void
+  and drops actions alone onto line 2.
 
 ## 7. The sidebar
 
@@ -379,6 +484,11 @@ Folded in per BACKLOG.md item 7, because these touch the same components.
   accessible name. The lede's own comment justifies it as protection against being
   misread beside the Clear button — and Clear is being deleted, so the rationale expires
   with it.
+- **Touch targets.** The drag grips (§7.2) are a 16px visible mark; under
+  `hover: none` the *hit area* must reach 44px without the mark growing to match.
+- **`?` help affordances** (§6.3) are buttons, not `title` attributes — `title` is
+  exactly the mechanism this pass is removing from the preset cards, and it does not
+  exist on touch.
 
 ## 11. Also included
 
@@ -402,7 +512,9 @@ change:
 | `docs/app.md §Theming` | the wash rule (§3.1); split the 3:1 obligation by mark type (§3.2); drop `--tint-strength` |
 | `docs/app.md §Coverage` | rewrite around counts and the era finding; delete the `oldestReading` paragraph; redefine `SPARSE_BELOW` as a preset-safety threshold |
 | `docs/app.md §Filters` | replace the accessibility rationale for two inputs with precision-vs-intuition; document drag, snapping, and handle visibility |
-| `docs/app.md §Presets` | delete the "Browse all" paragraph; `Clear` → `All` |
+| `docs/app.md §Presets` | delete the "Browse all" paragraph; `Clear` → `All`; the band becomes a first-arrival setup strip with ephemeral visibility, and why that is not the stored dismissal flag the section rules out |
+| `docs/app.md §Columns and sorting` | the two table renderings and the 700px switch; that columns never vary by viewport |
+| `docs/shoe-stories.md §Which half a story uses` | the interface deliberately does not assert the runner *is* a heel or forefoot striker, though the code still calls it `strike` |
 | `docs/app.md §Columns and sorting` | direction as a declared property; where it lives and why it is declared |
 | `docs/operations.md` | direction-map drift joins the contract-drift runbook |
 | `BACKLOG.md` | items 3 and 7 closed; new items for user-declared direction, method era, OG tags |
@@ -423,8 +535,12 @@ TDD throughout, per CLAUDE.md.
   through the DOM. Bound-at-extreme serialises as absent.
 - **Accessibility** — roving tabindex moves selection on arrow keys within each
   radiogroup; drawer traps focus and closes on Escape.
-- **e2e** — one pass over the sticky chrome and the story segment, since neither is
-  observable in jsdom.
+- **Setup strip** — shows on a bare first arrival; hidden when a query string is present;
+  hidden when a stored view is restored; a pace click collapses it and it does not return
+  after the view is cleared to `All`.
+- **e2e** — the sticky chrome, the story segment, the toolbar cascade at the three tiers,
+  and the 700px table switch. None of these are observable in jsdom, and the cascade in
+  particular produced three separate layout bugs that only rendering revealed.
 
 No live network, ever (CLAUDE.md).
 
@@ -436,12 +552,14 @@ rewritten against the tokens, and doing it in the other order edits each file tw
 1. Tokens and the wash rule (§3) — invisible except for colour, lands everywhere.
 2. Direction map and the tint fix (§5) — correctness, independently verifiable.
 3. Table presentation (§4).
-4. Toolbar and entry band (§6).
-5. Sidebar: rows, coverage, brands (§7.1, §7.4, §8).
-6. Relax counts (§7.3).
-7. Drag-to-bound (§7.2).
-8. Accessibility (§10).
-9. Incidentals (§11).
+4. Toolbar cascade, then the setup strip that collapses into it (§6). The bar has to
+   exist and be right before the thing that hands over to it.
+5. The two-tier mobile table (§4.2) — independent of everything above it.
+6. Sidebar: rows, coverage, brands (§7.1, §7.4, §8).
+7. Relax counts (§7.3).
+8. Drag-to-bound (§7.2).
+9. Accessibility (§10).
+10. Incidentals (§11).
 
 Regenerate `data/` once in the primary checkout **after** landing, never on the branch
 (CLAUDE.md). Nothing here changes the dataset, so this is a formality — but the branch
