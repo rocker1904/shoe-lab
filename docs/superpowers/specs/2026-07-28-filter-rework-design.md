@@ -45,18 +45,60 @@ URL key `disc=hide|only`, replacing `nodisc=1`.
 
 ## 4. Strike preference, and how a side pair renders
 
-A **heel / forefoot** toggle, defaulting to heel, recorded as `strike` in the view and
-serialised. It decides which half of a side pair a preset bounds and sorts by, and which
-half appears in that preset's columns.
+The app currently encodes a preference silently: every default column and every story
+bound reads the heel half, because someone picked heel. A forefoot striker is given a
+heel-shaped view and no way to say otherwise. **Strike stops being an assumption and
+becomes a stated input.**
 
-This is the axis docs/app.md §Columns and sorting already names: a forefoot striker
-cares about the forefoot figure, which is why the halves are colocated rather than
-merged. The toggle turns that from a fact about the data into a control.
+### 4.0 Three layers, and what each one answers
 
-It appears in the entry band beneath the story cards, and in the chip row that replaces
-the band, so it stays reachable after a story is chosen.
+The view is produced by two inputs, not one, and they change on different timescales:
 
-### 4.1 Both halves always show
+| layer | answers | survives |
+|---|---|---|
+| **Runner** — `strike` | who is looking | everything; only the runner changes it |
+| **Story** — Easy / Tempo / Race | what they are shopping for | until another story or a clear |
+| **Filters** | this particular search | until cleared |
+
+The mapping is `(story, strike) → { filters, sort, columns }`, and the runner layer
+applies **whether or not a story is chosen** — a forefoot striker browsing with no story
+still gets forefoot columns. That is the whole point: heel-by-default was the bug.
+
+### 4.1 The baseline moves with the runner
+
+`defaultView` takes the strike. The baseline for a forefoot striker is a forefoot
+baseline, so:
+
+- the entry band shows while the view equals `defaultView(view.strike)` — flipping strike
+  keeps the band open, because the view is still that runner's default. No exception
+  carved into the comparison, and no control that deletes itself when used.
+- **Clear** returns to `defaultView(currentStrike)`, keeping who you are and dropping
+  what you searched for.
+- `applyPreset(story, strike)` is the mapping in §4.0, with nothing special-cased.
+
+Strike serialises like everything else, so a shared link shows the recipient what the
+sender saw, and persists so a returning runner is not asked twice.
+
+The toggle appears beside the story cards and in the chip row that replaces them — it is
+a peer of the story, not a filter, and never lives in the filter sidebar.
+
+### 4.2 A side-swappable bound must be relative
+
+**The two halves are not on the same scale**, so a threshold cannot simply move between
+them. Easy bounds heel stack at 36 mm, which is the 49th percentile and keeps about half
+the fleet; the same 36 on forefoot stack is the **98th** and keeps eleven shoes. Shock
+absorption is as bad — a heel median of 131.6 against a forefoot median of 108.8.
+
+So **every bound that can swap sides is a percentile of that side's own distribution**,
+never a number. "As much stack as most of the fleet" transfers between sides; "36 mm"
+does not. This retires the last absolute threshold in the preset set, and it is the same
+rule docs/shoe-stories.md already states — a bound is market-relative where the claim is
+relative, and "well cushioned" plainly is.
+
+A bound that cannot swap sides — Race's weight ceiling, say — may stay absolute, because
+weight has no sides.
+
+### 4.3 Both halves always show
 
 **A side pair is never mutually exclusive.** Both halves render, always, as two labelled
 rows under one heading:
@@ -79,7 +121,10 @@ exclusive because readings are not comparable across a supersession
 would be worse than either; a side pair reads as one metric measured in two places, a
 method pair as one measurement taken two ways.
 
-### 4.2 Four pairs, two sources
+Note this is orthogonal to §4.1: the strike toggle decides which half a *story* uses;
+both halves stay independently filterable by hand regardless.
+
+### 4.4 Four pairs, two sources
 
 The catalogue links only half of them. `energy-return` and `shock-absorption` carry
 `primaryTestId` / `secondaryTestIds` and a shared `chartLabel`. **Stack**
@@ -129,7 +174,7 @@ Price moves up because it is the one bound every story shares and the one most p
 reach for. Group 7 is the union of what Easy, Tempo and Race bound, so the controls a
 story just set are the ones nearest to hand — without the set changing per story.
 
-Because both halves of a side pair always render (§4.1), group 7 is fixed under the
+Because both halves of a side pair always render (§4.3), group 7 is fixed under the
 strike toggle too: flipping strike changes which row is in use, never which rows exist.
 
 ## 7. Every filter clears, and added filters can leave
@@ -176,11 +221,14 @@ those are.
 5. Applying a story highlights it; editing any bound afterwards removes the highlight;
    Clear returns to the default view and re-opens the band.
 6. The strike toggle changes which half of a side pair a story bounds, sorts by and
-   shows as a column, and changes nothing about which rows the sidebar renders.
-7. All four side pairs — energy return, shock absorption, stack, midsole width — render
+   shows as a column, and changes nothing about which rows the sidebar renders. It also
+   applies with no story chosen, and does not collapse the entry band.
+7. Clearing preserves the strike and drops everything else. No side-swappable bound is
+   an absolute number.
+8. All four side pairs — energy return, shock absorption, stack, midsole width — render
    as one heading with a forefoot row and a heel row, in that order.
-8. The sidebar's filter order is identical whichever story is selected, and whichever
+9. The sidebar's filter order is identical whichever story is selected, and whichever
    strike is chosen.
-9. Every range row clears in one action; every hand-added row can be removed; released-after
+10. Every range row clears in one action; every hand-added row can be removed; released-after
    can be unset.
-10. The add-filter dialog shows coverage as a bar, and is keyboard reachable and dismissible.
+11. The add-filter dialog shows coverage as a bar, and is keyboard reachable and dismissible.
