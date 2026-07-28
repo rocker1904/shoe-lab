@@ -158,6 +158,23 @@ halves beside their heel counterparts. Both halves stay separately checkable
 and separately sortable: a forefoot striker wants the forefoot number, and
 merging them would destroy the distinction.
 
+The four heel/forefoot pairs — stack, energy return, shock absorption, midsole
+width — are **declared** in `SIDE_PAIRS`, because the catalogue links only two
+of them and carries no notion of side at all. The declaration is authoritative
+where it applies: it names the heading, orders the halves forefoot-first, and
+puts `side` on each part. `parts[].label` stays the full test name, so the
+column picker can still tell "Forefoot stack" from "Heel stack". A declared
+pair takes its group from the **heel** half. Pairs are never inferred from a
+slug or a name pattern — `heel-padding-durability` has no forefoot
+counterpart, `forefoot-traction`'s secondary is unpublished, and an upstream
+rename would silently regroup the sidebar.
+
+Agreement with the catalogue is asserted by `lineage.test.ts`, **not** thrown
+at runtime: a pair whose slugs are absent is skipped silently, because neither
+test fixture carries all eight and a throwing validator would take the app
+down with them. When that assertion fires, read
+docs/operations.md §Contract-drift runbook.
+
 A pair offers exactly one generation — the chosen one, current by default. The
 click path enforces that: choosing a generation drops the sibling's range and
 its column in the same `setView` call, matching what `parseView` does to a URL

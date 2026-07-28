@@ -20,6 +20,7 @@ const yearless = metricEntries([
   labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', updateId: 55 }),
   labTest({ id: 55, slug: 'toebox-width-widest-part', name: 'Width / Fit', units: 'mm', previousId: 27 }),
 ])[0]!;
+// A declared side pair: forefoot first, under the declared heading (docs/app.md §Columns and sorting).
 const colocated = metricEntries([
   labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return heel', chartLabel: 'Energy return', secondaryTestIds: [66] }),
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', primaryTestId: 65 }),
@@ -118,8 +119,8 @@ describe('MetricRow colocated', () => {
     expect(screen.getByRole('heading')).toHaveAccessibleName(/Energy return/);
     const parts = screen.getAllByRole('button');
     expect(parts.map((b) => b.getAttribute('aria-label')))
-      .toEqual(['Energy return, Energy return heel', 'Energy return, Energy return forefoot']);
-    return fireEvent.click(parts[1]!).then(() => {
+      .toEqual(['Energy return, Energy return forefoot', 'Energy return, Energy return heel']);
+    return fireEvent.click(parts[0]!).then(() => {
       expect(onchoose).toHaveBeenCalledWith('energy-return-forefoot');
     });
   });

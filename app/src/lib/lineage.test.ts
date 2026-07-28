@@ -1,6 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { generationLabel, metricEntries } from './lineage';
+import { NUMERIC_TEST_TYPES } from './dataset';
+import { generationLabel, metricEntries, SIDE_PAIRS, sideKey, swapSide, type ResolvedMetric } from './lineage';
 import { labTest } from './test-fixtures';
+import type { LabTest } from '../../../shared/types.js';
+
+const colocatedOf = (e: ResolvedMetric) => e as Extract<ResolvedMetric, { kind: 'colocated' }>;
 
 describe('generationLabel', () => {
   it('reads a method year off the slug suffix', () => {
@@ -52,13 +59,14 @@ describe('metricEntries', () => {
     ])).toHaveLength(1);
   });
   it('colocates a primary with its secondaries and takes the primary group', () => {
+    // an unlinked-upstream, undeclared pairing: the catalogue path, which orders primary-first
     const e = metricEntries([
-      labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return heel', groupId: '3', chartLabel: 'Energy return', secondaryTestIds: [66] }),
-      labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', groupId: null, primaryTestId: 65 }),
+      labTest({ id: 60, slug: 'traction-heel', name: 'Traction heel', groupId: '3', chartLabel: 'Traction', secondaryTestIds: [61] }),
+      labTest({ id: 61, slug: 'traction-forefoot', name: 'Traction forefoot', groupId: null, primaryTestId: 60 }),
     ])[0]!;
-    expect(e).toMatchObject({ kind: 'colocated', label: 'Energy return', groupId: '3' });
-    expect((e as Extract<typeof e, { kind: 'colocated' }>).parts.map((p) => p.key))
-      .toEqual(['energy-return-heel', 'energy-return-forefoot']);
+    expect(e).toMatchObject({ kind: 'colocated', label: 'Traction', groupId: '3' });
+    expect(colocatedOf(e).parts.map((p) => p.key)).toEqual(['traction-heel', 'traction-forefoot']);
+    expect(colocatedOf(e).parts.map((p) => p.side)).toEqual([null, null]);
   });
   it('ignores a secondary that is not in the published catalogue', () => {
     // real case: forefoot-traction names #61, which was dropped for having no readings
@@ -96,6 +104,40 @@ describe('metricEntries', () => {
     expect((e[0] as Extract<(typeof e)[number], { kind: 'colocated' }>).parts.map((p) => p.key))
       .toEqual(['er-heel', 'er-fore']);
   });
+  it('emits one colocated entry per declared pair, forefoot first, under the declared label', () => {
+    const e = metricEntries([
+      labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm', groupId: '3' }),
+      labTest({ id: 5, slug: 'forefoot-stack', name: 'Forefoot stack', units: 'mm', groupId: '9' }),
+    ]);
+    expect(e).toHaveLength(1);
+    expect(e[0]).toMatchObject({ kind: 'colocated', label: 'Stack', groupId: '3' }); // the heel half's group
+    expect(colocatedOf(e[0]!).parts.map((p) => p.key)).toEqual(['forefoot-stack', 'heel-stack']);
+    expect(colocatedOf(e[0]!).parts.map((p) => p.side)).toEqual(['forefoot', 'heel']);
+  });
+  it('keeps the full test name on each part, so the column picker can still tell them apart', () => {
+    const e = metricEntries([
+      labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm' }),
+      labTest({ id: 5, slug: 'forefoot-stack', name: 'Forefoot stack', units: 'mm' }),
+    ])[0]!;
+    expect(colocatedOf(e).parts.map((p) => p.label)).toEqual(['Forefoot stack', 'Heel stack']);
+  });
+  it('does not emit a catalogue-linked declared pair twice', () => {
+    const e = metricEntries([
+      labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return heel', type: 'percent', groupId: '3', chartLabel: 'Energy return', secondaryTestIds: [66] }),
+      labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', type: 'percent', primaryTestId: 65 }),
+    ]);
+    expect(e).toHaveLength(1);
+    // the declaration wins over the catalogue on order and label alike
+    expect(colocatedOf(e[0]!).parts.map((p) => p.key)).toEqual(['energy-return-forefoot', 'energy-return-heel']);
+    expect(e[0]!.label).toBe('Energy return');
+  });
+  it('degrades a declared pair with one half absent to a single', () => {
+    const e = metricEntries([labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm' })]);
+    expect(e).toEqual([{ kind: 'single', key: 'heel-stack', label: 'Heel stack', units: 'mm', groupId: null }]);
+  });
+  it('emits nothing for a declared pair whose slugs are both absent', () => {
+    expect(metricEntries([labTest({ id: 24, slug: 'weight', name: 'Weight' })]).map((e) => e.label)).toEqual(['Weight']);
+  });
   it('never lists a test twice across all entries', () => {
     const keys = metricEntries([
       labTest({ id: 11, slug: 'a', name: 'A', updateId: 70 }), labTest({ id: 70, slug: 'a-22', name: 'A', previousId: 11 }),
@@ -104,5 +146,71 @@ describe('metricEntries', () => {
     ]).flatMap((e) => e.kind === 'single' ? [e.key] : e.kind === 'pair' ? [e.current.key, e.retired.key] : e.parts.map((p) => p.key));
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys).toHaveLength(5);
+  });
+});
+
+describe('side pairs', () => {
+  it('resolves each declared label to the slug of the runner\'s side', () => {
+    for (const pair of SIDE_PAIRS) {
+      expect(sideKey(pair.label, 'heel')).toBe(pair.heel);
+      expect(sideKey(pair.label, 'forefoot')).toBe(pair.forefoot);
+    }
+  });
+  it('maps either half onto the requested side and leaves an unpaired slug alone', () => {
+    expect(swapSide('heel-stack', 'forefoot')).toBe('forefoot-stack');
+    expect(swapSide('forefoot-stack', 'heel')).toBe('heel-stack');
+    // not an exchange: a slug already on the requested side stays put
+    expect(swapSide('forefoot-stack', 'forefoot')).toBe('forefoot-stack');
+    expect(swapSide('weight', 'forefoot')).toBe('weight');
+  });
+  it('lists each slug in exactly one pair', () => {
+    const slugs = SIDE_PAIRS.flatMap((p) => [p.forefoot, p.heel]);
+    expect(new Set(slugs).size).toBe(slugs.length);
+    expect(new Set(SIDE_PAIRS.map((p) => p.label)).size).toBe(SIDE_PAIRS.length);
+  });
+});
+
+/**
+ * The declaration is authoritative but must *agree* with the catalogue rather than avoid it.
+ * A test rather than a runtime throw: neither component fixture carries all eight slugs, so a
+ * throwing validator would take down the app and every component test. Read from disk because
+ * `app/tsconfig.json` covers only `src`, `../shared` and `scripts` and leaves `resolveJsonModule`
+ * unset, so importing the JSON will not compile. Resolved from this file rather than from the cwd,
+ * which vitest sets to `app/`, and through `fileURLToPath` because the jsdom environment replaces
+ * the global `URL` with one `readFileSync` rejects. Failure mode:
+ * docs/operations.md §Contract-drift runbook.
+ */
+describe('declared side pairs against the published catalogue', () => {
+  const tests: LabTest[] = JSON.parse(readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8')).tests;
+  const bySlug = new Map(tests.map((t) => [t.slug, t]));
+
+  it('names a numeric test on both sides of every pair', () => {
+    for (const pair of SIDE_PAIRS) {
+      for (const slug of [pair.forefoot, pair.heel]) {
+        const t = bySlug.get(slug);
+        expect(t, `${slug} is not in the catalogue`).toBeDefined();
+        expect(NUMERIC_TEST_TYPES.has(t!.type), `${slug} is not rangeable`).toBe(true);
+      }
+    }
+  });
+  it('agrees with every catalogue link a declared pair carries', () => {
+    for (const pair of SIDE_PAIRS) {
+      const forefoot = bySlug.get(pair.forefoot)!;
+      const heel = bySlug.get(pair.heel)!;
+      // where upstream links the pair it must link these two and nothing else
+      expect(heel.secondaryTestIds.filter((id) => id !== forefoot.id), `${pair.label} heel`).toEqual([]);
+      expect(forefoot.secondaryTestIds, `${pair.label} forefoot`).toEqual([]);
+      expect([null, heel.id]).toContain(forefoot.primaryTestId);
+      expect(heel.primaryTestId).toBeNull();
+    }
+  });
+  it('resolves every declared pair into one entry with both halves, forefoot first', () => {
+    const entries = metricEntries(tests);
+    for (const pair of SIDE_PAIRS) {
+      const found = entries.filter((e) => e.kind === 'colocated' && e.parts.some((p) => p.key === pair.heel));
+      expect(found, `${pair.label} does not resolve to one entry`).toHaveLength(1);
+      expect(colocatedOf(found[0]!).parts.map((p) => p.key)).toEqual([pair.forefoot, pair.heel]);
+    }
   });
 });

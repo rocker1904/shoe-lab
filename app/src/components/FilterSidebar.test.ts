@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import FilterSidebar from './FilterSidebar.svelte';
 import { isoYearsAgo } from '../lib/dataset';
@@ -14,6 +14,10 @@ function setup(view = defaultView()) {
   return onchange;
 }
 
+/** Scoped to its own row: side pairs put several range groups on screen, so an index would drift. */
+const boundOf = (name: RegExp, part: 'min' | 'max' = 'min') =>
+  within(screen.getAllByRole('group', { name }).at(-1)!).getByLabelText(part);
+
 describe('FilterSidebar', () => {
   it('renders curated range filters that exist in the dataset', () => {
     setup();
@@ -24,8 +28,7 @@ describe('FilterSidebar', () => {
   });
   it('emits updated view when a range min changes', async () => {
     const onchange = setup();
-    const min = screen.getAllByLabelText('min')[0]!;
-    await fireEvent.input(min, { target: { value: '36' } });
+    await fireEvent.input(boundOf(/^Heel stack/), { target: { value: '36' } });
     expect(onchange).toHaveBeenCalled();
     const v = onchange.mock.lastCall![0];
     expect(v.filters.ranges['heel-stack']).toEqual({ min: 36 });
@@ -134,7 +137,7 @@ describe('FilterSidebar filter set management', () => {
     const select = screen.getByLabelText('Add filter');
     // curated keys, the option-typed test and both retired generations are all absent
     expect([...select.querySelectorAll('option')].map((o) => o.getAttribute('value')))
-      .toEqual(['', 'stiffness', 'score']);
+      .toEqual(['', 'energy-return-forefoot', 'stiffness', 'score']);
 
     await fireEvent.change(select, { target: { value: 'stiffness' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
@@ -157,7 +160,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.ranges['energy-return-heel'] = { max: 80 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
-    await fireEvent.input(screen.getAllByLabelText('min')[0]!, { target: { value: '36' } });
+    await fireEvent.input(boundOf(/^Heel stack/), { target: { value: '36' } });
     const next = onchange.mock.lastCall![0];
     expect(next.filters).toEqual({
       search: 'racer', brands: ['Brand'],
@@ -173,7 +176,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.ranges['stiffness'] = { min: 5 };
     render(FilterSidebar, { props: { data: dataPlus, view, onchange, population: FLEET } });
 
-    await fireEvent.input(screen.getAllByLabelText('min').at(-1)!, { target: { value: '' } });
+    await fireEvent.input(boundOf(/^Stiffness/), { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({ stiffness: {} });
   });
 
@@ -183,7 +186,7 @@ describe('FilterSidebar filter set management', () => {
     view.filters.ranges['heel-stack'] = { min: 36 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
-    await fireEvent.input(screen.getAllByLabelText('min')[0]!, { target: { value: '' } });
+    await fireEvent.input(boundOf(/^Heel stack/), { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
   });
 });

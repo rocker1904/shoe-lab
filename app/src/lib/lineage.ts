@@ -15,8 +15,47 @@ export type ResolvedMetric =
     }
   | {
       kind: 'colocated'; label: string; groupId: string | null;
-      parts: { key: string; label: string; units: string }[];
+      /** `label` stays the full test name — `side` is additive. The column picker renders `label`,
+       *  and repurposing it would fill the picker with four checkboxes called "Forefoot". */
+      parts: { key: string; label: string; units: string; side: Side | null }[];
     };
+
+/** Which end of the shoe a reading describes, and which end the runner lands on. */
+export type Side = 'heel' | 'forefoot';
+
+/**
+ * Heel/forefoot pairs and the side of each half. The catalogue links only two of these four and
+ * carries no notion of side at all, so the grouping is declared: `heel-padding-durability` has no
+ * forefoot counterpart, `forefoot-traction`'s secondary is unpublished, and an upstream rename
+ * must not silently regroup the sidebar (docs/app.md §Columns and sorting). Agreement with the
+ * catalogue is asserted by `lineage.test.ts` rather than thrown at runtime — neither test fixture
+ * carries all eight slugs, so a throwing validator would take the app down.
+ */
+export const SIDE_PAIRS = [
+  { label: 'Stack', forefoot: 'forefoot-stack', heel: 'heel-stack' },
+  { label: 'Energy return', forefoot: 'energy-return-forefoot', heel: 'energy-return-heel' },
+  { label: 'Shock absorption', forefoot: 'shock-absorption-forefoot', heel: 'shock-absorption-heel' },
+  { label: 'Midsole width', forefoot: 'midsole-width-in-the-forefoot', heel: 'midsole-width-in-the-heel' },
+] as const satisfies readonly { label: string; forefoot: string; heel: string }[];
+
+export type SidePairLabel = (typeof SIDE_PAIRS)[number]['label'];
+
+/** The half of a declared pair that the runner's strike puts in use. */
+export function sideKey(label: SidePairLabel, strike: Side): string {
+  return SIDE_PAIRS.find((p) => p.label === label)![strike];
+}
+
+/**
+ * The half of `slug`'s pair on `strike`'s side, or `slug` itself when it has no sides. Deliberately
+ * *not* an exchange: a view can hold both halves at once, and both must land on the same side.
+ */
+export function swapSide(slug: string, strike: Side): string {
+  const pair = SIDE_PAIRS.find((p) => p.forefoot === slug || p.heel === slug);
+  return pair ? pair[strike] : slug;
+}
+
+const DECLARED_BY_SLUG = new Map((SIDE_PAIRS as readonly { label: string; forefoot: string; heel: string }[])
+  .flatMap((p) => [[p.forefoot, p] as const, [p.heel, p] as const]));
 
 /** RunRepeat suffixes a revised method with its two-digit year. 20–29 only: a bare trailing number is a body part or a size, not a year. */
 const METHOD_YEAR = /-(2\d)$/;
@@ -34,12 +73,31 @@ export function generationLabel(slug: string, fallback: 'current' | 'previous'):
 export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
   const numeric = tests.filter((t) => NUMERIC_TEST_TYPES.has(t.type));
   const byId = new Map(numeric.map((t) => [t.id, t]));
+  const bySlug = new Map(numeric.map((t) => [t.slug, t]));
   const at = (id: number | null): LabTest | undefined => (id === null ? undefined : byId.get(id));
 
   const out: ResolvedMetric[] = [];
   const claimed = new Set<number>();
   for (const t of numeric) {
     if (claimed.has(t.id)) continue;
+
+    // The declaration is authoritative where it applies, so it is consulted before the catalogue's
+    // own links: two of the four pairs are linked upstream and would otherwise be emitted
+    // primary-first, under `chartLabel`, with no side on either half.
+    const declared = DECLARED_BY_SLUG.get(t.slug);
+    const forefoot = declared && bySlug.get(declared.forefoot);
+    const heel = declared && bySlug.get(declared.heel);
+    if (declared && forefoot && heel) {
+      claimed.add(forefoot.id);
+      claimed.add(heel.id);
+      // Neither declared-only pair has a catalogue primary and both halves share a group anyway,
+      // so the heel half names the group.
+      out.push({
+        kind: 'colocated', label: declared.label, groupId: heel.groupId,
+        parts: [sidePart(forefoot, 'forefoot'), sidePart(heel, 'heel')],
+      });
+      continue;
+    }
 
     // Only previousId/updateId settle which reading is current; isNew reports false on both sides
     // of a pair (docs/scraping.md §Test lineage). A reference to an absent test degrades to a single.
@@ -65,7 +123,7 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
       for (const p of parts) claimed.add(p.id);
       out.push({
         kind: 'colocated', label: primary.chartLabel ?? primary.name, groupId: primary.groupId,
-        parts: parts.map((p) => ({ key: p.slug, label: p.name, units: p.units })),
+        parts: parts.map((p) => sidePart(p, null)),
       });
       continue;
     }
@@ -73,6 +131,10 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
     out.push({ kind: 'single', key: t.slug, label: t.name, units: t.units, groupId: t.groupId });
   }
   return out;
+}
+
+function sidePart(t: LabTest, side: Side | null) {
+  return { key: t.slug, label: t.name, units: t.units, side };
 }
 
 /** A dated current method dates what it replaced too: the retired side is simply the original. */

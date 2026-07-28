@@ -99,6 +99,16 @@ An issue therefore means one of two things:
 Then run the matching refresh by hand: drift usually means the last scheduled
 run either failed or wrote nothing.
 
+`check:live` is not the only drift detector. `lineage.test.ts` asserts the
+declared heel/forefoot pairs (docs/app.md §Columns and sorting) against the
+committed `data/shoes.json`, so an upstream **rename or unlink** of one of
+those eight tests turns it red. Expect it on an unrelated branch: the refresh
+workflows run scrape → build → commit and never `verify`, and their pushes use
+`GITHUB_TOKEN`, which triggers no push workflows. So the failure surfaces on
+the next PR touching anything, not on the refresh that caused it — the diff
+under review is not the cause. Fix the declaration to match the new catalogue;
+do not delete the assertion.
+
 ## Deploy
 
 Pages is configured to publish from the workflow (build type: workflow), not
