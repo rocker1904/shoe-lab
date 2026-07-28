@@ -650,7 +650,7 @@ where the controls are.
 
 ### 8.1 What it says
 
-`measured on 378 / 450` on the heading line, **shown only below complete coverage**.
+`378 / 450 measured` on the heading line, **shown only below complete coverage**.
 
 - **Counts, not a percentage.** "84%" of an unstated pool is the complaint; both numbers
   on screen states the denominator instead of assuming it. Filter to last year and it
