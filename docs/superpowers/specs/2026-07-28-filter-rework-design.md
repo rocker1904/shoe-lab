@@ -43,12 +43,11 @@ half of the value strategy in docs/shoe-stories.md. It becomes
 
 URL key `disc=hide|only`, replacing `nodisc=1`.
 
-## 4. Strike preference
+## 4. Strike preference, and how a side pair renders
 
 A **heel / forefoot** toggle, defaulting to heel, recorded as `strike` in the view and
-serialised. It decides which half of a colocated pair a preset bounds and sorts by, and
-which half appears in that preset's columns — `energy-return-heel` against
-`energy-return-forefoot`, and the same for shock absorption.
+serialised. It decides which half of a side pair a preset bounds and sorts by, and which
+half appears in that preset's columns.
 
 This is the axis docs/app.md §Columns and sorting already names: a forefoot striker
 cares about the forefoot figure, which is why the halves are colocated rather than
@@ -56,6 +55,47 @@ merged. The toggle turns that from a fact about the data into a control.
 
 It appears in the entry band beneath the story cards, and in the chip row that replaces
 the band, so it stays reachable after a story is chosen.
+
+### 4.1 Both halves always show
+
+**A side pair is never mutually exclusive.** Both halves render, always, as two labelled
+rows under one heading:
+
+> **Energy return**
+> Forefoot · [histogram]
+> Heel · [histogram]
+
+The heading is the shared name; each row is labelled by its side alone, not by the full
+test name. Order is fixed — forefoot, then heel — and does **not** follow the strike
+toggle, so flipping strike never rearranges the sidebar.
+
+The strike toggle marks which half is **in use** — the one presets bound, sort by and
+show as a column. It does not hide or disable the other, which stays filterable on its
+own at any time.
+
+This is deliberately unlike the method switch on a superseded pair, which *is* mutually
+exclusive because readings are not comparable across a supersession
+(docs/scraping.md §Test lineage). Two controls that look alike but behave differently
+would be worse than either; a side pair reads as one metric measured in two places, a
+method pair as one measurement taken two ways.
+
+### 4.2 Four pairs, two sources
+
+The catalogue links only half of them. `energy-return` and `shock-absorption` carry
+`primaryTestId` / `secondaryTestIds` and a shared `chartLabel`. **Stack**
+(`forefoot-stack`, `heel-stack`) and **midsole width**
+(`midsole-width-in-the-forefoot`, `midsole-width-in-the-heel`) are unlinked upstream
+despite being the same kind of pair.
+
+Catalogue links stay the primary source. A small **declared supplement** in app source
+covers the pairs upstream does not link, giving each its heading and the side of each
+half. It is validated: a declared id that is absent from the catalogue, or that the
+catalogue already links, fails rather than silently duplicating a metric or dropping
+one.
+
+Do not infer pairs from slug or name patterns. `heel-padding-durability` and
+`heel-counter-stiffness` have no forefoot counterpart, `forefoot-traction`'s secondary
+is not published at all, and a rename upstream would silently regroup the sidebar.
 
 ## 5. The entry band shows what is selected
 
@@ -88,6 +128,9 @@ underneath someone comparing two stories:
 Price moves up because it is the one bound every story shares and the one most people
 reach for. Group 7 is the union of what Easy, Tempo and Race bound, so the controls a
 story just set are the ones nearest to hand — without the set changing per story.
+
+Because both halves of a side pair always render (§4.1), group 7 is fixed under the
+strike toggle too: flipping strike changes which row is in use, never which rows exist.
 
 ## 7. Every filter clears, and added filters can leave
 
@@ -132,9 +175,12 @@ those are.
 4. `discontinued=only` returns exactly the discontinued shoes.
 5. Applying a story highlights it; editing any bound afterwards removes the highlight;
    Clear returns to the default view and re-opens the band.
-6. The strike toggle changes which half of a colocated pair a story bounds, sorts by and
-   shows as a column.
-7. The sidebar's filter order is identical whichever story is selected.
-8. Every range row clears in one action; every hand-added row can be removed; released-after
+6. The strike toggle changes which half of a side pair a story bounds, sorts by and
+   shows as a column, and changes nothing about which rows the sidebar renders.
+7. All four side pairs — energy return, shock absorption, stack, midsole width — render
+   as one heading with a forefoot row and a heel row, in that order.
+8. The sidebar's filter order is identical whichever story is selected, and whichever
+   strike is chosen.
+9. Every range row clears in one action; every hand-added row can be removed; released-after
    can be unset.
-9. The add-filter dialog shows coverage as a bar, and is keyboard reachable and dismissible.
+10. The add-filter dialog shows coverage as a bar, and is keyboard reachable and dismissible.
