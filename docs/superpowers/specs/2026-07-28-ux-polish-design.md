@@ -139,7 +139,7 @@ which matters because it is the units line under every column header.
 - **Sticky `thead`**, offset below the sticky header and toolbar (§6.2), carrying
   `--shadow-sticky`.
 - **Sticky first column** (shoe name), **above 700px only** — below that the table is a
-  different rendering entirely and has no horizontal scroll to pin against (§4.3).
+  different rendering entirely and has no horizontal scroll to pin against (§4.2).
 - **Chevron affordance** in the name cell. Expandability is signalled by `cursor:
   pointer` alone today.
 - **Multiple rows expand at once.** `expanded` becomes a `Set<string>`.
@@ -389,8 +389,31 @@ once, then hands over to the bar for good.
   friendlier (§10).
 - **Strike cards carry no count** — strike does not change how many shoes exist. The
   count slot is reserved rather than removed, so every card is the same height.
-- **A `?` beside each label** opens the fuller explanation: tooltip on desktop, small
-  sheet on mobile. It is the right home for the paragraph neither label should carry.
+- **A `?` beside each label** opens the fuller explanation. **One mechanism on every
+  device**: a click-triggered popover, anchored beside the `?` above 700px and a bottom
+  sheet below it. Edge-aware positioning, focus return and Escape — the machinery
+  `AddFilterDialog` already has.
+
+  A hover tooltip was rejected: it is the same mechanism as the `title` attribute this
+  pass removes from the preset cards, and it needs a wholly separate touch path. An
+  inline disclosure was rejected for moving the cards down as you reach for them.
+
+  The copy:
+
+  > **Use measurements from the** — Stack, energy return, shock absorption and midsole
+  > width are each measured twice — once at the heel, once at the forefoot. Pick the end
+  > you want the table and filters to use. Usually that is the end you land on, but
+  > either is fine.
+
+  > **Built for** — Easy, Tempo and Race each set the filters, columns and sorting to
+  > suit that kind of run. All clears them again, and you can change anything at any
+  > point.
+
+  Two things the wording deliberately does **not** do. It never says "session" — that is
+  our word, not a runner's. And it does not contrast these against "labels the shoe comes
+  with": the reader has no idea the data carries editorial labels, so denying it plants
+  the question. The strike paragraph is also the one place the interface can say *either
+  is fine*, which is the assumption the label itself was rewritten to avoid making.
 - Descriptions: All — *Everything in the catalogue*; Easy — *Cushioned, no carbon,
   affordable*; Tempo — *Light, fast, affordable*; Race — *Lightest, fastest, price no
   object*. Deliberately cheap, because BACKLOG.md item 1 may change the presets.
@@ -555,21 +578,55 @@ nominal O(n²). The expensive thing was never the recompute.
 
 ### 7.3 Relax counts
 
-Every active range row shows **`+N`**: the shoes that would return if *this one bound*
-were removed and everything else kept.
+Every **bounded** range row shows **`N excluded`**, right of the number fields: the shoes
+that would return if *this one bound* were removed and everything else kept.
 
 - Leave-one-out, so it is order-independent and conditioned on the rest of the filter
-  set. With a £60 ceiling set, each other filter's count is "of the shoes under £60,
-  how many did this cost me".
+  set. With a £60 ceiling set, each other filter's count is "of the shoes under £60, how
+  many did this cost me".
 - **No ranking and no recommendation.** An earlier design singled out the most
-  restrictive bound; that imposes a priority we cannot know, and a budget is usually
-  the *least* relaxable thing in the set. The number goes next to the control that acts
-  on it and the runner chooses.
-- **The counts do not sum.** Dropping two bounds returns more than the sum of dropping
-  each. Copy is per-filter and must never present a total.
-- Cost: N+1 passes of `applyFilters` over 450 shoes, recomputed as filters change. Cheap,
-  but it is the first thing in the app whose cost grows with filter count, and it should
-  be stated rather than discovered.
+  restrictive bound; that imposes a priority we cannot know, and a budget is usually the
+  *least* relaxable thing in the set. The number goes next to the control that acts on it
+  and the runner chooses.
+- **An unbounded row shows nothing** — there is nothing to relax. **`0 excluded` does
+  show**, because "this filter is doing no work" is worth knowing and its absence would
+  be ambiguous against the unbounded case.
+
+**The numbers are informative, which was not obvious in advance.** Measured against the
+real presets:
+
+| filter set | result | per-bound |
+|---|---|---|
+| Easy | 150 | heel stack **204**, price **22** |
+| Tempo | 54 | energy **74**, weight **74**, price **46** |
+| Race | 39 | energy **50**, weight **19** |
+| price ≤ 180, stack ≥ 36, energy ≥ 60 | 44 | energy **118**, price **52**, stack **37** |
+
+No zeros, no absurdities, and the spread carries meaning: Easy's stack floor does almost
+all the work while its price cap barely binds, and in the last set energy return is by far
+the most restrictive bound — which nothing else on screen would tell you.
+
+**The count must be computed under the current `showMissing`.** A range bound excludes
+shoes with no reading for that metric, so clearing Tempo's energy bound returns 74 — but
+only 54 failed the bound; the other 20 have no energy reading. With `showMissing` on those
+20 are already visible and clearing returns 54. Run the calculation under the live setting
+or the number is simply wrong. This only bites where coverage is incomplete: every
+fully-covered metric splits 100/0.
+
+**One number, not a split.** `54 · 20 no data` keeps the receipt's distinction at the point
+of decision, but the single total is what actually happens when the bound is cleared, and
+prediction is the job. Once cleared, those shoes show a dash in the column, so nothing is
+concealed.
+
+**Do not reuse the receipt's word "outside".** The receipt says "96 outside your bounds";
+borrowing it here would imply the per-row numbers sum to that figure. They do not — a shoe
+failing two bounds is counted by both, so **the counts overlap and must never be
+totalled**.
+
+**Cost is not a concern**: six passes over 450 shoes measures **0.77ms**, or ~2.9ms per
+frame alongside `percentileMap` during a drag — comfortably inside 16.7ms. It is still the
+first thing in the app whose cost grows with filter count, which is worth stating rather
+than discovering.
 
 ### 7.4 Brands
 
@@ -712,8 +769,10 @@ TDD throughout, per CLAUDE.md.
   an unclassified one fails. Both known-wrong cases (`outsole-durability`,
   `size-rating`) pinned explicitly.
 - **`stats.test.ts`** — the wash reads direction from the map; neutral yields no blue.
-- **Relax counts** — leave-one-out is order-independent; counts do not sum; a bound
-  returning zero still renders.
+- **Relax counts** — leave-one-out is order-independent; counts do not sum; `0 excluded`
+  renders while an unbounded row shows nothing; and the count changes with `showMissing`
+  on a metric with incomplete coverage, which is the case a naive implementation gets
+  wrong.
 - **Coverage** — silent at complete; counts track `considered` as non-range filters
   change.
 - **Drag** — axis trimming, snap-to-nearest-value and position clamping are pure
