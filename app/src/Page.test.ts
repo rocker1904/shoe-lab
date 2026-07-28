@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
 import { VIEW_STORAGE_KEY } from './lib/persist';
+import { PRESETS } from './lib/presets';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
@@ -75,7 +76,7 @@ describe('Page', () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
     expect(location.search).toContain('plate=carbon');
-    await fireEvent.click(screen.getByRole('button', { name: /reset/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     expect(location.search).toBe('');
   });
   it('round-trips a multi-value plate filter from URL to filtered rows', () => {
@@ -186,11 +187,25 @@ describe('Page entry band', () => {
     expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2 shoes');
     expect(screen.getByRole('button', { name: /Browse all/ })).toHaveTextContent('5 shoes');
   });
-  it('collapses to the chip row once a story is applied', async () => {
+  // The band's three counts are what make the stories comparable, and comparing them is exactly
+  // what someone is doing at the moment they pick one (docs/app.md §Presets).
+  it('stays open when a story is applied, with exactly that story marked', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    expect(band()).toBeInTheDocument();
+    expect(chips()).not.toBeInTheDocument();
+    const marked = screen.getAllByRole('button', { pressed: true });
+    expect(marked).toHaveLength(1);
+    expect(marked[0]).toHaveTextContent('Easy');
+  });
+  it('collapses, and drops the mark, once a bound is edited past what any story describes', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.input(screen.getByRole('group', { name: 'Stack — Heel' }).querySelector('input')!,
+      { target: { value: '20' } });
     expect(band()).not.toBeInTheDocument();
     expect(chips()).toBeInTheDocument();
+    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
   });
   it('collapses when a filter is added even though nothing is bounded yet', async () => {
     render(Page, { props: { data: dataPlus } });
@@ -205,6 +220,17 @@ describe('Page entry band', () => {
     expect(band()).not.toBeInTheDocument();
     expect(chips()).toBeInTheDocument();
   });
+  it('Clear returns to this runner\'s own default, keeping who they are', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+    expect(location.search).toBe('?strike=forefoot');    // strike survives; everything else goes
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
+    expect(band()).toBeInTheDocument();
+    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
+  });
   it('Browse all leaves the view exactly as it was', async () => {
     render(Page, { props: { data } });
     const rows = screen.getAllByRole('row').length;
@@ -214,6 +240,55 @@ describe('Page entry band', () => {
     // deliberately does not collapse: the collapse is derived from view state, which is unchanged
     expect(band()).toBeInTheDocument();
     expect(document.getElementById(TABLE_ANCHOR_ID)).toBe(document.activeElement);
+  });
+});
+
+const columnHeaders = () => screen.getAllByRole('columnheader').map((th) => th.textContent?.trim());
+
+describe('Page strike toggle', () => {
+  it('changes the columns without collapsing the band', async () => {
+    render(Page, { props: { data } });
+    expect(columnHeaders()).toContain('Heel stack');
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+
+    expect(band()).toBeInTheDocument();     // still this runner's own default view
+    expect(chips()).not.toBeInTheDocument();
+    expect(columnHeaders()).toContain('Forefoot stack');
+    expect(columnHeaders()).not.toContain('Heel stack');
+    expect(location.search).toContain('strike=forefoot');
+    expect(location.search).not.toContain('cols=');
+  });
+  it('re-derives a story rather than only setting the field, and flips back to the same view', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    const before = location.search;
+
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    expect(band()).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { pressed: true })[0]).toHaveTextContent('Easy');
+    expect(location.search).toContain('r.forefoot-stack=');
+    expect(location.search).not.toContain('r.heel-stack=');
+
+    await fireEvent.click(screen.getByRole('radio', { name: 'Heel' }));
+    expect(location.search).toBe(before);
+  });
+  it('swaps a hand-edited view\'s columns and sort, and leaves its bounds alone', async () => {
+    history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack&sort=-heel-stack&r.heel-stack=36~');
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+
+    // a map onto the new side, not an exchange: both halves were shown, one column comes out
+    expect(columnHeaders()).toEqual(['Shoe', 'Score', 'Forefoot stack ▼']);
+    expect(location.search).toContain('sort=-forefoot-stack');
+    expect(location.search).toContain('r.heel-stack=36%7E');   // the number was never the runner's to move
+  });
+  it('recounts the stories on the other side', async () => {
+    render(Page, { props: { data } });
+    const countOf = (label: RegExp) => screen.getByRole('button', { name: label }).textContent;
+    const before = PRESETS.map((p) => countOf(new RegExp(p.label)));
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    // the fixture's two sides sit on different scales, so at least one story must move
+    expect(PRESETS.map((p) => countOf(new RegExp(p.label)))).not.toEqual(before);
   });
 });
 

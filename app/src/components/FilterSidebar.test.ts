@@ -79,8 +79,12 @@ describe('FilterSidebar', () => {
     const view = defaultView('heel');
     view.filters.ranges['heel-stack'] = { min: 36 };
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
-    await fireEvent.click(screen.getByRole('button', { name: /reset/i }));
-    expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
+    // "Clear filters", not "Clear": the toolbar's Clear returns the whole view to its baseline,
+    // and two controls side by side meaning different things is the accretion this rework deletes.
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    const next = onchange.mock.lastCall![0];
+    expect(next.filters.ranges).toEqual({});
+    expect(next.columns).toEqual(view.columns);   // filters only: columns and sort are not its business
   });
 });
 

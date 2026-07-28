@@ -47,12 +47,14 @@ export function shoe(overrides: Partial<Shoe> & { slug: string }): Shoe {
  * (6, 65), which is the premise of a per-side percentile: a bound computed on the wrong side is
  * only detectable because the two distributions do not overlap. They carry readings on all four
  * reading-carrying shoes, not three — Easy under forefoot excludes `racer` on plate, so three
- * readings would leave coverage at exactly the sparse threshold.
+ * readings would leave coverage at exactly the sparse threshold. Forefoot energy return also
+ * **ranks** the fleet differently from heel, so a story's count moves when the strike does; without
+ * that, counts pinned to one side would look correct.
  */
 export const FLEET: Shoe[] = [
-  shoe({ slug: 'cushy', values: { '5': 30, '6': 40, '24': 210, '65': 70, '66': 62, '70': 40 }, plate: 'none', releasedAt: '2025-06-01', score: 92 }),
+  shoe({ slug: 'cushy', values: { '5': 30, '6': 40, '24': 210, '65': 70, '66': 55, '70': 40 }, plate: 'none', releasedAt: '2025-06-01', score: 92 }),
   shoe({ slug: 'racer', values: { '5': 29, '6': 39, '24': 220, '65': 75, '66': 68, '70': 42 }, plate: 'carbon', releasedAt: '2026-01-01', score: 90, msrpGbp: 250 }),
-  shoe({ slug: 'trainer', values: { '5': 25, '6': 35, '24': 280, '65': 60, '66': 51, '70': 30 }, plate: 'plated-other', releasedAt: '2023-05-01', score: 85 }),
+  shoe({ slug: 'trainer', values: { '5': 25, '6': 35, '24': 280, '65': 60, '66': 60, '70': 30 }, plate: 'plated-other', releasedAt: '2023-05-01', score: 85 }),
   shoe({ slug: 'oldie', values: { '5': 20, '6': 30, '24': 300, '65': 55, '66': 45 }, releasedAt: '2021-01-01', score: 70, discontinued: true, brand: 'Other' }),
   shoe({ slug: 'mystery', values: {}, releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null }),
 ];

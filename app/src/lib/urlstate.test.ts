@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { defaultColumns, defaultView, isDefaultView, parseView, serializeView, type ViewState } from './urlstate';
+import { defaultColumns, defaultView, isDefaultView, parseView, sameValue, serializeView, swapStrike, type ViewState } from './urlstate';
 import type { FilterState } from './filters';
 import { TESTS, labTest } from './test-fixtures';
 
@@ -325,6 +325,44 @@ describe('the runner\'s strike', () => {
     v.columns = ['score'];
     expect(serializeView(v)).toContain('cols=score');
     expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+});
+
+describe('swapStrike', () => {
+  it('maps every side-keyed column onto the new side, deduping and preserving order', () => {
+    const v = defaultView('heel');
+    // a hand-edited view can hold both halves at once, which is why this is a map and not an exchange
+    v.columns = ['score', 'forefoot-stack', 'heel-stack', 'weight'];
+    expect(swapStrike(v, 'forefoot').columns).toEqual(['score', 'forefoot-stack', 'weight']);
+    expect(swapStrike(v, 'heel').columns).toEqual(['score', 'heel-stack', 'weight']);
+  });
+  it('takes the sort key with it, because a sort carries no number', () => {
+    const v = defaultView('heel');
+    v.sort = { key: 'energy-return-heel', dir: 'asc' };
+    expect(swapStrike(v, 'forefoot').sort).toEqual({ key: 'energy-return-forefoot', dir: 'asc' });
+    expect(swapStrike(v, 'forefoot').strike).toBe('forefoot');
+  });
+  /**
+   * A bound carries a number and a number does not transfer: 36 mm is the median heel stack and
+   * the 98th percentile of forefoot stack, so rewriting it would hand over a filter nobody chose.
+   */
+  it('leaves every bound exactly where it was', () => {
+    const v = defaultView('heel');
+    v.filters.ranges['heel-stack'] = { min: 36 };
+    v.filters.search = 'nike';
+    const next = swapStrike(v, 'forefoot');
+    expect(next.filters.ranges).toEqual({ 'heel-stack': { min: 36 } });
+    expect(next.filters.search).toBe('nike');
+  });
+  it('returns an independent view', () => {
+    const v = defaultView('heel');
+    v.filters.ranges['heel-stack'] = { min: 36 };
+    const next = swapStrike(v, 'forefoot');
+    next.filters.ranges['heel-stack']!.min = 99;
+    expect(v.filters.ranges['heel-stack']).toEqual({ min: 36 });
+  });
+  it('round-trips a default view, which is what keeps the band open across a flip', () => {
+    expect(sameValue(swapStrike(swapStrike(defaultView('heel'), 'forefoot'), 'heel'), defaultView('heel'))).toBe(true);
   });
 });
 

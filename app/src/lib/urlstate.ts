@@ -2,7 +2,7 @@ import type { Plate } from '../../../shared/types.js';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, metricEntries, sideKey, type Side } from './lineage';
+import { CURATED_RANGE_KEYS, metricEntries, sideKey, swapSide, type Side } from './lineage';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
@@ -45,7 +45,7 @@ export function defaultView(strike: Side): ViewState {
  * Structural equality with `undefined` treated as absent, so a cleared field that keeps its key
  * (structuredClone preserves own properties whose value is `undefined`) still compares equal.
  */
-function sameValue(a: unknown, b: unknown): boolean {
+export function sameValue(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (Array.isArray(a) || Array.isArray(b)) {
     return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => sameValue(x, b[i]));
@@ -70,6 +70,23 @@ export function isDefaultView(v: ViewState): boolean {
   // Against **this runner's** baseline, so a view differing only in strike is still default and the
   // entry band survives a strike flip (docs/app.md §Presets).
   return sameValue(v, defaultView(v.strike));
+}
+
+/**
+ * Moves a **hand-edited** view onto the other side. The line falls where a number does: a column
+ * and a sort key carry none — "sorted by energy return" means the same thing on either side — so
+ * both follow the strike, while a bound carries one and is left exactly where the runner put it.
+ * A default view or a view equal to a story is re-derived instead, by `Page.svelte`.
+ *
+ * Columns dedupe, preserving order: a hand-edited view can hold both halves of a pair, and each
+ * maps onto the new side rather than the two exchanging places.
+ */
+export function swapStrike(v: ViewState, strike: Side): ViewState {
+  const next = structuredClone(v);
+  next.strike = strike;
+  next.sort = { ...v.sort, key: swapSide(v.sort.key, strike) };
+  next.columns = [...new Set(v.columns.map((c) => swapSide(c, strike)))];
+  return next;
 }
 
 /** Current-generation slug to retired-generation slug, for every pair the catalogue resolves. */

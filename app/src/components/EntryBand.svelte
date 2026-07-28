@@ -7,8 +7,11 @@
 <script lang="ts">
   import { PRESETS } from '../lib/presets';
 
-  let { counts, total, onapply }: {
+  let { counts, total, onapply, selected }: {
     counts: Map<string, number>; total: number; onapply: (id: string) => void;
+    /** Derived in `Page.svelte`, never stored: a story is selected while the view equals what
+     *  `applyPreset` would build for it right now (docs/app.md §Presets). */
+    selected: string | null;
   } = $props();
 
   const shoes = (n: number) => `${n} ${n === 1 ? 'shoe' : 'shoes'}`;
@@ -27,15 +30,16 @@
 
 <section class="band" aria-label="Start with a session" data-testid="entry-band">
   {#each PRESETS as p (p.id)}
-    <button type="button" class="card" onclick={() => onapply(p.id)}>
+    <!-- The sentence stays on the type and reaches the reader as a tooltip: the cards exist to make
+         three counts comparable, and three paragraphs is what stopped that reading at a glance. -->
+    <button type="button" class="card" title={p.describe} aria-pressed={selected === p.id}
+            class:on={selected === p.id} onclick={() => onapply(p.id)}>
       <span class="name">{p.label}</span>
-      <span class="describe">{p.describe}</span>
       <span class="count">{shoes(counts.get(p.id) ?? 0)}</span>
     </button>
   {/each}
   <button type="button" class="card browse" onclick={browseAll}>
     <span class="name">Browse all {shoes(total)}</span>
-    <span class="describe">Set your own bounds — every filter is already there</span>
   </button>
 </section>
 
@@ -48,8 +52,9 @@
   }
   .card:hover { border-color: var(--accent); background: var(--accent-dim); }
   .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Not colour alone: the selected card is also the only one carrying aria-pressed. */
+  .card.on { border-color: var(--accent); border-width: 2px; background: var(--accent-dim); }
   .name { font-size: 1.15rem; font-weight: 700; }
-  .describe { color: var(--text-dim); font-size: 0.85rem; flex: 1; }
   .count { font-weight: 600; color: var(--accent); }
   /* An escape hatch that reads as a lesser option is not an escape hatch: same size, same weight,
      distinguished only by a dashed edge. */

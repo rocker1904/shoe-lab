@@ -190,7 +190,9 @@
     </select>
   {/if}
 
-  <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Reset filters</button>
+  <!-- Named for what it does. The toolbar's Clear returns the whole view to this runner's
+       baseline; this one touches the filters and nothing else (docs/app.md §Presets). -->
+  <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
 </aside>
 
 <style>

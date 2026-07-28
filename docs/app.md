@@ -289,19 +289,33 @@ that recommends against itself is self-inflicted. `presets.test.ts` asserts it
 in both directions.
 
 `EntryBand.svelte` offers the presets as cards above the table on arrival, each
-carrying its live count — `Page.svelte` applies every preset and runs
-`applyFilters` to get them, which is three passes over a dataset already in
-memory. The band is shown when `isDefaultView(view)` and the chip row replaces
-it otherwise, so the collapse is **derived from view state and never stored**:
-a link carrying filters opens collapsed and a bare link opens expanded.
-Touching a filter at all collapses it, empty range row included.
+carrying name and live count and nothing else — `Page.svelte` applies every
+preset and runs `applyFilters` to get the counts, which is three passes over a
+dataset already in memory. `Preset.describe` stays on the type and reaches the
+reader as the card's tooltip and through `PresetChips`.
 
-**Reset filters does not re-open the band**, because a preset sets columns and
-sort as well as filters and the reset button clears only filters. That follows
-from the rule rather than contradicting it — the view genuinely is not the
-default any more — but it means the reset button no longer returns the table to
-its default shape, which it did before presets carried columns. The chip row
-stays available for re-choosing a story.
+The band shows while the view is a **clean state**: equal to
+`defaultView(strike)`, or equal to `applyPreset(story, …, strike)` for some
+story. It collapses to the chip row only once the view is hand-edited into
+something no story describes, and both are derived from view state and never
+stored — a link carrying filters opens collapsed and a bare link opens
+expanded. Selection is derived the same way, so editing a bound drops the
+highlight because the view genuinely is not that story any more; a stored
+`preset` field would keep claiming Easy.
+
+The band cannot hold the controls that reset it, because it is gone by the time
+they are needed. **`StrikeToggle` and Clear live in the toolbar**, as peers of
+the story chips and present in both states. Clear returns to
+`defaultView(strike)` — who you are survives, what you searched for does not.
+The sidebar's **Clear filters** is a different, smaller thing and says so: it
+empties the filters and leaves sort and columns alone.
+
+Flipping strike **re-derives** the view rather than setting a field: from the
+default view to `defaultView(next)`, from a view equal to a story to that story
+under the new strike, and from a hand-edited view through `swapStrike`. Setting
+the field alone would leave heel-shaped columns behind, so the view would stop
+equalling its own baseline and the band would collapse on the very control this
+protects.
 
 **Browse all** changes no state, and that is not an oversight. The default view
 already shows every shoe, so there is nothing to apply; and collapsing the band
