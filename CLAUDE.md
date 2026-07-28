@@ -77,3 +77,33 @@ not reference; where they disagree with docs/, docs/ wins.
   the model that wrote the commit (e.g. `Claude Opus 5 (1M context)`), on
   commits, never in PR descriptions.
 - **Comments are WHY-only** — docs/README.md §Rules, rule 5.
+
+## Working approach
+
+The considered route is the faster one here. These are not style preferences;
+each was learned by getting it wrong first.
+
+- **Measure, do not reason.** Layout, spacing, typography and distribution
+  questions get answered by rendering the thing and reading the result, never
+  by arguing about CSS or eyeballing a description. Playwright is already a
+  dependency (`node_modules/playwright`); drive it from the repo root, screenshot
+  at real widths, and measure text and box sizes from the DOM. Design decisions
+  made by reasoning alone have repeatedly survived review and then been wrong on
+  screen.
+- **State bounds as testable numbers.** "Six metric names must fit at 375px" is
+  a bound; "the header should be readable" is not. Where a design implies a
+  constraint, write the number down and build a rig that checks it —
+  `.superpowers/audit.mjs` is one such rig, and its assertion belongs in the
+  suite so upstream drift fails the build rather than clipping on a phone.
+- **Check the real data before designing over it.** Distributions are not what
+  they look like: price is effectively categorical (47 distinct values, five
+  holding half the fleet), several metrics are 99% distinct, and coverage is
+  era-shaped rather than sparse. Compute the shape before choosing an
+  interaction for it.
+- **Explore fully before writing anything up.** Keep offering alternatives until
+  the human says they are done, not until an option looks good enough. Do not
+  update specs or docs mid-design — batch the write-up after sign-off, or the
+  churn outweighs the record.
+- **Prefer deleting an assumption to abbreviating it.** The best fixes this
+  project has found were removals: a duplicated brand line, a warning whose
+  classifier was wrong, a tooltip that did not exist on mobile.
