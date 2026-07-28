@@ -123,9 +123,10 @@ the fieldset legend, so the name is stated once — but the fieldset's accessibl
 name carries heading **and** side, because two rows both called "Forefoot"
 would be indistinguishable to anyone not looking at the screen.
 
-The order is fixed and comes from one declared list, `CURATED_RANGE_KEYS`:
-search, released after, plate, brand, discontinued, price, then the metrics the
-stories bound, then the rest curated, then anything added by hand. It does not
+The order is fixed: search, released after, plate, brand, discontinued, then
+the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
+price, then the metrics the stories bound, then the rest curated, then anything
+added by hand. Price leads because every story bounds it. It does not
 rearrange itself under the story or the strike — someone comparing two stories
 must not have the controls move underneath them. Both halves of every side pair
 are curated for that reason, and **every part of a side pair renders always**;

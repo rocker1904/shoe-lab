@@ -47,7 +47,7 @@
       {#each offers as o (o.key)}
         <button type="button" onclick={() => onchoose(o.key)}>
           <span class="name">{o.label}</span>
-          <!-- A bar, which is what the `select` this replaced could never hold (docs/app.md §Coverage). -->
+          <!-- A bar, which is what the `select` this replaced could never hold (docs/app.md §Filters). -->
           <span class="bar"><span class="fill" style:width="{o.coverage}%"></span></span>
           <span class="pct">{o.coverage}%</span>
         </button>

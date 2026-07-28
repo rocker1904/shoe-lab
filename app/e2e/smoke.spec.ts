@@ -47,6 +47,38 @@ test('opens on the entry band and resumes the previous session across a reload',
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
 });
 
+test('states a strike, keeps the band open through it, and clears back to that runner', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('entry-band')).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
+  // both halves of both side pairs render, forefoot first, whichever strike is chosen
+  const stackRows = page.locator('fieldset[aria-label^="Stack — "]');
+  await expect(stackRows).toHaveCount(2);
+  await expect(stackRows.first()).toHaveAttribute('aria-label', 'Stack — Forefoot');
+  await expect(stackRows.last()).toHaveAttribute('aria-label', 'Stack — Heel');
+  await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Midsole width — Heel' })).toBeVisible();
+
+  await page.getByRole('radio', { name: 'Forefoot' }).click();
+  await expect(page).toHaveURL(/strike=forefoot/);
+  await expect(page.getByTestId('entry-band')).toBeVisible();          // still this runner's default
+  await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Easy' }).click();
+  await expect(page.getByTestId('entry-band')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Easy', pressed: true })).toBeVisible();
+  await expect(page).toHaveURL(/r\.forefoot-stack=/);
+
+  await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  await expect(page).toHaveURL(/\?strike=forefoot$/);                  // who you are survives a Clear
+  await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByTestId('entry-band')).toBeVisible();
+  await expect(page.getByRole('button', { pressed: true })).toHaveCount(0);
+  await expect(page.getByText('5 of 5 shoes')).toBeVisible();
+});
+
 test('renders a superseded pair once and keeps colocated halves independently sortable', async ({ page }) => {
   await page.goto('/');
 

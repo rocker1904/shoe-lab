@@ -167,7 +167,7 @@ describe('urlstate hostile input', () => {
     expect(parseView('cols=score,score,bogus,tongue-gusset-type,plate', idx).columns)
       .toEqual(['score', 'tongue-gusset-type', 'plate']);
     const fallback = parseView('cols=bogus,alsobogus', idx).columns;
-    fallback.push('leaked'); // the fallback must be a copy, so mutating it cannot corrupt DEFAULT_COLUMNS
+    fallback.push('leaked'); // the fallback must be a fresh array, so mutating it cannot corrupt the next default
     expect(parseView('cols=bogus,alsobogus', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
       'midsole-softness-22', 'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
     expect(serializeView(parseView(`cols=${defaultColumns('heel').join(',')}`, indexTests([...TESTS,
