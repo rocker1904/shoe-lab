@@ -8,8 +8,11 @@ import { defaultView, type ViewState } from './urlstate';
 // is which, and why. Read it before changing a number.
 const EASY_MIN_HEEL_STACK = 36;
 const PRICE_PERCENTILE = 0.8;
-const TEMPO_MIN_ENERGY_RETURN = 65;
-const TEMPO_WEIGHT_PERCENTILE = 0.3;
+// Tempo is the broad middle of the week, so both its bounds read "more than most of this fleet"
+// rather than naming a number. An absolute energy-return floor is what made it narrow: 65 happens
+// to sit at the 74th percentile, so it kept only the liveliest quarter of the catalogue.
+const TEMPO_ENERGY_RETURN_PERCENTILE = 0.5;
+const TEMPO_WEIGHT_PERCENTILE = 0.4;
 const RACE_MAX_WEIGHT = 230;
 const RACE_MIN_ENERGY_RETURN = 70;
 
@@ -44,7 +47,8 @@ export function applyPreset(id: string, shoes: Shoe[], idx: TestIndex): ViewStat
       return v;
     }
     case 'tempo': {
-      v.filters.ranges['energy-return-heel'] = { min: TEMPO_MIN_ENERGY_RETURN };
+      const energy = fleetCap(shoes, 'energy-return-heel', idx, TEMPO_ENERGY_RETURN_PERCENTILE);
+      if (energy !== null) v.filters.ranges['energy-return-heel'] = { min: energy };
       const weight = fleetCap(shoes, 'weight', idx, TEMPO_WEIGHT_PERCENTILE);
       if (weight !== null) v.filters.ranges['weight'] = { max: weight };
       if (price !== null) v.filters.ranges['msrpGbp'] = { max: price };

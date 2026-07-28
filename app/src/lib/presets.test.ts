@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { coverageOf, isSparse } from './coverage';
-import { indexTests, type TestIndex } from './dataset';
+import { indexTests, numericValue, type TestIndex } from './dataset';
 import { applyPreset, PRESETS } from './presets';
 import { applyFilters } from './filters';
+import { quantile } from './stats';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 import { DEFAULT_COLUMNS, defaultView, parseView, serializeView, type ViewState } from './urlstate';
 import type { Shoe } from '../../../shared/types.js';
@@ -88,15 +89,26 @@ describe('preset stories on the fixture fleet', () => {
     const view = applyPreset('easy', fleet, idx);
     expect(applyFilters(fleet, view.filters, idx).visible.map((s) => s.slug)).toEqual(['nylon-daily']);
   });
-  it('tempo wants energy return, light weight and a price it can repeat', () => {
+  it('tempo asks for more than most of the fleet, on both energy return and weight', () => {
+    // Both bounds are percentiles, not numbers: an absolute energy-return floor is what made this
+    // story narrow, because the number that reads as "lively" sits three quarters up the fleet.
     const view = applyPreset('tempo', FLEET, idx);
-    expect(view.filters.ranges['energy-return-heel']).toEqual({ min: 65 });
-    // fixture weights 210, 220, 280, 300 -> 30th percentile 210
-    expect(view.filters.ranges['weight']).toEqual({ max: 210 });
+    const er = FLEET.map((s) => numericValue(s, 'energy-return-heel', idx)).filter((x): x is number => x !== undefined);
+    const wt = FLEET.map((s) => numericValue(s, 'weight', idx)).filter((x): x is number => x !== undefined);
+    expect(view.filters.ranges['energy-return-heel']).toEqual({ min: quantile(er, 0.5) });
+    expect(view.filters.ranges['weight']).toEqual({ max: quantile(wt, 0.4) });
     expect(view.filters.ranges['msrpGbp']).toEqual({ max: 140 });
     expect(view.filters.plate).toBeUndefined(); // carbon is deliberately left to the runner
     expect(view.sort).toEqual({ key: 'energy-return-heel', dir: 'desc' });
-    expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug)).toEqual(['cushy']);
+  });
+  it('tempo raises its energy-return floor when the fleet gets livelier', () => {
+    // The regression this guards is a return to an absolute floor, which would report the same
+    // number for both fleets and quietly keep only the liveliest slice of a lively catalogue.
+    const bound = (er: number[]) =>
+      applyPreset('tempo', er.map((e, i) => shoe({ slug: `s${i}`, values: { '65': e } })), idx)
+        .filters.ranges['energy-return-heel']?.min;
+    expect(bound([40, 45, 50, 55, 60])).toBe(50);
+    expect(bound([70, 75, 80, 85, 90])).toBe(80);
   });
   it('race is speed alone: no price cap and no plate requirement', () => {
     const view = applyPreset('race', FLEET, idx);
