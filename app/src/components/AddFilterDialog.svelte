@@ -9,6 +9,7 @@
   } = $props();
 
   let query = $state('');
+  let panel: HTMLElement;
   let search: HTMLInputElement;
 
   const grouped = $derived.by(() => {
@@ -31,14 +32,26 @@
   });
 
   function onkeydown(e: KeyboardEvent) {
-    if (e.key !== 'Escape') return;
-    // Under 800px the sidebar is itself a drawer, so one Escape must not dismiss both.
-    e.stopPropagation();
-    onclose();
+    if (e.key === 'Escape') {
+      // Under 800px the sidebar is itself a drawer, so one Escape must not dismiss both.
+      e.stopPropagation();
+      onclose();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    // `aria-modal` tells a screen reader the rest of the page is inert; without a trap, Tab walks
+    // straight out of it and the promise is a lie. Nothing here is in the top layer, so the
+    // browser will not do this for us.
+    const focusable = [...panel.querySelectorAll<HTMLElement>('input, button')].filter((el) => !el.hasAttribute('disabled'));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 </script>
 
-<div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" onkeydown={onkeydown}>
+<div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" onkeydown={onkeydown} bind:this={panel}>
   <input class="q" type="search" aria-label="Filter metrics" placeholder="Search metrics…"
          bind:value={query} bind:this={search} />
   <div class="list">

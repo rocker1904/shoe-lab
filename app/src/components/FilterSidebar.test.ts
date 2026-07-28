@@ -378,11 +378,13 @@ describe('FilterSidebar order', () => {
   });
   it('marks the half the strike puts in use, in text', () => {
     const heel = render(FilterSidebar, { props: { data, view: defaultView('heel'), onchange: vi.fn(), population: FLEET } });
-    expect(within(heel.container).getAllByText('Heel · in use').length).toBe(2);   // stack and energy return
-    expect(within(heel.container).queryByText('Forefoot · in use')).not.toBeInTheDocument();
+    // Matched by suffix: a row keeps its units, so the marker is appended rather than swapped in
+    // — "Heel (mm) · in use", not "Heel · in use".
+    expect(within(heel.container).getAllByText(/^Heel\b.*· in use$/).length).toBe(2);   // stack and energy return
+    expect(within(heel.container).queryByText(/^Forefoot\b.*· in use$/)).not.toBeInTheDocument();
 
     const fore = render(FilterSidebar, { props: { data, view: defaultView('forefoot'), onchange: vi.fn(), population: FLEET } });
-    expect(within(fore.container).getAllByText('Forefoot · in use').length).toBe(2);
-    expect(within(fore.container).queryByText('Heel · in use')).not.toBeInTheDocument();
+    expect(within(fore.container).getAllByText(/^Forefoot\b.*· in use$/).length).toBe(2);
+    expect(within(fore.container).queryByText(/^Heel\b.*· in use$/)).not.toBeInTheDocument();
   });
 });

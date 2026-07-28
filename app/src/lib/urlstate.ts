@@ -59,9 +59,9 @@ export function sameValue(a: unknown, b: unknown): boolean {
 
 /**
  * Whether the view is untouched — what the entry band's collapse is derived from (docs/app.md
- * §Presets). Deliberately not `serializeView(v) === ''`: an empty range row is view state that
- * does not serialise, so a view with a filter added from the Add-filter menu serialises to
- * nothing and is still not the default (docs/app.md §View and URL ownership).
+ * §Presets). Deliberately not `serializeView(v) === ''`: the baseline is strike-relative, so a
+ * forefoot runner's untouched view serialises to `strike=forefoot` and is still the default
+ * (docs/app.md §View and URL ownership).
  *
  * Compared wholesale rather than field by field so a new `FilterState` field cannot silently go
  * unchecked, and **by value rather than by key presence** — see `sameValue`.

@@ -35,7 +35,9 @@
   const width = (key: string) => `${Math.round(coverage(key).fraction * 100)}%`;
   /** A declared half reads as its side alone; the fieldset below carries heading and side both. */
   const partLabel = (p: { label: string; units: string; side: Side | null }) =>
-    (p.side ? SIDE_LABEL[p.side] : p.label) + (p.side === strike ? ' · in use' : p.units ? ` (${p.units})` : '');
+    (p.side ? SIDE_LABEL[p.side] : p.label)
+    + (p.units ? ` (${p.units})` : '')
+    + (p.side === strike ? ' · in use' : '');
 </script>
 
 <div class="metric">

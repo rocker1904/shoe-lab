@@ -29,7 +29,7 @@
   function cellText(s: Shoe, col: string): string {
     // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
     if (col === 'releasedAt') return s.releasedAt ? (s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4)) : '—';
-    if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'carbon' : 'Non-carbon plate';
+    if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate';
     // msrpGbp goes through numericValue so the cell shows the same resolved price the
     // filter and the sort use (docs/app.md §Resolved price).
     const v = col === 'score' ? s.score : numericValue(s, col, idx);

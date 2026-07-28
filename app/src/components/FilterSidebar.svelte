@@ -106,7 +106,11 @@
       else v.filters.ranges[key] = next;
     });
   }
-  const removable = (key: string) => view.rows.includes(key);
+  // Anything not curated is removable, rather than only what is in `rows`. A row can also be on
+  // screen because it is a half of a side pair, and gating Remove on `rows` would leave such a row
+  // with clearing as its only exit — which is clear-means-remove, the conflation this surface
+  // deleted (docs/app.md §Filters).
+  const removable = (key: string) => !CURATED_RANGE_KEYS.includes(key);
   function removeRow(key: string) {
     patch((v) => {
       v.rows = v.rows.filter((k) => k !== key);
