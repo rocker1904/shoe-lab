@@ -1,3 +1,4 @@
+import type { Plate } from '../../../shared/types.js';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
@@ -15,7 +16,12 @@ export const DEFAULT_COLUMNS: string[] = [
   'releasedAt', 'score', 'msrpGbp', 'heel-stack', 'midsole-softness-22',
   'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight',
 ];
-const PLATES = new Set(['none', 'plated', 'carbon', 'not-carbon']);
+/**
+ * Every value a shoe's `plate` can hold, in the order a selection is written. Both the filter UI
+ * and `parseView` normalise to this order, so a link-borne selection still compares equal to the
+ * story that would build it — story selection is a positional value comparison (docs/app.md §Presets).
+ */
+export const PLATES: Plate[] = ['none', 'plated-other', 'carbon'];
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate']);
 /** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
 const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
@@ -81,7 +87,7 @@ export function serializeView(v: ViewState): string {
     if (!finite(b.min) || !finite(b.max)) continue;
     p.set(`r.${key}`, `${b.min ?? ''}~${b.max ?? ''}`);
   }
-  if (v.filters.plate) p.set('plate', v.filters.plate);
+  if (v.filters.plate?.length) p.set('plate', v.filters.plate.join(','));
   if (v.filters.releasedAfter) p.set('after', v.filters.releasedAfter);
   if (v.filters.brands?.length) p.set('brands', v.filters.brands.join(','));
   if (v.filters.search) p.set('q', v.filters.search);
@@ -123,8 +129,11 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       if (min !== undefined) b.min = min;
       if (max !== undefined) b.max = max;
       if (b.min !== undefined || b.max !== undefined) v.filters.ranges[target] = b;
-    } else if (key === 'plate' && PLATES.has(raw)) {
-      v.filters.plate = raw as FilterState['plate'];
+    } else if (key === 'plate' && raw) {
+      // Same all-separator rule as `brands`: ",," stays absent rather than becoming an empty array.
+      const picked = new Set(raw.split(','));
+      const plates = PLATES.filter((x) => picked.has(x));
+      if (plates.length) v.filters.plate = plates;
     } else if (key === 'after' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
       v.filters.releasedAfter = raw;
     } else if (key === 'brands' && raw) {

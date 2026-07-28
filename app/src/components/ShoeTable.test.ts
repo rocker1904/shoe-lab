@@ -75,7 +75,7 @@ describe('ShoeTable', () => {
     // index 3 of [name, score, heel-stack, plate] — scoped to the row so the em dash cannot be matched elsewhere
     const plateCell = (name: string) => screen.getByText(name).closest('tr')!.querySelectorAll('td')[3]!;
     expect(plateCell('racer').textContent).toBe('carbon');
-    expect(plateCell('trainer').textContent).toBe('plated');
+    expect(plateCell('trainer').textContent).toBe('Non-carbon plate');
     expect(plateCell('cushy').textContent).toBe('—');
   });
   it('missing values render as em dash', () => {

@@ -40,7 +40,7 @@ export function applyPreset(id: string, shoes: Shoe[], idx: TestIndex): ViewStat
   switch (id) {
     case 'easy': {
       v.filters.ranges['heel-stack'] = { min: EASY_MIN_HEEL_STACK };
-      v.filters.plate = 'not-carbon';
+      v.filters.plate = ['none', 'plated-other'];
       if (price !== null) v.filters.ranges['msrpGbp'] = { max: price };
       v.sort = { key: 'score', dir: 'desc' };
       v.columns = [...EASY_COLUMNS];

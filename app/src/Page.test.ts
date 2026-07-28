@@ -68,19 +68,19 @@ describe('Page', () => {
     // on a default view the band renders and PresetChips does not, so the card carries the description too
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument(); // only 'cushy' passes on fixture fleet
-    expect(location.search).toContain('plate=not-carbon');
+    expect(location.search).toContain('plate=none%2Cplated-other');
     expect(location.search).toContain('r.heel-stack=36%7E');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: 'Carbon' }));
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
     expect(location.search).toContain('plate=carbon');
     await fireEvent.click(screen.getByRole('button', { name: /reset/i }));
     expect(location.search).toBe('');
   });
-  it('round-trips the "any plate" filter from URL to filtered rows', () => {
-    // 'plated' in the URL means "any plate at all": carbon and plated-other both qualify.
-    history.replaceState(null, '', '/?plate=plated');
+  it('round-trips a multi-value plate filter from URL to filtered rows', () => {
+    // "any plate at all" is now chosen directly, as both plated values, rather than named by a token.
+    history.replaceState(null, '', '/?plate=carbon,plated-other');
     render(Page, { props: { data } });
     expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument();
     const names = screen.getAllByRole('row').slice(1).map((r) => r.textContent);
@@ -220,7 +220,7 @@ describe('Page entry band', () => {
 
 describe('Page persistence', () => {
   it('lets a shared link beat a previous session', () => {
-    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=plated'); // would show 2 shoes
+    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon,plated-other'); // would show 2 shoes
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
     expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
@@ -237,7 +237,7 @@ describe('Page persistence', () => {
   });
   it('stores the view on every change', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: 'Carbon' }));
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
     expect(localStorage.getItem(VIEW_STORAGE_KEY)).toContain('plate=carbon');
   });
   it('opens at defaults when the stored value is under another schema version', () => {

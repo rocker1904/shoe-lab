@@ -30,10 +30,28 @@ describe('FilterSidebar', () => {
     const v = onchange.mock.lastCall![0];
     expect(v.filters.ranges['heel-stack']).toEqual({ min: 36 });
   });
-  it('emits plate selection', async () => {
+  it('emits plate selection as a set, and undefined once emptied', async () => {
     const onchange = setup();
-    await fireEvent.click(screen.getByRole('button', { name: 'Carbon' }));
-    expect(onchange.mock.lastCall![0].filters.plate).toBe('carbon');
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    expect(onchange.mock.lastCall![0].filters.plate).toEqual(['carbon']);
+
+    const view = defaultView();
+    view.filters.plate = ['carbon'];
+    const off = vi.fn();
+    render(FilterSidebar, { props: { data, view, onchange: off, population: FLEET } });
+    await fireEvent.click(screen.getAllByRole('checkbox', { name: 'Carbon' }).at(-1)!);
+    expect(off.mock.lastCall![0].filters.plate).toBeUndefined();
+    expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
+  });
+  // Story selection is a positional value comparison, so a hand-built selection that ordered its
+  // members by click would never equal a preset's.
+  it('emits plate values in the declared order however they were clicked', async () => {
+    const view = defaultView();
+    view.filters.plate = ['carbon'];
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'None' }));
+    expect(onchange.mock.lastCall![0].filters.plate).toEqual(['none', 'carbon']);
   });
   it('brand list shows counts and toggles', async () => {
     const onchange = setup();

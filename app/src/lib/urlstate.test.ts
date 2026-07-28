@@ -14,7 +14,7 @@ describe('urlstate', () => {
     const v: ViewState = {
       filters: {
         ranges: { 'heel-stack': { min: 36 }, msrpGbp: { max: 200 }, weight: { min: 200, max: 250 } },
-        plate: 'none', releasedAfter: '2024-07-26', brands: ['Nike', 'New Balance'], search: 'peg', hideDiscontinued: true,
+        plate: ['none'], releasedAfter: '2024-07-26', brands: ['Nike', 'New Balance'], search: 'peg', hideDiscontinued: true,
       },
       sort: { key: 'energy-return-heel', dir: 'desc' },
       columns: ['score', 'heel-stack'],
@@ -27,11 +27,29 @@ describe('urlstate', () => {
     expect(parseView('r.heel-stack=~40', idx).filters.ranges['heel-stack']).toEqual({ max: 40 });
     expect(parseView('r.heel-stack=36~40', idx).filters.ranges['heel-stack']).toEqual({ min: 36, max: 40 });
   });
-  it('round-trips the not-carbon plate token', () => {
+  it('round-trips a plate selection as a comma-joined set', () => {
     const v = defaultView();
-    v.filters.plate = 'not-carbon';
-    expect(serializeView(v)).toBe('plate=not-carbon');
-    expect(parseView('plate=not-carbon', idx).filters.plate).toBe('not-carbon');
+    v.filters.plate = ['none', 'plated-other'];
+    expect(serializeView(v)).toBe('plate=none%2Cplated-other');
+    expect(parseView(serializeView(v), idx).filters.plate).toEqual(['none', 'plated-other']);
+  });
+  it('keeps the valid members of a plate list and drops the rest', () => {
+    expect(parseView('plate=none,bogus,carbon', idx).filters.plate).toEqual(['none', 'carbon']);
+    expect(parseView('plate=none,none', idx).filters.plate).toEqual(['none']);
+  });
+  // The two inexact tokens the multi-select replaced. A URL carrying either is stale, not partial:
+  // dropping it is what stops `plate=plated` quietly meaning something new.
+  it.each(['plate=plated', 'plate=not-carbon', 'plate=plated,not-carbon'])('drops %s as unknown', (qs) => {
+    expect(parseView(qs, idx)).toEqual(defaultView());
+  });
+  it('leaves an all-separator plate absent rather than empty, exactly like brands', () => {
+    expect(parseView('plate=,,', idx).filters.plate).toBeUndefined();
+    expect(parseView('plate=,,', idx)).toEqual(defaultView());
+  });
+  it('omits an empty plate selection from the URL', () => {
+    const v = defaultView();
+    v.filters.plate = [];
+    expect(serializeView(v)).toBe('');
   });
   it('ignores unknown keys, unknown range targets, and garbage values', () => {
     const v = parseView('r.nonsense=1~2&bogus=1&r.heel-stack=abc~def&plate=titanium&sort=-nope', idx);
@@ -48,7 +66,7 @@ describe('urlstate', () => {
     for (let i = 0; i < 50; i++) {
       const v = defaultView();
       for (const k of keys) if (rnd() > 0.5) v.filters.ranges[k] = { ...(rnd() > 0.4 ? { min: Math.round(rnd() * 100) } : {}), ...(rnd() > 0.4 ? { max: 100 + Math.round(rnd() * 100) } : {}) };
-      if (rnd() > 0.5) v.filters.plate = (['none', 'plated', 'carbon'] as const)[Math.floor(rnd() * 3)];
+      if (rnd() > 0.5) v.filters.plate = [(['none', 'plated-other', 'carbon'] as const)[Math.floor(rnd() * 3)]!];
       if (rnd() > 0.5) v.sort = { key: keys[Math.floor(rnd() * keys.length)]!, dir: rnd() > 0.5 ? 'asc' : 'desc' };
       const parsed = parseView(serializeView(v), idx);
       // empty range bounds are dropped in serialisation — normalise before comparing
@@ -214,7 +232,7 @@ describe('isDefaultView', () => {
   // which runs in verify — instead of silently going untested.
   const setters: Record<keyof FilterState, (f: FilterState) => void> = {
     ranges: (f) => { f.ranges['weight'] = {}; },
-    plate: (f) => { f.plate = 'carbon'; },
+    plate: (f) => { f.plate = ['carbon']; },
     search: (f) => { f.search = 'nike'; },
     brands: (f) => { f.brands = ['ASICS']; },
     releasedAfter: (f) => { f.releasedAfter = '2024-01-01'; },

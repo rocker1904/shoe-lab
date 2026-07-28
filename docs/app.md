@@ -79,7 +79,7 @@ boundary, and needs the decision above.
 
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
-`plate`, `after`, `brands` (comma-joined), `q`, `nodisc=1`, `missing=1`,
+`plate` and `brands` (comma-joined), `after`, `q`, `nodisc=1`, `missing=1`,
 `sort` (`-` prefix means descending), `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
@@ -89,9 +89,10 @@ default and never appears.
 cannot vouch for, always falling back to the default rather than throwing:
 range and sort keys must name a numeric test or a numeric shoe field, a
 malformed bound voids that whole range (dropping one side would silently widen
-it), `plate` and `after` are pattern-checked, an all-separator `brands` stays
-absent instead of becoming an empty array, and `cols` is deduped and filtered
-against the column allowlist. A `gen.` choice survives only when its key names
+it), `after` is pattern-checked, `plate` keeps only allowlisted members and is
+deduped into declared order, an all-separator `brands` or `plate` stays absent
+instead of becoming an empty array, and `cols` is deduped and filtered against
+the column allowlist. A `gen.` choice survives only when its key names
 the current generation of a resolved pair and its value names that pair's
 retired generation. Bound serialisation accepts everything `String(number)`
 emits, exponent form included, so round-trips are lossless.
@@ -165,16 +166,14 @@ tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
 an ISO string; year-derived dates therefore sit at 1 January, and the table
 prints the year alone unless `preciseReleaseDate` is set.
 
-Plate has two different token sets, on purpose. As a **filter**, `plated` and
-`not-carbon` are inexact and `carbon` and `none` are exact: `plated` means
-*any* plate, keeping carbon and non-carbon alike and excluding only `none`,
-while `not-carbon` excludes only `carbon` and keeps nylon- and plastic-plated
-shoes alongside unplated ones. The two are not opposites and neither is
-redundant — excluding carbon is not the same as excluding every plate, and a
-great many ordinary daily trainers carry a non-carbon plate. As a **sort**,
-plate is ordinal:
-`none` 0, `plated-other` 1, `carbon` 2, so descending reads "most plate
-first" like every other column. The table renders `plated-other` as "plated".
+Plate filters as a **set of the real values** a shoe can carry — `none`,
+`plated-other`, `carbon` — with empty meaning no constraint, so "not carbon"
+is chosen directly as the first two rather than named by a token. The set is
+always ordered as `PLATES` declares it, in the UI and in `parseView` alike,
+because a selection is compared to a story's by value. As a **sort**, plate
+is ordinal: `none` 0, `plated-other` 1, `carbon` 2, so descending reads "most
+plate first" like every other column. `plated-other` reads **Non-carbon
+plate** everywhere a human sees it — the table cell and the filter box.
 
 ## Number display
 

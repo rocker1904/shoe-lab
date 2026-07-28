@@ -73,7 +73,7 @@ describe('presets', () => {
 describe('preset stories on the fixture fleet', () => {
   it('easy wants stack and affordability, and excludes carbon without excluding plates', () => {
     const view = applyPreset('easy', FLEET, idx);
-    expect(view.filters.plate).toBe('not-carbon');
+    expect(view.filters.plate).toEqual(['none', 'plated-other']);
     expect(view.filters.ranges['heel-stack']).toEqual({ min: 36 });
     // fixture prices 140, 250, 140, 140 -> 80th percentile 140
     expect(view.filters.ranges['msrpGbp']).toEqual({ max: 140 });
@@ -161,7 +161,7 @@ describe('preset determinism', () => {
     }
   });
   it('survives a URL round trip', () => {
-    // the only place asserting that plate=not-carbon survives parseView's allowlist and that each
+    // the only place asserting that Easy's plate set survives parseView's allowlist and that each
     // preset's columns survive the column allowlist
     for (const p of PRESETS) {
       const v = applyPreset(p.id, FLEET, idx);

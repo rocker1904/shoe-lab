@@ -8,7 +8,7 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await expect(page.getByTestId('entry-band')).toBeVisible();
   await page.getByRole('button', { name: 'Easy' }).click();
   await expect(page.getByText('1 of 5 shoes')).toBeVisible();
-  await expect(page).toHaveURL(/plate=not-carbon/);
+  await expect(page).toHaveURL(/plate=none%2Cplated-other/);
   await expect(page.getByTestId('entry-band')).toHaveCount(0);
   await expect(page.getByRole('row').filter({ hasText: 'cushy' })).toBeVisible();
 
@@ -42,7 +42,7 @@ test('opens on the entry band and resumes the previous session across a reload',
   await expect(page.getByText('1 of 5 shoes')).toBeVisible();
   await expect(page.getByTestId('entry-band')).toHaveCount(0);
   // and the restored view reaches the URL, so copying the link shares what is on screen
-  await expect(page).toHaveURL(/plate=not-carbon/);
+  await expect(page).toHaveURL(/plate=none%2Cplated-other/);
 });
 
 test('renders a superseded pair once and keeps colocated halves independently sortable', async ({ page }) => {

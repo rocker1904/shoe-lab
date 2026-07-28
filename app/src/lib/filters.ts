@@ -1,10 +1,11 @@
-import type { Shoe } from '../../../shared/types.js';
+import type { Plate, Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
 
 export interface RangeBound { min?: number; max?: number }
 export interface FilterState {
   ranges: Record<string, RangeBound>;
-  plate?: 'none' | 'plated' | 'carbon' | 'not-carbon';
+  /** The real values a shoe can carry. Empty or absent constrains nothing (docs/app.md §Filters). */
+  plate?: Plate[];
   releasedAfter?: string;
   brands?: string[];
   search?: string;
@@ -28,14 +29,7 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
     if (f.hideDiscontinued && s.discontinued) continue;
     if (search && !s.name.toLowerCase().includes(search)) continue;
     if (f.brands?.length && !f.brands.includes(s.brand ?? '')) continue;
-    if (f.plate) {
-      // `plated` and `not-carbon` are the two inexact tokens; everything else is an exact match
-      // (docs/app.md §Columns and sorting).
-      const dropped = f.plate === 'plated' ? s.plate === 'none'
-        : f.plate === 'not-carbon' ? s.plate === 'carbon'
-        : s.plate !== f.plate;
-      if (dropped) continue;
-    }
+    if (f.plate?.length && !f.plate.includes(s.plate)) continue;
     if (f.releasedAfter && (!s.releasedAt || s.releasedAt < f.releasedAfter)) continue;
     considered.push(s);
     // Missing-ness is settled across every active range before any bound is applied (docs/app.md §Filters).

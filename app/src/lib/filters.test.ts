@@ -19,10 +19,10 @@ describe('applyFilters', () => {
     expect(slugs(applyFilters(FLEET, { ranges: { 'energy-return-heel': { min: 70 } } }, idx))).toEqual(['cushy', 'racer']);
     expect(slugs(applyFilters(FLEET, { ranges: { msrpGbp: { max: 150 } } }, idx))).toEqual(['cushy', 'trainer', 'oldie']);
   });
-  it('plate filter: none/carbon exact, plated = any plate', () => {
-    expect(slugs(applyFilters(FLEET, { ranges: {}, plate: 'carbon' }, idx))).toEqual(['racer']);
-    expect(slugs(applyFilters(FLEET, { ranges: {}, plate: 'plated' }, idx))).toEqual(['racer', 'trainer']);
-    expect(slugs(applyFilters(FLEET, { ranges: {}, plate: 'none' }, idx))).toEqual(['cushy', 'oldie', 'mystery']);
+  it('plate filter matches the selected values exactly', () => {
+    expect(slugs(applyFilters(FLEET, { ranges: {}, plate: ['carbon'] }, idx))).toEqual(['racer']);
+    expect(slugs(applyFilters(FLEET, { ranges: {}, plate: ['carbon', 'plated-other'] }, idx))).toEqual(['racer', 'trainer']);
+    expect(slugs(applyFilters(FLEET, { ranges: {}, plate: ['none'] }, idx))).toEqual(['cushy', 'oldie', 'mystery']);
   });
   it('releasedAfter excludes older and unknown dates', () => {
     expect(slugs(applyFilters(FLEET, { ranges: {}, releasedAfter: '2025-01-01' }, idx))).toEqual(['cushy', 'racer']);
@@ -33,7 +33,7 @@ describe('applyFilters', () => {
     expect(slugs(applyFilters(FLEET, { ranges: {}, hideDiscontinued: true }, idx))).not.toContain('oldie');
   });
   it('filters combine with AND semantics', () => {
-    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 35 } }, plate: 'none', releasedAfter: '2025-01-01' }, idx);
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 35 } }, plate: ['none'], releasedAfter: '2025-01-01' }, idx);
     expect(slugs(r)).toEqual(['cushy']);
   });
 });
@@ -93,22 +93,30 @@ describe('applyFilters edge cases', () => {
   });
 });
 
-describe('plate not-carbon', () => {
-  it('keeps unplated and non-carbon plated shoes, drops carbon', () => {
-    const r = applyFilters(FLEET, { ranges: {}, plate: 'not-carbon' }, idx);
+describe('plate as a set', () => {
+  it('keeps only the selected plate values', () => {
+    const r = applyFilters(FLEET, { ranges: {}, plate: ['none', 'plated-other'] }, idx);
     expect(r.visible.length).toBeGreaterThan(0);          // an empty result would make every() vacuous
     expect(r.visible.map((s) => s.plate)).not.toContain('carbon');
-    expect(r.visible.some((s) => s.plate === 'none')).toBe(true);
     expect(r.visible.some((s) => s.plate === 'plated-other')).toBe(true);
   });
-  it('is a strictly larger set than none', () => {
-    const notCarbon = applyFilters(FLEET, { ranges: {}, plate: 'not-carbon' }, idx).visible;
-    const none = applyFilters(FLEET, { ranges: {}, plate: 'none' }, idx).visible;
+  it('a single selection is an exact match', () => {
+    const r = applyFilters(FLEET, { ranges: {}, plate: ['carbon'] }, idx);
+    expect(r.visible.length).toBeGreaterThan(0);
+    expect(r.visible.every((s) => s.plate === 'carbon')).toBe(true);
+  });
+  it('an empty selection constrains nothing, exactly like no selection', () => {
+    const none = applyFilters(FLEET, { ranges: {} }, idx).visible.length;
+    expect(applyFilters(FLEET, { ranges: {}, plate: [] }, idx).visible.length).toBe(none);
+  });
+  it('is a strictly larger set than one of its members alone', () => {
+    const notCarbon = applyFilters(FLEET, { ranges: {}, plate: ['none', 'plated-other'] }, idx).visible;
+    const none = applyFilters(FLEET, { ranges: {}, plate: ['none'] }, idx).visible;
     expect(notCarbon.length).toBeGreaterThan(none.length);
     expect(none.every((s) => notCarbon.includes(s))).toBe(true);
   });
   it('still accounts for every shoe when combined with a range', () => {
-    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 36 } }, plate: 'not-carbon' }, idx);
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 36 } }, plate: ['none', 'plated-other'] }, idx);
     expect(r.visible.length + r.outsideBounds + r.hiddenMissing).toBe(r.considered.length);
   });
 });
@@ -119,7 +127,7 @@ describe('applyFilters accounting', () => {
       { ranges: {} },
       { ranges: { 'heel-stack': { min: 36 } } },
       { ranges: { 'heel-stack': { min: 36 }, score: { max: 90 } } },
-      { ranges: { 'heel-stack': { min: 999 } }, plate: 'carbon' },
+      { ranges: { 'heel-stack': { min: 999 } }, plate: ['carbon'] },
       { ranges: {}, search: 'x', hideDiscontinued: true },
     ];
     for (const f of states) {
@@ -128,7 +136,7 @@ describe('applyFilters accounting', () => {
     }
   });
   it('considered is the population left by the non-range filters alone', () => {
-    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 999 } }, plate: 'carbon' }, idx);
+    const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 999 } }, plate: ['carbon'] }, idx);
     expect(r.considered).toEqual(FLEET.filter((s) => s.plate === 'carbon'));
     expect(r.visible).toEqual([]);
   });
