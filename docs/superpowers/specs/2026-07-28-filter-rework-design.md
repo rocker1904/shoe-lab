@@ -56,7 +56,7 @@ The view is produced by two inputs, not one, and they change on different timesc
 
 | layer | answers | survives |
 |---|---|---|
-| **Runner** — `strike` | who is looking | everything; only the runner changes it |
+| **Runner** — `strike` | who is looking | every clear and every filter change; set only by the runner or by a link |
 | **Story** — Easy / Tempo / Race | what they are shopping for | until another story or a clear |
 | **Filters** | this particular search | until cleared |
 
@@ -77,10 +77,31 @@ baseline, so:
 - `applyPreset(story, strike)` is the mapping in §4.0, with nothing special-cased.
 
 Strike serialises like everything else, so a shared link shows the recipient what the
-sender saw, and persists so a returning runner is not asked twice.
+sender saw, and persists so a returning runner is not asked twice. It survives a Clear
+and every filter change; only the runner sets it, or a link that carries one.
 
-The toggle appears beside the story cards and in the chip row that replaces them — it is
-a peer of the story, not a filter, and never lives in the filter sidebar.
+The toggle sits beside the story cards — it is a peer of the story, not a filter, and
+never lives in the filter sidebar.
+
+### 4.1.1 What flipping it does to the rest of the view
+
+Setting `strike` alone is not enough: the columns would stay heel-shaped, the view would
+stop equalling its own baseline, and the band would collapse on the very control §4.1
+exists to protect. Flipping strike **re-derives** the view:
+
+| from | becomes |
+|---|---|
+| the default view | `defaultView(next)` |
+| a view equal to a story | `applyPreset(story, …, next)` |
+| a hand-edited view | side-keyed **columns** swap to the other side; **bounds are left alone** |
+
+The last row is the careful one. A bound's *number* does not transfer between sides —
+36 mm is the median heel stack and the 98th percentile of forefoot stack — so silently
+rewriting a hand-set bound onto the other side would hand the runner a filter they never
+chose. Columns are presentation and swap safely; bounds are intent and do not.
+
+Flipping twice returns the original view for the first two rows, which is the property
+worth testing.
 
 ### 4.2 A side-swappable bound must be relative
 
@@ -91,12 +112,14 @@ absorption is as bad — a heel median of 131.6 against a forefoot median of 108
 
 So **every bound that can swap sides is a percentile of that side's own distribution**,
 never a number. "As much stack as most of the fleet" transfers between sides; "36 mm"
-does not. This retires the last absolute threshold in the preset set, and it is the same
+does not. It is the same
 rule docs/shoe-stories.md already states — a bound is market-relative where the claim is
 relative, and "well cushioned" plainly is.
 
 A bound that cannot swap sides — Race's weight ceiling, say — may stay absolute, because
-weight has no sides.
+weight has no sides. Every bound that *can* swap must convert, and that is more than one:
+Race's energy-return floor of 70 sits at the 85th percentile on heel and the 80th on
+forefoot, so it moves too.
 
 ### 4.3 Both halves always show
 
@@ -145,8 +168,24 @@ is not published at all, and a rename upstream would silently regroup the sideba
 ## 5. The entry band shows what is selected
 
 - **Cards lose their description line.** Name and count only.
-- **The selected story is highlighted**, in the band and in the chip row.
-- **A Clear control** returns to the default view.
+- **The selected story is highlighted.**
+- **A Clear control** returns to `defaultView(strike)`.
+
+### 5.1 The band stays open while the view is clean
+
+The band cannot both collapse on selection and display which story is selected. So its
+visibility rule widens: **the band shows while the view is a clean state** — equal to
+`defaultView(strike)`, or equal to `applyPreset(story, …, strike)` for some story. It
+collapses to the chip row only once the view is hand-edited into something no story
+describes.
+
+That is a better rule than the old one, not a concession. The band's three counts are
+what make the stories comparable, and comparing them is exactly what someone is doing at
+the moment they pick one. Collapsing on selection threw that away at the instant it
+became useful, and left nowhere to show the selection or offer a Clear.
+
+Once a filter is touched, the view is the runner's own and the compact chip row is
+right — the stories are then a way back, not a way in.
 
 Selection is **derived, not stored**: a story reads as selected when the current view
 equals what `applyPreset` would build for it right now. Presets resolve their
@@ -188,6 +227,21 @@ That splits two things today's code conflates: clearing a *value* and removing a
 The current rule — a cleared curated row drops its key, a cleared added row keeps an
 empty entry so the row survives — exists only because removal had no control of its
 own. With one, clear always means clear and remove always means remove, for every row.
+
+### 7.1 Which rows are shown is its own state
+
+Splitting the two actions needs somewhere to record that a hand-added row is *shown*,
+independently of whether it currently holds a bound. Deriving the row list from the bound
+keys — which is what today's code does — makes clearing and removing the same action
+however they are labelled.
+
+So `ViewState` carries the hand-added row list. It serialises, because a shared link
+should show the recipient the same controls, and it is the last encoding change before
+the storage key is bumped.
+
+An empty bound is then just an empty bound: `isDefaultView` keeps treating a stray range
+key as non-default (it is), and a cleared row survives because it is in the row list, not
+because a hollow key was left behind to prop it up.
 
 ## 8. Where the filters live
 
