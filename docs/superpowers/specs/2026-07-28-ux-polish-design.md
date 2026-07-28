@@ -79,8 +79,11 @@ This is the load-bearing decision of the whole pass, and it replaces
 - **The endpoint is the cap.** Each endpoint is chosen so cell text clears 4.5:1
   against it, and the endpoint is the worst case of the ramp, so checking the endpoint
   is sufficient. `--tint-strength` disappears as a tunable.
-- The dark surface is flat: page and table share `#0e1014`. There is no elevated or
-  recessed data surface.
+- **The row surface is `#0e1014` in dark and `#ffffff` in light**, and that is what the
+  wash travels inward from. The page behind it is one step darker (`#08090c`) so the
+  cards in §4.2 read as surfaces rather than as the page — this does not weaken the rule,
+  because the rule is about the *row* surface being at the end of the axis, not the page.
+  There is no *elevated* data surface: nothing sits above the page.
 
 ### 3.2 The 3:1 rule needs splitting
 
