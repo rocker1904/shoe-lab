@@ -16,6 +16,19 @@ function versionRef(v: any): VersionRef | null {
   return { slug, name: decodeEntities(name) };
 }
 
+/**
+ * The `{SIZE}` token is not a free choice. The CDN renders exactly the width the payload declares
+ * and 404s every other value, so a hardcoded size yields a URL that is well-formed and dead —
+ * which is how every image stayed broken while the field looked populated. A template we cannot
+ * resolve is worth less than no image at all, so it returns null rather than guessing.
+ */
+function resolveImageUrl(image: any): string | null {
+  const url = typeof image?.url === 'string' && image.url !== '' ? image.url : null;
+  if (url === null) return null;
+  if (!url.includes('{SIZE}')) return url;
+  return typeof image.size === 'number' ? url.replace('{SIZE}', String(image.size)) : null;
+}
+
 export function extractDetails(pageData: Record<string, any>, slug: string, scrapedAt: string): DetailRecord {
   const p = pageData?.product;
   if (!p || typeof p.id !== 'number' || !p.name) throw new PayloadError(`product missing for ${slug}`);
@@ -60,7 +73,7 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     score: typeof p.score === 'number' ? p.score : null,
     msrpGbp: typeof p.price === 'number' ? p.price : null, // GBP list price on /uk pages
     discontinued: Boolean(p.discontinued),
-    imageUrl: p.image?.url ? String(p.image.url).replace('{SIZE}', '400') : null,
+    imageUrl: resolveImageUrl(p.image),
     runrepeatUrl: `https://runrepeat.com/uk/${slug}`,
     features: factValues(factBySlug('features')?.values).map((v) => v.text),
     hasPlateSection,

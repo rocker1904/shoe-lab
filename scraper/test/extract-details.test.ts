@@ -32,6 +32,19 @@ describe('extractDetails', () => {
     expect(rec.whoShouldNotBuy).not.toContain('does not support the video tag');
     expect(rec.features).toContain('Removable insole');
   });
+  it('resolves the image size the payload declares, never a size of its own', () => {
+    // A hardcoded width is well-formed and dead: the CDN 404s every size but the declared one.
+    expect(rec.imageUrl).toContain('-720.jpg');
+    expect(rec.imageUrl).not.toContain('{SIZE}');
+  });
+  it('returns no image rather than an unresolvable template', () => {
+    const templated = { product: { id: 1, name: 'X', image: { url: 'https://x/y-{SIZE}.jpg' } } };
+    expect(extractDetails(templated, 'x', 't').imageUrl).toBeNull();
+  });
+  it('keeps a url that carries no size token at all', () => {
+    const plain = { product: { id: 1, name: 'X', image: { url: 'https://x/y.jpg' } } };
+    expect(extractDetails(plain, 'x', 't').imageUrl).toBe('https://x/y.jpg');
+  });
   it('throws PayloadError when product is missing', () => {
     expect(() => extractDetails({}, 'x', 't')).toThrow(PayloadError);
     expect(() => extractDetails({ product: { name: 'no id' } }, 'x', 't')).toThrow(PayloadError);
