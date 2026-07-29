@@ -2,11 +2,14 @@
   import type { Histogram } from '../lib/stats';
   import type { RangeBound } from '../lib/filters';
 
-  let { label, units, hist, bound, onchange, name, onremove }: {
+  let { label, units, hist, bound, onchange, name, excluded, onremove }: {
     label: string; units: string; hist: Histogram | null; bound: RangeBound;
     onchange: (b: RangeBound) => void;
     /** Accessible name for callers that title the row above the fieldset instead of in its legend. */
     name?: string;
+    /** How many shoes would return if this one bound were cleared, everything else kept. Absent on
+     *  an unbounded row, where there is nothing to relax (docs/app.md §Filters). */
+    excluded?: number;
     /** Present only on a hand-added row. Clearing a value and removing a row are different
      *  actions, so they are different controls (docs/app.md §Filters). */
     onremove?: () => void;
@@ -52,6 +55,12 @@
     {#if onremove}
       <button type="button" class="act" aria-label="Remove {name}" onclick={onremove}>Remove</button>
     {/if}
+    <!-- Beside the control that acts on it, with no ranking and no recommendation: which bound is
+         the relaxable one is the runner's call, and a budget is usually the least relaxable thing
+         in the set. `0 excluded` still shows, because its absence would read as unbounded. -->
+    {#if bounded && excluded !== undefined}
+      <span class="excluded">{excluded} excluded</span>
+    {/if}
   </div>
 </fieldset>
 
@@ -64,4 +73,5 @@
   .act { padding: var(--s1) var(--s2); font-size: var(--t-xs); cursor: pointer; background: none; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-sm); }
   .act:hover { color: var(--text); border-color: var(--accent); }
   .icon { line-height: 1; padding: var(--s1); }
+  .excluded { font-size: var(--t-xs); color: var(--text-dim); font-variant-numeric: tabular-nums; }
 </style>

@@ -184,6 +184,28 @@ it stays in the list, greyed, showing `(0)` and clickable — the list does not
 reflow under the cursor, and a 0 is an answer. A search box narrows the
 fifty-odd brands in a 14rem scroll box.
 
+**Every bounded row states what it is costing**: `N excluded`, from
+`lib/relax.ts`, is the number of shoes that would return if *that one bound*
+were cleared and everything else kept. Leave-one-out, so it is order-independent
+and conditioned on the rest of the set. There is no ranking and no
+recommendation — singling out the most restrictive bound imposes a priority we
+cannot know, and a budget is usually the *least* relaxable thing in the set —
+so the number simply sits beside the control that acts on it. An unbounded row
+shows nothing, because there is nothing to relax; **`0 excluded` does show**,
+because "this bound is doing no work" is worth knowing and its absence would be
+ambiguous against the unbounded case.
+
+The count is computed over the whole fleet under the **live `showMissing`**,
+never over `population`: `population` has already had the other bounds applied,
+and a range bound also excludes shoes with no reading for its metric, so with
+the flag off those come back when it is cleared and with it on they were never
+hidden. Run it under the wrong setting and the number is simply wrong wherever
+coverage is incomplete. The counts **overlap** — a shoe failing two bounds is
+counted by both — so they must never be totalled, and this is deliberately not
+the receipt's "outside your bounds", whose word is not reused here for that
+reason. It is the first thing in the app whose cost grows with filter count,
+which is worth stating: six passes over 450 shoes is well inside a frame.
+
 `applyFilters` accounts for every shoe it drops: `considered` is the
 population surviving the non-range filters alone, and
 `visible + outsideBounds + hiddenMissing === considered.length` holds for any

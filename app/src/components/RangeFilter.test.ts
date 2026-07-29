@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/svelte';
+import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { expect, it, vi } from 'vitest';
 import RangeFilter from './RangeFilter.svelte';
 import { histogram } from '../lib/stats';
@@ -36,6 +36,16 @@ it('empties both bounds in one action, and names the clear control after its row
   expect(clear.textContent?.trim()).toBe('\u2715');
   await fireEvent.click(clear);
   expect(onchange).toHaveBeenCalledExactlyOnceWith({});
+});
+
+it('renders a zero on a bounded row but nothing on an unbounded one', () => {
+  // `0 excluded` shows, because "this bound is doing no work" is worth knowing and its absence
+  // would be indistinguishable from the unbounded case (docs/app.md §Filters).
+  const bounded = render(RangeFilter, { props: { ...props, bound: { max: 100000 }, excluded: 0 } });
+  expect(bounded.getByText('0 excluded')).toBeInTheDocument();
+  cleanup();
+  const open = render(RangeFilter, { props: { ...props, bound: {}, excluded: undefined } });
+  expect(open.queryByText(/excluded/)).not.toBeInTheDocument();
 });
 
 it('offers nothing to clear on an empty bound, and remove only when it can be removed', () => {

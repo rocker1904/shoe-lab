@@ -4,6 +4,7 @@
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import { applyFilters, type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
+  import { excludedBy } from '../lib/relax';
   import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
@@ -103,6 +104,16 @@
   let adding = $state(false);
 
   const histFor = (key: string) => histogram(data.shoes.map((s) => numericValue(s, key, idx)).filter((v): v is number => v !== undefined));
+  /**
+   * Over the whole fleet under the live filter set, never over `population`: the question is how
+   * many shoes come back if this bound goes, and `population` has already had the other bounds
+   * applied to it. Undefined on an open row, where there is nothing to relax (docs/app.md §Filters).
+   */
+  const excludedFor = (key: string): number | undefined => {
+    const b = view.filters.ranges[key];
+    if (!b || (b.min === undefined && b.max === undefined)) return undefined;
+    return excludedBy(data.shoes, view.filters, key, idx);
+  };
   /**
    * Counted over the population with the brand filter itself removed, not over `population` and not
    * over the fleet. `applyFilters` applies brands *before* pushing to `considered` (filters.ts), so
@@ -206,6 +217,7 @@
       {#each rowKeysOf(e) as key (key)}
         <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} hist={histFor(key)}
                      bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
+                     excluded={excludedFor(key)}
                      onremove={removable(key) ? () => removeRow(key) : undefined} />
       {/each}
     </section>

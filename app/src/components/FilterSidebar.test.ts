@@ -112,6 +112,16 @@ describe('FilterSidebar', () => {
     expect(next.filters.ranges).toEqual({});
     expect(next.columns).toEqual(view.columns);   // filters only: columns and sort are not its business
   });
+  // The count is leave-one-out over the whole fleet under the live filter set, so the sidebar has
+  // to hand `RangeFilter` a conditioned number rather than anything the row could work out alone.
+  it('tells each bounded row what it is costing, and says nothing on the open ones', () => {
+    const view = defaultView('heel');
+    view.filters.ranges['weight'] = { max: 250 };
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    // trainer and oldie fail the ceiling; mystery has no weight at all and the bound hides it too.
+    expect(within(screen.getByRole('group', { name: /^Weight/ })).getByText('3 excluded')).toBeInTheDocument();
+    expect(within(screen.getByRole('group', { name: /^Stack — Heel/ })).queryByText(/excluded/)).toBeNull();
+  });
 });
 
 // Every cleared control must round-trip back to the default filter state, not to a falsy stand-in:
