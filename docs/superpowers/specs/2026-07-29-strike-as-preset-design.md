@@ -59,10 +59,23 @@ view → (strike?, story?)        both marks derived, both able to be nothing
 ```
 
 - `ViewState` loses `strike`. The URL loses `strike=`.
-- `defaultView()` and `defaultColumns()` lose their parameter and return the **heel-shaped**
-  baseline. This is not the silent assumption the parameter was introduced to kill: with
-  strike derived, the toolbar renders **Heel** as selected on that view, so the interface
-  states it rather than assuming it.
+- **`defaultView()` loses its parameter; `defaultColumns(side)` keeps its.** The guard the
+  parameter provided is preserved rather than deleted — no call site can drift to a side by
+  accident, because `defaultColumns` still demands one. Exactly one place, `defaultView()`,
+  names **heel** as the arbitrary half, and `isDefaultView` finally gets the constant it
+  always wanted.
+
+  The comment on the current parameter warns that a default "would reinstate the silent heel
+  assumption". It is already there: `parseView` (`urlstate.ts:146`) defaults to heel when a
+  query string carries no `strike=`, so every first arrival is heel today. This change
+  relocates that default rather than introducing it — and makes it visible, since the
+  toolbar renders **Heel** as selected on that view.
+
+  A genuinely side-free default — dropping stack and energy return from `defaultColumns` so
+  neither side is favoured — was considered and rejected. It is the fairer option and it
+  would dissolve the URL cost below, but stack is the best-covered cushioning proxy in the
+  fleet and energy return is the speed metric. Gutting the default table to avoid choosing a
+  side is a large usability cost for a small fairness gain.
 - `applyPreset(story, shoes, idx, side)` keeps its side argument — it is now a plain input to
   the mapping rather than a field being carried around.
 - Marks are derived by matching, as `selectedPreset` already does: eight combinations of
@@ -102,6 +115,28 @@ vouch for, so such a link opens heel-shaped. Accepted: the tool has not been sha
 there are no such links in anyone's hands, and a compatibility branch for a population of
 zero is a branch that can never be removed. Links carrying explicit `cols=` are unaffected
 either way.
+
+## 4a. The cost: a forefoot default view gets a verbose URL
+
+`serializeView` writes `cols` only when the columns differ from **that strike's** default
+(`urlstate.ts:134`), so today a forefoot runner's untouched view serialises to
+`?strike=forefoot` — nine characters. With `strike` gone, their columns no longer match the
+heel default and serialise in full:
+
+```
+?cols=releasedAt,score,msrpGbp,forefoot-stack,plate,energy-return-forefoot,toebox-width-widest-part,weight
+```
+
+~110 characters for a *default* view, working against the compact, default-omitting property
+`docs/app.md §URL encoding` is built on. Half the possible audience gets an ugly link for
+having a different landing.
+
+**Accepted, not fixed.** The remedy if it turns out to matter is a `side=forefoot` token that
+is pure shorthand for "that side's default columns" — emitted only when the columns match a
+side default exactly, expanded on read, with `ViewState` still carrying no strike. It is a
+serialisation optimisation rather than the field returning. It is not built now because it
+adds a second way to express one column set, in a parser whose stated job is to treat input
+as hostile, and that is not worth paying speculatively.
 
 ## 5. What changes, file by file
 
