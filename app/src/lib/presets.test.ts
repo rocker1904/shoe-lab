@@ -38,8 +38,7 @@ describe('presets', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, FLEET, idx, strike);
-        expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'rows', 'sort', 'strike']);
-        expect(v.strike).toBe(strike);
+        expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'rows', 'sort']);
         // Every key a story binds is curated, so a story never needs a hand-added row — and
         // selection derivation compares this field like any other.
         expect(v.rows).toEqual([]);
@@ -296,7 +295,7 @@ describe('no preset bounds a metric its own coverage warning would flag', () => 
     const fleet = Array.from({ length: 10 }, (_, i) =>
       shoe({ slug: `s${i}`, values: i < 4 ? { '70': 30 } : {} }));
     expect(coverageOf(fleet, 'midsole-softness-22', idx).fraction).toBeCloseTo(0.4);
-    const view = defaultView('heel');
+    const view = defaultView();
     view.filters.ranges['midsole-softness-22'] = { max: 35 };
     expect(sparseBoundKeys(view, fleet, idx)).toEqual(['midsole-softness-22']);
   });

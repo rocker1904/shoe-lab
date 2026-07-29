@@ -2,16 +2,13 @@ import type { Plate } from '../../../shared/types.js';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, metricEntries, sideKey, swapSide, type Side } from './lineage';
+import { CURATED_RANGE_KEYS, metricEntries, sideKey, type Side } from './lineage';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
   /** Chosen generation of each superseded pair, keyed by the **current** generation's slug. A
    *  choice equal to its key is the default and never serialises (docs/app.md §URL encoding). */
   generations: Record<string, string>;
-  /** Which end of the shoe the runner lands on. The baseline itself takes it, so nothing
-   *  downstream special-cases it (docs/app.md §View and URL ownership). */
-  strike: Side;
   /** Non-curated range rows the runner asked to see, independently of whether they hold a bound.
    *  Deriving this from the bound keys is what would make clearing and removing the same action
    *  however they were labelled (docs/app.md §Filters). */
@@ -19,8 +16,11 @@ export interface ViewState {
 }
 
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
-/** The strike is required rather than defaulted: a default would reinstate the silent heel
- *  assumption invisibly, at whichever call site forgot to pass one.
+/** The arbitrary half, named here and nowhere else. It is not a silent assumption: the toolbar
+ *  renders Heel as marked on this view, because the mark is derived from it (docs/app.md §Presets). */
+export const DEFAULT_SIDE: Side = 'heel';
+/** The side is required rather than defaulted: a default would put a second answer to "which half"
+ *  beside `DEFAULT_SIDE`, at whichever call site forgot to pass one.
  *
  *  Six numeric columns, because `releasedAt` and `plate` render as metadata rather than values on
  *  a phone and six is the widest set that fits one (docs/app.md §Columns and sorting). Softness
@@ -42,8 +42,8 @@ const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
-export function defaultView(strike: Side): ViewState {
-  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(strike), generations: {}, strike, rows: [] };
+export function defaultView(): ViewState {
+  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_SIDE), generations: {}, rows: [] };
 }
 
 /**
@@ -60,38 +60,6 @@ export function sameValue(a: unknown, b: unknown): boolean {
     return [...keys].every((k) => sameValue((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
   }
   return false;
-}
-
-/**
- * Whether the view is untouched — what the entry band's collapse is derived from (docs/app.md
- * §Presets). Deliberately not `serializeView(v) === ''`: the baseline is strike-relative, so a
- * forefoot runner's untouched view serialises to `strike=forefoot` and is still the default
- * (docs/app.md §View and URL ownership).
- *
- * Compared wholesale rather than field by field so a new `FilterState` field cannot silently go
- * unchecked, and **by value rather than by key presence** — see `sameValue`.
- */
-export function isDefaultView(v: ViewState): boolean {
-  // Against **this runner's** baseline, so a view differing only in strike is still default and the
-  // entry band survives a strike flip (docs/app.md §Presets).
-  return sameValue(v, defaultView(v.strike));
-}
-
-/**
- * Moves a **hand-edited** view onto the other side. The line falls where a number does: a column
- * and a sort key carry none — "sorted by energy return" means the same thing on either side — so
- * both follow the strike, while a bound carries one and is left exactly where the runner put it.
- * A default view or a view equal to a story is re-derived instead, by `Page.svelte`.
- *
- * Columns dedupe, preserving order: a hand-edited view can hold both halves of a pair, and each
- * maps onto the new side rather than the two exchanging places.
- */
-export function swapStrike(v: ViewState, strike: Side): ViewState {
-  const next = structuredClone(v);
-  next.strike = strike;
-  next.sort = { ...v.sort, key: swapSide(v.sort.key, strike) };
-  next.columns = [...new Set(v.columns.map((c) => swapSide(c, strike)))];
-  return next;
 }
 
 /** Current-generation slug to retired-generation slug, for every pair the catalogue resolves. */
@@ -129,9 +97,9 @@ export function serializeView(v: ViewState): string {
   if (v.sort.key !== DEFAULT_SORT.key || v.sort.dir !== DEFAULT_SORT.dir) {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
   }
-  if (v.strike !== 'heel') p.set('strike', v.strike);
   if (v.rows.length) p.set('rows', v.rows.join(','));
-  if (v.columns.join(',') !== defaultColumns(v.strike).join(',')) p.set('cols', v.columns.join(','));
+  // No side token: the columns already say which half the view is about (docs/app.md §URL encoding).
+  if (v.columns.join(',') !== defaultColumns(DEFAULT_SIDE).join(',')) p.set('cols', v.columns.join(','));
   for (const [key, chosen] of Object.entries(v.generations)) {
     if (chosen !== key) p.set(`gen.${key}`, chosen);
   }
@@ -140,10 +108,7 @@ export function serializeView(v: ViewState): string {
 
 export function parseView(qs: string, idx: TestIndex): ViewState {
   const p = new URLSearchParams(qs);
-  // Read before the baseline is built, not in the loop below: the baseline is the runner's, so a
-  // link carrying `strike=forefoot` and no `cols` would otherwise open heel-shaped — and, worse,
-  // open with the band collapsed, because the view no longer equals its own baseline.
-  const v = defaultView(p.getAll('strike').at(-1) === 'forefoot' ? 'forefoot' : 'heel');
+  const v = defaultView();
   // Ranges and sorts take numeric keys only while columns stay permissive
   // (docs/app.md §Columns are permissive, ranges and sorts are strict).
   const numericTest = (k: string) => {

@@ -43,7 +43,7 @@ function fleetCap(shoes: Shoe[], key: string, idx: TestIndex, p: number): number
 
 /** The mapping spec §4.0 describes: `(story, strike) -> view`, with nothing special-cased. */
 export function applyPreset(id: string, shoes: Shoe[], idx: TestIndex, strike: Side): ViewState {
-  const v = defaultView(strike);
+  const v = defaultView();
   // Prices resolve through numericValue, which prefers the weekly test over the field
   // (docs/app.md §Resolved price) — reading shoe.msrpGbp here would disagree with the column.
   const price = fleetCap(shoes, 'msrpGbp', idx, PRICE_PERCENTILE);

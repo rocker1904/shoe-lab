@@ -23,14 +23,13 @@ problem on every keystroke. It is still **one** write path, now asynchronous,
 and it flushes on `pagehide` so a page being torn down never loses the pending
 write.
 
-`ViewState` also carries the runner's `strike`, and **the baseline takes it**:
-`defaultView(strike)` and `defaultColumns(strike)` require one rather than
-defaulting to heel, so no call site can reinstate the old silent assumption by
-forgetting. `isDefaultView` compares against `defaultView(v.strike)`, which is
-what lets a runner state their strike without leaving the default view.
-`parseView` therefore resolves `strike` **before** it builds the baseline: read
-in the parameter loop instead, a link carrying a strike and no `cols` would open
-heel-shaped and already collapsed.
+`ViewState` carries **no side**. Which half of each side pair a view is about is
+read back out of it by `sideOf` (docs/app.md §Presets), so the baseline is a
+constant: `defaultView()` takes no argument and `DEFAULT_SIDE` is the one place
+`'heel'` is written. `defaultColumns` still *requires* a side, which is what
+stops a second call site defaulting by accident. `parseView` has nothing to
+resolve before it builds that baseline — the columns a link carries are the
+side it carries.
 
 Init takes the first of: a query string in the URL, a stored view, the
 defaults. A shared link must always beat a previous session, so the query
@@ -48,12 +47,13 @@ requirement: state that does not serialise would be silently dropped on the
 round trip. Every field of `ViewState` therefore serialises, `rows` included.
 
 "Serialises to nothing" and "is the default" are still different questions, and
-`isDefaultView` answers the second: a range key holding no bound at all is real
-view state that `serializeView` omits, so `serializeView(v) === ''` would call
-such a view default. It compares the whole `ViewState` **by value**, never by
-key presence — `structuredClone` keeps own properties whose value is
-`undefined`, so every cleared field leaves its key behind and a key count would
-never let a derived control re-open.
+`sameValue(v, defaultView())` answers the second: a range key holding no bound
+at all is real view state that `serializeView` omits, so
+`serializeView(v) === ''` would call such a view default. `sameValue` compares
+the whole `ViewState` **by value**, never by key presence — `structuredClone`
+keeps own properties whose value is `undefined`, so every cleared field leaves
+its key behind and a key count would never let a derived control re-open. Every
+derived mark in the app is one such comparison (docs/app.md §Presets).
 
 `persist.ts` stores the view between visits as **the exact output of
 `serializeView`** and nothing else — no bespoke JSON shape. Restoring runs the
@@ -99,11 +99,18 @@ boundary, and needs the decision above.
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
 `plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
-`strike=forefoot`, `rows` (comma-joined), `sort` (`-` prefix means descending),
+`rows` (comma-joined), `sort` (`-` prefix means descending),
 `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
 default and never appears.
+
+**There is no side token.** The side rides in `cols`, which is the only thing
+that records it (docs/app.md §Presets), so a plain forefoot table is a verbose
+link: eight column slugs where `side=forefoot` would be one. That is the
+accepted cost of having one encoding of the side rather than two that can
+disagree. A `side=` shorthand expanding to `defaultColumns(side)` is the remedy
+if the length ever becomes annoying in practice (BACKLOG.md).
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, always falling back to the default rather than throwing:
@@ -140,7 +147,7 @@ The order is fixed: search, released after, plate, brand, discontinued, then
 the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
 price, then the metrics the stories bound, then the rest curated, then anything
 added by hand. Price leads because every story bounds it. It does not
-rearrange itself under the story or the strike — someone comparing two stories
+rearrange itself under the story or the side — someone comparing two stories
 must not have the controls move underneath them. Both halves of every side pair
 are curated for that reason, and **every part of a side pair renders always**;
 a single renders when it is curated, active, or listed.
@@ -269,7 +276,7 @@ accessible name is not announced with the field inside it, so the metric is the
 only thing that tells them apart.
 
 **Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
-one action, `lib/roving.ts`, applied to all four of them — strike, the story
+one action, `lib/roving.ts`, applied to all four of them — the side, the story
 segment, discontinued, and the generation picker. The role promises exactly
 that, and each group made every radio its own stop and ignored the keys. The
 radios are buttons rather than native inputs — two rendered copies of a group
@@ -552,10 +559,13 @@ This section owns the mechanism only. What each preset is *for*, and why its
 thresholds are what they are, is docs/shoe-stories.md — read it before changing
 a number.
 
-`applyPreset` takes the runner's strike, so the mapping is `(story, strike) →
-view` with nothing special-cased: a story bounds, sorts by and shows the half
-of each side pair that the strike names — why, and why a side-swappable bound
-must be a percentile, is docs/shoe-stories.md §Which half a story uses.
+`applyPreset` takes a side as an **input**, so the mapping is
+`(story, side) → view` with nothing special-cased: a story bounds, sorts by and
+shows the half of each side pair that the side names — why, and why a
+side-swappable bound must be a percentile, is
+docs/shoe-stories.md §Which half a story uses.
+Nothing carries the side afterwards; the view it produces simply uses one
+half's keys, which is what `sideOf` then reads back.
 
 Thresholds are a mix, and the split is deliberate. Where the story is relative
 to the market — "affordable", "light for the fleet" — or where the bound could
@@ -577,6 +587,71 @@ equals what `applyPreset` would build for it right now. Editing a bound drops
 the highlight because the view genuinely is not that story any more, where a
 stored `preset` field would keep claiming Easy.
 
+### The side is a preset too
+
+Both groups above the table are derived marks over one view, not a field and a
+mark. `lib/side.ts` is the whole mechanism:
+
+- **`sideOf(v)`** is the side a view is *about*: the one half every side-paired
+  key it uses belongs to — columns, range keys and the sort key alike — or
+  `null` when it uses both halves or neither. A mixed view is not wrong, it is
+  simply neither preset, exactly as a hand-edited view is neither story. Unlike
+  the story mark, this one **survives hand-editing a bound**: a side is not a
+  story, and a runner who types a heel number has not stopped being on heel.
+- **`projectSide(v, side)`** is what a click does. Columns and the sort key
+  carry no number — "sorted by energy return" means the same on either half — so
+  they follow; a bound on the half being left carries one that does not
+  transfer, 36 mm being the median heel stack and the 98th percentile of
+  forefoot, so it is **dropped rather than translated**. Carrying the
+  *percentile* across instead would silently rewrite a number the runner typed.
+  Everything with no side — price, weight, brands, search, the discontinued and
+  missing-data flags — is untouched. A view that names no side at all gains that
+  side's two default measurement columns, so the control is never a dead button
+  that has just deleted a bound.
+
+Together those give the invariant the rest depends on:
+`sideOf(projectSide(v, s)) === s` for every view and side. A click always leaves
+the view committed to the side clicked, so the mark can honestly read
+everything and the just-clicked control is never left unlit. `Page.svelte`
+routes a view that *is* a story through `applyPreset` on the new side instead,
+so its bounds re-resolve at the new side's percentiles.
+
+Mixed views stay reachable by hand and by link, and stay unmarked in the side
+group. They are simply not *preserved* across an explicit side click.
+
+### What All does
+
+`allView(v, side)` is both what `All` produces and what lights it: `All` is
+marked exactly when `sameValue(v, allView(v, side))`. One function rather than
+an action and a matching predicate, so **marked means pressing it changes
+nothing** is true by construction and cannot drift.
+
+With a derived side, `All` restores that side's plain table. On a mixed view it
+replaces the filters and touches nothing else — there is no defensible column
+set to impose on a deliberately mixed table, and clearing a bound is not
+removing its row (docs/app.md §Filters), so a hand-added row that was on screen
+only because it carried a bound stays listed and empty. The sided branch is a
+wholesale restore, which by definition carries no hand-added rows, so there they
+go. The two branches disagreeing is the point.
+
+Two consequences follow from the identity, and both are deliberate:
+
+- **A mixed view with no filters marks `All`.** A view showing everything is an
+  `All` view whether or not it commits to a side; the alternative leaves `All`
+  lit-less on a view it cannot change.
+- **`All` is not idempotent when clearing a filter is what gives the view a
+  side.** From `cols=score,heel-stack` with a bound on `forefoot-stack`, the
+  first press clears the bound and leaves the columns alone; the view is now
+  heel-derived but is not heel's plain table, so `All` stays unlit and a second
+  press restores it. There really is something left for it to do.
+
+Marking on "no filter is active" was considered and rejected: it would light
+`All` on a view whose columns and sort were hand-edited, so pressing a lit
+control would still change the table.
+
+When the view names no side, applying a story has to pick one — the stories each
+bind one half — and `DEFAULT_SIDE` is that pick.
+
 ### The setup strip
 
 `SetupStrip.svelte` asks **both** questions once and then hands over to the
@@ -592,7 +667,7 @@ describes what the control does to the table, and "Built for" puts the claim on
 the shoe. This is a deliberate stance — do not "fix" it back to something
 friendlier.
 
-Strike cards carry **no count**, because strike does not change how many shoes
+Side cards carry **no count**, because the side does not change how many shoes
 exist; the slot is reserved rather than removed, so the cards are the same
 height. The descriptions align to a common baseline by giving the name and
 count lines fixed heights: bottom-aligning with `margin-top: auto` leaves them
@@ -614,9 +689,11 @@ stored view" — a genuine first arrival, which `Page.svelte` already knows at
 init — cleared on the first story click, never serialised and never persisted.
 That is not the stored dismissal flag this section rules out, and the property
 it protects is preserved exactly: a bare link opens expanded, a filtered link
-opens collapsed. A strike click leaves the strip up, because strike is the
+opens collapsed. A side click leaves the strip up, because the side is the
 strip's other question; a story click collapses it with a height transition
-under a `prefers-reduced-motion` guard.
+under a `prefers-reduced-motion` guard. The strip's `All` card stays marked
+through a side click, because the click leaves the view equal to that side's
+plain table, which is what `allView` produces.
 
 **The strip never returns**, and nothing is lost by that: the toolbar carries
 the counts, so the only thing the cards held exclusively is the descriptions,
@@ -628,7 +705,7 @@ toolbar peer, reachable long after the strip has gone.
 ### The toolbar
 
 `Toolbar.svelte` is the permanent surface: two segmented radiogroups in one
-visual language — strike, a divider, then `All | Easy | Tempo | Race` with live
+visual language — the side, a divider, then `All | Easy | Tempo | Race` with live
 counts — and an actions group (`Filters`, `Columns`) pushed right by
 `margin-left: auto`. The strip cannot hold the controls that reset it, because
 it is gone by the time they are needed.
@@ -639,18 +716,22 @@ same two groups put the four stories on screen twice on a first arrival, which
 is the one screen the strip exists to own.
 
 **There is no `Clear` button.** `All` is the fourth peer of the stories and the
-same state a Clear produced, `defaultView(strike)`, named for what you get
-rather than what you destroy — and it dissolves the ambiguity between a toolbar
-"Clear" and the sidebar's "Clear filters". `All` leads the group so it reads as
-everything → narrow to a story. Who you are survives it; what you searched for
-does not. The sidebar's **Clear filters** is a different, smaller thing and
-keeps its name: it empties the filters and leaves sort and columns alone.
+same state a Clear produced, `allView` (docs/app.md §What All does), named for
+what you get rather than what you destroy — and it dissolves the ambiguity
+between a toolbar "Clear" and the sidebar's "Clear filters". `All` leads the
+group so it reads as everything → narrow to a story. It clears **hand-set
+filters too**, not only a story's share: telling the two apart would need the
+stored `preset` field this section rules out. The sidebar's **Clear filters** is
+a different, smaller thing and keeps its name: it empties the filters and leaves
+sort and columns alone.
 
-Selection is passed in, not held: `'all'` while the view is this runner's
-baseline, a story id while it equals that story, and `null` once it is neither,
-so a hand-edited view marks nothing.
+Both marks are passed in, not held: `'all'` while the view equals what `All`
+would produce, a story id while it equals that story, and `null` once it is
+neither; the side group takes `sideOf` and marks nothing on a mixed view. Each
+group is a nullable mark, so either can show nothing selected, and `roving`
+still gives a group with nothing checked one tab stop.
 
-`StrikeToggle` carries **no visible lede**. Two segmented groups side by side
+`SideToggle` carries **no visible lede**. Two segmented groups side by side
 are one language, and the words live on the setup strip, where the question is
 asked once; the group keeps `aria-label="Measurements from"` so it is still
 named for a screen reader.
@@ -661,25 +742,26 @@ one line rather than phone-versus-desktop:
 | width | layout |
 |---|---|
 | above 880px | one line, actions right-aligned |
-| 560–880px | actions ride up beside strike on line 1; pace takes line 2, shrink-wrapped |
+| 560–880px | actions ride up beside the side group on line 1; pace takes line 2, shrink-wrapped |
 | 560px and below | as above, with pace stretched to fill the line and its pills `flex: 1` |
 
 Three details that were bugs first. The **divider is removed** the moment the
-groups stop sharing a line, or it wraps with the strike group and dangles after
+groups stop sharing a line, or it wraps with the side group and dangles after
 Forefoot. `flex-basis: 100%` belongs on the **wrapper**, never on the
 segment: on the segment, the bordered pill container stretches the full width
 with its pills clustered at the left. And the narrow tier **tightens the bar's
-own padding, gaps and button padding**, because line one is strike plus actions
-and at 360px — the usual Android width, and the binding one — the two needed
-345px against the 336px the wider padding left them, so the actions dropped to
-a third line and left the void the middle tier exists to prevent.
+own padding, gaps and button padding**, because line one is the side group plus
+actions and at 360px — the usual Android width, and the binding one — the two
+needed 345px against the 336px the wider padding left them, so the actions
+dropped to a third line and left the void the middle tier exists to prevent.
 
-Flipping strike **re-derives** the view rather than setting a field: from the
-default view to `defaultView(next)`, from a view equal to a story to that story
-under the new strike, and from a hand-edited view through `swapStrike`. Setting
-the field alone would leave heel-shaped columns behind, so the view would stop
-equalling its own baseline and the toolbar would drop the mark on the very
-control this protects.
+Picking a side always leaves the view about that side, in three states: a view
+equal to a story is rebuilt as that story on the new side; a view that names a
+side is projected onto the new one; a view that names none gains that side's
+measurement columns. In all three, the other half's bounds are **dropped rather
+than translated**, and everything with no side is untouched — the reasoning is
+docs/app.md §The side is a preset too. A no-op click on the marked side returns
+early, so it cannot rebuild the view.
 
 ## Theming
 
@@ -786,7 +868,7 @@ rows carries a bound, and so is the specific half or generation carrying it.
 Scanning the sidebar then answers "what is constraining this shortlist?" without
 reading a number.
 
-It replaced a `· in use` marker that named the half the strike had selected.
+It replaced a `· in use` marker that named the half the side group had selected.
 That was a preset's business rather than a property of the filter, and it made a
 side pair look like a control it is not — the two halves were named twice, once
 by the marker and again by each range row's own legend. **The halves are named

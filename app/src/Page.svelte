@@ -24,13 +24,14 @@
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
   import { debounce } from './lib/debounce';
-  import { applyFilters } from './lib/filters';
+  import { applyFilters, EMPTY_FILTERS } from './lib/filters';
   import type { Side } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
+  import { projectSide, sideOf } from './lib/side';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
-  import { defaultView, isDefaultView, parseView, sameValue, serializeView, swapStrike, type ViewState } from './lib/urlstate';
+  import { DEFAULT_SIDE, defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './lib/urlstate';
 
   let { data }: { data: ShoesFile } = $props();
 
@@ -132,20 +133,44 @@
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx));
   const snapshot = $derived($state.snapshot(view) as ViewState);
-  const atDefault = $derived(isDefaultView(snapshot));
+  const sideMark = $derived(sideOf(snapshot));
+  /** Somewhere to stand when the view names no side: the stories each bind one half, so applying
+   *  one has to pick, and the baseline's own half is the least surprising pick. */
+  const workingSide = $derived(sideMark ?? DEFAULT_SIDE);
+
+  /**
+   * What `All` produces — and, because the mark is `sameValue(v, allView(v))`, also what lights it.
+   * One function rather than an action and a matching predicate, so "marked means pressing it
+   * changes nothing" is true by construction and cannot drift (docs/app.md §Presets).
+   *
+   * `All` speaks for the story group and means "all paces". With a side to work from it restores
+   * that side's plain table; with none — a deliberately mixed view — it clears the filters and
+   * leaves the table's shape alone, because there is no defensible column set to impose and a row
+   * the runner added is not a filter.
+   */
+  function allView(v: ViewState, side: Side | null): ViewState {
+    if (side !== null) return { ...defaultView(), columns: defaultColumns(side) };
+    const next = structuredClone(v) as ViewState;
+    next.filters = { ...EMPTY_FILTERS, ranges: {} };
+    return next;
+  }
+
+  const atAll = $derived(sameValue(snapshot, allView(snapshot, sideMark)));
   /**
    * Derived, never stored: a story reads as selected while the view equals what `applyPreset`
    * would build for it *now*. A stored `preset` field would keep claiming Easy after the runner
    * had filtered it into something else (docs/app.md §Presets).
    */
-  const selectedPreset = $derived(
-    PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, snapshot.strike)))?.id ?? null);
+  const storyMark = $derived(
+    sideMark === null ? null
+    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, sideMark)))?.id ?? null);
+  const selected = $derived(atAll ? 'all' : storyMark);
   // `All` is a peer of the stories in the bar, so it needs a count in the same map. Three preset
   // applications over a dataset already in memory.
   const presetCounts = $derived(new Map<string, number>([
     ['all', data.shoes.length],
     ...PRESETS.map((p) => [p.id,
-      applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, view.strike).filters, idx).visible.length] as const),
+      applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, workingSide).filters, idx).visible.length] as const),
   ]));
 
   /**
@@ -177,28 +202,20 @@
   // a one-off at init, not part of a burst, and a bare URL for 200ms is a link worth copying.
   if (initial.restored) { setView(initial.view); flushView(); }
 
-  function onPreset(id: string) {
-    setView(applyPreset(id, data.shoes, idx, view.strike));
-  }
   /**
-   * Flipping strike **re-derives** the view (docs/app.md §Presets). Setting the field alone would
-   * leave heel-shaped columns behind, so the view would stop equalling its own baseline and the
-   * band would collapse on the very control this exists to protect.
+   * A side click makes the view about that side (docs/app.md §Presets). A view that is a story is
+   * rebuilt as that story on the new side, so its bounds re-resolve at the new side's percentiles;
+   * anything else is projected, which moves the columns and sort and drops the other half's bounds.
    */
-  function onStrike(next: Side) {
-    if (next === snapshot.strike) return;
-    if (atDefault) setView(defaultView(next));
-    else if (selectedPreset) setView(applyPreset(selectedPreset, data.shoes, idx, next));
-    else setView(swapStrike(snapshot, next));
+  function onSide(next: Side) {
+    if (next === sideMark) return;   // already there: a no-op click must not rebuild the view
+    setView(storyMark ? applyPreset(storyMark, data.shoes, idx, next) : projectSide(snapshot, next));
   }
-  // `All` is the baseline rather than a fourth story, so it routes to the same view a Clear
-  // button used to produce (docs/app.md §Presets).
   function onStory(id: string) {
     // The strip's own question, answered — the toolbar carries the counts from here, and the only
     // thing the cards held exclusively was the descriptions, which are a first-encounter need.
     stripOpen = false;
-    if (id === 'all') setView(defaultView(snapshot.strike));
-    else onPreset(id);
+    setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, data.shoes, idx, workingSide));
   }
   function onShowMissing() {
     const next = structuredClone($state.snapshot(view)) as ViewState;
@@ -235,7 +252,7 @@
           onexport={onExport} ontheme={onTheme} />
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
-  <Toolbar side={view.strike} onside={onStrike} selected={atDefault ? 'all' : selectedPreset}
+  <Toolbar side={sideMark} onside={onSide} {selected}
            counts={presetCounts} onstory={onStory} {showFilters} showGroups={!stripOpen}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
@@ -250,8 +267,8 @@
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
 {#if stripOpen}
   <div transition:slide={{ duration: collapseMs }}>
-    <SetupStrip counts={presetCounts} side={view.strike} selected={atDefault ? 'all' : selectedPreset}
-                onside={onStrike} onstory={onStory} />
+    <SetupStrip counts={presetCounts} side={sideMark} {selected}
+                onside={onSide} onstory={onStory} />
   </div>
 {/if}
 

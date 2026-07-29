@@ -7,7 +7,7 @@
  * build-derived version would discard state on every push
  * (docs/app.md §View and URL ownership).
  */
-export const VIEW_STORAGE_KEY = 'shoe-lab.view.v3';
+export const VIEW_STORAGE_KEY = 'shoe-lab.view.v4';
 
 // Storage access throws where it is blocked (embedded frames, hard privacy settings) rather than
 // returning null, so both directions are wrapped exactly as the theme is (docs/app.md §Theming).

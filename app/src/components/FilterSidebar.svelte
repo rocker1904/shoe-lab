@@ -44,7 +44,7 @@
     return held(e.retired.key) && !held(e.current.key) ? e.retired.key : e.current.key;
   };
   /** **Every** part of a side pair gets a row, always: the sidebar must not change shape with the
-   *  strike (docs/app.md §Filters). A superseded pair still offers one generation at a time. */
+   *  side (docs/app.md §Filters). A superseded pair still offers one generation at a time. */
   const rowKeysOf = (e: ResolvedMetric): string[] =>
     e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)];
 

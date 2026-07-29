@@ -3,12 +3,15 @@ import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page, { VIEW_WRITE_MS } from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
+import { indexTests } from './lib/dataset';
 import { VIEW_STORAGE_KEY } from './lib/persist';
 import { PRESETS } from './lib/presets';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
+import { defaultColumns, parseView } from './lib/urlstate';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
+const idx = indexTests(TESTS);
 // An extra numeric test that is not in the sidebar's curated list, so the "Add filter…" select renders.
 const EXTRA: LabTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' });
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, EXTRA] };
@@ -260,7 +263,7 @@ const markedStory = () => [
   ...screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true }),
   ...screen.queryAllByRole('button', { name: /All|Easy|Tempo|Race/, pressed: true }),
 ].map((r) => r.textContent?.trim().split(/\s/)[0]);
-/** The strike control, which is on the strip until a story is picked and in the toolbar after. */
+/** The side control, which is on the strip until a story is picked and in the toolbar after. */
 const clickForefoot = () => fireEvent.click([
   ...screen.queryAllByRole('radio', { name: 'Forefoot' }),
   ...screen.queryAllByRole('button', { name: /^Forefoot/ }),
@@ -307,16 +310,82 @@ describe('Page story selection', () => {
     expect(screen.getAllByRole('radio', { name: /All|Easy|Tempo|Race/ })).toHaveLength(4);
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeInTheDocument();
   });
-  it('All returns to this runner\'s own default, keeping who they are', async () => {
+  // A regression guard rather than a red-first test: the heel baseline already marks Heel.
+  it('marks both groups when the view is a story on a side', async () => {
     render(Page, { props: { data } });
-    await clickForefoot();
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    await fireEvent.click(screen.getByRole('radio', { name: /All/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));   // the strip's card
+    expect(markedStory()).toEqual(['Easy']);
+    expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
+  });
 
-    settle();
-    expect(location.search).toBe('?strike=forefoot');    // strike survives; everything else goes
-    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
+  it('marks neither side when the view mixes them, and All when nothing is filtered', () => {
+    history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack');
+    render(Page, { props: { data } });
+    expect(screen.getByRole('radio', { name: 'Heel' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).not.toBeChecked();
+    // A view showing everything is an All view whether or not it commits to a side; the mark is
+    // `sameValue(v, allView(v))`, so it is lit exactly when pressing it would do nothing.
     expect(markedStory()).toEqual(['All']);
+  });
+
+  it('All restores the derived side\'s own plain table, and stays marked on it', async () => {
+    history.replaceState(null, '', `/?cols=${defaultColumns('forefoot').join(',')}&r.weight=~250`);
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('radio', { name: /^All/ }));
+    expect(markedStory()).toEqual(['All']);
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
+    settle();
+    expect(location.search).not.toContain('r.weight');
+    expect(parseView(location.search.slice(1), idx).columns).toEqual(defaultColumns('forefoot'));
+  });
+
+  it('All on a mixed view clears the filters, leaves the table\'s shape, and then marks itself', async () => {
+    history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack&sort=-forefoot-stack&r.weight=~250');
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('radio', { name: /^All/ }));
+    expect(markedStory()).toEqual(['All']);   // nothing left for it to do
+    settle();
+    expect(location.search).not.toContain('r.weight');
+    expect(location.search).toContain('cols=score%2Cheel-stack%2Cforefoot-stack');
+    expect(location.search).toContain('sort=-forefoot-stack');   // the sort is left exactly as it was
+  });
+
+  // Mixed *only* because of the bound, so clearing it is what gives the view a side — and the view
+  // it leaves is not that side's plain table.
+  it('All takes two presses when clearing the bound is what makes the view sided', async () => {
+    history.replaceState(null, '', '/?cols=score,heel-stack&r.forefoot-stack=20~');
+    render(Page, { props: { data } });
+
+    await fireEvent.click(screen.getByRole('radio', { name: /^All/ }));
+    expect(markedStory()).toEqual([]);        // honestly unlit: there is still something All can do
+    expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
+    settle();
+    expect(location.search).not.toContain('r.forefoot-stack');
+    expect(location.search).toContain('cols=score%2Cheel-stack');
+
+    await fireEvent.click(screen.getByRole('radio', { name: /^All/ }));
+    expect(markedStory()).toEqual(['All']);
+    settle();
+    expect(location.search).toBe('');
+  });
+
+  // `workingSide`'s only reason to exist: the stories each bind one half, so one has to be picked.
+  // A regression guard rather than a red-first test.
+  it('a story picked from a mixed view lands on the baseline side', async () => {
+    history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack');
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
+    expect(markedStory()).toEqual(['Easy']);
+    expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
+  });
+
+  // A regression guard rather than a red-first test: All has always rebuilt the baseline wholesale.
+  it('All clears a filter the user set by hand, not only a preset\'s', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.input(screen.getByLabelText('Search'), { target: { value: 'nova' } });
+    await fireEvent.click(screen.getByRole('button', { name: /^All/ }));   // strip is still up
+    settle();
+    expect(location.search).not.toContain('q=');
   });
   // The skip link (BACKLOG.md) is its next consumer; the id and the tabindex are what it needs.
   it('wraps the table in a focusable anchor', () => {
@@ -330,18 +399,17 @@ describe('Page story selection', () => {
 const columnHeaders = () => screen.getAllByRole('columnheader')
   .map((th) => (th.querySelector('.h-name') ?? th).textContent?.trim());
 
-describe('Page strike toggle', () => {
+describe('Page side toggle', () => {
   it('changes the columns without collapsing the band', async () => {
     render(Page, { props: { data } });
     expect(columnHeaders()).toContain('Heel stack');
     await clickForefoot();
 
-    expect(markedStory()).toEqual(['All']);     // still this runner's own default view
+    expect(markedStory()).toEqual(['All']);     // forefoot's own plain table is an All view too
     expect(columnHeaders()).toContain('Forefoot stack');
     expect(columnHeaders()).not.toContain('Heel stack');
     settle();
-    expect(location.search).toContain('strike=forefoot');
-    expect(location.search).not.toContain('cols=');
+    expect(parseView(location.search.slice(1), idx).columns).toEqual(defaultColumns('forefoot'));
   });
   it('re-derives a story rather than only setting the field, and flips back to the same view', async () => {
     render(Page, { props: { data } });
@@ -359,16 +427,27 @@ describe('Page strike toggle', () => {
     settle();
     expect(location.search).toBe(before);
   });
-  it('swaps a hand-edited view\'s columns and sort, and leaves its bounds alone', async () => {
-    history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack&sort=-heel-stack&r.heel-stack=36~');
+  it('picking a side drops the other half\'s bound, keeps the rest, and moves the columns', async () => {
+    history.replaceState(null, '', '/?cols=score,heel-stack&sort=-heel-stack&r.heel-stack=36~&r.weight=~250&q=nova');
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
 
-    // a map onto the new side, not an exchange: both halves were shown, one column comes out
+    // An escaped nbsp, not a space: the sort arrow is nbsp-joined inside `.h-name` and
+    // `columnHeaders()` reads that span, so a copy-paste must not silently lose it.
     expect(columnHeaders()).toEqual(['Shoe', 'Score', 'Forefoot stack\u00a0▼']);
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
     settle();
+    expect(location.search).not.toContain('r.heel-stack');   // the number does not transfer
+    expect(location.search).toContain('r.weight=%7E250');    // no side, so not this control's business
+    expect(location.search).toContain('q=nova');
     expect(location.search).toContain('sort=-forefoot-stack');
-    expect(location.search).toContain('r.heel-stack=36%7E');   // the number was never the runner's to move
+  });
+  it('gives a side-free view that side\'s measurements rather than doing nothing', async () => {
+    history.replaceState(null, '', '/?cols=score,weight');
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    expect(columnHeaders()).toContain('Forefoot stack');
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
   });
   it('recounts the stories on the other side', async () => {
     render(Page, { props: { data } });

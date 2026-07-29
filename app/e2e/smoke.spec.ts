@@ -59,11 +59,11 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
 });
 
-test('states a strike, keeps the strip open through it, and returns to that runner via All', async ({ page }) => {
+test('picks a side, keeps the strip open through it, and returns to that side\'s table via All', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('setup-strip')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
-  // both halves of both side pairs render, forefoot first, whichever strike is chosen
+  // both halves of both side pairs render, forefoot first, whichever side is chosen
   const stackRows = page.locator('fieldset[aria-label^="Stack — "]');
   await expect(stackRows).toHaveCount(2);
   await expect(stackRows.first()).toHaveAttribute('aria-label', 'Stack — Forefoot');
@@ -74,8 +74,10 @@ test('states a strike, keeps the strip open through it, and returns to that runn
   // the strip's own card: while it is up the bar draws no second copy of either group
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Forefoot', exact: true }).click();
-  await expect(page).toHaveURL(/strike=forefoot/);
-  await expect(page.getByTestId('setup-strip')).toBeVisible();         // strike is the strip's own question
+  // no side token: the columns are the only record of which half the view is about
+  await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
+  await expect(page).not.toHaveURL(/strike=/);
+  await expect(page.getByTestId('setup-strip')).toBeVisible();         // the side is the strip's own question
   await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
@@ -86,7 +88,8 @@ test('states a strike, keeps the strip open through it, and returns to that runn
   await expect(page).toHaveURL(/r\.forefoot-stack=/);
 
   await page.getByRole('radio', { name: /All/ }).click();
-  await expect(page).toHaveURL(/\?strike=forefoot$/);                  // who you are survives All
+  // written out in full: the side rides in `cols`, so a plain forefoot table is a verbose link
+  await expect(page).toHaveURL('/?cols=releasedAt%2Cscore%2CmsrpGbp%2Cforefoot-stack%2Cplate%2Cenergy-return-forefoot%2Ctoebox-width-widest-part%2Cweight');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
   await expect(page.getByText('5 of 5 shoes')).toBeVisible();
@@ -247,7 +250,7 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
   await heel.focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toBeFocused();
-  await expect(page).toHaveURL(/strike=forefoot/);
+  await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
   await expect(heel).toHaveAttribute('tabindex', '-1');
 });
 

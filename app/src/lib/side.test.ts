@@ -3,8 +3,7 @@ import { projectSide, sideOf } from './side';
 import { defaultColumns, defaultView, type ViewState } from './urlstate';
 import type { Side } from './lineage';
 
-// `defaultView` still takes a side in this task; Task 3 drops the argument here.
-const base = (): ViewState => defaultView('heel');
+const base = (): ViewState => defaultView();
 const withCols = (cols: string[]): ViewState => ({ ...base(), columns: cols });
 const SIDES: Side[] = ['heel', 'forefoot'];
 
