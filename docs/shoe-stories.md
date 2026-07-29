@@ -53,10 +53,13 @@ only as an exclusion.
 
 Four metrics are measured at both ends of the shoe — stack, energy return,
 shock absorption, midsole width. Which half a story bounds, sorts by and shows
-as a column follows the **runner's strike**, because that is the half
-describing their landing. It applies whether or not a story is chosen: a
-forefoot striker browsing with nothing selected still gets forefoot columns.
-Nothing about a story changes with it; only which number it reads.
+as a column follows the **side the runner picked**, because for most runners
+that is the half describing their landing. The side is a selection rather than
+an identity: it is one of the two preset groups above the table, and it is
+derived from the view rather than stored on it (docs/app.md §Presets). A table
+that uses both halves or neither has no side, which is a shape of table and not
+a runner without a strike. Nothing about a story changes with it; only which
+number it reads.
 
 The two halves are not on one scale, so a threshold cannot simply move between
 them. 36 mm is the median heel stack and the **98th** percentile of forefoot
@@ -69,15 +72,15 @@ one above, applied to a second axis.
 A bound on a metric with no sides may stay absolute. Race's weight ceiling is
 the only one left.
 
-**The interface never asks the runner to declare what they are.** The code
-calls the field `strike` and this doc reasons in strikes, because that is what
-makes the choice of half correct — but on screen the question is
-"Measurements from: Heel | Forefoot", which asks which number to read rather
+**The interface never asks the runner to declare what they are.** This doc
+reasons in strikes, because a runner's strike is what makes one half the right
+one to read — but nothing on screen or in the code names a runner: the question
+is "Measurements from: Heel | Forefoot", which asks which number to read rather
 than asserting a gait. Many runners do not know their strike and most change it
 with pace, so a tool whose first act is to demand a self-diagnosis it cannot
 check has claimed something it has no standing to claim. The distinction costs
-nothing — same field, same two values, worded as a preference — so do not
-"clarify" the label into "I am a heel striker".
+nothing — same two values, worded as a preference — so do not "clarify" the
+label into "I am a heel striker".
 
 ## Checking a threshold set
 
