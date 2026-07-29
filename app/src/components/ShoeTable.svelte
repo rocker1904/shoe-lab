@@ -4,8 +4,9 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { columnLabel } from '../lib/labels';
   import { percentileMap } from '../lib/stats';
-  import { headerUnits } from '../lib/units';
+  import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
 
@@ -17,15 +18,6 @@
   // A set, not a single slug: comparing two shoes means having both panels open at once.
   const expanded = new SvelteSet<string>();
 
-  const headerFor = (key: string): string => {
-    if (key === 'releasedAt') return 'Released';
-    if (key === 'score') return 'Score';
-    if (key === 'msrpGbp') return 'Price';
-    if (key === 'plate') return 'Plate';
-    return idx.bySlug.get(key)?.name ?? key;
-  };
-  /** The two columns that hold words and dates rather than figures, so they are not right-aligned. */
-  const isFigure = (key: string) => key !== 'plate' && key !== 'releasedAt';
   const percentiles = $derived(new Map(view.columns.map((c) => [c, percentileMap(shoes, c, idx)])));
 
   function setSort(key: string) {
@@ -67,7 +59,7 @@
         <th class:fig={isFigure(col)}
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
-            <span class="h-name">{headerFor(col)}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
+            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
             <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
                  second line would make the header rows different heights. -->
             <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
@@ -125,12 +117,11 @@
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: var(--r-sm); }
   /* Expandability was signalled by `cursor: pointer` alone, which a touch reader never sees. */
   .chev { display: inline-block; color: var(--text-dim); }
-  /* Above 700px only: below it the table is a different rendering with no horizontal scroll to
-     pin against (docs/app.md §Columns and sorting). */
-  @media (min-width: 700px) {
-    th.name, td.name { position: sticky; left: 0; z-index: 1; }
-    thead th.name { z-index: 3; }
-  }
+  /* Unconditional, because this component is the desktop rendering: below 700px `Page.svelte`
+     mounts `ShoeTableMobile` instead, which has no horizontal scroll to pin against
+     (docs/app.md §Columns and sorting). */
+  th.name, td.name { position: sticky; left: 0; z-index: 1; }
+  thead th.name { z-index: 3; }
   /* Squared so only leaders read as tinted, which is what a ranking wants; the endpoint is the
      cap (docs/app.md §Theming). */
   td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--p) * var(--p) * 100%), transparent); }

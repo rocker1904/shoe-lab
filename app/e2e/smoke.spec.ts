@@ -79,6 +79,24 @@ test('states a strike, keeps the band open through it, and clears back to that r
   await expect(page.getByText('5 of 5 shoes')).toBeVisible();
 });
 
+// The 700px switch is invisible to jsdom: it applies no component CSS and evaluates no media
+// query, so only a real browser can say which of the two tables is on screen.
+test('switches to stacked cards on a phone, and back', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto('/');
+  const mobile = page.getByTestId('shoe-table-mobile');
+  await expect(mobile).toBeVisible();
+  // only numeric columns are columns; the date and the plate moved onto the shoe's own row
+  await expect(mobile.getByRole('columnheader', { name: /Released/ })).toHaveCount(0);
+  await expect(mobile.getByRole('columnheader')).toHaveCount(6);
+  // and all six fit — the bound the short labels were measured against
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await expect(mobile).toBeHidden();
+  await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
+});
+
 test('renders a superseded pair once and keeps colocated halves independently sortable', async ({ page }) => {
   await page.goto('/');
 

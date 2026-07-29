@@ -260,8 +260,8 @@ filtered and sorted on. There is no dimming of discontinued rows either — the
 `disc-tag` chip says it in text, and dimming would argue against the
 `discontinued=only` filter, which exists because those shoes are worth finding.
 
-The `thead` pins at `--thead-top`, and the first column pins left above 700px.
-Both depend on `Page.svelte`'s `.content` having **no `overflow-x`**: setting
+The `thead` pins at `--thead-top`, and the first column pins left. Both depend
+on `Page.svelte`'s `.content` having **no `overflow-x`**: setting
 it forces `overflow-y` to compute to `auto`, which makes `.content` a
 scrollport, and a sticky header inside a box that never scrolls vertically
 rides off with the page. Measured in Chromium at 1200×700 scrolling 800px: with
@@ -269,6 +269,62 @@ rides off with the page. Measured in Chromium at 1200×700 scrolling 800px: with
 51 and stays. Horizontal overflow therefore falls to the page. Do not "fix"
 the horizontal scrollbar by putting `overflow-x` back — that trades a working
 pinned header for it.
+
+### Two renderings, and only one of them mounted
+
+Below 700px the same columns render as `ShoeTableMobile.svelte`: the shoe name
+takes its own full-width row with the chevron, and the numbers get the whole
+viewport beneath it in true columns under one shared sticky header. A pinned
+name column with the numbers scrolling behind it is not a design at 375px — it
+spends 40% of the width on the name and shows about two numbers.
+
+**Which one renders is decided in script, not by a media query.** `Page.svelte`
+holds a `matchMedia('(max-width: 699px)')`-backed `$state` and mounts only the
+winner, because a `display: none` table is still in the DOM: it would answer
+"what are the columns?" twice, for assistive tech and for the suite alike.
+jsdom evaluates no media query and vitest applies no component CSS, so the
+suite cannot see the difference at all — `test-setup.ts` stubs `matchMedia`
+non-matching, and the phone rendering is checked directly in
+`ShoeTableMobile.test.ts` and at real widths by Playwright.
+
+The geometry is the contract, and these numbers are measured rather than
+chosen:
+
+- `table-layout: fixed`, `border-collapse: separate`, `border-spacing: 2px 0`.
+  Content-sized columns made every chip a different width and detached each
+  header from the values it labels. The spacing-derived gap is what makes
+  every chip one box.
+- **57px minimum column**, so six columns need 358px and fit any phone from
+  360px up. The table bleeds out of `.content`'s inline padding to get there.
+  Past six columns the minimum holds and the page scrolls, so every column
+  always has the geometry the labels were validated against — measured at
+  360px with nine columns: 57px each, page scrolling to 533px, nothing clipped.
+- **2px of horizontal header padding, deliberately not the nearest token.**
+  `--s1` is 4px and would take 4px off a 57px column, which is the difference
+  between "softness" fitting its header and clipping. It is the one place the
+  token scale is overridden.
+- That leaves **53px of header text** at 360px and 56px at 375px, which is what
+  `app/src/lib/labels.ts` validates every catalogue name against. Names wider
+  than that get a short label; 35 of 53 keep their real name. `Outsole wear` is
+  the one entry that is not a length fix — the test is Dremel dent depth in mm,
+  so "durability" contradicts its own units, and this is a deliberate
+  divergence from RunRepeat's name.
+- Values are **centred**, not right-aligned: with fixed equal columns that is
+  the more composed object and leaves no dead colour. The cost is that `73`,
+  `74.3` and `80.38` centre on different axes, judged acceptable at real
+  density. If it is ever revisited, right-alignment is the rigorous choice and
+  column-sized widths are its necessary partner.
+- The wash is **inset as a rounded chip** rather than filling the cell. At this
+  density full-bleed cells read as a solid band of colour, far louder than the
+  desktop table where borders and wider cells break the wash up.
+- `releasedAt` and `plate` render as dim metadata after the name and **wrap
+  rather than truncate**. Neither fits a ~53px cell and neither is a thing you
+  scan down a column; moving them is what keeps the value row uniformly
+  numeric.
+
+Rows are double height in this rendering, so roughly half as many shoes fit a
+screen. That is the direct price of keeping the numbers in columns, and it is
+worth paying: columns are what make this a comparison tool rather than a list.
 
 Plate filters as a **set of the real values** a shoe can carry — `none`,
 `plated-other`, `carbon` — with empty meaning no constraint, so "not carbon"

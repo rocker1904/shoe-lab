@@ -3,7 +3,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
-import { MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import { columnLabel, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import { labTest } from './test-fixtures';
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: a hand-written fixture can never fail on a
 // name that arrives upstream, which is the whole point of the bound guard below. Resolved through
@@ -19,6 +20,25 @@ const catalogue = JSON.parse(
 // Only numeric tests can ever be a column header — `metricEntries` filters to these
 // (lineage.ts), so an `option`-typed test like `leather-suede-quality` is out of scope.
 const numeric = catalogue.tests.filter((t) => NUMERIC_TEST_TYPES.has(t.type));
+
+describe('columnLabel', () => {
+  it('names the four shoe fields, which have no catalogue test behind them', () => {
+    expect(columnLabel('releasedAt', undefined)).toBe('Released');
+    expect(columnLabel('score', undefined)).toBe('Score');
+    expect(columnLabel('msrpGbp', undefined)).toBe('Price');
+    expect(columnLabel('plate', undefined)).toBe('Plate');
+  });
+
+  it('takes the catalogue name for everything else', () => {
+    expect(columnLabel('weight', labTest({ id: 24, slug: 'weight', name: 'Weight' }))).toBe('Weight');
+  });
+
+  it('falls back to the slug rather than an empty header when the test is unknown', () => {
+    // A column can outlive its test: `cols` is permissive, so a link can name a slug this
+    // dataset no longer ships (docs/app.md §Columns and sorting).
+    expect(columnLabel('gone-upstream', undefined)).toBe('gone-upstream');
+  });
+});
 
 describe('shortLabel', () => {
   it('renames outsole durability to what it measures', () => {

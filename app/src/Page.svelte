@@ -8,6 +8,7 @@
   import PresetChips from './components/PresetChips.svelte';
   import Receipt from './components/Receipt.svelte';
   import ShoeTable from './components/ShoeTable.svelte';
+  import ShoeTableMobile from './components/ShoeTableMobile.svelte';
   import StrikeToggle from './components/StrikeToggle.svelte';
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
@@ -32,6 +33,24 @@
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
+
+  /**
+   * Which table renders is a query the script asks, not a `@media` rule, because **only one may be
+   * in the DOM at a time**: a `display: none` table is still queryable, and two tables' headers
+   * would be two answers to "what are the columns?" for assistive tech and for the suite alike
+   * (docs/app.md §Columns and sorting). Read once at init so the first paint is already right,
+   * then kept live for a rotation or a resized window.
+   */
+  const PHONE_QUERY = '(max-width: 699px)';
+  let phone = $state(untrack(() => window.matchMedia?.(PHONE_QUERY).matches ?? false));
+  $effect(() => {
+    const mq = window.matchMedia?.(PHONE_QUERY);
+    if (!mq) return;
+    const sync = () => (phone = mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx));
@@ -135,7 +154,11 @@
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
     <!-- tabindex so Browse all can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
-      <ShoeTable shoes={visibleSorted} {data} {view} onchange={setView} />
+      {#if phone}
+        <ShoeTableMobile shoes={visibleSorted} {data} {view} onchange={setView} />
+      {:else}
+        <ShoeTable shoes={visibleSorted} {data} {view} onchange={setView} />
+      {/if}
     </div>
     {#if visibleSorted.length === 0}
       <!-- The table still renders: its headers keep the sort controls reachable. -->

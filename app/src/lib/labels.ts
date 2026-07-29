@@ -1,3 +1,19 @@
+import type { LabTest } from '../../../shared/types.js';
+
+/**
+ * The header's first line. The four shoe fields that have cells carry no catalogue test behind
+ * them, so they are named here; everything else is the catalogue's own name. Both renderings read
+ * this, so a column is called the same thing on a phone and on a desktop before `shortLabel` gets
+ * a say (docs/app.md §Columns and sorting).
+ */
+export function columnLabel(key: string, test: LabTest | undefined): string {
+  if (key === 'releasedAt') return 'Released';
+  if (key === 'score') return 'Score';
+  if (key === 'msrpGbp') return 'Price';
+  if (key === 'plate') return 'Plate';
+  return test?.name ?? key;
+}
+
 /**
  * Mobile column headers get ~53px of text at the six-column bound, measured at the narrowest
  * common phone (360px) rather than the 375px the design was drawn at. Only names whose widest

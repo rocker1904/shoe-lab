@@ -27,3 +27,13 @@ function unitsOf(key: string, test: LabTest | undefined): string {
 export function headerUnits(key: string, test: LabTest | undefined): string {
   return [unitsOf(key, test), ARROW[directionOf(key)]].filter(Boolean).join(' ');
 }
+
+/**
+ * The two columns that hold words and dates rather than figures. It decides more than alignment:
+ * the phone rendering has no grid cell either would fit, so both move onto the shoe's name line
+ * and the value row stays uniformly numeric (docs/app.md §Columns and sorting). Shared, so the
+ * two renderings cannot disagree about which columns are figures.
+ */
+export function isFigure(key: string): boolean {
+  return key !== 'plate' && key !== 'releasedAt';
+}
