@@ -3,11 +3,13 @@
   import type { Side } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
   import { roving } from '../lib/roving';
-  import StrikeToggle from './StrikeToggle.svelte';
+  import SideToggle from './SideToggle.svelte';
 
-  let { strike, onstrike, selected, counts, onstory, showFilters, onfilters, columns,
+  let { side, onside, selected, counts, onstory, showFilters, onfilters, columns,
         showGroups = true }: {
-    strike: Side; onstrike: (s: Side) => void;
+    /** Derived in `Page.svelte`, never stored: null while the view names both halves or neither
+     *  (docs/app.md §Presets). */
+    side: Side | null; onside: (s: Side) => void;
     /** Derived in `Page.svelte`, never stored: `'all'` while the view equals this runner's own
      *  baseline, a story id while it equals that story, null once it is neither
      *  (docs/app.md §Presets). */
@@ -31,7 +33,7 @@
 
 <div class="toolbar" data-testid="toolbar">
   {#if showGroups}
-    <div class="strike-wrap"><StrikeToggle {strike} onchange={onstrike} /></div>
+    <div class="side-wrap"><SideToggle {side} onchange={onside} /></div>
     <span class="sep" aria-hidden="true"></span>
     <div class="pace-wrap">
       <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
@@ -87,9 +89,9 @@
     /* `border-box`, or the 1px pill border puts the segment 2px past the line it is filling. */
     .pace-wrap .seg { width: 100%; box-sizing: border-box; }
     .pace-wrap .s { flex: 1; justify-content: center; }
-    /* Line one is strike plus actions, and at 360px — the usual Android width, and the binding one
+    /* Line one is the side group plus actions, and at 360px — the usual Android width, and the binding one
        (docs/app.md §Presets) — the two need 345px against the 336px this padding left
-       them, so the actions dropped to a line of their own and left a void beside the strike. The
+       them, so the actions dropped to a line of their own and left a void beside the side group. The
        gaps and the buttons' own padding are what pay for it; the `:global` reaches the column
        picker's summary, which is the bar's own line budget rather than the picker's. */
     .toolbar { padding: var(--s2); column-gap: var(--s2); }

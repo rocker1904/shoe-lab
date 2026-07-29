@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Toolbar from './Toolbar.svelte';
+import type { Side } from '../lib/lineage';
 
 const counts = new Map([['all', 450], ['easy', 150], ['tempo', 54], ['race', 39]]);
 const props = {
-  strike: 'heel' as const, onstrike: vi.fn(), selected: 'all' as string | null, counts,
+  side: 'heel' as Side | null, onside: vi.fn(), selected: 'all' as string | null, counts,
   onstory: vi.fn(), showFilters: false, onfilters: vi.fn(),
 };
 
@@ -34,6 +35,22 @@ describe('Toolbar', () => {
     expect(screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true })).toHaveLength(0);
   });
 
+  it('marks neither side when the view commits to none', () => {
+    render(Toolbar, { ...props, side: null });
+    expect(screen.getByRole('radio', { name: /Heel/ })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: /Forefoot/ })).not.toBeChecked();
+  });
+
+  // A regression guard rather than a red-first test: `roving` already falls back to the first
+  // radio when nothing is checked. It is here because a nullable mark makes "nothing checked"
+  // reachable for the first time, so a later refactor assuming a checked radio would break
+  // keyboard access silently.
+  it('keeps one tab stop even with nothing selected', () => {
+    render(Toolbar, { ...props, side: null });
+    const sides = screen.getAllByRole('radio', { name: /Heel|Forefoot/ });
+    expect(sides.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+  });
+
   it('reports the story that was picked, All included', async () => {
     const onstory = vi.fn();
     render(Toolbar, { props: { ...props, selected: 'easy', onstory } });
@@ -43,7 +60,7 @@ describe('Toolbar', () => {
 
   // The words are on the group, not on a lede beside it: two unexplained pills need a name for a
   // screen reader, and the setup strip carries the visible wording (docs/app.md §Presets).
-  it('names the strike group without printing a lede', () => {
+  it('names the side group without printing a lede', () => {
     render(Toolbar, { props: { ...props } });
     expect(screen.getByRole('radiogroup', { name: 'Measurements from' })).toBeInTheDocument();
     expect(screen.queryByText('I land on my')).toBeNull();
@@ -66,13 +83,13 @@ describe('Toolbar', () => {
     expect(onstory).toHaveBeenCalledWith('easy');
   });
 
-  it('picks the other strike with an arrow key', async () => {
-    const onstrike = vi.fn();
-    render(Toolbar, { props: { ...props, onstrike } });
+  it('picks the other side with an arrow key', async () => {
+    const onside = vi.fn();
+    render(Toolbar, { props: { ...props, onside } });
     const heel = screen.getByRole('radio', { name: 'Heel' });
     heel.focus();
     await fireEvent.keyDown(heel, { key: 'ArrowRight' });
-    expect(onstrike).toHaveBeenCalledWith('forefoot');
+    expect(onside).toHaveBeenCalledWith('forefoot');
   });
 
   // The strip asks both questions in words on a first arrival, so a bar that drew them at the same

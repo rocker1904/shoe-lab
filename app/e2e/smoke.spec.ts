@@ -162,7 +162,7 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
       return b ? Math.round(b.y + b.height / 2) : null; };
     const sep = q('[data-testid="toolbar"] .sep');
     return {
-      strikeY: y('[data-testid="toolbar"] .strike-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
+      sideY: y('[data-testid="toolbar"] .side-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
       actionsY: y('[data-testid="toolbar"] .actions'),
       sepShown: sep ? getComputedStyle(sep).display !== 'none' : false,
       paceW: q('[data-testid="toolbar"] .pace-wrap .seg')?.getBoundingClientRect().width ?? 0,
@@ -174,31 +174,31 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
   await page.goto('/');
   await settled();
   const wide = await boxes();
-  expect(wide.strikeY).not.toBeNull();
-  expect(wide.strikeY).toBe(wide.paceY);        // one line, all three groups
-  expect(wide.strikeY).toBe(wide.actionsY);
+  expect(wide.sideY).not.toBeNull();
+  expect(wide.sideY).toBe(wide.paceY);        // one line, all three groups
+  expect(wide.sideY).toBe(wide.actionsY);
   expect(wide.sepShown).toBe(true);
   // and nothing scrolls sideways: the content track is capped and the table's headers wrap
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1200);
 
   await page.setViewportSize({ width: 700, height: 800 });
   const mid = await boxes();
-  expect(mid.actionsY).toBe(mid.strikeY);       // actions ride up beside strike
-  expect(mid.paceY).toBeGreaterThan(mid.strikeY!);
+  expect(mid.actionsY).toBe(mid.sideY);       // actions ride up beside the side group
+  expect(mid.paceY).toBeGreaterThan(mid.sideY!);
   expect(mid.sepShown).toBe(false);             // nothing left to separate
   expect(mid.paceW).toBeLessThan(mid.wrapW);    // shrink-wrapped, not stretched
 
   await page.setViewportSize({ width: 375, height: 800 });
   const narrow = await boxes();
-  expect(narrow.paceY).toBeGreaterThan(narrow.strikeY!);
+  expect(narrow.paceY).toBeGreaterThan(narrow.sideY!);
   expect(narrow.paceW).toBe(narrow.wrapW);      // stretched to fill the line
 
   // 360px is the binding width, not 375: it is the usual Android one, and a third line there is
   // the same void the middle tier was written to eliminate at 620.
   await page.setViewportSize({ width: 360, height: 800 });
   const android = await boxes();
-  expect(android.actionsY).toBe(android.strikeY);
-  expect(android.paceY).toBeGreaterThan(android.strikeY!);
+  expect(android.actionsY).toBe(android.sideY);
+  expect(android.paceY).toBeGreaterThan(android.sideY!);
 
   // The pinned header row must clear the chrome at every width, which a constant offset cannot do:
   // the chrome is 44px at 1200 and 103px at 375.

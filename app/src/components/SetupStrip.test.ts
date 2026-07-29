@@ -5,12 +5,13 @@ import SetupStrip from './SetupStrip.svelte';
 import { VIEW_STORAGE_KEY } from '../lib/persist';
 import { FLEET, TESTS } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
+import type { Side } from '../lib/lineage';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 const counts = new Map([['all', 450], ['easy', 150], ['tempo', 54], ['race', 39]]);
 const props = {
-  counts, strike: 'heel' as const, selected: null as string | null,
-  onstrike: vi.fn(), onstory: vi.fn(),
+  counts, side: 'heel' as Side | null, selected: null as string | null,
+  onside: vi.fn(), onstory: vi.fn(),
 };
 
 describe('SetupStrip', () => {
@@ -21,9 +22,9 @@ describe('SetupStrip', () => {
     expect(names).toEqual(['Heel', 'Forefoot', 'All', 'Easy', 'Tempo', 'Race']);
   });
 
-  // Strike does not change how many shoes exist, so a count there would be four copies of the
+  // The side does not change how many shoes exist, so a count there would be four copies of the
   // same number; the slot stays, empty, so the cards are the same height.
-  it('counts the stories and not the strikes', () => {
+  it('counts the stories and not the sides', () => {
     render(SetupStrip, { props: { ...props } });
     expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('150');
     expect(screen.getByRole('button', { name: /^Heel/ })).not.toHaveTextContent(/\d/);
@@ -45,19 +46,28 @@ describe('SetupStrip', () => {
   });
 
   it('reports the card that was picked', async () => {
-    const onstrike = vi.fn();
+    const onside = vi.fn();
     const onstory = vi.fn();
-    render(SetupStrip, { props: { ...props, onstrike, onstory } });
+    render(SetupStrip, { props: { ...props, onside, onstory } });
     await fireEvent.click(screen.getByRole('button', { name: /^Forefoot/ }));
-    expect(onstrike).toHaveBeenCalledWith('forefoot');
+    expect(onside).toHaveBeenCalledWith('forefoot');
     await fireEvent.click(screen.getByRole('button', { name: /Race/ }));
     expect(onstory).toHaveBeenCalledWith('race');
   });
 
-  it('marks the chosen strike and the chosen story, and nothing else', () => {
+  it('marks the chosen side and the chosen story, and nothing else', () => {
     render(SetupStrip, { props: { ...props, selected: 'tempo' } });
     expect(screen.getAllByRole('button', { pressed: true }).map((b) => b.querySelector('.name')?.textContent))
       .toEqual(['Heel', 'Tempo']);
+  });
+
+  // Anchored regexes, matching the file's own convention: the card carries a reserved count span
+  // as well as its name.
+  it('presses neither card when the view commits to no side', () => {
+    render(SetupStrip, { ...props, side: null });
+    for (const name of [/^Heel/, /^Forefoot/]) {
+      expect(screen.getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
+    }
   });
 
   it('explains a group in a popover rather than a tooltip, and hands focus back on Escape', async () => {
@@ -103,7 +113,7 @@ describe('Page setup strip', () => {
     expect(screen.queryByTestId('setup-strip')).toBeNull();
   });
 
-  it('survives a strike change, which is the other half of the same question', async () => {
+  it('survives a side change, which is the other half of the same question', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getAllByRole('button', { name: /^Forefoot/ })[0]!);
     expect(screen.getByTestId('setup-strip')).toBeInTheDocument();

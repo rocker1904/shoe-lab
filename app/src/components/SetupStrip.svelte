@@ -2,11 +2,13 @@
   import type { Side } from '../lib/lineage';
   import HelpPopover from './HelpPopover.svelte';
 
-  let { counts, strike, selected, onstrike, onstory }: {
-    counts: Map<string, number>; strike: Side;
+  let { counts, side, selected, onside, onstory }: {
+    counts: Map<string, number>;
+    /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
+    side: Side | null;
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
     selected: string | null;
-    onstrike: (s: Side) => void; onstory: (id: string) => void;
+    onside: (s: Side) => void; onstory: (id: string) => void;
   } = $props();
 
   const SIDES: { v: Side; label: string }[] = [{ v: 'heel', label: 'Heel' }, { v: 'forefoot', label: 'Forefoot' }];
@@ -22,12 +24,12 @@
     { id: 'race', label: 'Race', desc: 'Lightest, fastest, price no object' },
   ];
 
-  const STRIKE_LABEL = 'Use measurements from the';
+  const SIDE_LABEL = 'Use measurements from the';
   const STORY_LABEL = 'Built for';
   // Verbatim from the design, and two things it deliberately does not do: it never says "session",
   // which is our word rather than a runner's, and it does not contrast these against the labels
   // the data ships with — the reader has no idea those exist, so denying it plants the question.
-  const STRIKE_HELP = 'Stack, energy return, shock absorption and midsole width are each measured '
+  const SIDE_HELP = 'Stack, energy return, shock absorption and midsole width are each measured '
     + 'twice — once at the heel, once at the forefoot. Pick the end you want the table and filters '
     + 'to use. Usually that is the end you land on, but either is fine.';
   const STORY_HELP = 'Easy, Tempo and Race each set the filters, columns and sorting to suit that '
@@ -36,12 +38,12 @@
 
 <section class="strip" aria-label="Set up your table" data-testid="setup-strip">
   <div class="grid">
-    <h2 class="label strike-label">{STRIKE_LABEL} <HelpPopover label={STRIKE_LABEL} body={STRIKE_HELP} /></h2>
+    <h2 class="label side-label">{SIDE_LABEL} <HelpPopover label={SIDE_LABEL} body={SIDE_HELP} /></h2>
     {#each SIDES as s (s.v)}
-      <button type="button" class="card side" aria-pressed={strike === s.v} class:on={strike === s.v}
-              onclick={() => onstrike(s.v)}>
+      <button type="button" class="card side" aria-pressed={side === s.v} class:on={side === s.v}
+              onclick={() => onside(s.v)}>
         <span class="name">{s.label}</span>
-        <!-- Reserved, not removed: strike does not change how many shoes exist, and a card that
+        <!-- Reserved, not removed: the side does not change how many shoes exist, and a card that
              drops the slot is a different height from its neighbours. -->
         <span class="count" aria-hidden="true"></span>
       </button>
@@ -69,7 +71,7 @@
   }
   .label { grid-row: 1; margin: 0; display: flex; align-items: center; gap: var(--s2);
            font-size: var(--t-sm); font-weight: 600; color: var(--text-dim); }
-  .strike-label { grid-column: 1 / 3; }
+  .side-label { grid-column: 1 / 3; }
   .story-label { grid-column: 4 / -1; }
   /* `--divider`, not `--border`: a border-coloured hairline is invisible against `--chrome`. */
   .divider { grid-column: 3; grid-row: 1 / 3; background: var(--divider); }

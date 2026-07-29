@@ -235,7 +235,7 @@
           onexport={onExport} ontheme={onTheme} />
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
-  <Toolbar strike={view.strike} onstrike={onStrike} selected={atDefault ? 'all' : selectedPreset}
+  <Toolbar side={view.strike} onside={onStrike} selected={atDefault ? 'all' : selectedPreset}
            counts={presetCounts} onstory={onStory} {showFilters} showGroups={!stripOpen}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
@@ -250,8 +250,8 @@
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
 {#if stripOpen}
   <div transition:slide={{ duration: collapseMs }}>
-    <SetupStrip counts={presetCounts} strike={view.strike} selected={atDefault ? 'all' : selectedPreset}
-                onstrike={onStrike} onstory={onStory} />
+    <SetupStrip counts={presetCounts} side={view.strike} selected={atDefault ? 'all' : selectedPreset}
+                onside={onStrike} onstory={onStory} />
   </div>
 {/if}
 
