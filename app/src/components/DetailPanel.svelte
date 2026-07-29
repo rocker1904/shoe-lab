@@ -65,7 +65,9 @@
 <style>
   .detail { padding: var(--s4) var(--s5); background: var(--surface); border-top: 1px solid var(--border); }
   .cols { display: flex; gap: var(--s5); align-items: flex-start; }
-  img { width: 220px; max-width: 30vw; border-radius: var(--r-md); }
+  /* An aspect ratio, so the box is the right height before the image loads and the panel does not
+     shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. */
+  img { width: 220px; max-width: 30vw; aspect-ratio: 3 / 2; object-fit: contain; border-radius: var(--r-md); }
   .intro { font-style: italic; color: var(--text-dim); }
   .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
   .pros li::marker { content: '+ '; color: var(--good); }
@@ -82,4 +84,8 @@
   /* Stripping embedded videos at sanitise time leaves empty paragraphs behind; collapse them. */
   .detail :global(p:empty) { display: none; }
   .detail :global(p) { margin: var(--s2) 0; }
+  /* Two columns of pros and cons leave about twenty characters a line on a phone. */
+  @media (max-width: 699px) {
+    .proscons { grid-template-columns: 1fr; }
+  }
 </style>

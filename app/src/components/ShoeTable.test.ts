@@ -70,6 +70,23 @@ describe('ShoeTable', () => {
     expect(heel.getAttribute('style')).toContain('--p:');
     expect(cells[3]!.className).not.toContain('tinted'); // plate is not numeric
   });
+  it('does not print the brand, which every shoe name already starts with', () => {
+    setup();
+    // Four of the five FLEET shoes carry brand 'Brand', so queryByText would throw on multiples.
+    expect(screen.queryAllByText('Brand')).toHaveLength(0);
+  });
+  it('carries units and a direction arrow in the header', () => {
+    setup({ view: { columns: ['weight'] } });
+    expect(screen.getByText('g ↓')).toBeInTheDocument();
+  });
+  it('expands more than one row at a time', async () => {
+    setup();
+    const rows = screen.getAllByRole('row').filter((r) => r.classList.contains('shoe'));
+    await fireEvent.click(rows[0]!);
+    await fireEvent.click(rows[1]!);
+    expect(rows[0]!.getAttribute('aria-expanded')).toBe('true');
+    expect(rows[1]!.getAttribute('aria-expanded')).toBe('true');
+  });
   it('washes a directional column blue and a neutral one grey', () => {
     const { container } = setup().rendered;
     const cells = [...container.querySelectorAll('tbody tr:first-child td')];

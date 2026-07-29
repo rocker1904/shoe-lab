@@ -151,7 +151,12 @@
   /* A sticky column taller than the viewport can never scroll to its own bottom, and ten range
      filters easily outgrow it — give the sidebar its own scrollbar. */
   .sidebar { position: sticky; top: 3.2rem; max-height: calc(100vh - 3.2rem); overflow-y: auto; }
-  .content { overflow-x: auto; padding: 0 var(--s4) var(--s6); }
+  /* No `overflow-x` here, deliberately. It would make `.content` a scrollport — `overflow-x: auto`
+     forces `overflow-y` to compute to `auto` — so the table's sticky `thead` would stick to a box
+     that never scrolls vertically and ride off with the page. Horizontal overflow falls to the
+     page instead, which only bites well past the default six columns and is the only structure in
+     which the pinned header works at all (docs/app.md §Columns and sorting). */
+  .content { padding: 0 var(--s4) var(--s6); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
   .clear { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text-dim); border-radius: var(--r-full); font-size: var(--t-sm); }

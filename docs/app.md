@@ -224,6 +224,38 @@ tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
 an ISO string; year-derived dates therefore sit at 1 January, and the table
 prints the year alone unless `preciseReleaseDate` is set.
 
+### Table presentation
+
+Every header is two lines: the metric name, then the units-and-direction line
+`headerUnits` derives in `app/src/lib/units.ts`. Units are **derived, never
+authored** — `float` carries its own, `percent` is `%`, `score` and `rating`
+are `/5`, the `score` field is `/100` and `msrpGbp` is `£` — and the arrow is
+`directionOf`'s, so a neutral metric gets none. `size-rating` is the one
+override: it reads `3 = true`, because `/5` would present a runs-small /
+true / runs-large scale as a mediocre mark.
+
+Figures are right-aligned with `tabular-nums`; `plate` and `releasedAt` hold
+words and dates and are not. Any number of rows expand at once — comparing two
+shoes means having both panels open — and the panel scrolls itself into view,
+under a `prefers-reduced-motion` guard.
+
+**No brand line under the name.** 442 of 450 names already begin with their
+brand and the remaining 8 shorten it ("Topo", "Hylo") rather than drop it, so
+the line was duplication on every row. `brand` stays in the data: it is still
+filtered and sorted on. There is no dimming of discontinued rows either — the
+`disc-tag` chip says it in text, and dimming would argue against the
+`discontinued=only` filter, which exists because those shoes are worth finding.
+
+The `thead` pins at `--thead-top`, and the first column pins left above 700px.
+Both depend on `Page.svelte`'s `.content` having **no `overflow-x`**: setting
+it forces `overflow-y` to compute to `auto`, which makes `.content` a
+scrollport, and a sticky header inside a box that never scrolls vertically
+rides off with the page. Measured in Chromium at 1200×700 scrolling 800px: with
+`overflow-x: auto` the header goes from y 266 to −534; without it, it pins at
+51 and stays. Horizontal overflow therefore falls to the page. Do not "fix"
+the horizontal scrollbar by putting `overflow-x` back — that trades a working
+pinned header for it.
+
 Plate filters as a **set of the real values** a shoe can carry — `none`,
 `plated-other`, `carbon` — with empty meaning no constraint, so "not carbon"
 is chosen directly as the first two rather than named by a token. The set is

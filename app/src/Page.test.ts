@@ -268,7 +268,10 @@ describe('Page entry band', () => {
   });
 });
 
-const columnHeaders = () => screen.getAllByRole('columnheader').map((th) => th.textContent?.trim());
+// First line only: a header is name over units-and-direction now, and it is the name these cases
+// are about (docs/app.md §Columns and sorting).
+const columnHeaders = () => screen.getAllByRole('columnheader')
+  .map((th) => (th.querySelector('.h-name') ?? th).textContent?.trim());
 
 describe('Page strike toggle', () => {
   it('changes the columns without collapsing the band', async () => {

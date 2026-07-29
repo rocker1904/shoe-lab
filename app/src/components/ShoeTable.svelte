@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { tick } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
   import { percentileMap } from '../lib/stats';
+  import { headerUnits } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
 
@@ -11,15 +14,18 @@
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  let expanded = $state<string | null>(null);
+  // A set, not a single slug: comparing two shoes means having both panels open at once.
+  const expanded = new SvelteSet<string>();
 
   const headerFor = (key: string): string => {
     if (key === 'releasedAt') return 'Released';
     if (key === 'score') return 'Score';
-    if (key === 'msrpGbp') return 'Price £';
+    if (key === 'msrpGbp') return 'Price';
     if (key === 'plate') return 'Plate';
     return idx.bySlug.get(key)?.name ?? key;
   };
+  /** The two columns that hold words and dates rather than figures, so they are not right-aligned. */
+  const isFigure = (key: string) => key !== 'plate' && key !== 'releasedAt';
   const percentiles = $derived(new Map(view.columns.map((c) => [c, percentileMap(shoes, c, idx)])));
 
   function setSort(key: string) {
@@ -36,13 +42,20 @@
     const v = col === 'score' ? s.score : numericValue(s, col, idx);
     return v === null || v === undefined ? '—' : displayNumber(v);
   }
-  function toggle(slug: string) {
-    expanded = expanded === slug ? null : slug;
+  async function toggle(slug: string, row: HTMLElement | null) {
+    if (expanded.delete(slug)) return;
+    expanded.add(slug);
+    // The panel opens *below* the row, so a row near the fold opens off screen. Awaited so the
+    // panel exists to be scrolled to. jsdom implements no layout and defines neither
+    // `scrollIntoView` nor `matchMedia`, hence the optional calls.
+    await tick();
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    row?.nextElementSibling?.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
   }
   function onRowKey(e: KeyboardEvent, slug: string) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
-    toggle(slug);
+    void toggle(slug, e.currentTarget as HTMLElement);
   }
 </script>
 
@@ -51,9 +64,13 @@
     <tr>
       <th class="name">Shoe</th>
       {#each view.columns as col (col)}
-        <th aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
+        <th class:fig={isFigure(col)}
+            aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
-            {headerFor(col)}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}
+            <span class="h-name">{headerFor(col)}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
+            <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
+                 second line would make the header rows different heights. -->
+            <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
           </button>
         </th>
       {/each}
@@ -61,19 +78,22 @@
   </thead>
   <tbody>
     {#each shoes as s (s.slug)}
-      <tr class="shoe" class:discontinued={s.discontinued} tabindex="0" aria-expanded={expanded === s.slug}
-          onclick={() => toggle(s.slug)} onkeydown={(e) => onRowKey(e, s.slug)}>
+      <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)}
+          onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
         <td class="name">
+          <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
           {#if s.imageUrl}<img src={s.imageUrl} alt="" loading="lazy" />{/if}
-          <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}<br /><small>{s.brand ?? ''}</small></div>
+          <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
+               shorten it rather than drop it (docs/app.md §Columns and sorting). -->
+          <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}</div>
         </td>
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
-          <td class="num" style:--p={p ?? 0} class:tinted={p !== undefined}
+          <td class="num" class:fig={isFigure(col)} style:--p={p ?? 0} class:tinted={p !== undefined}
               class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
       </tr>
-      {#if expanded === s.slug}
+      {#if expanded.has(s.slug)}
         <tr class="expand"><td colspan={1 + view.columns.length}><DetailPanel shoe={s} /></td></tr>
       {/if}
     {/each}
@@ -81,17 +101,36 @@
 </table>
 
 <style>
-  table { border-collapse: collapse; width: 100%; font-size: var(--t-md); }
-  th { text-align: left; border-bottom: 2px solid var(--border); padding: var(--s2); white-space: nowrap; }
-  th button { background: none; border: none; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; padding: 0; }
+  /* Separate rather than collapsed: a collapsed border belongs to the table, not the cell, so it
+     does not travel with a sticky header and vanishes the moment the head detaches. */
+  table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: var(--t-md); }
+  th { text-align: left; border-bottom: 2px solid var(--border); padding: var(--s2); white-space: nowrap;
+       background: var(--surface); }
+  /* The offset is the pinned chrome above, and the fallback is the header height rather than 0 —
+     `Header` is itself sticky at top 0, so a zero fallback pins this row underneath it. */
+  thead th { position: sticky; top: var(--thead-top, 3.2rem); z-index: 2; box-shadow: var(--shadow-sticky); }
+  th button { display: flex; flex-direction: column; gap: 1px; background: none; border: none; color: var(--text);
+              font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-align: inherit; }
+  .h-units { font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1em; }
+  th.fig, td.fig { text-align: right; }
+  th.fig button { align-items: flex-end; }
+  td.fig { font-variant-numeric: tabular-nums; }
   td { border-bottom: 1px solid var(--border); padding: var(--s2); }
   tr.shoe { cursor: pointer; }
   /* A background *image* layers over the cell's background colour, so hovering a tinted cell
-     dims it rather than replacing the percentile tint with a flat wash. */
+     dims it rather than replacing the percentile wash with a flat one. */
   tr.shoe:hover td { background-image: linear-gradient(var(--hover-wash), var(--hover-wash)); }
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  td.name { display: flex; gap: var(--s2); align-items: center; min-width: 14rem; }
+  td.name { display: flex; gap: var(--s2); align-items: center; min-width: 14rem; background: var(--surface); }
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: var(--r-sm); }
+  /* Expandability was signalled by `cursor: pointer` alone, which a touch reader never sees. */
+  .chev { display: inline-block; color: var(--text-dim); }
+  /* Above 700px only: below it the table is a different rendering with no horizontal scroll to
+     pin against (docs/app.md §Columns and sorting). */
+  @media (min-width: 700px) {
+    th.name, td.name { position: sticky; left: 0; z-index: 1; }
+    thead th.name { z-index: 3; }
+  }
   /* Squared so only leaders read as tinted, which is what a ranking wants; the endpoint is the
      cap (docs/app.md §Theming). */
   td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--p) * var(--p) * 100%), transparent); }
@@ -99,5 +138,13 @@
      than a podium (docs/app.md §Theming). */
   td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--p) * 100%), transparent); }
   .disc-tag { margin-left: var(--s1); font-size: var(--t-xs); color: var(--bad); border: 1px solid var(--bad); border-radius: var(--r-full); padding: 0 var(--s1); }
-  small { color: var(--text-dim); }
+  @media (prefers-reduced-motion: no-preference) {
+    .chev { transition: transform 120ms ease-out; }
+    .chev.open { transform: rotate(90deg); }
+    tr.expand td { animation: reveal 140ms ease-out; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chev.open { transform: rotate(90deg); }
+  }
+  @keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
 </style>
