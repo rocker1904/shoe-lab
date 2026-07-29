@@ -626,13 +626,22 @@ marked exactly when `sameValue(v, allView(v, side))`. One function rather than
 an action and a matching predicate, so **marked means pressing it changes
 nothing** is true by construction and cannot drift.
 
-With a derived side, `All` restores that side's plain table. On a mixed view it
+With a derived side, `All` restores that side's plain table. With none it
 replaces the filters and touches nothing else — there is no defensible column
 set to impose on a deliberately mixed table, and clearing a bound is not
 removing its row (docs/app.md §Filters), so a hand-added row that was on screen
 only because it carried a bound stays listed and empty. The sided branch is a
 wholesale restore, which by definition carries no hand-added rows, so there they
 go. The two branches disagreeing is the point.
+
+**A view with no side covers two states**, and this branch treats them alike: one
+using *both* halves, and one using *neither* — reachable by unticking Stack and
+Energy return in the column picker, or by a link like `cols=score,weight`. The
+second gets the timid rule too, so `All` leaves those columns alone rather than
+imposing a table on someone who chose not to have one. It costs a click getting
+back: pick a side and the two measurement columns are appended at the end where
+`defaultColumns` interleaves them, so the order differs, `All` goes unlit, and a
+second press restores the plain table (BACKLOG.md).
 
 Two consequences follow from the identity, and both are deliberate:
 
