@@ -3,7 +3,7 @@
 # Strike becomes a preset
 
 **Date:** 2026-07-29
-**Status:** Design, pending approval and an implementation plan
+**Status:** Approved design, pending an implementation plan
 **Size:** Medium — `ViewState` loses a field, so it reaches `urlstate`, `presets`, `persist`,
 `Page` and both selection surfaces. Nine files reference `strike`; `urlstate.ts` alone has 21.
 
@@ -74,36 +74,34 @@ columns, bounds, sort — is the heel half; forefoot-marked when they are all fo
 legible rather than impossible. A view using no side-paired metric at all keeps whichever
 mark its columns imply.
 
-## 4. Two questions this design does not settle
+## 4. What `All` does, and what happens to old links
 
-Both are genuine forks. They want deciding before the plan, not during it.
+**`All` is the pace axis reading "all paces", not a reset of everything.** It is in the
+story group, so it speaks for the story group:
 
-**4.1 What does `All` do to the side?** Today Clear returns to `defaultView(strike)` and the
-strike survives. With strike derived there is no stored side to survive, so `All` has to
-produce a view with *some* side.
+| the view's derived side | `All` produces |
+|---|---|
+| Heel or Forefoot | filters cleared, `sort` back to `DEFAULT_SORT`, `columns` = `defaultColumns(thatSide)` |
+| none — the view mixes sides | **filters cleared, and nothing else touched** |
 
-- *Reset both* — `All` returns the heel baseline. Simple and consistent with "All means the
-  baseline", but a forefoot runner clicking `All` silently becomes a heel runner.
-- *Keep the derived side* — `All` returns `defaultView(currentMark ?? 'heel')`. Preserves the
-  reading that the two groups are independent axes, at the cost of `All` no longer meaning
-  one fixed view. When the current view is mixed and therefore unmarked, it still has to fall
-  back to heel.
+The mixed case is the interesting one and the rule is deliberately timid: with no derived
+side there is no defensible column set to impose, so imposing one would throw away a
+deliberately mixed view to answer a question about pace. Clearing the filters is the whole
+of what the user asked for; the shape of their table is none of `All`'s business.
 
-The second is better behaviour and worse to explain. I lean to it, because the toolbar
-*shows* two independent groups and users will read them that way whatever the doc says.
+**`All` clears every filter, not only the ones a preset contributed.** Undoing just the
+preset's share would mean knowing which bounds came from the preset and which the user
+typed — which means storing the preset alongside the view, and that stored `preset` field
+is precisely the modelling error this design removes (docs/app.md §Presets: a stored field
+"would keep claiming Easy"). So a search term typed before choosing Easy is cleared by
+`All`, as it is today. This is unchanged behaviour, recorded because it is the case someone
+will read as a bug.
 
-**4.2 What happens to a link carrying `strike=forefoot`?** Every such link that exists today
-was produced by this app. `parseView` drops keys it cannot vouch for, so those links would
-silently open heel-shaped — a shared shortlist quietly changing which numbers it is about.
-
-- *Translate on read* — `parseView` maps a bare `strike=forefoot` onto the forefoot column
-  set when no `cols` is present, then forgets it. Costs a compatibility branch that can never
-  be removed without breaking those links again.
-- *Accept the break* — the app is weeks old, links are private, and the columns a link
-  carries explicitly are unaffected; only links with `strike=` and no `cols=` change meaning.
-
-I lean to translating, because the failure is silent and a shared link changing meaning is
-the one thing the URL design exists to prevent.
+**Links carrying `strike=forefoot` are not translated.** `parseView` drops what it cannot
+vouch for, so such a link opens heel-shaped. Accepted: the tool has not been shared, so
+there are no such links in anyone's hands, and a compatibility branch for a population of
+zero is a branch that can never be removed. Links carrying explicit `cols=` are unaffected
+either way.
 
 ## 5. What changes, file by file
 
@@ -135,7 +133,11 @@ is not.
 - Choosing a side re-derives columns and preset bounds without touching unrelated filters.
 - Hand-editing a bound drops the side mark, exactly as it drops the story mark.
 - `serializeView` never emits `strike=`; a round trip through `parseView` is lossless without it.
-- Whichever of §4.1 is chosen, `All` is asserted against it explicitly — it is the case a
-  reader will get wrong.
-- If §4.2 translates: a legacy `?strike=forefoot` opens with forefoot columns, and
-  `?strike=forefoot&cols=…` leaves the explicit columns alone.
+- `All` on a heel-marked view clears the filters and restores the heel columns; on a
+  forefoot-marked view, the forefoot columns.
+- **`All` on a mixed view clears the filters and leaves columns and sort exactly as they
+  were.** This is the case a reader will get wrong, and the one a careless implementation
+  will "tidy" into a full reset.
+- `All` clears a filter the user set by hand, not only the preset's own — asserted, because
+  it looks like a bug and is not.
+- `serializeView` never emits `strike=`, and a legacy `?strike=forefoot` is simply ignored.
