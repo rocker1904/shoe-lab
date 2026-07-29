@@ -10,7 +10,7 @@
 </div>
 
 <style>
-  .chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  button { padding: 0.25rem 0.75rem; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 999px; cursor: pointer; font-size: 0.85rem; }
+  .chips { display: flex; gap: var(--s2); flex-wrap: wrap; }
+  button { padding: var(--s1) var(--s3); border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: var(--r-full); cursor: pointer; font-size: var(--t-sm); }
   button:hover { background: var(--accent-dim); }
 </style>

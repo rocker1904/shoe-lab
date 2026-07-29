@@ -20,7 +20,7 @@
 </details>
 
 <style>
-  summary { cursor: pointer; font-size: 0.85rem; color: var(--text-dim); }
-  ul { list-style: none; padding: 0.25rem 0 0; margin: 0; max-height: 14rem; overflow-y: auto; }
-  li { font-size: 0.85rem; padding: 0.1rem 0; }
+  summary { cursor: pointer; font-size: var(--t-sm); color: var(--text-dim); }
+  ul { list-style: none; padding: var(--s1) 0 0; margin: 0; max-height: 14rem; overflow-y: auto; }
+  li { font-size: var(--t-sm); padding: 0.1rem 0; }
 </style>

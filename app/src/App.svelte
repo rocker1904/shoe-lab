@@ -31,12 +31,12 @@
 <style>
   .error,
   .loading {
-    padding: 3rem;
+    padding: var(--s6);
     text-align: center;
     color: var(--text-dim);
   }
   button {
-    padding: 0.5rem 1.25rem;
+    padding: var(--s2) var(--s5);
     cursor: pointer;
   }
 </style>

@@ -25,6 +25,6 @@
 </div>
 
 <style>
-  .plates { display: flex; flex-direction: column; gap: 0.15rem; }
-  label { font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+  .plates { display: flex; flex-direction: column; gap: var(--s1); }
+  label { font-size: var(--t-sm); display: flex; align-items: center; gap: var(--s2); cursor: pointer; }
 </style>

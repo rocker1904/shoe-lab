@@ -63,23 +63,23 @@
 </div>
 
 <style>
-  .detail { padding: 1rem 1.5rem; background: var(--surface); border-top: 1px solid var(--border); }
-  .cols { display: flex; gap: 1.5rem; align-items: flex-start; }
-  img { width: 220px; max-width: 30vw; border-radius: 8px; }
+  .detail { padding: var(--s4) var(--s5); background: var(--surface); border-top: 1px solid var(--border); }
+  .cols { display: flex; gap: var(--s5); align-items: flex-start; }
+  img { width: 220px; max-width: 30vw; border-radius: var(--r-md); }
   .intro { font-style: italic; color: var(--text-dim); }
-  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
   .pros li::marker { content: '+ '; color: var(--good); }
   .cons li::marker { content: '− '; color: var(--bad); }
-  h4 { margin: 0.75rem 0 0.25rem; font-size: 0.85rem; }
-  .tags { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .fact { margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: baseline; }
-  .fact-name { font-size: 0.75rem; text-transform: capitalize; color: var(--text-dim); min-width: 7rem; }
-  .note { font-size: 0.8rem; color: var(--text-dim); border-left: 2px solid var(--border); padding-left: 0.5rem; }
-  .lineage { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-dim); list-style: none; padding: 0; }
-  .tag { font-size: 0.75rem; padding: 0.1rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; color: var(--text-dim); }
-  a { display: inline-block; margin-top: 0.75rem; color: var(--accent); }
+  h4 { margin: var(--s3) 0 var(--s1); font-size: var(--t-sm); }
+  .tags { margin-top: var(--s3); display: flex; flex-wrap: wrap; gap: var(--s1); }
+  .fact { margin-top: var(--s2); display: flex; flex-wrap: wrap; gap: var(--s1); align-items: baseline; }
+  .fact-name { font-size: var(--t-xs); text-transform: capitalize; color: var(--text-dim); min-width: 7rem; }
+  .note { font-size: var(--t-sm); color: var(--text-dim); border-left: 2px solid var(--border); padding-left: var(--s2); }
+  .lineage { margin-top: var(--s3); font-size: var(--t-sm); color: var(--text-dim); list-style: none; padding: 0; }
+  .tag { font-size: var(--t-xs); padding: 0.1rem var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); color: var(--text-dim); }
+  a { display: inline-block; margin-top: var(--s3); color: var(--accent); }
   .missing { color: var(--text-dim); }
   /* Stripping embedded videos at sanitise time leaves empty paragraphs behind; collapse them. */
   .detail :global(p:empty) { display: none; }
-  .detail :global(p) { margin: 0.4rem 0; }
+  .detail :global(p) { margin: var(--s2) 0; }
 </style>

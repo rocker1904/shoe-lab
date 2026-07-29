@@ -44,17 +44,17 @@
 </section>
 
 <style>
-  .band { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; padding: 1rem 0 1.25rem; }
+  .band { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--s3); padding: var(--s4) 0 var(--s5); }
   .card {
-    display: flex; flex-direction: column; gap: 0.35rem; text-align: left; cursor: pointer;
-    padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 10px;
+    display: flex; flex-direction: column; gap: var(--s1); text-align: left; cursor: pointer;
+    padding: var(--s4); border: 1px solid var(--border); border-radius: var(--r-md);
     background: var(--surface); color: var(--text); font: inherit;
   }
   .card:hover { border-color: var(--accent); background: var(--accent-dim); }
   .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Not colour alone: the selected card is also the only one carrying aria-pressed. */
   .card.on { border-color: var(--accent); border-width: 2px; background: var(--accent-dim); }
-  .name { font-size: 1.15rem; font-weight: 700; }
+  .name { font-size: var(--t-lg); font-weight: 700; }
   .count { font-weight: 600; color: var(--accent); }
   /* An escape hatch that reads as a lesser option is not an escape hatch: same size, same weight,
      distinguished only by a dashed edge. */

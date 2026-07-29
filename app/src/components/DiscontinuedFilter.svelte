@@ -23,7 +23,7 @@
 </div>
 
 <style>
-  .disc { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-  button { flex: 1; padding: 0.3rem 0.2rem; border: none; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.75rem; }
+  .disc { display: flex; border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+  button { flex: 1; padding: var(--s1); border: none; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: var(--t-xs); }
   button.on { background: var(--accent-dim); color: var(--text); font-weight: 600; }
 </style>

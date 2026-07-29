@@ -21,16 +21,16 @@
 </header>
 
 <style>
-  header { display: flex; align-items: center; gap: 1rem; padding: 0.6rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 5; }
-  h1 { font-size: 1.1rem; margin: 0; }
+  header { display: flex; align-items: center; gap: var(--s4); padding: var(--s2) var(--s5); border-bottom: 1px solid var(--border); background: var(--chrome); position: sticky; top: 0; z-index: 5; }
+  h1 { font-size: var(--t-xl); margin: 0; }
   .count { color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
-  .meta { font-size: 0.8rem; color: var(--text-dim); }
+  .meta { font-size: var(--t-sm); color: var(--text-dim); }
   .meta a { color: var(--accent); }
-  button { padding: 0.3rem 0.8rem; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; }
+  button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
   button:hover { background: var(--accent-dim); }
   @media (max-width: 800px) {
-    header { flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+    header { flex-wrap: wrap; gap: var(--s2) var(--s3); }
     .meta { order: 1; flex-basis: 100%; }
   }
 </style>

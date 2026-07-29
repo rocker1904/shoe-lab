@@ -55,11 +55,11 @@
 </fieldset>
 
 <style>
-  .range { border: none; padding: 0; margin: 0 0 1rem; }
-  legend { font-size: 0.8rem; color: var(--text-dim); padding: 0; margin-bottom: 0.25rem; }
-  svg { width: 100%; height: 24px; display: block; margin-bottom: 0.25rem; }
-  .bounds { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
-  input { width: 5rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.4rem; }
-  .act { padding: 0.15rem 0.45rem; font-size: 0.72rem; cursor: pointer; background: none; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; }
+  .range { border: none; padding: 0; margin: 0 0 var(--s4); }
+  legend { font-size: var(--t-sm); color: var(--text-dim); padding: 0; margin-bottom: var(--s1); }
+  svg { width: 100%; height: 24px; display: block; margin-bottom: var(--s1); }
+  .bounds { display: flex; align-items: center; gap: var(--s1); flex-wrap: wrap; }
+  input { width: 5rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--s1) var(--s2); }
+  .act { padding: var(--s1) var(--s2); font-size: var(--t-xs); cursor: pointer; background: none; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-sm); }
   .act:hover { color: var(--text); border-color: var(--accent); }
 </style>

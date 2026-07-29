@@ -341,15 +341,32 @@ applied in `main.ts` **before** the dataset fetch, so a saved dark theme never
 flashes light. Storage access is wrapped: it throws rather than returning null
 in blocked contexts, and losing the preference beats losing the click.
 
-All colour lives in `app.css` as tokens on `:root`, with dark values under
-both `prefers-color-scheme` and `[data-theme]` so the toggle wins in either
-direction. The dataviz-derived values carry contrast obligations, not taste:
-inactive histogram bars clear 3:1 against the surface because they are data
-marks, and `--tint-strength` caps the percentile wash where cell text still
-clears 4.5:1 in each mode. The wash ramp is **squared** so only leaders read
-as tinted — a linear ramp across every numeric column turns the whole table
-blue — and row hover paints as a translucent layer so the tint underneath
-survives it.
+Colour, spacing, radius, type and elevation all live in `app.css` as tokens on
+`:root`, with dark values under both `prefers-color-scheme` and `[data-theme]`
+so the toggle wins in either direction. Components choose none of them: the
+scales are `--s1`…`--s6`, `--r-sm`/`--r-md`/`--r-full`, `--t-xs`…`--t-xl` and
+the two shadows, and `app/src/lib/tokens.test.ts` fails the build on a
+component that writes its own rem font size or px radius.
+
+The row surface sits at the end of the lightness axis in each theme — white in
+light, near-black in dark — and both washes travel inward from it, separated
+only by hue. **Grey means "more"; blue means "better".** A metric with a
+declared direction gets `--wash-blue` **squared**, so only leaders read as
+tinted, which is what a ranking wants; a neutral metric gets `--wash-grey`
+**linear**, because a scale must read as a gradient rather than a podium.
+Row hover paints as a translucent layer so the wash underneath survives it.
+
+The contrast obligation splits by the kind of mark, because one rule cannot
+cover both:
+
+- **Flat mark** — the inactive histogram bars and the coverage rule are a
+  single fill, drawn or not. They clear **3:1 against the surface**.
+- **Gradient wash** — governed by **text over the endpoint at 4.5:1**, with no
+  surface floor. Every intermediate value of a ramp is closer to the surface
+  than its endpoint and tends to 1:1 as p→0, so a surface floor is
+  unsatisfiable by construction. The endpoint *is* the cap: it is the worst
+  case of the ramp, so checking it is sufficient and no separate strength
+  factor exists. Retune `--wash-grey` and `--wash-blue` against that.
 
 ## Coverage
 

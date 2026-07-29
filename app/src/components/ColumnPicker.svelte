@@ -61,11 +61,11 @@
 
 <style>
   .picker { position: relative; }
-  summary { cursor: pointer; padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; white-space: nowrap; }
-  .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.2rem; min-width: 20rem; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); }
-  h4 { margin: 0.5rem 0 0.15rem; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
-  label { font-size: 0.85rem; display: grid; grid-template-columns: auto 1fr 3rem 2.2rem; align-items: center; gap: 0.4rem; }
-  .bar { display: block; height: 6px; border-radius: 3px; background: var(--hist-dim); overflow: hidden; }
+  summary { cursor: pointer; padding: var(--s1) var(--s3); border: 1px solid var(--border); border-radius: var(--r-sm); white-space: nowrap; }
+  .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); min-width: 20rem; box-shadow: var(--shadow-dialog); }
+  h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
+  label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr 3rem 2.2rem; align-items: center; gap: var(--s2); }
+  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--hist-dim); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--accent); }
-  .pct { font-size: 0.72rem; color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+  .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
 </style>

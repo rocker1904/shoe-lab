@@ -22,9 +22,9 @@
 </span>
 
 <style>
-  .wrap { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .lede { font-size: 0.78rem; color: var(--text-dim); white-space: nowrap; }
-  .strike { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
-  button { padding: 0.25rem 0.75rem; border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 0.85rem; }
+  .wrap { display: inline-flex; align-items: center; gap: var(--s2); }
+  .lede { font-size: var(--t-xs); color: var(--text-dim); white-space: nowrap; }
+  .strike { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r-full); overflow: hidden; }
+  button { padding: var(--s1) var(--s3); border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
   button.on { background: var(--accent-dim); color: var(--text); font-weight: 600; }
 </style>

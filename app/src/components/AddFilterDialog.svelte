@@ -73,19 +73,19 @@
 <style>
   .dialog {
     position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); z-index: 20;
-    display: flex; flex-direction: column; gap: 0.5rem; width: min(28rem, 92vw); max-height: 80vh;
-    padding: 1rem; background: var(--surface); color: var(--text);
-    border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
+    display: flex; flex-direction: column; gap: var(--s2); width: min(28rem, 92vw); max-height: 80vh;
+    padding: var(--s4); background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-dialog);
   }
-  .q { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
-  .list { overflow-y: auto; display: flex; flex-direction: column; gap: 0.15rem; }
-  h4 { margin: 0.5rem 0 0.15rem; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
-  .list button { display: grid; grid-template-columns: 1fr 4rem 2.4rem; align-items: center; gap: 0.5rem;
-                 padding: 0.25rem 0.35rem; border: 1px solid transparent; border-radius: 4px;
-                 background: none; color: var(--text); cursor: pointer; font: inherit; font-size: 0.85rem; text-align: left; }
+  .q { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); }
+  .list { overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); }
+  h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
+  .list button { display: grid; grid-template-columns: 1fr 4rem 2.4rem; align-items: center; gap: var(--s2);
+                 padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
+                 background: none; color: var(--text); cursor: pointer; font: inherit; font-size: var(--t-sm); text-align: left; }
   .list button:hover { border-color: var(--accent); background: var(--accent-dim); }
-  .bar { display: block; height: 6px; border-radius: 3px; background: var(--hist-dim); overflow: hidden; }
+  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--hist-dim); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--accent); }
-  .pct { font-size: 0.72rem; color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
-  .close { align-self: flex-end; padding: 0.3rem 0.8rem; cursor: pointer; }
+  .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+  .close { align-self: flex-end; padding: var(--s1) var(--s3); cursor: pointer; }
 </style>

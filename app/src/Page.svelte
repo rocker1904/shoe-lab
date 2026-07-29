@@ -145,19 +145,19 @@
 </div>
 
 <style>
-  .toolbar { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1.25rem; }
+  .toolbar { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s5); }
   .spacer { flex: 1; }
   .layout { display: grid; grid-template-columns: 260px 1fr; align-items: start; }
   /* A sticky column taller than the viewport can never scroll to its own bottom, and ten range
      filters easily outgrow it — give the sidebar its own scrollbar. */
   .sidebar { position: sticky; top: 3.2rem; max-height: calc(100vh - 3.2rem); overflow-y: auto; }
-  .content { overflow-x: auto; padding: 0 1rem 2rem; }
-  .empty { padding: 2rem; text-align: center; color: var(--text-dim); }
-  .filters-toggle { display: none; padding: 0.3rem 0.8rem; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; }
-  .clear { padding: 0.25rem 0.75rem; cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text-dim); border-radius: 999px; font-size: 0.85rem; }
+  .content { overflow-x: auto; padding: 0 var(--s4) var(--s6); }
+  .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
+  .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
+  .clear { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text-dim); border-radius: var(--r-full); font-size: var(--t-sm); }
   .clear:hover { color: var(--text); border-color: var(--accent); }
   @media (max-width: 800px) {
-    .toolbar { flex-wrap: wrap; padding: 0.5rem 0.75rem; }
+    .toolbar { flex-wrap: wrap; padding: var(--s2) var(--s3); }
     .layout { grid-template-columns: 1fr; }
     .sidebar { display: none; position: static; }
     .layout.show-filters .sidebar { display: block; }

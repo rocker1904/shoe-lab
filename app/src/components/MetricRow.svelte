@@ -81,18 +81,18 @@
 </div>
 
 <style>
-  .metric { display: flex; flex-direction: column; gap: 0.25rem; }
-  h4 { font-size: 0.8rem; color: var(--text-dim); margin: 0; font-weight: 600; }
-  .gens, .parts { display: flex; flex-direction: column; gap: 0.15rem; }
-  button, .part { display: grid; grid-template-columns: 1fr 3rem 2.2rem; align-items: center; gap: 0.4rem; width: 100%;
-           padding: 0.15rem 0.3rem; border: 1px solid transparent; border-radius: 4px;
-           background: none; color: var(--text-dim); font-size: 0.78rem; text-align: left; }
+  .metric { display: flex; flex-direction: column; gap: var(--s1); }
+  h4 { font-size: var(--t-sm); color: var(--text-dim); margin: 0; font-weight: 600; }
+  .gens, .parts { display: flex; flex-direction: column; gap: var(--s1); }
+  button, .part { display: grid; grid-template-columns: 1fr 3rem 2.2rem; align-items: center; gap: var(--s2); width: 100%;
+           padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
+           background: none; color: var(--text-dim); font-size: var(--t-xs); text-align: left; }
   button { cursor: pointer; }
   button.on { border-color: var(--accent); color: var(--text); font-weight: 600; }
   .part.on { color: var(--text); font-weight: 600; }
-  .solo { display: grid; grid-template-columns: 1fr 2.2rem; align-items: center; gap: 0.4rem; padding: 0 0.3rem; }
-  .bar { display: block; height: 6px; border-radius: 3px; background: var(--hist-dim); overflow: hidden; }
+  .solo { display: grid; grid-template-columns: 1fr 2.2rem; align-items: center; gap: var(--s2); padding: 0 var(--s1); }
+  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--hist-dim); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--accent); }
-  .pct { font-size: 0.72rem; color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
-  .warn { margin: 0; font-size: 0.75rem; color: var(--text-dim); }
+  .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+  .warn { margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
 </style>

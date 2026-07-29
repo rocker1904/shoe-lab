@@ -24,7 +24,7 @@
 </p>
 
 <style>
-  .receipt { margin: 0 0 0.5rem; padding: 0.4rem 0.2rem; font-size: 0.85rem; color: var(--text-dim); }
+  .receipt { margin: 0 0 var(--s2); padding: var(--s2) var(--s1); font-size: var(--t-sm); color: var(--text-dim); }
   strong { color: var(--text); }
   button { padding: 0; border: none; background: none; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; }
 </style>

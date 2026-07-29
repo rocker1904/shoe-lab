@@ -1,29 +1,45 @@
 :root {
   color-scheme: light dark;
-  --bg: #fafaf8; --surface: #ffffff; --text: #1a1d21; --text-dim: #5c6470;
-  --border: #e3e5e8; --accent: #2563eb; --accent-dim: #dbeafe;
-  --good: #15803d; --bad: #dc2626;
-  /* Both values carry contrast obligations, not taste — retune against docs/app.md §Theming. */
-  --hist-dim: #8b929d;
-  --tint-strength: 50%;
-  --hover-wash: color-mix(in oklab, var(--accent) 10%, transparent);
+  --bg: #eeeeea; --surface: #ffffff; --chrome: #f2f2ef;
+  --text: #1a1d21; --text-dim: #5c6470; --border: #dcdfe3; --divider: #c9ced6;
+  --accent: #2563eb; --accent-dim: #e6efff;
+  --good: #15803d; --bad: #b91c1c;
+  --hist-dim: #8b929d;   /* flat mark: clears 3:1 against the surface — docs/app.md §Theming */
+  /* The endpoint IS the cap: each is chosen so cell text clears 4.5:1 against it, and the
+     endpoint is the worst case of the ramp, so no separate strength factor is needed
+     (docs/app.md §Theming). */
+  --wash-grey: #b0b6bf; --wash-blue: #4a86f0;
+  --hover-wash: color-mix(in oklab, var(--accent) 8%, transparent);
+  --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.5rem; --s6: 2rem;
+  --r-sm: 4px; --r-md: 8px; --r-full: 999px;
+  --t-xs: 0.75rem; --t-sm: 0.83rem; --t-md: 0.92rem; --t-lg: 1.05rem; --t-xl: 1.2rem;
+  --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.35);
+  --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.14);
   font-family: system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #14161a; --surface: #1c1f24; --text: #e8eaed; --text-dim: #9aa2ad;
-    --border: #2c313a; --accent: #4a90e2; --accent-dim: #1e3a5f;
-    --good: #22c55e; --bad: #f87171;
-    --hist-dim: #717b88; --tint-strength: 56%;
+    --bg: #08090c; --surface: #0e1014; --chrome: #15181d;
+    --text: #eef0f3; --text-dim: #98a0ac; --border: #2a3039; --divider: #3a424e;
+    --accent: #5b9dff; --accent-dim: #16304f;
+    --good: #22c55e; --bad: #f08a84;
+    --hist-dim: #717b88;
+    --wash-grey: #454b54; --wash-blue: #2b6cb0;
+    --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.6);
+    --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.5);
   }
 }
 :root[data-theme='light'] { color-scheme: light; }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #14161a; --surface: #1c1f24; --text: #e8eaed; --text-dim: #9aa2ad;
-  --border: #2c313a; --accent: #4a90e2; --accent-dim: #1e3a5f;
-  --good: #22c55e; --bad: #f87171;
-  --hist-dim: #717b88; --tint-strength: 56%;
+  --bg: #08090c; --surface: #0e1014; --chrome: #15181d;
+  --text: #eef0f3; --text-dim: #98a0ac; --border: #2a3039; --divider: #3a424e;
+  --accent: #5b9dff; --accent-dim: #16304f;
+  --good: #22c55e; --bad: #f08a84;
+  --hist-dim: #717b88;
+  --wash-grey: #454b54; --wash-blue: #2b6cb0;
+  --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.6);
+  --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.5);
 }
 body { margin: 0; background: var(--bg); color: var(--text); }

@@ -218,11 +218,11 @@
 </aside>
 
 <style>
-  aside { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-  h3 { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 0.25rem; font-weight: 600; }
-  .search { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box; }
-  .chips { display: flex; gap: 0.35rem; margin-top: 0.35rem; }
-  .chips button { padding: 0.15rem 0.6rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-dim); cursor: pointer; }
-  .metric { display: flex; flex-direction: column; gap: 0.3rem; }
-  .reset, .add { align-self: flex-start; padding: 0.3rem 0.8rem; cursor: pointer; }
+  aside { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+  h3 { font-size: var(--t-sm); color: var(--text-dim); margin: 0 0 var(--s1); font-weight: 600; }
+  .search { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box; }
+  .chips { display: flex; gap: var(--s1); margin-top: var(--s1); }
+  .chips button { padding: var(--s1) var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface); color: var(--text-dim); cursor: pointer; }
+  .metric { display: flex; flex-direction: column; gap: var(--s1); }
+  .reset, .add { align-self: flex-start; padding: var(--s1) var(--s3); cursor: pointer; }
 </style>
