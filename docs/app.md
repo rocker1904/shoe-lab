@@ -356,6 +356,18 @@ tinted, which is what a ranking wants; a neutral metric gets `--wash-grey`
 **linear**, because a scale must read as a gradient rather than a podium.
 Row hover paints as a translucent layer so the wash underneath survives it.
 
+Direction is **declared**, in `app/src/lib/direction.ts`, and never inferred
+from a slug or a name: `outsole-durability` is Dremel dent depth in mm, so
+lower is the more durable shoe despite the word, and `size-rating` is a
+runs-small/true/runs-large scale on which 3 is correct rather than a mediocre
+score. Stack, drop, softness, stiffness and every width are `neutral` because
+they are fit and feel preferences with no fleet-wide better end
+(docs/shoe-stories.md). Only `lower` inverts the percentile; `neutral` changes
+the ramp's colour and nothing else, and drops the header's direction arrow.
+An unlisted key reads `neutral`, and `direction.test.ts` fails the build when
+an upstream numeric test arrives unclassified (docs/operations.md
+§Contract-drift runbook).
+
 The contrast obligation splits by the kind of mark, because one rule cannot
 cover both:
 

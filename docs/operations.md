@@ -109,6 +109,14 @@ the next PR touching anything, not on the refresh that caused it — the diff
 under review is not the cause. Fix the declaration to match the new catalogue;
 do not delete the assertion.
 
+`direction.test.ts` is the second such guard, over
+`app/src/lib/direction.ts` (docs/app.md §Theming). It reads the **full**
+`data/tests.json` catalogue rather than the shipped subset in `shoes.json`, so
+a new numeric test fails the build while it still has no readings instead of
+the day one shoe gets a reading and it appears as a column. Classify the new
+slug; do not widen the guard. An unclassified key reads `neutral`, which is
+unmarked rather than mis-marked — that is the safe fallback, not the answer.
+
 ## Deploy
 
 Pages is configured to publish from the workflow (build type: workflow), not

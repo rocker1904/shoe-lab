@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { histogram, percentileMap, quantile } from './stats';
-import { FLEET, TESTS, shoe } from './test-fixtures';
+import { FLEET, TESTS, labTest, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -103,6 +103,23 @@ describe('percentileMap polarity', () => {
   it('leaves a bigger-is-better metric alone', () => {
     const fleet = [30, 35, 39, 40].map((v, i) => shoe({ slug: `s${i}`, values: { '6': v } }));
     const p = percentileMap(fleet, 'heel-stack', idx);
+    expect(p.get('s3')!).toBeGreaterThan(p.get('s0')!);
+  });
+
+  // Neither slug is in the component fixtures, so both direction changes need their own test.
+  const extra = indexTests([...TESTS,
+    labTest({ id: 90, slug: 'outsole-durability', name: 'Outsole durability', units: 'mm' }),
+    labTest({ id: 91, slug: 'drop', name: 'Drop', units: 'mm' })]);
+
+  it('inverts outsole durability, which is dent depth rather than a score', () => {
+    const fleet = [1, 2, 3, 4].map((v, i) => shoe({ slug: `s${i}`, values: { '90': v } }));
+    const p = percentileMap(fleet, 'outsole-durability', extra);
+    expect(p.get('s0')!).toBeGreaterThan(p.get('s3')!);
+  });
+
+  it('stops inverting drop, which is a preference and not a quality', () => {
+    const fleet = [4, 6, 8, 10].map((v, i) => shoe({ slug: `s${i}`, values: { '91': v } }));
+    const p = percentileMap(fleet, 'drop', extra);
     expect(p.get('s3')!).toBeGreaterThan(p.get('s0')!);
   });
 });

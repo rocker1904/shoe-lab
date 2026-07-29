@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
+  import { washOf } from '../lib/direction';
   import { percentileMap } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
@@ -68,7 +69,8 @@
         </td>
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
-          <td class="num" style:--p={p ?? 0} class:tinted={p !== undefined}>{cellText(s, col)}</td>
+          <td class="num" style:--p={p ?? 0} class:tinted={p !== undefined}
+              class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
       </tr>
       {#if expanded === s.slug}
@@ -90,8 +92,12 @@
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   td.name { display: flex; gap: var(--s2); align-items: center; min-width: 14rem; }
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: var(--r-sm); }
-  /* Squared so only leaders read as tinted; the endpoint is the cap (docs/app.md §Theming). */
-  td.num.tinted { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--p) * var(--p) * 100%), transparent); }
+  /* Squared so only leaders read as tinted, which is what a ranking wants; the endpoint is the
+     cap (docs/app.md §Theming). */
+  td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--p) * var(--p) * 100%), transparent); }
+  /* Linear, because a metric with no better end is a scale and must read as a gradient rather
+     than a podium (docs/app.md §Theming). */
+  td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--p) * 100%), transparent); }
   .disc-tag { margin-left: var(--s1); font-size: var(--t-xs); color: var(--bad); border: 1px solid var(--bad); border-radius: var(--r-full); padding: 0 var(--s1); }
   small { color: var(--text-dim); }
 </style>

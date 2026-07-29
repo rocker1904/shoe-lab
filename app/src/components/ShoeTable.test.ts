@@ -70,6 +70,12 @@ describe('ShoeTable', () => {
     expect(heel.getAttribute('style')).toContain('--p:');
     expect(cells[3]!.className).not.toContain('tinted'); // plate is not numeric
   });
+  it('washes a directional column blue and a neutral one grey', () => {
+    const { container } = setup().rendered;
+    const cells = [...container.querySelectorAll('tbody tr:first-child td')];
+    expect(cells[1]!.className).toContain('blue'); // score — higher is better
+    expect(cells[2]!.className).toContain('grey'); // heel stack — a preference, not a quality
+  });
   it('maps each plate value in the plate column', () => {
     setup();
     // index 3 of [name, score, heel-stack, plate] — scoped to the row so the em dash cannot be matched elsewhere
