@@ -117,6 +117,15 @@ the day one shoe gets a reading and it appears as a column. Classify the new
 slug; do not widen the guard. An unclassified key reads `neutral`, which is
 unmarked rather than mis-marked — that is the safe fallback, not the answer.
 
+`labels.test.ts` is the third, over `app/src/lib/labels.ts`
+(docs/app.md §Columns and sorting). It reads the same full catalogue and fails
+when a numeric test's label — its short form, or its real name where none is
+declared — has a word wider than `MAX_LABEL_PX`, or when two metrics that can
+be on screen together resolve to the same label. So an upstream rename to
+something long fails the build rather than clipping silently on a phone. Add a
+short label; **do not raise `MAX_LABEL_PX`**, which is a measured column width
+and not a preference.
+
 ## Deploy
 
 Pages is configured to publish from the workflow (build type: workflow), not

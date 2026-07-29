@@ -130,8 +130,9 @@ the data" rather than "when did the extractor last run" — the latter is what g
 already records. A re-extraction that changed only derived fields moves no dates,
 which is also what keeps its data commit legible.
 
-`ageMonths` is computed in the app at load rather than stored, for the same
-reason: storing it would make the build depend on the wall clock.
+Nothing derived from *today* is stored, for the same reason: any age-from-now
+field would make the build depend on the wall clock. Where the app needs one —
+the sidebar's "released after" chips — it computes it at render time.
 
 ## Release-year supplement
 

@@ -599,7 +599,8 @@ under a `prefers-reduced-motion` guard.
 the counts, so the only thing the cards held exclusively is the descriptions,
 which are a first-encounter need. That split — **descriptions at first
 encounter, counts permanently** — is what makes the model work, and it is why
-there is no "Browse all" card: `All` owns that affordance now.
+the strip needs no card of its own for "everything": `All` is a permanent
+toolbar peer, reachable long after the strip has gone.
 
 ### The toolbar
 
@@ -718,21 +719,19 @@ keep their per-row percentages, as do the coverage bars in `ColumnPicker` and
 
 ### There is no sparse warning
 
-It was deleted, and **the classifier behind it was wrong**, not merely verbose.
-Coverage by release year shows every sparse metric is **era-shaped**, not
-sporadic: metrics are either *arriving* (a clean adoption ramp — `breathability-25`
-runs 0, 0, 0, 1%, 11%, 36% across '21–'26) or *retiring* (near-total coverage
-then a cliff — `stiffness` runs 85%, 100%, 98%, 99%, 23%, 0). Not one is
-uniformly thin.
+The live count is the whole treatment: **do not add a badge that classifies a
+metric as thin.** Coverage by release year shows every sparse metric is
+**era-shaped**, not sporadic — each is either *arriving* (a clean adoption ramp:
+`breathability-25` runs 0, 0, 0, 1%, 11%, 36% across '21–'26) or *retiring*
+(near-total coverage then a cliff: `stiffness` runs 85%, 100%, 98%, 99%, 23%,
+0). Not one is uniformly thin, so "this test is rarely run" is a sentence that
+is false about every metric it would be shown on.
 
-The warning had two labels, derived from `oldestReading` and `ageMonths`.
-`stiffness` has readings going back years, so it was labelled *rarely run* —
-but it is retired, with better historical coverage than most of the fleet. The
-case that matters, that a reading will keep thinning, was not expressible in
-the vocabulary the warning had. And because coverage is era-shaped, the live
-count **demonstrates** the answer as the runner filters: narrow to recent shoes
-and an arriving metric fills in, a retiring one empties out. `oldestReading`,
-`ageMonths` and `YOUNG_METHOD_MONTHS` are gone with it.
+Any such classifier needs a notion of **era per test**, which the dataset does
+not carry; that is a BACKLOG.md item, not something to approximate from the age
+of the oldest reading. Meanwhile the count **demonstrates** the answer as the
+runner filters: narrow to recent shoes and an arriving metric fills in while a
+retiring one empties out, which is more than a static label could have said.
 
 `SPARSE_BELOW` and `isSparse` stay, redefined: they are a **preset-safety**
 threshold, not a warning threshold. Nothing on screen reads them; the one

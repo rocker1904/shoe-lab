@@ -51,7 +51,7 @@ beforeEach(() => {
   history.replaceState(null, '', '/');
   localStorage.clear();
   delete document.documentElement.dataset.theme;
-  // jsdom implements no layout, so Element.prototype has no scrollIntoView and Browse all would
+  // jsdom implements no layout, so Element.prototype has no scrollIntoView and the skip link would
   // throw. Planted rather than guarded at the call site.
   Element.prototype.scrollIntoView = vi.fn();
 });

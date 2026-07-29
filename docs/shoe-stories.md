@@ -69,6 +69,16 @@ one above, applied to a second axis.
 A bound on a metric with no sides may stay absolute. Race's weight ceiling is
 the only one left.
 
+**The interface never asks the runner to declare what they are.** The code
+calls the field `strike` and this doc reasons in strikes, because that is what
+makes the choice of half correct — but on screen the question is
+"Measurements from: Heel | Forefoot", which asks which number to read rather
+than asserting a gait. Many runners do not know their strike and most change it
+with pace, so a tool whose first act is to demand a self-diagnosis it cannot
+check has claimed something it has no standing to claim. The distinction costs
+nothing — same field, same two values, worded as a preference — so do not
+"clarify" the label into "I am a heel striker".
+
 ## Checking a threshold set
 
 RunRepeat labels each shoe with a `pace` fact — daily, tempo, competition, or a
