@@ -185,6 +185,20 @@ dual-thumb slider: same capability, keyboard-accessible, no drag maths.
 `msrpGbp`, `plate`) plus any test slug; `name` and `brand` are rendered by the
 table itself and have no cell, so they are sortable but never columns.
 
+**The default view holds six numeric columns**, plus `releasedAt` and `plate`,
+which carry words and dates rather than figures. Six is the bound: it is the
+widest numeric set that fits the narrowest common phone without horizontal
+scrolling. `midsole-softness-22` is the column the default gives up — the
+sparsest of the seven it used to carry, and the only one no story bounds,
+because docs/shoe-stories.md argues softness should not drive a shortlist.
+This is a product change rather than a phone workaround, because **columns
+never vary by viewport**: `cols` serialises into the URL, so a
+viewport-dependent default would mean a link shared from a phone carried fewer
+columns than the sender saw and the URL would stop describing the view
+(docs/app.md §View and URL ownership). A stored view from before the change
+simply reads as non-default, which is why `VIEW_STORAGE_KEY` was bumped
+alongside it; shared links carry explicit `cols` and are unaffected.
+
 The picker and the sidebar both offer `metricEntries` (`app/src/lib/lineage.ts`)
 rather than the raw catalogue, so a superseded pair is one entry and a
 heel/forefoot split is one entry. The picker groups by the dataset's test

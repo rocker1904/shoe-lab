@@ -89,7 +89,7 @@ describe('urlstate hostile input', () => {
   });
   it('defaultView hands out fresh objects', () => {
     // inline literal, not the live defaultColumns() reference: a leaked array would otherwise mutate the expectation too
-    const columns = ['releasedAt', 'score', 'msrpGbp', 'heel-stack', 'midsole-softness-22',
+    const columns = ['releasedAt', 'score', 'msrpGbp', 'heel-stack',
       'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight'];
     expect(defaultColumns('heel')).toEqual(columns);
     const a = defaultView('heel');
@@ -169,7 +169,7 @@ describe('urlstate hostile input', () => {
     const fallback = parseView('cols=bogus,alsobogus', idx).columns;
     fallback.push('leaked'); // the fallback must be a fresh array, so mutating it cannot corrupt the next default
     expect(parseView('cols=bogus,alsobogus', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
-      'midsole-softness-22', 'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
+      'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
     expect(serializeView(parseView(`cols=${defaultColumns('heel').join(',')}`, indexTests([...TESTS,
       labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', units: 'mm' })]))))
       .toBe('');
@@ -298,6 +298,11 @@ describe('the runner\'s strike', () => {
     expect(defaultColumns('heel')).not.toContain('energy-return-forefoot');
     expect(defaultColumns('heel')).toContain('heel-stack');
     expect(defaultColumns('heel')).not.toContain('forefoot-stack');
+  });
+  it('defaults to six numeric columns so a phone fits them all', () => {
+    const cols = defaultColumns('heel');
+    expect(cols).not.toContain('midsole-softness-22');
+    expect(cols.filter((c) => c !== 'releasedAt' && c !== 'plate')).toHaveLength(6);
   });
   // The baseline moves with the runner, so a view differing only in strike is still that runner's
   // default — that is what keeps the entry band open across a strike flip (docs/app.md §Presets).

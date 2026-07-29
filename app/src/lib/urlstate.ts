@@ -20,9 +20,14 @@ export interface ViewState {
 
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
 /** The strike is required rather than defaulted: a default would reinstate the silent heel
- *  assumption invisibly, at whichever call site forgot to pass one. */
+ *  assumption invisibly, at whichever call site forgot to pass one.
+ *
+ *  Six numeric columns, because `releasedAt` and `plate` render as metadata rather than values on
+ *  a phone and six is the widest set that fits one (docs/app.md §Columns and sorting). Softness
+ *  is the one dropped: it is the sparsest of the seven and the only default column no story uses,
+ *  because docs/shoe-stories.md argues it should not drive a shortlist. */
 export function defaultColumns(strike: Side): string[] {
-  return ['releasedAt', 'score', 'msrpGbp', sideKey('Stack', strike), 'midsole-softness-22',
+  return ['releasedAt', 'score', 'msrpGbp', sideKey('Stack', strike),
     'plate', sideKey('Energy return', strike), 'toebox-width-widest-part', 'weight'];
 }
 /**
