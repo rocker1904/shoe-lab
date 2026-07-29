@@ -17,7 +17,8 @@ export interface ViewState {
 
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
 /** The arbitrary half, named here and nowhere else. It is not a silent assumption: the toolbar
- *  renders Heel as marked on this view, because the mark is derived from it (docs/app.md §Presets). */
+ *  renders Heel as marked on this view, because the mark is derived from it
+ *  (docs/app.md §The side is a preset too). */
 export const DEFAULT_SIDE: Side = 'heel';
 /** The side is required rather than defaulted: a default would put a second answer to "which half"
  *  beside `DEFAULT_SIDE`, at whichever call site forgot to pass one.
@@ -26,9 +27,9 @@ export const DEFAULT_SIDE: Side = 'heel';
  *  a phone and six is the widest set that fits one (docs/app.md §Columns and sorting). Softness
  *  is the one dropped: it is the sparsest of the seven and the only default column no story uses,
  *  because docs/shoe-stories.md argues it should not drive a shortlist. */
-export function defaultColumns(strike: Side): string[] {
-  return ['releasedAt', 'score', 'msrpGbp', sideKey('Stack', strike),
-    'plate', sideKey('Energy return', strike), 'toebox-width-widest-part', 'weight'];
+export function defaultColumns(side: Side): string[] {
+  return ['releasedAt', 'score', 'msrpGbp', sideKey('Stack', side),
+    'plate', sideKey('Energy return', side), 'toebox-width-widest-part', 'weight'];
 }
 /**
  * Every value a shoe's `plate` can hold, in the order a selection is written. Both the filter UI

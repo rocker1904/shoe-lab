@@ -324,7 +324,7 @@ describe('Page story selection', () => {
     expect(screen.getByRole('radio', { name: 'Heel' })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: 'Forefoot' })).not.toBeChecked();
     // A view showing everything is an All view whether or not it commits to a side; the mark is
-    // `sameValue(v, allView(v))`, so it is lit exactly when pressing it would do nothing.
+    // `sameValue(v, allView(v, side))`, so it is lit exactly when pressing it would do nothing.
     expect(markedStory()).toEqual(['All']);
   });
 

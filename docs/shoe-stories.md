@@ -74,8 +74,8 @@ the only one left.
 
 **The interface never asks the runner to declare what they are.** This doc
 reasons in strikes, because a runner's strike is what makes one half the right
-one to read — but nothing on screen or in the code names a runner: the question
-is "Measurements from: Heel | Forefoot", which asks which number to read rather
+one to read — but nothing on screen names a runner: the question is
+"Measurements from: Heel | Forefoot", which asks which number to read rather
 than asserting a gait. Many runners do not know their strike and most change it
 with pace, so a tool whose first act is to demand a self-diagnosis it cannot
 check has claimed something it has no standing to claim. The distinction costs

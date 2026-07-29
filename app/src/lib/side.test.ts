@@ -70,8 +70,12 @@ describe('projectSide', () => {
   // The invariant the whole design rests on: a click always lands the view on the side clicked,
   // so the control is never left unlit and the mark can honestly read everything.
   it('always leaves the view committed to the side chosen', () => {
+    // One view per source `sideOf` reads, or the totality claim rests on columns alone.
+    const bound = withCols(['score']);
+    bound.filters.ranges['energy-return-forefoot'] = { min: 60 };
     const views = [base(), withCols(defaultColumns('forefoot')),
-      withCols(['score', 'heel-stack', 'shock-absorption-forefoot']), withCols(['score', 'weight'])];
+      withCols(['score', 'heel-stack', 'shock-absorption-forefoot']), withCols(['score', 'weight']),
+      bound, { ...withCols(['score']), sort: { key: 'heel-stack', dir: 'desc' as const } }];
     for (const v of views) for (const s of SIDES) expect(sideOf(projectSide(v, s))).toBe(s);
   });
 });

@@ -139,9 +139,10 @@
   const workingSide = $derived(sideMark ?? DEFAULT_SIDE);
 
   /**
-   * What `All` produces — and, because the mark is `sameValue(v, allView(v))`, also what lights it.
-   * One function rather than an action and a matching predicate, so "marked means pressing it
-   * changes nothing" is true by construction and cannot drift (docs/app.md §Presets).
+   * What `All` produces — and, because the mark is `sameValue(v, allView(v, side))`, also what
+   * lights it. One function rather than an action and a matching predicate, so "marked means
+   * pressing it changes nothing" is true by construction and cannot drift
+   * (docs/app.md §What All does).
    *
    * `All` speaks for the story group and means "all paces". With a side to work from it restores
    * that side's plain table; with none — a deliberately mixed view — it clears the filters and
@@ -208,7 +209,9 @@
    * anything else is projected, which moves the columns and sort and drops the other half's bounds.
    */
   function onSide(next: Side) {
-    if (next === sideMark) return;   // already there: a no-op click must not rebuild the view
+    // Already there, so there is nothing to do. Rebuilding would be harmless — projecting onto the
+    // side a view already names is the identity — but it would spend a URL write on it.
+    if (next === sideMark) return;
     setView(storyMark ? applyPreset(storyMark, data.shoes, idx, next) : projectSide(snapshot, next));
   }
   function onStory(id: string) {

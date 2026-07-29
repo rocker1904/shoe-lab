@@ -24,7 +24,7 @@ and it flushes on `pagehide` so a page being torn down never loses the pending
 write.
 
 `ViewState` carries **no side**. Which half of each side pair a view is about is
-read back out of it by `sideOf` (docs/app.md §Presets), so the baseline is a
+read back out of it by `sideOf` (docs/app.md §The side is a preset too), so the baseline is a
 constant: `defaultView()` takes no argument and `DEFAULT_SIDE` is the one place
 `'heel'` is written. `defaultColumns` still *requires* a side, which is what
 stops a second call site defaulting by accident. `parseView` has nothing to
@@ -106,7 +106,7 @@ default is not written at all — a generation choice naming its own key is the
 default and never appears.
 
 **There is no side token.** The side rides in `cols`, which is the only thing
-that records it (docs/app.md §Presets), so a plain forefoot table is a verbose
+that records it (docs/app.md §The side is a preset too), so a plain forefoot table is a verbose
 link: eight column slugs where `side=forefoot` would be one. That is the
 accepted cost of having one encoding of the side rather than two that can
 disagree. A `side=` shorthand expanding to `defaultColumns(side)` is the remedy
@@ -638,7 +638,7 @@ Two consequences follow from the identity, and both are deliberate:
 
 - **A mixed view with no filters marks `All`.** A view showing everything is an
   `All` view whether or not it commits to a side; the alternative leaves `All`
-  lit-less on a view it cannot change.
+  unlit on a view it cannot change.
 - **`All` is not idempotent when clearing a filter is what gives the view a
   side.** From `cols=score,heel-stack` with a bound on `forefoot-stack`, the
   first press clears the bound and leaves the columns alone; the view is now

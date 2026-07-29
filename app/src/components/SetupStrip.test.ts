@@ -64,7 +64,7 @@ describe('SetupStrip', () => {
   // Anchored regexes, matching the file's own convention: the card carries a reserved count span
   // as well as its name.
   it('presses neither card when the view commits to no side', () => {
-    render(SetupStrip, { ...props, side: null });
+    render(SetupStrip, { props: { ...props, side: null } });
     for (const name of [/^Heel/, /^Forefoot/]) {
       expect(screen.getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
     }

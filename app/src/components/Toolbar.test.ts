@@ -36,7 +36,7 @@ describe('Toolbar', () => {
   });
 
   it('marks neither side when the view commits to none', () => {
-    render(Toolbar, { ...props, side: null });
+    render(Toolbar, { props: { ...props, side: null } });
     expect(screen.getByRole('radio', { name: /Heel/ })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: /Forefoot/ })).not.toBeChecked();
   });
@@ -46,7 +46,7 @@ describe('Toolbar', () => {
   // reachable for the first time, so a later refactor assuming a checked radio would break
   // keyboard access silently.
   it('keeps one tab stop even with nothing selected', () => {
-    render(Toolbar, { ...props, side: null });
+    render(Toolbar, { props: { ...props, side: null } });
     const sides = screen.getAllByRole('radio', { name: /Heel|Forefoot/ });
     expect(sides.filter((r) => r.tabIndex === 0)).toHaveLength(1);
   });

@@ -278,7 +278,11 @@ describe('equality against the baseline', () => {
 
 describe('the side the view is about', () => {
   it('never writes a side key', () => {
-    expect(serializeView({ ...defaultView(), columns: defaultColumns('forefoot') })).not.toContain('strike');
+    // `side=` as well as `strike=`: the shorthand is deferred, not built (BACKLOG.md), and one
+    // encoding of the side is the property this asserts (docs/app.md §URL encoding).
+    const qs = serializeView({ ...defaultView(), columns: defaultColumns('forefoot') });
+    expect(qs).not.toContain('strike');
+    expect(qs).not.toContain('side=');
   });
   it('carries the side in the columns instead', () => {
     const v = { ...defaultView(), columns: defaultColumns('forefoot') };
