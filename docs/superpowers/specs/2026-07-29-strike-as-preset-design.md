@@ -107,7 +107,7 @@ either way.
 
 | file | change |
 |---|---|
-| `lib/urlstate.ts` | `strike` off `ViewState`; `defaultView()`/`defaultColumns()` lose the parameter; `strike=` out of `serializeView`/`parseView` (or a read-only compatibility branch, §4.2); `swapStrike` deleted; `isDefaultView` compares against a constant |
+| `lib/urlstate.ts` | `strike` off `ViewState`; `defaultView()`/`defaultColumns()` lose the parameter; `strike=` out of `serializeView` and `parseView`, with no compatibility branch (§4); `swapStrike` deleted; `isDefaultView` compares against a constant |
 | `lib/presets.ts` | unchanged in shape — `applyPreset` keeps taking a side |
 | `lib/persist.ts` | storage key bumped: the encoding changes |
 | `Page.svelte` | `onStrike` re-derives from `(side, story)` rather than mutating a field; `selectedPreset` becomes a `(side, story)` match; a derived `strikeMark` |
