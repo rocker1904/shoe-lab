@@ -55,14 +55,16 @@ describe('ShoeTable', () => {
     await fireEvent.keyDown(row, { key: 'Enter' });
     expect(screen.queryByText(/Full review on RunRepeat/)).not.toBeInTheDocument();
   });
-  // `aria-expanded` says a row controls something; without `aria-controls` it never says what.
-  it('points the expanded row at the panel it opened', async () => {
+  // `aria-expanded` says a row controls something; without `aria-controls` it never says what. The
+  // panel exists only while the row is open, and an IDREF naming a node that is not in the document
+  // is an unresolvable reference rather than a promise of one.
+  it('points the expanded row at the panel it opened, and at nothing while it is closed', async () => {
     setup();
     const row = screen.getByText('cushy').closest('tr')!;
+    expect(row).not.toHaveAttribute('aria-controls');
+    await fireEvent.click(row);
     const panelId = row.getAttribute('aria-controls');
     expect(panelId).toBeTruthy();
-    expect(document.getElementById(panelId!)).toBeNull();
-    await fireEvent.click(row);
     expect(document.getElementById(panelId!)).toBeInTheDocument();
   });
   it('hides the detail panel when the expanded shoe leaves the list', async () => {

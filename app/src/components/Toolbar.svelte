@@ -5,7 +5,8 @@
   import { roving } from '../lib/roving';
   import StrikeToggle from './StrikeToggle.svelte';
 
-  let { strike, onstrike, selected, counts, onstory, showFilters, onfilters, columns }: {
+  let { strike, onstrike, selected, counts, onstory, showFilters, onfilters, columns,
+        showGroups = true }: {
     strike: Side; onstrike: (s: Side) => void;
     /** Derived in `Page.svelte`, never stored: `'all'` while the view equals this runner's own
      *  baseline, a story id while it equals that story, null once it is neither
@@ -17,6 +18,10 @@
     /** The column picker, passed through rather than imported: it needs the whole dataset, which
      *  the toolbar has no other reason to know about. */
     columns?: Snippet;
+    /** False while the setup strip is still asking both questions in words: the strip hands over to
+     *  the bar rather than sharing the screen with it, or the four stories are on screen twice
+     *  (docs/app.md §Presets). The actions stay either way — they are the bar's own. */
+    showGroups?: boolean;
   } = $props();
 
   // `All` leads so the group reads as everything → narrow to a story, and it is the same state a
@@ -25,20 +30,22 @@
 </script>
 
 <div class="toolbar" data-testid="toolbar">
-  <div class="strike-wrap"><StrikeToggle {strike} onchange={onstrike} /></div>
-  <span class="sep" aria-hidden="true"></span>
-  <div class="pace-wrap">
-    <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
-      {#each STORIES as s (s.id)}
-        {@const n = counts.get(s.id)}
-        <button type="button" role="radio" class="s" aria-checked={selected === s.id}
-                class:on={selected === s.id} onclick={() => onstory(s.id)}>
-          {s.label}
-          {#if n !== undefined}<span class="n">{n}</span>{/if}
-        </button>
-      {/each}
-    </span>
-  </div>
+  {#if showGroups}
+    <div class="strike-wrap"><StrikeToggle {strike} onchange={onstrike} /></div>
+    <span class="sep" aria-hidden="true"></span>
+    <div class="pace-wrap">
+      <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
+        {#each STORIES as s (s.id)}
+          {@const n = counts.get(s.id)}
+          <button type="button" role="radio" class="s" aria-checked={selected === s.id}
+                  class:on={selected === s.id} onclick={() => onstory(s.id)}>
+            {s.label}
+            {#if n !== undefined}<span class="n">{n}</span>{/if}
+          </button>
+        {/each}
+      </span>
+    </div>
+  {/if}
   <div class="actions">
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
             onclick={onfilters}>Filters</button>
@@ -69,15 +76,24 @@
     .actions { order: 1; }
     .pace-wrap { order: 2; flex-basis: 100%; }
   }
+  @media (max-width: 800px) {
+    .toolbar { padding: var(--s2) var(--s3); }
+    .filters-toggle { display: inline-block; }
+  }
   /* On the wrapper, never the segment: on the segment the bordered pill container stretches the
-     full width with its pills clustered at the left. */
+     full width with its pills clustered at the left. Last of the three, because every tier below
+     880px is narrower than the one before and the later rule is the one that wins. */
   @media (max-width: 560px) {
     /* `border-box`, or the 1px pill border puts the segment 2px past the line it is filling. */
     .pace-wrap .seg { width: 100%; box-sizing: border-box; }
     .pace-wrap .s { flex: 1; justify-content: center; }
-  }
-  @media (max-width: 800px) {
-    .toolbar { padding: var(--s2) var(--s3); }
-    .filters-toggle { display: inline-block; }
+    /* Line one is strike plus actions, and at 360px — the usual Android width, and the binding one
+       (docs/app.md §Presets) — the two need 345px against the 336px this padding left
+       them, so the actions dropped to a line of their own and left a void beside the strike. The
+       gaps and the buttons' own padding are what pay for it; the `:global` reaches the column
+       picker's summary, which is the bar's own line budget rather than the picker's. */
+    .toolbar { padding: var(--s2); column-gap: var(--s2); }
+    .actions { gap: var(--s2); }
+    .filters-toggle, .actions :global(summary) { padding-inline: var(--s2); }
   }
 </style>

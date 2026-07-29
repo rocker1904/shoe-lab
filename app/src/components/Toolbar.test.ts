@@ -75,6 +75,16 @@ describe('Toolbar', () => {
     expect(onstrike).toHaveBeenCalledWith('forefoot');
   });
 
+  // The strip asks both questions in words on a first arrival, so a bar that drew them at the same
+  // time put the four stories on screen twice; it hands over rather than doubling up
+  // (docs/app.md §Presets).
+  it('draws only its actions while the setup strip still holds the questions', () => {
+    render(Toolbar, { props: { ...props, showGroups: false } });
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument();
+  });
+
   it('carries the Filters toggle and its expanded state', async () => {
     const onfilters = vi.fn();
     render(Toolbar, { props: { ...props, onfilters } });

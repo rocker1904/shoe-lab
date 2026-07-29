@@ -233,8 +233,10 @@
 <div class="chrome" bind:clientHeight={chromeHeight}>
   <Header total={data.shoes.length} visible={visibleSorted.length} builtAt={data.builtAt} {theme}
           onexport={onExport} ontheme={onTheme} />
+  <!-- The strip asks both questions in words while it is up, so the bar carries only its own
+       actions until it has been handed them (docs/app.md §Presets). -->
   <Toolbar strike={view.strike} onstrike={onStrike} selected={atDefault ? 'all' : selectedPreset}
-           counts={presetCounts} onstory={onStory} {showFilters}
+           counts={presetCounts} onstory={onStory} {showFilters} showGroups={!stripOpen}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
@@ -296,6 +298,11 @@
      page instead, which only bites well past the default six columns and is the only structure in
      which the pinned header works at all (docs/app.md §Columns and sorting). */
   .content { padding: 0 var(--s4) var(--s6); }
+  /* The skip link scrolls the anchor to the top of the scrollport, and the top of the scrollport is
+     behind the pinned chrome — without this the runner arrives looking at the third row
+     (docs/app.md §Columns and sorting). The table's own header row then sits exactly where it
+     sticks, so the first row is the first thing under it. */
+  #shoe-table { scroll-margin-top: var(--thead-top); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   @media (max-width: 800px) {
     .layout { grid-template-columns: minmax(0, 1fr); }

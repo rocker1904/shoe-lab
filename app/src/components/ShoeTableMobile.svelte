@@ -84,8 +84,11 @@
     <tbody>
       {#each shoes as s (s.slug)}
         <!-- `aria-expanded` says the card controls something; `aria-controls` is the only thing
-             that says what, and the panel is a sibling row rather than a child of the control. -->
-        <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)} aria-controls="detail-{s.slug}"
+             that says what, and the panel is a sibling row rather than a child of the control.
+             Emitted only while it is open: the panel exists only then, and an IDREF naming a node
+             that is not in the document is an unresolvable reference rather than a promise of one. -->
+        <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)}
+            aria-controls={expanded.has(s.slug) ? `detail-${s.slug}` : undefined}
             onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
           <td class="ident" colspan={span}>
             <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
@@ -126,8 +129,11 @@
   }
   /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 57px column, which is
      the difference between "softness" fitting the header and clipping (docs/app.md §Columns and sorting). */
+  /* The two side shadows paint the `border-spacing` gaps: a cell background stops at the cell, so a
+     sticky header made of them is see-through in 2px slits and scrolled rows show through the band. */
   th { padding: var(--s1) 2px; background: var(--bg); vertical-align: bottom;
-       position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky); }
+       position: sticky; top: var(--thead-top); z-index: 2;
+       box-shadow: var(--shadow-sticky), 2px 0 0 var(--bg), -2px 0 0 var(--bg); }
   th button { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%;
               background: none; border: none; color: var(--text); font: inherit; font-size: var(--t-xs);
               font-weight: 600; letter-spacing: -0.02em; cursor: pointer; padding: 0; text-align: center; }

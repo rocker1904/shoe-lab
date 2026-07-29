@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
-import { columnLabel, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import { columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
 import { labTest } from './test-fixtures';
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: a hand-written fixture can never fail on a
@@ -60,6 +60,24 @@ describe('shortLabel', () => {
       .map((t) => shortLabel(t.slug, t.name))
       .filter((label) => widestWordPx(label) > MAX_LABEL_PX);
     expect(tooWide).toEqual([]);
+  });
+
+  // The width bound alone lets a name of short words grow without limit: the header is sticky, so
+  // a fourth line is paid by every row on screen (docs/app.md §Columns and sorting).
+  it('keeps every catalogue label inside three lines of that column', () => {
+    const tooTall = numeric
+      .map((t) => shortLabel(t.slug, t.name))
+      .filter((label) => lineCount(label) > MAX_LABEL_LINES);
+    expect(tooTall).toEqual([]);
+  });
+
+  it('counts the lines a header wraps to, so one word longer would fail the build', () => {
+    expect(lineCount('Hi-vis')).toBe(1);
+    expect(lineCount('Heel stack')).toBe(2);
+    // "Midsole softness in cold" is a real name sitting exactly on the bound; one word more is
+    // what this guard is here to catch.
+    expect(lineCount('Midsole softness in cold')).toBe(MAX_LABEL_LINES);
+    expect(lineCount('Midsole softness in cold weather')).toBeGreaterThan(MAX_LABEL_LINES);
   });
 
   it('never gives two simultaneously visible metrics the same label', () => {

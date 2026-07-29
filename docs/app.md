@@ -361,12 +361,25 @@ override: it reads `3 = true`, because `/5` would present a runs-small /
 true / runs-large scale as a mediocre mark.
 
 Figures are right-aligned with `tabular-nums`; `plate` and `releasedAt` hold
-words and dates and are not. Any number of rows expand at once — comparing two
-shoes means having both panels open — and the panel scrolls itself into view,
-under a `prefers-reduced-motion` guard. An expandable row carries
-`aria-controls` as well as `aria-expanded`, in both renderings: the panel is a
-*sibling* row rather than a child of the control, so nothing else says what the
-row expands.
+words and dates and are not. Those two are the cells that carry
+`white-space: nowrap`: "Non-carbon plate" wrapped to three lines in an
+auto-sized column and made the row heights ragged. It goes on the **cell**,
+never the header — `nowrap` on a `th` makes each column's minimum its longest
+header, which is the bug that pushed the document sideways. The plate cell
+widens its own column by about 80px, which costs nothing at 1200px and adds to
+the sideways scroll that already exists between 700 and 1000px, where the table
+outgrows the viewport whatever the plate does. The name cell is a
+plain `table-cell` with an inner flex row, because `display: flex` on a `td`
+takes it out of the table-cell box, so it stops stretching to the row and
+leaves a gap the numeric cells show through under the sticky column.
+
+Any number of rows expand at once — comparing two shoes means having both
+panels open — and the panel scrolls itself into view, under a
+`prefers-reduced-motion` guard. An expandable row carries `aria-controls` as
+well as `aria-expanded`, in both renderings, **while it is open**: the panel is
+a *sibling* row rather than a child of the control, so nothing else says what
+the row expands, and it exists only while the row does — an IDREF naming a node
+that is not in the document resolves to nothing.
 
 **A skip link is the first element in the page.** It is 49 tab stops from the
 top to the first table row, and `SkipLink.svelte` moves focus to
@@ -374,7 +387,9 @@ top to the first table row, and `SkipLink.svelte` moves focus to
 navigate: the query string is the view and nothing else may write to the
 address bar, so a `#shoe-table` left behind would ride along in every copied
 link. The anchor carries `tabindex="-1"`, because `.focus()` on a plain
-container is a silent no-op.
+container is a silent no-op, and `scroll-margin-top: var(--thead-top)`, because
+the top of the scrollport is behind the pinned chrome: without it the jump
+lands the anchor at y=0 and the runner arrives looking at the third row.
 
 **No brand line under the name.** 442 of 450 names already begin with their
 brand and the remaining 8 shorten it ("Topo", "Hylo") rather than drop it, so
@@ -442,12 +457,20 @@ chosen:
   `--s1` is 4px and would take 4px off a 57px column, which is the difference
   between "softness" fitting its header and clipping. It is the one place the
   token scale is overridden.
+- The sticky header **paints its own `border-spacing` gaps**, with `--bg` side
+  shadows either side of each `th`. A cell background stops at the cell, so the
+  band was see-through in 2px slits and scrolled rows showed through them.
 - That leaves **53px of header text** at 360px and 56px at 375px, which is what
   `app/src/lib/labels.ts` validates every catalogue name against. Names wider
   than that get a short label; 35 of 53 keep their real name. `Outsole wear` is
   the one entry that is not a length fix — the test is Dremel dent depth in mm,
   so "durability" contradicts its own units, and this is a deliberate
   divergence from RunRepeat's name.
+- **Up to three lines**, which `labels.ts` validates as well: the width bound
+  alone lets a name of short words grow without limit, and the header is
+  sticky, so a fourth line is paid once by every screen. Every label is at or
+  inside the bound today, several exactly on it, so the guard is what an
+  upstream name one word longer runs into.
 - Values are **centred**, not right-aligned: with fixed equal columns that is
   the more composed object and leaves no dead colour. The cost is that `73`,
   `74.3` and `80.38` centre on different axes, judged acceptable at real
@@ -610,6 +633,11 @@ counts — and an actions group (`Filters`, `Columns`) pushed right by
 `margin-left: auto`. The strip cannot hold the controls that reset it, because
 it is gone by the time they are needed.
 
+**The bar draws only its actions while the strip is up** (`showGroups`). The
+strip *hands over* rather than sharing the screen: both surfaces drawing the
+same two groups put the four stories on screen twice on a first arrival, which
+is the one screen the strip exists to own.
+
 **There is no `Clear` button.** `All` is the fourth peer of the stories and the
 same state a Clear produced, `defaultView(strike)`, named for what you get
 rather than what you destroy — and it dissolves the ambiguity between a toolbar
@@ -636,11 +664,15 @@ one line rather than phone-versus-desktop:
 | 560–880px | actions ride up beside strike on line 1; pace takes line 2, shrink-wrapped |
 | 560px and below | as above, with pace stretched to fill the line and its pills `flex: 1` |
 
-Two details that were bugs first. The **divider is removed** the moment the
+Three details that were bugs first. The **divider is removed** the moment the
 groups stop sharing a line, or it wraps with the strike group and dangles after
-Forefoot. And `flex-basis: 100%` belongs on the **wrapper**, never on the
+Forefoot. `flex-basis: 100%` belongs on the **wrapper**, never on the
 segment: on the segment, the bordered pill container stretches the full width
-with its pills clustered at the left.
+with its pills clustered at the left. And the narrow tier **tightens the bar's
+own padding, gaps and button padding**, because line one is strike plus actions
+and at 360px — the usual Android width, and the binding one — the two needed
+345px against the 336px the wider padding left them, so the actions dropped to
+a third line and left the void the middle tier exists to prevent.
 
 Flipping strike **re-derives** the view rather than setting a field: from the
 default view to `defaultView(next)`, from a view equal to a story to that story
@@ -670,6 +702,21 @@ declared direction gets `--wash-blue` **squared**, so only leaders read as
 tinted, which is what a ranking wants; a neutral metric gets `--wash-grey`
 **linear**, because a scale must read as a gradient rather than a podium.
 Row hover paints as a translucent layer so the wash underneath survives it.
+
+**The surface is painted on the row** — `tr.shoe` in the desktop table,
+`tr.values` on a phone — and never on the numeric cell. The wash is a
+translucent `background-color` on that cell at higher specificity, so a
+cell-level surface would simply be replaced by it and the wash would composite
+over the page instead of over the surface, which is the one thing the rule
+above is about. The sticky name cell carries a surface of its own as well,
+because the numeric cells scroll underneath it rather than behind the row.
+
+The page sits one step behind the chrome and two behind the row surface
+(`--bg`, `--chrome`, `--surface`), which is what makes the phone's cards read
+as surfaces rather than as the page. Both themes keep that ordering: at
+`#eeeeea` the light identity strip was 1.04:1 against the page and only the
+white value row read as a card, where `#e6e6e1` gives 1.12:1 — the separation
+dark already had.
 
 Direction is **declared**, in `app/src/lib/direction.ts`, and never inferred
 from a slug or a name: `outsole-durability` is Dremel dent depth in mm, so
@@ -774,6 +821,10 @@ confirmation is a separate `role="status"` region rather than a relabelled
 button — swapping the label would change the control's accessible name to
 something that cannot then be pressed — and both an absent clipboard (outside a
 secure context) and a rejected write leave it unsaid, because neither may claim
-a success that did not happen. The page carries a `<title>` and an SVG favicon
+a success that did not happen. The region is **always rendered and only its
+text arrives late** — a live region created together with its text is not
+reliably announced — and it collapses its own flex gap while it is silent, so
+the header is spaced the same whether or not a link has ever been copied.
+The page carries a `<title>` and an SVG favicon
 so a shared link previews as something; Open Graph tags need an image and a
 decision, and are their own BACKLOG.md item.

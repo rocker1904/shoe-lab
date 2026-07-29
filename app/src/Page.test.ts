@@ -251,10 +251,20 @@ describe('Page', () => {
 
 /** The setup strip on a first arrival; `SetupStrip.test.ts` owns when it shows and when it goes. */
 const strip = () => screen.queryByTestId('setup-strip');
-/** The toolbar's story pills, which replaced both the chip row and the Clear button: a hand-edited
- *  view matches no story, so nothing is marked (docs/app.md §Presets). */
-const markedStory = () => screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true })
-  .map((r) => r.textContent?.trim().split(/\s/)[0]);
+/**
+ * The mark, wherever the questions are being asked: the strip's pressed card on a first arrival,
+ * the toolbar's checked pill once the strip has handed over. Either way a hand-edited view matches
+ * no story, so nothing is marked (docs/app.md §Presets).
+ */
+const markedStory = () => [
+  ...screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true }),
+  ...screen.queryAllByRole('button', { name: /All|Easy|Tempo|Race/, pressed: true }),
+].map((r) => r.textContent?.trim().split(/\s/)[0]);
+/** The strike control, which is on the strip until a story is picked and in the toolbar after. */
+const clickForefoot = () => fireEvent.click([
+  ...screen.queryAllByRole('radio', { name: 'Forefoot' }),
+  ...screen.queryAllByRole('button', { name: /^Forefoot/ }),
+][0]!);
 
 describe('Page story selection', () => {
   it('opens on the strip, with the live count of each story', () => {
@@ -286,9 +296,20 @@ describe('Page story selection', () => {
     render(Page, { props: { data } });
     expect(markedStory()).toEqual([]);
   });
+  // The strip asks both questions once and hands over for good: while it is up, the bar carries no
+  // second copy of the same four stories (docs/app.md §Presets).
+  it('asks the questions on one surface at a time', async () => {
+    render(Page, { props: { data } });
+    expect(strip()).toBeInTheDocument();
+    expect(screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/ })).toHaveLength(0);
+
+    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    expect(screen.getAllByRole('radio', { name: /All|Easy|Tempo|Race/ })).toHaveLength(4);
+    expect(screen.getByRole('radio', { name: 'Heel' })).toBeInTheDocument();
+  });
   it('All returns to this runner\'s own default, keeping who they are', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    await clickForefoot();
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     await fireEvent.click(screen.getByRole('radio', { name: /All/ }));
 
@@ -313,7 +334,7 @@ describe('Page strike toggle', () => {
   it('changes the columns without collapsing the band', async () => {
     render(Page, { props: { data } });
     expect(columnHeaders()).toContain('Heel stack');
-    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    await clickForefoot();
 
     expect(markedStory()).toEqual(['All']);     // still this runner's own default view
     expect(columnHeaders()).toContain('Forefoot stack');
@@ -353,7 +374,7 @@ describe('Page strike toggle', () => {
     render(Page, { props: { data } });
     const countOf = (label: RegExp) => screen.getByRole('button', { name: label }).textContent;
     const before = PRESETS.map((p) => countOf(new RegExp(p.label)));
-    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    await clickForefoot();
     // the fixture's two sides sit on different scales, so at least one story must move
     expect(PRESETS.map((p) => countOf(new RegExp(p.label)))).not.toEqual(before);
   });

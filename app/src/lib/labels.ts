@@ -73,9 +73,33 @@ const CHAR_PX: Record<string, number> = {
 };
 const FALLBACK_PX = 7;
 
+const textPx = (s: string): number =>
+  [...s].reduce((sum, ch) => sum + (CHAR_PX[ch] ?? FALLBACK_PX), 0);
+
 export function widestWordPx(label: string): number {
-  return Math.max(...label.split(/\s+/).map((word) =>
-    [...word].reduce((sum, ch) => sum + (CHAR_PX[ch] ?? FALLBACK_PX), 0)));
+  return Math.max(...label.split(/\s+/).map(textPx));
+}
+
+/**
+ * Three lines, not two: a two-line rule was an invention rather than a requirement, and relaxing
+ * it keeps eight real names. Beyond three nothing improves, because what is left is word overflow
+ * rather than line count — and the header is sticky, so a fourth line is paid once by every screen
+ * (docs/app.md §Columns and sorting).
+ */
+export const MAX_LABEL_LINES = 3;
+
+/** The browser's own greedy wrap, which is what decides how tall the sticky header stands. */
+export function lineCount(label: string, maxPx: number = MAX_LABEL_PX): number {
+  const space = textPx(' ');
+  let lines = 1;
+  let width = 0;
+  for (const word of label.split(/\s+/)) {
+    const w = textPx(word);
+    if (width === 0) width = w;
+    else if (width + space + w <= maxPx) width += space + w;
+    else { lines += 1; width = w; }
+  }
+  return lines;
 }
 
 export function shortLabel(key: string, fallback: string): string {

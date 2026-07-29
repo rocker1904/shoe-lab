@@ -1,12 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
 /**
- * jsdom implements no `window.matchMedia`, and `Page.svelte` picks which of the two tables to
- * mount from one (docs/app.md §Columns and sorting). Non-matching, so the suite always sees the
- * desktop rendering: the phone one is exercised directly in `ShoeTableMobile.test.ts` and at real
- * widths by Playwright, neither of which jsdom could stand in for.
- */
-/**
  * jsdom implements no Web Animations API, and Svelte 5 runs every `transition:` directive through
  * `Element.animate` — the setup strip's collapse is one (docs/app.md §Presets). Finishing on the
  * next microtask makes a transition instant rather than absent: the node still leaves the DOM,
@@ -34,6 +28,12 @@ window.ResizeObserver ??= class {
   disconnect(): void {}
 } as unknown as typeof ResizeObserver;
 
+/**
+ * jsdom implements no `window.matchMedia`, and `Page.svelte` picks which of the two tables to
+ * mount from one (docs/app.md §Columns and sorting). Non-matching, so the suite always sees the
+ * desktop rendering: the phone one is exercised directly in `ShoeTableMobile.test.ts` and at real
+ * widths by Playwright, neither of which jsdom could stand in for.
+ */
 window.matchMedia ??= ((query: string) => ({
   matches: false, media: query, onchange: null,
   addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,

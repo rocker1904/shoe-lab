@@ -73,15 +73,23 @@
   <tbody>
     {#each shoes as s (s.slug)}
       <!-- `aria-expanded` says the row controls something; `aria-controls` is the only thing that
-           says what, and the panel is a sibling row rather than a child of the control. -->
-      <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)} aria-controls="detail-{s.slug}"
+           says what, and the panel is a sibling row rather than a child of the control. Emitted only
+           while it is open: the panel exists only then, and an IDREF naming a node that is not in
+           the document is an unresolvable reference rather than a promise of one. -->
+      <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)}
+          aria-controls={expanded.has(s.slug) ? `detail-${s.slug}` : undefined}
           onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
+        <!-- The flex lives on a wrapper, not on the cell: `display: flex` on a `td` takes it out of
+             the table-cell box, so it stops stretching to the row and leaves a half-height block the
+             numeric cells scroll through under the sticky column. -->
         <td class="name">
-          <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
-          {#if s.imageUrl}<img src={s.imageUrl} alt="" loading="lazy" />{/if}
-          <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
-               shorten it rather than drop it (docs/app.md §Columns and sorting). -->
-          <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}</div>
+          <div class="name-row">
+            <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
+            {#if s.imageUrl}<img src={s.imageUrl} alt="" loading="lazy" />{/if}
+            <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
+                 shorten it rather than drop it (docs/app.md §Columns and sorting). -->
+            <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}</div>
+          </div>
         </td>
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
@@ -117,13 +125,24 @@
   th.fig button { align-items: flex-end; }
   td.fig { font-variant-numeric: tabular-nums; }
   td { border-bottom: 1px solid var(--border); padding: var(--s2); }
-  tr.shoe { cursor: pointer; }
+  /* The surface belongs to the ROW, and the wash travels inward from it (docs/app.md §Theming).
+     On the cell it would be replaced by the translucent wash, which `td.num.tinted` sets at higher
+     specificity — and the cell would then composite over the page instead of over the surface. */
+  tr.shoe { cursor: pointer; background: var(--surface); }
   /* A background *image* layers over the cell's background colour, so hovering a tinted cell
      dims it rather than replacing the percentile wash with a flat one. */
   tr.shoe:hover td { background-image: linear-gradient(var(--hover-wash), var(--hover-wash)); }
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  td.name { display: flex; gap: var(--s2); align-items: center; min-width: 14rem; background: var(--surface); }
+  /* The cell keeps its own opaque background as well as the row's: it is sticky, and the numeric
+     cells scroll underneath it rather than behind the row. */
+  td.name { min-width: 14rem; background: var(--surface); }
+  .name-row { display: flex; gap: var(--s2); align-items: center; }
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: var(--r-sm); }
+  /* The plate reads "Non-carbon plate", which wrapped to three lines in an auto-sized column and
+     made the row heights ragged. On the cell rather than the header, deliberately: `nowrap` on a
+     `th` makes every column's minimum its longest header, which summed past the viewport
+     (docs/app.md §Columns and sorting). */
+  td.num:not(.fig) { white-space: nowrap; }
   /* Expandability was signalled by `cursor: pointer` alone, which a touch reader never sees. */
   .chev { display: inline-block; color: var(--text-dim); }
   /* Unconditional, because this component is the desktop rendering: below 700px `Page.svelte`

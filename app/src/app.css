@@ -1,6 +1,9 @@
 :root {
   color-scheme: light dark;
-  --bg: #eeeeea; --surface: #ffffff; --chrome: #f2f2ef;
+  /* The page sits a step behind the chrome and two behind the row surface, so the phone's cards
+     read as surfaces rather than as the page: at #eeeeea the identity strip was 1.04:1 against it
+     and only the white value row read as a card (docs/app.md §Theming). */
+  --bg: #e6e6e1; --surface: #ffffff; --chrome: #f2f2ef;
   --text: #1a1d21; --text-dim: #5c6470; --border: #dcdfe3; --divider: #c9ced6;
   --accent: #2563eb; --accent-dim: #e6efff;
   --good: #15803d; --bad: #b91c1c;

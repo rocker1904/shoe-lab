@@ -71,7 +71,9 @@ test('states a strike, keeps the strip open through it, and returns to that runn
   await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Midsole width — Heel' })).toBeVisible();
 
-  await page.getByRole('radio', { name: 'Forefoot' }).click();
+  // the strip's own card: while it is up the bar draws no second copy of either group
+  await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Forefoot', exact: true }).click();
   await expect(page).toHaveURL(/strike=forefoot/);
   await expect(page.getByTestId('setup-strip')).toBeVisible();         // strike is the strip's own question
   await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
@@ -143,8 +145,15 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
 // same zero-sized box whatever the viewport is.
 test('degrades the toolbar in three tiers and keeps the table header clear of the chrome', async ({ page }) => {
   // The dataset is fetched, so the toolbar is not in the DOM at `goto` — and every reading below
-  // would come back null, which compares equal to itself and passes every assertion silently.
-  const settled = async () => { await expect(page.getByRole('radio', { name: /All/ })).toBeVisible(); };
+  // would come back null, which compares equal to itself and passes every assertion silently. The
+  // bar carries the two groups only once the strip has handed them over, so a first arrival has to
+  // answer it before there is a cascade to measure at all.
+  const settled = async () => {
+    const card = page.getByTestId('setup-strip').getByRole('button', { name: /^All/ });
+    await expect(page.getByRole('button', { name: 'Export CSV' })).toBeVisible();
+    if (await card.count()) await card.click();
+    await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+  };
   const boxes = () => page.evaluate(() => {
     const q = (s: string) => document.querySelector(s);
     // Centres, not tops: the groups are different heights and `align-items: center` is what puts
@@ -184,6 +193,13 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
   expect(narrow.paceY).toBeGreaterThan(narrow.strikeY!);
   expect(narrow.paceW).toBe(narrow.wrapW);      // stretched to fill the line
 
+  // 360px is the binding width, not 375: it is the usual Android one, and a third line there is
+  // the same void the middle tier was written to eliminate at 620.
+  await page.setViewportSize({ width: 360, height: 800 });
+  const android = await boxes();
+  expect(android.actionsY).toBe(android.strikeY);
+  expect(android.paceY).toBeGreaterThan(android.strikeY!);
+
   // The pinned header row must clear the chrome at every width, which a constant offset cannot do:
   // the chrome is 44px at 1200 and 103px at 375.
   for (const width of [1200, 700, 375]) {
@@ -203,9 +219,12 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
 // jsdom moves focus for nothing: neither Tab order nor a drawer that is hidden by `visibility` can
 // be observed there, and both are the whole point of these two.
 test('puts the skip link first and makes each radiogroup one tab stop', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 800 });
+  // Short on purpose: the jump has to be made from a page that genuinely scrolls, or the anchor is
+  // already where it would land and nothing is being tested.
+  await page.setViewportSize({ width: 1200, height: 400 });
   await page.goto('/');
-  await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+  await expect(page.getByTestId('setup-strip')).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to results' })).toBeFocused();
@@ -213,7 +232,17 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
   await expect(page.locator('#shoe-table')).toBeFocused();
   // the view owns the query string, so the jump leaves no fragment behind to ride along in a link
   expect(new URL(page.url()).hash).toBe('');
+  // and it lands somewhere worth landing: the pinned chrome and the sticky header own the top of
+  // the scrollport, so a jump that puts the anchor at y=0 leaves the runner looking at row 3
+  const clear = await page.evaluate(() => {
+    const th = document.querySelector('thead th')!.getBoundingClientRect();
+    const row = document.querySelector('tbody tr.shoe')!.getBoundingClientRect();
+    return Math.round(row.top - th.bottom);
+  });
+  expect(clear, 'the first row is behind the pinned header').toBeGreaterThanOrEqual(0);
 
+  // the bar carries the groups once the strip has handed over
+  await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
   const heel = page.getByRole('radio', { name: 'Heel' });
   await heel.focus();
   await page.keyboard.press('ArrowRight');

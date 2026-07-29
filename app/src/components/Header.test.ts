@@ -30,6 +30,9 @@ describe('Header', () => {
     const clip = stubClipboard();
     restore = clip.restore;
     render(Header, { props });
+    // The region is on the page before there is anything to say: a live region created together
+    // with its text is not reliably announced, so only the text may arrive late.
+    expect(screen.getByRole('status').textContent).toBe('');
     await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
     expect(clip.writeText).toHaveBeenCalledWith(location.href);
     // The confirmation is its own live region, so the button keeps one accessible name and the
@@ -43,7 +46,7 @@ describe('Header', () => {
     render(Header, { props });
     await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
     await settled();
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 
   it('copies nothing where there is no clipboard, rather than throwing', async () => {
@@ -53,6 +56,6 @@ describe('Header', () => {
     render(Header, { props });
     await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
     await settled();
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 });

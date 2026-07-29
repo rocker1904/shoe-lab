@@ -56,12 +56,15 @@ describe('ShoeTableMobile', () => {
     expect(cards[0]!.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('points the expanded card at the panel it opened', async () => {
+  // The panel exists only while the card is open, and an IDREF naming a node that is not in the
+  // document is an unresolvable reference rather than a promise of one.
+  it('points the expanded card at the panel it opened, and at nothing while it is closed', async () => {
     setup();
     const card = screen.getAllByRole('row').find((r) => r.classList.contains('shoe'))!;
+    expect(card).not.toHaveAttribute('aria-controls');
+    await fireEvent.click(card);
     const panelId = card.getAttribute('aria-controls');
     expect(panelId).toBeTruthy();
-    await fireEvent.click(card);
     expect(document.getElementById(panelId!)).toBeInTheDocument();
   });
 
