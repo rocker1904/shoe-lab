@@ -108,6 +108,37 @@ test('switches to stacked cards on a phone, and back', async ({ page }) => {
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
 });
 
+// The drag maths is percent positions over a measured box plus gap-aware hit areas, none of which
+// jsdom can produce: every element there reports the same zero-sized rect.
+test('drags a bound onto the histogram and clamps only the drawing', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  const row = page.getByRole('group', { name: 'Price (£)' });
+  await expect(row).toBeVisible();
+  const box = await row.locator('.plot').boundingBox();
+  expect(box, 'the plot never got a box, so nothing below would be measuring anything').not.toBeNull();
+  const max = row.getByLabel('max', { exact: true });
+  const min = row.getByLabel('min', { exact: true });
+
+  // The max grip rests at the axis ceiling; dragged to the floor it lands on a price that exists.
+  await page.mouse.move(box!.x + box!.width - 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x, box!.y + box!.height / 2, { steps: 10 });
+  await page.mouse.up();
+  await expect(max).toHaveValue('140');
+  await expect(page.getByText('3 of 5 shoes')).toBeVisible();
+  await expect(page).toHaveURL(/r\.msrpGbp=%7E140/);
+
+  // A typed value past the axis keeps its number and only its drawing is clamped, so its grip ends
+  // up exactly where an unbounded maximum draws.
+  await max.fill('');
+  await min.fill('400');
+  await expect(min).toHaveValue('400');
+  const lefts = await row.locator('.handle').evaluateAll((els) =>
+    els.map((e) => (e as HTMLElement).style.left));
+  expect(lefts[0]).toBe(lefts[1]);
+});
+
 // None of this is observable in jsdom: it applies no component CSS, so every group reports the
 // same zero-sized box whatever the viewport is.
 test('degrades the toolbar in three tiers and keeps the table header clear of the chrome', async ({ page }) => {

@@ -225,8 +225,43 @@ bound is still dropped. It is one flag over the whole filter set rather than
 per range — the receipt offers one control, so one flag is what the user can
 actually address.
 
-Range inputs are a histogram plus min/max number fields rather than a
-dual-thumb slider: same capability, keyboard-accessible, no drag maths.
+**A range row has two input modes because they serve different needs**, not for
+accessibility: the number field is *precise*, the plot is *intuitive*.
+Accessibility is a property of how each is built, not the reason either exists.
+The plot carries an edge handle per side, dragged inward; a handle left at its
+extreme means **no bound on that side**, so the row still serialises open-ended.
+The number fields stay authoritative and independently editable.
+
+The drawn axis is **trimmed to p2–p98** (`lib/axis.ts`), with the excluded
+readings drawn as hatched overflow bins at each end rather than dropped. A
+linear axis over the full range is unusable for dragging and price says why:
+79% of it is empty pixels, the densest single pixel holds 64 shoes, and the
+middle half of the fleet gets 23px of a 222px control. Trimming roughly doubles
+that. p2–p98 is symmetric, needs no per-metric tuning, and is deliberately
+conservative — a wider trim buys travel but starts discarding real spread.
+
+**Snapping is to values that exist, not to round numbers.** £5 and 1g detents
+are arbitrary; a boundary between two shoes is not, and the rule self-adjusts
+across the two regimes the fleet contains — 43 stops on price (10% distinct),
+324 on energy return (90%) — with no constants. Both axis ends are readings too,
+because `quantile` is floor-of-rank.
+
+**Bounds may cross, and a crossed range honestly matches zero shoes.** Dragging
+clamps each handle against the other, but the number fields do not, and a value
+outside the axis **clamps only where it is drawn** — `clampPct` moves the
+position, never the stored number. Clamping on input is actively broken: with
+max at 180, typing "200" into min would rewrite the field at the third keystroke
+and further typing would append to what it rewrote.
+
+Two details the plot has to get right. **It is not a tab stop**: giving it
+`tabindex` so `:focus-within` could reveal the grips would add an empty stop in
+an app that already has 49, so the reveal hangs off the **row** — hover or
+focus-within on the fieldset — which also means tabbing into either number
+field reveals them. And **the touch hit areas are gap-aware**: 44px on a 222px
+plot is a fifth of the width each way, so each shrinks to half the gap once the
+handles are within 88px. Under `@media (hover: none)` the grips are permanently
+visible, because hover never fires there. A *set* bound is drawn either way — an
+edge is state, a grip is affordance, and they have different visibility rules.
 
 ## Columns and sorting
 

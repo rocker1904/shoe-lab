@@ -5,7 +5,6 @@
   import { applyFilters, type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
   import { excludedBy } from '../lib/relax';
-  import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
@@ -103,7 +102,10 @@
   }));
   let adding = $state(false);
 
-  const histFor = (key: string) => histogram(data.shoes.map((s) => numericValue(s, key, idx)).filter((v): v is number => v !== undefined));
+  /** The readings themselves: the row trims its own axis to p2–p98 and snaps a drag to values that
+   *  exist, neither of which bucket counts can supply (docs/app.md §Filters). */
+  const valuesFor = (key: string) =>
+    data.shoes.map((s) => numericValue(s, key, idx)).filter((v): v is number => v !== undefined);
   /**
    * Over the whole fleet under the live filter set, never over `population`: the question is how
    * many shoes come back if this bound goes, and `population` has already had the other bounds
@@ -215,7 +217,7 @@
       <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)} strike={view.strike}
                  coverage={(k) => coverageOf(population, k, idx)} />
       {#each rowKeysOf(e) as key (key)}
-        <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} hist={histFor(key)}
+        <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} values={valuesFor(key)}
                      bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
                      excluded={excludedFor(key)}
                      onremove={removable(key) ? () => removeRow(key) : undefined} />

@@ -30,13 +30,19 @@ export function percentileMap(shoes: Shoe[], key: string, idx: TestIndex): Map<s
 
 export interface Histogram { min: number; max: number; counts: number[] }
 
-export function histogram(values: number[], bins = 24): Histogram | null {
+/**
+ * `range` is the drawn axis when there is one: the sidebar's plot is trimmed to p2–p98, and bins
+ * derived from the surviving values would quietly un-trim it at whichever end the outliers were
+ * (docs/app.md §Filters). Readings outside the range are left to the overflow bins.
+ */
+export function histogram(values: number[], bins = 24, range?: { min: number; max: number }): Histogram | null {
   if (values.length < 2) return null;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  if (min === max) return null;
+  const min = range?.min ?? Math.min(...values);
+  const max = range?.max ?? Math.max(...values);
+  if (min >= max) return null;
   const counts = new Array<number>(bins).fill(0);
   for (const v of values) {
+    if (v < min || v > max) continue;
     const i = Math.min(bins - 1, Math.floor(((v - min) / (max - min)) * bins));
     counts[i] = (counts[i] ?? 0) + 1;
   }

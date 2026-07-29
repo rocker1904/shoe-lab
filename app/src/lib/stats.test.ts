@@ -59,6 +59,16 @@ describe('stats edge cases', () => {
     const h = histogram([0, 2, 4, 6, 8, 10], 5)!; // width 2: [0,2) [2,4) [4,6) [6,8) [8,10]
     expect(h.counts).toEqual([1, 1, 1, 1, 2]);
   });
+  // The sidebar's plot is drawn over a trimmed axis, so the bins have to be told their range
+  // rather than deriving one from whatever survived the trim (docs/app.md §Filters).
+  it('histogram bins over a given range and ignores what falls outside it', () => {
+    const h = histogram([0, 4, 5, 6, 100], 2, { min: 4, max: 6 })!;
+    expect([h.min, h.max]).toEqual([4, 6]);
+    expect(h.counts).toEqual([1, 2]);
+  });
+  it('histogram is null for a range of zero width', () => {
+    expect(histogram([1, 2, 3], 4, { min: 2, max: 2 })).toBeNull();
+  });
   it('histogram handles negative ranges', () => {
     const h = histogram([-10, -5, 0], 2)!;
     expect([h.min, h.max]).toEqual([-10, 0]);
