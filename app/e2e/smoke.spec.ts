@@ -4,14 +4,14 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await page.goto('/');
   await expect(page.getByText('5 of 5 shoes')).toBeVisible();
 
-  // a bare first visit opens on the band, so this is a story card rather than a toolbar pill
-  await expect(page.getByTestId('entry-band')).toBeVisible();
+  // a bare first visit opens on the setup strip, so this is a card rather than a toolbar pill
+  await expect(page.getByTestId('setup-strip')).toBeVisible();
   await page.getByRole('button', { name: 'Easy' }).click();
   await expect(page.getByText('2 of 5 shoes')).toBeVisible();
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
-  // the band stays open and marks what was chosen — the counts are what make the stories comparable
-  await expect(page.getByTestId('entry-band')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Easy', pressed: true })).toBeVisible();
+  // the strip hands over to the toolbar, which is where the mark and the counts live from here
+  await expect(page.getByTestId('setup-strip')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: 'cushy' })).toBeVisible();
 
   await page.getByText('cushy').first().click();
@@ -27,29 +27,41 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await expect(page.getByRole('row').filter({ hasText: 'racer' })).toBeVisible();
 });
 
-test('opens on the entry band and resumes the previous session across a reload', async ({ page }) => {
+test('opens on the setup strip and resumes the previous session across a reload', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('entry-band')).toBeVisible();
-  // counts are computed from the live dataset, not hard-coded in the band
-  await expect(page.getByRole('button', { name: 'Race' })).toContainText('2 shoes');
-  await expect(page.getByRole('button', { name: 'Browse all 5 shoes' })).toBeVisible();
+  const strip = page.getByTestId('setup-strip');
+  await expect(strip).toBeVisible();
+  // counts are computed from the live dataset, not hard-coded in the strip
+  await expect(strip.getByRole('button', { name: /Race/ })).toContainText('2');
+  // six equal cards in one row, with the group divider drawn in the gutter between them
+  await expect(strip.locator('.card')).toHaveCount(6);
+  const widths = await strip.locator('.card').evaluateAll((els) =>
+    els.map((e) => Math.round(e.getBoundingClientRect().width)));
+  expect(new Set(widths).size).toBe(1);
+  await expect(strip.locator('.divider')).toBeVisible();
+
+  // the help is a click-triggered popover on every device, never a hover tooltip
+  await strip.getByRole('button', { name: /About Built for/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Built for' })).toContainText('you can change anything');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Easy' }).click();
   await expect(page.getByText('2 of 5 shoes')).toBeVisible();
-  await expect(page.getByTestId('entry-band')).toBeVisible();
-  await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
+  await expect(strip).toHaveCount(0);
 
   // the only proof persistence works, because it spans a real page load
   await page.goto('/');
   await expect(page.getByText('2 of 5 shoes')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Easy', pressed: true })).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
+  await expect(strip).toHaveCount(0);                                  // and it never returns
   // and the restored view reaches the URL, so copying the link shares what is on screen
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
 });
 
-test('states a strike, keeps the band open through it, and returns to that runner via All', async ({ page }) => {
+test('states a strike, keeps the strip open through it, and returns to that runner via All', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('entry-band')).toBeVisible();
+  await expect(page.getByTestId('setup-strip')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
   // both halves of both side pairs render, forefoot first, whichever strike is chosen
   const stackRows = page.locator('fieldset[aria-label^="Stack — "]');
@@ -61,21 +73,20 @@ test('states a strike, keeps the band open through it, and returns to that runne
 
   await page.getByRole('radio', { name: 'Forefoot' }).click();
   await expect(page).toHaveURL(/strike=forefoot/);
-  await expect(page.getByTestId('entry-band')).toBeVisible();          // still this runner's default
+  await expect(page.getByTestId('setup-strip')).toBeVisible();         // strike is the strip's own question
   await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Easy' }).click();
-  await expect(page.getByTestId('entry-band')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Easy', pressed: true })).toBeVisible();
+  await expect(page.getByTestId('setup-strip')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
   await expect(page).toHaveURL(/r\.forefoot-stack=/);
 
   await page.getByRole('radio', { name: /All/ }).click();
   await expect(page).toHaveURL(/\?strike=forefoot$/);                  // who you are survives All
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByTestId('entry-band')).toBeVisible();
-  await expect(page.getByRole('button', { pressed: true })).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
   await expect(page.getByText('5 of 5 shoes')).toBeVisible();
 });
 

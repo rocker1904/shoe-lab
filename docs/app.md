@@ -417,27 +417,64 @@ population would trip the sparse warning (docs/app.md §Coverage) — a preset
 that recommends against itself is self-inflicted. `presets.test.ts` asserts it
 in both directions.
 
-`EntryBand.svelte` offers the presets as cards above the table on arrival, each
-carrying name and live count and nothing else — `Page.svelte` applies every
-preset and runs `applyFilters` to get the counts, which is three passes over a
-dataset already in memory. `Preset.describe` stays on the type and reaches the
-reader as the card's tooltip.
+Selection is **derived, never stored**: a story reads as chosen while the view
+equals what `applyPreset` would build for it right now. Editing a bound drops
+the highlight because the view genuinely is not that story any more, where a
+stored `preset` field would keep claiming Easy.
 
-The band shows while the view is a **clean state**: equal to
-`defaultView(strike)`, or equal to `applyPreset(story, …, strike)` for some
-story. It collapses to the chip row only once the view is hand-edited into
-something no story describes, and both are derived from view state and never
-stored — a link carrying filters opens collapsed and a bare link opens
-expanded. Selection is derived the same way, so editing a bound drops the
-highlight because the view genuinely is not that story any more; a stored
-`preset` field would keep claiming Easy.
+### The setup strip
+
+`SetupStrip.svelte` asks **both** questions once and then hands over to the
+toolbar for good. Six equal cards in one row, in two divided groups: *Use
+measurements from the* — Heel, Forefoot; *Built for* — All, Easy, Tempo, Race
+with live counts and a one-line description each. `Page.svelte` applies every
+preset and runs `applyFilters` to get the counts, which is three passes over a
+dataset already in memory.
+
+**Neither label makes a claim about the person.** "I land on my heel" tells a
+curious browser they are being mislabelled; "Use measurements from the"
+describes what the control does to the table, and "Built for" puts the claim on
+the shoe. This is a deliberate stance — do not "fix" it back to something
+friendlier.
+
+Strike cards carry **no count**, because strike does not change how many shoes
+exist; the slot is reserved rather than removed, so the cards are the same
+height. The descriptions align to a common baseline by giving the name and
+count lines fixed heights: bottom-aligning with `margin-top: auto` leaves them
+ragged, because the descriptions wrap to different line counts. The grid is
+`repeat(2, minmax(0, 1fr)) 1px repeat(4, minmax(0, 1fr))`, so the group divider
+gets a track of its own in the gutter and no card is resized to make room for
+it; it is drawn in `--divider`, which exists because `--border` is invisible
+against `--chrome`. Below 700px each group becomes two columns at full card
+size — six in a row is a desktop layout.
+
+A `?` beside each label opens `HelpPopover.svelte`, **one mechanism on every
+device**: a click-triggered popover anchored beside the `?` above 700px and a
+bottom sheet below, with focus return and Escape. A hover tooltip was rejected
+— it is the same mechanism as the `title` attribute this pass removes from the
+cards, and it needs a wholly separate touch path.
+
+**Visibility is ephemeral `$state`**, initialised from "no query string *and* no
+stored view" — a genuine first arrival, which `Page.svelte` already knows at
+init — cleared on the first story click, never serialised and never persisted.
+That is not the stored dismissal flag this section rules out, and the property
+it protects is preserved exactly: a bare link opens expanded, a filtered link
+opens collapsed. A strike click leaves the strip up, because strike is the
+strip's other question; a story click collapses it with a height transition
+under a `prefers-reduced-motion` guard.
+
+**The strip never returns**, and nothing is lost by that: the toolbar carries
+the counts, so the only thing the cards held exclusively is the descriptions,
+which are a first-encounter need. That split — **descriptions at first
+encounter, counts permanently** — is what makes the model work, and it is why
+there is no "Browse all" card: `All` owns that affordance now.
 
 ### The toolbar
 
 `Toolbar.svelte` is the permanent surface: two segmented radiogroups in one
 visual language — strike, a divider, then `All | Easy | Tempo | Race` with live
 counts — and an actions group (`Filters`, `Columns`) pushed right by
-`margin-left: auto`. The band cannot hold the controls that reset it, because
+`margin-left: auto`. The strip cannot hold the controls that reset it, because
 it is gone by the time they are needed.
 
 **There is no `Clear` button.** `All` is the fourth peer of the stories and the
@@ -476,14 +513,8 @@ Flipping strike **re-derives** the view rather than setting a field: from the
 default view to `defaultView(next)`, from a view equal to a story to that story
 under the new strike, and from a hand-edited view through `swapStrike`. Setting
 the field alone would leave heel-shaped columns behind, so the view would stop
-equalling its own baseline and the band would collapse on the very control this
-protects.
-
-**Browse all** changes no state, and that is not an oversight. The default view
-already shows every shoe, so there is nothing to apply; and collapsing the band
-from it would need the stored dismissal flag the derived rule exists to avoid.
-It moves focus to the table and scrolls it into view, and it is styled as a
-peer of the story cards rather than as a lesser option.
+equalling its own baseline and the toolbar would drop the mark on the very
+control this protects.
 
 ## Theming
 

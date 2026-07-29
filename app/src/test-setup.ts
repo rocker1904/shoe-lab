@@ -7,6 +7,22 @@ import '@testing-library/jest-dom/vitest';
  * widths by Playwright, neither of which jsdom could stand in for.
  */
 /**
+ * jsdom implements no Web Animations API, and Svelte 5 runs every `transition:` directive through
+ * `Element.animate` — the setup strip's collapse is one (docs/app.md §Presets). Finishing on the
+ * next microtask makes a transition instant rather than absent: the node still leaves the DOM,
+ * which is the behaviour a test can meaningfully assert, and jsdom has no compositor for the
+ * frames in between to mean anything to.
+ */
+window.Element.prototype.animate ??= function () {
+  const anim: Record<string, unknown> = {
+    currentTime: 0, playState: 'finished', effect: null, onfinish: null,
+    cancel: () => {},
+  };
+  queueMicrotask(() => (anim['onfinish'] as (() => void) | null)?.());
+  return anim as unknown as Animation;
+};
+
+/**
  * jsdom implements no layout and no `ResizeObserver`, and Svelte's `bind:clientHeight` is built on
  * one — `Page.svelte` measures the pinned chrome that way (docs/app.md §Columns and sorting).
  * A no-op observer is the honest stand-in: every box in jsdom is zero-sized, so the binding would

@@ -1,14 +1,16 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+  import { slide } from 'svelte/transition';
   import type { ShoesFile } from '../../shared/types.js';
   import ColumnPicker from './components/ColumnPicker.svelte';
-  import EntryBand, { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
   import FilterSidebar from './components/FilterSidebar.svelte';
   import Header from './components/Header.svelte';
   import Receipt from './components/Receipt.svelte';
+  import SetupStrip from './components/SetupStrip.svelte';
   import ShoeTable from './components/ShoeTable.svelte';
   import ShoeTableMobile from './components/ShoeTableMobile.svelte';
   import Toolbar from './components/Toolbar.svelte';
+  import { TABLE_ANCHOR_ID } from './lib/anchor';
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
   import { applyFilters } from './lib/filters';
@@ -28,10 +30,22 @@
   const initial = untrack(() => {
     const qs = location.search.replace(/^\?/, '');
     const stored = qs ? null : readStoredView();
-    return { view: parseView(qs || stored || '', indexTests(data.tests)), restored: stored !== null };
+    return { view: parseView(qs || stored || '', indexTests(data.tests)), restored: stored !== null,
+             bare: !qs && stored === null };
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
+  /**
+   * Ephemeral, never serialised and never persisted: the strip asks both questions on a genuine
+   * first arrival — no query string and no stored view — and hands over to the toolbar for good
+   * once a story is picked. A *stored* dismissal flag is what docs/app.md §Presets rules out; the
+   * property it protects, that a bare link opens expanded and a filtered link collapsed, is this.
+   */
+  let stripOpen = $state(initial.bare);
+  /** A JS transition cannot be wrapped in an `@media` block, so the query is asked here instead.
+   *  jsdom implements no `matchMedia` beyond the suite's stub, hence the optional call. */
+  const collapseMs = untrack(() =>
+    (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false) ? 0 : 200);
   /**
    * Measured, never assumed: the header wraps to two lines below 800px and the toolbar to two
    * below 880px, so the pinned `thead` and the sticky sidebar both sit under a box whose height
@@ -69,8 +83,6 @@
    */
   const selectedPreset = $derived(
     PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, snapshot.strike)))?.id ?? null);
-  // The band shows while the view is a clean state — this runner's baseline, or some story.
-  const bandOpen = $derived(atDefault || selectedPreset !== null);
   // `All` is a peer of the stories in the bar, so it needs a count in the same map. Three preset
   // applications over a dataset already in memory.
   const presetCounts = $derived(new Map<string, number>([
@@ -107,6 +119,9 @@
   // `All` is the baseline rather than a fourth story, so it routes to the same view a Clear
   // button used to produce (docs/app.md §Presets).
   function onStory(id: string) {
+    // The strip's own question, answered — the toolbar carries the counts from here, and the only
+    // thing the cards held exclusively was the descriptions, which are a first-encounter need.
+    stripOpen = false;
     if (id === 'all') setView(defaultView(snapshot.strike));
     else onPreset(id);
   }
@@ -150,10 +165,13 @@
   </Toolbar>
 </div>
 
-<!-- Outside .layout so it precedes the sidebar in the tab order. The band is the default path
-     into the tool; inside .content a keyboard user reaches it only after every filter control. -->
-{#if bandOpen}
-  <EntryBand counts={presetCounts} total={data.shoes.length} onapply={onPreset} selected={selectedPreset} />
+<!-- Outside .layout so it precedes the sidebar in the tab order: the strip is the default path
+     into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
+{#if stripOpen}
+  <div transition:slide={{ duration: collapseMs }}>
+    <SetupStrip counts={presetCounts} strike={view.strike} selected={atDefault ? 'all' : selectedPreset}
+                onstrike={onStrike} onstory={onStory} />
+  </div>
 {/if}
 
 <div class="layout" class:show-filters={showFilters}>

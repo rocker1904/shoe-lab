@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from './Page.svelte';
-import { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
+import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { VIEW_STORAGE_KEY } from './lib/persist';
 import { PRESETS } from './lib/presets';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
@@ -200,52 +200,41 @@ describe('Page', () => {
   });
 });
 
-const band = () => screen.queryByTestId('entry-band');
+/** The setup strip on a first arrival; `SetupStrip.test.ts` owns when it shows and when it goes. */
+const strip = () => screen.queryByTestId('setup-strip');
 /** The toolbar's story pills, which replaced both the chip row and the Clear button: a hand-edited
  *  view matches no story, so nothing is marked (docs/app.md §Presets). */
 const markedStory = () => screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true })
   .map((r) => r.textContent?.trim().split(/\s/)[0]);
 
-describe('Page entry band', () => {
-  it('opens on the band, with the live count of each story', () => {
+describe('Page story selection', () => {
+  it('opens on the strip, with the live count of each story', () => {
     render(Page, { props: { data } });
-    expect(band()).toBeInTheDocument();
+    expect(strip()).toBeInTheDocument();
     expect(markedStory()).toEqual(['All']);
-    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('2 shoes');
-    expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2 shoes');
-    expect(screen.getByRole('button', { name: /Browse all/ })).toHaveTextContent('5 shoes');
+    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('2');
+    expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2');
   });
-  // The band's three counts are what make the stories comparable, and comparing them is exactly
-  // what someone is doing at the moment they pick one (docs/app.md §Presets).
-  it('stays open when a story is applied, with exactly that story marked', async () => {
+  it('marks exactly the story that was applied', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    expect(band()).toBeInTheDocument();
     expect(markedStory()).toEqual(['Easy']);
-    const marked = screen.getAllByRole('button', { pressed: true });
-    expect(marked).toHaveLength(1);
-    expect(marked[0]).toHaveTextContent('Easy');
   });
-  it('collapses, and drops the mark, once a bound is edited past what any story describes', async () => {
+  it('drops the mark once a bound is edited past what any story describes', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     await fireEvent.input(screen.getByRole('group', { name: 'Stack — Heel' }).querySelector('input')!,
       { target: { value: '20' } });
-    expect(band()).not.toBeInTheDocument();
     expect(markedStory()).toEqual([]);
-    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
   });
-  it('collapses when a filter is added even though nothing is bounded yet', async () => {
+  it('drops the mark when a filter is added even though nothing is bounded yet', async () => {
     render(Page, { props: { data: dataPlus } });
-    expect(band()).toBeInTheDocument();
     await addFilter('Stiffness');
-    expect(band()).not.toBeInTheDocument();
     expect(markedStory()).toEqual([]);
   });
-  it('opens collapsed when the link carries filters', () => {
+  it('marks nothing when the link carries filters', () => {
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
-    expect(band()).not.toBeInTheDocument();
     expect(markedStory()).toEqual([]);
   });
   it('All returns to this runner\'s own default, keeping who they are', async () => {
@@ -256,18 +245,12 @@ describe('Page entry band', () => {
 
     expect(location.search).toBe('?strike=forefoot');    // strike survives; everything else goes
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
-    expect(band()).toBeInTheDocument();
-    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
+    expect(markedStory()).toEqual(['All']);
   });
-  it('Browse all leaves the view exactly as it was', async () => {
+  // The skip link (BACKLOG.md) is its next consumer; the id and the tabindex are what it needs.
+  it('wraps the table in a focusable anchor', () => {
     render(Page, { props: { data } });
-    const rows = screen.getAllByRole('row').length;
-    await fireEvent.click(screen.getByRole('button', { name: /Browse all/ }));
-    expect(location.search).toBe('');
-    expect(screen.getAllByRole('row').length).toBe(rows);
-    // deliberately does not collapse: the collapse is derived from view state, which is unchanged
-    expect(band()).toBeInTheDocument();
-    expect(document.getElementById(TABLE_ANCHOR_ID)).toBe(document.activeElement);
+    expect(document.getElementById(TABLE_ANCHOR_ID)).toHaveAttribute('tabindex', '-1');
   });
 });
 
@@ -282,8 +265,7 @@ describe('Page strike toggle', () => {
     expect(columnHeaders()).toContain('Heel stack');
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
 
-    expect(band()).toBeInTheDocument();     // still this runner's own default view
-    expect(markedStory()).toEqual(['All']);
+    expect(markedStory()).toEqual(['All']);     // still this runner's own default view
     expect(columnHeaders()).toContain('Forefoot stack');
     expect(columnHeaders()).not.toContain('Heel stack');
     expect(location.search).toContain('strike=forefoot');
@@ -295,8 +277,7 @@ describe('Page strike toggle', () => {
     const before = location.search;
 
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
-    expect(band()).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { pressed: true })[0]).toHaveTextContent('Easy');
+    expect(markedStory()).toEqual(['Easy']);
     expect(location.search).toContain('r.forefoot-stack=');
     expect(location.search).not.toContain('r.heel-stack=');
 
@@ -338,7 +319,7 @@ describe('Page persistence', () => {
     render(Page, { props: { data } });
     expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
     expect(location.search).toContain('plate=carbon');
-    expect(band()).not.toBeInTheDocument();
+    expect(strip()).not.toBeInTheDocument();
   });
   it('stores the view on every change', async () => {
     render(Page, { props: { data } });
@@ -350,13 +331,13 @@ describe('Page persistence', () => {
     render(Page, { props: { data } });
     expect(screen.getByText(/5 of 5 shoes/)).toBeInTheDocument();
     expect(location.search).toBe('');
-    expect(band()).toBeInTheDocument();
+    expect(strip()).toBeInTheDocument();
   });
   it('opens normally when storage is blocked in both directions', async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     render(Page, { props: { data } });
-    expect(band()).toBeInTheDocument();
+    expect(strip()).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument();
   });
