@@ -125,7 +125,7 @@
   /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 57px column, which is
      the difference between "softness" fitting the header and clipping (docs/app.md §Columns and sorting). */
   th { padding: var(--s1) 2px; background: var(--bg); vertical-align: bottom;
-       position: sticky; top: var(--thead-top, 3.2rem); z-index: 2; box-shadow: var(--shadow-sticky); }
+       position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky); }
   th button { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%;
               background: none; border: none; color: var(--text); font: inherit; font-size: var(--t-xs);
               font-weight: 600; letter-spacing: -0.02em; cursor: pointer; padding: 0; text-align: center; }

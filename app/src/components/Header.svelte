@@ -21,7 +21,10 @@
 </header>
 
 <style>
-  header { display: flex; align-items: center; gap: var(--s4); padding: var(--s2) var(--s5); border-bottom: 1px solid var(--border); background: var(--chrome); position: sticky; top: 0; z-index: 5; }
+  /* Not sticky itself: `Page.svelte` pins header and toolbar together as one chrome box, and the
+     table's header row offsets against that box's measured height
+     (docs/app.md §Columns and sorting). */
+  header { display: flex; align-items: center; gap: var(--s4); padding: var(--s2) var(--s5); border-bottom: 1px solid var(--border); background: var(--chrome); }
   h1 { font-size: var(--t-xl); margin: 0; }
   .count { color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }

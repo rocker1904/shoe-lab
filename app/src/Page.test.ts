@@ -79,7 +79,7 @@ describe('Page', () => {
   });
   it('applying a preset filters the table and updates the URL', async () => {
     render(Page, { props: { data } });
-    // on a default view the band renders and PresetChips does not, so the card carries the description too
+    // the band's card, not the toolbar pill: one is a button, the other a radio
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument(); // cushy and trainer pass on the fixture fleet
     expect(location.search).toContain('plate=none%2Cplated-other');
@@ -201,13 +201,16 @@ describe('Page', () => {
 });
 
 const band = () => screen.queryByTestId('entry-band');
-const chips = () => screen.queryByRole('group', { name: 'Presets' });
+/** The toolbar's story pills, which replaced both the chip row and the Clear button: a hand-edited
+ *  view matches no story, so nothing is marked (docs/app.md §Presets). */
+const markedStory = () => screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true })
+  .map((r) => r.textContent?.trim().split(/\s/)[0]);
 
 describe('Page entry band', () => {
   it('opens on the band, with the live count of each story', () => {
     render(Page, { props: { data } });
     expect(band()).toBeInTheDocument();
-    expect(chips()).not.toBeInTheDocument();
+    expect(markedStory()).toEqual(['All']);
     expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('2 shoes');
     expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2 shoes');
     expect(screen.getByRole('button', { name: /Browse all/ })).toHaveTextContent('5 shoes');
@@ -218,7 +221,7 @@ describe('Page entry band', () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     expect(band()).toBeInTheDocument();
-    expect(chips()).not.toBeInTheDocument();
+    expect(markedStory()).toEqual(['Easy']);
     const marked = screen.getAllByRole('button', { pressed: true });
     expect(marked).toHaveLength(1);
     expect(marked[0]).toHaveTextContent('Easy');
@@ -229,7 +232,7 @@ describe('Page entry band', () => {
     await fireEvent.input(screen.getByRole('group', { name: 'Stack — Heel' }).querySelector('input')!,
       { target: { value: '20' } });
     expect(band()).not.toBeInTheDocument();
-    expect(chips()).toBeInTheDocument();
+    expect(markedStory()).toEqual([]);
     expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
   });
   it('collapses when a filter is added even though nothing is bounded yet', async () => {
@@ -237,19 +240,19 @@ describe('Page entry band', () => {
     expect(band()).toBeInTheDocument();
     await addFilter('Stiffness');
     expect(band()).not.toBeInTheDocument();
-    expect(chips()).toBeInTheDocument();
+    expect(markedStory()).toEqual([]);
   });
   it('opens collapsed when the link carries filters', () => {
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
     expect(band()).not.toBeInTheDocument();
-    expect(chips()).toBeInTheDocument();
+    expect(markedStory()).toEqual([]);
   });
-  it('Clear returns to this runner\'s own default, keeping who they are', async () => {
+  it('All returns to this runner\'s own default, keeping who they are', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    await fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    await fireEvent.click(screen.getByRole('radio', { name: /All/ }));
 
     expect(location.search).toBe('?strike=forefoot');    // strike survives; everything else goes
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
@@ -280,7 +283,7 @@ describe('Page strike toggle', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
 
     expect(band()).toBeInTheDocument();     // still this runner's own default view
-    expect(chips()).not.toBeInTheDocument();
+    expect(markedStory()).toEqual(['All']);
     expect(columnHeaders()).toContain('Forefoot stack');
     expect(columnHeaders()).not.toContain('Heel stack');
     expect(location.search).toContain('strike=forefoot');
@@ -306,7 +309,7 @@ describe('Page strike toggle', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
 
     // a map onto the new side, not an exchange: both halves were shown, one column comes out
-    expect(columnHeaders()).toEqual(['Shoe', 'Score', 'Forefoot stack ▼']);
+    expect(columnHeaders()).toEqual(['Shoe', 'Score', 'Forefoot stack\u00a0▼']);
     expect(location.search).toContain('sort=-forefoot-stack');
     expect(location.search).toContain('r.heel-stack=36%7E');   // the number was never the runner's to move
   });

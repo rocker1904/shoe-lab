@@ -260,8 +260,24 @@ filtered and sorted on. There is no dimming of discontinued rows either — the
 `disc-tag` chip says it in text, and dimming would argue against the
 `discontinued=only` filter, which exists because those shoes are worth finding.
 
-The `thead` pins at `--thead-top`, and the first column pins left. Both depend
-on `Page.svelte`'s `.content` having **no `overflow-x`**: setting
+The `thead` pins at `--thead-top`, and the first column pins left.
+
+`--thead-top` is **measured, never assumed**. `Page.svelte` wraps the header
+and the toolbar in one `.chrome` box, pins that box at `top: 0`, and binds its
+`clientHeight`; the same number gives the sidebar its `top` and its
+`max-height`. There is no fallback value, because there is no width at which a
+constant is right: the chrome is 44px at 1200px, 70px at 700px once the header
+wraps, and 103px at 375px once the toolbar wraps too. A hard-coded `3.2rem`
+pinned the header row 19px behind the chrome at 700px and 52px behind it at
+375px, so the row was partly invisible on every phone.
+
+The `.layout` grid is `260px minmax(0, 1fr)`, and the `minmax` is load-bearing:
+a bare `1fr` track takes an automatic minimum of `min-content`, which the
+table's 14rem name column and `white-space: nowrap` headers inflate past the
+viewport. It scrolled the whole document 42px sideways at 1200px.
+
+Both sticky rules also depend on `Page.svelte`'s `.content` having **no
+`overflow-x`**: setting
 it forces `overflow-y` to compute to `auto`, which makes `.content` a
 scrollport, and a sticky header inside a box that never scrolls vertically
 rides off with the page. Measured in Chromium at 1200×700 scrolling 800px: with
@@ -405,7 +421,7 @@ in both directions.
 carrying name and live count and nothing else — `Page.svelte` applies every
 preset and runs `applyFilters` to get the counts, which is three passes over a
 dataset already in memory. `Preset.describe` stays on the type and reaches the
-reader as the card's tooltip and through `PresetChips`.
+reader as the card's tooltip.
 
 The band shows while the view is a **clean state**: equal to
 `defaultView(strike)`, or equal to `applyPreset(story, …, strike)` for some
@@ -416,12 +432,45 @@ expanded. Selection is derived the same way, so editing a bound drops the
 highlight because the view genuinely is not that story any more; a stored
 `preset` field would keep claiming Easy.
 
-The band cannot hold the controls that reset it, because it is gone by the time
-they are needed. **`StrikeToggle` and Clear live in the toolbar**, as peers of
-the story chips and present in both states. Clear returns to
-`defaultView(strike)` — who you are survives, what you searched for does not.
-The sidebar's **Clear filters** is a different, smaller thing and says so: it
-empties the filters and leaves sort and columns alone.
+### The toolbar
+
+`Toolbar.svelte` is the permanent surface: two segmented radiogroups in one
+visual language — strike, a divider, then `All | Easy | Tempo | Race` with live
+counts — and an actions group (`Filters`, `Columns`) pushed right by
+`margin-left: auto`. The band cannot hold the controls that reset it, because
+it is gone by the time they are needed.
+
+**There is no `Clear` button.** `All` is the fourth peer of the stories and the
+same state a Clear produced, `defaultView(strike)`, named for what you get
+rather than what you destroy — and it dissolves the ambiguity between a toolbar
+"Clear" and the sidebar's "Clear filters". `All` leads the group so it reads as
+everything → narrow to a story. Who you are survives it; what you searched for
+does not. The sidebar's **Clear filters** is a different, smaller thing and
+keeps its name: it empties the filters and leaves sort and columns alone.
+
+Selection is passed in, not held: `'all'` while the view is this runner's
+baseline, a story id while it equals that story, and `null` once it is neither,
+so a hand-edited view marks nothing.
+
+`StrikeToggle` carries **no visible lede**. Two segmented groups side by side
+are one language, and the words live on the setup strip, where the question is
+asked once; the group keeps `aria-label="Measurements from"` so it is still
+named for a screen reader.
+
+The cascade has three tiers, and the rule is whether all three groups fit on
+one line rather than phone-versus-desktop:
+
+| width | layout |
+|---|---|
+| above 880px | one line, actions right-aligned |
+| 560–880px | actions ride up beside strike on line 1; pace takes line 2, shrink-wrapped |
+| 560px and below | as above, with pace stretched to fill the line and its pills `flex: 1` |
+
+Two details that were bugs first. The **divider is removed** the moment the
+groups stop sharing a line, or it wraps with the strike group and dangles after
+Forefoot. And `flex-basis: 100%` belongs on the **wrapper**, never on the
+segment: on the segment, the bordered pill container stretches the full width
+with its pills clustered at the left.
 
 Flipping strike **re-derives** the view rather than setting a field: from the
 default view to `defaultView(next)`, from a view equal to a story to that story

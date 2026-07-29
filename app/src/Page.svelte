@@ -5,11 +5,10 @@
   import EntryBand, { TABLE_ANCHOR_ID } from './components/EntryBand.svelte';
   import FilterSidebar from './components/FilterSidebar.svelte';
   import Header from './components/Header.svelte';
-  import PresetChips from './components/PresetChips.svelte';
   import Receipt from './components/Receipt.svelte';
   import ShoeTable from './components/ShoeTable.svelte';
   import ShoeTableMobile from './components/ShoeTableMobile.svelte';
-  import StrikeToggle from './components/StrikeToggle.svelte';
+  import Toolbar from './components/Toolbar.svelte';
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
   import { applyFilters } from './lib/filters';
@@ -33,6 +32,13 @@
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
+  /**
+   * Measured, never assumed: the header wraps to two lines below 800px and the toolbar to two
+   * below 880px, so the pinned `thead` and the sticky sidebar both sit under a box whose height
+   * is a function of the viewport. A hard-coded offset put the table's header row *behind* the
+   * chrome on every width where the chrome grew (docs/app.md §Columns and sorting).
+   */
+  let chromeHeight = $state(0);
 
   /**
    * Which table renders is a query the script asks, not a `@media` rule, because **only one may be
@@ -65,10 +71,13 @@
     PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, snapshot.strike)))?.id ?? null);
   // The band shows while the view is a clean state — this runner's baseline, or some story.
   const bandOpen = $derived(atDefault || selectedPreset !== null);
-  // Three preset applications over the fleet, and only when the band is on screen — $derived is
-  // pull-based, so a collapsed band computes nothing.
-  const presetCounts = $derived(new Map(PRESETS.map((p) =>
-    [p.id, applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, view.strike).filters, idx).visible.length])));
+  // `All` is a peer of the stories in the bar, so it needs a count in the same map. Three preset
+  // applications over a dataset already in memory.
+  const presetCounts = $derived(new Map<string, number>([
+    ['all', data.shoes.length],
+    ...PRESETS.map((p) => [p.id,
+      applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, view.strike).filters, idx).visible.length] as const),
+  ]));
 
   function setView(v: ViewState) {
     view = v;
@@ -95,8 +104,11 @@
     else if (selectedPreset) setView(applyPreset(selectedPreset, data.shoes, idx, next));
     else setView(swapStrike(snapshot, next));
   }
-  function onClear() {
-    setView(defaultView(snapshot.strike));
+  // `All` is the baseline rather than a fourth story, so it routes to the same view a Clear
+  // button used to produce (docs/app.md §Presets).
+  function onStory(id: string) {
+    if (id === 'all') setView(defaultView(snapshot.strike));
+    else onPreset(id);
   }
   function onShowMissing() {
     const next = structuredClone($state.snapshot(view)) as ViewState;
@@ -121,21 +133,21 @@
   }
 </script>
 
-<Header total={data.shoes.length} visible={visibleSorted.length} builtAt={data.builtAt} {theme}
-        onexport={onExport} ontheme={onTheme} />
-
-<div class="toolbar">
-  <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
-          onclick={() => (showFilters = !showFilters)}>Filters</button>
-  <!-- Peers of the story chips, and present in both states: a control that resets a hand-edited
-       view has to be reachable *from* one, and the band is gone by then (docs/app.md §Presets). -->
-  <StrikeToggle strike={view.strike} onchange={onStrike} />
-  <button type="button" class="clear" onclick={onClear}>Clear</button>
-  {#if !bandOpen}<PresetChips onapply={onPreset} />{/if}
-  <span class="spacer"></span>
-  <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
-                population={filtered.considered} {idx} generations={view.generations}
-                onchange={(cols) => setView({ ...($state.snapshot(view) as ViewState), columns: cols })} />
+<!-- Header and toolbar pin together, because every control that changes the view has to stay
+     reachable from anywhere in a 25,000px table; the receipt below reports rather than controls,
+     so it scrolls (docs/app.md §Columns and sorting). -->
+<div class="chrome" bind:clientHeight={chromeHeight}>
+  <Header total={data.shoes.length} visible={visibleSorted.length} builtAt={data.builtAt} {theme}
+          onexport={onExport} ontheme={onTheme} />
+  <Toolbar strike={view.strike} onstrike={onStrike} selected={atDefault ? 'all' : selectedPreset}
+           counts={presetCounts} onstory={onStory} {showFilters}
+           onfilters={() => (showFilters = !showFilters)}>
+    {#snippet columns()}
+      <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
+                    population={filtered.considered} {idx} generations={view.generations}
+                    onchange={(cols) => setView({ ...($state.snapshot(view) as ViewState), columns: cols })} />
+    {/snippet}
+  </Toolbar>
 </div>
 
 <!-- Outside .layout so it precedes the sidebar in the tab order. The band is the default path
@@ -145,10 +157,10 @@
 {/if}
 
 <div class="layout" class:show-filters={showFilters}>
-  <div class="sidebar" id="filter-sidebar">
+  <div class="sidebar" id="filter-sidebar" style:--chrome-h="{chromeHeight}px">
     <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>
-  <div class="content">
+  <div class="content" style:--thead-top="{chromeHeight}px">
     <Receipt shown={visibleSorted.length} total={filtered.considered.length}
              outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
@@ -168,12 +180,15 @@
 </div>
 
 <style>
-  .toolbar { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s5); }
-  .spacer { flex: 1; }
-  .layout { display: grid; grid-template-columns: 260px 1fr; align-items: start; }
+  .chrome { position: sticky; top: 0; z-index: 5; }
+  /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes an automatic minimum of min-content, and
+     the table's 14rem name column plus its nowrap headers inflate that past the viewport, so the
+     whole document scrolled sideways at desktop widths. */
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; }
   /* A sticky column taller than the viewport can never scroll to its own bottom, and ten range
-     filters easily outgrow it — give the sidebar its own scrollbar. */
-  .sidebar { position: sticky; top: 3.2rem; max-height: calc(100vh - 3.2rem); overflow-y: auto; }
+     filters easily outgrow it — give the sidebar its own scrollbar. The offset is the measured
+     chrome, not the header alone: the toolbar pins too, and is two lines tall below 880px. */
+  .sidebar { position: sticky; top: var(--chrome-h); max-height: calc(100vh - var(--chrome-h)); overflow-y: auto; }
   /* No `overflow-x` here, deliberately. It would make `.content` a scrollport — `overflow-x: auto`
      forces `overflow-y` to compute to `auto` — so the table's sticky `thead` would stick to a box
      that never scrolls vertically and ride off with the page. Horizontal overflow falls to the
@@ -181,14 +196,9 @@
      which the pinned header works at all (docs/app.md §Columns and sorting). */
   .content { padding: 0 var(--s4) var(--s6); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
-  .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
-  .clear { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text-dim); border-radius: var(--r-full); font-size: var(--t-sm); }
-  .clear:hover { color: var(--text); border-color: var(--accent); }
   @media (max-width: 800px) {
-    .toolbar { flex-wrap: wrap; padding: var(--s2) var(--s3); }
-    .layout { grid-template-columns: 1fr; }
+    .layout { grid-template-columns: minmax(0, 1fr); }
     .sidebar { display: none; position: static; }
     .layout.show-filters .sidebar { display: block; }
-    .filters-toggle { display: inline-block; }
   }
 </style>

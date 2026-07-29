@@ -59,7 +59,9 @@
         <th class:fig={isFigure(col)}
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
-            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
+            <!-- A non-breaking space before the arrow: the name may now wrap, and an arrow alone
+                 on the second line reads as a bullet rather than as a sort direction. -->
+            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
             <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
                  second line would make the header rows different heights. -->
             <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
@@ -96,11 +98,16 @@
   /* Separate rather than collapsed: a collapsed border belongs to the table, not the cell, so it
      does not travel with a sticky header and vanishes the moment the head detaches. */
   table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: var(--t-md); }
-  th { text-align: left; border-bottom: 2px solid var(--border); padding: var(--s2); white-space: nowrap;
+  /* Header names wrap rather than holding their line: `nowrap` made every column's minimum its
+     longest header, which summed to 950px and pushed the whole document 26px sideways at 1200px.
+     Wrapping only bites once the width is genuinely short, so a wide viewport looks unchanged
+     (docs/app.md §Columns and sorting). */
+  th { text-align: left; border-bottom: 2px solid var(--border); padding: var(--s2);
        background: var(--surface); }
-  /* The offset is the pinned chrome above, and the fallback is the header height rather than 0 —
-     `Header` is itself sticky at top 0, so a zero fallback pins this row underneath it. */
-  thead th { position: sticky; top: var(--thead-top, 3.2rem); z-index: 2; box-shadow: var(--shadow-sticky); }
+  /* The offset is the height `Page.svelte` measured off the pinned chrome, with no fallback: the
+     chrome is 44px at desktop widths and 103px on a phone, so any constant here hides this row
+     behind it at every width but one (docs/app.md §Columns and sorting). */
+  thead th { position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky); }
   th button { display: flex; flex-direction: column; gap: 1px; background: none; border: none; color: var(--text);
               font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-align: inherit; }
   .h-units { font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1em; }
