@@ -1,5 +1,14 @@
+<script lang="ts" module>
+  /**
+   * Long enough that a drag or a typed word is one write, short enough that a runner who copies
+   * the address bar straight after a click gets what is on screen
+   * (docs/app.md §View and URL ownership).
+   */
+  export const VIEW_WRITE_MS = 200;
+</script>
+
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { slide } from 'svelte/transition';
   import type { ShoesFile } from '../../shared/types.js';
   import ColumnPicker from './components/ColumnPicker.svelte';
@@ -13,6 +22,7 @@
   import { TABLE_ANCHOR_ID } from './lib/anchor';
   import { exportCsv } from './lib/csv-export';
   import { indexTests } from './lib/dataset';
+  import { debounce } from './lib/debounce';
   import { applyFilters } from './lib/filters';
   import type { Side } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
@@ -91,16 +101,34 @@
       applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, view.strike).filters, idx).visible.length] as const),
   ]));
 
-  function setView(v: ViewState) {
-    view = v;
-    const qs = serializeView(v);
+  /**
+   * Still the one write path, now asynchronous. A drag fires about sixty view updates a second, so
+   * writing on each would make a two-second gesture 120 `replaceState` calls — past Safari's
+   * throttle inside a single drag — plus 120 synchronous storage writes. The state assignment in
+   * `setView` stays immediate, so the table filters live (docs/app.md §View and URL ownership).
+   */
+  const writeView = debounce((qs: string) => {
     history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
     writeStoredView(qs);
+  }, VIEW_WRITE_MS);
+  // A page being torn down cannot wait out a timer, and `pagehide` is the last event a bfcache
+  // navigation reliably delivers.
+  const flushView = () => writeView.flush();
+  window.addEventListener('pagehide', flushView);
+  onDestroy(() => {
+    window.removeEventListener('pagehide', flushView);
+    flushView();
+  });
+
+  function setView(v: ViewState) {
+    view = v;
+    writeView(serializeView(v));
   }
   // A view restored from storage has to reach the URL, or a returning visitor sees a filtered
   // table behind a bare URL and copying the link shares the default view instead. Routed through
-  // the one existing write path rather than adding a second URL write site.
-  if (initial.restored) setView(initial.view);
+  // the one existing write path rather than adding a second URL write site, then flushed: this is
+  // a one-off at init, not part of a burst, and a bare URL for 200ms is a link worth copying.
+  if (initial.restored) { setView(initial.view); flushView(); }
 
   function onPreset(id: string) {
     setView(applyPreset(id, data.shoes, idx, view.strike));

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Page from './Page.svelte';
+import Page, { VIEW_WRITE_MS } from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { VIEW_STORAGE_KEY } from './lib/persist';
 import { PRESETS } from './lib/presets';
@@ -37,7 +37,16 @@ function stubObjectUrls(stubs: Partial<typeof URL>): () => void {
 
 let restoreUrls: (() => void) | null = null;
 
+/**
+ * The URL and storage write is trailing-debounced, so every assertion about `location.search` or
+ * `localStorage` here is 200ms late (docs/app.md §View and URL ownership). Only the two timer
+ * functions are faked: the transition stubs in `test-setup.ts` finish on a microtask and jsdom's
+ * `FileReader` schedules its own work, both of which a blanket `useFakeTimers()` would freeze.
+ */
+const settle = () => vi.advanceTimersByTime(VIEW_WRITE_MS);
+
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   history.replaceState(null, '', '/');
   localStorage.clear();
   delete document.documentElement.dataset.theme;
@@ -50,6 +59,9 @@ afterEach(() => {
   restoreUrls = null;
   delete (Element.prototype as Partial<Element>).scrollIntoView;
   vi.restoreAllMocks();
+  // `restoreAllMocks` does not reset timers, and the export case's deferred revoke stalls forever
+  // under a fake clock that no later test advances.
+  vi.useRealTimers();
 });
 
 /** jsdom's synthetic click does not move focus the way a real one does, and the dialog hands focus
@@ -82,14 +94,17 @@ describe('Page', () => {
     // the band's card, not the toolbar pill: one is a button, the other a radio
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument(); // cushy and trainer pass on the fixture fleet
+    settle();
     expect(location.search).toContain('plate=none%2Cplated-other');
     expect(location.search).toContain('r.heel-stack=35%7E');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    settle();
     expect(location.search).toContain('plate=carbon');
     await fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    settle();
     expect(location.search).toBe('');
   });
   it('round-trips a multi-value plate filter from URL to filtered rows', () => {
@@ -105,12 +120,14 @@ describe('Page', () => {
     render(Page, { props: { data } });
     const th = screen.getByRole('columnheader', { name: /Heel stack/ });
     await fireEvent.click(th.querySelector('button')!);
+    settle();
     expect(location.search).toContain('sort=-heel-stack');
   });
   it('keeps an added row with no bound, and carries it in the URL', async () => {
     render(Page, { props: { data: dataPlus } });
     await addFilter('Stiffness');
     // which rows are shown is its own state now, so a shared link shows the same controls
+    settle();
     expect(location.search).toContain('rows=stiffness');
     // the fieldset's aria-label names the group, so this is the slider row rather than the column-picker entry
     expect(screen.getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
@@ -123,6 +140,7 @@ describe('Page', () => {
     expect(screen.getByTestId('receipt')).toHaveTextContent('1 shoe has no data for the active filters');
 
     await fireEvent.click(screen.getByRole('button', { name: /show them anyway/i }));
+    settle();
     expect(location.search).toContain('missing=1');
     expect(screen.getByText(/3 of 5 shoes/)).toBeInTheDocument();
     expect(screen.getByTestId('receipt')).toHaveTextContent(/no data for the active filters are included/);
@@ -147,7 +165,7 @@ describe('Page', () => {
     expect(clicked[0]?.href).toBe('blob:mock');
     // the revoke is deferred a tick so the browser can take its own reference to the blob first
     expect(revoke).not.toHaveBeenCalled();
-    await new Promise((r) => setTimeout(r, 0));
+    vi.advanceTimersByTime(0);
     expect(revoke).toHaveBeenCalledWith('blob:mock');
     const text = await readBlob(blobs[0]!);
     expect(text).toMatch(/^slug,name,brand,/);
@@ -243,6 +261,7 @@ describe('Page story selection', () => {
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
     await fireEvent.click(screen.getByRole('radio', { name: /All/ }));
 
+    settle();
     expect(location.search).toBe('?strike=forefoot');    // strike survives; everything else goes
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
     expect(markedStory()).toEqual(['All']);
@@ -268,20 +287,24 @@ describe('Page strike toggle', () => {
     expect(markedStory()).toEqual(['All']);     // still this runner's own default view
     expect(columnHeaders()).toContain('Forefoot stack');
     expect(columnHeaders()).not.toContain('Heel stack');
+    settle();
     expect(location.search).toContain('strike=forefoot');
     expect(location.search).not.toContain('cols=');
   });
   it('re-derives a story rather than only setting the field, and flips back to the same view', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    settle();
     const before = location.search;
 
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
     expect(markedStory()).toEqual(['Easy']);
+    settle();
     expect(location.search).toContain('r.forefoot-stack=');
     expect(location.search).not.toContain('r.heel-stack=');
 
     await fireEvent.click(screen.getByRole('radio', { name: 'Heel' }));
+    settle();
     expect(location.search).toBe(before);
   });
   it('swaps a hand-edited view\'s columns and sort, and leaves its bounds alone', async () => {
@@ -291,6 +314,7 @@ describe('Page strike toggle', () => {
 
     // a map onto the new side, not an exchange: both halves were shown, one column comes out
     expect(columnHeaders()).toEqual(['Shoe', 'Score', 'Forefoot stack\u00a0▼']);
+    settle();
     expect(location.search).toContain('sort=-forefoot-stack');
     expect(location.search).toContain('r.heel-stack=36%7E');   // the number was never the runner's to move
   });
@@ -318,12 +342,15 @@ describe('Page persistence', () => {
     localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon');
     render(Page, { props: { data } });
     expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    // No `settle()`, deliberately: the restore is a one-off at init rather than part of a burst,
+    // so it flushes rather than waiting out the debounce (docs/app.md §View and URL ownership).
     expect(location.search).toContain('plate=carbon');
     expect(strip()).not.toBeInTheDocument();
   });
   it('stores the view on every change', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    settle();
     expect(localStorage.getItem(VIEW_STORAGE_KEY)).toContain('plate=carbon');
   });
   it('opens at defaults when the stored value is under another schema version', () => {
@@ -332,6 +359,27 @@ describe('Page persistence', () => {
     expect(screen.getByText(/5 of 5 shoes/)).toBeInTheDocument();
     expect(location.search).toBe('');
     expect(strip()).toBeInTheDocument();
+  });
+  it('does not write the URL once per keystroke', async () => {
+    render(Page, { props: { data } });
+    const spy = vi.spyOn(history, 'replaceState');
+    const search = screen.getByLabelText('Search');
+    for (const q of ['n', 'no', 'nov', 'nova', 'novab', 'novabl', 'novabla', 'novablas', 'novablast']) {
+      await fireEvent.input(search, { target: { value: q } });
+    }
+    // Nine keystrokes, and today's write path would have made nine calls.
+    expect(spy).not.toHaveBeenCalled();
+    settle();
+    expect(spy).toHaveBeenCalledOnce();
+    expect(location.search).toContain('q=novablast');
+  });
+  it('flushes the pending write on pagehide', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    const spy = vi.spyOn(history, 'replaceState');
+    window.dispatchEvent(new Event('pagehide'));
+    expect(spy).toHaveBeenCalledOnce();
+    expect(location.search).toContain('plate=carbon');
   });
   it('opens normally when storage is blocked in both directions', async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });

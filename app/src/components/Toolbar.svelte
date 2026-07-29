@@ -59,7 +59,9 @@
   /* Above 800px the sidebar is always on screen, so the drawer toggle has nothing to toggle. */
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
                     background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
-  @media (max-width: 880px) {
+  /* 879.98px, not 880px: the tier boundary is "880 and up is one line", and `max-width: 880px`
+     matches *at* 880 and splits the toolbar on the width that is supposed to be the wide one. */
+  @media (max-width: 879.98px) {
     /* The separator has nothing to separate once the groups stop sharing a line, and would
        otherwise dangle after Forefoot at the end of line one. */
     .sep { display: none; }

@@ -13,6 +13,16 @@ components. Dataset shape and field semantics are docs/scraping.md.
 init, inside `untrack`; every change goes through `setView`, which sets the
 state, `history.replaceState`s the serialised form, and stores it.
 
+The state assignment is immediate — the table filters live, which is the whole
+point of filtering — but the URL and storage write is **trailing-debounced at
+200ms** (`lib/debounce.ts`), because a dragged histogram handle emits about
+sixty view updates a second: a two-second gesture would otherwise make 120
+`replaceState` calls, past Safari's ~100-per-30-seconds throttle inside a single
+drag, plus 120 synchronous storage writes. The search box had the same latent
+problem on every keystroke. It is still **one** write path, now asynchronous,
+and it flushes on `pagehide` so a page being torn down never loses the pending
+write.
+
 `ViewState` also carries the runner's `strike`, and **the baseline takes it**:
 `defaultView(strike)` and `defaultColumns(strike)` require one rather than
 defaulting to heel, so no call site can reinstate the old silent assumption by
@@ -28,7 +38,10 @@ string wins outright and storage is only read when there is none. A view
 restored from storage is passed straight back through `setView` once, which is
 what puts it in the URL — otherwise a returning visitor would see a filtered
 table behind a bare URL and copying the link would share the default view.
-That reuses the single write path rather than adding a second write site.
+That reuses the single write path rather than adding a second write site, and
+**that one write flushes immediately** rather than waiting out the debounce: it
+is a one-off at init, not part of a burst, and the 200ms in between is exactly
+the window in which a returning visitor copies the address bar.
 
 The view is never re-derived from the URL. Not a shortcut — a correctness
 requirement: state that does not serialise would be silently dropped on the
