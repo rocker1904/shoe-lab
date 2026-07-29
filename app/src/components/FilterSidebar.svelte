@@ -214,8 +214,9 @@
 
   {#each shown as e (keysOf(e)[0])}
     <section class="metric">
-      <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)} strike={view.strike}
-                 coverage={(k) => coverageOf(population, k, idx)} />
+      <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)}
+                 coverage={(k) => coverageOf(population, k, idx)}
+                 bounded={(k) => k in view.filters.ranges} />
       {#each rowKeysOf(e) as key (key)}
         <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} values={valuesFor(key)}
                      bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}

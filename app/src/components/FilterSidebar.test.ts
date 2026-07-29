@@ -416,15 +416,17 @@ describe('FilterSidebar order', () => {
     expect(orderOf(container).groups.filter((n) => n?.startsWith('Stack')))
       .toEqual(['Stack — Forefoot', 'Stack — Heel']);
   });
-  it('marks the half the strike puts in use, in text', () => {
-    const heel = render(FilterSidebar, { props: { data, view: defaultView('heel'), onchange: vi.fn(), population: FLEET } });
-    // Matched by suffix: a row keeps its units, so the marker is appended rather than swapped in
-    // — "Heel (mm) · in use", not "Heel · in use".
-    expect(within(heel.container).getAllByText(/^Heel\b.*· in use$/).length).toBe(2);   // stack and energy return
-    expect(within(heel.container).queryByText(/^Forefoot\b.*· in use$/)).not.toBeInTheDocument();
+  // Emphasis replaced the in-use marker: it reports what is filtering, which is a fact about the
+  // view, rather than which half a preset selected (docs/app.md §Coverage).
+  it('bolds only the half that carries a bound, and neither when none does', () => {
+    const bare = render(FilterSidebar, { props: { data, view: defaultView('heel'), onchange: vi.fn(), population: FLEET } });
+    expect(within(bare.container).queryByText(/· in use/)).not.toBeInTheDocument();
+    expect(bare.container.querySelectorAll('legend.on')).toHaveLength(0);
 
-    const fore = render(FilterSidebar, { props: { data, view: defaultView('forefoot'), onchange: vi.fn(), population: FLEET } });
-    expect(within(fore.container).getAllByText(/^Forefoot\b.*· in use$/).length).toBe(2);
-    expect(within(fore.container).queryByText(/^Heel\b.*· in use$/)).not.toBeInTheDocument();
+    const view = defaultView('heel');
+    view.filters.ranges['heel-stack'] = { min: 30 };
+    const bound = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    const bold = [...bound.container.querySelectorAll('legend.on')].map((n) => n.textContent?.trim());
+    expect(bold).toEqual(['Heel']);
   });
 });

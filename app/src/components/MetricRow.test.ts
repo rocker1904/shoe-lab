@@ -1,8 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import MetricRow from './MetricRow.svelte';
 import type { Coverage } from '../lib/coverage';
-import { metricEntries, type Side } from '../lib/lineage';
+import { metricEntries } from '../lib/lineage';
 import { labTest } from '../lib/test-fixtures';
 
 const cov = (fraction: number): Coverage => ({ n: Math.round(fraction * 100), total: 100, fraction });
@@ -26,7 +26,7 @@ const colocated = metricEntries([
 ])[0]!;
 
 function setup(metric: typeof single, over: {
-  chosen?: string; coverage?: (k: string) => Coverage; strike?: Side;
+  chosen?: string; coverage?: (k: string) => Coverage; bounded?: (k: string) => boolean;
 } = {}) {
   const onchoose = vi.fn();
   render(MetricRow, {
@@ -34,7 +34,7 @@ function setup(metric: typeof single, over: {
       metric,
       coverage: over.coverage ?? flat(0.8),
       chosen: over.chosen ?? 'heel-stack',
-      strike: over.strike ?? 'heel',
+      bounded: over.bounded ?? (() => false),
       onchoose,
     },
   });
@@ -98,8 +98,8 @@ describe('MetricRow pair', () => {
       chosen: 'midsole-softness-22',
       coverage: (k) => cov(k === 'midsole-softness-22' ? 0.51 : 0.83),
     });
-    expect(screen.getByText('51%')).toBeInTheDocument();
-    expect(screen.getByText('83%')).toBeInTheDocument();
+    expect(screen.getByText('51 / 100 measured')).toBeInTheDocument();
+    expect(screen.getByText('83 / 100 measured')).toBeInTheDocument();
   });
 });
 
@@ -114,19 +114,68 @@ describe('MetricRow warnings', () => {
 });
 
 describe('MetricRow colocated', () => {
-  // Coverage rows, not controls: every part renders always, so a button here could only ever write
-  // an empty range key — invisible in the sidebar, and enough to collapse the entry band.
-  it('renders one heading and both halves as coverage rows, forefoot first', () => {
-    setup(colocated, { chosen: 'energy-return-heel', strike: 'heel' });
+  // The halves are named once, by each RangeFilter's own legend. Naming them here too was the
+  // duplication that made a side pair look like a control it is not (docs/app.md §Coverage).
+  it('renders the heading alone — the halves are named by their own range rows', () => {
+    setup(colocated, { chosen: 'energy-return-heel' });
     expect(screen.getAllByRole('heading')).toHaveLength(1);
     expect(screen.getByRole('heading')).toHaveAccessibleName(/Energy return/);
     expect(screen.queryAllByRole('button')).toHaveLength(0);
-    expect(screen.getByText('Forefoot')).toBeInTheDocument();
-    expect(screen.getByText('Heel · in use')).toBeInTheDocument();
+    expect(screen.queryByText('Forefoot')).toBeNull();
+    expect(screen.queryByText('Heel')).toBeNull();
   });
-  it('moves the in-use marker with the strike, without hiding the other half', () => {
-    setup(colocated, { chosen: 'energy-return-heel', strike: 'forefoot' });
-    expect(screen.getByText('Forefoot · in use')).toBeInTheDocument();
-    expect(screen.getByText('Heel')).toBeInTheDocument();
+});
+
+
+describe('MetricRow coverage is one vocabulary', () => {
+  it('never renders a percentage or a bar in any shape', () => {
+    for (const metric of [single, pair, colocated]) {
+      const { container } = render(MetricRow, {
+        props: { metric, coverage: flat(0.8), chosen: 'heel-stack', bounded: () => false, onchoose: vi.fn() },
+      });
+      expect(container.textContent).not.toMatch(/\d+%/);
+      expect(container.querySelector('.bar')).toBeNull();
+      expect(container.querySelector('.rule')).toBeNull();
+      cleanup();
+    }
+  });
+
+  // Both halves of a declared side pair are measured in the same run, so a figure per half is
+  // duplication (docs/app.md §Coverage).
+  it('gives a side pair one coverage figure, not one per half', () => {
+    setup(colocated, { coverage: flat(0.84) });
+    expect(screen.getAllByText('84 / 100 measured')).toHaveLength(1);
+  });
+
+  it('says nothing at all when a side pair is fully covered', () => {
+    setup(colocated, { coverage: flat(1) });
+    expect(screen.queryByText(/measured/)).toBeNull();
+  });
+});
+
+describe('MetricRow marks what is filtering', () => {
+  it('does not mark a half as in use — that was the strike, not the filter', () => {
+    setup(colocated);
+    expect(screen.queryByText(/in use/)).toBeNull();
+  });
+
+  it('bolds the heading when any of its rows carries a bound', () => {
+    setup(single, { bounded: (k) => k === 'heel-stack' });
+    expect(screen.getByRole('heading', { level: 4 })).toHaveClass('on');
+  });
+
+  it('leaves the heading unbolded when nothing is bounded', () => {
+    setup(single, { bounded: () => false });
+    expect(screen.getByRole('heading', { level: 4 })).not.toHaveClass('on');
+  });
+
+  it('bolds a side pair heading when either half is bounded', () => {
+    setup(colocated, { bounded: (k) => k === 'energy-return-heel' });
+    expect(screen.getByRole('heading', { level: 4 })).toHaveClass('on');
+  });
+
+  it('bolds the chosen generation when its row is bounded', () => {
+    setup(pair, { chosen: 'midsole-softness-22', bounded: (k) => k === 'midsole-softness-22' });
+    expect(screen.getByRole('radio', { checked: true })).toHaveClass('filtering');
   });
 });

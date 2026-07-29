@@ -114,7 +114,7 @@
 </script>
 
 <fieldset class="range" aria-label={name}>
-  {#if label}<legend>{label}{units ? ` (${units})` : ''}</legend>{/if}
+  {#if label}<legend class:on={bounded}>{label}{units ? ` (${units})` : ''}</legend>{/if}
   {#if axis && plot}
     <!-- No `tabindex`: a plot that could take focus would be a 50th tab stop carrying nothing, and
          the grips are revealed from the row so tabbing into either number field shows them
@@ -179,6 +179,7 @@
 
 <style>
   .range { border: none; padding: 0; margin: 0 0 var(--s4); }
+  legend.on { color: var(--text); font-weight: 700; }
   legend { font-size: var(--t-sm); color: var(--text-dim); padding: 0; margin-bottom: var(--s1); }
   /* `touch-action: none`, or a drag on a phone scrolls the drawer instead of moving the bound. */
   .plot { position: relative; height: 24px; margin-bottom: var(--s1); touch-action: none; cursor: ew-resize; }

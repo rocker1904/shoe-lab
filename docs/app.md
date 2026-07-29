@@ -758,11 +758,46 @@ view fall silent. "84%" of an unstated pool is the complaint; both numbers on
 screen state the denominator instead of assuming it. Filter to last year and it
 reads `120 / 180`, where both numbers visibly moved.
 
-This applies to the **single-metric shape only**. A superseded pair renders a
-figure per generation inside its radiogroup and a colocated metric one per
-part — two or more numbers, with nowhere to go on one heading line — so those
-keep their per-row percentages, as do the coverage bars in `ColumnPicker` and
-`AddFilterDialog`.
+**One vocabulary, and the shape decides only how many figures there are.** A
+single metric and a **side pair** each carry one, on the heading line; a
+**superseded pair** carries one per generation, on its radio rows, with the word
+repeated rather than hoisted to a column label so a row read on its own still
+says what its numbers mean.
+
+A side pair takes one figure because **both halves are read in the same test
+run** — stack 450/450, energy return 378/378, shock absorption 381/381, midsole
+width 450/450 — so a figure per half is duplication. Generations take two
+because they genuinely differ, often hugely: breathability 430 against 41,
+torsional rigidity 408 against 134. That difference is the whole basis of the
+choice, so it has to be on screen. `coverage.test.ts` asserts the side-pair
+equality against the dataset rather than trusting it
+(docs/operations.md §Contract-drift runbook).
+
+There are **no coverage bars anywhere in the sidebar**. With only ever two rows
+to compare, a bar earned less than it cost, and it competed with the emphasis
+below. `ColumnPicker` and `AddFilterDialog` keep their percentage bars: those
+choose among forty-odd metrics against a constant denominator, where a
+percentage is a comparison device rather than a claim about a pool.
+
+### Emphasis marks what is filtering
+
+Bold reports a fact about the view: a metric heading is bold when any of its
+rows carries a bound, and so is the specific half or generation carrying it.
+Scanning the sidebar then answers "what is constraining this shortlist?" without
+reading a number.
+
+It replaced a `· in use` marker that named the half the strike had selected.
+That was a preset's business rather than a property of the filter, and it made a
+side pair look like a control it is not — the two halves were named twice, once
+by the marker and again by each range row's own legend. **The halves are named
+once now, by their legends.**
+
+Both halves of a side pair stay independently filterable, and that is deliberate
+rather than incidental: a link carrying `r.heel-stack` and
+`r.shock-absorption-forefoot` together is a legitimate thing to want. Do **not**
+give a side pair the superseded pair's switch — generations are mutually
+exclusive by nature, sides are two measurements of two parts of a shoe
+(docs/app.md §URL encoding).
 
 ### There is no sparse warning
 
