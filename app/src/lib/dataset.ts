@@ -5,6 +5,14 @@ export const NUMERIC_TEST_TYPES = new Set(['float', 'score', 'percent', 'rating'
 /** Numeric keys that live on the shoe itself rather than in the test catalogue. */
 export const FIELD_RANGE_KEYS = new Set(['score', 'msrpGbp']);
 
+/**
+ * Every shoe in the dataset is one RunRepeat also reviewed, so the target always exists there;
+ * shoe-lab has no per-shoe page of its own to link to (docs/app.md §Model lineage). Declared once
+ * because the detail panel and the CSV export both emit it, and two spellings of one URL is
+ * exactly the drift nothing would catch.
+ */
+export const reviewUrl = (slug: string): string => `https://runrepeat.com/uk/${slug}`;
+
 export interface TestIndex { bySlug: Map<string, LabTest>; byId: Map<string, LabTest> }
 
 export function indexTests(tests: LabTest[]): TestIndex {

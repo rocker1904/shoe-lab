@@ -482,6 +482,15 @@ arrive with twelve significant figures (docs/scraping.md §Data quirks) — and
 trimming belongs to the view, not the record. The in-app CSV export therefore
 writes full precision: it is a data export, not a rendering.
 
+The export's columns are the visible ones, plus four that are always there:
+`slug`, `name`, `brand` and **`url`**. The link is emitted whatever the view
+holds, for the same reason the numbers are unrounded — a row that has left the
+app has no other way back to the page its readings came from. `reviewUrl` in
+`lib/dataset.ts` is the single spelling of that URL, shared with the detail
+panel. The export still carries no marker for an imprecise release date; that
+is the CSV date-precision item in BACKLOG.md, and both CSV edits were meant to
+land in one visit.
+
 ## Resolved price
 
 Lab test 52 and the `msrpGbp` field are the same GBP list price from two
@@ -752,3 +761,20 @@ runtime. That keeps the dataset swappable after the build — which is exactly
 how the e2e run substitutes its fixture into `dist/` — and gives a load
 failure somewhere to surface, as an error message with a Retry button rather
 than a blank page. Importing the JSON as a module would take both away.
+
+**The loading state waits before it appears.** Nothing renders for the first
+`SKELETON_AFTER_MS` (300ms); past that, a skeleton shaped like the chrome and
+the rows that are coming, so the layout does not jump when they arrive. The
+2MB asset is same-origin and most loads finish well inside the delay, and a
+placeholder that flashes for one of those is worse than the text it replaced.
+
+### Sharing is copying the address bar
+`Copy link` in the header writes `location.href` to the clipboard, which is the
+whole feature: the URL already *is* the view (§View and URL ownership). The
+confirmation is a separate `role="status"` region rather than a relabelled
+button — swapping the label would change the control's accessible name to
+something that cannot then be pressed — and both an absent clipboard (outside a
+secure context) and a rejected write leave it unsaid, because neither may claim
+a success that did not happen. The page carries a `<title>` and an SVG favicon
+so a shared link previews as something; Open Graph tags need an image and a
+decision, and are their own BACKLOG.md item.

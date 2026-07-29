@@ -7,6 +7,26 @@
   } = $props();
   const updated = $derived(builtAt.slice(0, 10));
   const ICON: Record<Theme, string> = { auto: '◐', light: '☀', dark: '☾' };
+
+  let copied = $state(false);
+  /**
+   * The URL *is* the view (docs/app.md §View and URL ownership), so copying the address bar is the
+   * whole share feature — a stated project goal that had no affordance at all. The confirmation is
+   * its own live region rather than a relabelled button: swapping the label would change the
+   * control's accessible name to something you cannot then press.
+   */
+  async function copyLink() {
+    // Absent outside a secure context, and it can reject on a denied permission. Neither is worth
+    // an error state — but neither may claim success either, so both leave the region unsaid.
+    if (!navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(location.href);
+      copied = true;
+      setTimeout(() => (copied = false), 2000);
+    } catch {
+      copied = false;
+    }
+  }
 </script>
 
 <header>
@@ -15,6 +35,8 @@
   <span class="spacer"></span>
   <span class="meta">updated {updated} · data from
     <a href="https://runrepeat.com/catalog/running-shoes" rel="noopener" target="_blank">RunRepeat</a></span>
+  <button type="button" onclick={copyLink}>Copy link</button>
+  {#if copied}<span class="copied" role="status">Copied</span>{/if}
   <button type="button" onclick={onexport}>Export CSV</button>
   <button type="button" onclick={ontheme} aria-label="Toggle theme (currently {theme})"
           title="Theme: {theme}">{ICON[theme]}</button>
@@ -29,6 +51,7 @@
   .count { color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
   .meta { font-size: var(--t-sm); color: var(--text-dim); }
+  .copied { font-size: var(--t-sm); color: var(--good); }
   .meta a { color: var(--accent); }
   button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
   button:hover { background: var(--accent-dim); }

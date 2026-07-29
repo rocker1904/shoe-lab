@@ -1,5 +1,5 @@
 import type { Shoe } from '../../../shared/types.js';
-import { numericValue, type TestIndex } from './dataset';
+import { numericValue, reviewUrl, type TestIndex } from './dataset';
 
 function esc(v: unknown): string {
   if (v === null || v === undefined) return '';
@@ -18,11 +18,17 @@ function cell(shoe: Shoe, col: string, idx: TestIndex): unknown {
   return test ? shoe.values[String(test.id)] : undefined;
 }
 
+/**
+ * `url` sits with the identity columns rather than among the chosen ones, and is emitted whatever
+ * the view holds: this is a data export, not a rendering (docs/app.md §Number display), and a row
+ * that has left the app has no other way back to the page its numbers came from.
+ */
 export function exportCsv(shoes: Shoe[], columns: string[], idx: TestIndex): string {
-  const header = ['slug', 'name', 'brand', ...columns];
+  const header = ['slug', 'name', 'brand', 'url', ...columns];
   const lines = [header.map(esc).join(',')];
   for (const s of shoes) {
-    lines.push([s.slug, s.name, s.brand, ...columns.map((c) => cell(s, c, idx))].map(esc).join(','));
+    lines.push([s.slug, s.name, s.brand, reviewUrl(s.slug),
+                ...columns.map((c) => cell(s, c, idx))].map(esc).join(','));
   }
   return lines.join('\n') + '\n';
 }

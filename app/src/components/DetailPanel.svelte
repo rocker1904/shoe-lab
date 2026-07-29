@@ -1,12 +1,10 @@
 <script lang="ts">
   import type { Shoe } from '../../../shared/types.js';
+  import { reviewUrl } from '../lib/dataset';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
   let { shoe }: { shoe: Shoe } = $props();
 
-  // Every reference names a shoe RunRepeat also reviewed, so the link target always exists
-  // there; shoe-lab has no per-shoe page of its own to link to (docs/app.md §Model lineage).
-  const reviewUrl = (slug: string) => `https://runrepeat.com/uk/${slug}`;
   const lineage = $derived([
     { label: 'Replaced', ref: shoe.previousVersion },
     { label: 'Superseded by', ref: shoe.nextVersion },
