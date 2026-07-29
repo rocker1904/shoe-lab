@@ -23,9 +23,11 @@ const open = (trigger: HTMLElement) => {
   return fireEvent.click(trigger);
 };
 
-/** Scoped to its own row: side pairs put several range groups on screen, so an index would drift. */
+/** Scoped to its own row: side pairs put several range groups on screen, so an index would drift.
+ *  Matched by suffix, because each field is now named for the metric it bounds. */
 const boundOf = (name: RegExp, part: 'min' | 'max' = 'min') =>
-  within(screen.getAllByRole('group', { name }).at(-1)!).getByLabelText(part);
+  within(screen.getAllByRole('group', { name }).at(-1)!)
+    .getByLabelText(part === 'min' ? /minimum$/ : /maximum$/);
 
 describe('FilterSidebar', () => {
   it('renders curated range filters that exist in the dataset', () => {
@@ -149,6 +151,15 @@ describe('FilterSidebar text and toggle controls', () => {
     await fireEvent.input(date, { target: { value: '' } });
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView('heel').filters);
+  });
+
+  it('moves the discontinued choice with an arrow key, from a single tab stop', async () => {
+    const onchange = setup();
+    const radios = within(screen.getByRole('radiogroup', { name: 'Discontinued' })).getAllByRole('radio');
+    expect(radios.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+    radios[0]!.focus();
+    await fireEvent.keyDown(radios[0]!, { key: 'ArrowRight' });
+    expect(onchange.mock.lastCall![0].filters.discontinued).toBe('hide');
   });
 
   it('emits the discontinued choice, and undefined for Any', async () => {

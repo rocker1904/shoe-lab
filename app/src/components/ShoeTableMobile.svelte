@@ -83,7 +83,9 @@
     </thead>
     <tbody>
       {#each shoes as s (s.slug)}
-        <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)}
+        <!-- `aria-expanded` says the card controls something; `aria-controls` is the only thing
+             that says what, and the panel is a sibling row rather than a child of the control. -->
+        <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)} aria-controls="detail-{s.slug}"
             onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
           <td class="ident" colspan={span}>
             <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
@@ -102,7 +104,7 @@
           {/each}
         </tr>
         {#if expanded.has(s.slug)}
-          <tr class="expand"><td colspan={span}><DetailPanel shoe={s} /></td></tr>
+          <tr class="expand" id="detail-{s.slug}"><td colspan={span}><DetailPanel shoe={s} /></td></tr>
         {/if}
         <tr class="gap" aria-hidden="true"><td colspan={span}></td></tr>
       {/each}

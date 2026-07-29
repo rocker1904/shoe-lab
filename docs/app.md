@@ -263,6 +263,34 @@ handles are within 88px. Under `@media (hover: none)` the grips are permanently
 visible, because hover never fires there. A *set* bound is drawn either way — an
 edge is state, a grip is affordance, and they have different visibility rules.
 
+**Each number field is named for the metric it bounds** — `Weight (g) minimum`,
+not `min`. Ten range rows put twenty of these on screen, and a fieldset's
+accessible name is not announced with the field inside it, so the metric is the
+only thing that tells them apart.
+
+**Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
+one action, `lib/roving.ts`, applied to all four of them — strike, the story
+segment, discontinued, and the generation picker. The role promises exactly
+that, and each group made every radio its own stop and ignored the keys. The
+radios are buttons rather than native inputs — two rendered copies of a group
+must not join one document-wide radio group by sharing a `name` — so the
+browser does none of it for us, and moving focus must also *activate*, which
+`click()` is. Both axes move, because the generation picker is a column. The
+tab stop is whatever is checked, tracked through a `MutationObserver` on
+`aria-checked` so a selection made with the mouse, or re-derived from a link,
+carries it too; a group with nothing checked still admits focus at its first
+radio.
+
+**Below 800px the sidebar is a drawer, and a drawer traps focus.** It slides
+on a transform rather than toggling `display`, which cannot be animated;
+`visibility` is what keeps a closed drawer out of the tab order, switched
+immediately on the way in — the panel is handed focus the moment it opens, and
+a hidden element cannot take it — and 200ms late on the way out, so the slide
+is seen first. Escape closes it and returns focus to the control that opened
+it, found by its `aria-controls`. **A drawer left open across a resize past
+800px closes itself**: above that width it is simply part of the page, and its
+trap would hold the keyboard inside a panel that is no longer modal.
+
 ## Columns and sorting
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
@@ -335,7 +363,18 @@ true / runs-large scale as a mediocre mark.
 Figures are right-aligned with `tabular-nums`; `plate` and `releasedAt` hold
 words and dates and are not. Any number of rows expand at once — comparing two
 shoes means having both panels open — and the panel scrolls itself into view,
-under a `prefers-reduced-motion` guard.
+under a `prefers-reduced-motion` guard. An expandable row carries
+`aria-controls` as well as `aria-expanded`, in both renderings: the panel is a
+*sibling* row rather than a child of the control, so nothing else says what the
+row expands.
+
+**A skip link is the first element in the page.** It is 49 tab stops from the
+top to the first table row, and `SkipLink.svelte` moves focus to
+`TABLE_ANCHOR_ID` (`lib/anchor.ts`) itself rather than letting the `href`
+navigate: the query string is the view and nothing else may write to the
+address bar, so a `#shoe-table` left behind would ride along in every copied
+link. The anchor carries `tabindex="-1"`, because `.focus()` on a plain
+container is a silent no-op.
 
 **No brand line under the name.** 442 of 450 names already begin with their
 brand and the remaining 8 shorten it ("Topo", "Hylo") rather than drop it, so

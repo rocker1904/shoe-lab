@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Side } from '../lib/lineage';
+  import { roving } from '../lib/roving';
 
   let { strike, onchange }: { strike: Side; onchange: (s: Side) => void } = $props();
 
@@ -11,7 +12,7 @@
 
 <!-- No visible lede: the toolbar is two segmented groups in one language, and the setup strip is
      where the question gets asked in words (docs/app.md §Presets). -->
-<span class="strike" role="radiogroup" aria-label="Measurements from">
+<span class="strike" role="radiogroup" aria-label="Measurements from" use:roving>
   {#each SIDES as s (s.v)}
     <button type="button" role="radio" aria-checked={strike === s.v} class:on={strike === s.v}
             onclick={() => onchange(s.v)}>{s.label}</button>

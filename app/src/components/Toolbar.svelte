@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import type { Side } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
+  import { roving } from '../lib/roving';
   import StrikeToggle from './StrikeToggle.svelte';
 
   let { strike, onstrike, selected, counts, onstory, showFilters, onfilters, columns }: {
@@ -27,7 +28,7 @@
   <div class="strike-wrap"><StrikeToggle {strike} onchange={onstrike} /></div>
   <span class="sep" aria-hidden="true"></span>
   <div class="pace-wrap">
-    <span class="seg" role="radiogroup" aria-label="Built for">
+    <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
       {#each STORIES as s (s.id)}
         {@const n = counts.get(s.id)}
         <button type="button" role="radio" class="s" aria-checked={selected === s.id}

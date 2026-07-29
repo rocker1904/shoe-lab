@@ -117,8 +117,8 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
   await expect(row).toBeVisible();
   const box = await row.locator('.plot').boundingBox();
   expect(box, 'the plot never got a box, so nothing below would be measuring anything').not.toBeNull();
-  const max = row.getByLabel('max', { exact: true });
-  const min = row.getByLabel('min', { exact: true });
+  const max = row.getByLabel('Price (£) maximum', { exact: true });
+  const min = row.getByLabel('Price (£) minimum', { exact: true });
 
   // The max grip rests at the axis ceiling; dragged to the floor it lands on a price that exists.
   await page.mouse.move(box!.x + box!.width - 2, box!.y + box!.height / 2);
@@ -198,6 +198,45 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
     });
     expect(gap, `header row occluded at ${width}px`).toBeGreaterThanOrEqual(0);
   }
+});
+
+// jsdom moves focus for nothing: neither Tab order nor a drawer that is hidden by `visibility` can
+// be observed there, and both are the whole point of these two.
+test('puts the skip link first and makes each radiogroup one tab stop', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Skip to results' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#shoe-table')).toBeFocused();
+  // the view owns the query string, so the jump leaves no fragment behind to ride along in a link
+  expect(new URL(page.url()).hash).toBe('');
+
+  const heel = page.getByRole('radio', { name: 'Heel' });
+  await heel.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('radio', { name: 'Forefoot' })).toBeFocused();
+  await expect(page).toHaveURL(/strike=forefoot/);
+  await expect(heel).toHaveAttribute('tabindex', '-1');
+});
+
+test('traps focus in the filter drawer and hands it back on Escape', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: 'Filters' });
+  const drawer = page.getByTestId('filter-drawer');
+  // Closed, it is out of the tab order rather than merely translated away.
+  await expect(drawer).toBeHidden();
+
+  await toggle.click();
+  await expect(drawer).toBeVisible();
+  await expect(page.getByLabel('Search', { exact: true })).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+  await expect(toggle).toBeFocused();
 });
 
 test('renders a superseded pair once and keeps colocated halves independently sortable', async ({ page }) => {

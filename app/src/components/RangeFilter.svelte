@@ -151,10 +151,13 @@
     </div>
   {/if}
   <div class="bounds">
-    <input type="number" aria-label="min" placeholder={extent ? String(extent.min) : 'min'}
+    <!-- Named for the metric, not "min" and "max": ten of these rows sit in the sidebar at once and
+         a fieldset's label is not read with the field inside it, so twenty controls announced as
+         one of two words (docs/app.md §Filters). -->
+    <input type="number" aria-label="{name ?? ''} minimum" placeholder={extent ? String(extent.min) : 'min'}
            value={bound.min ?? ''} oninput={(e) => update('min', e.currentTarget.value)} />
     <span>–</span>
-    <input type="number" aria-label="max" placeholder={extent ? String(extent.max) : 'max'}
+    <input type="number" aria-label="{name ?? ''} maximum" placeholder={extent ? String(extent.max) : 'max'}
            value={bound.max ?? ''} oninput={(e) => update('max', e.currentTarget.value)} />
     <!-- An icon, with the row's name on the label: ten rows spelling out "Clear" is most of the
          sidebar's width, and two buttons both called "Clear" would be indistinguishable to anyone

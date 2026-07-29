@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FilterState } from '../lib/filters';
+  import { roving } from '../lib/roving';
 
   let { value, onchange }: {
     value: FilterState['discontinued']; onchange: (v: FilterState['discontinued']) => void;
@@ -15,7 +16,7 @@
   ] as const;
 </script>
 
-<div class="disc" role="radiogroup" aria-label="Discontinued">
+<div class="disc" role="radiogroup" aria-label="Discontinued" use:roving>
   {#each OPTIONS as o (o.label)}
     <button type="button" role="radio" aria-checked={value === o.v} class:on={value === o.v}
             onclick={() => onchange(o.v)}>{o.label}</button>

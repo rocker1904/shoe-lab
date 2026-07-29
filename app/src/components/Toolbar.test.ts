@@ -49,6 +49,32 @@ describe('Toolbar', () => {
     expect(screen.queryByText('I land on my')).toBeNull();
   });
 
+  // The role promises arrow-key selection and one tab stop; both groups here ignored it, and the
+  // roving action is what makes the promise true (docs/app.md §Filters).
+  it('is one tab stop per group, not one per radio', () => {
+    render(Toolbar, { props: { ...props, selected: 'tempo' } });
+    const stops = screen.getAllByRole('radio').filter((r) => r.tabIndex === 0);
+    expect(stops.map((r) => r.textContent?.trim().split(/\s/)[0])).toEqual(['Heel', 'Tempo']);
+  });
+
+  it('picks the next story with an arrow key', async () => {
+    const onstory = vi.fn();
+    render(Toolbar, { props: { ...props, selected: 'all', onstory } });
+    const all = screen.getByRole('radio', { name: /All/ });
+    all.focus();
+    await fireEvent.keyDown(all, { key: 'ArrowRight' });
+    expect(onstory).toHaveBeenCalledWith('easy');
+  });
+
+  it('picks the other strike with an arrow key', async () => {
+    const onstrike = vi.fn();
+    render(Toolbar, { props: { ...props, onstrike } });
+    const heel = screen.getByRole('radio', { name: 'Heel' });
+    heel.focus();
+    await fireEvent.keyDown(heel, { key: 'ArrowRight' });
+    expect(onstrike).toHaveBeenCalledWith('forefoot');
+  });
+
   it('carries the Filters toggle and its expanded state', async () => {
     const onfilters = vi.fn();
     render(Toolbar, { props: { ...props, onfilters } });

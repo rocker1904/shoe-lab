@@ -36,7 +36,7 @@ it('highlights every bar when the bound is open', () => {
 it('renders bounds without a histogram when the data cannot form one', () => {
   const { container, getByLabelText } = render(RangeFilter, { props: { ...props, values: [], bound: {} } });
   expect(container.querySelector('svg')).toBeNull();
-  expect(getByLabelText('min')).toHaveAttribute('placeholder', 'min');
+  expect(getByLabelText('minimum')).toHaveAttribute('placeholder', 'min');
 });
 
 it('trims the drawn axis and hatches what fell outside it', () => {
@@ -60,7 +60,7 @@ it('is not a tab stop, because the number fields are the keyboard path', () => {
 it('keeps a typed value that lies outside the axis, and clamps only where it is drawn', async () => {
   const onchange = vi.fn();
   const typed = render(RangeFilter, { props: { ...props, values: PRICES, bound: {}, onchange } });
-  await fireEvent.input(typed.getByLabelText('min'), { target: { value: '400' } });
+  await fireEvent.input(typed.getByLabelText('minimum'), { target: { value: '400' } });
   expect(onchange).toHaveBeenLastCalledWith(expect.objectContaining({ min: 400 }));
   cleanup();
 
@@ -117,6 +117,16 @@ it('empties both bounds in one action, and names the clear control after its row
   expect(clear.textContent?.trim()).toBe('✕');
   await fireEvent.click(clear);
   expect(onchange).toHaveBeenCalledExactlyOnceWith({});
+});
+
+// Ten of these rows on screen at once, and every one of them announced "min" and "max": the metric
+// is the only thing that tells them apart (docs/app.md §Filters).
+it('names each number field by the metric it bounds', () => {
+  const { getByLabelText } = render(RangeFilter, {
+    props: { ...props, name: 'Weight (g)', bound: {} },
+  });
+  expect(getByLabelText('Weight (g) minimum')).toBeInTheDocument();
+  expect(getByLabelText('Weight (g) maximum')).toBeInTheDocument();
 });
 
 it('renders a zero on a bounded row but nothing on an unbounded one', () => {

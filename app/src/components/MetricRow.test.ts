@@ -74,6 +74,15 @@ describe('MetricRow pair', () => {
     await fireEvent.click(screen.getAllByRole('radio')[1]!);
     expect(onchoose).toHaveBeenCalledWith('midsole-softness');
   });
+  // A column of two radios: Down is the natural key, and only one of them may be a tab stop.
+  it('switches generation from the keyboard, as one tab stop', async () => {
+    const onchoose = setup(pair, { chosen: 'midsole-softness-22' });
+    const radios = screen.getAllByRole('radio');
+    expect(radios.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+    radios[0]!.focus();
+    await fireEvent.keyDown(radios[0]!, { key: 'ArrowDown' });
+    expect(onchoose).toHaveBeenCalledWith('midsole-softness');
+  });
   it('gives the two generations different accessible names even when name and units match', () => {
     setup(yearless, { chosen: 'toebox-width-widest-part' });
     const [a, b] = screen.getAllByRole('radio');

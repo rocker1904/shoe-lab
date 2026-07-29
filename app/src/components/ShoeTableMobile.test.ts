@@ -56,6 +56,15 @@ describe('ShoeTableMobile', () => {
     expect(cards[0]!.getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('points the expanded card at the panel it opened', async () => {
+    setup();
+    const card = screen.getAllByRole('row').find((r) => r.classList.contains('shoe'))!;
+    const panelId = card.getAttribute('aria-controls');
+    expect(panelId).toBeTruthy();
+    await fireEvent.click(card);
+    expect(document.getElementById(panelId!)).toBeInTheDocument();
+  });
+
   it('insets the percentile wash as a chip rather than filling the cell', () => {
     const { container } = setup().rendered;
     const chip = container.querySelector('tr.values .chip')!;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Coverage } from '../lib/coverage';
   import type { ResolvedMetric, Side } from '../lib/lineage';
+  import { roving } from '../lib/roving';
 
   const SIDE_LABEL: Record<Side, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
@@ -43,7 +44,7 @@
   </div>
 
   {#if metric.kind === 'pair'}
-    <div class="gens" role="radiogroup" aria-label={metric.label}>
+    <div class="gens" role="radiogroup" aria-label={metric.label} use:roving>
       {#each generations as g (g.key)}
         <button type="button" role="radio" aria-checked={chosen === g.key} aria-label="{metric.label}, {g.generation}"
                 class:on={chosen === g.key} onclick={() => onchoose(g.key)}>

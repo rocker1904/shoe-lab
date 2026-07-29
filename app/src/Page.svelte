@@ -8,7 +8,7 @@
 </script>
 
 <script lang="ts">
-  import { onDestroy, untrack } from 'svelte';
+  import { onDestroy, tick, untrack } from 'svelte';
   import { slide } from 'svelte/transition';
   import type { ShoesFile } from '../../shared/types.js';
   import ColumnPicker from './components/ColumnPicker.svelte';
@@ -18,6 +18,7 @@
   import SetupStrip from './components/SetupStrip.svelte';
   import ShoeTable from './components/ShoeTable.svelte';
   import ShoeTableMobile from './components/ShoeTableMobile.svelte';
+  import SkipLink from './components/SkipLink.svelte';
   import Toolbar from './components/Toolbar.svelte';
   import { TABLE_ANCHOR_ID } from './lib/anchor';
   import { exportCsv } from './lib/csv-export';
@@ -81,6 +82,52 @@
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   });
+
+  /**
+   * The sidebar is a drawer only below 800px; above it, it is simply part of the page. One left
+   * open across a resize would carry its focus trap into a layout where nothing is modal, so the
+   * width at which it stops being a drawer is the width that closes it.
+   */
+  $effect(() => {
+    const mq = window.matchMedia?.('(max-width: 800px)');
+    if (!mq) return;
+    const sync = () => { if (!mq.matches) showFilters = false; };
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
+
+  let drawerEl = $state<HTMLElement>();
+  /** Everything inside the drawer that can hold focus, in document order. */
+  const drawerStops = (): HTMLElement[] =>
+    [...(drawerEl?.querySelectorAll<HTMLElement>('input, button, select, a[href]') ?? [])]
+      .filter((el) => !el.hasAttribute('disabled'));
+
+  async function openFilters() {
+    showFilters = true;
+    // Awaited: until the class lands the drawer is still translated off-canvas and
+    // `visibility: hidden`, and a hidden element cannot take focus.
+    await tick();
+    drawerStops()[0]?.focus();
+  }
+  function closeFilters() {
+    showFilters = false;
+    // The control that owns the drawer declares itself with `aria-controls`, so it can be found by
+    // that contract rather than by threading a binding back up through the toolbar.
+    document.querySelector<HTMLElement>('[aria-controls="filter-sidebar"]')?.focus();
+  }
+  function onDrawerKey(e: KeyboardEvent) {
+    if (!showFilters) return;
+    if (e.key === 'Escape') { closeFilters(); return; }
+    if (e.key !== 'Tab') return;
+    // An open drawer covers the page it sits over, so without a trap Tab walks straight out into
+    // controls the runner cannot see (docs/app.md §Filters).
+    const stops = drawerStops();
+    const first = stops[0];
+    const last = stops.at(-1);
+    if (!first || !last) return;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx));
@@ -176,6 +223,10 @@
   }
 </script>
 
+<!-- First in the document, because a skip link that is not the first tab stop skips nothing: it is
+     49 stops from here to the first table row (docs/app.md §Columns and sorting). -->
+<SkipLink />
+
 <!-- Header and toolbar pin together, because every control that changes the view has to stay
      reachable from anywhere in a 25,000px table; the receipt below reports rather than controls,
      so it scrolls (docs/app.md §Columns and sorting). -->
@@ -184,7 +235,7 @@
           onexport={onExport} ontheme={onTheme} />
   <Toolbar strike={view.strike} onstrike={onStrike} selected={atDefault ? 'all' : selectedPreset}
            counts={presetCounts} onstory={onStory} {showFilters}
-           onfilters={() => (showFilters = !showFilters)}>
+           onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
                     population={filtered.considered} {idx} generations={view.generations}
@@ -203,7 +254,11 @@
 {/if}
 
 <div class="layout" class:show-filters={showFilters}>
-  <div class="sidebar" id="filter-sidebar" style:--chrome-h="{chromeHeight}px">
+  <!-- The handler is a key trap for the panel below 800px, not a control: giving this box a role
+       would announce a landmark that is only a drawer at one width. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="sidebar" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
+       style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
     <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>
   <div class="content" style:--thead-top="{chromeHeight}px">
@@ -244,7 +299,22 @@
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   @media (max-width: 800px) {
     .layout { grid-template-columns: minmax(0, 1fr); }
-    .sidebar { display: none; position: static; }
-    .layout.show-filters .sidebar { display: block; }
+    /* Off-canvas rather than `display: none`: display cannot be animated, so the drawer appeared
+       and vanished with no sense of where it came from. `visibility` is what keeps a closed drawer
+       out of the tab order — a panel that is merely translated away is still focusable — and it is
+       one of the few properties that can be transitioned alongside a transform without fading. */
+    .sidebar {
+      position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(20rem, 88vw);
+      max-height: none; background: var(--surface); border-right: 1px solid var(--border);
+      box-shadow: var(--shadow-dialog); transform: translateX(-100%); visibility: hidden;
+    }
+    .layout.show-filters .sidebar { transform: none; visibility: visible; }
+    /* `visibility` cannot be interpolated, so it is switched at whichever end of the slide is
+       right: immediately on the way in, or the panel is still hidden when it is handed focus, and
+       200ms late on the way out, so the slide is seen before it leaves the tab order. */
+    @media (prefers-reduced-motion: no-preference) {
+      .sidebar { transition: transform 200ms ease-out, visibility 0s linear 200ms; }
+      .layout.show-filters .sidebar { transition: transform 200ms ease-out, visibility 0s; }
+    }
   }
 </style>

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page, { VIEW_WRITE_MS } from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
@@ -203,6 +204,36 @@ describe('Page', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+  // 49 tab stops from the top of the page to the first row, and the skip link is the way past them.
+  it('sends the keyboard straight to the table, without touching the URL', async () => {
+    render(Page, { props: { data } });
+    const link = screen.getByRole('link', { name: /Skip to results/ });
+    await fireEvent.click(link);
+    expect(document.getElementById(TABLE_ANCHOR_ID)).toHaveFocus();
+    // The view owns the query string; a fragment left behind would ride along in every shared link.
+    expect(location.hash).toBe('');
+  });
+  it('traps focus in the open drawer and hands it back on Escape', async () => {
+    render(Page, { props: { data } });
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+    toggle.focus();
+    await fireEvent.click(toggle);
+    await tick();
+    const drawer = screen.getByTestId('filter-drawer');
+    expect(drawer.contains(document.activeElement)).toBe(true);
+
+    const focusable = [...drawer.querySelectorAll<HTMLElement>('input, button, select, a[href]')];
+    const last = focusable.at(-1)!;
+    last.focus();
+    await fireEvent.keyDown(last, { key: 'Tab' });
+    expect(document.activeElement).toBe(focusable[0]);
+    await fireEvent.keyDown(focusable[0]!, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    await fireEvent.keyDown(last, { key: 'Escape' });
+    expect(toggle).toHaveFocus();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
   // Under 800px the sidebar is itself the drawer, so one Escape must not dismiss both.
   it('closes the Add-filter dialog on Escape and leaves the drawer open', async () => {
