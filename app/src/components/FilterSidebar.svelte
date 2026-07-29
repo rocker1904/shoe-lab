@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
-  import { coverageOf, oldestReading } from '../lib/coverage';
+  import { coverageOf } from '../lib/coverage';
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
-  import type { RangeBound } from '../lib/filters';
+  import { applyFilters, type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
   import { histogram } from '../lib/stats';
   import type { ViewState } from '../lib/urlstate';
@@ -103,7 +103,18 @@
   let adding = $state(false);
 
   const histFor = (key: string) => histogram(data.shoes.map((s) => numericValue(s, key, idx)).filter((v): v is number => v !== undefined));
-  const brandCounts = $derived(data.shoes.reduce((m, s) => (s.brand ? m.set(s.brand, (m.get(s.brand) ?? 0) + 1) : m), new Map<string, number>()));
+  /**
+   * Counted over the population with the brand filter itself removed, not over `population` and not
+   * over the fleet. `applyFilters` applies brands *before* pushing to `considered` (filters.ts), so
+   * counting over the passed-in population would read `(0)` beside every unticked brand the moment
+   * one is ticked — and clicking one of those still returns shoes, because brands are OR'd. A facet
+   * must not filter itself. The key set is seeded from the whole fleet so a brand matching nothing
+   * still has a row to show its zero (docs/app.md §Filters).
+   */
+  const brandPool = $derived(applyFilters(data.shoes, { ...view.filters, brands: undefined }, idx).considered);
+  const brandCounts = $derived(new Map(
+    [...new Set(data.shoes.map((s) => s.brand).filter((b): b is string => !!b))]
+      .map((b) => [b, brandPool.filter((s) => s.brand === b).length] as const)));
 
   function patch(mutate: (v: ViewState) => void) {
     const next: ViewState = structuredClone($state.snapshot(view)) as ViewState;
@@ -191,8 +202,7 @@
   {#each shown as e (keysOf(e)[0])}
     <section class="metric">
       <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)} strike={view.strike}
-                 coverage={(k) => coverageOf(population, k, idx)}
-                 oldest={(k) => oldestReading(population, k, idx)} />
+                 coverage={(k) => coverageOf(population, k, idx)} />
       {#each rowKeysOf(e) as key (key)}
         <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} hist={histFor(key)}
                      bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}

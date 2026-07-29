@@ -43,10 +43,11 @@
     <span>–</span>
     <input type="number" aria-label="max" placeholder={hist ? String(hist.max) : 'max'}
            value={bound.max ?? ''} oninput={(e) => update('max', e.currentTarget.value)} />
-    <!-- Named after the row: several rows share this control, and two buttons called "Clear"
-         would be indistinguishable to anyone not looking at the screen. -->
+    <!-- An icon, with the row's name on the label: ten rows spelling out "Clear" is most of the
+         sidebar's width, and two buttons both called "Clear" would be indistinguishable to anyone
+         not looking at the screen. -->
     {#if bounded}
-      <button type="button" class="act" aria-label="Clear {name}" onclick={() => onchange({})}>Clear</button>
+      <button type="button" class="act icon" aria-label="Clear {name}" onclick={() => onchange({})}>✕</button>
     {/if}
     {#if onremove}
       <button type="button" class="act" aria-label="Remove {name}" onclick={onremove}>Remove</button>
@@ -62,4 +63,5 @@
   input { width: 5rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--s1) var(--s2); }
   .act { padding: var(--s1) var(--s2); font-size: var(--t-xs); cursor: pointer; background: none; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-sm); }
   .act:hover { color: var(--text); border-color: var(--accent); }
+  .icon { line-height: 1; padding: var(--s1); }
 </style>

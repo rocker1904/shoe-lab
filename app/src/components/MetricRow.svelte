@@ -1,16 +1,12 @@
 <script lang="ts">
-  import { isSparse, type Coverage } from '../lib/coverage';
-  import { ageMonths } from '../lib/dataset';
+  import type { Coverage } from '../lib/coverage';
   import type { ResolvedMetric, Side } from '../lib/lineage';
 
-  /** Deep enough that novelty stops being the explanation and rarity starts (docs/app.md §Coverage). */
-  const YOUNG_METHOD_MONTHS = 24;
   const SIDE_LABEL: Record<Side, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
-  let { metric, coverage, oldest, chosen, onchoose, strike }: {
+  let { metric, coverage, chosen, onchoose, strike }: {
     metric: ResolvedMetric;
     coverage: (key: string) => Coverage;
-    oldest: (key: string) => string | null;
     chosen: string;
     onchoose: (key: string) => void;
     /** Which half of a side pair the stories use. It marks; it never hides or disables the other,
@@ -19,17 +15,17 @@
   } = $props();
 
   const generations = $derived(metric.kind === 'pair' ? [metric.current, metric.retired] : []);
-  /** The key the warning speaks about: a pair warns about the generation in use, never the other one. */
-  const active = $derived(metric.kind === 'pair' ? chosen : metric.kind === 'single' ? metric.key : null);
-  const warning = $derived.by(() => {
-    if (active === null) return null;
-    const c = coverage(active);
-    if (!isSparse(c)) return null;
-    const months = ageMonths(oldest(active), new Date());
-    const pct = `${Math.round(c.fraction * 100)}%`;
-    return months !== null && months < YOUNG_METHOD_MONTHS
-      ? `Only ${pct} of these shoes have this reading — the method is new.`
-      : `Only ${pct} of these shoes have this reading — it is rarely run.`;
+  /**
+   * Counts, not a percentage, and only on the single-metric shape: "83%" of an unstated pool is
+   * the complaint, and both numbers on screen state the denominator instead of assuming it. A pair
+   * renders a figure per generation and a colocated metric one per part — two or more numbers with
+   * nowhere to go on one heading line — so those keep their per-row percentages
+   * (docs/app.md §Coverage). Silent at complete coverage, which is most rows on a default view.
+   */
+  const soloCoverage = $derived.by(() => {
+    if (metric.kind !== 'single') return null;
+    const c = coverage(metric.key);
+    return c.total > 0 && c.n < c.total ? `${c.n} / ${c.total} measured` : null;
   });
   const pct = (key: string) => `${Math.round(coverage(key).fraction * 100)}%`;
   const width = (key: string) => `${Math.round(coverage(key).fraction * 100)}%`;
@@ -41,7 +37,10 @@
 </script>
 
 <div class="metric">
-  <h4>{metric.label}{metric.kind === 'single' && metric.units ? ` (${metric.units})` : ''}</h4>
+  <div class="head">
+    <h4>{metric.label}{metric.kind === 'single' && metric.units ? ` (${metric.units})` : ''}</h4>
+    {#if soloCoverage}<span class="cov">{soloCoverage}</span>{/if}
+  </div>
 
   {#if metric.kind === 'pair'}
     <div class="gens" role="radiogroup" aria-label={metric.label}>
@@ -68,21 +67,17 @@
       {/each}
     </div>
   {:else}
-    <div class="solo">
-      <span class="bar"><span class="fill" style:width={width(metric.key)}></span></span>
-      <span class="pct">{pct(metric.key)}</span>
-    </div>
-  {/if}
-
-  {#if warning}
-    <!-- Text, never colour alone: the warning is the whole point of the row when it fires. -->
-    <p class="warn" role="status">{warning}</p>
+    <!-- The bar becomes a rule under the heading: the figure moved onto the heading line, so the
+         bar has no row of its own left to sit in. -->
+    <span class="rule"><span class="fill" style:width={width(metric.key)}></span></span>
   {/if}
 </div>
 
 <style>
   .metric { display: flex; flex-direction: column; gap: var(--s1); }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
   h4 { font-size: var(--t-sm); color: var(--text-dim); margin: 0; font-weight: 600; }
+  .cov { font-size: var(--t-xs); color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .gens, .parts { display: flex; flex-direction: column; gap: var(--s1); }
   button, .part { display: grid; grid-template-columns: 1fr 3rem 2.2rem; align-items: center; gap: var(--s2); width: 100%;
            padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
@@ -90,9 +85,8 @@
   button { cursor: pointer; }
   button.on { border-color: var(--accent); color: var(--text); font-weight: 600; }
   .part.on { color: var(--text); font-weight: 600; }
-  .solo { display: grid; grid-template-columns: 1fr 2.2rem; align-items: center; gap: var(--s2); padding: 0 var(--s1); }
+  .rule { display: block; height: 2px; background: var(--hist-dim); overflow: hidden; }
   .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--hist-dim); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--accent); }
   .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
-  .warn { margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
 </style>

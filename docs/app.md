@@ -134,8 +134,11 @@ a single renders when it is curated, active, or listed.
 
 **Clearing a value and removing a row are different actions.** Clearing empties
 both bounds in one click and deletes the key outright — leaving `{}` behind
-would mean `isDefaultView` never returned true again and the entry band could
-never re-open. Removing drops the row and its bound together, and is offered
+would mean `isDefaultView` never returned true again and the toolbar could
+never mark `All` again. Its control is an **✕** icon rather than the word
+"Clear": ten rows spelling it out is most of the sidebar's width, and the
+`aria-label="Clear {name}"` still says which row it belongs to. Removing drops
+the row and its bound together, and is offered
 only on a hand-added row. That needs somewhere to record which rows are
 *shown*, so `ViewState.rows` carries the hand-added list; deriving it from the
 bound keys is exactly what made clearing and removing the same action. A row
@@ -156,6 +159,17 @@ drawer and one Escape must not dismiss both.
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half
 the value strategy in docs/shoe-stories.md.
+
+**Brand counts respect the other filters, and a facet must not filter itself.**
+`brandCounts` counts over the population with the *brand* filter removed —
+neither over `population` nor over the whole fleet. `applyFilters` applies
+brands before pushing to `considered`, so counting over what the sidebar is
+handed would read `(0)` beside every unticked brand the moment one is ticked,
+and clicking one of those still returns shoes, because brands are OR'd. The key
+set is seeded from the whole fleet, so a brand matching nothing keeps its row:
+it stays in the list, greyed, showing `(0)` and clickable — the list does not
+reflow under the cursor, and a 0 is an answer. A search box narrows the
+fifty-odd brands in a 14rem scroll box.
 
 `applyFilters` accounts for every shoe it drops: `considered` is the
 population surviving the non-range filters alone, and
@@ -413,9 +427,9 @@ number, not the preset. A fleet with no readings for a percentile bound omits
 that bound rather than inventing one.
 
 A preset must never bound a metric whose coverage over its own `considered`
-population would trip the sparse warning (docs/app.md §Coverage) — a preset
-that recommends against itself is self-inflicted. `presets.test.ts` asserts it
-in both directions.
+population falls below `SPARSE_BELOW` (docs/app.md §Coverage) — a preset that
+recommends against itself is self-inflicted. `presets.test.ts` asserts it in
+both directions.
 
 Selection is **derived, never stored**: a story reads as chosen while the view
 equals what `applyPreset` would build for it right now. Editing a bound drops
@@ -566,21 +580,47 @@ cover both:
 
 A metric's coverage is the share of shoes carrying a reading among the shoes
 passing every **non-range** filter — the population `applyFilters` reports as
-`considered`. Non-range is load-bearing: if range filters counted, a metric's
-own bound would move its own denominator as the user typed it. The number
-answers "of the shoes I am considering", not "of the shoes I can still see".
+`considered`. Non-range is load-bearing twice over: if range filters counted, a
+metric's own bound would move its own denominator as the user typed it, and any
+bounded metric would read 100% every time, because a bound already excludes
+every shoe lacking a reading. The number would become a tautology exactly when
+it was being used.
 
-Sparse means below `SPARSE_BELOW`, a fraction of that population rather than a
-fixed age. `torsional-rigidity-23` covers 30% of the whole fleet but two thirds
-of shoes released in the last two years: someone browsing everything needs the
-warning and someone already filtered to recent shoes does not. A fixed
-time-depth rule cannot express that, and would clear `breathability-25` — 2.6
-years deep, 9% covered — while flagging metrics that are fine.
+It is stated as **counts, not a percentage**: `378 / 450 measured` on the
+heading line, and **only below complete coverage**, so most rows on a default
+view fall silent. "84%" of an unstated pool is the complaint; both numbers on
+screen state the denominator instead of assuming it. Filter to last year and it
+reads `120 / 180`, where both numbers visibly moved.
 
-`oldestReading` is the *explanation* shown alongside, never the measure: a
-metric sparse because the method is new reads differently from one sparse
-because it is rarely run. Why generations exist at all is
-docs/scraping.md §Test lineage.
+This applies to the **single-metric shape only**. A superseded pair renders a
+figure per generation inside its radiogroup and a colocated metric one per
+part — two or more numbers, with nowhere to go on one heading line — so those
+keep their per-row percentages, as do the coverage bars in `ColumnPicker` and
+`AddFilterDialog`.
+
+### There is no sparse warning
+
+It was deleted, and **the classifier behind it was wrong**, not merely verbose.
+Coverage by release year shows every sparse metric is **era-shaped**, not
+sporadic: metrics are either *arriving* (a clean adoption ramp — `breathability-25`
+runs 0, 0, 0, 1%, 11%, 36% across '21–'26) or *retiring* (near-total coverage
+then a cliff — `stiffness` runs 85%, 100%, 98%, 99%, 23%, 0). Not one is
+uniformly thin.
+
+The warning had two labels, derived from `oldestReading` and `ageMonths`.
+`stiffness` has readings going back years, so it was labelled *rarely run* —
+but it is retired, with better historical coverage than most of the fleet. The
+case that matters, that a reading will keep thinning, was not expressible in
+the vocabulary the warning had. And because coverage is era-shaped, the live
+count **demonstrates** the answer as the runner filters: narrow to recent shoes
+and an arriving metric fills in, a retiring one empties out. `oldestReading`,
+`ageMonths` and `YOUNG_METHOD_MONTHS` are gone with it.
+
+`SPARSE_BELOW` and `isSparse` stay, redefined: they are a **preset-safety**
+threshold, not a warning threshold. Nothing on screen reads them; the one
+consumer is `presets.test.ts`, which asserts in both directions that no preset
+bounds a metric below it — a preset that recommends against itself is
+self-inflicted. Why generations exist at all is docs/scraping.md §Test lineage.
 
 ## Decisions
 

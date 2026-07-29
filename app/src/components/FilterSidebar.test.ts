@@ -69,6 +69,25 @@ describe('FilterSidebar', () => {
     await fireEvent.click(screen.getByLabelText(/Other \(1\)/));
     expect(onchange.mock.lastCall![0].filters.brands).toEqual(['Other']);
   });
+  // The one number in the sidebar that promised something it did not keep: it reduced over the
+  // whole fleet while every coverage figure beside it used the filtered population.
+  it('counts brands over the filtered population, not the whole fleet', () => {
+    const view = defaultView('heel');
+    view.filters.discontinued = 'only';
+    const onlyDiscontinued = FLEET.filter((s) => s.discontinued);
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: onlyDiscontinued } });
+    // `oldie` is the only discontinued fixture shoe and its brand is 'Other', not 'Brand'.
+    expect(screen.getByLabelText(/Other \(1\)/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Brand \(0\)/)).toBeInTheDocument();
+  });
+  // A facet must not filter itself: brands are OR'd, so counting over a population that already
+  // had the brand filter applied would read (0) beside every brand a click would actually find.
+  it('does not let a ticked brand zero every other brand', () => {
+    const view = defaultView('heel');
+    view.filters.brands = ['Other'];
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    expect(screen.getByLabelText(/^Brand \(4\)/)).toBeInTheDocument();
+  });
   it('released-after chips set a UTC cut-off that does not shift with the time of day', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));

@@ -30,7 +30,11 @@ it('empties both bounds in one action, and names the clear control after its row
   const { getByRole } = render(RangeFilter, {
     props: { ...props, onchange, name: 'Stack — Heel', bound: { min: 36, max: 45 } },
   });
-  await fireEvent.click(getByRole('button', { name: 'Clear Stack — Heel' }));
+  const clear = getByRole('button', { name: 'Clear Stack — Heel' });
+  // An icon, because ten of these rows spelling out "Clear" is most of the sidebar's width; the
+  // accessible name still says which row it belongs to (docs/app.md §Filters).
+  expect(clear.textContent?.trim()).toBe('\u2715');
+  await fireEvent.click(clear);
   expect(onchange).toHaveBeenCalledExactlyOnceWith({});
 });
 

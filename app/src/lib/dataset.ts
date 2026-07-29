@@ -57,10 +57,3 @@ export function isoYearsAgo(now: Date, years: number): string {
   d.setUTCFullYear(d.getUTCFullYear() - years);
   return d.toISOString().slice(0, 10);
 }
-
-export function ageMonths(releasedAt: string | null, now: Date): number | null {
-  if (!releasedAt) return null;
-  const d = new Date(releasedAt);
-  // UTC accessors: date-only strings parse as UTC midnight; local accessors would be off by one in UTC-negative timezones
-  return Math.max(0, (now.getUTCFullYear() - d.getUTCFullYear()) * 12 + now.getUTCMonth() - d.getUTCMonth());
-}

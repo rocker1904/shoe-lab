@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coverageOf, isSparse, oldestReading, SPARSE_BELOW } from './coverage';
+import { coverageOf, isSparse, SPARSE_BELOW } from './coverage';
 import { indexTests } from './dataset';
 import { FLEET, TESTS } from './test-fixtures';
 
@@ -34,14 +34,3 @@ describe('isSparse', () => {
   });
 });
 
-describe('oldestReading', () => {
-  it('returns the earliest release date among shoes carrying a reading', () => {
-    expect(oldestReading(FLEET, 'heel-stack', idx)).toBe(
-      FLEET.filter((s) => typeof s.values['6'] === 'number' && s.releasedAt)
-        .map((s) => s.releasedAt!).sort()[0]);
-  });
-  it('is null when nothing carries a reading or nothing is dated', () => {
-    expect(oldestReading([], 'heel-stack', idx)).toBeNull();
-    expect(oldestReading(FLEET, 'no-such-test', idx)).toBeNull();
-  });
-});
