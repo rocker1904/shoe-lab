@@ -82,9 +82,9 @@ The **pool defines where a definition's constants came from; it does not gate co
 
 Task 1 transcribes ~30 frozen numbers into a new file, so transcription error is the real risk and endpoint checks would not catch a wrong middle.
 
-- [ ] **Step 1:** `cd ~/dev/shoe-lab-tempo-scoring && npm install`
-- [ ] **Step 2:** `npm run verify` → PASS; `npm -w app run e2e` → PASS. If either fails, stop and report.
-- [ ] **Step 3: Capture Easy's exact current output.** `tsx` is not a dependency and node cannot import `score.ts`, so the only working route is a vitest scratch test. Create `app/src/lib/baseline.scratch.test.ts` (matches the `src/**/*.test.ts` include):
+- [x] **Step 1:** `cd ~/dev/shoe-lab-tempo-scoring && npm install`
+- [x] **Step 2:** `npm run verify` → PASS; `npm -w app run e2e` → PASS. If either fails, stop and report.
+- [x] **Step 3: Capture Easy's exact current output.** `tsx` is not a dependency and node cannot import `score.ts`, so the only working route is a vitest scratch test. Create `app/src/lib/baseline.scratch.test.ts` (matches the `src/**/*.test.ts` include):
 
 ```typescript
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -127,7 +127,7 @@ The fixture is deleted at the end of Task 1. (`moduleResolution: bundler` implie
 
 **Retired:** `EasyTermKey`, `EasyTerms`, `EasyReading`, `easyReadings`, `easyTerms`, `EASY_WEIGHTS`, `TERM_SD`, `ANCHORS`, `easyContributions`, `easyScore`, `easyScoreMap`, **`EASY_SCORE_KEYS`**. `terms` exists precisely because ten current tests call `easyTerms` and `contributions` cannot serve them — it returns `null` wholesale when any weighted term is missing and never surfaces unweighted terms.
 
-- [ ] **Step 1: The equivalence test**
+- [x] **Step 1: The equivalence test**
 
 ```typescript
 import BASELINE from './__fixtures__/easy-scores-baseline.json';
@@ -148,9 +148,9 @@ it('reproduces every published Easy score exactly', () => {
 });
 ```
 
-- [ ] **Step 2:** Run → FAIL on module resolution (`scoreMap`/`EASY` not exported). Permitted red phase, per the Global Constraints.
+- [x] **Step 2:** Run → FAIL on module resolution (`scoreMap`/`EASY` not exported). Permitted red phase, per the Global Constraints.
 
-- [ ] **Step 3: `score.ts` becomes the engine**
+- [x] **Step 3: `score.ts` becomes the engine**
 
 All four mapping constants **stay here**, beside the `terms` that uses them: they are stage 1 of the pipeline, not story data — the Tempo spec is explicit that a per-story `L_OK` is the one thing that would let two scores over one pool disagree about one measurement — and moving them would create a cycle, since `score-defs.ts` must import types from here.
 
@@ -291,7 +291,7 @@ export function scoreMap(
 }
 ```
 
-- [ ] **Step 4: `score-defs.ts`, with every literal written out**
+- [x] **Step 4: `score-defs.ts`, with every literal written out**
 
 ```typescript
 import { derivedSideKey, type Side } from './lineage';
@@ -338,7 +338,7 @@ export const defForKey = (key: string): ScoreDef | undefined =>
 export const defForPreset = (id: string): ScoreDef | undefined => SCORE_DEFS.find((d) => d.id === id);
 ```
 
-- [ ] **Step 5: Two invariant tests**
+- [x] **Step 5: Two invariant tests**
 
 `Partial` plus `def.sd[side][key]!` would make a missing divisor a silent `NaN` — stored by `scoreMap` because its guard is `!== null`, then sorted, washed and exported as a number-shaped nothing instead of an em dash. Race's table legitimately holds three of six terms, which is exactly where a mistyped weight key lands.
 
@@ -363,11 +363,11 @@ it('a stability add never silently replaces a base weight', () => {
 });
 ```
 
-- [ ] **Step 6: `sideOfKey` goes in `lineage.ts`, not `side.ts`**
+- [x] **Step 6: `sideOfKey` goes in `lineage.ts`, not `side.ts`**
 
 `side.ts` imports `urlstate.ts`, so putting it there would give a presentational component a transitive dependency on URL parsing for a lookup whose whole input is `ALL_SIDE_PAIRS` — which lives in `lineage.ts`, beside `swapSide`, which already does the same search. Move `SIDE_OF_KEY` there, export `sideOfKey(key): Side | null`, and have `side.ts` import it.
 
-- [ ] **Step 7: Re-point every caller — mechanical, no behaviour change**
+- [x] **Step 7: Re-point every caller — mechanical, no behaviour change**
 
 The gate cannot pass until all of these move. Source: `Page.svelte`, `DetailPanel.svelte`, `presets.ts`, `labels.ts`, `direction.ts`, `urlstate.ts`, `ColumnPicker.svelte`. Tests: `score.test.ts`, `ColumnPicker.test.ts`, `DetailPanel.test.ts`, `ShoeTable.test.ts`, `csv-export.test.ts`, `sort.test.ts`, `units.test.ts`, `side.test.ts`, `urlstate.test.ts`, `direction.test.ts`, `labels.test.ts`, `presets.test.ts`.
 
@@ -377,8 +377,8 @@ The substitutions: `EASY_SCORE_KEYS` → `EASY.keys`; `easyScoreMap(shoes, …)`
 
 Tasks 4, 5 and 7 later replace these Easy-specific call sites with registry-driven ones; here they are just re-pointed.
 
-- [ ] **Step 8:** `npm run verify` → PASS, including the exact-reproduction test.
-- [ ] **Step 9:** Delete `app/src/lib/__fixtures__/easy-scores-baseline.json` **and the test that reads it** (deleting only the import leaves `BASELINE` undefined). Re-run `npm run verify`, then commit — `"Make the scoring engine read a story definition rather than Easy"`
+- [x] **Step 8:** `npm run verify` → PASS, including the exact-reproduction test.
+- [x] **Step 9:** Delete `app/src/lib/__fixtures__/easy-scores-baseline.json` **and the test that reads it** (deleting only the import leaves `BASELINE` undefined). Re-run `npm run verify`, then commit — `"Make the scoring engine read a story definition rather than Easy"`
 
 ---
 
@@ -386,7 +386,7 @@ Tasks 4, 5 and 7 later replace these Easy-specific call sites with registry-driv
 
 Adds its own `DERIVED_SIDE_PAIRS` entry: `derivedSideKey`'s parameter is typed `DerivedSidePairLabel`, today the literal `'Easy score'` alone, so a definition cannot compile before its pair exists.
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 ```typescript
 it('pairs the Tempo score columns by side', () => {
@@ -434,11 +434,11 @@ describe('the Tempo score against the real fleet', () => {
 
 `sd` is a local helper in `score.test.ts`; `POOL` is already defined at module level there — **use it rather than redeclaring** a second spelling of one pool.
 
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Add to `DERIVED_SIDE_PAIRS`:
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3:** Add to `DERIVED_SIDE_PAIRS`:
   `{ label: 'Tempo score', forefoot: 'tempo-score-forefoot', heel: 'tempo-score-heel' }`
   then `TEMPO`: `weights: { energyReturn: 3, weight: 2, outsoleDurability: 2, shockAbsorption: 1 }`, `sd: PLATED_POOL_SD`, base and stable anchors from the table, `stable.add: { midsoleWidth: 1, heelCounter: 1 }`. Append to `SCORE_DEFS`.
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Score Tempo on energy return, weight and how long the outsole lasts"`
+- [x] **Step 4:** `npm run verify` → PASS. Commit — `"Score Tempo on energy return, weight and how long the outsole lasts"`
 
 ---
 

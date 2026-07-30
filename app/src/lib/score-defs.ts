@@ -41,7 +41,24 @@ export const EASY: ScoreDef = {
   },
 };
 
-export const SCORE_DEFS: readonly ScoreDef[] = [EASY];
+export const TEMPO: ScoreDef = {
+  id: 'tempo',
+  keys: { heel: derivedSideKey('Tempo score', 'heel'), forefoot: derivedSideKey('Tempo score', 'forefoot') },
+  /** Energy return leads because it is the direct measure of a fast shoe; shock absorption is small
+   *  **because** it is a floor, and it must exist **because** weight is large — dropping it lets
+   *  lightness run away and ranks barefoot shoes as tempo picks (docs/shoe-stories.md §Tempo). */
+  weights: { energyReturn: 3, weight: 2, outsoleDurability: 2, shockAbsorption: 1 },
+  sd: PLATED_POOL_SD,
+  base: { anchors: { heel: { r0: 4.7625, r100: 7.9385 }, forefoot: { r0: 4.5415, r100: 7.6499 } } },
+  /** Weight 1 each, not 2: Tempo has eight terms with the pair in, so 1 each is 20% of it. At 2
+   *  each stability swamps speed and budget trainers climb (docs/shoe-stories.md §Tempo). */
+  stable: {
+    add: { midsoleWidth: 1, heelCounter: 1 },
+    anchors: { heel: { r0: 5.0514, r100: 7.3590 }, forefoot: { r0: 4.7002, r100: 6.8820 } },
+  },
+};
+
+export const SCORE_DEFS: readonly ScoreDef[] = [EASY, TEMPO];
 
 export const defForKey = (key: string): ScoreDef | undefined =>
   SCORE_DEFS.find((d) => d.keys.heel === key || d.keys.forefoot === key);

@@ -3,11 +3,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import type { Side } from './lineage';
+import { swapSide, type Side } from './lineage';
 import {
   contributions, L_OK, SA_REF, scoreMap, scoreOf, terms, W_REF, WID_CAP, type TermKey,
 } from './score';
-import { EASY, SCORE_DEFS } from './score-defs';
+import { EASY, SCORE_DEFS, TEMPO } from './score-defs';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 
@@ -208,7 +208,7 @@ const sd = (xs: number[]) => {
   return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length);
 };
 
-describe('the score against the real fleet', () => {
+describe('the Easy score against the real fleet', () => {
   it('delivers the nominal weights as effective influence, on either side and either toggle', () => {
     // Stage 2 exists for exactly this. Without it a term's influence is its sd on the mapped scale,
     // and outsole durability at weight 1 outweighs shock absorption at weight 2. Checked with the
@@ -254,5 +254,54 @@ describe('the score against the real fleet', () => {
         expect(Math.min(...vs), label).toBeCloseTo(0, 1);
       }
     }
+  });
+});
+
+describe('the Tempo score against the real fleet', () => {
+  it('pairs the Tempo score columns by side', () => {
+    expect(swapSide('tempo-score-heel', 'forefoot')).toBe('tempo-score-forefoot');
+  });
+
+  it('scores the plate-filtered pool and anchors on it', () => {
+    for (const side of SIDES) {
+      for (const stability of [false, true]) {
+        const vs = [...scoreMap(TEMPO, POOL, side, stability, realIdx).values()];
+        const label = `${side}/${stability ? 'on' : 'off'}`;
+        // The eligibility invariant Easy asserts holds for Tempo too, and for the same reason: the
+        // opt-in metrics are the best-covered in the fleet.
+        expect(vs.length, label).toBe(283);
+        expect(Math.max(...vs), label).toBeCloseTo(100, 1);
+        expect(Math.min(...vs), label).toBeCloseTo(0, 1);
+      }
+    }
+  });
+
+  it('shares one divisor table with Easy, by reference', () => {
+    // Object identity, not value equality: `toBe` on numbers passes against a copied literal too,
+    // which is the thing this exists to catch.
+    expect(TEMPO.sd).toBe(EASY.sd);
+  });
+
+  it('delivers every nominal weight as effective influence, on both sides', () => {
+    // Covers `weight` in particular — the only term this branch introduces, with a new mapping and
+    // a new divisor, and where `w/450` written instead of `1 − w/450` would land.
+    for (const side of SIDES) {
+      const rows = POOL.map((s) => contributions(TEMPO, s, side, false, realIdx)).filter((r) => r !== null);
+      const spread = (k: TermKey) => sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted));
+      const keys = ['energyReturn', 'weight', 'outsoleDurability', 'shockAbsorption'] as const;
+      const total = keys.reduce((a, k) => a + spread(k), 0);
+      const nominal = keys.reduce((a, k) => a + TEMPO.weights[k]!, 0);
+      for (const k of keys) {
+        expect(spread(k) / total, `${side} ${k}`).toBeCloseTo(TEMPO.weights[k]! / nominal, 1);
+      }
+    }
+  });
+
+  it('ranks the archetypal tempo shoes above the fragile flats they resemble', () => {
+    const r = [...scoreMap(TEMPO, POOL, 'heel', false, realIdx).entries()]
+      .sort((a, b) => b[1] - a[1]).map(([slug]) => slug);
+    expect(r[0]).toBe('asics-megablast');
+    expect(r.indexOf('adidas-adizero-evo-sl')).toBeLessThan(5);
+    expect(r.indexOf('adidas-adizero-takumi-sen-11')).toBeGreaterThan(30); // outsole life 1.0
   });
 });
