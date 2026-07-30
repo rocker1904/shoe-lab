@@ -383,7 +383,10 @@ source rather than a `data/` edit, for the reasons in §Decisions.
 
 Both crawlers take `--from-corpus <dir>` and read saved pages instead of the
 network, which is how a new extracted **field** is backfilled across the fleet
-without spending a crawl. `scrape:details` re-extracts every record;
+without spending a crawl. `scrape:details` still applies its incremental rule
+there, so `--from-corpus` alone re-extracts *nothing* on a fully-crawled fleet —
+a backfill needs `--from-corpus <dir> --force-all`, which reads every page and
+still makes no request;
 `scrape:metrics` re-extracts the **catalogue only** and deliberately leaves
 `metrics.json` untouched, because the readings live behind the API and cannot
 be replayed from a page. Neither path constructs a request, so neither passes
