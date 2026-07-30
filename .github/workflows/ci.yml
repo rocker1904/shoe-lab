@@ -23,6 +23,9 @@ jobs:
       # so a local run mirrors CI exactly.
       - run: npm run verify
       - run: npx playwright install chromium --with-deps
+      # Separate step, not folded into the line above, so the workflow's own timings report what
+      # the two extra engines cost (app/e2e/cross-browser.spec.ts says why they are here).
+      - run: npx playwright install firefox webkit --with-deps
       - run: npm -w app run e2e
       - if: failure()
         uses: actions/upload-artifact@v4
