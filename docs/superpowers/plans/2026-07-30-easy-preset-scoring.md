@@ -1121,7 +1121,7 @@ git commit -m "Let the runner opt into stability in the score"
 **Interfaces:**
 - Produces: `exportCsv(shoes, columns, idx, scores?)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 The export emits **raw column keys**, not display labels — `csv-export.test.ts` pins that at lines 12, 37, 50 and 58, and the file's own header comment says it is a data export rather than a rendering. Keep it that way:
 
@@ -1140,19 +1140,19 @@ it('emits an empty cell for an unscored shoe rather than a zero', () => {
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- csv-export.test.ts`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Add an optional fourth parameter `scores?: Map<string, number>` and special-case the synthetic key where the cell value is resolved: the score when present, an empty cell when not. Do **not** route the header through `columnLabel`. Update the `Page.svelte` call site to pass `scores`.
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npm -w app run test && npm run typecheck` → PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/lib/csv-export.ts app/src/lib/csv-export.test.ts app/src/Page.svelte

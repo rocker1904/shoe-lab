@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exportCsv } from './csv-export';
 import { indexTests } from './dataset';
+import { EASY_SCORE_KEY } from './score';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -56,5 +57,21 @@ describe('exportCsv', () => {
   });
   it('quotes a column name that needs escaping', () => {
     expect(exportCsv([], ['odd,name'], idx)).toBe('slug,name,brand,url,"odd,name"\n');
+  });
+});
+
+describe('exportCsv and the Easy score', () => {
+  it('emits the Easy score under its raw key', () => {
+    const csv = exportCsv([FLEET.find((s) => s.slug === 'cushy')!], [EASY_SCORE_KEY], idx,
+                          new Map([['cushy', 87.4]]));
+    expect(csv.split('\n')[0]).toContain(EASY_SCORE_KEY);
+    expect(csv).toContain('87.4');
+  });
+
+  it('emits an empty cell for an unscored shoe rather than a zero', () => {
+    const csv = exportCsv([FLEET.find((s) => s.slug === 'mystery')!], [EASY_SCORE_KEY], idx, new Map());
+    const row = csv.split('\n')[1]!;
+    expect(row.endsWith(',')).toBe(true);
+    expect(row).not.toMatch(/,0$/);
   });
 });

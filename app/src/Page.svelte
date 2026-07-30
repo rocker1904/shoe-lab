@@ -240,7 +240,7 @@
     setView(next);
   }
   function onExport() {
-    const blob = new Blob([exportCsv(visibleSorted, view.columns, idx)], { type: 'text/csv' });
+    const blob = new Blob([exportCsv(visibleSorted, view.columns, idx, scores)], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
