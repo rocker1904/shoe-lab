@@ -20,7 +20,15 @@ export const TESTS: LabTest[] = [
   labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', groupId: '3', previousId: 11 }),
   labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', groupId: '3',
     options: [{ value: 'none', name: 'None' }, { value: 'both-sides-semi', name: 'Both sides (semi)' }] }),
+  // A second option test whose choices overlap the first's labels: two categorical columns reading
+  // "None" at once is the ordinary case, not a contrived one (docs/app.md §Categorical columns).
+  labTest({ id: 40, slug: 'heel-tab', name: 'Heel tab', type: 'option', groupId: '3',
+    options: [{ value: 'none', name: 'None' }, { value: 'pull-tab', name: 'Pull tab' }] }),
   labTest({ id: 41, slug: 'removable-insole', name: 'Removable insole', type: 'bool', groupId: '3' }),
+  // The catalogue's own `plate` test, whose slug collides with the shoe field of that name. Present
+  // in the fixture because the collision is only visible when both exist
+  // (docs/app.md §Categorical columns).
+  labTest({ id: 69, slug: 'plate', name: 'Plate', type: 'bool' }),
   // A pair carrying no method year on either side and sharing both name and units — the case the
   // generation label cannot derive from a slug (docs/scraping.md §Test lineage).
   labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', updateId: 55 }),

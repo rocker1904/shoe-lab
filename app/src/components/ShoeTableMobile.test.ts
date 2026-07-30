@@ -93,4 +93,22 @@ describe('ShoeTableMobile categorical columns', () => {
     setup({ view: { columns: ['tongue-gusset-type'] }, shoes: [shoe({ slug: 'bare', values: {} })] });
     expect(screen.getByText('bare').closest('tr')!.textContent).not.toContain('undefined');
   });
+
+  // Two readings that say the same word is the ordinary case — 265 shoes have no heel tab and 187
+  // no gusset — and keying the strip by its own text threw `each_key_duplicate`, which blanks the
+  // whole app rather than the row (docs/app.md §Categorical columns).
+  it('renders both readings when two categorical columns say the same word', () => {
+    setup({ view: { columns: ['tongue-gusset-type', 'heel-tab'] },
+            shoes: [shoe({ slug: 'plain', values: { '39': 'none', '40': 'none' } })] });
+    const strip = screen.getByText('plain').closest('tr')!;
+    expect(strip.querySelectorAll('.meta')).toHaveLength(2);
+  });
+
+  it('keeps the plate field on the name line for a shoe carrying the catalogue plate reading', () => {
+    setup({ view: { columns: ['plate', 'removable-insole'] },
+            shoes: [shoe({ slug: 'plated', plate: 'plated-other', values: { '69': true, '41': true } })] });
+    const strip = screen.getByText('plated').closest('tr')!;
+    expect(strip.textContent).toContain('Non-carbon plate');
+    expect(strip.querySelectorAll('.meta')).toHaveLength(2); // the plate label and one Yes, not two
+  });
 });

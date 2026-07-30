@@ -58,20 +58,24 @@
     return v === null || v === undefined ? '—' : displayNumber(v);
   }
   /** The columns that hold words, rendered after the name and wrapping rather than truncating.
-   *  A shoe with no plate and no date contributes nothing, rather than a row of em dashes. */
-  function metaOf(s: Shoe): string[] {
-    const out: string[] = [];
+   *  A shoe with no plate and no date contributes nothing, rather than a row of em dashes.
+   *
+   *  Each entry carries the column it came from, because that is the only unique thing about it:
+   *  two categorical readings both saying "None" is the ordinary case, and keying the strip by its
+   *  own text threw on the duplicate and blanked the page (docs/app.md §Categorical columns). */
+  function metaOf(s: Shoe): { key: string; text: string }[] {
+    const out: { key: string; text: string }[] = [];
     if (view.columns.includes('releasedAt') && s.releasedAt) {
-      out.push(displayReleaseDate(s.releasedAt, s.releaseDateSource));
+      out.push({ key: 'releasedAt', text: displayReleaseDate(s.releasedAt, s.releaseDateSource) });
     }
     if (view.columns.includes('plate') && s.plate !== 'none') {
-      out.push(s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate');
+      out.push({ key: 'plate', text: s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate' });
     }
     // Categorical readings hold words too, so they belong on this line rather than in the numeric
     // value row (docs/app.md §Categorical columns). A shoe with no reading contributes nothing.
     for (const col of view.columns) {
       const cat = categoricalValue(s, col, idx);
-      if (cat !== undefined) out.push(cat);
+      if (cat !== undefined) out.push({ key: col, text: cat });
     }
     return out;
   }
@@ -122,7 +126,7 @@
           <td class="ident" colspan={span}>
             <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
             <strong>{s.name}</strong>
-            {#each metaOf(s) as m (m)}<span class="meta">{m}</span>{/each}
+            {#each metaOf(s) as m (m.key)}<span class="meta">{m.text}</span>{/each}
             {#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}
           </td>
         </tr>

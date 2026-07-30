@@ -564,6 +564,12 @@ name line rather than the value row, for the same reason plate and the release
 date do: the value row stays uniformly numeric
 (docs/app.md §Columns and sorting).
 
+**The name line keys each entry by its column, never by its text.** Two
+categorical readings saying the same word is ordinary — 265 shoes have no heel
+tab and 187 no gusset, so "None" beside "None" is the common case — and a keyed
+`{#each}` over the text itself throws `each_key_duplicate`, which blanks the
+whole page rather than the row.
+
 **There is no categorical filter yet.** A set-membership facet is the obvious
 next step and is a backlog item, not an oversight — the column is useful for
 comparison without it.
