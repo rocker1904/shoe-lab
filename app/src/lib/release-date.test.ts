@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayReleaseDate } from './release-date';
+import { displayReleaseDate, startOfMonth } from './release-date';
 
 describe('displayReleaseDate', () => {
   it('shows month and year for a precise page date, never the day', () => {
@@ -25,5 +25,13 @@ describe('displayReleaseDate', () => {
     // Hostile input: the app must not crash on a malformed dataset field.
     expect(displayReleaseDate('2024-13-01', 'page')).toBe('2024');
     expect(displayReleaseDate('2024-00-01', 'page')).toBe('2024');
+  });
+});
+
+describe('startOfMonth', () => {
+  it('normalises both bound shapes to the first of the month', () => {
+    expect(startOfMonth('2024-03')).toBe('2024-03-01');
+    expect(startOfMonth('2024-03-15')).toBe('2024-03-01');
+    expect(startOfMonth('2024-03-01')).toBe('2024-03-01');
   });
 });

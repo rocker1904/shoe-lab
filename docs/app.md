@@ -567,6 +567,28 @@ qualifies**, not among the always-present identity columns: a provenance column
 with no date column beside it is noise. `shoes.csv` carries it unconditionally,
 because that export has a fixed header.
 
+## Released after is month-granular
+
+The control is a **month** input, and every bound is stored as the first of that
+month. The dataset is month-precision at best — only 24 of 450 shoes could
+supply a day (docs/scraping.md §Release-date provenance) — so a day picker would
+offer a bound the data cannot honour.
+
+`startOfMonth` in `lib/release-date.ts` is the one normalisation, applied at
+three edges: the input, the 1y/2y/3y chips, and `parseView`. It exists because
+bounds compare against full ISO dates and a bare `YYYY-MM` sorts *before* every
+day in that month, so an unnormalised bound would silently shift the window by a
+month. `applyFilters` is untouched by this and still compares whole ISO strings.
+
+The chips truncate too, which **widens** the window by up to a month rather than
+narrowing it. That is the deliberate direction: this filter's failure mode
+should be showing a shoe that is marginally too old, not hiding one that
+qualifies.
+
+The URL carries `after=YYYY-MM`. A day-precise `after` from an older link still
+parses and normalises inward, so shared links keep working and round-trip
+stably thereafter.
+
 ## Resolved price
 
 Lab test 52 and the `msrpGbp` field are the same GBP list price from two

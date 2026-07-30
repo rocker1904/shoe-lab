@@ -2,6 +2,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { coverageOf } from '../lib/coverage';
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
+  import { startOfMonth } from '../lib/release-date';
   import { applyFilters, type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
   import { excludedBy } from '../lib/relax';
@@ -185,13 +186,15 @@
 
   <section>
     <h3>Released after</h3>
-    <input type="date" aria-label="Released after" value={view.filters.releasedAfter ?? ''}
-           oninput={(e) => patch((v) => { v.filters.releasedAfter = e.currentTarget.value || undefined; })} />
+    <!-- Month, not date: the dataset is month-precision at best, so a day picker would offer a
+         bound the data cannot honour (docs/app.md §Released after is month-granular). -->
+    <input type="month" aria-label="Released after" value={view.filters.releasedAfter?.slice(0, 7) ?? ''}
+           oninput={(e) => patch((v) => { v.filters.releasedAfter = e.currentTarget.value ? startOfMonth(e.currentTarget.value) : undefined; })} />
     <div class="chips">
       <!-- The only way to unset a date the chips set: a chip that sets one cannot also clear it. -->
       <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = undefined; })}>Any</button>
       {#each [1, 2, 3] as y (y)}
-        <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = isoYearsAgo(new Date(), y); })}>{y}y</button>
+        <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = startOfMonth(isoYearsAgo(new Date(), y)); })}>{y}y</button>
       {/each}
     </div>
   </section>

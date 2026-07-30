@@ -16,3 +16,13 @@ export function displayReleaseDate(releasedAt: string | null, source: ReleaseDat
   const month = MONTHS[Number(releasedAt.slice(5, 7)) - 1];
   return month === undefined ? releasedAt.slice(0, 4) : `${month} ${releasedAt.slice(0, 4)}`;
 }
+
+/**
+ * Normalises a `YYYY-MM` or `YYYY-MM-DD` bound to the first of its month. Bounds are compared
+ * against full ISO dates, and a bare `YYYY-MM` sorts *before* every day in that month, so leaving
+ * one unnormalised would silently shift the window by a month
+ * (docs/app.md §Released after is month-granular).
+ */
+export function startOfMonth(iso: string): string {
+  return `${iso.slice(0, 7)}-01`;
+}

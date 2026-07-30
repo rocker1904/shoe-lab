@@ -3,6 +3,7 @@ import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
 import { CURATED_RANGE_KEYS, DERIVED_SIDE_PAIRS, metricEntries, sideKey, type Side } from './lineage';
+import { startOfMonth } from './release-date';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
@@ -98,7 +99,8 @@ export function serializeView(v: ViewState): string {
     p.set(`r.${key}`, `${b.min ?? ''}~${b.max ?? ''}`);
   }
   if (v.filters.plate?.length) p.set('plate', v.filters.plate.join(','));
-  if (v.filters.releasedAfter) p.set('after', v.filters.releasedAfter);
+  // Month granularity: the bound is always the first of a month, so the day carries no meaning.
+  if (v.filters.releasedAfter) p.set('after', v.filters.releasedAfter.slice(0, 7));
   if (v.filters.brands?.length) p.set('brands', v.filters.brands.join(','));
   if (v.filters.search) p.set('q', v.filters.search);
   if (v.filters.discontinued) p.set('disc', v.filters.discontinued);
@@ -147,8 +149,10 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       const picked = new Set(raw.split(','));
       const plates = PLATES.filter((x) => picked.has(x));
       if (plates.length) v.filters.plate = plates;
-    } else if (key === 'after' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-      v.filters.releasedAfter = raw;
+    } else if (key === 'after' && /^\d{4}-(0[1-9]|1[0-2])(-\d{2})?$/.test(raw)) {
+      // A day-precise `after` from an older link normalises inward to the month start, which
+      // widens the window rather than narrowing it — the safe direction for a filter.
+      v.filters.releasedAfter = startOfMonth(raw);
     } else if (key === 'brands' && raw) {
       // an all-separator value (",,,") must stay absent, not become an empty array that no longer equals the default
       const brands = raw.split(',').filter(Boolean);

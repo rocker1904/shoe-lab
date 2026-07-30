@@ -18,7 +18,7 @@ describe('urlstate', () => {
     const v: ViewState = {
       filters: {
         ranges: { 'heel-stack': { min: 36 }, msrpGbp: { max: 200 }, weight: { min: 200, max: 250 } },
-        plate: ['none'], releasedAfter: '2024-07-26', brands: ['Nike', 'New Balance'], search: 'peg', discontinued: 'hide',
+        plate: ['none'], releasedAfter: '2024-07-01', brands: ['Nike', 'New Balance'], search: 'peg', discontinued: 'hide',
       },
       sort: { key: 'energy-return-heel', dir: 'desc' },
       columns: ['score', 'heel-stack'],
@@ -154,7 +154,7 @@ describe('urlstate hostile input', () => {
     expect(parseView('sort=-', idx).sort).toEqual(defaultView().sort);
     expect(parseView('sort=', idx).sort).toEqual(defaultView().sort);
   });
-  it.each(['disc=0', 'disc=true', 'disc=', 'disc=HIDE', 'brands=', 'brands=,,,', 'q=', 'after=26-07-2024', 'plate=NONE'])(
+  it.each(['disc=0', 'disc=true', 'disc=', 'disc=HIDE', 'brands=', 'brands=,,,', 'q=', 'after=26-07-2024', 'after=2024-13', 'after=2024-00', 'after=2024', 'plate=NONE'])(
     'ignores %s', (qs) => { expect(parseView(qs, idx)).toEqual(defaultView()); });
   it.each(['hide', 'only'] as const)('round-trips disc=%s', (value) => {
     const v = defaultView();
@@ -396,5 +396,20 @@ describe('the synthetic story scores as view keys', () => {
       expect(parseView(`sort=-${key}`, idx).sort).toEqual({ key, dir: 'desc' });
       expect(parseView(`cols=${key},weight`, idx).columns).toEqual([key, 'weight']);
     }
+  });
+});
+
+describe('released-after is month-granular', () => {
+  const idx = indexTests(TESTS);
+  it('parses a month bound to the first of that month', () => {
+    expect(parseView('after=2024-03', idx).filters.releasedAfter).toBe('2024-03-01');
+  });
+  it('normalises a day-precise bound from an older link inward, widening rather than narrowing', () => {
+    expect(parseView('after=2024-03-15', idx).filters.releasedAfter).toBe('2024-03-01');
+  });
+  it('serialises the bound as a month, and round-trips', () => {
+    const v = parseView('after=2024-03-15', idx);
+    expect(serializeView(v)).toContain('after=2024-03');
+    expect(parseView(serializeView(v), idx).filters.releasedAfter).toBe('2024-03-01');
   });
 });

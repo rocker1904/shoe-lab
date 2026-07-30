@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import FilterSidebar from './FilterSidebar.svelte';
 import { indexTests, isoYearsAgo } from '../lib/dataset';
+import { startOfMonth } from '../lib/release-date';
 import { applyPreset, PRESETS } from '../lib/presets';
 import { projectSide } from '../lib/side';
 import { defaultView, parseView, sameValue } from '../lib/urlstate';
@@ -91,14 +92,14 @@ describe('FilterSidebar', () => {
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByLabelText(/^Brand \(4\)/)).toBeInTheDocument();
   });
-  it('released-after chips set a UTC cut-off that does not shift with the time of day', async () => {
+  it('released-after chips set a UTC cut-off, truncated to the month the data can honour', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
     try {
       const onchange = setup();
       await fireEvent.click(screen.getByRole('button', { name: '2y' }));
-      expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(isoYearsAgo(new Date(), 2));
-      expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-07-28');
+      expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(startOfMonth(isoYearsAgo(new Date(), 2)));
+      expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-07-01');
     } finally {
       vi.useRealTimers();
     }
@@ -142,11 +143,12 @@ describe('FilterSidebar text and toggle controls', () => {
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
 
-  it('emits the released-after date, and undefined once cleared', async () => {
+  it('emits the released-after month as the first of that month, and undefined once cleared', async () => {
     const onchange = setup();
     const date = screen.getByLabelText('Released after');
+    expect(date).toHaveAttribute('type', 'month');
 
-    await fireEvent.input(date, { target: { value: '2024-03-01' } });
+    await fireEvent.input(date, { target: { value: '2024-03' } });
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-03-01');
 
     await fireEvent.input(date, { target: { value: '' } });
