@@ -153,13 +153,22 @@ The order is fixed: search, released after, plate, brand, discontinued, then
 the range rows, which come from one declared list, `CURATED_RANGE_KEYS` — price,
 then the measurements a runner narrows on most, then the rest curated, then
 anything added by hand. Price leads because it is the bound almost every search
-has. The list predates the story scores and is **not** the set of terms those
-scores read: outsole durability and heel counter stiffness are score terms with
-no curated row, and drop and softness are curated rows no score reads. That is
-not an oversight to reconcile — a filter row is for narrowing a search and a
-term is for ranking one, and the two lists answer different questions. It does
-not rearrange itself under the story or the side — someone comparing two stories
-must not have the controls move underneath them. Both halves of every side pair
+has.
+
+**The curated list is not the set of terms the story scores read**, and it is
+not meant to become one: a filter row narrows a search, a term ranks one. Heel
+counter stiffness is a term with no row, because nobody searches in five-point
+heel-counter buckets; drop and the toebox measurements are rows no score reads,
+because fit is exactly the thing a runner filters on and no score can speak to.
+Where the two coincide the row still has to earn its place on its own footing —
+**outsole durability** is listed because "I want a shoe that lasts" is an
+ordinary search, not because Easy weights it. **Midsole softness is not listed**:
+it is redundant with shock absorption, which is one row above it and measures the
+outcome rather than the material cause (docs/shoe-stories.md). It stays
+reachable from the Add-filter dialog like any other metric.
+
+The order does not rearrange itself under the story or the side — someone
+comparing two stories must not have the controls move underneath them. Both halves of every side pair
 are curated for that reason, and **every part of a side pair renders always**;
 a single renders when it is curated, active, or listed.
 

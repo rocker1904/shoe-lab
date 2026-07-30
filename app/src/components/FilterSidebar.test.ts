@@ -190,10 +190,12 @@ describe('FilterSidebar filter set management', () => {
     const onchange = vi.fn();
     const { container } = render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, population: FLEET } });
     await open(within(container).getByRole('button', { name: 'Add filter' }));
-    // curated keys, the option-typed test and both retired generations are all absent; the two
-    // outsole tests and the heel counter are the uncurated metrics the Easy score reads
+    // curated keys, the option-typed test and both retired generations are all absent. Midsole
+    // softness is offered because it is deliberately not curated — redundant with shock absorption,
+    // which is a row already (docs/app.md §Filters) — and heel counter is offered because it is a
+    // score term that is not a natural search.
     expect(within(screen.getByRole('dialog')).getAllByRole('button').map((b) => b.textContent?.trim().split(/\s+/)[0]))
-      .toEqual(['Outsole', 'Outsole', 'Heel', 'Stiffness', 'RunRepeat', 'Close']);
+      .toEqual(['Midsole', 'Outsole', 'Heel', 'Stiffness', 'RunRepeat', 'Close']);
 
     // a row, not a hollow range key: the two are different state, and only the row survives a clear
     await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Stiffness/ }));
@@ -317,10 +319,12 @@ describe('FilterSidebar filter set management', () => {
 });
 
 describe('FilterSidebar metric entries', () => {
+  // The toebox pair rather than midsole softness: these three want a superseded pair that renders
+  // on a default view, and softness is deliberately not curated (docs/app.md §Filters).
   it('renders a superseded pair once, as one heading with two generations', () => {
     setup();
-    expect(screen.getAllByRole('heading', { name: /^Midsole softness/ })).toHaveLength(1);
-    const gens = screen.getAllByRole('radio', { name: /Midsole softness/ });
+    expect(screen.getAllByRole('heading', { name: /^Width \/ Fit/ })).toHaveLength(1);
+    const gens = screen.getAllByRole('radio', { name: /Width \/ Fit/ });
     expect(gens).toHaveLength(2);
     expect(gens[0]).toHaveAttribute('aria-checked', 'true'); // current generation by default
   });
@@ -342,18 +346,18 @@ describe('FilterSidebar metric entries', () => {
   it('choosing a generation releases the range and column its sibling held', async () => {
     const onchange = vi.fn();
     const view = defaultView();
-    view.filters.ranges['midsole-softness-22'] = { min: 30 };
-    view.columns = ['midsole-softness-22', 'score'];
+    view.filters.ranges['toebox-width-widest-part'] = { min: 30 };
+    view.columns = ['toebox-width-widest-part', 'score'];
     const { container } = render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
 
-    await fireEvent.click(within(container).getAllByRole('radio', { name: /Midsole softness/ })[1]!);
+    await fireEvent.click(within(container).getAllByRole('radio', { name: /Width \/ Fit/ })[1]!);
     const next = onchange.mock.lastCall![0];
-    expect(next.generations).toEqual({ 'midsole-softness-22': 'midsole-softness' });
+    expect(next.generations).toEqual({ 'toebox-width-widest-part': 'toebox-width-at-the-widest-part' });
     // no hollow key left behind to prop the row up: the pair is curated, so it renders regardless
     expect(next.filters.ranges).toEqual({});
     expect(next.columns).toEqual(['score']);
     const after = render(FilterSidebar, { props: { data, view: next, onchange: vi.fn(), population: FLEET } });
-    expect(within(after.container).getByRole('group', { name: /Midsole softness — original/ })).toBeInTheDocument();
+    expect(within(after.container).getByRole('group', { name: /Width \/ Fit — previous method/ })).toBeInTheDocument();
   });
   it('moves a hand-added pair\'s row to the generation it switches to', async () => {
     const pairPlus: ShoesFile = { ...data, tests: [
@@ -370,10 +374,10 @@ describe('FilterSidebar metric entries', () => {
   });
   it('shows the chosen generation rather than the current one once it is chosen', () => {
     const view = defaultView();
-    view.generations['midsole-softness-22'] = 'midsole-softness';
+    view.generations['toebox-width-widest-part'] = 'toebox-width-at-the-widest-part';
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
-    expect(screen.getByRole('group', { name: /Midsole softness — original/ })).toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: /Midsole softness — 2022 method/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /Width \/ Fit — previous method/ })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /Width \/ Fit — current method/ })).not.toBeInTheDocument();
   });
 });
 
@@ -384,8 +388,8 @@ describe('FilterSidebar metric entries', () => {
  */
 const HEADINGS = [
   'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
-  'Price (£)', 'Stack', 'Energy return', 'Weight (g)', 'Midsole softness',
-  'Shock absorption', 'Midsole width', 'Width / Fit',
+  'Price (£)', 'Stack', 'Energy return', 'Weight (g)',
+  'Shock absorption', 'Outsole durability (mm)', 'Midsole width', 'Width / Fit',
 ];
 const GROUPS = [
   'Plate', 'Brand',
@@ -393,8 +397,8 @@ const GROUPS = [
   'Stack — Forefoot', 'Stack — Heel',
   'Energy return — Forefoot', 'Energy return — Heel',
   'Weight (g)',
-  'Midsole softness — 2022 method',
   'Shock absorption — Forefoot', 'Shock absorption — Heel',
+  'Outsole durability (mm)',
   'Midsole width — Forefoot', 'Midsole width — Heel',
   'Width / Fit — current method',
 ];

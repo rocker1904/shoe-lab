@@ -100,8 +100,12 @@ const DECLARED_BY_SLUG = new Map((SIDE_PAIRS as readonly { label: string; forefo
 
 /**
  * The range filters the sidebar offers without being asked, **in the order it offers them**
- * (docs/app.md §Filters). Price leads because every story bounds it; then the metrics the stories
- * bound; then the rest. Both halves of every side pair are listed, because a pair renders both
+ * (docs/app.md §Filters). Price leads because it is the bound almost every search has; then the
+ * measurements a runner narrows on most; then the rest. This is **not** the set of terms the story
+ * scores read — a filter row narrows a search, a term ranks one, and the two lists answer different
+ * questions. Where they do coincide the row earns its place on its own: outsole durability is here
+ * because "I want a shoe that lasts" is an ordinary thing to want, not because Easy weights it.
+ * Both halves of every side pair are listed, because a pair renders both
  * rows whichever strike is chosen — omitting one would make the sidebar change shape with strike.
  * Lives here rather than in the sidebar because `parseView` needs it to tell a hand-added row from
  * a curated one, and a lib module must not import a component.
@@ -111,8 +115,9 @@ export const CURATED_RANGE_KEYS = [
   'heel-stack', 'forefoot-stack',
   'energy-return-heel', 'energy-return-forefoot',
   'weight',
-  'drop', 'midsole-softness-22',
+  'drop',
   'shock-absorption-heel', 'shock-absorption-forefoot',
+  'outsole-durability',
   'midsole-width-in-the-heel', 'midsole-width-in-the-forefoot',
   'toebox-width-widest-part', 'toebox-width-big-toe', 'toebox-height',
 ];

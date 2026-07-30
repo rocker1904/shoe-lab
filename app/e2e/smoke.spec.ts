@@ -281,7 +281,10 @@ test('traps focus in the filter drawer and hands it back on Escape', async ({ pa
 });
 
 test('renders a superseded pair once and keeps colocated halves independently sortable', async ({ page }) => {
-  await page.goto('/');
+  // Arrived at by link rather than on the default view: midsole softness is the fixture's only
+  // superseded pair and is deliberately not curated (docs/app.md §Filters), so a listed row is how
+  // a runner reaches it now. The pair behaviour under test is the same either way.
+  await page.goto('/?rows=midsole-softness-22');
 
   // one entry for the pair, not one per generation, with the current method selected
   await expect(page.getByRole('heading', { name: 'Midsole softness', exact: true })).toHaveCount(1);
