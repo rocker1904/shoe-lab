@@ -89,9 +89,10 @@ force per step is *lower* than at speed but weekly impulse is far higher, so the
   is not the binding constraint. **The saturation falls out of the physics rather than from a bent
   curve.**
 - **Midsole width → `min(1, (width / stack) / cap)`.** Stability is a lever from foot to ground, so
-  the dimensionless ratio is the physical quantity. It also removes a confound: `rho(ratio, weight)
-  = 0.15` against `rho(raw width, weight) = 0.56`, so "stability" stops covertly selecting heavy
-  shoes. Capped because the top end is degenerate — Vapor Glove scores 10.13, and a flat sandal
+  the dimensionless ratio is the physical quantity. It also removes a confound: measured over the
+  pool, the capped term runs `rho = −0.05` (heel) and `−0.08` (forefoot) against weight, where raw
+  width runs `+0.45` and `+0.29` — so "stability" stops covertly selecting heavy shoes. Capped
+  because the top end is degenerate — Vapor Glove scores 10.13, and a flat sandal
   genuinely *is* stable. The cap is **the p90 of that side's own ratio distribution across the pool**
   (heel 3.04, forefoot 5.37), so the minimalist tail caps out while the real fleet stays spread. It
   must be per side, because the two halves are not on one scale — the reasoning is owned by
