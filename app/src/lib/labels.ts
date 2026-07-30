@@ -9,7 +9,8 @@ import { EASY_SCORE_KEYS } from './score';
  */
 export function columnLabel(key: string, test: LabTest | undefined): string {
   if (key === 'releasedAt') return 'Released';
-  if (key === 'score') return 'Score';
+  // Named for whose it is: our own score sits beside it now (docs/app.md §Table presentation).
+  if (key === 'score') return 'RunRepeat Score';
   if (key === 'msrpGbp') return 'Price';
   if (key === 'plate') return 'Plate';
   if (key === EASY_SCORE_KEYS.heel) return 'Easy heel score';
@@ -40,6 +41,8 @@ export const SHORT_LABELS: Record<string, string> = {
   'removable-insole': 'Remv. insole', 'reflective-elements': 'Hi-vis',
   'secondary-foam-softness': '2nd foam softness', 'secondary-foam-softness-22': '2nd foam softness',
   'shock-absorption-heel': 'Heel shock', 'shock-absorption-forefoot': 'Forefoot shock',
+  // Not a catalogue test: "RunRepeat" alone is 63.5px against a 52px column.
+  score: 'RR score',
   'sweat-evaporated': 'Sweat evap.', insulation: 'Warmth',
   // Marginal against the bound once headroom is allowed.
   'outsole-hardness': 'Outsole firmness',

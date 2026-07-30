@@ -18,7 +18,7 @@
    *  without a home here the column a story sets could never be unticked. */
   const FIXED: [string, string][] = [['releasedAt', 'Release date'],
     [EASY_SCORE_KEYS.heel, 'Easy heel score'], [EASY_SCORE_KEYS.forefoot, 'Easy forefoot score'],
-    ['score', 'Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];
+    ['score', 'RunRepeat Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];
 
   interface Offer { key: string; label: string }
   // A pair offers whichever generation is chosen and never both; a colocated metric offers both

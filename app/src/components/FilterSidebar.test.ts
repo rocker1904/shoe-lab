@@ -191,7 +191,7 @@ describe('FilterSidebar filter set management', () => {
     // curated keys, the option-typed test and both retired generations are all absent; the two
     // outsole tests and the heel counter are the uncurated metrics the Easy score reads
     expect(within(screen.getByRole('dialog')).getAllByRole('button').map((b) => b.textContent?.trim().split(/\s+/)[0]))
-      .toEqual(['Outsole', 'Outsole', 'Heel', 'Stiffness', 'Score', 'Close']);
+      .toEqual(['Outsole', 'Outsole', 'Heel', 'Stiffness', 'RunRepeat', 'Close']);
 
     // a row, not a hollow range key: the two are different state, and only the row survives a clear
     await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Stiffness/ }));
@@ -330,12 +330,12 @@ describe('FilterSidebar metric entries', () => {
   it('keeps the price row, and the score row once it is active', () => {
     setup();
     expect(screen.getByRole('group', { name: /Price/ })).toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: /^Score/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /^RunRepeat Score/ })).not.toBeInTheDocument();
 
     const view = defaultView();
     view.filters.ranges['score'] = { min: 80 };
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
-    expect(screen.getByRole('group', { name: /^Score/ })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /^RunRepeat Score/ })).toBeInTheDocument();
   });
   it('choosing a generation releases the range and column its sibling held', async () => {
     const onchange = vi.fn();

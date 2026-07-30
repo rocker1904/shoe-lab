@@ -14,7 +14,7 @@ describe('ColumnPicker', () => {
     render(ColumnPicker, { props: { ...base, columns: ['score'], onchange } });
     await fireEvent.click(screen.getByRole('checkbox', { name: /Heel stack/ }));
     expect(onchange).toHaveBeenLastCalledWith(['score', 'heel-stack']);
-    await fireEvent.click(screen.getByRole('checkbox', { name: /^Score/ }));
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^RunRepeat Score/ }));
     expect(onchange).toHaveBeenLastCalledWith([]);
   });
   it('groups numeric tests and excludes option-typed ones', () => {

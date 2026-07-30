@@ -494,6 +494,12 @@ chosen:
   the one entry that is not a length fix — the test is Dremel dent depth in mm,
   so "durability" contradicts its own units, and this is a deliberate
   divergence from RunRepeat's name.
+- The `score` field reads **RunRepeat Score** everywhere a human sees it — the
+  header, the column picker and the filter row — because our own score sits
+  beside it and "Score" alone no longer says whose it is. It is one of the
+  entries that then needs a short label as well: `RunRepeat` alone is 63.5px
+  against the 52px bound, so the phone reads `RR score`. The CSV writes raw
+  column keys and is unaffected.
 - **Up to three lines**, which `labels.ts` validates as well: the width bound
   alone lets a name of short words grow without limit, and the header is
   sticky, so a fourth line is paid once by every screen. Every label is at or

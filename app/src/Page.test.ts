@@ -437,7 +437,7 @@ describe('Page side toggle', () => {
 
     // An escaped nbsp, not a space: the sort arrow is nbsp-joined inside `.h-name` and
     // `columnHeaders()` reads that span, so a copy-paste must not silently lose it.
-    expect(columnHeaders()).toEqual(['Shoe', 'Score', 'Forefoot stack\u00a0▼']);
+    expect(columnHeaders()).toEqual(['Shoe', 'RunRepeat Score', 'Forefoot stack\u00a0▼']);
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
     settle();
     expect(location.search).not.toContain('r.heel-stack');   // the number does not transfer

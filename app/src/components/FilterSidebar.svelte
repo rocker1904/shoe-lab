@@ -26,7 +26,7 @@
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
   const FIELD_METRICS: ResolvedMetric[] = [
     { kind: 'single', key: 'msrpGbp', label: 'Price', units: '£', groupId: null },
-    { kind: 'single', key: 'score', label: 'Score', units: '', groupId: null },
+    { kind: 'single', key: 'score', label: 'RunRepeat Score', units: '', groupId: null },
   ];
   const entries = $derived([...metricEntries(data.tests), ...FIELD_METRICS]);
   const keysOf = (e: ResolvedMetric): string[] =>

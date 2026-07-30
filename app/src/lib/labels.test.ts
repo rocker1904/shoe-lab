@@ -25,7 +25,7 @@ const numeric = catalogue.tests.filter((t) => NUMERIC_TEST_TYPES.has(t.type));
 describe('columnLabel', () => {
   it('names the four shoe fields, which have no catalogue test behind them', () => {
     expect(columnLabel('releasedAt', undefined)).toBe('Released');
-    expect(columnLabel('score', undefined)).toBe('Score');
+    expect(columnLabel('score', undefined)).toBe('RunRepeat Score');
     expect(columnLabel('msrpGbp', undefined)).toBe('Price');
     expect(columnLabel('plate', undefined)).toBe('Plate');
   });
@@ -44,6 +44,15 @@ describe('columnLabel', () => {
 describe('shortLabel', () => {
   it('renames outsole durability to what it measures', () => {
     expect(shortLabel('outsole-durability', 'Outsole durability')).toBe('Outsole wear');
+  });
+
+  // It sits beside our own score now, so "Score" alone no longer says whose it is — and the full
+  // name is 63.5px against a 52px column, which is the same bind `shock-absorption-heel` is in.
+  it('shortens the RunRepeat score, whose full name overruns a phone column', () => {
+    expect(widestWordPx('RunRepeat')).toBeGreaterThan(MAX_LABEL_PX);
+    expect(shortLabel('score', columnLabel('score', undefined))).toBe('RR score');
+    expect(widestWordPx('RR score')).toBeLessThanOrEqual(MAX_LABEL_PX);
+    expect(lineCount('RR score')).toBeLessThanOrEqual(MAX_LABEL_LINES);
   });
 
   it('falls back to the real name when it already fits', () => {
