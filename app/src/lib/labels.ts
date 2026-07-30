@@ -118,3 +118,21 @@ export function lineCount(label: string, maxPx: number = MAX_LABEL_PX): number {
 export function shortLabel(key: string, fallback: string): string {
   return SHORT_LABELS[key] ?? fallback;
 }
+
+/**
+ * The noun a categorical reading takes on the phone's name line, where it is prose rather than a
+ * 53px header — so `SHORT_LABELS` is the wrong source ("Remv. insole" reads as an abbreviation in
+ * a sentence) and so is the catalogue name, because "Tongue: gusset type" already carries a colon
+ * and the line adds another (docs/app.md §Categorical columns).
+ *
+ * Only the tests that need one are listed; anything else falls back to its catalogue name, which
+ * is wordy but never wrong.
+ */
+const CHIP_LABELS: Record<string, string> = {
+  'tongue-gusset-type': 'Gusset',
+  'heel-tab': 'Heel tab',
+};
+
+export function chipLabel(key: string, test: LabTest | undefined): string {
+  return CHIP_LABELS[key] ?? columnLabel(key, test);
+}

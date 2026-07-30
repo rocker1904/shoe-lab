@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { categoricalEntries, categoricalValue, isCategorical } from './categorical';
+import { categoricalEntries, categoricalValue, isCategorical, isNegativeReading } from './categorical';
 import { indexTests } from './dataset';
 import { TESTS, shoe } from './test-fixtures';
 
@@ -35,6 +35,22 @@ describe('categoricalValue', () => {
   // name is the derived field, so the reading must not answer for it.
   it('is undefined for plate, which the shoe field owns', () => {
     expect(categoricalValue(shoe({ slug: 'a', values: { '69': true } }), 'plate', idx)).toBeUndefined();
+  });
+});
+
+describe('isNegativeReading', () => {
+  it('is true for a false bool and for the none choice', () => {
+    expect(isNegativeReading(shoe({ slug: 'a', values: { '41': false } }), 'removable-insole', idx)).toBe(true);
+    expect(isNegativeReading(shoe({ slug: 'a', values: { '39': 'none' } }), 'tongue-gusset-type', idx)).toBe(true);
+  });
+  it('is false for a reading that says something, and for no reading at all', () => {
+    expect(isNegativeReading(shoe({ slug: 'a', values: { '41': true } }), 'removable-insole', idx)).toBe(false);
+    expect(isNegativeReading(shoe({ slug: 'a', values: { '39': 'bootie' } }), 'tongue-gusset-type', idx)).toBe(false);
+    expect(isNegativeReading(shoe({ slug: 'a', values: {} }), 'tongue-gusset-type', idx)).toBe(false);
+  });
+  it('is false for a numeric column and for a column naming no test', () => {
+    expect(isNegativeReading(shoe({ slug: 'a', values: { '6': 0 } }), 'heel-stack', idx)).toBe(false);
+    expect(isNegativeReading(shoe({ slug: 'a' }), 'not-a-test', idx)).toBe(false);
   });
 });
 

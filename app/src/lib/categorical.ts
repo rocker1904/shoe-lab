@@ -38,6 +38,20 @@ export function categoricalValue(shoe: Shoe, key: string, idx: TestIndex): strin
   return label ?? String(raw);
 }
 
+/**
+ * Whether the reading says this shoe *has none of the thing* — a `false` bool, or the `none`
+ * choice both option tests spell that way. Distinct from having no reading at all: the desktop
+ * cell prints "None" where an unread shoe gets an em dash, while the phone's name line drops it,
+ * because "None · None · No" tells a reader nothing they came for
+ * (docs/app.md §Categorical columns).
+ */
+export function isNegativeReading(shoe: Shoe, key: string, idx: TestIndex): boolean {
+  const test = idx.bySlug.get(key);
+  if (!isCategorical(test)) return false;
+  const raw = shoe.values[String(test!.id)];
+  return raw === false || raw === 'none';
+}
+
 /** The categorical columns the picker offers, in catalogue order. Reads the same rule as every
  *  other caller, so a field-owned slug cannot be offered twice. */
 export function categoricalEntries(tests: LabTest[]): { key: string; label: string; groupId: string | null }[] {

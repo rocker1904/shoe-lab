@@ -4,9 +4,9 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
-  import { categoricalValue } from '../lib/categorical';
+  import { categoricalValue, isNegativeReading } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
-  import { columnLabel, shortLabel } from '../lib/labels';
+  import { chipLabel, columnLabel, shortLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
@@ -72,10 +72,17 @@
       out.push({ key: 'plate', text: s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate' });
     }
     // Categorical readings hold words too, so they belong on this line rather than in the numeric
-    // value row (docs/app.md §Categorical columns). A shoe with no reading contributes nothing.
+    // value row (docs/app.md §Categorical columns). Two things this line does that a cell does not:
+    // it drops an absence, because prose listing what a shoe lacks is noise where a column has a
+    // header asking the question; and it names the column, because "Both sides (semi)" on its own
+    // answers a question nothing here asked. A bool needs no value at all — naming the feature is
+    // the whole reading.
     for (const col of view.columns) {
       const cat = categoricalValue(s, col, idx);
-      if (cat !== undefined) out.push({ key: col, text: cat });
+      if (cat === undefined || isNegativeReading(s, col, idx)) continue;
+      const test = idx.bySlug.get(col);
+      const label = chipLabel(col, test);
+      out.push({ key: col, text: test?.type === 'bool' ? label : `${label}: ${cat}` });
     }
     return out;
   }

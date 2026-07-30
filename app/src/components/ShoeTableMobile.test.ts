@@ -2,20 +2,21 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
 import { defaultView, type ViewState } from '../lib/urlstate';
-import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
+import { FLEET, TESTS, labTest, shoe } from '../lib/test-fixtures';
 import type { ScoreColumns } from '../lib/score';
-import type { Shoe, ShoesFile } from '../../../shared/types.js';
+import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';
 
 // A test whose real name is one `labels.ts` shortens, so the mobile header can be shown to use the
 // short one rather than the catalogue name.
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns } = {}) {
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns; tests?: LabTest[] } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['releasedAt', 'score', 'heel-stack', 'plate'];
-  const rendered = render(ShoeTableMobile, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
-    scores: over.scores ?? new Map(), stability: false } });
+  const rendered = render(ShoeTableMobile, {
+    props: { shoes: over.shoes ?? FLEET, data: over.tests ? { ...data, tests: over.tests } : data,
+      view, onchange, scores: over.scores ?? new Map(), stability: false } });
   return Object.assign(onchange, { rendered });
 }
 
@@ -89,19 +90,46 @@ describe('ShoeTableMobile categorical columns', () => {
     const strip = screen.getByText('gusseted').closest('tr')!;
     expect(strip.textContent).toContain('Both sides (semi)');
   });
+
+  // The value alone names no column: "Both sides (semi)" could be almost any reading, where
+  // "Finger loop" describes itself. One rule for both, since which is which is a judgement.
+  it('names the column an option reading answers', () => {
+    setup({ view: { columns: ['tongue-gusset-type'] },
+            shoes: [shoe({ slug: 'gusseted', values: { '39': 'both-sides-semi' } })] });
+    expect(screen.getByText('gusseted').closest('tr')!.textContent).toContain('Gusset: Both sides (semi)');
+  });
+
+  it('says a true bool as the feature it names, with no yes', () => {
+    setup({ view: { columns: ['removable-insole'] },
+            shoes: [shoe({ slug: 'insoled', values: { '41': true } })] });
+    const strip = screen.getByText('insoled').closest('tr')!;
+    expect(strip.textContent).toContain('Removable insole');
+    expect(strip.textContent).not.toContain('Yes');
+  });
+
+  // The desktop cell still prints None and No against an em dash for unread; this line is prose,
+  // and "None · None · No" tells the reader nothing they came for.
+  it('drops a reading that says the shoe has none of the thing', () => {
+    setup({ view: { columns: ['tongue-gusset-type', 'heel-tab', 'removable-insole'] },
+            shoes: [shoe({ slug: 'plain', values: { '39': 'none', '40': 'none', '41': false } })] });
+    expect(screen.getByText('plain').closest('tr')!.querySelectorAll('.meta')).toHaveLength(0);
+  });
   it('contributes nothing for a shoe with no reading', () => {
     setup({ view: { columns: ['tongue-gusset-type'] }, shoes: [shoe({ slug: 'bare', values: {} })] });
     expect(screen.getByText('bare').closest('tr')!.textContent).not.toContain('undefined');
   });
 
-  // Two readings that say the same word is the ordinary case — 265 shoes have no heel tab and 187
-  // no gusset — and keying the strip by its own text threw `each_key_duplicate`, which blanks the
-  // whole app rather than the row (docs/app.md §Categorical columns).
-  it('renders both readings when two categorical columns say the same word', () => {
-    setup({ view: { columns: ['tongue-gusset-type', 'heel-tab'] },
-            shoes: [shoe({ slug: 'plain', values: { '39': 'none', '40': 'none' } })] });
-    const strip = screen.getByText('plain').closest('tr')!;
-    expect(strip.querySelectorAll('.meta')).toHaveLength(2);
+  // Keying the strip by its own text threw `each_key_duplicate` and blanked the whole app rather
+  // than the row. Today's labels make two chips reading alike unreachable, so the catalogue here is
+  // bespoke: the invariant is that the *column* is the key, and it must outlive the label rules
+  // that currently happen to keep the texts apart (docs/app.md §Categorical columns).
+  it('renders both readings when two categorical columns say exactly the same thing', () => {
+    const twins = ['trim-a', 'trim-b'].map((slug, i) => labTest({
+      id: 900 + i, slug, name: 'Trim', type: 'option', options: [{ value: 'x', name: 'X' }] }));
+    setup({ tests: [...TESTS, ...twins], view: { columns: ['trim-a', 'trim-b'] },
+            shoes: [shoe({ slug: 'twinned', values: { '900': 'x', '901': 'x' } })] });
+    const strip = screen.getByText('twinned').closest('tr')!;
+    expect([...strip.querySelectorAll('.meta')].map((e) => e.textContent)).toEqual(['Trim: X', 'Trim: X']);
   });
 
   it('keeps the plate field on the name line for a shoe carrying the catalogue plate reading', () => {
