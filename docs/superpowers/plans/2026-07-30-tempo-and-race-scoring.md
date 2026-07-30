@@ -1,6 +1,6 @@
 # Tempo and Race Scoring Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Give Tempo and Race their own lab-measurement scores on the pipeline Easy already uses, and drop every threshold the two stories still carry.
 
@@ -695,9 +695,9 @@ Read `docs/README.md` first — forward-only.
 
 ### Task 11: Verify
 
-- [ ] **Step 1:** `npm run verify` → PASS, `src/lib/**` above 90% lines / 85% branches.
-- [ ] **Step 2:** `npm -w app run e2e` → PASS.
-- [ ] **Step 3: Look at it.** `npm -w app run dev`:
+- [x] **Step 1:** `npm run verify` → PASS, `src/lib/**` above 90% lines / 85% branches.
+- [x] **Step 2:** `npm -w app run e2e` → PASS.
+- [x] **Step 3: Look at it.** `npm -w app run dev`:
   - **Tempo** leads Megablast, EVO SL, ANTA Zone 2 90, and shows **no carbon shoe at all**.
   - **Race** leads Adios Pro Evo 3, Metaspeed Ray, Fast-R Nitro Elite 3; the top twelve are all carbon; **no filter chip is active**.
   - Ticking stability moves Easy and Tempo and leaves **Race's order and numbers identical**.
@@ -705,7 +705,7 @@ Read `docs/README.md` first — forward-only.
   - Expand a row with several score columns: one breakdown each, and the shared terms appear **in the same order** in every table.
 
   Easy's list is covered by Task 1's equivalence test rather than by eye — the baseline fixture is gone by then, so there is nothing to compare against on screen.
-- [ ] **Step 4:** Commit any fixes. **Do not push or merge.** Report and stop.
+- [x] **Step 4:** Commit any fixes. **Do not push or merge.** Report and stop.
 
 ---
 
