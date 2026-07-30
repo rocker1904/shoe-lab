@@ -31,6 +31,10 @@ describe('SetupStrip', () => {
   it('describes each story in a line, which the toolbar has no room for', () => {
     render(SetupStrip, { props: { ...props } });
     expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('Cushioned, durable, no carbon');
+    // Pinned for all three: these lines name what each score ranks on, so a story's terms changing
+    // without the copy changing is exactly the drift worth failing on.
+    expect(screen.getByRole('button', { name: /Tempo/ })).toHaveTextContent('Lively, light, lasts the season');
+    expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('Fastest, lightest, one day only');
     expect(screen.getByRole('button', { name: /All/ })).toHaveTextContent('Everything in the catalogue');
   });
 

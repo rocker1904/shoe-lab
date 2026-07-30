@@ -10,11 +10,13 @@ import { defaultView, type ViewState } from './urlstate';
  * second home for one of them.
  */
 
-/** Six numeric columns is the phone bound (docs/app.md §Columns and sorting), and each story spends
- *  them on its score and the terms behind it. Toebox width and stack are what the stories give up:
- *  neither is a term, and fit is the runner\'s own final filter rather than something a score speaks
- *  to. Easy and Tempo each leave one term out for want of a seventh slot — Easy outsole durability,
- *  Tempo shock absorption, which is the floor rather than the point. Race shows all three of its. */
+/** Six numeric columns is the phone bound (docs/app.md §Columns and sorting), spent on the story's
+ *  score and the terms behind it — but not uniformly, and the exceptions are deliberate. Race shows
+ *  all three of its terms. Tempo shows three of four, leaving out shock absorption, which is its
+ *  floor rather than its point. Easy shows two of three: it drops outsole durability and spends the
+ *  slot on weight, which is **not** an Easy term at all but is the number a runner compares trainers
+ *  by. Toebox width and stack are what every story gives up — neither is a term anywhere, and fit is
+ *  the runner's own final filter rather than something a score can speak to. */
 const easyColumns = (strike: Side) =>
   ['releasedAt', EASY.keys[strike], 'score', 'msrpGbp', sideKey('Shock absorption', strike),
     sideKey('Energy return', strike), 'weight', 'plate'];
@@ -25,12 +27,14 @@ const raceColumns = (strike: Side) =>
   ['releasedAt', RACE.keys[strike], 'score', 'msrpGbp',
     sideKey('Energy return', strike), 'weight', sideKey('Shock absorption', strike), 'plate'];
 
-export interface Preset { id: string; label: string; describe: string }
+/** No description here: the setup cards carry the only story copy a runner reads, and a second
+ *  wording nothing renders is a second home for one fact (docs/README.md §Rules). */
+export interface Preset { id: string; label: string }
 
 export const PRESETS: Preset[] = [
-  { id: 'easy', label: 'Easy', describe: 'The bulk of the week — ranked on cushioning, durability and how much the shoe gives back' },
-  { id: 'tempo', label: 'Tempo', describe: 'Fast twice a week — ranked on how much the shoe gives back, how little it weighs and how long the outsole lasts' },
-  { id: 'race', label: 'Race', describe: 'One day, one goal — ranked on how much the shoe gives back and how little it weighs, with nothing asked of durability' },
+  { id: 'easy', label: 'Easy' },
+  { id: 'tempo', label: 'Tempo' },
+  { id: 'race', label: 'Race' },
 ];
 
 /** The mapping `(story, strike) -> view`, with nothing special-cased. */

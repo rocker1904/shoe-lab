@@ -118,7 +118,7 @@ What it can do is catch a set of weights that has gone completely orthogonal to 
 session it names. Easy's top 30 carry `daily-running` 28 and 29 times out of 30
 against a 79% base rate, which is that check passing, not a target being hit.
 
-All three agree closely this way now. Tempo's top 30 carry `tempo` 20–24 times out of
+All three agree closely this way now. Tempo's top 30 carry `tempo` 19–23 times out of
 30 with `competition`-only at **0 of 30** on every side and toggle state, and Race's
 carry `competition` 27–28 times. A change to any weight should be scored this way
 before it lands, and a change that drops the figure sharply needs an argument.
@@ -199,7 +199,7 @@ Tempo bounds nothing. It resolves to the plate gate and the Tempo score descendi
 - **Shock absorption is a floor, and dropping it breaks the score.** Removing it
   separates Tempo from Easy nicely and then ranks barefoot shoes as tempo picks: with
   weight at 2 and no impact term, lightness runs away, and the Vibram FiveFingers V-Run
-  climbs from #180 to #11. So it earns its place for a completely different reason than
+  climbs 126 places, from #157 to #31 on heel. So it earns its place for a completely different reason than
   in Easy, where it is the primary comfort measure: here it is small **because** it is a
   floor, and it must exist **because** weight is large.
 - **The outsole cap is Easy's, and the durability *weight* does the work.** Tempo does
@@ -275,8 +275,8 @@ resolving to the Race score descending over the whole fleet.
   way — yet a marathon is two to four hours of loading at speed, and impact attenuation
   over that duration is real.
 - **Stability is not baked in, and the toggle does not reach Race at all.** This is
-  measured rather than assumed: at every usable weight the preference moves **one shoe in
-  fifteen** at the top, all the movement is in the middle and deep field, and what it
+  measured rather than assumed: at every usable weight the preference moves **one to three
+  shoes in fifteen** at the top, all the movement is in the middle and deep field, and what it
   promotes there is daily trainers; push it hard enough to matter and slow budget shoes
   climb. The cause is structural rather than a tuning failure — **race shoes are uniformly
   tall and narrow, so the category has no stable variant to surface.** There is no Race

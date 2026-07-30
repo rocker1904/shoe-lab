@@ -105,8 +105,9 @@ export interface ScoreVariant { anchors: Record<Side, Anchor> }
  * below 0 — which is correct and must not be clamped (docs/app.md §The story scores).
  */
 export interface ScoreDef {
-  /** The preset this score ranks, so `presets.ts` resolves a definition rather than re-listing. */
-  id: 'easy' | 'tempo' | 'race';
+  /** The preset this score ranks, so `presets.ts` resolves a definition rather than re-listing.
+   *  Deliberately `string`: the engine names no story, or a fourth one would be a change here. */
+  id: string;
   /** Synthetic column keys, from `DERIVED_SIDE_PAIRS` — the one home of a score key. */
   keys: Record<Side, string>;
   /** Editorial, and only meaningful because stage 2 makes weights control influence rather than

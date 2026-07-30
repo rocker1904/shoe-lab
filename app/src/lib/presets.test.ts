@@ -26,7 +26,6 @@ describe('presets', () => {
   it('declares exactly the three stories, with unique ids and labels', () => {
     expect(PRESETS.map((p) => p.id)).toEqual(['easy', 'tempo', 'race']);
     expect(PRESETS.map((p) => p.label)).toEqual(['Easy', 'Tempo', 'Race']);
-    expect(PRESETS.every((p) => p.describe.length > 0)).toBe(true);
   });
   it('returns a complete ViewState for every id, under either strike', () => {
     for (const strike of STRIKES) {

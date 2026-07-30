@@ -12,9 +12,9 @@
 
   const SIDES: { v: Side; label: string }[] = [{ v: 'heel', label: 'Heel' }, { v: 'forefoot', label: 'Forefoot' }];
   /**
-   * Deliberately cheap one-liners, and deliberately not `Preset.describe`: these are read once, at
-   * a glance, against each other, where `describe` is a sentence about a kind of run. BACKLOG.md
-   * item 1 may change what the stories are, and rewriting four short lines is the cheap half.
+   * The only story copy a runner reads, and the reason `Preset` carries no description of its own:
+   * these are read once, at a glance, against each other. They name what each score ranks on, so
+   * they go stale the moment a story's terms change — which is why they are four short lines.
    */
   const STORIES = [
     { id: 'all', label: 'All', desc: 'Everything in the catalogue' },

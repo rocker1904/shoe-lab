@@ -307,8 +307,8 @@ trap would hold the keyboard inside a panel that is no longer modal.
 ## Columns and sorting
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
-`msrpGbp`, `plate`), the two synthetic score keys `easy-score-heel` and
-`easy-score-forefoot` (docs/app.md §The story scores) and any test slug; `name` and
+`msrpGbp`, `plate`), the six synthetic score keys — two per story
+(docs/app.md §The story scores) — and any test slug; `name` and
 `brand` are rendered by the table itself and have no cell, so they are sortable
 but never columns.
 
@@ -929,11 +929,12 @@ still gives a group with nothing checked one tab stop.
 
 **The score is explained where it is changed.** The stability checkbox is the one
 control that alters the score, so the `?` beside its label opens the same
-`HelpPopover` the setup strip uses rather than a second mechanism. It says what the
-score reads, what it deliberately leaves out — price and release date, so the value
-call stays the runner's — that a shoe missing a measurement is unscored rather than
-zero, and that the scale is fixed to a dated fleet so a future shoe may read above
-100. No maths: docs/app.md §The story scores owns that, and a second copy would drift.
+`HelpPopover` the setup strip uses rather than a second mechanism. It says that each
+story ranks on measurements chosen for it and the breakdown names them, which stories
+the preference reaches and why race shoes have no stable variant to surface, what every
+score deliberately leaves out — price and release date, so the value call stays the
+runner's — that a shoe missing a measurement is unscored rather than zero, and that the
+scale is fixed to a dated fleet so a future shoe may read above 100. No maths: docs/app.md §The story scores owns that, and a second copy would drift.
 The checkbox's label is explicit rather than wrapping it, because a button inside a
 label is a click on the label: the help would toggle the preference it explains.
 
