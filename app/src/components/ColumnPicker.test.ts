@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ColumnPicker from './ColumnPicker.svelte';
 import { indexTests } from '../lib/dataset';
-import { EASY_SCORE_KEYS } from '../lib/score';
+import { EASY } from '../lib/score-defs';
 import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -68,7 +68,7 @@ describe('ColumnPicker metric entries', () => {
 
 describe('ColumnPicker and the Easy score', () => {
   it('offers a tickable score column per side, each naming its own', () => {
-    render(ColumnPicker, { props: { ...base, columns: [EASY_SCORE_KEYS.heel], onchange: vi.fn() } });
+    render(ColumnPicker, { props: { ...base, columns: [EASY.keys.heel], onchange: vi.fn() } });
     expect(screen.getByRole('checkbox', { name: /easy heel score/i })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /easy forefoot score/i })).not.toBeChecked();
   });

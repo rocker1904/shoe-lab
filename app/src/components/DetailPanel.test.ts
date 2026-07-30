@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 import DetailPanel from './DetailPanel.svelte';
-import { EASY_SCORE_KEYS } from '../lib/score';
+import { EASY } from '../lib/score-defs';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 
 const DATA: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 /** The panel now reads the view as well as the shoe, so the cases about the shoe's own copy share
  *  one baseline rather than repeating it. */
-const VIEW = { data: DATA, columns: [EASY_SCORE_KEYS.heel], stability: false };
+const VIEW = { data: DATA, columns: [EASY.keys.heel], stability: false };
 
 describe('DetailPanel', () => {
   it('renders full details', () => {
@@ -110,7 +110,7 @@ describe('DetailPanel facts and review language', () => {
 describe('DetailPanel Easy score breakdown', () => {
   const panel = (over: { slug?: string; columns?: string[]; stability?: boolean } = {}) => render(DetailPanel, {
     props: { shoe: FLEET.find((s) => s.slug === (over.slug ?? 'cushy'))!, data: DATA,
-             columns: over.columns ?? [EASY_SCORE_KEYS.heel], stability: over.stability ?? false },
+             columns: over.columns ?? [EASY.keys.heel], stability: over.stability ?? false },
   });
 
   it('breaks the Easy score into its terms, so a rank can be diagnosed', () => {
@@ -124,7 +124,7 @@ describe('DetailPanel Easy score breakdown', () => {
   // The panel reads the columns rather than a side of its own, so it can never explain a side the
   // table is not showing (docs/app.md §The story scores).
   it('breaks down every score column on screen, each named for its own side', () => {
-    const { container } = panel({ columns: [EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot] });
+    const { container } = panel({ columns: [EASY.keys.heel, EASY.keys.forefoot] });
     expect([...container.querySelectorAll('.score-breakdown h4')].map((h) => h.textContent))
       .toEqual(['Easy heel score', 'Easy forefoot score']);
     // Each reads its own half: cushy's forefoot shock absorption is 115 against 140 at the heel.

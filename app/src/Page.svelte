@@ -28,7 +28,8 @@
   import type { Side } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
-  import { EASY_SCORE_KEYS, easyScoreMap, type ScoreColumns } from './lib/score';
+  import { scoreMap, type ScoreColumns } from './lib/score';
+  import { EASY } from './lib/score-defs';
   import { projectSide, sideOf } from './lib/side';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
@@ -144,8 +145,8 @@
    * score is a further entry (docs/app.md §The story scores).
    */
   const scores = $derived<ScoreColumns>(new Map([
-    [EASY_SCORE_KEYS.heel, easyScoreMap(data.shoes, 'heel', view.stability, idx)],
-    [EASY_SCORE_KEYS.forefoot, easyScoreMap(data.shoes, 'forefoot', view.stability, idx)],
+    [EASY.keys.heel, scoreMap(EASY, data.shoes, 'heel', view.stability, idx)],
+    [EASY.keys.forefoot, scoreMap(EASY, data.shoes, 'forefoot', view.stability, idx)],
   ]));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
 

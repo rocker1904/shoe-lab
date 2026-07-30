@@ -1,163 +1,187 @@
 import type { Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
-import { derivedSideKey, sideKey, type Side } from './lineage';
+import { sideKey, type Side } from './lineage';
 
 /**
- * Every constant here is **frozen**: derived once from the fleet at `data/` commit baed23b and never
- * recomputed from the loaded catalogue. That is what makes a score comparable across refreshes, and
- * what lets a future shoe read above 100 rather than renormalising the improvement away. Recomputing
- * any of them from `shoes` reintroduces exactly the drift the design exists to remove — the reasoning
- * is owned by docs/decisions.md §Frozen scores and live thresholds, and the pipeline the constants
- * belong to by docs/app.md §The story scores.
+ * The story-agnostic engine: four stages, no story numbers. A story arrives as a `ScoreDef` from
+ * `score-defs.ts`, which owns every frozen constant that belongs to one — so this file imports
+ * nothing from there, and a fourth story is a fourth definition rather than a fourth code path
+ * (docs/app.md §The story scores).
  */
 
 /** Cosmetic: an uncapped linear factor cancels when the term is divided by its sd, so this sets the
  *  displayed term and never the ranking. Above the observed max so nothing clips. */
 export const SA_REF = 200;
+/** As `SA_REF`, and for the same reason: above the heaviest shoe in the fleet, so `1 − w/W_REF` is
+ *  linear in grams and never clips. */
+export const W_REF = 450;
 /** Outsole life (thickness/wear) past which the outsole is not the binding constraint — the midsole
- *  packing out is, and that is unmeasured. The one constant that changes an ordering. */
+ *  packing out is, and that is unmeasured. The one constant that changes an ordering.
+ *  Deliberately one number for every story: a per-story cap is the only thing that would let two
+ *  scores over one pool disagree about one measurement (docs/shoe-stories.md §Tempo). */
 export const L_OK = 3.0;
 /** p90 of each side's width/stack ratio. Per side because the halves are not on one scale: the
  *  minimalist tail caps out, a flat sandal genuinely being stable, while the real fleet stays spread. */
 export const WID_CAP: Record<Side, number> = { heel: 3.04, forefoot: 5.37 };
 
-export type EasyTermKey =
-  | 'shockAbsorption' | 'outsoleDurability' | 'energyReturn' | 'midsoleWidth' | 'heelCounter';
-
-export type EasyTerms = Record<EasyTermKey, number | null>;
+export type TermKey =
+  | 'energyReturn' | 'weight' | 'outsoleDurability' | 'shockAbsorption'
+  | 'midsoleWidth' | 'heelCounter';
 
 /**
- * The quantity a term's mapping reads, before the mapping. Two of the five terms **cap**, so past
+ * The order every breakdown reads in, whatever order a definition declares its weights — two score
+ * columns on screen would otherwise list their shared terms differently. It opens on Easy's
+ * existing order, so the engine changes neither what a runner sees nor the floating-point summation
+ * order that produced every published Easy score.
+ */
+export const TERM_ORDER: TermKey[] = [
+  'shockAbsorption', 'outsoleDurability', 'energyReturn', 'weight', 'midsoleWidth', 'heelCounter',
+];
+
+/**
+ * The quantity a term's mapping reads, before the mapping. Three of the six terms **cap**, so past
  * saturation the reading is not recoverable from the mapped value — and the breakdown exists to make
  * a surprising rank diagnosable, which it cannot do while the reading is hidden
  * (docs/app.md §The story scores).
  */
-export interface EasyReading {
+export interface Reading {
   value: number;
   /** Numerator and denominator where `value` is derived from two readings: the ratio alone does not
    *  say which of them moved. */
   over?: [number, number];
 }
 
-const reading = (v: number | undefined): EasyReading | null => (v === undefined ? null : { value: v });
+const reading = (v: number | undefined): Reading | null => (v === undefined ? null : { value: v });
 /** A zero denominator is an unmeasurable ratio, not an infinite one. */
-const ratio = (a: number | undefined, b: number | undefined): EasyReading | null =>
+const ratio = (a: number | undefined, b: number | undefined): Reading | null =>
   a === undefined || b === undefined || b === 0 ? null : { value: a / b, over: [a, b] };
 
-export function easyReadings(shoe: Shoe, side: Side, idx: TestIndex): Record<EasyTermKey, EasyReading | null> {
+/** Every term any story can read. A definition picks the ones it weights; the rest are ignored,
+ *  which is what lets three stories share one reader. */
+export function readings(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, Reading | null> {
   const v = (key: string) => numericValue(shoe, key, idx);
   return {
-    shockAbsorption: reading(v(sideKey('Shock absorption', side))),
     energyReturn: reading(v(sideKey('Energy return', side))),
+    // Sideless, unlike every other term: a shoe has one weight, not a heel and a forefoot one.
+    weight: reading(v('weight')),
     outsoleDurability: ratio(v('outsole-thickness'), v('outsole-durability')),
+    shockAbsorption: reading(v(sideKey('Shock absorption', side))),
     midsoleWidth: ratio(v(sideKey('Midsole width', side)), v(sideKey('Stack', side))),
     heelCounter: reading(v('heel-counter-stiffness')),
   };
 }
 
-/** Stage 1: each reading becomes 0–1 and linear in goodness, with its true zero preserved. */
-function mapReadings(r: Record<EasyTermKey, EasyReading | null>, side: Side): EasyTerms {
-  const map = (key: EasyTermKey, f: (x: number) => number): number | null => {
+/** Stage 1: each reading becomes 0–1 and linear in goodness, true zero preserved. Shared by every
+ *  story — a metric means the same thing whichever score reads it, which is also why two stories
+ *  over one pool share divisors (docs/app.md §The story scores). */
+export function terms(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, number | null> {
+  const r = readings(shoe, side, idx);
+  const map = (key: TermKey, f: (x: number) => number): number | null => {
     const raw = r[key];
     return raw === null ? null : f(raw.value);
   };
   return {
-    shockAbsorption: map('shockAbsorption', (x) => x / SA_REF),
     energyReturn: map('energyReturn', (x) => x / 100),
+    // Linear in grams, W_REF above the heaviest shoe so it never clips. Like SA_REF an uncapped
+    // linear factor, so stage 2 cancels it and it never moves a ranking.
+    weight: map('weight', (x) => 1 - x / W_REF),
     outsoleDurability: map('outsoleDurability', (x) => Math.min(x / L_OK, 1)),
+    shockAbsorption: map('shockAbsorption', (x) => x / SA_REF),
     midsoleWidth: map('midsoleWidth', (x) => Math.min(x / WID_CAP[side], 1)),
     heelCounter: map('heelCounter', (x) => (x - 1) / 4),
   };
 }
 
-export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
-  return mapReadings(easyReadings(shoe, side, idx), side);
+export interface Anchor { r0: number; r100: number }
+export interface ScoreVariant { anchors: Record<Side, Anchor> }
+
+/**
+ * One story's score, as data. The engine reads nothing story-specific, so a fourth story is a
+ * fourth definition rather than a fourth code path.
+ *
+ * There is deliberately **no pool predicate here.** The pool a definition's constants were derived
+ * over lives in the *name* of the divisor object; it does not gate computation. Every loaded shoe
+ * is scored against every definition, so a shoe outside a definition's pool can read above 100 or
+ * below 0 — which is correct and must not be clamped (docs/app.md §The story scores).
+ */
+export interface ScoreDef {
+  /** The preset this score ranks, so `presets.ts` resolves a definition rather than re-listing. */
+  id: 'easy' | 'tempo' | 'race';
+  /** Synthetic column keys, from `DERIVED_SIDE_PAIRS` — the one home of a score key. */
+  keys: Record<Side, string>;
+  /** Editorial, and only meaningful because stage 2 makes weights control influence rather than
+   *  each term's spread on its own mapped scale. */
+  weights: Partial<Record<TermKey, number>>;
+  /** Named for the pool it was derived over, never for the story: two stories over one pool share
+   *  this object by reference (docs/app.md §The story scores). */
+  sd: Record<Side, Partial<Record<TermKey, number>>>;
+  base: ScoreVariant;
+  /** Present exactly when the stability preference applies. Structural rather than a comment, so
+   *  the extra weights and the scale they anchor on cannot come from different halves. */
+  stable?: ScoreVariant & { add: Partial<Record<TermKey, number>> };
 }
 
-/**
- * The synthetic columns and sort keys, one per side. Not catalogue tests: their value depends on
- * the *view* — the stability preference decides how many terms there are — which is why `Page`
- * resolves them into maps and hands them down rather than letting `numericValue` answer for them.
- * Two self-describing keys rather than one resolved through the *derived* side: a column that names
- * its own side cannot disagree with the panel beside it, and a view naming no side needs no silent
- * fallback (docs/app.md §The story scores).
- */
-export const EASY_SCORE_KEYS: Record<Side, string> = {
-  heel: derivedSideKey('Easy score', 'heel'), forefoot: derivedSideKey('Easy score', 'forefoot'),
-};
+export interface Contribution { key: TermKey; raw: Reading; term: number; weighted: number }
 
 /**
+ * The synthetic columns and sort keys, one per side per story. Not catalogue tests: their value
+ * depends on the *view* — the stability preference decides how many terms there are — which is why
+ * `Page` resolves them into maps and hands them down rather than letting `numericValue` answer for
+ * them. Two self-describing keys per story rather than one resolved through the *derived* side: a
+ * column that names its own side cannot disagree with the panel beside it, and a view naming no
+ * side needs no silent fallback (docs/app.md §The story scores).
+ *
  * Every resolved score column: column key to slug to score. Keyed by column rather than passed as
- * one map per consumer, so Tempo's and Race's scores arrive as further **entries** and no signature
- * moves when they do (BACKLOG.md).
+ * one map per consumer, so a further story arrives as further **entries** and no signature moves.
  */
 export type ScoreColumns = Map<string, Map<string, number>>;
 
-/** Editorial, and only meaningful because stage 2 makes weights control influence rather than
- *  each term's spread on its own mapped scale. */
-export const EASY_WEIGHTS: Record<EasyTermKey, number> = {
-  shockAbsorption: 2, outsoleDurability: 1, energyReturn: 1, midsoleWidth: 1, heelCounter: 1,
-};
+/** One predicate, so weights and anchors always come from the same variant. */
+function variantOf(def: ScoreDef, stability: boolean) {
+  const stable = stability ? def.stable : undefined;
+  return {
+    weights: stable ? { ...def.weights, ...stable.add } : def.weights,
+    anchors: (stable ?? def.base).anchors,
+  };
+}
 
-const BASE_TERMS: EasyTermKey[] = ['shockAbsorption', 'outsoleDurability', 'energyReturn'];
-const STABILITY_TERMS: EasyTermKey[] = ['midsoleWidth', 'heelCounter'];
-
-export const TERM_SD: Record<Side, Record<EasyTermKey, number>> = {
-  heel: {
-    shockAbsorption: 0.0896, outsoleDurability: 0.1614, energyReturn: 0.0758,
-    midsoleWidth: 0.0872, heelCounter: 0.2712,
-  },
-  forefoot: {
-    shockAbsorption: 0.0961, outsoleDurability: 0.1614, energyReturn: 0.0790,
-    midsoleWidth: 0.1133, heelCounter: 0.2712,
-  },
-};
-
-/** Per side *and* per stability state: the toggle changes what the score means, so putting both
- *  states on one scale would invite a comparison that is not meaningful. Derived by dividing by
- *  `TERM_SD` **as published above** rather than by the unrounded sds, or the endpoints miss 100 and
- *  0 by enough to see (they read 100.03 and −0.01 when the two disagree). */
-export const ANCHORS: Record<Side, Record<'on' | 'off', { r0: number; r100: number }>> = {
-  heel: { off: { r0: 3.7275, r100: 8.474 }, on: { r0: 4.3963, r100: 7.4104 } },
-  forefoot: { off: { r0: 3.7119, r100: 7.6771 }, on: { r0: 3.9456, r100: 6.567 } },
-};
-
-const termsFor = (stability: boolean): EasyTermKey[] =>
-  stability ? [...BASE_TERMS, ...STABILITY_TERMS] : BASE_TERMS;
-
-export function easyContributions(
-  shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
-): { key: EasyTermKey; raw: EasyReading; term: number; weighted: number }[] | null {
-  const readings = easyReadings(shoe, side, idx);
-  const mapped = mapReadings(readings, side);
-  const keys = termsFor(stability);
+export function contributions(
+  def: ScoreDef, shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
+): Contribution[] | null {
+  const raw = readings(shoe, side, idx);
+  const mapped = terms(shoe, side, idx);
+  const { weights } = variantOf(def, stability);
+  const keys = TERM_ORDER.filter((k) => weights[k] !== undefined);
   if (keys.some((k) => mapped[k] === null)) return null; // all-terms-required
   return keys.map((key) => ({
     key,
-    raw: readings[key]!,
+    raw: raw[key]!,
     term: mapped[key]!,
     // Stage 2 then 3. Dividing without centring keeps the true zero; the differing means only add a
     // constant to every shoe, which cannot reorder anything.
-    weighted: (EASY_WEIGHTS[key] * mapped[key]!) / TERM_SD[side][key],
+    weighted: (weights[key]! * mapped[key]!) / def.sd[side][key]!,
   }));
 }
 
-export function easyScore(shoe: Shoe, side: Side, stability: boolean, idx: TestIndex): number | null {
-  const rows = easyContributions(shoe, side, stability, idx);
+export function scoreOf(
+  def: ScoreDef, shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
+): number | null {
+  const rows = contributions(def, shoe, side, stability, idx);
   if (rows === null) return null;
-  const totalWeight = rows.reduce((sum, r) => sum + EASY_WEIGHTS[r.key], 0);
+  const { weights, anchors } = variantOf(def, stability);
+  const total = rows.reduce((sum, r) => sum + weights[r.key]!, 0);
   // A weighted mean rather than a sum, so adding the stability pair does not rescale the total.
-  const mean = rows.reduce((sum, r) => sum + r.weighted, 0) / totalWeight;
-  const { r0, r100 } = ANCHORS[side][stability ? 'on' : 'off'];
+  const mean = rows.reduce((sum, r) => sum + r.weighted, 0) / total;
+  const { r0, r100 } = anchors[side];
   return ((mean - r0) / (r100 - r0)) * 100;
 }
 
-export function easyScoreMap(
-  shoes: Shoe[], side: Side, stability: boolean, idx: TestIndex,
+export function scoreMap(
+  def: ScoreDef, shoes: Shoe[], side: Side, stability: boolean, idx: TestIndex,
 ): Map<string, number> {
   const out = new Map<string, number>();
   for (const s of shoes) {
-    const v = easyScore(s, side, stability, idx);
+    const v = scoreOf(def, s, side, stability, idx);
     if (v !== null) out.set(s.slug, v);
   }
   return out;

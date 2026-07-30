@@ -1,5 +1,5 @@
 import type { LabTest } from '../../../shared/types.js';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 
 /**
  * The header's first line. The four shoe fields that have cells carry no catalogue test behind
@@ -13,8 +13,8 @@ export function columnLabel(key: string, test: LabTest | undefined): string {
   if (key === 'score') return 'RunRepeat Score';
   if (key === 'msrpGbp') return 'Price';
   if (key === 'plate') return 'Plate';
-  if (key === EASY_SCORE_KEYS.heel) return 'Easy heel score';
-  if (key === EASY_SCORE_KEYS.forefoot) return 'Easy forefoot score';
+  if (key === EASY.keys.heel) return 'Easy heel score';
+  if (key === EASY.keys.forefoot) return 'Easy forefoot score';
   return test?.name ?? key;
 }
 

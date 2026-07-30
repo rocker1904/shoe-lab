@@ -3,7 +3,7 @@ import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
 import { CURATED_RANGE_KEYS, metricEntries, sideKey, type Side } from './lineage';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
@@ -43,9 +43,9 @@ export function defaultColumns(side: Side): string[] {
  */
 export const PLATES: Plate[] = ['none', 'plated-other', 'carbon'];
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate',
-  ...Object.values(EASY_SCORE_KEYS)]);
+  ...Object.values(EASY.keys)]);
 /** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
-const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...Object.values(EASY_SCORE_KEYS)]);
+const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...Object.values(EASY.keys)]);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 

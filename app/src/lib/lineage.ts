@@ -79,6 +79,20 @@ export function swapSide(slug: string, strike: Side): string {
   return pair ? pair[strike] : slug;
 }
 
+/** Every key that names one half of a side pair, and which half it is. Computed pairs count: a
+ *  table showing only the Easy heel score is about the heel, and saying otherwise would leave the
+ *  side control unmarked on a view that names its side in a column header. Lives here beside
+ *  `swapSide`, which searches the same list, rather than in `side.ts`: the score breakdown needs it
+ *  too, and `side.ts` imports `urlstate.ts`. */
+const SIDE_OF_KEY = new Map<string, Side>(
+  ALL_SIDE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
+
+/** The half `key` names, or null when it names no side. Declared rather than inferred from the
+ *  slug, as everything about a side is here. */
+export function sideOfKey(key: string): Side | null {
+  return SIDE_OF_KEY.get(key) ?? null;
+}
+
 const DECLARED_BY_SLUG = new Map((SIDE_PAIRS as readonly { label: string; forefoot: string; heel: string }[])
   .flatMap((p) => [[p.forefoot, p] as const, [p.heel, p] as const]));
 

@@ -7,7 +7,7 @@ import {
   RACE_ENERGY_RETURN_PERCENTILE, RACE_MAX_WEIGHT,
   TEMPO_ENERGY_RETURN_PERCENTILE, TEMPO_WEIGHT_PERCENTILE,
 } from './presets';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 import { sideOf } from './side';
 import { applyFilters } from './filters';
 import { quantile } from './stats';
@@ -116,10 +116,10 @@ describe('easy', () => {
       const v = applyPreset('easy', FLEET, idx, strike, false);
       expect(Object.keys(v.filters.ranges)).toEqual([]);
       expect(v.filters.plate).toEqual(['none', 'plated-other']);
-      expect(v.sort).toEqual({ key: EASY_SCORE_KEYS[strike], dir: 'desc' });
-      expect(v.columns).toContain(EASY_SCORE_KEYS[strike]);
+      expect(v.sort).toEqual({ key: EASY.keys[strike], dir: 'desc' });
+      expect(v.columns).toContain(EASY.keys[strike]);
       // The column names its own side, so nothing downstream has to derive one.
-      expect(v.columns).not.toContain(EASY_SCORE_KEYS[strike === 'heel' ? 'forefoot' : 'heel']);
+      expect(v.columns).not.toContain(EASY.keys[strike === 'heel' ? 'forefoot' : 'heel']);
     }
   });
 
@@ -241,7 +241,7 @@ describe('preset stories on the fixture fleet', () => {
     // No stack floor and no price cap: the score rewards cushioning directly, and value is the
     // runner's own call (docs/shoe-stories.md §Easy).
     expect(view.filters.ranges).toEqual({});
-    expect(view.sort).toEqual({ key: EASY_SCORE_KEYS.heel, dir: 'desc' });
+    expect(view.sort).toEqual({ key: EASY.keys.heel, dir: 'desc' });
     expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug))
       .toEqual(['cushy', 'trainer', 'oldie', 'mystery']);
   });

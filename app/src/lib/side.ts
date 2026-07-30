@@ -1,11 +1,5 @@
-import { ALL_SIDE_PAIRS, swapSide, type Side } from './lineage';
+import { sideOfKey, swapSide, type Side } from './lineage';
 import { defaultColumns, type ViewState } from './urlstate';
-
-/** Every key that names one half of a side pair, and which half it is. Computed pairs count: a
- *  table showing only the Easy heel score is about the heel, and saying otherwise would leave the
- *  side control unmarked on a view that names its side in a column header. */
-const SIDE_OF_KEY = new Map<string, Side>(
-  ALL_SIDE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
 
 /**
  * The side a view is *about*, or null when it does not commit to one. Derived rather than stored,
@@ -15,7 +9,7 @@ const SIDE_OF_KEY = new Map<string, Side>(
 export function sideOf(v: ViewState): Side | null {
   const used = new Set<Side>();
   for (const key of [...v.columns, ...Object.keys(v.filters.ranges), v.sort.key]) {
-    const side = SIDE_OF_KEY.get(key);
+    const side = sideOfKey(key);
     if (side) used.add(side);
   }
   return used.size === 1 ? [...used][0]! : null;
@@ -38,14 +32,14 @@ export function projectSide(v: ViewState, side: Side): ViewState {
   // Dedupe preserving order: a view can hold both halves of a pair, and both land on the same key.
   next.columns = [...new Set(v.columns.map((c) => swapSide(c, side)))];
   for (const key of Object.keys(next.filters.ranges)) {
-    const of = SIDE_OF_KEY.get(key);
-    if (of !== undefined && of !== side) delete next.filters.ranges[key];
+    const of = sideOfKey(key);
+    if (of !== null && of !== side) delete next.filters.ranges[key];
   }
   // Everything above maps onto `side`, so the only way to be unmarked here is to name no side at
   // all. Left alone that makes the control a dead button — and one that has just silently dropped
   // a bound. Giving it that side's measurements is the literal reading of what was clicked.
   if (sideOf(next) === null) {
-    next.columns = [...next.columns, ...defaultColumns(side).filter((k) => SIDE_OF_KEY.has(k))];
+    next.columns = [...next.columns, ...defaultColumns(side).filter((k) => sideOfKey(k) !== null)];
   }
   return next;
 }

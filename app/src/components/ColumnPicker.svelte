@@ -3,7 +3,7 @@
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
   import { metricEntries, type ResolvedMetric } from '../lib/lineage';
-  import { EASY_SCORE_KEYS } from '../lib/score';
+  import { EASY } from '../lib/score-defs';
 
   let { tests, groups, columns, onchange, population, idx, generations }: {
     tests: LabTest[]; groups: Record<string, string>; columns: string[];
@@ -17,7 +17,7 @@
    *  catalogue test, so `metricEntries` never offers them and `coverageOf` would read 0% — and
    *  without a home here the column a story sets could never be unticked. */
   const FIXED: [string, string][] = [['releasedAt', 'Release date'],
-    [EASY_SCORE_KEYS.heel, 'Easy heel score'], [EASY_SCORE_KEYS.forefoot, 'Easy forefoot score'],
+    [EASY.keys.heel, 'Easy heel score'], [EASY.keys.forefoot, 'Easy forefoot score'],
     ['score', 'RunRepeat Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];
 
   interface Offer { key: string; label: string }

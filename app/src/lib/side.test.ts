@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { projectSide, sideOf } from './side';
 import { defaultColumns, defaultView, type ViewState } from './urlstate';
 import type { Side } from './lineage';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 
 const base = (): ViewState => defaultView();
 const withCols = (cols: string[]): ViewState => ({ ...base(), columns: cols });
@@ -85,18 +85,18 @@ describe('the Easy score columns are side-paired like any other', () => {
   it('follows a side click, so a table cannot mix a heel score with forefoot measurements', () => {
     // side.ts's own rule: a column carries no number, so it follows rather than being dropped.
     // Before this, clicking Forefoot swapped the stack column and left "Easy heel score" beside it.
-    const v = withCols([EASY_SCORE_KEYS.heel, 'heel-stack']);
-    expect(projectSide(v, 'forefoot').columns).toEqual([EASY_SCORE_KEYS.forefoot, 'forefoot-stack']);
-    expect(projectSide(v, 'heel').columns).toEqual([EASY_SCORE_KEYS.heel, 'heel-stack']);
+    const v = withCols([EASY.keys.heel, 'heel-stack']);
+    expect(projectSide(v, 'forefoot').columns).toEqual([EASY.keys.forefoot, 'forefoot-stack']);
+    expect(projectSide(v, 'heel').columns).toEqual([EASY.keys.heel, 'heel-stack']);
   });
 
   it('follows the sort key too', () => {
-    const v: ViewState = { ...withCols([EASY_SCORE_KEYS.heel]), sort: { key: EASY_SCORE_KEYS.heel, dir: 'desc' } };
-    expect(projectSide(v, 'forefoot').sort.key).toBe(EASY_SCORE_KEYS.forefoot);
+    const v: ViewState = { ...withCols([EASY.keys.heel]), sort: { key: EASY.keys.heel, dir: 'desc' } };
+    expect(projectSide(v, 'forefoot').sort.key).toBe(EASY.keys.forefoot);
   });
 
   it('names a side on its own, so a score-only table is not sideless', () => {
-    for (const side of SIDES) expect(sideOf(withCols([EASY_SCORE_KEYS[side]]))).toBe(side);
-    expect(sideOf(withCols([EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot]))).toBeNull();
+    for (const side of SIDES) expect(sideOf(withCols([EASY.keys[side]]))).toBe(side);
+    expect(sideOf(withCols([EASY.keys.heel, EASY.keys.forefoot]))).toBeNull();
   });
 });

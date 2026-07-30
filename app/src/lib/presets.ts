@@ -1,7 +1,7 @@
 import type { Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
 import { sideKey, type Side } from './lineage';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 import { quantile } from './stats';
 import { defaultView, type ViewState } from './urlstate';
 
@@ -26,7 +26,7 @@ export const RACE_ENERGY_RETURN_PERCENTILE = 0.85;
  *  neither is a term, and fit is the runner's own final filter rather than something a score speaks
  *  to. Outsole durability is the term left out, for want of a seventh slot. */
 const easyColumns = (strike: Side) =>
-  ['releasedAt', EASY_SCORE_KEYS[strike], 'score', 'msrpGbp', sideKey('Shock absorption', strike),
+  ['releasedAt', EASY.keys[strike], 'score', 'msrpGbp', sideKey('Shock absorption', strike),
     sideKey('Energy return', strike), 'weight', 'plate'];
 const fastColumns = (strike: Side) =>
   ['releasedAt', 'score', 'msrpGbp', sideKey('Energy return', strike), 'weight', 'plate'];
@@ -62,7 +62,7 @@ export function applyPreset(
       // return, so a stack floor would restate what it already rewards, and price is deliberately
       // absent so the runner judges value themselves (docs/shoe-stories.md §Easy).
       v.filters.plate = ['none', 'plated-other'];
-      v.sort = { key: EASY_SCORE_KEYS[strike], dir: 'desc' };
+      v.sort = { key: EASY.keys[strike], dir: 'desc' };
       v.columns = easyColumns(strike);
       return v;
     }

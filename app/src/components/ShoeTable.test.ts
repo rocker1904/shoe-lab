@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
-import { EASY_SCORE_KEYS, type ScoreColumns } from '../lib/score';
+import { type ScoreColumns } from '../lib/score';
+import { EASY } from '../lib/score-defs';
 import { defaultView, type ViewState } from '../lib/urlstate';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
@@ -134,11 +135,11 @@ describe('ShoeTable', () => {
 
 describe('ShoeTable and the Easy score', () => {
   it('renders each score column from its own map, and a dash where it is unscored', () => {
-    const view = { ...defaultView(), columns: [EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot] };
+    const view = { ...defaultView(), columns: [EASY.keys.heel, EASY.keys.forefoot] };
     const { container } = render(ShoeTable, {
       props: { shoes: FLEET, data, view,
-               scores: new Map([[EASY_SCORE_KEYS.heel, new Map([['cushy', 87.412]])],
-                                [EASY_SCORE_KEYS.forefoot, new Map([['cushy', 71.238]])]]),
+               scores: new Map([[EASY.keys.heel, new Map([['cushy', 87.412]])],
+                                [EASY.keys.forefoot, new Map([['cushy', 71.238]])]]),
                stability: false, onchange: () => {} },
     });
     const cells = [...container.querySelectorAll('tbody tr td')].map((c) => c.textContent?.trim());

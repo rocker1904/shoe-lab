@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 import { defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './urlstate';
 import type { FilterState } from './filters';
 import { TESTS, labTest } from './test-fixtures';
@@ -388,7 +388,7 @@ describe('the stability preference', () => {
 
 describe('the synthetic Easy score as a view key', () => {
   it('accepts either side\'s score as a sort key and a column', () => {
-    for (const key of Object.values(EASY_SCORE_KEYS)) {
+    for (const key of Object.values(EASY.keys)) {
       expect(parseView(`sort=-${key}`, idx).sort).toEqual({ key, dir: 'desc' });
       expect(parseView(`cols=${key},weight`, idx).columns).toEqual([key, 'weight']);
     }

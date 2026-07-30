@@ -3,7 +3,8 @@
   import { displayNumber, indexTests, reviewUrl } from '../lib/dataset';
   import { columnLabel } from '../lib/labels';
   import type { Side } from '../lib/lineage';
-  import { EASY_SCORE_KEYS, easyContributions, type EasyReading, type EasyTermKey } from '../lib/score';
+  import { contributions, type Reading, type TermKey } from '../lib/score';
+  import { EASY } from '../lib/score-defs';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
   let { shoe, data, columns, stability }: {
@@ -17,22 +18,22 @@
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  const TERM_LABEL: Record<EasyTermKey, string> = {
+  const TERM_LABEL: Record<TermKey, string> = {
     shockAbsorption: 'Shock absorption', outsoleDurability: 'Outsole durability',
-    energyReturn: 'Energy return', midsoleWidth: 'Midsole width / stack',
+    energyReturn: 'Energy return', weight: 'Weight', midsoleWidth: 'Midsole width / stack',
     heelCounter: 'Heel counter stiffness',
   };
   const SIDES: Side[] = ['heel', 'forefoot'];
-  const breakdowns = $derived(SIDES.filter((s) => columns.includes(EASY_SCORE_KEYS[s])).map((side) => ({
+  const breakdowns = $derived(SIDES.filter((s) => columns.includes(EASY.keys[s])).map((side) => ({
     side,
     // The column's own header text, so the two are named by one function rather than two.
-    label: columnLabel(EASY_SCORE_KEYS[side], undefined),
-    terms: easyContributions(shoe, side, stability, idx),
+    label: columnLabel(EASY.keys[side], undefined),
+    terms: contributions(EASY, shoe, side, stability, idx),
   })));
   // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
   // mapped 1.0 alone says nothing about which reading put them there
   // (docs/app.md §The story scores).
-  const readingText = (r: EasyReading) => (r.over
+  const readingText = (r: Reading) => (r.over
     ? `${displayNumber(r.value)} = ${displayNumber(r.over[0])} / ${displayNumber(r.over[1])}`
     : displayNumber(r.value));
 

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import { columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
-import { EASY_SCORE_KEYS } from './score';
+import { EASY } from './score-defs';
 import { labTest } from './test-fixtures';
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: a hand-written fixture can never fail on a
@@ -112,8 +112,8 @@ describe('shortLabel', () => {
 
 describe('the synthetic Easy score', () => {
   it('names a score column per side, within the phone label bound', () => {
-    expect(columnLabel(EASY_SCORE_KEYS.heel, undefined)).toBe('Easy heel score');
-    expect(columnLabel(EASY_SCORE_KEYS.forefoot, undefined)).toBe('Easy forefoot score');
+    expect(columnLabel(EASY.keys.heel, undefined)).toBe('Easy heel score');
+    expect(columnLabel(EASY.keys.forefoot, undefined)).toBe('Easy forefoot score');
     // The catalogue-wide guards in this file iterate real tests, so the synthetic keys need their
     // own assertion or they are the column headers nothing width-checks.
     for (const label of ['Easy heel score', 'Easy forefoot score']) {
