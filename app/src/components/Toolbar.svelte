@@ -6,7 +6,7 @@
   import SideToggle from './SideToggle.svelte';
 
   let { side, onside, selected, counts, onstory, showFilters, onfilters, columns,
-        showGroups = true }: {
+        stability, onstability, showGroups = true }: {
     /** Derived in `Page.svelte`, never stored: null while the view names both halves or neither
      *  (docs/app.md §Presets). */
     side: Side | null; onside: (s: Side) => void;
@@ -20,6 +20,10 @@
     /** The column picker, passed through rather than imported: it needs the whole dataset, which
      *  the toolbar has no other reason to know about. */
     columns?: Snippet;
+    /** A property of the runner rather than of the search, so it lives on the bar, which persists,
+     *  rather than on the strip, which collapses for good on the first story click
+     *  (docs/app.md §Presets). */
+    stability: boolean; onstability: (v: boolean) => void;
     /** False while the setup strip is still asking both questions in words: the strip hands over to
      *  the bar rather than sharing the screen with it, or the four stories are on screen twice
      *  (docs/app.md §Presets). The actions stay either way — they are the bar's own. */
@@ -48,6 +52,13 @@
       </span>
     </div>
   {/if}
+  <label class="stability">
+    <input type="checkbox" checked={stability} onchange={(e) => onstability(e.currentTarget.checked)} />
+    <span>Stability matters to me</span>
+    <!-- Said rather than discovered: midsole width correlates 0.56 with weight and heel counter
+         stiffness 0.44, so opting in genuinely selects heavier shoes (docs/shoe-stories.md §Easy). -->
+    <small>Adds midsole width and heel counter stiffness to the Easy score. Stable shoes tend to be heavier.</small>
+  </label>
   <div class="actions">
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
             onclick={onfilters}>Filters</button>
@@ -60,6 +71,11 @@
              padding: var(--s2) var(--s5); background: var(--chrome); border-bottom: 1px solid var(--border); }
   .sep { width: 1px; align-self: stretch; background: var(--divider); }
   .actions { display: flex; align-items: center; gap: var(--s3); margin-left: auto; }
+  /* A grid so the caveat sits under the label rather than beside the box: it is a sentence, and on
+     one line it pushed the actions off the bar's first row at every width below 1200px. */
+  .stability { display: grid; grid-template-columns: auto 1fr; align-items: center;
+               gap: 0 var(--s2); font-size: var(--t-sm); cursor: pointer; }
+  .stability small { grid-column: 2; font-size: var(--t-xs); color: var(--text-dim); }
   .seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r-full); overflow: hidden; }
   .s { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); border: none;
        background: none; color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); white-space: nowrap; }

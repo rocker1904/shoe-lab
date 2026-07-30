@@ -7,6 +7,7 @@ const counts = new Map([['all', 450], ['easy', 150], ['tempo', 54], ['race', 39]
 const props = {
   side: 'heel' as Side | null, onside: vi.fn(), selected: 'all' as string | null, counts,
   onstory: vi.fn(), showFilters: false, onfilters: vi.fn(),
+  stability: false, onstability: vi.fn(),
 };
 
 describe('Toolbar', () => {
@@ -109,5 +110,21 @@ describe('Toolbar', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await fireEvent.click(toggle);
     expect(onfilters).toHaveBeenCalled();
+  });
+});
+
+describe('Toolbar stability preference', () => {
+  it('offers a stability preference and reports the change', async () => {
+    let got: boolean | undefined;
+    render(Toolbar, { props: { ...props, stability: false, onstability: (v: boolean) => { got = v; } } });
+    const box = screen.getByRole('checkbox', { name: /stability/i });
+    expect((box as HTMLInputElement).checked).toBe(false);
+    await fireEvent.click(box);
+    expect(got).toBe(true);
+  });
+
+  it('says out loud that stable shoes tend to be heavier', () => {
+    render(Toolbar, { props: { ...props } });
+    expect(screen.getByText(/tend to be heavier/i)).toBeInTheDocument();
   });
 });

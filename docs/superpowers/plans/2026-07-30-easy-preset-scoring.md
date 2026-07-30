@@ -1058,7 +1058,7 @@ git commit -m "Show what each term contributes to a shoe's Easy score"
 - Modify: `app/src/components/Toolbar.svelte`, `Toolbar.test.ts`
 - Modify: `app/src/Page.svelte`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 it('offers a stability preference and reports the change', () => {
@@ -1073,11 +1073,11 @@ it('offers a stability preference and reports the change', () => {
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- Toolbar.test.ts`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Add `stability: boolean` and `onstability: (v: boolean) => void` to `Toolbar`'s props and render:
 
@@ -1100,11 +1100,11 @@ Add the caveat beside it, because the correlation is real and should not surpris
 
 Pass `stability={view.stability}` and `onstability={setStability}` at the `Toolbar` call site. Because Task 5 made `applyPreset` and `allView` carry the flag, setting it must **not** clear the story or `All` mark — verify by hand in Task 12.
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npm -w app run test && npm run typecheck` → PASS. Existing `Toolbar` renders need the two new props.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/components/Toolbar.svelte app/src/components/Toolbar.test.ts app/src/Page.svelte

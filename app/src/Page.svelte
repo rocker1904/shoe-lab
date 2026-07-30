@@ -228,6 +228,12 @@
     stripOpen = false;
     setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, data.shoes, idx, workingSide, view.stability));
   }
+  /** A preference, so it does not clear the story or the `All` mark: `applyPreset` and `allView`
+   *  both carry it through, which is what keeps the mark derived rather than lost
+   *  (docs/app.md §Presets). */
+  function setStability(next: boolean) {
+    setView({ ...($state.snapshot(view) as ViewState), stability: next });
+  }
   function onShowMissing() {
     const next = structuredClone($state.snapshot(view)) as ViewState;
     next.filters.showMissing = next.filters.showMissing ? undefined : true;
@@ -265,6 +271,7 @@
        actions until it has been handed them (docs/app.md §Presets). -->
   <Toolbar side={sideMark} onside={onSide} {selected}
            counts={presetCounts} onstory={onStory} {showFilters} showGroups={!stripOpen}
+           stability={view.stability} onstability={setStability}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
