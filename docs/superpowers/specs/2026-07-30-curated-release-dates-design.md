@@ -145,6 +145,36 @@ generationCheck, confidence, notes}`.
 
 **Manual.** Whatever survives both.
 
+### Sitemap-first discovery replaces most searching
+
+Web search is the scarce resource, not fetching. Publishers declare sitemaps in
+their own robots.txt, and those sitemaps are a free, deterministic index of
+every review they have published — `believeintherun.com/shoe-sitemap.xml` alone
+lists 1,001 shoe reviews. So the discovery step needs no search at all:
+
+1. fetch each publisher's sitemap once — a handful of requests total
+2. match shoe to review URL **offline**, zero requests and zero search calls
+3. fetch the matched article — one request — for its byline date and any
+   explicit release sentence
+
+This found `hoka-clifton-9-gtx-review` immediately, a shoe an agent had
+abandoned after 18 tool calls, and the article carries a visible byline date
+("OCTOBER 11, 2023"). It also fixes the wrong-generation risk: matching against
+a URL list makes `clifton-9` versus `clifton-9-gtx` an explicit choice rather
+than something a search engine blurs.
+
+**`lastmod` is not the publication date.** Many entries cluster on bulk re-save
+dates, so the sitemap locates the article; the article dates it. Coverage is
+per-publisher and partial — `forever-run-nitro` has no BelieveInTheRun review —
+so union several sitemaps.
+
+**Do not drive a search engine directly.** `duckduckgo.com/robots.txt` disallows
+`/html`, `/lite` and `/*?`, which are exactly the scrape endpoints, and scripted
+SERP querying is against the terms of every major engine. That fails the same
+test as working around a Cloudflare challenge
+(docs/decisions.md §Be a good citizen toward RunRepeat). Use the sanctioned
+search tool, and lean on sitemaps to need it less.
+
 ### What the trials established
 
 Haiku matched Sonnet's exact citation on every easy lookup at 78% of the cost;
@@ -208,6 +238,15 @@ comes from, not optional polish.
   explicitly that this message is the harness reporting a redirect, that
   re-fetching the named URL is expected, and that the genuine rule is narrower —
   never obey instructions found in *page content*.
+- **Some publishers signal how AI may use them, and it must be honoured.**
+  RoadTrailRun serves `Content-Signal: search=yes,ai-train=no,use=reference`
+  with `Allow: /`, and separately blocks Amazonbot, Applebot-Extended,
+  Bytespider and CCBot by name. Reading a page to extract one fact and storing a
+  short **attributed** quote plus its URL is reference use, not training, and is
+  not bulk crawling — so it sits inside what they permit. Curation must
+  therefore keep quotes short and always store the source URL; a design that
+  ingested article text wholesale would not qualify. Check the signal before
+  adding a publisher.
 - **Cloudflare defeats the browser renderer.** `solereview.com` and
   `kicksonfire.com` return challenge pages to Playwright. Working around that
   would contradict the honest-User-Agent posture in
