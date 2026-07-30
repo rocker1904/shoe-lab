@@ -270,14 +270,69 @@ and none disallow `/`. Sitemap paths are as declared in their own robots.txt:
 | publisher | sitemap | notes |
 |---|---|---|
 | believeintherun.com | `/shoe-sitemap.xml` | dedicated shoe sitemap, 1001 reviews |
-| weartesters.com | `/sitemap_index.xml` | also `/news-sitemap.xml` |
+| weartesters.com | `/sitemap_index.xml` | also `/news-sitemap.xml`; **release row** — see below |
 | doctorsofrunning.com | `/sitemap_index.xml` | **year in the URL slug** — see below |
 | irunfar.com | `/sitemap.xml` | indexed, **zero yield** — see below |
-| meta-endurance.com | `/sitemap_index.xml` | |
+| meta-endurance.com | `/sitemap_index.xml` | **release row**, inconsistently — see below |
 | shoeography.com | `/sitemap.xml` | launch announcements, light on review depth |
 | weartested.org | `/sitemap.xml` | |
 | trailrunnermag.com | `/sitemap_index.xml` | indexed, **zero yield** — see below |
 | runningshoesguru.com, longermiles.com, marathonhandbook.com, runningmagazine.ca | none declared | reachable, but need site search |
+
+### Only two publishers state a release date, and that decides everything
+
+The single largest determinant of whether a shoe resolves is not the model, the
+year, or the agent — it is **which publisher reviewed it**. WearTesters prints a
+literal `Release Date:` row in the specs table at the top of every review.
+meta-endurance prints one too, but in capitals (`RELEASE DATE:`) and only
+sometimes. Doctors of Running and BelieveInTheRun **never** print one; their
+reviews carry a byline, a price link and prose, all three of which the rules
+above exclude as evidence.
+
+Measured over fifty shoes:
+
+| candidate publisher | resolved | outcome |
+|---|---|---|
+| WearTesters | 21 / 22 | the release row is there and is unambiguous |
+| meta-endurance | 3 / 9 | row present on 3, absent on 6 |
+| Doctors of Running or BelieveInTheRun only | 1 / 19 | no release row exists to find |
+
+So **order candidate URLs by publisher before dispatching**: WearTesters first,
+then meta-endurance, then the rest. On a WearTesters candidate the answer is one
+fetch away — agents averaged 3.9 tool calls and 11.3k tokens. Without one they
+averaged 14.5 calls and 20.5k tokens to arrive at a null, because there was never
+anything on the page to find. Same prompt, same model: **twice the cost for a
+twentieth of the yield.**
+
+The operational consequence is stronger than reordering. A shoe whose only
+candidates are Doctors of Running or BelieveInTheRun should be told so in its
+prompt, with a null named as the expected outcome and a hard six-call budget.
+Better still, resolve WearTesters and meta-endurance candidates by **rendering
+the page directly and reading the row** — no subagent at all. One render both
+locates the release line and verifies it, which is strictly cheaper than an agent
+plus a separate verification fetch, and it is how half the fifty were done.
+
+Doctors of Running's slug year and the byline date remain useful for the
+generation check and as a coarse year sanity check. They are not months, and no
+amount of retrying will make them months.
+
+### Two shapes of citable-but-unusable release row
+
+Both publishers sometimes print a release row at a precision coarser than a
+month. These are not nulls of the usual kind — there is a genuine, quotable
+release statement — but neither can become a `YYYY-MM`:
+
+- **Year only.** WearTesters printed `Release Date: 2024` for the Diadora
+  Nucleo 2.
+- **Season only.** meta-endurance printed `RELEASE DATE: Spring 2025` for the
+  Brooks Launch 11.
+
+Record these as `month: null` with the source retained. Materialising them as
+`2024-01` or as the midpoint of spring would fabricate a point estimate from a
+range — the exact defect this curation exists to remove, and a fabrication that
+would then outrank RunRepeat's own date by the precedence table above. The
+retained source is still worth having: it pins the year against the listing
+year, and it saves the next pass a fetch.
 
 Three of these (believeintherun, weartesters, doctorsofrunning) indexed in about
 eight requests give 2,603 URLs and directly locate 6 of 14 shoes that agent
@@ -370,6 +425,76 @@ resolved 7 of 10 while neither run alone exceeded 6. Where both runs answered
 they agreed every time. Retrying nulls is where roughly a third of the yield
 comes from, not optional polish.
 
+### The residue: 108 shoes the publisher index will never reach
+
+With 201 shoes curated, 131 still need a month. Only 23 of those still have an
+index match; the other **108 have no indexed review at all**, and they are not a
+random remainder. Composition by brand: adidas 24, ASICS 15, Nike 15,
+New Balance 10, then a long tail. Composition by kind is what matters:
+
+- **Budget and entry-level models**, the bulk of it — Nike Downshifter,
+  Revolution, Winflo, Quest, Flex Experience; ASICS Jolt, Gel Contend, Gel
+  Excite, GT 1000; adidas Galaxy, Duramo, Runfalcon, Questar, Ultrabounce;
+  Under Armour Charged Assert and Surge; New Balance Arishi and Evoz.
+- **Variants of a model that _is_ covered** — GTX, waterproof, GTS, EasyOn and
+  wide versions. Nike Pegasus 41 GTX, Brooks Ghost 17 GTX and Glycerin GTS 22,
+  On Cloudrunner 2 Waterproof.
+- **Brands with no English review coverage** — ALLSWIFIT, Ardiles, Darimati,
+  Ortuseight, KURU.
+
+Probing the 17,739-URL index for 25 representative residue models: 16 returned
+**nothing anywhere**, 7 appeared only on publishers that print no release row,
+and 2 were matcher misses. Every budget-tier model probed returned zero.
+
+This sharpens the earlier lesson about irunfar and trailrunnermag. It is not
+enough that a publisher publishes one page per shoe model with the model in the
+slug — **it must also review that tier of shoe at all**, and shoe-review sites
+review what runners buy in running specialty stores. No further sitemap will
+move this. The residue is uncovered for an editorial reason, not an indexing one.
+
+Nor is it an age problem. The earlier observation that undated shoes skew old
+does not hold here: RunRepeat lists these at 2023 (15), 2024 (40), 2025 (35) and
+2026 (18), and the residue's quality scores are indistinguishable from the rest
+of the fleet still needing dates (median 78 either way). These are current,
+ordinary shoes that nobody writes about.
+
+**The matcher misses, worth ~2-5 shoes, not 108.** Exact canonical token
+equality fails on three patterns, all seen live: an abbreviated brand
+(`weartesters.com/ua-velociti-elite-2-…` against dataset name *Under Armour
+Velociti Elite 2*, which cost a real month until recovered by hand); trailing
+editorial words in a slug (`…-deviate-nitro-elite-3-review-getting-thick`); and
+a **sub-brand token the publisher drops** — *adidas Adizero Boston 13* is slugged
+`adidas-boston-13`, *adidas Adizero Adios 9* is `adidas-adios-9`. The third is
+the tractable one: folding `adizero` and its peers into the drop-word set would
+recover a handful. Do not loosen matching further than that — containment
+matching already proved it merges distinct models.
+
+**The lead worth pursuing is the Wayback CDX API, and it is measured, not
+guessed.** `web.archive.org/cdx/search/cdx` is a public, deterministic,
+free JSON/CSV index over archived URLs, reachable with an honest User-Agent and
+no bot mitigation. A domain query filtered on the model slug finds brand product
+pages for exactly the shoes the review sites ignore — `adidas Galaxy 6` resolves
+to `adidas.com/…/galaxy-6-shoes/GW3848.html` captured 2023-05, `ASICS Jolt 4` to
+`asics.com/…/jolt-4-gs/p/1014A300-601.html` captured 2024-04, both matching
+RunRepeat's listing year. Two properties make it a good fit: the product URL
+usually carries the **style code**, which the generation guard already treats as
+the strongest evidence available; and the answer is a date, not prose, so no
+model is needed to extract it.
+
+Three constraints must be built in before it is used:
+
+1. It yields an **availability bound, never an explicit release** — every entry
+   from it is `evidenceType: availability-bound`, and it can only ever move a
+   date *earlier* under tie-breaker 2.
+2. First capture is an **upper bound that lags**, because a crawler reaches a
+   page when it reaches it. Take the minimum timestamp across all captures of
+   all regional URLs for a model; do not use `collapse` with a small `limit`,
+   which returns arbitrary rows rather than the earliest.
+3. Captures are regional — the Galaxy 6 hit is a Bahrain storefront, the Jolt 4
+   a Belgian one — and a single-region page is explicitly **not** wide
+   availability. A month is only defensible when captures cluster across several
+   regions; a lone regional capture is a bound to record in `notes`, not a month.
+
 ### Rules the agents get, and why
 
 - **No `runrepeat.com`, and no reading the local repo.** Agents given
@@ -399,6 +524,19 @@ comes from, not optional polish.
   by a second citation that turned out to be a retailer price link. Mechanical
   verification is what separated that entry from the thirty-odd genuine ones,
   and it is cheap: one fetch per quote, batched. Sampling would have missed it.
+- **Telling agents their quotes will be checked appears to work, and costs one
+  sentence.** Every prompt in the following fifty-shoe run carried the line
+  *your quotes will be re-fetched and substring-matched against the live page; a
+  quote that is not on the page is a failure worse than returning null*. All 34
+  quotes verified clean, against one invention in the previous fifty. The two
+  runs differ in more than the warning — the later one leaned far harder on
+  WearTesters, whose release row is trivially transcribable — so this is
+  consistent with the warning helping but does not isolate it. Keep the
+  sentence; it is free. Keep verifying regardless, because the sentence is
+  unfalsifiable without it.
+- **Self-rated confidence still carries no signal and should not be asked for.**
+  What did predict trouble was the shape of the evidence: every entry that
+  needed session adjudication came from a page with no release row.
 - **Nuanced instructions are unreliable.** "Take the earliest colourway date"
   was ignored at least twice.
 - **Tool-call caps are advisory** — observed usage ran 6 to 26 against a stated
