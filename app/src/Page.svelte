@@ -120,7 +120,16 @@
   }
   function onDrawerKey(e: KeyboardEvent) {
     if (!showFilters) return;
-    if (e.key === 'Escape') { closeFilters(); return; }
+    if (e.key === 'Escape') {
+      // The Add-filter dialog renders into `<body>` (docs/app.md §Stacking order), so it is no
+      // longer a descendant that vanishes with this drawer — and a click on the strip of drawer
+      // above or below it can put focus back in here while it is still open. Closing the drawer
+      // then would leave a modal floating over the table with no opener behind it, so the dialog
+      // answers Escape first and the drawer waits its turn.
+      if (document.querySelector('[role="dialog"][aria-label="Add filter"]')) return;
+      closeFilters();
+      return;
+    }
     if (e.key !== 'Tab') return;
     // An open drawer covers the page it sits over, so without a trap Tab walks straight out into
     // controls the runner cannot see (docs/app.md §Filters).

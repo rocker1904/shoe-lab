@@ -190,9 +190,9 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
   expect(wide.zoneY).toBe(wide.actionsY);
   expect(wide.sepShown).toBe(true);
   // And nothing scrolls sideways: the content track is capped and the table's headers wrap.
-  // `toBeLessThanOrEqual`, not `toBe`: the claim is "no sideways scroll", and a document narrower
-  // than the viewport satisfies it just as well. `toBe` also failed whenever the font stack merely
-  // moved, which is not this assertion's business (docs/app.md §Table presentation).
+  // `toBeLessThanOrEqual` states that claim; `toBe` additionally asserted "and the scrollport is
+  // exactly the viewport", which is a fact about the runner's scrollbars
+  // (docs/app.md §Table presentation).
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1200);
 
   await page.setViewportSize({ width: 700, height: 800 });

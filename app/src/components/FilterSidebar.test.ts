@@ -155,8 +155,10 @@ describe('FilterSidebar text and toggle controls', () => {
     await open(screen.getByRole('button', { name: /Released after/ }));
     await fireEvent.click(screen.getByRole('button', { name: 'Previous year' }));
     await fireEvent.click(screen.getByRole('radio', { name: 'March' }));
-    const year = new Date().getFullYear() - 1;
-    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(`${year}-03-01`);
+    // The picker opens on the newest shoe the fleet has, not on today: reading the clock here made
+    // this pass only for as long as the fixture's last release year happened to be the current one.
+    const newest = Math.max(...FLEET.map((s) => Number(s.releasedAt?.slice(0, 4) ?? 0)));
+    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(`${newest - 1}-03-01`);
   });
 
   it('clears the released-after bound from the Any chip, which is the only control that can', async () => {
@@ -164,8 +166,8 @@ describe('FilterSidebar text and toggle controls', () => {
     view.filters.releasedAfter = '2024-03-01';
     const onchange = vi.fn();
     const { container } = render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
-    // Scoped to the release section rather than taken by index: "Any" also names the brand and
-    // discontinued controls, so a positional match would silently follow their order.
+    // Scoped to the release section rather than taken by index, so that a second control named
+    // "Any" arriving in this sidebar cannot silently retarget the click.
     const section = [...container.querySelectorAll('section')]
       .find((s) => s.querySelector('h3')?.textContent === 'Released after')!;
     await fireEvent.click(within(section).getByRole('button', { name: 'Any' }));

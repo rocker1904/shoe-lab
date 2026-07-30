@@ -197,8 +197,8 @@ held it. The node itself is moved to `<body>` on mount; §Stacking order says
 why. That is also why this dialog, alone among the panels here, does **not**
 stop Escape from propagating: living outside the drawer, it is not on a bubble
 path that reaches the drawer's key handler, so there is no second dismissal to
-suppress. The month picker and the help popover still do stop it, because they
-are genuinely inside the sidebar.
+suppress. The month picker still does stop it, because its panel is a real
+descendant of the drawer.
 
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half
@@ -447,13 +447,16 @@ rendering takes over and there is no horizontal scroll at all.
 
 The e2e assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`.
 Equality tested more than the claim: a document *narrower* than the viewport
-scrolls sideways just as little, and the exact figure is the font stack's, so
-the assertion also failed whenever those metrics merely moved. Relaxing it is
-not what fixed the red build — the plate label was. Note what this does **not**
-cover: the e2e fixture is five shoes with short names, and its `scrollWidth` is
-1200 with the long label or the short one, so nothing in the suite reproduces
-the overflow this section describes. The bound is measured against the real
-fleet and recorded here, not guarded.
+scrolls sideways just as little, and `scrollWidth` falls below the viewport
+whenever the runner draws a classic scrollbar. The two forms agree in headless
+Chromium, where a fitting document reports exactly 1200 — this is a statement
+of the claim, not a bug fix.
+
+**The overflow above is measured, not guarded.** The e2e fixture is five shoes
+with one-word names, and its `scrollWidth` is 1200 with the long plate label or
+the short one, so no test in the suite reproduces the 10px the real fleet
+overran by. Widening the fixture is what a guard would take, and the counts and
+score values that every other e2e assertion pins are what makes that expensive.
 
 The name cell is a
 plain `table-cell` with an inner flex row, because `display: flex` on a `td`
@@ -1196,19 +1199,29 @@ early, so it cannot rebuild the view.
 
 ## Stacking order
 
-One scale, read as a whole, because a z-index only ever means something next to
-its siblings:
+**Not one scale — a tree.** A z-index only ever means something next to its
+siblings, and three of the boxes here are stacking contexts of their own, so
+the numbers inside them are not comparable with the numbers outside. Read the
+indentation, not the column:
 
-| Layer | z-index |
-|---|---|
-| sticky shoe-name column | 1 |
-| pinned `thead` (its name cell, 3) | 2 |
-| pinned chrome — header and toolbar | 5 |
-| column picker panel | 10 |
-| help popover, and the month picker's panel | 20 |
-| filter drawer, below 800px | 30 |
-| Add-filter dialog | 35 |
-| skip link | 40 |
+| Layer | z-index | Ranked against |
+|---|---|---|
+| sticky shoe-name column | 1 | the page |
+| pinned `thead` (its name cell, 3) | 2 | the page |
+| **pinned chrome** — header and toolbar | 5 | the page |
+| ↳ column picker panel | 10 | *the chrome's children only* |
+| **sidebar** — sticky, so a context at `z-index: auto` | — | the page, at 0 |
+| ↳ help popover, month picker panel | 20 | *the sidebar's children only* |
+| filter drawer, below 800px | 30 | the page |
+| Add-filter dialog | 35 | the page |
+| skip link | 40 | the page |
+
+So the column picker's 10 does **not** outrank the chrome's 5 — it is inside
+it, and rides wherever the chrome goes. The month picker's 20 does not outrank
+the drawer's 30 for the same reason. Only the unindented rows can be compared
+with one another. The help popover is in the chrome and the setup strip rather
+than the sidebar, but it shares the sidebar picker's number and its constraint:
+both only ever have to clear their own siblings.
 
 **A modal has to be a child of `<body>`, or its number is not on this scale at
 all.** `position: sticky` creates a stacking context whatever its z-index, so

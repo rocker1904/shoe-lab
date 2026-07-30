@@ -28,13 +28,12 @@ export function roving(node: HTMLElement): { destroy(): void } {
    * months outside the fleet (docs/app.md §Released after is month-granular). The four older groups
    * disable nothing, so this changes none of them.
    */
-  const radios = (): HTMLElement[] =>
-    [...node.querySelectorAll<HTMLElement>('[role="radio"]')]
-      .filter((r) => !(r as HTMLButtonElement).disabled);
+  const all = (): HTMLElement[] => [...node.querySelectorAll<HTMLElement>('[role="radio"]')];
+  const radios = (): HTMLElement[] => all().filter((r) => !(r as HTMLButtonElement).disabled);
   /** Cleared across *every* radio, not just the steppable ones: a radio disabled while it held the
    *  tab stop would otherwise keep it, which is the unreachable group this guards against. */
   const mark = (active: HTMLElement | undefined): void => {
-    for (const r of node.querySelectorAll<HTMLElement>('[role="radio"]')) r.tabIndex = r === active ? 0 : -1;
+    for (const r of all()) r.tabIndex = r === active ? 0 : -1;
   };
   /** The tab stop is whatever is checked; a group with nothing checked still needs one way in. */
   const sync = (): void => {

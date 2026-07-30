@@ -6,7 +6,7 @@ deploy key. Everything runs on `ubuntu-latest` with the `.nvmrc` Node and
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main` | typecheck, lint, doc check, both suites with coverage, Playwright smoke in three engines |
+| `ci.yml` | PRs, pushes to `main` | typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
 | `deploy.yml` | Push to `main` touching `app/`, `shared/`, `data/shoes.json` or itself, + dispatch | builds the app, publishes to Pages |
@@ -28,7 +28,10 @@ none of `input type="month"` and a Chromium-only suite reported the release
 filter working when it was a bare text box in both
 (docs/app.md §Released after is month-granular).
 
-On CI the two extra engines cost a measured 26s to install and 7s to run.
+On CI the two extra engines cost 23–54s to install across the runs measured so
+far — the spread is the runner's apt cache, not the payload — and about a second
+of test time, since the four cross-browser tests run alongside the smoke suite
+rather than after it.
 
 **WebKit does not launch on a distribution Playwright supports only through
 apt.** Its bundle wants 19 sonames pinned to Ubuntu 24.04 — `libicu*.so.74`,

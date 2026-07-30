@@ -108,13 +108,14 @@
    * The picker offers only months the fleet actually spans. Derived from the loaded shoes rather
    * than frozen: this is an affordance, not a score constant, so
    * docs/decisions.md §Frozen scores and live thresholds does not apply — the brand list and every
-   * histogram beside it are derived the same way. The fallback covers a fleet with no dated shoe
-   * at all, where a picker offering nothing would be worse than one offering this year.
+   * histogram beside it are derived the same way. The fallback covers a fleet with no dated shoe at
+   * all: a whole year, both ends, because collapsing min onto max would disable eleven months and
+   * both steppers and leave a picker that offers only January.
    */
   const fleetRange = $derived.by(() => {
     const dated = data.shoes.map((s) => s.releasedAt).filter((d): d is string => !!d).sort();
-    const thisYear = `${new Date().getFullYear()}-01-01`;
-    return { min: dated[0] ?? thisYear, max: dated.at(-1) ?? thisYear };
+    const year = new Date().getFullYear();
+    return { min: dated[0] ?? `${year}-01-01`, max: dated.at(-1) ?? `${year}-12-01` };
   });
 
   /** The readings themselves: the row trims its own axis to p2–p98 and snaps a drag to values that

@@ -11,8 +11,8 @@ test('bounds the fleet by release month without a native month input', async ({ 
   await page.goto('/');
   await expect(page.getByText('5 of 5 shoes')).toBeVisible();
 
-  // The control that was a bare text box in these two engines. Nothing on the page may be the
-  // native input any more, in any of the three.
+  // The control that was a bare text box in these two engines. Chromium does not run this file, so
+  // the same claim is made against jsdom in `FilterSidebar.test.ts`.
   await expect(page.locator('input[type="month"]')).toHaveCount(0);
 
   const trigger = page.getByRole('button', { name: /Released after/ });

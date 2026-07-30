@@ -1,7 +1,7 @@
 import type { ReleaseDateSource } from '../../../shared/types.js';
 
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'];
+  'July', 'August', 'September', 'October', 'November', 'December'] as const;
 
 /**
  * Month precision for every source but `listing`, which only ever knew a year

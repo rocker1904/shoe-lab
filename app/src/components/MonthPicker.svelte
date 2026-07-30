@@ -8,7 +8,9 @@
     value: string | undefined;
     /** The fleet's own first and last release dates — the picker offers nothing outside them. */
     min: string; max: string;
-    onchange: (iso: string | undefined) => void;
+    /** Only ever a bound. Clearing belongs to the Any chip beside the trigger, which is the one
+     *  control that can unset a date (docs/app.md §Released after is month-granular). */
+    onchange: (iso: string) => void;
   } = $props();
 
   /** Emitted only while the panel exists: an IDREF naming a node that is not in the document is an
@@ -61,8 +63,9 @@
   }
   function onkeydown(e: KeyboardEvent) {
     if (e.key !== 'Escape') return;
-    // Below 800px the sidebar is itself a drawer, so one Escape must not dismiss both — the same
-    // reason HelpPopover and AddFilterDialog stop it (docs/app.md §Filters).
+    // Below 800px the sidebar is itself a drawer with its own Escape handler, and this panel is a
+    // real descendant of it — so without this, one Escape would shut the picker and the drawer
+    // around it (docs/app.md §Filters).
     e.stopPropagation();
     close();
   }
@@ -164,7 +167,7 @@
   .trigger:hover { border-color: var(--accent); }
   .caret { color: var(--text-dim); font-size: var(--t-xs); }
   /* Absolute inside the sidebar, not portalled to `<body>` like the Add-filter dialog: this panel
-     is 240px inside a 260px column so it never reaches the table, and the section it hangs from
+     is the width of the column it sits in, so it never reaches the table, and the section it hangs from
      sits near the top of the sidebar's scroll content, so it is never clipped
      (docs/app.md §Stacking order). 20 matches HelpPopover — both only have to clear their siblings. */
   /* `width: 100%` with `border-box`, not a fixed width: the sidebar is a scroll container, so
