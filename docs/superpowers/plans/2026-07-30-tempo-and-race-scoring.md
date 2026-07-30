@@ -4,61 +4,60 @@
 
 **Goal:** Give Tempo and Race their own lab-measurement scores on the pipeline Easy already uses, and drop every threshold the two stories still carry.
 
-**Architecture:** `score.ts` currently hard-codes Easy. Task 1 turns it into a **story-agnostic engine plus a declarative `ScoreDef`**, with Easy re-expressed as one definition and every published score proved bit-identical. Tasks 2–3 add Tempo and Race. The extension point is genuinely one definition plus one `DERIVED_SIDE_PAIRS` entry: a registry (`SCORE_DEFS`, `defForKey`, `defForPreset`) means no consumer enumerates the stories.
+**Architecture:** `score.ts` currently hard-codes Easy. Task 1 turns it into a **story-agnostic engine plus a declarative `ScoreDef`**, with Easy re-expressed as one definition and every published score proved bit-identical. Tasks 2–3 add Tempo and Race. The extension point is one definition plus one `DERIVED_SIDE_PAIRS` entry: a registry (`SCORE_DEFS`, `defForKey`, `defForPreset`) means no consumer enumerates the stories.
 
 **Tech Stack:** TypeScript, Svelte 5 (runes), Vitest, Playwright. Zero runtime dependencies.
 
 ## Global Constraints
 
 - **Specs:** `docs/superpowers/specs/2026-07-30-tempo-scoring-design.md` and `…-race-scoring-design.md`. Where this plan and a spec disagree, stop and ask.
-- **TDD:** failing test first; a red phase only counts if the test *ran* and failed on its assertion.
+- **TDD:** failing test first. **Exception, stated once:** where a task introduces a brand-new export, the red phase legitimately fails on module resolution rather than an assertion — that counts. Everywhere else the test must run and fail on its assertion.
+- **Filtered test command:** `npm -w app run test -- src/lib/score.test.ts`. Use the workspace `test` script, **not** root `test:coverage` — a filtered run trips the 90/85 thresholds.
 - **Docs ride the change.**
-- **`npm run check:docs` resolves `§` pointers inside source comments too.** A `§` must name a real heading and must not wrap across a newline.
-- **The docs heading is already `docs/app.md §The story scores`.** It was `§The Easy score` and was renamed ahead of this plan, along with all 29 pointers across `docs/app.md`, `docs/shoe-stories.md`, `docs/decisions.md`, `BACKLOG.md`, nine source and test files and the frozen specs — doing it inside Task 1 would have left the gate red for the whole task. **Write `§The story scores` in every comment and doc you touch.** The section still describes only Easy; Task 10 generalises its content.
+- **`npm run check:docs` resolves `§` pointers inside source comments.** A `§` must name a real heading and must not wrap across a newline.
+- **The docs heading is already `docs/app.md §The story scores`** — renamed ahead of this plan along with all 33 pointers, because doing it inside a task would leave the gate red for that task's duration. Write `§The story scores` in every comment and doc you touch. The section still describes only Easy; Task 10 generalises it.
+- **`npm run verify` is `check:docs && typecheck && lint && test:coverage`.** Lint runs before tests, and `@typescript-eslint/no-unused-vars` is an **error** — deleting a test usually strands an import or helper, so each deletion task lists its lint casualties.
 - **Commits:** single-line subjects, no embedded measurements, trailer `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`.
 - **Worktree:** `~/dev/shoe-lab-tempo-scoring`, branch `tempo-scoring`. Do not regenerate `data/`. Do not push or merge.
 - **Never recompute a frozen constant from the loaded fleet** (docs/decisions.md §Frozen scores and live thresholds).
-- **Gate:** `npm run verify` then `npm -w app run e2e`.
 
-### The frozen constants
+### The frozen constants, in full
 
-Divisors belong to a **pool**, never to a story. Easy and Tempo rank the plate-filtered pool and therefore **share one object by reference**; Race ranks the whole fleet, where carbon widens every spread.
+Divisors belong to a **pool**, never to a story. Easy and Tempo rank the plate-filtered pool and **share one object by reference**; Race ranks the whole fleet, where carbon widens every spread. `PLATED_POOL_SD` carries all six terms; `weights` decides which are read, so Easy simply ignores `weight`. That is what lets the two share one object.
 
 ```
 mapping constants (stage 1, engine-owned, global)
-  SA_REF = 200    W_REF = 450 (new)    L_OK = 3.0    WID_CAP  heel 3.04  forefoot 5.37
+  SA_REF = 200      W_REF = 450      L_OK = 3.0      WID_CAP  heel 3.04  forefoot 5.37
 
-PLATED_POOL_SD — 378 shoes, plate ≠ carbon        heel      forefoot
-  energyReturn                                    0.0758    0.0790
-  weight                                          0.0776    0.0776
-  outsoleDurability                               0.1614    0.1614
-  shockAbsorption                                 0.0896    0.0961
-  midsoleWidth                                    0.0872    0.1133
-  heelCounter                                     0.2712    0.2712
+PLATED_POOL_SD — 378 shoes, plate ≠ carbon       heel      forefoot
+  energyReturn                                   0.0758    0.0790
+  weight                                         0.0776    0.0776
+  outsoleDurability                              0.1614    0.1614
+  shockAbsorption                                0.0896    0.0961
+  midsoleWidth                                   0.0872    0.1133
+  heelCounter                                    0.2712    0.2712
 
-WHOLE_FLEET_SD — 450 shoes                        heel      forefoot
-  energyReturn                                    0.0902    0.0900
-  weight                                          0.0904    0.0904
-  shockAbsorption                                 0.0902    0.0930
+WHOLE_FLEET_SD — 450 shoes                       heel      forefoot
+  energyReturn                                   0.0902    0.0900
+  weight                                         0.0904    0.0904
+  shockAbsorption                                0.0902    0.0930
 
-anchors
-  easy   base heel 3.7275 / 8.4740   fore 3.7119 / 7.6771
-         stable heel 4.3963 / 7.4104   fore 3.9456 / 6.5670
-  tempo  base heel 4.7625 / 7.9385   fore 4.5415 / 7.6499
-         stable heel 5.0514 / 7.3590   fore 4.7002 / 6.8820
-  race   base heel 3.7787 / 8.5477   fore 3.9800 / 8.6001      (no stable variant)
+anchors, as { r0, r100 }
+  easy   base   heel { 3.7275, 8.4740 }   forefoot { 3.7119, 7.6771 }
+         stable heel { 4.3963, 7.4104 }   forefoot { 3.9456, 6.5670 }
+  tempo  base   heel { 4.7625, 7.9385 }   forefoot { 4.5415, 7.6499 }
+         stable heel { 5.0514, 7.3590 }   forefoot { 4.7002, 6.8820 }
+  race   base   heel { 3.7787, 8.5477 }   forefoot { 3.9800, 8.6001 }   (no stable variant)
 
-weights                   ER   WT   DUR   SA   | stability adds (each)
-  easy                     1    —     1    2   |   1
-  tempo                    3    2     2    1   |   1
-  race                     3    2     —    1   |   none
+weights                    ER   WT   DUR   SA   | stable.add (each)
+  easy                      1    —     1    2   |   1
+  tempo                     3    2     2    1   |   1
+  race                      3    2     —    1   |   none
 ```
-
-`PLATED_POOL_SD` carries all six terms; `weights` decides which are read, so Easy simply ignores `weight`. That is what lets Easy and Tempo share one object.
 
 ### One thing that is easy to misread
 
-The **pool defines where a definition's constants came from; it does not gate computation.** `Page` scores every loaded shoe against every definition, so a carbon shoe does get an Easy score — it is filtered out of Easy's *view* by the plate filter. Already true today. A shoe outside a definition's pool can therefore score above 100 or below 0, which is correct and **must not be clamped**. There is deliberately **no `pool` predicate on `ScoreDef`** — a callable would invite exactly that mistake. The pool lives in the *name* of the divisor constant instead.
+The **pool defines where a definition's constants came from; it does not gate computation.** `Page` scores every loaded shoe against every definition, so a carbon shoe gets an Easy score — it is filtered out of Easy's *view* by the plate filter. Already true today. A shoe outside a definition's pool can therefore read above 100 or below 0, which is correct and **must not be clamped**. There is deliberately **no `pool` predicate on `ScoreDef`** — a callable would invite exactly that mistake. The pool lives in the *name* of the divisor constant instead.
 
 ---
 
@@ -66,57 +65,77 @@ The **pool defines where a definition's constants came from; it does not gate co
 
 | file | responsibility |
 |---|---|
-| `app/src/lib/score.ts` | **the engine.** `TermKey`, mapping constants, `readings`, `terms`, `ScoreDef`, `contributions`, `scoreOf`, `scoreMap`, `ScoreColumns`, `TERM_ORDER`. No story-specific numbers, and it imports nothing from `score-defs.ts` |
-| `app/src/lib/score-defs.ts` | **new.** `PLATED_POOL_SD`, `WHOLE_FLEET_SD`, the three defs, `SCORE_DEFS`, `defForKey`, `defForPreset`. Data plus lookups |
-| `app/src/lib/side.ts` | exports `sideOfKey` so nothing re-derives a side from a slug suffix |
-| `app/src/lib/lineage.ts` | two more `DERIVED_SIDE_PAIRS` entries (added in Tasks 2 and 3, with their definitions) |
-| `app/src/lib/labels.ts`, `direction.ts`, `urlstate.ts` | **derive** from `DERIVED_SIDE_PAIRS` rather than enumerating stories |
-| `app/src/lib/presets.ts` | Tempo and Race resolve to score sorts, bounds dropped; all three `describe` strings rewritten |
+| `app/src/lib/score.ts` | **the engine.** `TermKey`, `TERM_ORDER`, mapping constants, `readings`, `terms`, `ScoreDef`, `contributions`, `scoreOf`, `scoreMap`, `ScoreColumns`. No story numbers; imports nothing from `score-defs.ts` |
+| `app/src/lib/score-defs.ts` | **new.** `PLATED_POOL_SD`, `WHOLE_FLEET_SD`, the three defs, `SCORE_DEFS`, `defForKey`, `defForPreset` |
+| `app/src/lib/lineage.ts` | two more `DERIVED_SIDE_PAIRS` entries (Tasks 2, 3); gains `sideOfKey` |
+| `app/src/lib/labels.ts`, `direction.ts`, `urlstate.ts` | **derive** from `DERIVED_SIDE_PAIRS` |
 | `app/src/Page.svelte` | resolve score maps by iterating `SCORE_DEFS` |
+| `app/src/lib/presets.ts` | Tempo gains a plate gate, both lose their bounds, all three `describe` strings rewritten |
+| `app/src/components/SetupStrip.svelte` | the three card `desc` strings, which still promise price caps |
 | `app/src/components/ColumnPicker.svelte` | score columns derived, labelled through `columnLabel` |
-| `app/src/components/Toolbar.svelte` | the label, the caption **and** the popover stop being Easy-specific |
+| `app/src/components/Toolbar.svelte` | label, caption and popover stop being Easy-specific |
 | `app/src/components/DetailPanel.svelte` | one breakdown per score column present, keyed by column key |
 
 ---
 
 ### Task 0: Baseline and a regression fixture
 
+Task 1 transcribes ~30 frozen numbers into a new file, so transcription error is the real risk and endpoint checks would not catch a wrong middle.
+
 - [ ] **Step 1:** `cd ~/dev/shoe-lab-tempo-scoring && npm install`
-- [ ] **Step 2:** `npm run verify` → PASS. `npm -w app run e2e` → PASS. If either fails, stop and report.
-- [ ] **Step 3: Capture Easy's exact current output.** Task 1 transcribes ~20 frozen constants into a new file, so transcription error is the real risk and endpoint checks will not catch a wrong middle. Write a throwaway script that imports the *current* `easyScoreMap` and dumps all four (side, stability) combinations over the plate-filtered pool to `app/src/lib/__fixtures__/easy-scores-baseline.json` — `{ "heel:off": { slug: number, … }, … }`, 283 entries each.
+- [ ] **Step 2:** `npm run verify` → PASS; `npm -w app run e2e` → PASS. If either fails, stop and report.
+- [ ] **Step 3: Capture Easy's exact current output.** `tsx` is not a dependency and node cannot import `score.ts`, so the only working route is a vitest scratch test. Create `app/src/lib/baseline.scratch.test.ts` (matches the `src/**/*.test.ts` include):
+
+```typescript
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { describe, it } from 'vitest';
+// Read data/shoes.json exactly as score.test.ts does — fileURLToPath, not a bare URL, because
+// jsdom replaces the global URL.
+import { easyScoreMap } from './score';
+
+it('writes the baseline', () => {
+  const out: Record<string, Record<string, number>> = {};
+  const POOL = REAL.shoes.filter((s) => s.plate !== 'carbon');
+  for (const side of ['heel', 'forefoot'] as const) {
+    for (const stability of [false, true]) {
+      out[`${side}:${stability ? 'on' : 'off'}`] =
+        Object.fromEntries(easyScoreMap(POOL, side, stability, realIdx));
+    }
+  }
+  mkdirSync(fileURLToPath(new URL('./__fixtures__/', import.meta.url)), { recursive: true });
+  writeFileSync(fileURLToPath(new URL('./__fixtures__/easy-scores-baseline.json', import.meta.url)),
+                JSON.stringify(out));
+});
+```
+
+Copy `REAL`/`realIdx` from the top of `score.test.ts`. Run `npm -w app run test -- src/lib/baseline.scratch.test.ts`, then **delete the scratch file** — leaving it would break Task 1's gate, since it imports the retired `easyScoreMap`.
 
 ```bash
-# run it however is convenient (vitest scratch test, tsx, whatever), then:
+rm app/src/lib/baseline.scratch.test.ts
 git add app/src/lib/__fixtures__/easy-scores-baseline.json
 git commit -m "Capture the Easy scores the refactor must reproduce"
 ```
 
-This fixture is deleted at the end of Task 1. It exists to make Task 1's headline claim a check rather than a claim.
+The fixture is deleted at the end of Task 1. (`moduleResolution: bundler` implies `resolveJsonModule`, so importing it type-checks; v8 coverage excludes `.json` and eslint never sees it.)
 
 ---
 
 ### Task 1: Generalise the engine, with Easy's output proved unchanged
 
-**Files:** `app/src/lib/score.ts`, new `app/src/lib/score-defs.ts`, `app/src/lib/side.ts`, `score.test.ts`, `side.test.ts`, `docs/app.md` (+ every `§The story scores` pointer), and every importer.
+**Interfaces produced:** `TermKey`, `TERM_ORDER`, `Reading`, `readings`, **`terms`**, `Anchor`, `ScoreVariant`, `ScoreDef`, `Contribution`, `contributions`, `scoreOf`, `scoreMap`, `ScoreColumns`; `sideOfKey` from `lineage.ts`; `EASY`, `SCORE_DEFS`, `defForKey`, `defForPreset` from `score-defs.ts`.
 
-**Interfaces produced:**
-- `type TermKey = 'energyReturn' | 'weight' | 'outsoleDurability' | 'shockAbsorption' | 'midsoleWidth' | 'heelCounter'`
-- `interface Reading { value: number; over?: [number, number] }`
-- `readings(shoe, side, idx): Record<TermKey, Reading | null>`
-- **`terms(shoe, side, idx): Record<TermKey, number | null>`** — the mapped terms, story-agnostic. **This replaces `easyTerms` and the ten existing unit tests re-point at it**; without it those tests have no entry point, because `contributions` returns `null` wholesale whenever a weighted term is missing and never surfaces unweighted terms.
-- `ScoreDef`, `ScoreVariant`, `Anchor`, `Contribution`, `contributions`, `scoreOf`, `scoreMap`, `ScoreColumns`, `TERM_ORDER`
-- `sideOfKey(key): Side | null` from `side.ts`
-- `EASY`, `SCORE_DEFS`, `defForKey`, `defForPreset` from `score-defs.ts`
-- **Retired:** `EasyTermKey`, `EasyTerms`, `EasyReading`, `easyReadings`, `easyTerms`, `EASY_WEIGHTS`, `TERM_SD`, `ANCHORS`, `easyContributions`, `easyScore`, `easyScoreMap`, **and `EASY_SCORE_KEYS`** — keeping the last as an alias would give one story's keys a special name the other two lack, which is how `TEMPO_SCORE_KEYS` gets written next. Consumers read `EASY.keys`.
+**Retired:** `EasyTermKey`, `EasyTerms`, `EasyReading`, `easyReadings`, `easyTerms`, `EASY_WEIGHTS`, `TERM_SD`, `ANCHORS`, `easyContributions`, `easyScore`, `easyScoreMap`, **`EASY_SCORE_KEYS`**. `terms` exists precisely because ten current tests call `easyTerms` and `contributions` cannot serve them — it returns `null` wholesale when any weighted term is missing and never surfaces unweighted terms.
 
-- [ ] **Step 1: Write the equivalence test**
+- [ ] **Step 1: The equivalence test**
 
 ```typescript
 import BASELINE from './__fixtures__/easy-scores-baseline.json';
 
 it('reproduces every published Easy score exactly', () => {
-  // Task 1 is a refactor. The arithmetic and its summation order are unchanged, so bit-equality is
-  // the right bar — endpoint checks would pass while a mistyped divisor moved the whole middle.
+  // A refactor. TERM_ORDER is chosen so Easy's summation order is byte-for-byte what it is today,
+  // which is why bit-equality is the right bar — endpoint checks would pass while a mistyped
+  // divisor moved the whole middle of the fleet.
   const POOL = REAL.shoes.filter((s) => s.plate !== 'carbon');
   for (const side of SIDES) {
     for (const stability of [false, true]) {
@@ -129,11 +148,11 @@ it('reproduces every published Easy score exactly', () => {
 });
 ```
 
-- [ ] **Step 2:** Run → FAIL (`scoreMap`/`EASY` not exported).
+- [ ] **Step 2:** Run → FAIL on module resolution (`scoreMap`/`EASY` not exported). Permitted red phase, per the Global Constraints.
 
-- [ ] **Step 3: Rewrite `score.ts` as the engine**
+- [ ] **Step 3: `score.ts` becomes the engine**
 
-**All four mapping constants stay here**, beside `mapReadings` that uses them — they are stage 1 of the pipeline, not story data, and the Tempo spec is explicit that a per-story `L_OK` is the one thing that would let two scores over one pool disagree about one measurement. Moving them to `score-defs.ts` would also create an import cycle, since `score-defs.ts` must import the types from here.
+All four mapping constants **stay here**, beside the `terms` that uses them: they are stage 1 of the pipeline, not story data — the Tempo spec is explicit that a per-story `L_OK` is the one thing that would let two scores over one pool disagree about one measurement — and moving them would create a cycle, since `score-defs.ts` must import types from here.
 
 ```typescript
 export const SA_REF = 200;
@@ -145,26 +164,66 @@ export type TermKey =
   | 'energyReturn' | 'weight' | 'outsoleDurability' | 'shockAbsorption'
   | 'midsoleWidth' | 'heelCounter';
 
-/** The order every breakdown reads in, whatever order a definition happens to declare its weights.
- *  Two score columns on screen at once would otherwise list their shared terms differently. */
+/**
+ * The order every breakdown reads in, whatever order a definition declares its weights — two score
+ * columns on screen would otherwise list their shared terms differently. **It opens on Easy's
+ * existing order**, so the refactor changes neither what a runner sees nor the floating-point
+ * summation order, and the equivalence test can demand bit-equality.
+ */
 export const TERM_ORDER: TermKey[] = [
-  'shockAbsorption', 'energyReturn', 'weight', 'outsoleDurability', 'midsoleWidth', 'heelCounter',
+  'shockAbsorption', 'outsoleDurability', 'energyReturn', 'weight', 'midsoleWidth', 'heelCounter',
 ];
 
-export function readings(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, Reading | null> { … }
+export interface Reading { value: number; over?: [number, number] }
+
+const reading = (v: number | undefined): Reading | null => (v === undefined ? null : { value: v });
+/** A zero denominator is an unmeasurable ratio, not an infinite one. */
+const ratio = (a: number | undefined, b: number | undefined): Reading | null =>
+  a === undefined || b === undefined || b === 0 ? null : { value: a / b, over: [a, b] };
+
+/** Every term any story can read. A definition picks the ones it weights; the rest are ignored,
+ *  which is what lets three stories share one reader. */
+export function readings(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, Reading | null> {
+  const v = (key: string) => numericValue(shoe, key, idx);
+  return {
+    energyReturn: reading(v(sideKey('Energy return', side))),
+    // Sideless, unlike every other term: a shoe has one weight, not a heel and a forefoot one.
+    weight: reading(v('weight')),
+    outsoleDurability: ratio(v('outsole-thickness'), v('outsole-durability')),
+    shockAbsorption: reading(v(sideKey('Shock absorption', side))),
+    midsoleWidth: ratio(v(sideKey('Midsole width', side)), v(sideKey('Stack', side))),
+    heelCounter: reading(v('heel-counter-stiffness')),
+  };
+}
 
 /** Stage 1: each reading becomes 0–1 and linear in goodness, true zero preserved. Shared by every
  *  story — a metric means the same thing whichever score reads it, which is also why two stories
  *  over one pool share divisors (docs/app.md §The story scores). */
-export function terms(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, number | null> { … }
-```
+export function terms(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, number | null> {
+  const r = readings(shoe, side, idx);
+  const map = (key: TermKey, f: (x: number) => number): number | null => {
+    const raw = r[key];
+    return raw === null ? null : f(raw.value);
+  };
+  return {
+    energyReturn: map('energyReturn', (x) => x / 100),
+    // Linear in grams, W_REF above the heaviest shoe so it never clips. Like SA_REF an uncapped
+    // linear factor, so stage 2 cancels it and it never moves a ranking.
+    weight: map('weight', (x) => 1 - x / W_REF),
+    outsoleDurability: map('outsoleDurability', (x) => Math.min(x / L_OK, 1)),
+    shockAbsorption: map('shockAbsorption', (x) => x / SA_REF),
+    midsoleWidth: map('midsoleWidth', (x) => Math.min(x / WID_CAP[side], 1)),
+    heelCounter: map('heelCounter', (x) => (x - 1) / 4),
+  };
+}
 
-The definition shape groups what must co-exist, so the illegal state is unrepresentable:
-
-```typescript
 export interface Anchor { r0: number; r100: number }
 export interface ScoreVariant { anchors: Record<Side, Anchor> }
 
+/**
+ * One story's score, as data. The engine reads nothing story-specific, so a fourth story is a
+ * fourth definition rather than a fourth code path.
+ */
 export interface ScoreDef {
   /** The preset this score ranks, so `presets.ts` resolves a definition rather than re-listing. */
   id: 'easy' | 'tempo' | 'race';
@@ -175,10 +234,13 @@ export interface ScoreDef {
    *  this object by reference (docs/app.md §The story scores). */
   sd: Record<Side, Partial<Record<TermKey, number>>>;
   base: ScoreVariant;
-  /** Present exactly when the stability preference applies. Structural rather than a comment: the
-   *  extra weights and the scale they are anchored on cannot come from different halves. */
+  /** Present exactly when the stability preference applies. Structural rather than a comment, so
+   *  the extra weights and the scale they anchor on cannot come from different halves. */
   stable?: ScoreVariant & { add: Partial<Record<TermKey, number>> };
 }
+
+export interface Contribution { key: TermKey; raw: Reading; term: number; weighted: number }
+export type ScoreColumns = Map<string, Map<string, number>>;
 
 /** One predicate, so weights and anchors always come from the same variant. */
 function variantOf(def: ScoreDef, stability: boolean) {
@@ -205,7 +267,9 @@ export function contributions(
   }));
 }
 
-export function scoreOf(def, shoe, side, stability, idx): number | null {
+export function scoreOf(
+  def: ScoreDef, shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
+): number | null {
   const rows = contributions(def, shoe, side, stability, idx);
   if (rows === null) return null;
   const { weights, anchors } = variantOf(def, stability);
@@ -214,34 +278,69 @@ export function scoreOf(def, shoe, side, stability, idx): number | null {
   const { r0, r100 } = anchors[side];
   return ((mean - r0) / (r100 - r0)) * 100;
 }
+
+export function scoreMap(
+  def: ScoreDef, shoes: Shoe[], side: Side, stability: boolean, idx: TestIndex,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const s of shoes) {
+    const v = scoreOf(def, s, side, stability, idx);
+    if (v !== null) out.set(s.slug, v);
+  }
+  return out;
+}
 ```
 
-**`keys` comes from `TERM_ORDER`, not `Object.keys(weights)`** — that fixes the display-order problem and removes the dependence on literal declaration order in one move.
-
-- [ ] **Step 4: Create `score-defs.ts`**
-
-Name the divisor tables for their pools and share by reference:
+- [ ] **Step 4: `score-defs.ts`, with every literal written out**
 
 ```typescript
-/** Divisors over the plate-filtered pool — 378 shoes at `data/` commit baed23b. Shared by Easy and
- *  Tempo *by reference*, because a divisor is a property of (metric, mapping, pool) and never of the
- *  story: two copies would be two homes for one fact (docs/README.md §Rules). */
-const PLATED_POOL_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({ … });
-/** Divisors over the whole fleet — 450 shoes. Carbon widens every spread, so Race cannot use the
- *  table above; its energy-return divisor is 0.0902 against 0.0758. */
-const WHOLE_FLEET_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({ … });
+import { derivedSideKey, type Side } from './lineage';
+import type { ScoreDef, TermKey } from './score';
 
-export const EASY: ScoreDef = { id: 'easy', keys: {…}, weights: {…}, sd: PLATED_POOL_SD, base: {…}, stable: {…} };
-export const SCORE_DEFS: readonly ScoreDef[] = [EASY];  // TEMPO and RACE join in Tasks 2 and 3
-export const defForKey = (key: string) => SCORE_DEFS.find((d) => d.keys.heel === key || d.keys.forefoot === key);
-export const defForPreset = (id: string) => SCORE_DEFS.find((d) => d.id === id);
+/** [keep the frozen-constants doc comment from score.ts here — it is about these numbers] */
+
+/** Divisors over the plate-filtered pool — 378 shoes at `data/` commit baed23b. Shared by Easy and
+ *  Tempo **by reference**: a divisor is a property of (metric, mapping, pool) and never of the
+ *  story, so two copies would be two homes for one fact (docs/README.md §Rules). */
+const PLATED_POOL_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({
+  heel: Object.freeze({
+    energyReturn: 0.0758, weight: 0.0776, outsoleDurability: 0.1614,
+    shockAbsorption: 0.0896, midsoleWidth: 0.0872, heelCounter: 0.2712,
+  }),
+  forefoot: Object.freeze({
+    energyReturn: 0.0790, weight: 0.0776, outsoleDurability: 0.1614,
+    shockAbsorption: 0.0961, midsoleWidth: 0.1133, heelCounter: 0.2712,
+  }),
+});
+
+/** Divisors over the whole fleet — 450 shoes. Carbon widens every spread, so Race cannot use the
+ *  table above: its energy-return divisor is 0.0902 against 0.0758. */
+const WHOLE_FLEET_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({
+  heel: Object.freeze({ energyReturn: 0.0902, weight: 0.0904, shockAbsorption: 0.0902 }),
+  forefoot: Object.freeze({ energyReturn: 0.0900, weight: 0.0904, shockAbsorption: 0.0930 }),
+});
+
+export const EASY: ScoreDef = {
+  id: 'easy',
+  keys: { heel: derivedSideKey('Easy score', 'heel'), forefoot: derivedSideKey('Easy score', 'forefoot') },
+  weights: { shockAbsorption: 2, outsoleDurability: 1, energyReturn: 1 },
+  sd: PLATED_POOL_SD,
+  base: { anchors: { heel: { r0: 3.7275, r100: 8.4740 }, forefoot: { r0: 3.7119, r100: 7.6771 } } },
+  stable: {
+    add: { midsoleWidth: 1, heelCounter: 1 },
+    anchors: { heel: { r0: 4.3963, r100: 7.4104 }, forefoot: { r0: 3.9456, r100: 6.5670 } },
+  },
+};
+
+export const SCORE_DEFS: readonly ScoreDef[] = [EASY]; // TEMPO and RACE join in Tasks 2 and 3
+export const defForKey = (key: string): ScoreDef | undefined =>
+  SCORE_DEFS.find((d) => d.keys.heel === key || d.keys.forefoot === key);
+export const defForPreset = (id: string): ScoreDef | undefined => SCORE_DEFS.find((d) => d.id === id);
 ```
 
-The frozen-constants doc comment moves here with the constants it is about.
+- [ ] **Step 5: Two invariant tests**
 
-- [ ] **Step 5: Add the divisor-completeness invariant**
-
-`Partial` plus `def.sd[side][key]!` makes a missing divisor a silent `NaN` — `weight * mapped / undefined`, stored by `scoreMap` because its guard is `!== null`, then sorted, washed and exported as a number-shaped nothing rather than the em dash an unscored shoe gets. Race's table legitimately holds only three of six terms, which is exactly where a mistyped weight key would land. Guard it the way `lineage.test.ts` guards catalogue agreement:
+`Partial` plus `def.sd[side][key]!` would make a missing divisor a silent `NaN` — stored by `scoreMap` because its guard is `!== null`, then sorted, washed and exported as a number-shaped nothing instead of an em dash. Race's table legitimately holds three of six terms, which is exactly where a mistyped weight key lands.
 
 ```typescript
 it('every weighted term has a divisor on both sides, for every story', () => {
@@ -253,36 +352,39 @@ it('every weighted term has a divisor on both sides, for every story', () => {
   }
 });
 
-it('a stable variant and its anchors arrive together', () => {
+it('a stability add never silently replaces a base weight', () => {
+  // `variantOf` spreads `add` over `weights`, so a shared key overwrites rather than adds:
+  // `{ shockAbsorption: 1 }` in Easy's add would drop its base weight from 2 to 1, silently.
   for (const def of SCORE_DEFS) {
-    if (def.stable) expect(Object.keys(def.stable.add).length).toBeGreaterThan(0);
+    for (const k of Object.keys(def.stable?.add ?? {}) as TermKey[]) {
+      expect(def.weights[k]).toBeUndefined();
+    }
   }
 });
 ```
 
-- [ ] **Step 6: Export `sideOfKey` from `side.ts`**
+- [ ] **Step 6: `sideOfKey` goes in `lineage.ts`, not `side.ts`**
 
-`SIDE_OF_KEY` already maps every side-paired key to its half, built from `ALL_SIDE_PAIRS`. Export a reader for it. Nothing may re-derive a side from a slug suffix — `lineage.ts` refuses that pattern everywhere else, and Task 7 needs exactly this.
+`side.ts` imports `urlstate.ts`, so putting it there would give a presentational component a transitive dependency on URL parsing for a lookup whose whole input is `ALL_SIDE_PAIRS` — which lives in `lineage.ts`, beside `swapSide`, which already does the same search. Move `SIDE_OF_KEY` there, export `sideOfKey(key): Side | null`, and have `side.ts` import it.
 
-- [ ] **Step 7: Re-point the existing tests, then run**
+- [ ] **Step 7: Re-point every caller — mechanical, no behaviour change**
 
-Constant-pinning and API tests move to `EASY.weights`, `EASY.sd`, `EASY.base.anchors` — **the numbers do not change, only where they are read from**. `easyTerms` tests become `terms` tests. **No real-dataset numeric assertion may move.** Keep the pinning test: retiring the named exports must not retire the frozen-constant guard.
+The gate cannot pass until all of these move. Source: `Page.svelte`, `DetailPanel.svelte`, `presets.ts`, `labels.ts`, `direction.ts`, `urlstate.ts`, `ColumnPicker.svelte`. Tests: `score.test.ts`, `ColumnPicker.test.ts`, `DetailPanel.test.ts`, `ShoeTable.test.ts`, `csv-export.test.ts`, `sort.test.ts`, `units.test.ts`, `side.test.ts`, `urlstate.test.ts`, `direction.test.ts`, `labels.test.ts`, `presets.test.ts`.
 
-Run: `npm run verify` → PASS, including the exact-reproduction test.
+The substitutions: `EASY_SCORE_KEYS` → `EASY.keys`; `easyScoreMap(shoes, …)` → `scoreMap(EASY, shoes, …)`; `easyContributions(shoe, …)` → `contributions(EASY, shoe, …)`; `easyTerms` → `terms`; `EasyTermKey` → `TermKey`; `EasyReading` → `Reading`. Constant-pinning tests move to `EASY.weights`, `EASY.sd`, `EASY.base.anchors` / `EASY.stable.anchors`.
 
-- [ ] **Step 8:** Delete `app/src/lib/__fixtures__/easy-scores-baseline.json` and its import, re-run `npm run verify`, then commit.
+**One number does change:** `EASY.sd.heel` now carries `weight: 0.0776`, because `PLATED_POOL_SD` holds all six terms so Tempo can share it. The pinning assertion grows that key. **No real-dataset numeric assertion may move.**
 
-```bash
-git commit -m "Make the scoring engine read a story definition rather than Easy"
-```
+Tasks 4, 5 and 7 later replace these Easy-specific call sites with registry-driven ones; here they are just re-pointed.
+
+- [ ] **Step 8:** `npm run verify` → PASS, including the exact-reproduction test.
+- [ ] **Step 9:** Delete `app/src/lib/__fixtures__/easy-scores-baseline.json` **and the test that reads it** (deleting only the import leaves `BASELINE` undefined). Re-run `npm run verify`, then commit — `"Make the scoring engine read a story definition rather than Easy"`
 
 ---
 
 ### Task 2: The Tempo definition
 
-Adds its own `DERIVED_SIDE_PAIRS` entry — `derivedSideKey`'s parameter is typed `DerivedSidePairLabel`, today the literal `'Easy score'` alone, so a definition cannot compile before its pair exists.
-
-**Files:** `lineage.ts`, `lineage.test.ts`, `score-defs.ts`, `score.test.ts`
+Adds its own `DERIVED_SIDE_PAIRS` entry: `derivedSideKey`'s parameter is typed `DerivedSidePairLabel`, today the literal `'Easy score'` alone, so a definition cannot compile before its pair exists.
 
 - [ ] **Step 1: Failing tests**
 
@@ -292,8 +394,6 @@ it('pairs the Tempo score columns by side', () => {
 });
 
 describe('the Tempo score against the real fleet', () => {
-  const POOL = REAL.shoes.filter((s) => s.plate !== 'carbon');
-
   it('scores the plate-filtered pool and anchors on it', () => {
     for (const side of SIDES) for (const stability of [false, true]) {
       const vs = [...scoreMap(TEMPO, POOL, side, stability, realIdx).values()];
@@ -304,18 +404,22 @@ describe('the Tempo score against the real fleet', () => {
   });
 
   it('shares one divisor table with Easy, by reference', () => {
-    // Object identity, not value equality: `toBe` on numbers would pass against a copied literal,
-    // which is the thing this asserts against.
+    // Object identity, not value equality: `toBe` on numbers passes against a copied literal too,
+    // which is the thing this exists to catch.
     expect(TEMPO.sd).toBe(EASY.sd);
   });
 
-  it('delivers its nominal weights as effective influence', () => {
-    const rows = POOL.map((s) => contributions(TEMPO, s, 'heel', false, realIdx)).filter((r) => r !== null);
-    const spread = (k: TermKey) => sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted));
-    const total = (['energyReturn', 'weight', 'outsoleDurability', 'shockAbsorption'] as const)
-      .reduce((a, k) => a + spread(k), 0);
-    expect(spread('energyReturn') / total).toBeCloseTo(0.375, 1);
-    expect(spread('shockAbsorption') / total).toBeCloseTo(0.125, 1);
+  it('delivers every nominal weight as effective influence, on both sides', () => {
+    // Covers `weight` in particular — the only term this branch introduces, with a new mapping and
+    // a new divisor, and where `w/450` written instead of `1 − w/450` would land.
+    for (const side of SIDES) {
+      const rows = POOL.map((s) => contributions(TEMPO, s, side, false, realIdx)).filter((r) => r !== null);
+      const spread = (k: TermKey) => sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted));
+      const keys = ['energyReturn', 'weight', 'outsoleDurability', 'shockAbsorption'] as const;
+      const total = keys.reduce((a, k) => a + spread(k), 0);
+      const nominal = keys.reduce((a, k) => a + TEMPO.weights[k]!, 0);
+      for (const k of keys) expect(spread(k) / total).toBeCloseTo(TEMPO.weights[k]! / nominal, 1);
+    }
   });
 
   it('ranks the archetypal tempo shoes above the fragile flats they resemble', () => {
@@ -328,16 +432,17 @@ describe('the Tempo score against the real fleet', () => {
 });
 ```
 
+`sd` is a local helper in `score.test.ts`; `POOL` is already defined at module level there — **use it rather than redeclaring** a second spelling of one pool.
+
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Add the `DERIVED_SIDE_PAIRS` entry, then `TEMPO` with weights `energyReturn 3, weight 2, outsoleDurability 2, shockAbsorption 1`, `sd: PLATED_POOL_SD`, `stable: { add: { midsoleWidth: 1, heelCounter: 1 }, anchors: … }`. Append to `SCORE_DEFS`.
-- [ ] **Step 4:** `npm run verify` → PASS.
-- [ ] **Step 5:** Commit — `"Score Tempo on energy return, weight and how long the outsole lasts"`
+- [ ] **Step 3:** Add to `DERIVED_SIDE_PAIRS`:
+  `{ label: 'Tempo score', forefoot: 'tempo-score-forefoot', heel: 'tempo-score-heel' }`
+  then `TEMPO`: `weights: { energyReturn: 3, weight: 2, outsoleDurability: 2, shockAbsorption: 1 }`, `sd: PLATED_POOL_SD`, base and stable anchors from the table, `stable.add: { midsoleWidth: 1, heelCounter: 1 }`. Append to `SCORE_DEFS`.
+- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Score Tempo on energy return, weight and how long the outsole lasts"`
 
 ---
 
 ### Task 3: The Race definition
-
-**Files:** `lineage.ts`, `lineage.test.ts`, `score-defs.ts`, `score.test.ts`
 
 - [ ] **Step 1: Failing tests**
 
@@ -388,65 +493,87 @@ describe('the Race score against the real fleet', () => {
 ```
 
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Add the pair, then `RACE` — weights `energyReturn 3, weight 2, shockAbsorption 1`, `sd: WHOLE_FLEET_SD`, **no `stable`**, base anchors only. Append to `SCORE_DEFS`.
-- [ ] **Step 4:** `npm run verify` → PASS.
-- [ ] **Step 5:** Commit — `"Score Race on speed alone, with no durability to answer for"`
+- [ ] **Step 3:** Add `{ label: 'Race score', forefoot: 'race-score-forefoot', heel: 'race-score-heel' }`, then `RACE`: `weights: { energyReturn: 3, weight: 2, shockAbsorption: 1 }`, `sd: WHOLE_FLEET_SD`, base anchors only, **no `stable`**. Append to `SCORE_DEFS`.
+- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Score Race on speed alone, with no durability to answer for"`
 
 ---
 
 ### Task 4: Derive the plumbing instead of enumerating it
 
-Four files currently name Easy's keys explicitly. Make each derive from `DERIVED_SIDE_PAIRS`, so a fourth story needs no edit here.
-
-**Files:** `labels.ts`, `labels.test.ts`, `direction.ts`, `direction.test.ts`, `urlstate.ts`, `urlstate.test.ts`, `ColumnPicker.svelte` + test
-
-- [ ] **Step 1: Failing tests**
+- [ ] **Step 1: Failing tests.** Each of `labels.test.ts`, `direction.test.ts`, `urlstate.test.ts` needs `import { SCORE_DEFS } from './score-defs';` and `const SIDES: Side[] = ['heel', 'forefoot'];` — none defines `SIDES` today.
 
 ```typescript
-// labels.test.ts — derived from the registry, not six hard-coded strings
-it('names every score column within the phone label bound', () => {
+// labels.test.ts — keep one exact pin, so the string surgery is anchored to what it must reproduce
+it('names every score column, within the phone label bound', () => {
+  expect(columnLabel(EASY.keys.heel, undefined)).toBe('Easy heel score');
   for (const def of SCORE_DEFS) for (const side of SIDES) {
     const key = def.keys[side];
     const label = columnLabel(key, undefined);
-    expect(label).toMatch(/score/i);
     expect(widestWordPx(shortLabel(key, label))).toBeLessThanOrEqual(MAX_LABEL_PX);
     expect(lineCount(shortLabel(key, label))).toBeLessThanOrEqual(MAX_LABEL_LINES);
   }
 });
-
-// direction.test.ts
-it('marks every score higher-is-better', () => {
-  for (const def of SCORE_DEFS) for (const side of SIDES) expect(directionOf(def.keys[side])).toBe('higher');
-});
-
-// urlstate.test.ts
-it('accepts every score key as a sort and a column', () => {
-  for (const def of SCORE_DEFS) for (const side of SIDES) {
-    expect(parseView(`sort=-${def.keys[side]}`, idx).sort.key).toBe(def.keys[side]);
-    expect(parseView(`cols=${def.keys[side]}`, idx).columns).toEqual([def.keys[side]]);
-  }
-});
 ```
 
+plus the `directionOf` and `parseView` loops over `SCORE_DEFS`.
+
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** In each file, build from `DERIVED_SIDE_PAIRS`: every derived key is `higher`, every one is a valid sort and column key, and `columnLabel` composes `"<pair label minus ' score'> <side> score"`. `ColumnPicker`'s `FIXED` must call `columnLabel(key, undefined)` rather than hold a third copy of `'Easy heel score'`.
+- [ ] **Step 3: The four derivations**
+  - `labels.ts` — a `Map` from `DERIVED_SIDE_PAIRS` replacing the two `if`s; the composition is `` `${p.label.replace(/ score$/, '')} ${side} score` ``. Add a WHY comment: it depends on every derived pair's label ending in " score", which is why the exact pin above stays.
+  - `direction.ts` — spread `Object.fromEntries(DERIVED_SIDE_PAIRS.flatMap((p) => [[p.heel, 'higher'], [p.forefoot, 'higher']]))` into `DIRECTION`. Add a WHY comment: this asserts every *derived* pair is a score and higher is better, which is a property of that list rather than an inference from a slug — `direction.ts` refuses inference everywhere else.
+  - `urlstate.ts` — replace the `EASY_SCORE_KEYS` spread in `SORT_FIELDS` and `COLUMN_FIELDS`.
+  - `ColumnPicker.svelte` — `FIXED` derives its score entries and labels them with `columnLabel(key, undefined)` rather than holding a third copy of the string. Keep the existing UI order and append the score columns.
 
-**Widths are already measured and all six fit** — widest word 47.6 px ("forefoot") against a 52 px bound. But `lineCount` is **exactly 3 against a `MAX_LABEL_LINES` of 3**, i.e. zero headroom, so the assertion above is load-bearing rather than ceremonial. No `SHORT_LABELS` entry is needed.
+**Widths are already measured and all six fit** — widest word 47.6 px ("forefoot") against 52 px. But `lineCount` is **exactly 3 against a `MAX_LABEL_LINES` of 3**, so that assertion is load-bearing rather than ceremonial. No `SHORT_LABELS` entry needed.
 
-- [ ] **Step 4:** `npm run verify` → PASS.
-- [ ] **Step 5:** Commit — `"Derive the score columns from the pairs that declare them"`
+Also re-point `units.test.ts`, which iterates `EASY_SCORE_KEYS` for the `↑`/no-`/100` guard — otherwise it silently covers one story of three. `units.ts` itself needs no change.
+
+- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Derive the score columns from the pairs that declare them"`
 
 ---
 
-### Task 5: The presets lose their thresholds
+### Task 5: Resolve every score
 
-**Files:** `presets.ts`, `presets.test.ts`, `e2e/smoke.spec.ts`
+**Before Task 6, deliberately.** Task 6 makes the presets sort by keys this task resolves; the other order would ship one commit where clicking Tempo gives a column of em dashes, and nothing in the suite would catch it.
+
+- [ ] **Step 1: Failing test.** In `Page.test.ts`, render with a view showing `RACE.keys.heel`, read that column's cells, toggle `stability`, and assert the cells are unchanged.
+- [ ] **Step 2:** Run → FAIL.
+- [ ] **Step 3:**
+
+```typescript
+  /** Every score column the table can show, resolved once. Iterates the registry, so a fourth story
+   *  needs no edit here (docs/app.md §The story scores). */
+  const scores = $derived(new Map(
+    SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((side) =>
+      [def.keys[side], scoreMap(def, data.shoes, side, view.stability, idx)] as const))));
+```
+
+`RACE` having no `stable` makes the flag inert inside `scoreOf`; no branch belongs here.
+
+- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Resolve every story's score for the table"`
+
+---
+
+### Task 6: The presets lose their thresholds, and Tempo gains its plate gate
 
 - [ ] **Step 1: Failing tests**
 
 ```typescript
-it('no story bounds anything any more', () => {
-  // Every threshold is gone: the scores read those qualities directly (BACKLOG.md item 1 closes).
+it('keeps carbon out of Tempo, or Tempo collapses into Race', () => {
+  // The Tempo spec's central decision: a carbon-inclusive Tempo shares 11 of its top 20 with a pure
+  // speed ranking against 2 without. `presets.test.ts` currently pins the *absence* of this filter.
+  for (const strike of STRIKES) {
+    expect(applyPreset('tempo', FLEET, idx, strike, false).filters.plate).toEqual(['none', 'plated-other']);
+  }
+});
+
+it('race admits carbon and never requires it', () => {
+  for (const strike of STRIKES) {
+    expect(applyPreset('race', FLEET, idx, strike, false).filters.plate).toBeUndefined();
+  }
+});
+
+it('no story carries a range bound any more', () => {
   for (const p of PRESETS) for (const strike of STRIKES) {
     expect(Object.keys(applyPreset(p.id, FLEET, idx, strike, false).filters.ranges)).toEqual([]);
   }
@@ -461,12 +588,6 @@ it('each story sorts by its own score and shows it', () => {
   }
 });
 
-it('race admits carbon and never requires it', () => {
-  for (const strike of STRIKES) {
-    expect(applyPreset('race', FLEET, idx, strike, false).filters.plate).toBeUndefined();
-  }
-});
-
 it('every story still round-trips and still names a side', () => {
   for (const p of PRESETS) for (const strike of STRIKES) {
     const v = applyPreset(p.id, FLEET, idx, strike, false);
@@ -477,7 +598,9 @@ it('every story still round-trips and still names a side', () => {
 ```
 
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3: Implement.** Delete `PRICE_PERCENTILE`, `TEMPO_ENERGY_RETURN_PERCENTILE`, `TEMPO_WEIGHT_PERCENTILE`, `RACE_MAX_WEIGHT`, `RACE_ENERGY_RETURN_PERCENTILE` and the now-unused `fleetCap`. Column sets, six numeric each:
+- [ ] **Step 3: Implement.** Delete `PRICE_PERCENTILE`, `TEMPO_ENERGY_RETURN_PERCENTILE`, `TEMPO_WEIGHT_PERCENTILE`, `RACE_MAX_WEIGHT`, `RACE_ENERGY_RETURN_PERCENTILE` and `fleetCap`.
+
+**Tempo gains `v.filters.plate = ['none', 'plated-other']`** — it has none today, and this is the spec's central decision, not a detail. **Race sets no plate filter at all.** Column sets, six numeric each:
 
 ```typescript
 const tempoColumns = (strike: Side) =>
@@ -488,67 +611,45 @@ const raceColumns = (strike: Side) =>
    sideKey('Energy return', strike), 'weight', sideKey('Shock absorption', strike), 'plate'];
 ```
 
-Rewrite all three `describe` strings — BACKLOG.md item 13. They promise bounds that no longer exist ("cheap enough to put the miles through", "at a price you can repeat", "the lightest, liveliest shoes in the fleet").
+Rewrite all three `PRESETS[].describe` strings **and the three `desc` strings in `SetupStrip.svelte`** (`'Cushioned, no carbon, affordable'`, `'Light, fast, affordable'`, `'Lightest, fastest, price no object'`) — the cards are the first screen a runner sees and "affordable" is exactly the price-cap promise that no longer exists. Together these close BACKLOG item 13. `SetupStrip.test.ts` pins Easy's verbatim.
 
-- [ ] **Step 4: The full fallout, enumerated so none is discovered late.** In `presets.test.ts`:
-  - lines 5–9 — the import of all five deleted constants: **compile error**.
-  - line 90 `NUMERIC_COLUMNS = { easy: 6, tempo: 4, race: 4 }` → **all three become 6**, and its trailing comment ("Tempo and Race genuinely carry four") is rewritten. The plan previously claimed this assertion was unaffected; it is not.
-  - lines 166–169 `SIDE_BOUNDS` → empty, which silently makes three tests **vacuous rather than failing**: "resolves every side-swappable bound to a percentile of that side's own readings" (204), "leaves the two sides on visibly different bounds" (219), and the per-story loop in "omits a bound it cannot compute" (320). Delete them rather than leaving green tests that check nothing.
-  - lines 174–186 "bounds, sorts by and shows the half the strike names" — its `['tempo','race']` block asserts a range bound; rewrite around the score key.
-  - line 256 "tempo asks for more than most of the fleet…" — fails; note `filters.plate` becomes `['none','plated-other']`.
+- [ ] **Step 4: The full fallout.** `presets.test.ts`:
+  - lines 5–9, the import of five deleted constants — **compile error**.
+  - line 90 `NUMERIC_COLUMNS = { easy: 6, tempo: 4, race: 4 }` → **all three become 6**, and its trailing comment is rewritten.
+  - lines 166–169 `SIDE_BOUNDS` → empty, which makes three tests **vacuous rather than failing** (204, 219, and the per-story loop at 320). Delete them; a green test that checks nothing is worse than a red one.
+  - lines 173–186 "bounds, sorts by and shows the half the strike names" — rewrite around the score key.
+  - line 256 "tempo asks for more than most of the fleet…" — rewrite; note `filters.plate` is no longer `undefined`.
   - lines 267, 287, 307 — delete (fleet-tracking bounds).
-  - line 276 "race is speed alone: no price cap and no plate requirement" — rewrite for the score.
+  - line 276 "race is speed alone…" — rewrite for the score.
   - line 297 the price-cap test — **delete, do not re-point**: no story caps price and the constant is gone.
   - lines 326–327 empty-fleet assertions on `RACE_MAX_WEIGHT` — rewrite.
-  - line 354 `describe('no preset bounds a metric its own coverage warning would flag')` — now vacuous for every story. Leave it and record the loss in BACKLOG (Task 10).
+  - line 354 "no preset bounds a metric its own coverage warning would flag" — now vacuous for every story. Leave it; Task 10 records the loss.
+  - `describe('preset thresholds track the fleet')` at 294 retains only its empty-fleet test — rename it.
 
-  `Page.test.ts` needs **no** change: its `r.` params are hand-built URLs, not preset output, and its story assertions are Easy's or the generic mark regex. Do not go hunting there.
+  **Lint casualties**, which fail `npm run lint` before the tests run: in `presets.test.ts`, `quantile` (l.13), `SidePairLabel` (l.4), `readingsOf` (l.20), `SIDE_SLUGS` (l.170), `priced` (l.295); in `presets.ts`, `quantile`, `numericValue`, `Shoe`, `TestIndex` once `fleetCap` goes.
+
+  `Page.test.ts` needs **no** change: its `r.` params are hand-built URLs, not preset output.
 
 - [ ] **Step 5:** `npm run verify` → PASS. Commit — `"Rank every story by its own score rather than by bounds"`
 
 ---
 
-### Task 6: Resolve every score, by iterating the registry
-
-**Files:** `Page.svelte`, `Page.test.ts`
-
-- [ ] **Step 1: Failing test** — with `stability: true`, the Race column's values equal its `stability: false` values, driven through the page.
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:**
-
-```typescript
-  /** Every score column the table can show, resolved once. Iterates the registry, so a fourth story
-   *  needs no edit here (docs/app.md §The story scores). */
-  const scores = $derived(new Map(
-    SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((side) =>
-      [def.keys[side], scoreMap(def, data.shoes, side, view.stability, idx)] as const))));
-```
-
-`RACE` having no `stable` variant makes the flag inert inside `scoreOf`; no branch belongs here.
-
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Resolve every story's score for the table"`
-
----
-
 ### Task 7: The breakdown panel, for three stories
 
-**The plan's earlier description of this file was wrong and the correction matters.** `DetailPanel.svelte` does **not** iterate columns today: it derives from `SIDES`, filters on `columns.includes(EASY.keys[s])`, and keys its `{#each}` by `(b.side)`. With three definitions on screen `heel` appears three times and Svelte throws **duplicate key** at runtime.
-
-**Files:** `DetailPanel.svelte`, `DetailPanel.test.ts`
+`DetailPanel.svelte` does **not** iterate columns today: it derives from `SIDES`, filters on `columns.includes(EASY.keys[s])`, and keys its `{#each}` by `(b.side)` (line 93). With three definitions on screen `heel` appears three times and Svelte throws **duplicate key**.
 
 - [ ] **Step 1: Failing test** — a view showing all six score columns renders six breakdowns, each titled by `columnLabel`; Race's has three rows and never a stability row even with `stability: true`.
 - [ ] **Step 2:** Run → FAIL (duplicate key, or three breakdowns not six).
-- [ ] **Step 3:** Derive from the columns and key by the column key:
+- [ ] **Step 3:**
 
 ```typescript
-  const breakdowns = $derived(view.columns
-    .flatMap((key) => {
-      const def = defForKey(key); const side = sideOfKey(key);
-      return def && side ? [{ key, def, side, rows: contributions(def, shoe, side, stability, idx) }] : [];
-    }));
+  const breakdowns = $derived(view.columns.flatMap((key) => {
+    const def = defForKey(key); const side = sideOfKey(key);
+    return def && side ? [{ key, def, side, rows: contributions(def, shoe, side, stability, idx) }] : [];
+  }));
 ```
 
-`{#each breakdowns as b (b.key)}`. Use `sideOfKey` from `side.ts` — **not** a `key.endsWith('-heel')` heuristic, which would be a second spelling of something `side.ts` owns and the slug-inference pattern `lineage.ts` refuses everywhere. `TERM_LABEL` becomes `Record<TermKey, string>` and gains a `weight` entry. The file imports `EasyReading`/`EasyTermKey`, both retired in Task 1.
+`{#each breakdowns as b (b.key)}`. Use `sideOfKey` from `lineage.ts` — **not** a `key.endsWith('-heel')` heuristic, which would be a second spelling of something `lineage.ts` owns and the slug-inference pattern it refuses everywhere. `TERM_LABEL` becomes `Record<TermKey, string>` and gains a `weight` entry.
 
 - [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Break down whichever story's score is on screen"`
 
@@ -556,24 +657,24 @@ Rewrite all three `describe` strings — BACKLOG.md item 13. They promise bounds
 
 ### Task 8: The Toolbar stops speaking only about Easy
 
-Three Easy-specific strings live here, visible regardless of the selected story: `SCORE_LABEL = 'the Easy score'` (the popover's accessible name), `SCORE_HELP` (Easy's terms spelled out), and the always-visible caption `<small>Adds midsole width and heel counter stiffness to the Easy score.</small>`. Ship as planned and a runner on Race reads a caption about a score that is not on screen, attached to a control that does nothing — the exact failure the Race spec forbids.
+Three Easy-specific strings live here, visible whichever story is selected: `SCORE_LABEL = 'the Easy score'`, `SCORE_HELP`, and the always-visible caption `<small>Adds midsole width and heel counter stiffness to the Easy score.</small>`. Ship as-is and a runner on Race reads a caption about a score that is not on screen, attached to a control that does nothing — the exact failure the Race spec forbids.
 
-**Files:** `Toolbar.svelte`, `Toolbar.test.ts`
-
-- [ ] **Step 1: Failing test** — the caption and popover name Easy and Tempo as the stories the preference reaches, and say why Race is excluded.
+- [ ] **Step 1: Failing test** — the caption and popover name the stories the preference reaches and say why Race is excluded.
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Make label, caption and popover story-neutral. **Do not enumerate each story's terms and weights in `SCORE_HELP`** — that would be a second home for `score-defs.ts`, which the file's own comment already refuses. Say what the preference adds, which stories it reaches, and that race shoes have no stable variant to surface; leave per-story terms to the breakdown panel. Four existing tests assert the current strings (`Toolbar.test.ts` around lines 131, 134, 154, 158) — update them.
+- [ ] **Step 3:** Make all three story-neutral. **Derive the story list** — `SCORE_DEFS.filter((d) => d.stable)` mapped through `PRESETS` for labels — rather than writing "Easy and Tempo", so a fourth story needs no edit here. **Do not enumerate each story's terms in `SCORE_HELP`**: that would be a second home for `score-defs.ts`, which the file's own comment refuses. Say what the preference adds, which stories it reaches, and that race shoes have no stable variant to surface; leave per-story terms to the breakdown panel.
+
+Four assertion sites in `Toolbar.test.ts` (around lines 131, 134, 154, 162) pin the current strings; the popover test also asserts `/not scored/i` and `/2026-07-30/`, both of which must survive.
+
 - [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Say which stories the stability preference reaches"`
 
 ---
 
 ### Task 9: The browser suite
 
-**Files:** `e2e/fixtures/shoes.json`, `e2e/smoke.spec.ts`
+`app/e2e/fixtures/shoes.json` already carries weight (test 24), energy return, shock absorption and both outsole tests on all four reading-carrying shoes, so **Tempo and Race each score four shoes in a strict order and the fixture needs no extension.**
 
-- [ ] **Step 1:** The fixture carries the seven scoring tests Easy needed; check its shoes give Tempo and Race a real order and extend if not.
-- [ ] **Step 2:** Add specs: Tempo shows a Tempo score column and ranks by it; Race shows a Race score column, applies **no filter at all**, and ticking stability leaves the Race order unchanged.
-- [ ] **Step 3:** `npm -w app run e2e` → PASS. Commit — `"Exercise all three scores in the browser suite"`
+- [ ] **Step 1:** Add specs: Tempo shows a Tempo score column and ranks by it; Race shows a Race score column, applies **no filter at all**, and ticking stability leaves the Race order unchanged.
+- [ ] **Step 2:** `npm -w app run e2e` → PASS. Commit — `"Exercise all three scores in the browser suite"`
 
 ---
 
@@ -581,9 +682,13 @@ Three Easy-specific strings live here, visible regardless of the selected story:
 
 Read `docs/README.md` first — forward-only.
 
-- [ ] **Step 1: `docs/shoe-stories.md`** — rewrite §Tempo and §Race around their terms. **Replace Tempo's "carbon is deliberately left open"** with the precautionary line plus the finding that carbon makes Tempo collapse into Race. Record shock absorption as a floor in both. Record that Race admits carbon but never requires it, and that its weight ceiling is gone. Strengthen Race's stability position with the measurement. Delete every surviving price-cap reference.
-- [ ] **Step 2: `docs/app.md` §The story scores** (renamed in Task 1) — the shared engine and `ScoreDef`; that **divisors are named for their pool and shared by reference**, and Race's differ; that anchors are per story and per variant; that the stability preference reaches Easy and Tempo only, **and that one named preference is a deliberate decision rather than an unfinished generalisation** (BACKLOG.md item 3 rejects the general picker); the six score columns; that a shoe outside a definition's pool still scores and may exceed 100.
-- [ ] **Step 3: `BACKLOG.md`** — items 1, 11 and 13 close. **Item 14 widens**: the sparse-bound guard is now vacuous for all three stories, not just Easy. **Item 12 (versatility)**: its premise that no view shows the three scores side by side is no longer true — a runner can tick all six columns — and it gains the trap from the Race spec, that the three cover **different shoe sets** (283, 283, 378, not nested), so it cannot average over whichever exist without reintroducing the renormalisation flaw rejected for Easy.
+- [ ] **Step 1: `docs/shoe-stories.md`**, four sections, not two:
+  - **§Tempo** and **§Race** — rewrite around their terms. Replace Tempo's "carbon is deliberately left open" with the precautionary line plus the collapse-into-Race finding. Record shock absorption as a floor in both. Record that Race admits carbon but never requires it and that its weight ceiling is gone. Strengthen Race's stability position with the measurement.
+  - **§How a story becomes a threshold** — its table maps qualities to bounds; it now maps qualities to *terms*, and the "repeatability | price" row goes.
+  - **§Which half a story uses** — keep the per-side-constants rule; drop "every bound that can swap sides is a percentile" and "Race's weight ceiling is the only one left".
+  - **§Checking a threshold set** — keep the one-sided method, which both specs still point at; update "Tempo does not yet", since Tempo now reads 20–24/30 with `competition`-only at 0/30.
+- [ ] **Step 2: `docs/app.md`** — **§Presets** as well as §The story scores. §Presets currently states that every threshold lives in one constants block, that "a story need not bound anything" as an Easy-only fact, the whole "Thresholds are a mix" paragraph ending "Race's weight ceiling is the only one", and that the sparse-bound guard is asserted in both directions. All four are now false. §The story scores gains: the shared engine and `ScoreDef`; divisors named for their pool and shared by reference, and Race's differing; anchors per story and per variant; the preference reaching Easy and Tempo only, **and that one named preference is a deliberate decision rather than an unfinished generalisation** (BACKLOG item 3 rejects the general picker); the six score columns; that a shoe outside a definition's pool still scores and may exceed 100.
+- [ ] **Step 3: `BACKLOG.md`** — items 1, 11 and 13 close. **Item 14 widens** from Easy to all three stories. **Item 12** loses its premise that no view shows the three scores side by side — a runner can now tick all six columns — and gains the trap: the three cover **different shoe sets** (283, 283, 378, not nested), so it cannot average over whichever exist without reintroducing the renormalisation flaw rejected for Easy.
 - [ ] **Step 4:** `npm run check:docs` → PASS. Commit — `"Record what each story's score measures"`
 
 ---
@@ -592,17 +697,26 @@ Read `docs/README.md` first — forward-only.
 
 - [ ] **Step 1:** `npm run verify` → PASS, `src/lib/**` above 90% lines / 85% branches.
 - [ ] **Step 2:** `npm -w app run e2e` → PASS.
-- [ ] **Step 3: Look at it.** `npm -w app run dev`: Easy's list unchanged from before this branch; Tempo leads Megablast, EVO SL, ANTA Zone 2 90 with no carbon; Race leads Adios Pro Evo 3, Metaspeed Ray, Fast-R Nitro Elite 3, all carbon, with no filter applied; ticking stability moves Easy and Tempo and leaves Race untouched; all three stories stay marked through the toggle; expanding a row with several score columns shows one breakdown each, in the same term order.
+- [ ] **Step 3: Look at it.** `npm -w app run dev`:
+  - **Tempo** leads Megablast, EVO SL, ANTA Zone 2 90, and shows **no carbon shoe at all**.
+  - **Race** leads Adios Pro Evo 3, Metaspeed Ray, Fast-R Nitro Elite 3; the top twelve are all carbon; **no filter chip is active**.
+  - Ticking stability moves Easy and Tempo and leaves **Race's order and numbers identical**.
+  - All three stories stay marked through the toggle.
+  - Expand a row with several score columns: one breakdown each, and the shared terms appear **in the same order** in every table.
+
+  Easy's list is covered by Task 1's equivalence test rather than by eye — the baseline fixture is gone by then, so there is nothing to compare against on screen.
 - [ ] **Step 4:** Commit any fixes. **Do not push or merge.** Report and stop.
 
 ---
 
 ## Self-Review
 
-**Spec coverage.** Tempo §2 → Task 5. §3 → Task 2. §4 constants and shared divisors → Tasks 1–2 (asserted by object identity). §5 → Task 2. §6 → Task 5. §7 → Tasks 2, 11. §8 → Task 10. Race §2 → Task 5. §3 → Task 3. §4 own divisors → Task 3. §5 no stability → Tasks 3, 6, 8. §6 → Task 5. §7 → Tasks 3, 11. §8 → Task 10. §9 versatility trap → Task 10.
+**Spec coverage.** Tempo §2 pool → Task 6 (gate **and** test). §3 → Task 2. §4 → Tasks 1–2. §5 → Task 2. §6 → Task 6. §7 → Tasks 2, 11. §8 → Task 10. Race §2 → Task 6. §3 → Task 3. §4 → Task 3. §5 → Tasks 3, 5, 8. §6 → Task 6. §7 → Tasks 3, 11. §8 → Task 10. §9 → Task 10.
 
-**Type consistency.** `TermKey` members fixed across all tasks. `scoreOf`/`scoreMap`/`contributions` take `(def, …)` first. `def.keys[side]`, `def.base.anchors`, `def.stable?.add` spelled identically in Tasks 1–7. `SCORE_DEFS`, `defForKey`, `defForPreset`, `sideOfKey` are the only lookups; no task hard-codes a story trio.
+**Type consistency.** `TermKey` members fixed throughout. `scoreOf`/`scoreMap`/`contributions` take `(def, …)` first, all fully annotated. `def.keys[side]`, `def.base.anchors`, `def.stable?.add` spelled identically in Tasks 1–7. `SCORE_DEFS`, `defForKey`, `defForPreset`, `sideOfKey` are the only lookups.
 
-**Ordering constraint.** Tasks 2 and 3 each add their own `DERIVED_SIDE_PAIRS` entry, because `derivedSideKey`'s parameter type admits only labels already in that list — a definition cannot compile before its pair exists. Task 4 must therefore come after both.
+**Ordering constraints.** Tasks 2 and 3 each add their own `DERIVED_SIDE_PAIRS` entry, because `derivedSideKey`'s parameter type admits only labels already in that list — so Task 4 must follow both. Task 5 precedes Task 6 so no commit ships a preset sorting by an unresolved key.
 
-**Known ripple, named rather than discovered.** Task 1 retires every exported Easy symbol including `EASY_SCORE_KEYS`, and renames a docs heading 26 pointers depend on. Task 5 deletes five constants and breaks eleven named assertions in `presets.test.ts`, three of which would otherwise go silently vacuous. Task 7's file does not work the way an earlier draft of this plan described. Task 8 touches three visible strings, breaking four Toolbar tests.
+**`TERM_ORDER` opens on Easy's existing order deliberately** — `['shockAbsorption', 'outsoleDurability', 'energyReturn', …]`. Any other order changes both the breakdown a runner reads and the floating-point summation order, which would break the bit-equality the equivalence test depends on (measured: 188 of 1132 scores move in their last bits under the alternative).
+
+**One place the plan hard-codes a story trio, knowingly:** nowhere. Task 8's copy derives its story list from `SCORE_DEFS.filter((d) => d.stable)`. A fourth story needs: one `DERIVED_SIDE_PAIRS` entry, one `ScoreDef` with its constants, one `presets.ts` case with its columns, and one card `desc`.
