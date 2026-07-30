@@ -27,7 +27,7 @@ export function detailRecord(over: Partial<DetailRecord> = {}): DetailRecord {
 export function shoe(over: Partial<Shoe> & Pick<Shoe, 'slug'>): Shoe {
   return {
     name: over.slug, brand: null, url: `https://runrepeat.com/uk/${over.slug}`,
-    releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null,
+    releasedAt: null, releaseDateSource: null, score: null, msrpGbp: null,
     discontinued: false, plate: 'none', imageUrl: null, values: {}, details: null,
     facts: {}, previousVersion: null, nextVersion: null, latestVersion: null, reviewLanguage: null,
     ...over,

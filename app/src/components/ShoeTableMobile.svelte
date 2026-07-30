@@ -4,6 +4,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel, shortLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
   import { percentileMap, rankMap } from '../lib/stats';
@@ -60,8 +61,7 @@
   function metaOf(s: Shoe): string[] {
     const out: string[] = [];
     if (view.columns.includes('releasedAt') && s.releasedAt) {
-      // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
-      out.push(s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4));
+      out.push(displayReleaseDate(s.releasedAt, s.releaseDateSource));
     }
     if (view.columns.includes('plate') && s.plate !== 'none') {
       out.push(s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate');

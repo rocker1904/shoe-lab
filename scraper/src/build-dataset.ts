@@ -71,14 +71,21 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
     const features = det?.features ?? [];
     ruleDerived.set(slug, plateFromRules(features, det?.hasPlateSection === true));
     const year = releaseYears?.years[slug];
-    const releasedAt = det?.releasedAt ?? (year === undefined ? null : `${year}-01-01`);
+    const pageDate = det?.releasedAt ?? null;
+    const releasedAt = pageDate ?? (year === undefined ? null : `${year}-01-01`);
+    // Provenance rather than a precision flag: a boolean could not tell RunRepeat's own estimate
+    // apart from a year we materialised ourselves, and only the second is fiction
+    // (docs/scraping.md §Release-date provenance).
+    const releaseDateSource = pageDate !== null
+      ? (det!.preciseReleaseDate ? 'page' as const : 'page-estimated' as const)
+      : (releasedAt === null ? null : 'listing' as const);
     return {
       slug,
       name: det?.name ?? m.name,
       brand: det?.brand ?? null,
       url: det?.runrepeatUrl ?? m.url,
       releasedAt,
-      preciseReleaseDate: det?.releasedAt != null && det.preciseReleaseDate,
+      releaseDateSource,
       score: det?.score ?? null,
       msrpGbp: det?.msrpGbp ?? null,
       discontinued: det?.discontinued ?? false,
@@ -110,11 +117,11 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
   validateShoesFile(shoesFile);
 
   const csvTests = published.filter((t) => CSV_TEST_TYPES.has(t.type)).sort((a, b) => a.id - b.id);
-  const header = ['slug', 'name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate', 'discontinued', ...csvTests.map((t) => t.slug)];
+  const header = ['slug', 'name', 'brand', 'releasedAt', 'releaseDateSource', 'score', 'msrpGbp', 'plate', 'discontinued', ...csvTests.map((t) => t.slug)];
   const lines = [csvLine(header)];
   for (const s of shoes) {
     lines.push(csvLine([
-      s.slug, s.name, s.brand, s.releasedAt, s.score, s.msrpGbp, s.plate, s.discontinued,
+      s.slug, s.name, s.brand, s.releasedAt, s.releaseDateSource, s.score, s.msrpGbp, s.plate, s.discontinued,
       ...csvTests.map((t) => s.values[String(t.id)]),
     ]));
   }

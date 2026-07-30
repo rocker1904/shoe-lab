@@ -120,16 +120,17 @@ describe('ShoeTable', () => {
     setup();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
-  it('shows only the year when the release date is not precise', () => {
+  it('shows a bare year for a listing date and a month for a page date, never the day', () => {
     setup({
       shoes: [
-        shoe({ slug: 'yearly', releasedAt: '2024-01-01', preciseReleaseDate: false }),
+        shoe({ slug: 'yearly', releasedAt: '2024-01-01', releaseDateSource: 'listing' }),
         shoe({ slug: 'exact', releasedAt: '2025-03-14' }),
       ],
       view: { columns: ['releasedAt'] },
     });
     expect(screen.getByText('2024')).toBeInTheDocument();
-    expect(screen.getByText('2025-03-14')).toBeInTheDocument();
+    // The day is deliberately dropped: only 24 of 450 shoes could ever supply one.
+    expect(screen.getByText('March 2025')).toBeInTheDocument();
   });
 });
 

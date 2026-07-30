@@ -41,7 +41,7 @@ export const PRICE_TEST: LabTest = labTest({ id: 52, slug: 'price', name: 'Price
 export function shoe(overrides: Partial<Shoe> & { slug: string }): Shoe {
   return {
     name: overrides.slug, brand: 'Brand', url: `https://runrepeat.com/${overrides.slug}`,
-    releasedAt: '2025-01-01', preciseReleaseDate: true, score: 80, msrpGbp: 140, discontinued: false,
+    releasedAt: '2025-01-01', releaseDateSource: 'page', score: 80, msrpGbp: 140, discontinued: false,
     plate: 'none', imageUrl: null, values: {}, details: null,
     facts: {}, previousVersion: null, nextVersion: null, latestVersion: null, reviewLanguage: null,
     ...overrides,
@@ -69,5 +69,5 @@ export const FLEET: Shoe[] = [
   shoe({ slug: 'racer', values: { '5': 29, '6': 39, '24': 220, '65': 75, '66': 68, '70': 42, '68': 150, '67': 125, '4': 2.0, '9': 1.5, '19': 2, '26': 82, '25': 108 }, plate: 'carbon', releasedAt: '2026-01-01', score: 90, msrpGbp: 250 }),
   shoe({ slug: 'trainer', values: { '5': 25, '6': 35, '24': 280, '65': 60, '66': 60, '70': 30, '68': 120, '67': 100, '4': 0.5, '9': 3.0, '19': 5, '26': 98, '25': 120 }, plate: 'plated-other', releasedAt: '2023-05-01', score: 85 }),
   shoe({ slug: 'oldie', values: { '5': 20, '6': 30, '24': 300, '65': 55, '66': 45, '68': 100, '67': 90, '4': 1.2, '9': 2.4, '19': 3, '26': 92, '25': 112 }, releasedAt: '2021-01-01', score: 70, discontinued: true, brand: 'Other' }),
-  shoe({ slug: 'mystery', values: {}, releasedAt: null, preciseReleaseDate: false, score: null, msrpGbp: null }),
+  shoe({ slug: 'mystery', values: {}, releasedAt: null, releaseDateSource: null, score: null, msrpGbp: null }),
 ];

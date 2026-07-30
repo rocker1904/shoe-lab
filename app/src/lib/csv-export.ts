@@ -15,6 +15,7 @@ function cell(shoe: Shoe, col: string, idx: TestIndex, scores?: ScoreColumns): u
   if (resolved) return resolved.get(shoe.slug);
   if (col === 'plate') return shoe.plate;
   if (col === 'releasedAt') return shoe.releasedAt;
+  if (col === 'releaseDateSource') return shoe.releaseDateSource;
   if (col === 'name') return shoe.name;
   if (col === 'brand') return shoe.brand;
   const n = numericValue(shoe, col, idx);
@@ -31,11 +32,14 @@ function cell(shoe: Shoe, col: string, idx: TestIndex, scores?: ScoreColumns): u
 export function exportCsv(
   shoes: Shoe[], columns: string[], idx: TestIndex, scores?: ScoreColumns,
 ): string {
-  const header = ['slug', 'name', 'brand', 'url', ...columns];
+  // Provenance rides beside the date it qualifies rather than always: a source column with no
+  // date column would be noise (docs/app.md §Release-date provenance).
+  const withSource = columns.flatMap((c) => (c === 'releasedAt' ? [c, 'releaseDateSource'] : [c]));
+  const header = ['slug', 'name', 'brand', 'url', ...withSource];
   const lines = [header.map(esc).join(',')];
   for (const s of shoes) {
     lines.push([s.slug, s.name, s.brand, reviewUrl(s.slug),
-                ...columns.map((c) => cell(s, c, idx, scores))].map(esc).join(','));
+                ...withSource.map((c) => cell(s, c, idx, scores))].map(esc).join(','));
   }
   return lines.join('\n') + '\n';
 }

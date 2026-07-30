@@ -51,9 +51,16 @@ export interface ShoeDetails {
   pros: string[]; cons: string[]; intro: string;
   whoShouldBuy: string | null; whoShouldNotBuy: string | null; features: string[];
 }
+/**
+ * Where a shoe's `releasedAt` came from, in precedence order — `page` is RunRepeat's own
+ * confirmed date, `page-estimated` its own date flagged imprecise, `listing` a year from the
+ * category listing materialised as 1 January (docs/scraping.md §Release-date provenance).
+ * Null only when no source had a date at all.
+ */
+export type ReleaseDateSource = 'page' | 'page-estimated' | 'listing';
 export interface Shoe {
   slug: string; name: string; brand: string | null; url: string;
-  releasedAt: string | null; preciseReleaseDate: boolean;
+  releasedAt: string | null; releaseDateSource: ReleaseDateSource | null;
   score: number | null; msrpGbp: number | null;
   discontinued: boolean; plate: Plate; imageUrl: string | null;
   values: Record<string, MetricValue>;

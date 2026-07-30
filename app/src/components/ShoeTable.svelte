@@ -4,6 +4,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
   import { percentileMap, rankMap } from '../lib/stats';
@@ -43,8 +44,7 @@
     onchange(next);
   }
   function cellText(s: Shoe, col: string): string {
-    // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
-    if (col === 'releasedAt') return s.releasedAt ? (s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4)) : '—';
+    if (col === 'releasedAt') return displayReleaseDate(s.releasedAt, s.releaseDateSource);
     if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate';
     const resolved = scores.get(col);
     if (resolved) {

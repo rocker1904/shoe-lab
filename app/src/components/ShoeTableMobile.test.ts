@@ -20,10 +20,10 @@ function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: Score
 }
 
 describe('ShoeTableMobile', () => {
-  it('puts the shoe name on its own row with the year and the plate', () => {
+  it('puts the shoe name on its own row with the release month and the plate', () => {
     setup();
     const strip = screen.getByText('cushy').closest('tr')!;
-    expect(strip.textContent).toContain('2025-06-01');
+    expect(strip.textContent).toContain('June 2025');
     expect(screen.getByText('racer').closest('tr')!.textContent).toContain('Carbon');
   });
 

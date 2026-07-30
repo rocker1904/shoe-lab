@@ -40,8 +40,8 @@ describe('exportCsv', () => {
     ]);
   });
   it('blanks null brand, score and release date', () => {
-    const s = shoe({ slug: 'sparse', brand: null, score: null, releasedAt: null, msrpGbp: null });
-    expect(exportCsv([s], ['releasedAt', 'score', 'msrpGbp'], idx).trimEnd().split('\n')[1]).toBe('sparse,sparse,,https://runrepeat.com/uk/sparse,,,');
+    const s = shoe({ slug: 'sparse', brand: null, score: null, releasedAt: null, releaseDateSource: null, msrpGbp: null });
+    expect(exportCsv([s], ['releasedAt', 'score', 'msrpGbp'], idx).trimEnd().split('\n')[1]).toBe('sparse,sparse,,https://runrepeat.com/uk/sparse,,,,');
   });
   it('stringifies boolean values', () => {
     const s = shoe({ slug: 'flagged', values: { '39': false } });

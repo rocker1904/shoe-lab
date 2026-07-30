@@ -548,6 +548,25 @@ panel. The export still carries no marker for an imprecise release date; that
 is the CSV date-precision item in BACKLOG.md, and both CSV edits were meant to
 land in one visit.
 
+## Release-date provenance
+
+The table renders every release date at **month precision** — `March 2024` —
+except a `listing`-sourced one, which renders as the bare year because only the
+year was ever real (docs/scraping.md §Release-date provenance). `displayReleaseDate`
+in `lib/release-date.ts` is the single spelling of that rule, shared by the
+table and the mobile strip.
+
+The day is never shown, even for the 24 shoes whose date is precise: a column
+that is day-precise for 5% of rows implies a resolution the dataset does not
+have. The day is not lost — `releasedAt` keeps it, so sorting stays exact and
+the CSV exports it in full, for the same reason the numbers are unrounded
+(docs/app.md §Number display).
+
+The in-app export emits `releaseDateSource` **beside the date column it
+qualifies**, not among the always-present identity columns: a provenance column
+with no date column beside it is noise. `shoes.csv` carries it unconditionally,
+because that export has a fixed header.
+
 ## Resolved price
 
 Lab test 52 and the `msrpGbp` field are the same GBP list price from two

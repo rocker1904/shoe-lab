@@ -107,7 +107,7 @@ describe('buildDataset', () => {
     const { csv } = buildDataset(tests, metrics, details);
     const lines = csv.trimEnd().split('\n');
     const header = lines[0]!.split(',');
-    expect(header.slice(0, 8)).toEqual(['slug', 'name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate', 'discontinued']);
+    expect(header.slice(0, 9)).toEqual(['slug', 'name', 'brand', 'releasedAt', 'releaseDateSource', 'score', 'msrpGbp', 'plate', 'discontinued']);
     expect(header).toContain('heel-stack');
     expect(header).not.toContain('tongue-gusset-type'); // option type excluded
     expect(header).not.toContain('plate,plate');
@@ -205,12 +205,12 @@ describe('buildDataset release-year supplement', () => {
     return { scrapedAt: '2026-07-26T12:00:00Z', years };
   }
 
-  it('fills releasedAt from the year bucket and marks it imprecise', () => {
+  it('fills releasedAt from the year bucket and sources it to the listing', () => {
     const { metrics, details } = baseInputs();
     const { shoesFile, csv } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-005': 2025 }));
     const five = shoesFile.shoes.find((s) => s.slug === 'shoe-005')!;
     expect(five.releasedAt).toBe('2025-01-01');
-    expect(five.preciseReleaseDate).toBe(false);
+    expect(five.releaseDateSource).toBe('listing');
     expect(csv.split('\n').find((l) => l.startsWith('shoe-005,'))).toContain('2025-01-01');
   });
 
@@ -219,7 +219,7 @@ describe('buildDataset release-year supplement', () => {
     const { shoesFile } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-000': 2019 }));
     const zero = shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
     expect(zero.releasedAt).toBe('2025-06-01');
-    expect(zero.preciseReleaseDate).toBe(true);
+    expect(zero.releaseDateSource).toBe('page');
   });
 
   it('uses the year when the details record has no date of its own', () => {
@@ -228,26 +228,26 @@ describe('buildDataset release-year supplement', () => {
     if (!('gone' in rec)) rec.releasedAt = null;
     const { shoesFile } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-000': 2022, 'shoe-001': 2020 }));
     expect(shoesFile.shoes.find((s) => s.slug === 'shoe-000')!.releasedAt).toBe('2022-01-01');
-    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-000')!.preciseReleaseDate).toBe(false);
+    expect(shoesFile.shoes.find((s) => s.slug === 'shoe-000')!.releaseDateSource).toBe('listing');
     // tombstoned details record: the year still applies
     expect(shoesFile.shoes.find((s) => s.slug === 'shoe-001')!.releasedAt).toBe('2020-01-01');
   });
 
-  it('keeps an imprecise details date imprecise', () => {
+  it('sources a details date RunRepeat flagged imprecise as page-estimated, keeping its month', () => {
     const { metrics, details } = baseInputs();
     const rec = details.shoes['shoe-000']!;
     if (!('gone' in rec)) rec.preciseReleaseDate = false;
     const zero = buildDataset(tests, metrics, details).shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
     expect(zero.releasedAt).toBe('2025-06-01');
-    expect(zero.preciseReleaseDate).toBe(false);
+    expect(zero.releaseDateSource).toBe('page-estimated');
   });
 
-  it('leaves shoes with neither source null and imprecise', () => {
+  it('leaves shoes with neither source null, with no provenance at all', () => {
     const { metrics, details } = baseInputs();
     const { shoesFile } = buildDataset(tests, metrics, details, releaseYears({ 'shoe-005': 2025 }));
     const two = shoesFile.shoes.find((s) => s.slug === 'shoe-002')!;
     expect(two.releasedAt).toBeNull();
-    expect(two.preciseReleaseDate).toBe(false);
+    expect(two.releaseDateSource).toBeNull();
     // omitting the argument entirely behaves the same
     expect(buildDataset(tests, metrics, details).shoesFile.shoes.find((s) => s.slug === 'shoe-005')!.releasedAt).toBeNull();
   });
@@ -331,7 +331,7 @@ describe('buildDataset CSV cells', () => {
 
     const header = lines[0]!.split(',');
     // heel-stack and t0: every other catalogue test is either non-numeric or read by no shoe
-    expect(header.slice(8)).toEqual(['heel-stack', 't0']);
+    expect(header.slice(9)).toEqual(['heel-stack', 't0']);
     expect(new Set(header).size).toBe(header.length); // no duplicate column names
 
     const zero = lines.find((l) => l.startsWith('shoe-000,'))!;
@@ -344,10 +344,10 @@ describe('buildDataset CSV cells', () => {
     const { metrics, details } = baseInputs();
     const { csv } = buildDataset(tests, metrics, details);
     const one = csv.split('\n').find((l) => l.startsWith('shoe-001,'))!;
-    expect(one.startsWith('shoe-001,Shoe 1,,,,,none,false,')).toBe(true);
+    expect(one.startsWith('shoe-001,Shoe 1,,,,,,none,false,')).toBe(true);
     // no details record means no plate section, so a metrics-only shoe reads none
     const two = csv.split('\n').find((l) => l.startsWith('shoe-002,'))!;
-    expect(two.startsWith('shoe-002,Shoe 2,,,,,none,false,')).toBe(true);
+    expect(two.startsWith('shoe-002,Shoe 2,,,,,,none,false,')).toBe(true);
   });
 });
 

@@ -141,11 +141,33 @@ category listing and takes, per product, the first `facts['release-date']`
 option whose `name`/`text` is a bare four-digit year. `build:dataset` uses it
 **only** when the page gave no date, materialising `YYYY-01-01`.
 
-`preciseReleaseDate` is therefore the discriminator, not the date string: true
-only when the shoe page supplied a date; false means the day and month are
-fiction and only the year is real. Downstream consequences are real —
-year-derived shoes sort and filter as if released on 1 January — and the table
-renders the year alone when the flag is false (docs/app.md).
+A year-derived date sorts and filters as if the shoe shipped on 1 January, which
+is why the provenance below exists rather than a precision flag.
+
+## Release-date provenance
+
+`Shoe.releaseDateSource` records where `releasedAt` came from, and is the field
+anything downstream should branch on. `DetailRecord.preciseReleaseDate` stays a
+faithful transcript of RunRepeat's own flag and is an input to this, not a
+substitute for it.
+
+| source | n today | `releasedAt` holds |
+|---|---|---|
+| `page` | 24 | a date the page gave and flagged precise |
+| `page-estimated` | 94 | a date the page gave and flagged imprecise |
+| `listing` | 315 | `YYYY-01-01`, materialised from the year supplement |
+| `null` | 17 | nothing anywhere had a date |
+
+A boolean could not carry this. It collapsed `page-estimated` and `listing`
+together, yet only the second is fiction: those 94 shoes have a real month from
+RunRepeat — 50 of them month-precise on day 01, 44 with a specific day — which
+the app previously discarded by rendering the year alone. The distinction is
+also the one a CSV consumer needs, so `releaseDateSource` is a column in
+`shoes.csv` (docs/app.md §Release-date provenance).
+
+Precedence is the table order: a confirmed page date beats an estimate, which
+beats a listing year. Hand-curated months, when that work lands, slot between
+`page` and `page-estimated`.
 
 ## Data quirks
 
