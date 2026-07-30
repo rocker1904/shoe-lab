@@ -5,10 +5,18 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
 const SCAN = /\.(md|ts|svelte|mjs|js|yml|yaml|css|html)$/;
+/**
+ * `docs/superpowers/` is frozen: spec and plan artifacts recording what was decided at the time,
+ * which docs/ then supersedes (CLAUDE.md). Their pointers name headings as those headings stood
+ * then, so a live rename dangles one — and the fix would be editing history to match the present,
+ * which is the one thing a frozen artifact must not do. The index check below already excludes
+ * them for the same reason.
+ */
+const FROZEN = 'docs/superpowers/';
 // Untracked-but-not-ignored files count too, so a new doc is checked before it is committed.
 const files = execFileSync('git', ['ls-files', '-co', '--exclude-standard'], { encoding: 'utf8' })
   .split('\n')
-  .filter((f) => f && SCAN.test(f) && !f.includes('node_modules/'));
+  .filter((f) => f && SCAN.test(f) && !f.includes('node_modules/') && !f.startsWith(FROZEN));
 
 // Pointer syntax: docs/README.md, contract §Pointer syntax. The heading may wrap onto the
 // next line, so the separator spans newlines; the class stops it at sentence punctuation.

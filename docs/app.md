@@ -23,13 +23,13 @@ problem on every keystroke. It is still **one** write path, now asynchronous,
 and it flushes on `pagehide` so a page being torn down never loses the pending
 write.
 
-`ViewState` carries **no side**. Which half of each side pair a view is about is
-read back out of it by `sideOf` (docs/app.md §The side is a preset too), so the baseline is a
-constant: `defaultView()` takes no argument and `DEFAULT_SIDE` is the one place
-`'heel'` is written. `defaultColumns` still *requires* a side, which is what
+`ViewState` carries **no zone**. Which half of each zone pair a view is about is
+read back out of it by `zoneOf` (§The zone is a preset too), so the baseline is a
+constant: `defaultView()` takes no argument and `DEFAULT_ZONE` is the one place
+`'heel'` is written. `defaultColumns` still *requires* a zone, which is what
 stops a second call site defaulting by accident. `parseView` has nothing to
 resolve before it builds that baseline — the columns a link carries are the
-side it carries.
+zone it carries.
 
 Init takes the first of: a query string in the URL, a stored view, the
 defaults. A shared link must always beat a previous session, so the query
@@ -111,12 +111,14 @@ preference alongside their filters. That is accepted rather than overlooked: the
 preference changes what the score means, so a link that dropped it would show
 the recipient a different ranking under the same URL.
 
-**There is no side token.** The side rides in `cols`, which is the only thing
-that records it (docs/app.md §The side is a preset too), so a plain forefoot table is a verbose
-link: eight column slugs where `side=forefoot` would be one. That is the
-accepted cost of having one encoding of the side rather than two that can
-disagree. A `side=` shorthand expanding to `defaultColumns(side)` is the remedy
-if the length ever becomes annoying in practice (BACKLOG.md).
+**There is no zone token.** The zone rides in `cols`, which is the only thing
+that records it (§The zone is a preset too), so a plain forefoot table is a verbose
+link: eight column slugs where `zone=forefoot` would be one. That is the
+accepted cost of having one encoding of the zone rather than two that can
+disagree. A `zone=` shorthand expanding to `defaultColumns(zone)` is the remedy
+if the length ever becomes annoying in practice (BACKLOG.md). An old link may
+still carry `strike=` from the vocabulary before this one; `parseView` ignores it
+rather than honouring it, because the tool was never shared under that spelling.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, always falling back to the default rather than throwing:
@@ -146,7 +148,7 @@ fields). A range over an `option`, `bool` or `text` test reads as missing for
 every shoe and would empty the whole fleet in one click, so both the UI and
 `parseView` refuse them. Each row is titled by its `MetricRow` rather than by
 the fieldset legend, so the name is stated once — but the fieldset's accessible
-name carries heading **and** side, because two rows both called "Forefoot"
+name carries heading **and** zone, because two rows both called "Forefoot"
 would be indistinguishable to anyone not looking at the screen.
 
 The order is fixed: search, released after, plate, brand, discontinued, then
@@ -167,9 +169,9 @@ it is redundant with shock absorption, which is one row above it and measures th
 outcome rather than the material cause (docs/shoe-stories.md). It stays
 reachable from the Add-filter dialog like any other metric.
 
-The order does not rearrange itself under the story or the side — someone
-comparing two stories must not have the controls move underneath them. Both halves of every side pair
-are curated for that reason, and **every part of a side pair renders always**;
+The order does not rearrange itself under the story or the zone — someone
+comparing two stories must not have the controls move underneath them. Both halves of every zone pair
+are curated for that reason, and **every part of a zone pair renders always**;
 a single renders when it is curated, active, or listed.
 
 **Clearing a value and removing a row are different actions.** Clearing empties
@@ -308,7 +310,7 @@ accessible name is not announced with the field inside it, so the metric is the
 only thing that tells them apart.
 
 **Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
-one action, `lib/roving.ts`, applied to all four of them — the side, the story
+one action, `lib/roving.ts`, applied to all four of them — the zone, the story
 segment, discontinued, and the generation picker. The role promises exactly
 that, and each group made every radio its own stop and ignored the keys. The
 radios are buttons rather than native inputs — two rendered copies of a group
@@ -363,10 +365,10 @@ and separately sortable: a forefoot striker wants the forefoot number, and
 merging them would destroy the distinction.
 
 The four heel/forefoot pairs — stack, energy return, shock absorption, midsole
-width — are **declared** in `SIDE_PAIRS`, because the catalogue links only two
-of them and carries no notion of side at all. The declaration is authoritative
+width — are **declared** in `ZONE_PAIRS`, because the catalogue links only two
+of them and carries no notion of zone at all. The declaration is authoritative
 where it applies: it names the heading, orders the halves forefoot-first, and
-puts `side` on each part. `parts[].label` stays the full test name, so the
+puts `zone` on each part. `parts[].label` stays the full test name, so the
 column picker can still tell "Forefoot stack" from "Heel stack". A declared
 pair takes its group from the **heel** half. Pairs are never inferred from a
 slug or a name pattern — `heel-padding-durability` has no forefoot
@@ -589,11 +591,25 @@ which reads the whole page and says Carbon / Non-carbon plate — answers for th
 cell, the picker offers the column once, and the test's own reading is simply
 never shown. Any future field/test slug collision belongs in the same set.
 
-**The name line keys each entry by its column, never by its text.** Two
-categorical readings saying the same word is ordinary — 265 shoes have no heel
-tab and 187 no gusset, so "None" beside "None" is the common case — and a keyed
+**The phone's name line is prose, and says only what a shoe has.** A cell sits
+under a header that asks the question, so it prints `None`, `No`, or an em dash
+for no reading, and all three are legible. The name line has no header, so it
+does two things a cell does not. It **drops an absence** — `isNegativeReading`:
+a `false` bool, or the `none` choice both option tests spell that way — because
+"None · None · No" tells a reader nothing they came for. And it **names the
+column**: an option reads `Gusset: Both sides (semi)`, because the value alone
+answers a question nothing on that line asked, while a true `bool` reads as the
+feature alone (`Removable insole`), since naming it is the whole reading. The
+noun comes from `chipLabel`, which is neither `SHORT_LABELS` — "Remv. insole"
+reads as an abbreviation in a sentence — nor the catalogue name, because
+"Tongue: gusset type" already carries a colon and the line would add a second.
+
+**That line keys each entry by its column, never by its text.** A keyed
 `{#each}` over the text itself throws `each_key_duplicate`, which blanks the
-whole page rather than the row.
+whole page rather than the row. Today's labels happen to keep any two chips
+apart, so the regression test builds a catalogue where they collide rather than
+resting on that: the invariant is the key, not the label rules that currently
+protect it.
 
 **There is no categorical filter yet.** A set-membership facet is the obvious
 next step and is a backlog item, not an oversight — the column is useful for
@@ -689,10 +705,10 @@ than layering on it. A preset sets its own **columns** as well as its filters
 and sort, which makes it the single place a story is expressed.
 
 **A story is a pool and a ranking, and nothing else.** No story bounds a metric:
-Easy and Tempo resolve to the plate gate and a sort by their own side's score key,
+Easy and Tempo resolve to the plate gate and a sort by their own zone's score key,
 Race to a sort and **no filter at all**. `applyPreset` therefore reads nothing from
 the loaded fleet — the percentile bounds were the only thing that ever needed it, so
-its signature is `(story, side, stability)` and a fleet argument reappearing would be
+its signature is `(story, zone, stability)` and a fleet argument reappearing would be
 a threshold in disguise. One consequence worth stating because it is a safety net
 rather than a line of code: **no story participates in the sparse-bound guard** below,
 which only ever looks at range keys. All three have lost it by having nothing to guard,
@@ -704,19 +720,19 @@ from `defaultView()`, and so does `allView`. Both marks are `sameValue` over the
 *whole* view, so a new `ViewState` field participates in the comparison whether or
 not it should: reset it and turning the preference on would unmark Easy, clicking
 Easy again would silently switch the preference back off, and a plain table with it
-on would mark neither `All` nor any story. It is the same rule the side follows —
+on would mark neither `All` nor any story. It is the same rule the zone follows —
 who you are survives, what you searched for does not.
 
 This section owns the mechanism only. What each preset is *for*, and why its terms
 and weights are what they are, is docs/shoe-stories.md — read it before changing
 a number.
 
-`applyPreset` takes a side as an **input**, so the mapping is
-`(story, side) → view` with nothing special-cased: a story sorts by and shows
-the half of each side pair that the side names — why is
+`applyPreset` takes a zone as an **input**, so the mapping is
+`(story, zone) → view` with nothing special-cased: a story sorts by and shows
+the half of each zone pair that the zone names — why is
 docs/shoe-stories.md §Which half a story uses.
-Nothing carries the side afterwards; the view it produces simply uses one
-half's keys, which is what `sideOf` then reads back.
+Nothing carries the zone afterwards; the view it produces simply uses one
+half's keys, which is what `zoneOf` then reads back.
 
 Each story's columns are six numeric — the phone bound
 (docs/app.md §Columns and sorting) — spent on its score and the terms behind it,
@@ -742,7 +758,7 @@ stored `preset` field would keep claiming Easy.
 `app/src/lib/score.ts` is a **story-agnostic engine**; each story arrives as a
 `ScoreDef` in `app/src/lib/score-defs.ts` — its column keys, its term weights, its
 divisors and its anchors, as data. The engine reads nothing story-specific, so a
-fourth story is a fourth definition and one `DERIVED_SIDE_PAIRS` entry rather than a
+fourth story is a fourth definition and one `DERIVED_ZONE_PAIRS` entry rather than a
 fourth code path, and `SCORE_DEFS`/`defForKey`/`defForPreset` mean no consumer
 enumerates the stories. Four stages, each doing one job, and the separation is the
 design:
@@ -801,7 +817,7 @@ presets. The live margin is the test's to report, not this doc's to restate.
 
 **Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
 and never recomputed from the loaded catalogue: the two references, the outsole cap, the
-per-side width caps, the sd divisors per side, and the anchors. Why, and what an
+per-zone width caps, the sd divisors per zone, and the anchors. Why, and what an
 agent must not "fix", is docs/decisions.md §Frozen scores and live thresholds.
 Consequences, all intended: a shoe's score never
 moves because the catalogue grew, and **a future score may exceed 100**, which is why
@@ -825,7 +841,7 @@ outside a definition's pool can therefore read above 100 or below 0, which is co
 and **must not be clamped**. There is deliberately no `pool` predicate on `ScoreDef`: a
 callable would invite exactly that mistake.
 
-The anchors are frozen **per story, per side and per stability state** — four pairs each
+The anchors are frozen **per story, per zone and per stability state** — four pairs each
 for Easy and Tempo, two for Race, which has no stable variant. Only the anchors are per
 story, because they are the one constant that depends on the weights. The toggle changes
 what the score means, so one shared scale would invite a comparison that is not
@@ -838,15 +854,15 @@ carrying a large common baseline, so an unanchored scale compresses the fleet in
 **Each score is two synthetic keys** — `easy-score-heel`, `tempo-score-forefoot` and so
 on, six in all — and they are the columns whose value depends on the *view* rather than
 on the shoe: the stability preference decides how many terms there are.
-`numericValue` therefore cannot answer for them. **A score column names its own side rather than taking the derived
-one**: resolved through `sideOf`, unticking two measurement columns turned every score
+`numericValue` therefore cannot answer for them. **A score column names its own zone rather than taking the derived
+one**: resolved through `zoneOf`, unticking two measurement columns turned every score
 into a heel score with nothing on screen saying so, and the panel below could then
-explain a half the header did not name. There is no side fallback in scoring at all now.
+explain a half the header did not name. There is no zone fallback in scoring at all now.
 
-Naming its own side does not exempt it from the side control. The pair is declared in
-`DERIVED_SIDE_PAIRS`, held apart from `SIDE_PAIRS` because `metricEntries` resolves that
+Naming its own zone does not exempt it from the zone control. The pair is declared in
+`DERIVED_ZONE_PAIRS`, held apart from `ZONE_PAIRS` because `metricEntries` resolves that
 list against the catalogue and a key with no `LabTest` behind it would drop out of the
-column picker — but `swapSide` and `sideOf` read both. So a score column **follows a side
+column picker — but `swapZone` and `zoneOf` read both. So a score column **follows a zone
 click**, like every other column that carries no number, and a table showing only the Easy
 heel score **names the heel**. Without that, clicking Forefoot swapped the stack column and
 left a heel score sitting beside it. `labels.ts`, `direction.ts`, `urlstate.ts` and the
@@ -890,75 +906,83 @@ leaves the panel, so the block is **its own scrollport**: the page must not go s
 for it, and the e2e run asserts that at 375px with a row open. The panel is handed the
 view's **columns**, and renders one breakdown per score column on screen — labelled with
 that column's own header text, keyed by the column and resolved through `defForKey` and
-`sideOfKey` — and none at all without one. Keyed by the **column** rather than the side
-because with three stories on screen a side appears three times, and Svelte throws on a
-duplicate key. Reading the columns rather than a side is what makes panel and column
+`zoneOfKey` — and none at all without one. Keyed by the **column** rather than the zone
+because with three stories on screen a zone appears three times, and Svelte throws on a
+duplicate key. Reading the columns rather than a zone is what makes panel and column
 unable to disagree; `stability` still applies to all alike, and Race simply ignores it.
 
-### The side is a preset too
+### The zone is a preset too
+
+**Not "side".** The heel and the forefoot are the two *ends* of a shoe, and a
+runner asked to pick a "side" reasonably thinks of the medial and lateral ones,
+which this tool has no readings for at all. The control reads **Measured at**,
+the type is `Zone`, and the word "side" appears nowhere a runner can see it. An
+earlier framing called it the *strike*, which claimed to know how the reader
+runs; `strike=` survives only as a URL key `parseView` ignores
+(§URL encoding).
 
 Both groups above the table are derived marks over one view, not a field and a
-mark. `lib/side.ts` is the whole mechanism:
+mark. `lib/zone.ts` is the whole mechanism:
 
-- **`sideOf(v)`** is the side a view is *about*: the one half every side-paired
+- **`zoneOf(v)`** is the zone a view is *about*: the one half every zone-paired
   key it uses belongs to — columns, range keys and the sort key alike — or
   `null` when it uses both halves or neither. A mixed view is not wrong, it is
   simply neither preset, exactly as a hand-edited view is neither story. Unlike
-  the story mark, this one **survives hand-editing a bound**: a side is not a
+  the story mark, this one **survives hand-editing a bound**: a zone is not a
   story, and a runner who types a heel number has not stopped being on heel.
-- **`projectSide(v, side)`** is what a click does. Columns and the sort key
+- **`projectZone(v, zone)`** is what a click does. Columns and the sort key
   carry no number — "sorted by energy return" means the same on either half — so
   they follow; a bound on the half being left carries one that does not
   transfer, the median heel stack landing in the top few percent of forefoot
   stacks, so it is **dropped rather than translated**. Carrying the
   *percentile* across instead would silently rewrite a number the runner typed.
-  Everything with no side — price, weight, brands, search, the discontinued and
-  missing-data flags — is untouched. A view that names no side at all gains that
-  side's two default measurement columns, so the control is never a dead button
+  Everything with no zone — price, weight, brands, search, the discontinued and
+  missing-data flags — is untouched. A view that names no zone at all gains that
+  zone's two default measurement columns, so the control is never a dead button
   that has just deleted a bound.
 
 Together those give the invariant the rest depends on:
-`sideOf(projectSide(v, s)) === s` for every view and side. A click always leaves
-the view committed to the side clicked, so the mark can honestly read
+`zoneOf(projectZone(v, z)) === z` for every view and zone. A click always leaves
+the view committed to the zone clicked, so the mark can honestly read
 everything and the just-clicked control is never left unlit. `Page.svelte`
-routes a view that *is* a story through `applyPreset` on the new side instead,
+routes a view that *is* a story through `applyPreset` on the new zone instead,
 so it re-resolves as that story's own view of the new half — its sort key, its
 score column and its measurement columns all move together.
 
-Mixed views stay reachable by hand and by link, and stay unmarked in the side
-group. They are simply not *preserved* across an explicit side click.
+Mixed views stay reachable by hand and by link, and stay unmarked in the zone
+group. They are simply not *preserved* across an explicit zone click.
 
 ### What All does
 
-`allView(v, side)` is both what `All` produces and what lights it: `All` is
-marked exactly when `sameValue(v, allView(v, side))`. One function rather than
+`allView(v, zone)` is both what `All` produces and what lights it: `All` is
+marked exactly when `sameValue(v, allView(v, zone))`. One function rather than
 an action and a matching predicate, so **marked means pressing it changes
 nothing** is true by construction and cannot drift.
 
-With a derived side, `All` restores that side's plain table. With none it
+With a derived zone, `All` restores that zone's plain table. With none it
 replaces the filters and touches nothing else — there is no defensible column
 set to impose on a deliberately mixed table, and clearing a bound is not
 removing its row (docs/app.md §Filters), so a hand-added row that was on screen
-only because it carried a bound stays listed and empty. The sided branch is a
+only because it carried a bound stays listed and empty. The zoned branch is a
 wholesale restore, which by definition carries no hand-added rows, so there they
 go. The two branches disagreeing is the point.
 
-**A view with no side covers two states**, and this branch treats them alike: one
+**A view with no zone covers two states**, and this branch treats them alike: one
 using *both* halves, and one using *neither* — reachable by unticking Stack and
 Energy return in the column picker, or by a link like `cols=score,weight`. The
 second gets the timid rule too, so `All` leaves those columns alone rather than
 imposing a table on someone who chose not to have one. It costs a click getting
-back: pick a side and the two measurement columns are appended at the end where
+back: pick a zone and the two measurement columns are appended at the end where
 `defaultColumns` interleaves them, so the order differs, `All` goes unlit, and a
 second press restores the plain table (BACKLOG.md).
 
 Two consequences follow from the identity, and both are deliberate:
 
 - **A mixed view with no filters marks `All`.** A view showing everything is an
-  `All` view whether or not it commits to a side; the alternative leaves `All`
+  `All` view whether or not it commits to a zone; the alternative leaves `All`
   unlit on a view it cannot change.
 - **`All` is not idempotent when clearing a filter is what gives the view a
-  side.** From `cols=score,heel-stack` with a bound on `forefoot-stack`, the
+  zone.** From `cols=score,heel-stack` with a bound on `forefoot-stack`, the
   first press clears the bound and leaves the columns alone; the view is now
   heel-derived but is not heel's plain table, so `All` stays unlit and a second
   press restores it. There really is something left for it to do.
@@ -967,21 +991,22 @@ Marking on "no filter is active" was considered and rejected: it would light
 `All` on a view whose columns and sort were hand-edited, so pressing a lit
 control would still change the table.
 
-When the view names no side, applying a story has to pick one — the stories each
-bind one half — and `DEFAULT_SIDE` is that pick.
+When the view names no zone, applying a story has to pick one — the stories each
+bind one half — and `DEFAULT_ZONE` is that pick.
 
 ### The setup strip
 
 `SetupStrip.svelte` asks **both** questions once and then hands over to the
-toolbar for good. Six equal cards in one row, in two divided groups: *Use
-measurements from the* — Heel, Forefoot; *Built for* — All, Easy, Tempo, Race
-with a one-line description each.
+toolbar for good. Six equal cards in one row, in two divided groups: *Measured
+at* — Heel, Forefoot; *Built for* — All, Easy, Tempo, Race with a one-line
+description each.
 
 **Neither label makes a claim about the person.** "I land on my heel" tells a
-curious browser they are being mislabelled; "Use measurements from the"
-describes what the control does to the table, and "Built for" puts the claim on
-the shoe. This is a deliberate stance — do not "fix" it back to something
-friendlier.
+curious browser they are being mislabelled; "Measured at" describes what the
+control does to the table, and "Built for" puts the claim on the shoe. It also
+describes the shoe rather than the runner, which is why it survived the rename
+away from "side" unchanged in meaning (§The zone is a preset too). This is a
+deliberate stance — do not "fix" it back to something friendlier.
 
 No card carries a count (docs/app.md §The toolbar). The descriptions align to a
 common baseline by giving the **name** line a fixed height: bottom-aligning with
@@ -1004,10 +1029,10 @@ stored view" — a genuine first arrival, which `Page.svelte` already knows at
 init — cleared on the first story click, never serialised and never persisted.
 That is not the stored dismissal flag this section rules out, and the property
 it protects is preserved exactly: a bare link opens expanded, a filtered link
-opens collapsed. A side click leaves the strip up, because the side is the
+opens collapsed. A zone click leaves the strip up, because the zone is the
 strip's other question; a story click collapses it with a height transition
 under a `prefers-reduced-motion` guard. The strip's `All` card stays marked
-through a side click, because the click leaves the view equal to that side's
+through a zone click, because the click leaves the view equal to that zone's
 plain table, which is what `allView` produces.
 
 **The strip never returns**, and nothing is lost by that: the only thing the
@@ -1019,7 +1044,7 @@ has gone.
 ### The toolbar
 
 `Toolbar.svelte` is the permanent surface: two segmented radiogroups in one
-visual language — the side, a divider, then `All | Easy | Tempo | Race` — and an
+visual language — the zone, a divider, then `All | Easy | Tempo | Race` — and an
 actions group (`Filters`, `Columns`) pushed right by
 `margin-left: auto`. The strip cannot hold the controls that reset it, because
 it is gone by the time they are needed.
@@ -1051,7 +1076,7 @@ sort and columns alone.
 
 Both marks are passed in, not held: `'all'` while the view equals what `All`
 would produce, a story id while it equals that story, and `null` once it is
-neither; the side group takes `sideOf` and marks nothing on a mixed view. Each
+neither; the zone group takes `zoneOf` and marks nothing on a mixed view. Each
 group is a nullable mark, so either can show nothing selected, and `roving`
 still gives a group with nothing checked one tab stop.
 
@@ -1066,7 +1091,7 @@ scale is fixed to a dated fleet so a future shoe may read above 100. No maths: d
 The checkbox's label is explicit rather than wrapping it, because a button inside a
 label is a click on the label: the help would toggle the preference it explains.
 
-`SideToggle` carries **no visible lede**. Two segmented groups side by side
+`ZoneToggle` carries **no visible lede**. Two segmented groups side by side
 are one language, and the words live on the setup strip, where the question is
 asked once; the group keeps `aria-label="Measurements from"` so it is still
 named for a screen reader.
@@ -1081,21 +1106,21 @@ one line rather than phone-versus-desktop:
 | 560px and below | as above, with pace stretched to fill the line and its pills `flex: 1` |
 
 Three details that were bugs first. The **divider is removed** the moment the
-groups stop sharing a line, or it wraps with the side group and dangles after
+groups stop sharing a line, or it wraps with the zone group and dangles after
 Forefoot. `flex-basis: 100%` belongs on the **wrapper**, never on the
 segment: on the segment, the bordered pill container stretches the full width
 with its pills clustered at the left. And the narrow tier **tightens the bar's
-own padding, gaps and button padding**, because line one is the side group plus
+own padding, gaps and button padding**, because line one is the zone group plus
 actions and at 360px — the usual Android width, and the binding one — the two
 needed 345px against the 336px the wider padding left them, so the actions
 dropped to a third line and left the void the middle tier exists to prevent.
 
-Picking a side always leaves the view about that side, in three states: a view
-equal to a story is rebuilt as that story on the new side; a view that names a
-side is projected onto the new one; a view that names none gains that side's
+Picking a zone always leaves the view about that zone, in three states: a view
+equal to a story is rebuilt as that story on the new zone; a view that names a
+zone is projected onto the new one; a view that names none gains that zone's
 measurement columns. In all three, the other half's bounds are **dropped rather
-than translated**, and everything with no side is untouched — the reasoning is
-docs/app.md §The side is a preset too. A no-op click on the marked side returns
+than translated**, and everything with no zone is untouched — the reasoning is
+§The zone is a preset too. A no-op click on the marked zone returns
 early, so it cannot rebuild the view.
 
 ## Theming
@@ -1176,17 +1201,17 @@ screen state the denominator instead of assuming it. Filter to last year and it
 reads `120 / 180`, where both numbers visibly moved.
 
 **One vocabulary, and the shape decides only how many figures there are.** A
-single metric and a **side pair** each carry one, on the heading line; a
+single metric and a **zone pair** each carry one, on the heading line; a
 **superseded pair** carries one per generation, on its radio rows, with the word
 repeated rather than hoisted to a column label so a row read on its own still
 says what its numbers mean.
 
-A side pair takes one figure because **both halves are read in the same test
+A zone pair takes one figure because **both halves are read in the same test
 run**, so the two halves carry identical counts and a figure per half is
 duplication. Generations take two because they genuinely differ, often by an
 order of magnitude — a retiring method near-complete while its replacement is
 still in the low tens. That difference is the whole basis of the choice, so it
-has to be on screen. `coverage.test.ts` asserts the side-pair equality against
+has to be on screen. `coverage.test.ts` asserts the zone-pair equality against
 the dataset rather than trusting it
 (docs/operations.md §Contract-drift runbook).
 
@@ -1203,17 +1228,17 @@ rows carries a bound, and so is the specific half or generation carrying it.
 Scanning the sidebar then answers "what is constraining this shortlist?" without
 reading a number.
 
-It replaced a `· in use` marker that named the half the side group had selected.
+It replaced a `· in use` marker that named the half the zone group had selected.
 That was a preset's business rather than a property of the filter, and it made a
-side pair look like a control it is not — the two halves were named twice, once
+zone pair look like a control it is not — the two halves were named twice, once
 by the marker and again by each range row's own legend. **The halves are named
 once now, by their legends.**
 
-Both halves of a side pair stay independently filterable, and that is deliberate
+Both halves of a zone pair stay independently filterable, and that is deliberate
 rather than incidental: a link carrying `r.heel-stack` and
 `r.shock-absorption-forefoot` together is a legitimate thing to want. Do **not**
-give a side pair the superseded pair's switch — generations are mutually
-exclusive by nature, sides are two measurements of two parts of a shoe
+give a zone pair the superseded pair's switch — generations are mutually
+exclusive by nature, zones are two measurements of two parts of a shoe
 (docs/app.md §URL encoding).
 
 ### There is no sparse warning

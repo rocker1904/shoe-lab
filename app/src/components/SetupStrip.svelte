@@ -24,8 +24,8 @@
   ];
 
   // "Measured at" rather than a side: the heel and the forefoot are the two *ends* of a shoe, and
-  // no runner reads them as its sides (docs/app.md §The side is a preset too, which the docs
-  // commit renames).
+  // a runner asked for a side thinks of the medial and lateral ones, which nothing here measures
+  // (docs/app.md §The zone is a preset too).
   const ZONE_LABEL = 'Measured at';
   const STORY_LABEL = 'Built for';
   // Verbatim from the design, and two things it deliberately does not do: it never says "session",

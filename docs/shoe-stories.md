@@ -85,12 +85,12 @@ of these is usually why.
 
 Four metrics are measured at both ends of the shoe — stack, energy return,
 shock absorption, midsole width. Which half a story reads, sorts by and shows
-as a column follows the **side the runner picked**, because for most runners
-that is the half describing their landing. The side is a selection rather than
-an identity: it is one of the two preset groups above the table, and it is
-derived from the view rather than stored on it (docs/app.md §Presets). A table
-that uses both halves or neither has no side, which is a shape of table and not
-a runner without a strike. Nothing about a story changes with it; only which
+as a column follows the **zone the runner picked** — where the reading was
+taken, heel or forefoot — because for most runners that is the half describing
+their landing. The zone is a selection rather than an identity: it is one of the
+two preset groups above the table, and it is derived from the view rather than
+stored on it (docs/app.md §Presets). A table that uses both halves or neither
+has no zone, which is a shape of table and not a runner without a landing. Nothing about a story changes with it; only which
 number it reads.
 
 The two halves are not on one scale, so no number can simply move between
@@ -98,8 +98,8 @@ them. The median heel stack sits in the top few percent of forefoot stacks, and
 shock absorption's heel median runs about a fifth above its forefoot median.
 
 That is what governs a score's constants: **every figure that describes a
-distribution is derived per side** — the divisors, the width caps, the anchors
-(docs/app.md §The story scores). A term with no sides — weight, outsole life,
+distribution is derived per zone** — the divisors, the width caps, the anchors
+(docs/app.md §The story scores). A term with no zones — weight, outsole life,
 heel counter stiffness — carries one figure for both, which is a property of the
 measurement rather than a shortcut. The two shared reference constants are the
 exception that proves it: they are uncapped linear factors that cancel in the
@@ -132,7 +132,7 @@ session it names. Easy's top 30 is almost entirely `daily-running`, against a ba
 of roughly four shoes in five — which is that check passing, not a target being hit.
 
 All three agree this way now. Tempo's top 30 carries `tempo` on most of the list and
-`competition`-only on **none** of it, on every side and toggle state, and Race's is
+`competition`-only on **none** of it, in every zone and toggle state, and Race's is
 nearly all `competition`. A change to any weight should be scored this way before it
 lands, and a change that collapses one of those needs an argument.
 
@@ -263,7 +263,7 @@ Tempo bounds nothing. It resolves to the plate gate and the Tempo score descendi
 **Flexibility-stiffness is rejected here too**, and it was tested on the hypothesis that
 Easy's rejection would invert at speed — that a stiffer shoe is efficient under high
 force. It does not: bending stiffness is essentially uncorrelated with energy return on
-**both** sides. What it tracks is weight, and nothing about speed. Stack, softness and
+**both** zones. What it tracks is weight, and nothing about speed. Stack, softness and
 torsional rigidity are rejected for Easy's reasons, which carry.
 
 ## Race
@@ -320,8 +320,8 @@ assert it, and is simply not a claim Race makes.
 
 ### No composite over the three stories
 A fourth score built *from* Easy, Tempo and Race — their mean, their spread, their
-worst-of-three — is rejected on measurement, over the shoes all three score, on both
-sides and with stability off.
+worst-of-three — is rejected on measurement, over the shoes all three score, in both
+zones and with stability off.
 
 - **The three are not on one scale.** Their raw means sit at visibly different levels,
   roughly twenty points between the extremes, because each story anchors on its own pool. Arithmetic across raw scores therefore

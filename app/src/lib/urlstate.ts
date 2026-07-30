@@ -24,8 +24,7 @@ export interface ViewState {
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
 /** The arbitrary half, named here and nowhere else. It is not a silent assumption: the toolbar
  *  renders Heel as marked on this view, because the mark is derived from it
- *  (docs/app.md §The side is a preset too — the doc still says side; it is renamed there in the
- *  commit that rewrites the prose, not in this one). */
+ *  (docs/app.md §The zone is a preset too). */
 export const DEFAULT_ZONE: Zone = 'heel';
 /** The zone is required rather than defaulted: a default would put a second answer to "which half"
  *  beside `DEFAULT_ZONE`, at whichever call site forgot to pass one.
