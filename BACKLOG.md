@@ -16,4 +16,3 @@ Ordered roughly by priority. Items marked *(final review)* came out of the pre-m
 11. **Head-to-head compare view.** *(spec §11)* Select 2–4 shoes for a side-by-side metric comparison.
 12. **Other categories.** *(spec §11)* Trail/hiking/sneakers — the pipeline is parameterised by seed shoe already; needs a category switcher in the UI and per-category datasets. Each details record already carries the per-shoe `categorySlug` this would key on (docs/scraping.md §Non-running shoes), which currently only ever excludes.
 13. **Price/deal tracking.** *(spec §11)* MSRP history is implicit in git history of `data/`; surface it.
-14. **Public refresh trigger.** *(spec §11)* Currently refresh buttons need repo access; an issue-ops trigger would let friends request one.

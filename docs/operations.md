@@ -70,6 +70,9 @@ re-crawls one, and with neither it is incremental, fetching only shoes absent
 from `details.json`. Inputs reach the shell through `env:`, never string
 interpolation.
 
+Both are dispatch-only, and deliberately
+(§Repo access is the gate on who may trigger a refresh).
+
 A red refresh means the data is unchanged, not corrupt: read the failing step,
 and if it is a validation gate, treat it as a contract-drift report
 (§Contract-drift runbook).
@@ -187,6 +190,15 @@ refresh credential-free — no PAT, no deploy key, no App to rotate. The
 documented consequence is that such pushes trigger no push-event workflows, so
 each refresh ends by dispatching `deploy.yml` itself. Do not "fix" the missing
 trigger by introducing a PAT; the dispatch is the cheaper half of the trade.
+
+### Repo access is the gate on who may trigger a refresh
+Both refresh workflows are `workflow_dispatch` only, so triggering one takes
+write access — and that is the permission model, not a gap to route around with
+issue-ops or a comment trigger. A dispatch spends the politeness budget against
+runrepeat.com (docs/scraping.md §Politeness) and commits to `data/`, so the set
+of people who may spend it is exactly the set who may commit. Everyone else is
+served by the weekly schedule, which keeps the data current without anyone
+having to ask for a run.
 
 ### Drift is reported, never enforced
 `check:live` runs with `continue-on-error` and its result is turned into an
