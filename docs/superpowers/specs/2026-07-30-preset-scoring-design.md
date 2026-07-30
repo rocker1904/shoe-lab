@@ -207,8 +207,7 @@ sort   = easyScore desc
 - **Stack floor dropped** (`EASY_STACK_PERCENTILE`): the score rewards cushioning directly through
   shock absorption, so a floor is redundant machinery.
 - **Price cap dropped** (`PRICE_PERCENTILE` for Easy): it contradicts the premise that the runner
-  judges value themselves. *Flagged for review — this is the one filter change not forced by the
-  scoring work.*
+  judges value themselves. Tempo's cap is untouched here — Tempo is not designed yet.
 - **Sides:** every side-bearing term reads the selected side, and per-side constants are computed
   per side. Weight has no sides and is not a term here.
 
@@ -222,9 +221,30 @@ see the fleet reorder at once. So the breakdown is not a nice-to-have:
   per term. This is what makes a surprising rank diagnosable rather than arguable. It answered
   "why is the Novablast 5 at #35?" in one table (§11).
 - **Unscored shoes read as unscored**, never as 0.
-- Stage-4 rescaling is min-max over the scoreable set, so **the top shoe always reads exactly 100
-  and the bottom 0, and displayed scores drift as the catalogue grows even though rankings do
-  not.** Either accept this or divide by a fixed constant. *Open.*
+
+### The scale is anchored once and then frozen
+
+Stage 4 is `(weightedMean − r0) / (r100 − r0) × 100`, where **`r0` and `r100` are constants derived
+from the fleet as of 2026-07-30 and then never recomputed**. Consequences, all intended:
+
+- **Scores are comparable across time.** A shoe's score never moves because the catalogue grew.
+- **Future scores exceed 100.** A shoe 10% better than the Vomero Premium on the weighted mean reads
+  **118**. The scale records that shoes improve rather than hiding it by renormalising — which is the
+  same premise as §2.
+- **The sd divisors must be frozen too.** This is the part that is easy to miss: if stage 2 recomputes
+  sd from the live fleet, every score shifts on refresh and the point of freezing `r100` is lost. All
+  divisors are constants (§14).
+- `r0` cannot be dropped in favour of the physical zero. Preserving true zeros through stage 2 leaves
+  every shoe carrying a large common baseline, so an unanchored scale compresses the whole fleet into
+  44–100 with a median of 82 — Vapor Glove, genuinely wrong for the session, would read 44. Anchoring
+  both ends gives a median of 67 with quartiles at 59 and 75.
+- Anchors are frozen **per (side, stability)** — four pairs. The toggle changes what the score means,
+  so putting both states on one scale invites a comparison that isn't meaningful; with shared anchors
+  the stability-on list would top out at 77.6 purely because the best shoe overall is not the most
+  stable.
+
+Because the anchors are today's observed min and max, **displayed scores are unchanged today** — the
+freezing only takes effect on future refreshes.
 
 ## 11. Where it lands
 
@@ -271,24 +291,43 @@ objective — divergence from it is the point of this project — so this checks
 - **Toggle invariant**: scoreable count is identical with stability on and off. This is the property
   the whole toggle rests on and it should fail the build if upstream coverage moves.
 - **Per-side**: constants differ per side; no absolute number transfers between halves.
-- **Determinism**: no wall-clock in any output (docs/scraping.md §Determinism) if the score is
-  precomputed rather than resolved at click time. *Where it is computed is open — build-time in the
-  dataset, or in-app like the current percentile bounds.*
+- **Frozen constants are asserted**, not recomputed. A test pins each one, so an upstream change that
+  would silently move every score fails the build instead (the same reasoning as
+  docs/operations.md §Contract-drift runbook).
+- **No determinism gate needed**: the score is computed client-side (§14), so nothing enters `data/`
+  and docs/scraping.md §Determinism does not apply.
 
-## 14. Open questions for review
+## 14. Computed client-side
 
-Three decisions this design deliberately leaves to you, each flagged at its own section:
+The score resolves in the app at render time, like today's percentile bounds — **not** precomputed
+into `data/`. While the weights and constants are still moving, a dataset rebuild between every
+experiment would defeat the purpose of shipping it (§10). Moving it to build time later is a
+performance decision, not a correctness one.
 
-1. **Drop Easy's price cap?** (§9) The only filter change not forced by the scoring work. Dropping
-   it follows the premise that the runner judges value; keeping it costs nothing structurally.
-2. **How to rescale for display?** (§10) Min-max over the scoreable set means the top shoe always
-   reads exactly 100 and displayed scores drift as the catalogue grows, though rankings do not. A
-   fixed divisor makes scores stable and comparable over time, at the cost of never using the full
-   0–100 range.
-3. **Where is the score computed?** (§13) Build-time in the dataset — cheap in the app, and the
-   determinism gate applies. Or in-app at click time, like today's percentile bounds — which is what
-   makes the scoring logic instantly tweakable, and is likely right while the weights are still
-   moving.
+### The frozen constant set
+
+```
+SA_REF            = 200      cosmetic — cancels at stage 2
+L_OK              = 3.0      the only constant that changes an ordering
+WID_CAP  heel     = 3.04     p90 of that side's width/stack ratio
+         forefoot = 5.37
+
+sd  (heel / forefoot)
+  shock absorption       0.0896 / 0.0961
+  outsole durability     0.1614 / 0.1614
+  energy return          0.0758 / 0.0790
+  midsole width/stack    0.0872 / 0.1133
+  heel counter stiffness 0.2712 / 0.2712     (no sides)
+
+anchors (r0, r100) per side per stability state — four pairs
+  heel,     stability off   3.7277 / 8.4742
+  heel,     stability on    4.3967 / 7.4117
+  forefoot, stability off   3.7118 / 7.6761
+  forefoot, stability on    3.9452 / 6.5653
+```
+
+Every figure above is derived from the fleet at `data/` commit `baed23b` (450 shoes, 378 after the
+plate gate, 283 scoreable). Rederiving them is a deliberate act, not a refresh side effect.
 
 ## 15. Out of scope
 
