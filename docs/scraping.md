@@ -320,7 +320,7 @@ by itself the moment RunRepeat runs it again — no list to maintain, no
 non-running shoes emptied `lug-depth` and `insulation`, which only hiking boots
 ever carried.
 
-## Option-typed readings
+## Readings taken from the page
 
 `tongue-gusset-type` and `heel-tab` are populated on nearly every page but are
 `option`-typed, so §Which tests are fetched never requests them. They come from
@@ -328,20 +328,34 @@ the **details crawl instead**, which already holds the page: every shoe page
 carries the whole catalogue with that shoe's reading on each test, so a
 `--from-corpus` re-extract backfills the fleet at zero request cost.
 
-Only `option` readings are taken there. Everything numeric already arrives via
-the metrics API, refreshed weekly, and taking it from the page too would let a
+`bool` readings come from there too, and for a stronger reason: **the metrics
+API cannot express a "no".** Its lab-test-list only returns the shoes that have
+the feature, so `metrics.json` holds 209 `true` values for `reflective-elements`
+and not one `false` — while the pages say `0` on 219 of the 450 shoes and carry
+a reading of some kind on 428. Taken from the API alone, a column that is
+measured on 95% of the fleet reads as 46% coverage, and 219 shoes that were
+tested and found to have no reflective elements show an em dash meaning
+*unknown*. `removable-insole` is the same shape, milder: 430 yes, 16 no, 4
+unread.
+
+Nothing numeric is taken from the page. Those readings already arrive via the
+metrics API, refreshed weekly, and taking them from the page too would let a
 stale page value shadow a fresher API one — the two disagree already, mildly:
 `size-rating` differs in the last decimal on about 19 of 12,700 values, the page
-being a rounding of the same source.
+being a rounding of the same source. A page value in a shape its declared type
+does not accept is dropped rather than guessed at; that is one cell on one shoe,
+and the run has 449 others.
 
-`DetailRecord.optionValues` keys them by test id as string, and `build:dataset`
-merges them under the metrics values, which win any collision. They then reach
-`tests[]` on their own, because §Empty tests publishes any test with a reading
-anywhere.
+`DetailRecord.pageValues` keys them by test id as string, coerced through the
+same `coerceValue` the metrics path uses, and `build:dataset` merges them
+**under** the metrics values, which win any collision — so the weekly source
+still decides every value it has one for, and the page only fills what it has
+nothing for. They then reach `tests[]` on their own, because §Empty tests
+publishes any test with a reading anywhere.
 
 **The freshness contract differs from their neighbours.** A details record is
-crawled once and never refreshed, so an option reading ages with the record
-while every numeric value beside it in `Shoe.values` refreshes weekly. `msrpGbp`
+crawled once and never refreshed, so a page reading ages with the record while
+every numeric value beside it in `Shoe.values` refreshes weekly. `msrpGbp`
 already makes that trade and docs/app.md §Resolved price is the precedent for
 saying so rather than hiding it.
 
@@ -352,7 +366,10 @@ per-locale translations and scoring weights, which nothing reads.
 
 The other `option` and `text` tests really are empty: `length`,
 `leather-suede-quality`, `tested-size` and `outsole-design` return nothing on any
-of the 450 shoes, so they stay dropped.
+of the 450 shoes, so they stay dropped. The catalogue's third `bool`, `plate`,
+is read on two shoes and so survives the drop — but the app never shows it,
+because the shoe field of that name owns the column
+(docs/app.md §Categorical columns).
 
 ## Model lineage
 

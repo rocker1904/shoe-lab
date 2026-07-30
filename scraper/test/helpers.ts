@@ -19,7 +19,7 @@ export function detailRecord(over: Partial<DetailRecord> = {}): DetailRecord {
     discontinued: false, imageUrl: null, runrepeatUrl: 'https://runrepeat.com/uk/shoe',
     features: [], pros: [], cons: [], intro: '', hasPlateSection: false,
     whoShouldBuy: null, whoShouldNotBuy: null, categorySlug: null,
-    facts: {}, optionValues: {}, previousVersion: null, latestVersion: null,
+    facts: {}, pageValues: {}, previousVersion: null, latestVersion: null,
     ...over,
   };
 }

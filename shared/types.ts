@@ -10,7 +10,7 @@ export interface LabTest {
   previousId: number | null; updateId: number | null;
   primaryTestId: number | null; secondaryTestIds: number[];
   /** Declared choices for an `option` test. Readings store the `value` slug, so this is what turns
-   *  `both-sides-semi` into "Both sides (semi)" (docs/scraping.md §Option-typed readings). */
+   *  `both-sides-semi` into "Both sides (semi)" (docs/scraping.md §Readings taken from the page). */
   options: { value: string; name: string }[] | null;
 }
 export interface TestsFile {
@@ -37,9 +37,10 @@ export interface DetailRecord {
   categorySlug: string | null;
   /** Editorial facts keyed by fact slug — RunRepeat's labels, not measurements (docs/scraping.md §Editorial facts). */
   facts: Record<string, FactValue[]>;
-  /** `option`-typed readings the page carries, keyed by test id as string. The metrics API never
-   *  fetches these, so the page is the only source (docs/scraping.md §Option-typed readings). */
-  optionValues: Record<string, string>;
+  /** Categorical readings the page carries, keyed by test id as string. `option` never reaches the
+   *  metrics API at all and `bool` reaches it only when true, so the page is the only source of an
+   *  option and the only source of a "no" (docs/scraping.md §Readings taken from the page). */
+  pageValues: Record<string, string | boolean>;
   /** The immediately preceding model. `latestVersion` is the newest in the line and may skip generations. */
   previousVersion: VersionRef | null;
   latestVersion: VersionRef | null;

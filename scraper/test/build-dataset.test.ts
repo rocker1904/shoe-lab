@@ -95,6 +95,16 @@ describe('buildDataset', () => {
     expect(one.name).toBe('Shoe 1');         // falls back to metrics name
     expect(shoesFile.shoes.find((s) => s.slug === 'ghost-shoe')).toBeUndefined();
   });
+  // shoe-000 is even, so metrics read it as `true` for test 69; the page disagrees, and answers
+  // for 39, which the metrics API never fetches
+  // (docs/scraping.md §Readings taken from the page).
+  it('fills a value the metrics API has no row for, and loses every collision with it', () => {
+    const { metrics, details } = baseInputs();
+    (details.shoes['shoe-000'] as DetailRecord).pageValues = { '39': 'both-sides-semi', '69': false };
+    const zero = buildDataset(tests, metrics, details).shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
+    expect(zero.values['39']).toBe('both-sides-semi');
+    expect(zero.values['69']).toBe(true);
+  });
   it('is deterministic and time-independent', () => {
     const a = buildDataset(tests, baseInputs().metrics, baseInputs().details);
     const b = buildDataset(tests, baseInputs().metrics, baseInputs().details);

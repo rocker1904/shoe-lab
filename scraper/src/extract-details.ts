@@ -1,4 +1,5 @@
-import type { DetailRecord, FactValue, VersionRef } from '../../shared/types.js';
+import type { DetailRecord, FactValue, TestType, VersionRef } from '../../shared/types.js';
+import { coerceValue, isEmptyValue } from './coerce.js';
 import { PayloadError } from './page-payload.js';
 import { decodeEntities, factValues } from './page-text.js';
 import { sanitizeHtml } from './sanitize.js';
@@ -9,6 +10,10 @@ import { sanitizeHtml } from './sanitize.js';
  * measurement (docs/scraping.md §Editorial facts). Widening the list costs no requests.
  */
 export const KEPT_FACTS = ['pace', 'arch-support', 'strike-pattern', 'width'] as const;
+
+/** The test types read off the page rather than from the metrics API
+ *  (docs/scraping.md §Readings taken from the page). */
+const PAGE_VALUE_TYPES: ReadonlySet<string> = new Set(['option', 'bool']);
 
 function versionRef(v: any): VersionRef | null {
   const slug = v?.slug, name = v?.name;
@@ -59,16 +64,23 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     s?.section_id === 'plate'
     || (Array.isArray(s?.sections) && s.sections.some((n: any) => n?.section_id === 'plate')));
 
-  // The page carries the whole catalogue with this shoe's reading on each test. Only `option`
-  // ones are taken: everything numeric already arrives via the metrics API, fresher, and mixing
-  // the two sources would let a stale page value shadow a weekly one
-  // (docs/scraping.md §Option-typed readings).
-  const optionValues: Record<string, string> = {};
+  // The page carries the whole catalogue with this shoe's reading on each test. Only the
+  // categorical ones are taken: everything numeric already arrives via the metrics API, fresher,
+  // and mixing the two sources would let a stale page value shadow a weekly one. `bool` is here
+  // because the API cannot express a *false* — its list only returns the shoes that have the
+  // feature — so the page is the only place a "no" exists at all
+  // (docs/scraping.md §Readings taken from the page).
+  const pageValues: Record<string, string | boolean> = {};
   for (const t of Object.values<any>(pageData?.lab_tests?.tests ?? {})) {
-    if (String(t?.type) !== 'option' || typeof t?.id !== 'number') continue;
+    const type = String(t?.type);
+    if (typeof t?.id !== 'number' || !PAGE_VALUE_TYPES.has(type)) continue;
     const v = t.value;
-    if (typeof v !== 'string' || v === '') continue;
-    optionValues[String(t.id)] = v;
+    if (isEmptyValue(v)) continue;
+    // A reading in a shape neither type declares is dropped, not guessed at: this is one shoe's
+    // cell on one test, and the run has 449 others.
+    try {
+      pageValues[String(t.id)] = coerceValue(v, type as TestType) as string | boolean;
+    } catch { continue; }
   }
 
   // Anything but a non-empty string is "unknown", never a category in its own right:
@@ -98,7 +110,7 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     whoShouldNotBuy: findSection(/who should not buy/i),
     categorySlug: typeof category === 'string' && category !== '' ? category : null,
     facts,
-    optionValues,
+    pageValues,
     previousVersion: versionRef(p.previous_version),
     latestVersion: versionRef(pageData?.last_version),
   };

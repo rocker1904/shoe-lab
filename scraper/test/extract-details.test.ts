@@ -193,23 +193,38 @@ describe('extractDetails categorySlug', () => {
   });
 });
 
-describe('option-typed readings', () => {
-  it('takes option readings from the page and leaves every other type to the metrics API', () => {
+describe('categorical readings taken from the page', () => {
+  it('takes option and bool readings and leaves every numeric type to the metrics API', () => {
     const rec = extractDetails({
       product: { id: 1, name: 'Shoe' },
       lab_tests: { tests: {
         6: { id: 6, type: 'float', value: '40' },
         39: { id: 39, type: 'option', value: 'both-sides-semi' },
         40: { id: 40, type: 'option', value: 'none' },
+        41: { id: 41, type: 'bool', value: '1' },
+        45: { id: 45, type: 'bool', value: '0' },
         23: { id: 23, type: 'text', value: 'US 9' },
         50: { id: 50, type: 'option' },
         51: { id: 51, type: 'option', value: '' },
+        52: { id: 52, type: 'bool', value: '' },
+        53: { id: 53, type: 'bool', value: 'perhaps' },
       } },
     }, 'shoe', 'T');
-    expect(rec.optionValues).toEqual({ 39: 'both-sides-semi', 40: 'none' });
+    expect(rec.pageValues).toEqual({ 39: 'both-sides-semi', 40: 'none', 41: true, 45: false });
   });
 
-  it('is an empty object when the page carries no option readings', () => {
-    expect(extractDetails({ product: { id: 1, name: 'Shoe' } }, 'shoe', 'T').optionValues).toEqual({});
+  // The lab-test-list endpoint only ever returns the shoes that have the feature, so a `false`
+  // exists nowhere but the page: 219 of 450 shoes have no reflective elements and the API says
+  // nothing about any of them (docs/scraping.md §Readings taken from the page).
+  it('keeps a false reading, which the metrics API can never express', () => {
+    const rec = extractDetails({
+      product: { id: 1, name: 'Shoe' },
+      lab_tests: { tests: { 45: { id: 45, type: 'bool', value: '0' } } },
+    }, 'shoe', 'T');
+    expect(rec.pageValues['45']).toBe(false);
+  });
+
+  it('is an empty object when the page carries no categorical readings', () => {
+    expect(extractDetails({ product: { id: 1, name: 'Shoe' } }, 'shoe', 'T').pageValues).toEqual({});
   });
 });
