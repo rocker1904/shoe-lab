@@ -1,7 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { categoricalEntries, categoricalValue, isCategorical, isNegativeReading } from './categorical';
 import { indexTests } from './dataset';
 import { TESTS, shoe } from './test-fixtures';
+import type { LabTest } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
 
@@ -67,5 +71,29 @@ describe('isCategorical and categoricalEntries', () => {
     expect(categoricalEntries(TESTS).map((e) => e.key).sort())
       .toEqual(['heel-tab', 'removable-insole', 'tongue-gusset-type']);
     expect(categoricalEntries(TESTS).every((e) => e.groupId === '3')).toBe(true);
+  });
+});
+
+/**
+ * `isNegativeReading` keys on the literal slug `none`, which is how both option tests in the
+ * catalogue spell "this shoe has none of it". A new option test spelling it `no-gusset` or
+ * `absent` would put a redundant chip on the phone's name line with nothing failing.
+ *
+ * This is a **tripwire, not a law**: an option test with no absence among its choices is perfectly
+ * legitimate, and `isNegativeReading` correctly never fires for it. What the assertion buys is
+ * that a human looks once, when the catalogue's shape changes, rather than never. If a test
+ * arrives that genuinely has no absence, exempt it here and say why.
+ */
+describe('the none choice, against the published catalogue', () => {
+  const published = JSON.parse(
+    readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8'),
+  ) as { tests: LabTest[] };
+
+  it('spells the absence `none` on every option test that can become a column', () => {
+    const options = published.tests.filter((t) => t.type === 'option' && isCategorical(t));
+    expect(options.map((t) => t.slug)).toEqual(['tongue-gusset-type', 'heel-tab']);
+    for (const t of options) {
+      expect(t.options?.map((o) => o.value), t.slug).toContain('none');
+    }
   });
 });

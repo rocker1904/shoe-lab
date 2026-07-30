@@ -2,8 +2,10 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { NUMERIC_TEST_TYPES } from './dataset';
-import { columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import { categoricalEntries } from './categorical';
+import { indexTests, NUMERIC_TEST_TYPES } from './dataset';
+import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import type { LabTest } from '../../../shared/types.js';
 import type { Zone } from './lineage';
 import { EASY, SCORE_DEFS } from './score-defs';
 import { labTest } from './test-fixtures';
@@ -128,6 +130,29 @@ describe('the synthetic story scores', () => {
         expect(widestWordPx(shortLabel(key, label)), label).toBeLessThanOrEqual(MAX_LABEL_PX);
         expect(lineCount(shortLabel(key, label)), label).toBeLessThanOrEqual(MAX_LABEL_LINES);
       }
+    }
+  });
+});
+
+/**
+ * `chipLabel` overrides the two tests whose catalogue name already carries a colon; everything
+ * else takes that name unchanged. A third such name arriving upstream would put two colons on the
+ * phone's name line — `Tongue: gusset type: Both sides (semi)` — with nothing failing, so the
+ * guard iterates the **published** catalogue rather than a fixture. Read from `shoes.json`, not
+ * `tests.json`: a test with no reading on any shoe is never a column, so it cannot reach that
+ * line (docs/scraping.md §Empty tests).
+ */
+describe('the phone name line', () => {
+  const published = JSON.parse(
+    readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8'),
+  ) as { tests: LabTest[] };
+  const idx = indexTests(published.tests);
+
+  it('gives every categorical column a noun that carries no colon of its own', () => {
+    const entries = categoricalEntries(published.tests);
+    expect(entries.length).toBeGreaterThan(0); // or the loop below asserts nothing
+    for (const e of entries) {
+      expect(chipLabel(e.key, idx.bySlug.get(e.key)), e.key).not.toContain(':');
     }
   });
 });
