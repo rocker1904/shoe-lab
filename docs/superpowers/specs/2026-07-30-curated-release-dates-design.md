@@ -272,11 +272,11 @@ and none disallow `/`. Sitemap paths are as declared in their own robots.txt:
 | believeintherun.com | `/shoe-sitemap.xml` | dedicated shoe sitemap, 1001 reviews |
 | weartesters.com | `/sitemap_index.xml` | also `/news-sitemap.xml` |
 | doctorsofrunning.com | `/sitemap_index.xml` | **year in the URL slug** — see below |
-| irunfar.com | `/sitemap.xml` | trail-leaning |
+| irunfar.com | `/sitemap.xml` | indexed, **zero yield** — see below |
 | meta-endurance.com | `/sitemap_index.xml` | |
 | shoeography.com | `/sitemap.xml` | launch announcements, light on review depth |
 | weartested.org | `/sitemap.xml` | |
-| trailrunnermag.com | `/sitemap_index.xml` | trail-leaning |
+| trailrunnermag.com | `/sitemap_index.xml` | indexed, **zero yield** — see below |
 | runningshoesguru.com, longermiles.com, marathonhandbook.com, runningmagazine.ca | none declared | reachable, but need site search |
 
 Three of these (believeintherun, weartesters, doctorsofrunning) indexed in about
@@ -284,6 +284,20 @@ eight requests give 2,603 URLs and directly locate 6 of 14 shoes that agent
 search had failed on, including `hoka-clifton-9-gtx` and
 `topo-athletic-specter-2`. doctorsofrunning encodes the review year in the slug
 (`…-review-2022`), which is both a free coarse date and a generation check.
+
+**Adding the two trail publishers was a dead end, and the negative result is
+worth keeping.** irunfar and trailrunnermag were the last two roster entries
+with a declared sitemap and no index coverage, and 108 of 231 remaining shoes
+had no candidate URL, so they looked like the obvious next lever. Indexing both
+grew the index from 11,716 to 17,739 URLs and produced **one** newly matched
+shoe. irunfar contributed 5,973 URLs and zero matches: its sitemap is a flat
+post archive back to 2006 of race reports and news, whose slugs never name a
+shoe model. trailrunnermag returned only 47 URLs through the sub-sitemap filter,
+and the sample is editorial rather than per-shoe reviews. The lesson generalises
+past these two — **a publisher only helps this index if it publishes one page
+per shoe model with the model in the slug**, which is a property of shoe-review
+sites, not of running sites. The remaining unmatched shoes need a different
+lever (brand newsrooms, site search), not another sitemap.
 
 Misses are informative too: searching the index for `hyperboost` returns only
 *Edge*, never *Run*, which corroborates the naming doubt over
@@ -379,7 +393,12 @@ comes from, not optional polish.
 
 - **Quote discipline is roughly 50%** even when spelled out. Quotes must be
   verified mechanically by re-fetching and substring-matching; two of ten
-  results would have been caught.
+  results would have been caught. A later run verified **every** quote this way
+  across fifty shoes and found one outright invention — a confidently reported
+  `Release Date: July 1, 2023` on a page that has no release line at all, backed
+  by a second citation that turned out to be a retailer price link. Mechanical
+  verification is what separated that entry from the thirty-odd genuine ones,
+  and it is cheap: one fetch per quote, batched. Sampling would have missed it.
 - **Nuanced instructions are unreliable.** "Take the earliest colourway date"
   was ignored at least twice.
 - **Tool-call caps are advisory** — observed usage ran 6 to 26 against a stated
