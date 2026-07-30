@@ -699,11 +699,18 @@ leaves its cell empty for the same reason. The column's wash ranks over the
 **rendered rows** (`rankMap` in `lib/stats.ts`), like every other column's, or its
 tint would mean something different from its neighbours' in the same row.
 
-Expanding a row shows the **per-term breakdown**: raw mapped term, weighted
-contribution and share, per term. That is not decoration — it is what makes a
-surprising rank diagnosable rather than arguable, and it is the reason the feature
-ships before the weights settle. The panel is handed the same `side` and `stability`
-the column was scored with, so the two cannot disagree.
+Expanding a row shows the **per-term breakdown**: the raw reading, the mapped term, the
+weighted contribution and the share, per term. That is not decoration — it is what makes
+a surprising rank diagnosable rather than arguable, and it is the reason the feature
+ships before the weights settle. The **reading** column is what makes it work at all:
+two terms cap, and 206 of 283 shoes sit at exactly 1.0 on outsole durability, so a
+mapped value alone cannot say what put them there. Where a term reads a derived
+quantity the cell shows the division — `1.33 = 4 / 3` — because the ratio alone does
+not say which reading moved. `easyReadings` in `score.ts` owns those readings, so the
+panel never re-derives them. Five columns need 354px against the 321px a 375px phone
+leaves the panel, so the block is **its own scrollport**: the page must not go sideways
+for it, and the e2e run asserts that at 375px with a row open. The panel is handed the
+same `side` and `stability` the column was scored with, so the two cannot disagree.
 
 ### The side is a preset too
 

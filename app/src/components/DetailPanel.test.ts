@@ -117,6 +117,20 @@ describe('DetailPanel Easy score breakdown', () => {
     expect(rows[0]!.textContent).toContain('Shock absorption');
   });
 
+  it('shows the raw reading beside the mapped term, so a capped term is still diagnosable', () => {
+    // Two terms cap, so a mapped 1.0 cannot say what put the shoe there; a derived reading shows
+    // its division for the same reason (docs/app.md §The Easy score). cushy reads 140 shock
+    // absorption, an outsole life of 3.2 / 0.8 — capped — 70% energy return, a 95/40 heel lever
+    // and a heel counter of 4.
+    const { container } = render(DetailPanel, {
+      props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: true },
+    });
+    expect([...container.querySelectorAll('.score-breakdown thead th')].map((h) => h.textContent))
+      .toEqual(['Term', 'Reading', 'Mapped', 'Contribution', 'Share']);
+    expect([...container.querySelectorAll('.score-breakdown tbody td.raw')].map((c) => c.textContent))
+      .toEqual(['140', '4 = 3.2 / 0.8', '70', '2.38 = 95 / 40', '4']);
+  });
+
   it('adds the two stability terms once the runner has opted in', () => {
     const { container } = render(DetailPanel, {
       props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: true },

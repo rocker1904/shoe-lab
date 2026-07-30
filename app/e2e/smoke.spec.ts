@@ -109,6 +109,12 @@ test('switches to stacked cards on a phone, and back', async ({ page }) => {
   // and all six fit — the bound the short labels were measured against
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
+  // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
+  // inside its own box rather than take the page sideways with it (docs/app.md §The Easy score).
+  await page.getByText('cushy').first().click();
+  await expect(page.locator('.score-breakdown table')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
   await page.setViewportSize({ width: 1200, height: 800 });
   await expect(mobile).toBeHidden();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();

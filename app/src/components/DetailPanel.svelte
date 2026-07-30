@@ -2,7 +2,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, reviewUrl } from '../lib/dataset';
   import type { Side } from '../lib/lineage';
-  import { easyContributions, type EasyTermKey } from '../lib/score';
+  import { easyContributions, type EasyReading, type EasyTermKey } from '../lib/score';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
   let { shoe, data, side, stability }: {
@@ -20,6 +20,12 @@
   };
   const terms = $derived(easyContributions(shoe, side, stability, idx));
   const total = $derived(terms?.reduce((sum, r) => sum + r.weighted, 0) ?? 0);
+  // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
+  // mapped 1.0 alone says nothing about which reading put them there
+  // (docs/app.md §The Easy score).
+  const readingText = (r: EasyReading) => (r.over
+    ? `${displayNumber(r.value)} = ${displayNumber(r.over[0])} / ${displayNumber(r.over[1])}`
+    : displayNumber(r.value));
 
   const lineage = $derived([
     { label: 'Replaced', ref: shoe.previousVersion },
@@ -79,11 +85,12 @@
       <p class="missing">Not scored — this shoe is missing at least one measurement the score needs.</p>
     {:else}
       <table>
-        <thead><tr><th>Term</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
+        <thead><tr><th>Term</th><th>Reading</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
         <tbody>
           {#each terms as r (r.key)}
             <tr>
               <td>{TERM_LABEL[r.key]}</td>
+              <td class="raw">{readingText(r.raw)}</td>
               <td>{displayNumber(r.term)}</td>
               <td>{displayNumber(r.weighted)}</td>
               <td>{Math.round((r.weighted / total) * 100)}%</td>
@@ -117,11 +124,18 @@
   .missing { color: var(--text-dim); }
   /* Its own block rather than a column of the details grid: the breakdown is about the view, not
      about the shoe's copy, and it must still be there for a shoe RunRepeat never wrote up. */
-  .score-breakdown { margin-top: var(--s4); border-top: 1px solid var(--border); padding-top: var(--s3); }
+  /* And its own scrollport, measured: five columns need 354px against the 321px a 375px phone
+     leaves this panel, and without it the *page* scrolls sideways instead — 381px of document at
+     375px of viewport. Safe on this box, unlike on `.content`, which must stay unscrolled or the
+     table header rides off with the page (docs/app.md §Table presentation). */
+  .score-breakdown { margin-top: var(--s4); border-top: 1px solid var(--border); padding-top: var(--s3);
+                     overflow-x: auto; }
   .score-breakdown table { border-collapse: collapse; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .score-breakdown th, .score-breakdown td { text-align: right; padding: var(--s1) var(--s3) var(--s1) 0; }
   .score-breakdown th:first-child, .score-breakdown td:first-child { text-align: left; }
   .score-breakdown th { color: var(--text-dim); font-weight: 400; font-size: var(--t-xs); }
+  /* A ratio and its two readings are one expression; wrapping mid-division reads as two numbers. */
+  .score-breakdown td.raw { white-space: nowrap; }
   /* Stripping embedded videos at sanitise time leaves empty paragraphs behind; collapse them. */
   .detail :global(p:empty) { display: none; }
   .detail :global(p) { margin: var(--s2) 0; }

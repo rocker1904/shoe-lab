@@ -26,25 +26,52 @@ export type EasyTermKey =
 
 export type EasyTerms = Record<EasyTermKey, number | null>;
 
+/**
+ * The quantity a term's mapping reads, before the mapping. Two of the five terms **cap**, so past
+ * saturation the reading is not recoverable from the mapped value — and the breakdown exists to make
+ * a surprising rank diagnosable, which it cannot do while the reading is hidden
+ * (docs/app.md §The Easy score).
+ */
+export interface EasyReading {
+  value: number;
+  /** Numerator and denominator where `value` is derived from two readings: the ratio alone does not
+   *  say which of them moved. */
+  over?: [number, number];
+}
+
+const reading = (v: number | undefined): EasyReading | null => (v === undefined ? null : { value: v });
 /** A zero denominator is an unmeasurable ratio, not an infinite one. */
-const ratio = (a: number | undefined, b: number | undefined): number | null =>
-  a === undefined || b === undefined || b === 0 ? null : a / b;
+const ratio = (a: number | undefined, b: number | undefined): EasyReading | null =>
+  a === undefined || b === undefined || b === 0 ? null : { value: a / b, over: [a, b] };
+
+export function easyReadings(shoe: Shoe, side: Side, idx: TestIndex): Record<EasyTermKey, EasyReading | null> {
+  const v = (key: string) => numericValue(shoe, key, idx);
+  return {
+    shockAbsorption: reading(v(sideKey('Shock absorption', side))),
+    energyReturn: reading(v(sideKey('Energy return', side))),
+    outsoleDurability: ratio(v('outsole-thickness'), v('outsole-durability')),
+    midsoleWidth: ratio(v(sideKey('Midsole width', side)), v(sideKey('Stack', side))),
+    heelCounter: reading(v('heel-counter-stiffness')),
+  };
+}
 
 /** Stage 1: each reading becomes 0–1 and linear in goodness, with its true zero preserved. */
-export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
-  const v = (key: string) => numericValue(shoe, key, idx);
-  const sa = v(sideKey('Shock absorption', side));
-  const er = v(sideKey('Energy return', side));
-  const life = ratio(v('outsole-thickness'), v('outsole-durability'));
-  const lever = ratio(v(sideKey('Midsole width', side)), v(sideKey('Stack', side)));
-  const counter = v('heel-counter-stiffness');
-  return {
-    shockAbsorption: sa === undefined ? null : sa / SA_REF,
-    energyReturn: er === undefined ? null : er / 100,
-    outsoleDurability: life === null ? null : Math.min(life / L_OK, 1),
-    midsoleWidth: lever === null ? null : Math.min(lever / WID_CAP[side], 1),
-    heelCounter: counter === undefined ? null : (counter - 1) / 4,
+function mapReadings(r: Record<EasyTermKey, EasyReading | null>, side: Side): EasyTerms {
+  const map = (key: EasyTermKey, f: (x: number) => number): number | null => {
+    const raw = r[key];
+    return raw === null ? null : f(raw.value);
   };
+  return {
+    shockAbsorption: map('shockAbsorption', (x) => x / SA_REF),
+    energyReturn: map('energyReturn', (x) => x / 100),
+    outsoleDurability: map('outsoleDurability', (x) => Math.min(x / L_OK, 1)),
+    midsoleWidth: map('midsoleWidth', (x) => Math.min(x / WID_CAP[side], 1)),
+    heelCounter: map('heelCounter', (x) => (x - 1) / 4),
+  };
+}
+
+export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
+  return mapReadings(easyReadings(shoe, side, idx), side);
 }
 
 /**
@@ -88,12 +115,14 @@ const termsFor = (stability: boolean): EasyTermKey[] =>
 
 export function easyContributions(
   shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
-): { key: EasyTermKey; term: number; weighted: number }[] | null {
-  const mapped = easyTerms(shoe, side, idx);
+): { key: EasyTermKey; raw: EasyReading; term: number; weighted: number }[] | null {
+  const readings = easyReadings(shoe, side, idx);
+  const mapped = mapReadings(readings, side);
   const keys = termsFor(stability);
   if (keys.some((k) => mapped[k] === null)) return null; // all-terms-required
   return keys.map((key) => ({
     key,
+    raw: readings[key]!,
     term: mapped[key]!,
     // Stage 2 then 3. Dividing without centring keeps the true zero; the differing means only add a
     // constant to every shoe, which cannot reorder anything.
