@@ -54,7 +54,9 @@ not reference; where they disagree with docs/, docs/ wins.
   and only writes the URL (docs/app.md §View and URL ownership);
   `build-dataset` is deterministic — no wall-clock in outputs
   (docs/scraping.md §Determinism); validation gates fail runs rather than
-  write bad data (docs/scraping.md §Validation gates).
+  write bad data (docs/scraping.md §Validation gates); a score's constants are
+  frozen and never recomputed from the loaded fleet
+  (docs/decisions.md §Frozen scores and live thresholds).
 - **Datasets key shoes by slug**; metric values key by test id as string.
 - **TDD is the norm**: failing test first for behaviour changes; suites,
   typecheck, lint green before every commit.

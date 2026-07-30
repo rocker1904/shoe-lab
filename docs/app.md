@@ -99,11 +99,17 @@ boundary, and needs the decision above.
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
 `plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
-`rows` (comma-joined), `sort` (`-` prefix means descending),
+`stab=1`, `rows` (comma-joined), `sort` (`-` prefix means descending),
 `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
 default and never appears.
+
+`stab=1` is written only when the stability preference is on
+(docs/app.md §The Easy score), so a shared link carries the sender's own
+preference alongside their filters. That is accepted rather than overlooked: the
+preference changes what the score means, so a link that dropped it would show
+the recipient a different ranking under the same URL.
 
 **There is no side token.** The side rides in `cols`, which is the only thing
 that records it (docs/app.md §The side is a preset too), so a plain forefoot table is a verbose
@@ -301,8 +307,9 @@ trap would hold the keyboard inside a panel that is no longer modal.
 ## Columns and sorting
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
-`msrpGbp`, `plate`) plus any test slug; `name` and `brand` are rendered by the
-table itself and have no cell, so they are sortable but never columns.
+`msrpGbp`, `plate`), the synthetic `easy-score`
+(docs/app.md §The Easy score) and any test slug; `name` and `brand` are rendered
+by the table itself and have no cell, so they are sortable but never columns.
 
 **The default view holds six numeric columns**, plus `releasedAt` and `plate`,
 which carry words and dates rather than figures. Six is the bound: it is the
@@ -340,9 +347,10 @@ counterpart, `forefoot-traction`'s secondary is unpublished, and an upstream
 rename would silently regroup the sidebar.
 
 Agreement with the catalogue is asserted by `lineage.test.ts`, **not** thrown
-at runtime: a pair whose slugs are absent is skipped silently, because neither
-test fixture carries all eight and a throwing validator would take the app
-down with them. When that assertion fires, read
+at runtime: a pair whose slugs are absent is skipped silently, because
+`metricEntries` is called on partial catalogues throughout the suite — including
+single-half cases it must degrade rather than reject — and a throwing validator
+would take the app down with them. When that assertion fires, read
 docs/operations.md §Contract-drift runbook.
 
 A pair offers exactly one generation — the chosen one, current by default. The
@@ -355,7 +363,14 @@ without that the price filter would disappear.
 Sorting reads numbers, with missing values always last and score as the
 tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
 an ISO string; year-derived dates therefore sit at 1 January, and the table
-prints the year alone unless `preciseReleaseDate` is set.
+prints the year alone unless `preciseReleaseDate` is set. `sortShoes` takes the
+resolved score map as an optional fourth argument, because `easy-score` is the
+one sort key `numericValue` cannot answer for.
+
+**Easy shows the score and not toebox width.** Six numeric columns is the phone
+bound above, adding the score makes seven, and toebox width is the one column no
+scoring term reads — fit is the runner's own final filter rather than something a
+score can speak to (docs/shoe-stories.md §Easy). No story shows it now.
 
 ### Table presentation
 
@@ -550,10 +565,28 @@ review link.
 Preset chips are canned view states: `applyPreset` builds a complete
 `ViewState` from the defaults, so applying one **replaces** the view rather
 than layering on it. A preset sets its own **columns** as well as its filters
-and sort, which makes it the single place a story is expressed — Race showing
-toebox width is noise, Easy showing it is not. Every threshold lives in one
-constants block at the top of `app/src/lib/presets.ts` — tuning is a one-line
-edit there, and new presets are cheap (BACKLOG.md).
+and sort, which makes it the single place a story is expressed. Every threshold
+lives in one constants block at the top of `app/src/lib/presets.ts` — tuning is a
+one-line edit there, and new presets are cheap (BACKLOG.md).
+
+**A story need not bound anything.** Easy resolves to the plate filter and a sort
+by `easy-score`; it sets no range at all (docs/shoe-stories.md §Easy). Two
+consequences worth stating because they change what is on screen rather than only
+what is in the code:
+
+- **Easy's toolbar count is the size of its pool**, not a count of
+  recommendations. Every non-carbon shoe passes, scored or not. Whether it should
+  count scoreable shoes instead is a product question (BACKLOG.md).
+- **Easy no longer participates in the sparse-bound guard** below, which only ever
+  looks at range keys. It has lost that safety net by having nothing to guard.
+
+**`applyPreset` carries `stability` through unchanged** rather than rebuilding it
+from `defaultView()`, and so does `allView`. Both marks are `sameValue` over the
+*whole* view, so a new `ViewState` field participates in the comparison whether or
+not it should: reset it and turning the preference on would unmark Easy, clicking
+Easy again would silently switch the preference back off, and a plain table with it
+on would mark neither `All` nor any story. It is the same rule the side follows —
+who you are survives, what you searched for does not.
 
 This section owns the mechanism only. What each preset is *for*, and why its
 thresholds are what they are, is docs/shoe-stories.md — read it before changing
@@ -586,6 +619,89 @@ Selection is **derived, never stored**: a story reads as chosen while the view
 equals what `applyPreset` would build for it right now. Editing a bound drops
 the highlight because the view genuinely is not that story any more, where a
 stored `preset` field would keep claiming Easy.
+
+### The Easy score
+
+`app/src/lib/score.ts` ranks Easy. Four stages, each doing one job, and the
+separation is the design:
+
+1. **Physical map** — each raw reading becomes 0–1, **linear in goodness**, with its
+   true zero preserved. What the measurement *means*; reaching for a percentile by
+   default is what hides it.
+2. **Divide by that term's standard deviation**, without centring. Equalises spread
+   across terms. Not centring is what keeps the true zero, and the differing means only
+   add a constant to every shoe, which cannot change an ordering.
+3. **Weight** — editorial, and only *effective* because of stage 2.
+4. **Rescale the weighted mean between two frozen anchors** to give 0–100. Cosmetic;
+   the ranking is settled by stage 3.
+
+Stage 2 is not optional, and this is the part that is easy to drop. A term's influence
+is otherwise set by its spread on its own mapped scale, not by its weight: measured
+across the pool, outsole durability at weight 1 outweighs shock absorption at weight 2,
+and heel counter stiffness — five subjective buckets — becomes the most influential term
+in the function. The coarsest metric wins *because* it is coarse. Min-max does not fix
+it (both are linear; influence comes from spread, not range) and rank does but discards
+the magnitudes stage 1 exists to capture. `score.test.ts` asserts the effective
+influence against the real dataset, so this is a regression test rather than a
+measurement someone took once.
+
+Which terms there are, what each is for, and why the missing ones are missing is
+docs/shoe-stories.md §Easy. The mappings are ratios rather than percentiles because
+each has a defensible physical form: shock absorption over a fixed reference (a fit
+through the origin gives ≈3.6 SA per mm of stack and predicts the barefoot shoes, so 0
+SA ≈ bare ground); energy return is already a true percentage; outsole life is
+`thickness / wear`, so goodness is **reciprocal** rather than negated — half the wear
+rate lasts twice as long — and **capped**, because past a few Dremel-units of life the
+outsole is not what retires the shoe, the midsole packing out is, and that is
+unmeasured; midsole width over stack, because stability is a lever from foot to ground
+and the dimensionless ratio also stops "stability" covertly selecting heavy shoes
+(ρ 0.15 against 0.56 on the raw width); heel counter stiffness off its own five-point
+scale, because a percentile would invent resolution the measurement does not have.
+
+**Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
+and never recomputed from the loaded catalogue: the reference, the outsole cap, the
+per-side width caps, the five sd divisors per side, and the anchors. Why, and what an
+agent must not "fix", is docs/decisions.md §Frozen scores and live thresholds.
+Consequences, all intended: a shoe's score never
+moves because the catalogue grew, and **a future score may exceed 100**, which is why
+the column's header carries no `/100`. `score.test.ts` pins every constant, so an
+accidental recompute fails the build rather than silently moving every score.
+
+The anchors are frozen **per (side, stability state)** — four pairs. The toggle changes
+what the score means, so one shared scale would invite a comparison that is not
+meaningful; on shared anchors the stability-on list would top out at 77.6 purely
+because the best shoe overall is not the most stable. `r0` cannot be dropped in favour
+of the physical zero either: preserving true zeros through stage 2 leaves every shoe
+carrying a large common baseline, so an unanchored scale compresses the fleet into
+44–100 with a median of 82.
+
+**The score is a synthetic key**, `easy-score`, and it is the one column whose value
+depends on the *view* rather than on the shoe: the side decides which half every
+side-bearing term reads, and the stability toggle decides how many terms there are.
+`numericValue` therefore cannot answer for it. `Page.svelte` resolves
+`easyScoreMap(shoes, workingSide, stability, idx)` once and hands the map to
+`sortShoes`, both tables, the CSV export and the detail panel. It is computed
+**client-side at render time**, like a percentile bound and unlike anything in `data/`:
+while the weights are still moving, a dataset rebuild between experiments would defeat
+the point. Moving it to build time later is a performance decision, not a correctness
+one, and no determinism gate applies: nothing about it enters `data/`
+(docs/scraping.md §Determinism).
+
+`workingSide`, not `sideMark`: a view naming no side still scores, silently on
+`DEFAULT_SIDE`, with nothing on screen saying so. Refusing to score would blank the
+column for a view that merely unticked two measurement columns, which is worse.
+
+An unscored shoe renders an **em dash** and sorts last whichever way the column
+sorts — never a 0, which would read as the worst shoe in the fleet — and the CSV
+leaves its cell empty for the same reason. The column's wash ranks over the
+**rendered rows** (`rankMap` in `lib/stats.ts`), like every other column's, or its
+tint would mean something different from its neighbours' in the same row.
+
+Expanding a row shows the **per-term breakdown**: raw mapped term, weighted
+contribution and share, per term. That is not decoration — it is what makes a
+surprising rank diagnosable rather than arguable, and it is the reason the feature
+ships before the weights settle. The panel is handed the same `side` and `stability`
+the column was scored with, so the two cannot disagree.
 
 ### The side is a preset too
 

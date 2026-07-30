@@ -7,7 +7,8 @@ import { sideKey, type Side } from './lineage';
  * recomputed from the loaded catalogue. That is what makes a score comparable across refreshes, and
  * what lets a future shoe read above 100 rather than renormalising the improvement away. Recomputing
  * any of them from `shoes` reintroduces exactly the drift the design exists to remove — the reasoning
- * is owned by docs/decisions.md.
+ * is owned by docs/decisions.md §Frozen scores and live thresholds, and the pipeline the constants
+ * belong to by docs/app.md §The Easy score.
  */
 
 /** Cosmetic: an uncapped linear factor cancels when the term is divided by its sd, so this sets the

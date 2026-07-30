@@ -1204,7 +1204,7 @@ git commit -m "Exercise the Easy score in the browser suite"
 
 One task, because the changes cross-reference each other and `check:docs` gates them as a set. Read `docs/README.md` first — the contract is **forward-only**, so describe what *is*, never what changed.
 
-- [ ] **Step 1: `docs/shoe-stories.md`**
+- [x] **Step 1: `docs/shoe-stories.md`**
 
 - Add the **three-year horizon** to §The shared rules: both buyer types (latest-and-greatest, and value) shop inside roughly three years, which is why a metric's viability is judged by coverage over that window.
 - Re-ground the no-preset-filters-by-release-date rule: it holds because a lab-measurement score is time-blind and all-terms-required already sinks thinly-measured old shoes — not because it protects last-gen buyers.
@@ -1213,7 +1213,7 @@ One task, because the changes cross-reference each other and `check:docs` gates 
 - Amend §Checking a threshold set: the `pace` fact is **one-sided**; divergence is expected and it must never be an optimisation target.
 - The softness paragraph argues from a coverage figure for a metric no story now uses — rewrite or drop it.
 
-- [ ] **Step 2: `docs/app.md`**
+- [x] **Step 2: `docs/app.md`**
 
 - §Presets: Easy resolves to a plate filter and a sort, not to bounds. Note that `applyPreset` carries `stability` through, and why the marks would otherwise break.
 - New section for the score: the four stages, that every constant is frozen and why, that it is computed client-side, that the key is synthetic so its value depends on the view, and that its scale may exceed 100.
@@ -1222,11 +1222,11 @@ One task, because the changes cross-reference each other and `check:docs` gates 
 - Record that Easy's toolbar count is now the whole non-carbon pool rather than a recommendation count, and that unscoreable shoes sort last as em dashes. This is a real change in what the number means.
 - Record that when a view names no side, the score falls back to `DEFAULT_SIDE` with nothing on screen saying so.
 
-- [ ] **Step 3: `docs/decisions.md`**
+- [x] **Step 3: `docs/decisions.md`**
 
 Add one decision: **scores use frozen physical references; thresholds use live-fleet percentiles.** The market-relative convention is right for a bound ("as much stack as most of the fleet") and wrong for a score, where drift is a bug. An agent must not "fix" the frozen constants by recomputing them from the loaded fleet.
 
-- [ ] **Step 4: `BACKLOG.md`**
+- [x] **Step 4: `BACKLOG.md`**
 
 - Item 1: Easy is now a score; the item narrows to Tempo and Race.
 - Item 3: partly superseded — the score owns per-story direction. Record the general metric picker as **rejected**, with the three reasons from spec §7.
@@ -1234,11 +1234,11 @@ Add one decision: **scores use frozen physical references; thresholds use live-f
 - New: Easy's count means "pool size", not "recommended"; decide whether to count scoreable shoes instead.
 - New: Easy bounds nothing, so it no longer participates in the sparse-bound guard that `presets.test.ts` applies to the other stories — it has lost that safety net.
 
-- [ ] **Step 5: Run the gate**
+- [x] **Step 5: Run the gate**
 
 Run: `npm run check:docs` → PASS, no dead pointers.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/ BACKLOG.md CLAUDE.md

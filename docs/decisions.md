@@ -37,6 +37,20 @@ index-hygiene rather than access policy, and the robots-literal alternative
 honoured and re-checked before every crawl. Agents must not raise request
 rates, add concurrency, or widen scraping scope without a user decision.
 
+### Frozen scores and live thresholds (2026-07-30)
+The market-relative convention above is right for a **bound** and wrong for a
+**score**. "As much stack as most of the fleet" is a claim about the fleet, so it
+must move with the fleet; "how well does this shoe tolerate repetition" is a claim
+about the shoe, and a number that drifts because the catalogue grew is a bug.
+So every constant in a scoring function — references, caps, spread divisors and
+display anchors alike — is **derived once and frozen**, and a score is comparable
+across refreshes and may read above 100 as shoes improve
+(docs/app.md §The Easy score). Agents must not "fix" a frozen constant by
+recomputing it from the loaded fleet, and must not renormalise a score's scale so
+its top is always 100: both reintroduce exactly the drift freezing removes.
+Rederiving the set is a deliberate act — edit the constants, say so in the commit,
+and expect every published score to move.
+
 ### Testing bar: adversarial, no live network
 Every module has tests that attack its failure modes (hostile URL states,
 sanitiser breakouts, boundary-exact gates), not just happy paths. Coverage
