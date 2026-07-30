@@ -290,7 +290,7 @@ Its #35 is a **fleet fact, not an artefact**: it ranks 59th of 283 on shock abso
 energy return, with its outsole term at full marks. Read as "strong, not exceptional", with the
 value call left to the runner — which is what removing price commits us to.
 
-**One-sided sanity check** (docs/shoe-stories.md §Checking a threshold set): 28/30 and 29/30 of the
+**One-sided sanity check** (docs/shoe-stories.md §Checking a set of weights): 28/30 and 29/30 of the
 top shoes carry `daily-running` against a 79% base rate. The `pace` fact must **never** be an
 objective — divergence from it is the point of this project — so this checks only that we have not
 *completely* disagreed.

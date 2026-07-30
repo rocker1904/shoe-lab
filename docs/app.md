@@ -150,10 +150,15 @@ name carries heading **and** side, because two rows both called "Forefoot"
 would be indistinguishable to anyone not looking at the screen.
 
 The order is fixed: search, released after, plate, brand, discontinued, then
-the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
-price, then the metrics the stories bound, then the rest curated, then anything
-added by hand. Price leads because every story bounds it. It does not
-rearrange itself under the story or the side — someone comparing two stories
+the range rows, which come from one declared list, `CURATED_RANGE_KEYS` — price,
+then the measurements a runner narrows on most, then the rest curated, then
+anything added by hand. Price leads because it is the bound almost every search
+has. The list predates the story scores and is **not** the set of terms those
+scores read: outsole durability and heel counter stiffness are score terms with
+no curated row, and drop and softness are curated rows no score reads. That is
+not an oversight to reconcile — a filter row is for narrowing a search and a
+term is for ranking one, and the two lists answer different questions. It does
+not rearrange itself under the story or the side — someone comparing two stories
 must not have the controls move underneath them. Both halves of every side pair
 are curated for that reason, and **every part of a side pair renders always**;
 a single renders when it is curated, active, or listed.
@@ -328,7 +333,7 @@ but never columns.
 which carry words and dates rather than figures. Six is the bound: it is the
 widest numeric set that fits the narrowest common phone without horizontal
 scrolling. `midsole-softness-22` is the column the default gives up — the
-sparsest of the seven it used to carry, and the only one no story bounds,
+sparsest of the seven it used to carry, and the only one no story reads,
 because docs/shoe-stories.md argues softness should not drive a shortlist.
 This is a product change rather than a phone workaround, because **columns
 never vary by viewport**: `cols` serialises into the URL, so a
@@ -380,15 +385,17 @@ prints the year alone unless `preciseReleaseDate` is set. `sortShoes` takes the
 resolved score lookup as an optional fourth argument and consults it **by column
 key**, because the score keys are the ones `numericValue` cannot answer for.
 
-**Easy shows the score and the terms behind it.** Six numeric columns is the phone
-bound above, and Easy spends them on the score, shock absorption, energy return,
-price, weight and the RunRepeat score. The two it gives up are the two the score
-does not read: toebox width, because fit is the runner's own final filter rather
-than something a score can speak to (docs/shoe-stories.md §Easy) — no story shows
-it now — and stack, because the score reads shock absorption rather than the
-millimetres behind it, so a shown stack invites a hand ranking the story argues
-against. **Outsole durability is the one term not shown**, for want of a seventh
-slot.
+**Easy shows the score and most of the terms behind it.** Six numeric columns is the
+phone bound above, and Easy spends them on the score, shock absorption, energy
+return, price, weight and the RunRepeat score. Two of those are not Easy terms at
+all and are there anyway: price, because the value call is the runner's, and
+weight, because it is the number a runner compares trainers by whatever the story.
+**Outsole durability is the term that pays for weight** — a deliberate swap, not a
+shortage of slots, since Easy has three terms and three free columns. What every
+story gives up is toebox width, because fit is the runner's own last filter and no
+score speaks to it, and stack, because the score reads shock absorption rather than
+the millimetres behind it, so a shown stack invites a hand ranking the story argues
+against.
 
 ### Table presentation
 
@@ -596,9 +603,9 @@ The export's columns are the visible ones, plus four that are always there:
 holds, for the same reason the numbers are unrounded — a row that has left the
 app has no other way back to the page its readings came from. `reviewUrl` in
 `lib/dataset.ts` is the single spelling of that URL, shared with the detail
-panel. The export still carries no marker for an imprecise release date; that
-is the CSV date-precision item in BACKLOG.md, and both CSV edits were meant to
-land in one visit.
+panel. Release-date precision travels with the date rather than being dropped:
+where a `releasedAt` column is shown, `releaseDateSource` is emitted beside it
+(docs/app.md §Release-date provenance).
 
 ## Release-date provenance
 
@@ -703,9 +710,11 @@ Nothing carries the side afterwards; the view it produces simply uses one
 half's keys, which is what `sideOf` then reads back.
 
 Each story's columns are six numeric — the phone bound
-(docs/app.md §Columns and sorting) — spent on its score and the terms behind it.
-Easy and Tempo each leave one term off for want of a seventh slot; Race has only
-three terms, so it is the one story that shows all of them.
+(docs/app.md §Columns and sorting) — spent on its score and the terms behind it,
+though not uniformly. Race has three terms and shows all of them. Tempo has four
+and leaves out shock absorption, which is its floor rather than its point. Easy
+has three and still leaves out outsole durability, spending the slot on weight
+instead — the reasoning is docs/app.md §Columns and sorting.
 
 A preset must never bound a metric whose coverage over its own `considered`
 population falls below `SPARSE_BELOW` (docs/app.md §Coverage) — a preset that
@@ -764,10 +773,10 @@ rate lasts twice as long — and **capped**, because past a few Dremel-units of 
 outsole is not what retires the shoe, the midsole packing out is, and that is
 unmeasured; midsole width over stack, because stability is a lever from foot to ground
 and the dimensionless ratio also stops "stability" covertly selecting heavy shoes — measured
-against weight over the pool, the term reads ρ −0.05 on heel and −0.08 on forefoot where the
-raw width reads +0.45 and +0.29, and opting in moves the top 30's mean weight by 6 g on heel
-and none on forefoot, both still under the pool mean; heel counter stiffness off its own
-five-point scale, because a percentile would invent resolution the measurement does not have.
+against weight over the pool, the raw width correlates positively and the ratio slightly
+negatively, and opting in barely moves the top 30's mean weight, which stays under the pool
+mean on both sides; heel counter stiffness off its own five-point scale, because a
+percentile would invent resolution the measurement does not have.
 
 **No story weights a thin term.** This is the score's half of the sparse-bound guard
 (§Presets), and it is the half that still has something to check: `score.test.ts` counts
@@ -776,9 +785,10 @@ Easy and Tempo, the fleet for Race — and fails when one falls below `SPARSE_BE
 (§Coverage). The stability pair is counted too, because a runner can turn those terms on.
 Counting is on the **mapped term** rather than a metric slug: outsole life and midsole
 width are ratios, and a shoe missing either half is as unscoreable as one missing a
-reading outright. The thinnest term today is energy return at 83%, so a failure means
-upstream coverage has genuinely collapsed — drop the term, or the story that weights it.
-Do not lower the threshold, which is owned elsewhere and shared with the presets.
+reading outright. Every term sits comfortably clear of the threshold today, so a failure
+means upstream coverage has genuinely collapsed — drop the term, or the story that
+weights it. Do not lower the threshold, which is owned elsewhere and shared with the
+presets. The live margin is the test's to report, not this doc's to restate.
 
 **Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
 and never recomputed from the loaded catalogue: the two references, the outsole cap, the
@@ -792,8 +802,9 @@ accidental recompute fails the build rather than silently moving every score.
 **A divisor belongs to a pool, never to a story.** It is a property of
 `(metric, mapping, pool)`, so Easy and Tempo — which rank the same plate-filtered 378 —
 share **one object by reference**, and keeping two copies would be two homes for one
-fact. Race ranks the whole fleet, where carbon widens every spread: its energy-return
-divisor is 0.0902 against 0.0758. So the frozen tables are named for their pool
+fact. Race ranks the whole fleet, where carbon widens every spread, so its divisors are
+materially larger than the pooled ones — the values themselves live in `score-defs.ts`
+and nowhere else. The frozen tables are named for their pool
 (`PLATED_POOL_SD`, `WHOLE_FLEET_SD`) and must not be collapsed into one global table.
 The shared table carries every term, including ones a given story ignores — `weights`
 decides which are read, and that is what lets two stories share one object.
@@ -861,8 +872,8 @@ Expanding a row shows the **per-term breakdown**: the raw reading, the mapped te
 weighted contribution and the share, per term. That is not decoration — it is what makes
 a surprising rank diagnosable rather than arguable, and it is the reason the feature
 ships before the weights settle. The **reading** column is what makes it work at all:
-two terms cap, and 206 of 283 shoes sit at exactly 1.0 on outsole durability, so a
-mapped value alone cannot say what put them there. Where a term reads a derived
+two terms cap, and most of the scoreable pool sits at exactly 1.0 on outsole durability,
+so a mapped value alone cannot say what put them there. Where a term reads a derived
 quantity the cell shows the division — `1.33 = 4 / 3` — because the ratio alone does
 not say which reading moved. `readings` in `score.ts` owns those readings, so the
 panel never re-derives them. Five columns need 354px against the 321px a 375px phone
@@ -889,8 +900,8 @@ mark. `lib/side.ts` is the whole mechanism:
 - **`projectSide(v, side)`** is what a click does. Columns and the sort key
   carry no number — "sorted by energy return" means the same on either half — so
   they follow; a bound on the half being left carries one that does not
-  transfer, 36 mm being the median heel stack and the 98th percentile of
-  forefoot, so it is **dropped rather than translated**. Carrying the
+  transfer, the median heel stack landing in the top few percent of forefoot
+  stacks, so it is **dropped rather than translated**. Carrying the
   *percentile* across instead would silently rewrite a number the runner typed.
   Everything with no side — price, weight, brands, search, the discontinued and
   missing-data flags — is untouched. A view that names no side at all gains that
@@ -902,7 +913,8 @@ Together those give the invariant the rest depends on:
 the view committed to the side clicked, so the mark can honestly read
 everything and the just-clicked control is never left unlit. `Page.svelte`
 routes a view that *is* a story through `applyPreset` on the new side instead,
-so its bounds re-resolve at the new side's percentiles.
+so it re-resolves as that story's own view of the new half — its sort key, its
+score column and its measurement columns all move together.
 
 Mixed views stay reachable by hand and by link, and stay unmarked in the side
 group. They are simply not *preserved* across an explicit side click.
@@ -1011,8 +1023,9 @@ is the one screen the strip exists to own.
 **The stories carry no counts**, on the bar or on the strip. A scored story's
 count is the size of its **pool** rather than of a shortlist — every non-carbon
 shoe passes Easy, scored or not — so the number promised a filtering that no
-longer happens; and once Tempo and Race are scores too (BACKLOG.md) all three
-would be near-identical pool sizes distinguishing nothing. The receipt's
+longer happens. All three are scores now, and Easy and Tempo share one pool
+while Race takes the whole fleet, so the three counts would distinguish nothing
+anyway. The receipt's
 `N of M shoes` is a different number and stays: it counts what is on screen.
 Dropping them also drops three `applyPreset` passes over the whole dataset per
 render.
@@ -1160,12 +1173,12 @@ repeated rather than hoisted to a column label so a row read on its own still
 says what its numbers mean.
 
 A side pair takes one figure because **both halves are read in the same test
-run** — stack 450/450, energy return 378/378, shock absorption 381/381, midsole
-width 450/450 — so a figure per half is duplication. Generations take two
-because they genuinely differ, often hugely: breathability 430 against 41,
-torsional rigidity 408 against 134. That difference is the whole basis of the
-choice, so it has to be on screen. `coverage.test.ts` asserts the side-pair
-equality against the dataset rather than trusting it
+run**, so the two halves carry identical counts and a figure per half is
+duplication. Generations take two because they genuinely differ, often by an
+order of magnitude — a retiring method near-complete while its replacement is
+still in the low tens. That difference is the whole basis of the choice, so it
+has to be on screen. `coverage.test.ts` asserts the side-pair equality against
+the dataset rather than trusting it
 (docs/operations.md §Contract-drift runbook).
 
 There are **no coverage bars anywhere in the sidebar**. With only ever two rows
@@ -1198,11 +1211,13 @@ exclusive by nature, sides are two measurements of two parts of a shoe
 
 The live count is the whole treatment: **do not add a badge that classifies a
 metric as thin.** Coverage by release year shows every sparse metric is
-**era-shaped**, not sporadic — each is either *arriving* (a clean adoption ramp:
-`breathability-25` runs 0, 0, 0, 1%, 11%, 36% across '21–'26) or *retiring*
-(near-total coverage then a cliff: `stiffness` runs 85%, 100%, 98%, 99%, 23%,
-0). Not one is uniformly thin, so "this test is rarely run" is a sentence that
-is false about every metric it would be shown on.
+**era-shaped**, not sporadic — each is either *arriving* (a clean adoption ramp
+from nothing, like `breathability-25`) or *retiring* (near-total coverage then a
+cliff, like `stiffness`). Not one is uniformly thin, so "this test is rarely
+run" is a sentence that is false about every metric it would be shown on. The
+per-year shares are not quoted here on purpose: curating release months moves
+shoes between years, so any figure written down goes stale on the next curation
+pass rather than on the next scrape.
 
 Any such classifier needs a notion of **era per test**, which the dataset does
 not carry; that is a BACKLOG.md item, not something to approximate from the age

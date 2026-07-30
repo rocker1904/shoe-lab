@@ -58,8 +58,10 @@ export const TEMPO: ScoreDef = {
   weights: { energyReturn: 3, weight: 2, outsoleDurability: 2, shockAbsorption: 1 },
   sd: PLATED_POOL_SD,
   base: { anchors: { heel: { r0: 4.7625, r100: 7.9385 }, forefoot: { r0: 4.5415, r100: 7.6499 } } },
-  /** Weight 1 each, not 2: Tempo has eight terms with the pair in, so 1 each is 20% of it. At 2
-   *  each stability swamps speed and budget trainers climb (docs/shoe-stories.md §Tempo). */
+  /** Weight 1 each, not 2. Weights are what matter here, not term counts: Tempo's base weights sum
+   *  to eight, so the pair adds up to a fifth of the total, where in Easy the same absolute weight
+   *  is a third. At 2 each stability swamps speed and budget trainers climb
+   *  (docs/shoe-stories.md §Tempo). */
   stable: {
     add: { midsoleWidth: 1, heelCounter: 1 },
     anchors: { heel: { r0: 5.0514, r100: 7.3590 }, forefoot: { r0: 4.7002, r100: 6.8820 } },
@@ -68,7 +70,7 @@ export const TEMPO: ScoreDef = {
 
 /** No `stable` variant, and that is the decision rather than an omission: race shoes are uniformly
  *  tall and narrow, so the category has no stable member to surface — at every usable weight the
- *  preference moves one shoe in fifteen at the top and promotes daily trainers below
+ *  preference barely disturbs the top of the list and promotes daily trainers below
  *  (docs/shoe-stories.md §Race). The Toolbar says so rather than leaving a dead control. */
 export const RACE: ScoreDef = {
   id: 'race',

@@ -1210,7 +1210,7 @@ One task, because the changes cross-reference each other and `check:docs` gates 
 - Re-ground the no-preset-filters-by-release-date rule: it holds because a lab-measurement score is time-blind and all-terms-required already sinks thinly-measured old shoes — not because it protects last-gen buyers.
 - Rewrite §Easy around the four mechanisms and their metrics, and the plate gate's precautionary injury-risk basis.
 - Record the two mechanisms that matter and cannot be measured: **midsole/foam durability** and **compliance at low load**.
-- Amend §Checking a threshold set: the `pace` fact is **one-sided**; divergence is expected and it must never be an optimisation target.
+- Amend §Checking a set of weights: the `pace` fact is **one-sided**; divergence is expected and it must never be an optimisation target.
 - The softness paragraph argues from a coverage figure for a metric no story now uses — rewrite or drop it.
 
 - [x] **Step 2: `docs/app.md`**

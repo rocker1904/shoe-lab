@@ -214,8 +214,9 @@
 
   /**
    * A side click makes the view about that side (docs/app.md §Presets). A view that is a story is
-   * rebuilt as that story on the new side, so its bounds re-resolve at the new side's percentiles;
-   * anything else is projected, which moves the columns and sort and drops the other half's bounds.
+   * rebuilt as that story on the new side, so its sort key, score column and measurement columns
+   * move together; anything else is projected, which moves the columns and sort and drops the
+   * other half's bounds.
    */
   function onSide(next: Side) {
     // Already there, so there is nothing to do. Rebuilding would be harmless — projecting onto the

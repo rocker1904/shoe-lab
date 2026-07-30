@@ -63,7 +63,7 @@ export function applyPreset(id: string, strike: Side, stability: boolean): ViewS
     }
     case 'race': {
       // No gate at all. Carbon is admitted because race day is where the trade is worth it, and
-      // never required — with no plate gate and no plate term the top twelve are carbon anyway
+      // never required — with no plate gate and no plate term the top of the list is carbon anyway
       // (docs/shoe-stories.md §Race).
       v.sort = { key: RACE.keys[strike], dir: 'desc' };
       v.columns = raceColumns(strike);

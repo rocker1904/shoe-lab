@@ -48,8 +48,8 @@ describe('presets', () => {
   it('never sets releasedAfter', () => {
     for (const p of PRESETS) expect(applyPreset(p.id, 'heel', false).filters.releasedAfter).toBeUndefined();
   });
-  // None of the metrics the stories bound is half of a superseded pair, so there is no generation
-  // to choose — spec §4 requires a preset to populate it only for a pair it bounds.
+  // A story bounds nothing and its columns name no superseded pair, so there is no generation for
+  // it to choose: `generations` records a choice between two methods, and a story makes none.
   it('never populates generations', () => {
     for (const p of PRESETS) expect(applyPreset(p.id, 'heel', false).generations).toEqual({});
   });

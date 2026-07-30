@@ -140,7 +140,10 @@ describe('Toolbar stability preference', () => {
     // The three things a runner would otherwise have to infer from the table.
     expect(pop).toHaveTextContent(/price/i);
     expect(pop).toHaveTextContent(/not scored/i);
-    expect(pop).toHaveTextContent(/2026-07-30/);
+    // That the scale is pinned to a snapshot, not which snapshot: the date would be a second home
+    // for the `data/` commit `score-defs.ts` names, and the two drifted apart once already.
+    expect(pop).toHaveTextContent(/fixed to a dated snapshot/i);
+    expect(pop).toHaveTextContent(/above 100/i);
 
     await fireEvent.keyDown(pop, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();

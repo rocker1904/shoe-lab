@@ -53,7 +53,7 @@
     + 'row to see which, and what each one contributed. Price and release date are deliberately '
     + 'left out of every score, so the value call stays yours. A shoe missing any measurement a '
     + 'story reads is not scored at all rather than scored zero, and sorts last. The scale is fixed '
-    + 'to the fleet as it stood on 2026-07-30, so scores stay comparable over time and a future '
+    + 'to a dated snapshot of the fleet, so scores stay comparable over time and a future '
     + `shoe can read above 100. Stability reaches ${listed(STABLE_STORIES)} only: race shoes are `
     + 'uniformly tall and narrow, so there is no stable racer to surface.';
 </script>

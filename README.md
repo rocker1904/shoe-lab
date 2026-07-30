@@ -46,7 +46,7 @@ workflow and **no commit** — the previous data stays live.
 | `data/tests.json` | `scrape:metrics` | Lab-test catalogue — id, slug, display name, type, units, group |
 | `data/metrics.json` | `scrape:metrics` | Per-shoe measured values, keyed `slug → testId → value` |
 | `data/details.json` | `scrape:details` | Per-shoe editorial: pros/cons, intro, who-should(-not)-buy, features, price, score, release date |
-| `data/release-years.json` | `scrape:releases` | Release-year supplement, filling the gap where a shoe page has no precise date |
+| `data/release-years.json` | `scrape:releases` | Release-year supplement, filling the gap where a shoe page gives no date at all |
 | `data/shoes.json` | `build:dataset` | The joined artifact the app loads (the only file the app reads) |
 | `data/shoes.csv` | `build:dataset` | Same data flattened for spreadsheets |
 
@@ -105,8 +105,8 @@ Map slugs to display names and units with `data/tests.json`:
 jq -r '.tests[] | [.slug, .name, .units] | @tsv' data/tests.json
 ```
 
-Exports from the app always start with `slug,name,brand` so a saved view is self-identifying, then
-carry exactly the columns you had visible.
+Exports from the app always start with `slug,name,brand,url` so a saved view is self-identifying and
+every row can be traced back to its review, then carry exactly the columns you had visible.
 
 ## Politeness contract
 
@@ -131,8 +131,9 @@ with.
 
 ## Caveats
 
-- **Most release dates are year-only**, stored as `YYYY-01-01` and shown as the year alone unless
-  RunRepeat published a precise date.
+- **Release dates are month-precise at best**, and a good many are year-only — stored as
+  `YYYY-01-01` and shown as the bare year. The rest come from RunRepeat's own date or from
+  hand-researched months in `curated/`, and render as `March 2024`; the day is never shown.
 - **Plate detection is carbon-shaped**: non-carbon plates (nylon, PEBA) mostly read as "none".
 
 Both are properties of the upstream data, explained in docs/scraping.md §Data quirks; fixes are

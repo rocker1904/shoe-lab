@@ -166,7 +166,7 @@ heel, top 12                                                  ER      g   plate 
 Alphafly 3 at #22 (201 g, lower return than the leaders), adidas Adizero EVO SL at #33 — a
 super-trainer correctly below the racers but respectable — and Vapor Glove at #267.
 
-**One-sided sanity check** (docs/shoe-stories.md §Checking a threshold set): `competition` is carried
+**One-sided sanity check** (docs/shoe-stories.md §Checking a set of weights): `competition` is carried
 by **27/30 on heel and 28/30 on forefoot**, median £255–268, median 194–198 g. Carbon is 24–25 of 30
 without being required or rewarded. This checks only that we have not *completely* disagreed with
 RunRepeat; it is never an objective.

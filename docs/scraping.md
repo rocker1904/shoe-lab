@@ -160,9 +160,9 @@ substitute for it.
 | `null` | — | nothing anywhere had a date |
 
 A boolean could not carry this. It collapsed `page-estimated` and `listing`
-together, yet only the second is fiction: those 94 shoes have a real month from
-RunRepeat — 50 of them month-precise on day 01, 44 with a specific day — which
-the app previously discarded by rendering the year alone. The distinction is
+together, yet only the second is fiction: a `page-estimated` shoe has a real
+month from RunRepeat, about half of them with a specific day as well, which the
+app previously discarded by rendering the year alone. The distinction is
 also the one a CSV consumer needs, so `releaseDateSource` is a column in
 `shoes.csv` (docs/app.md §Release-date provenance).
 
@@ -210,8 +210,10 @@ docs/operations.md §Resuming release-date curation
 
 Expensive to discover, invisible in the code:
 
-- **Most shoes have no page-level `released_at`** — hence the supplement.
-  After it, roughly 433 of 450 shoes are dated and only ~24 precisely.
+- **Most shoes have no page-level `released_at`** — hence the supplement, and
+  hence the curation pass. After both, all but a handful of shoes are dated, but
+  only a few dozen carry a day RunRepeat itself flagged precise; the live split
+  by source is `releaseDateSource` in the dataset (§Release-date provenance).
 - **Plate detection reads the review section, not the vocabulary.** RunRepeat's
   structured plate fact and its features list both name carbon and nothing else —
   across the whole fleet the fact takes only `carbon-plate`, `false` or absent, so

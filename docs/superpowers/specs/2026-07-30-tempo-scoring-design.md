@@ -221,7 +221,7 @@ heel, stability off
 Saucony Endorphin Speed 5 sits at #13 and Speed 4 at #16 — the archetypal tempo shoes, and both
 above the fragile flats they resemble. Takumi Sen 11 is #42 on an outsole life of 1.0.
 
-**One-sided sanity check** (docs/shoe-stories.md §Checking a threshold set): `competition`-only is
+**One-sided sanity check** (docs/shoe-stories.md §Checking a set of weights): `competition`-only is
 **0/30 in every one of the four combinations**, and `tempo` is carried by 20–24 of 30. Median price
 £150–160 against the old preset's cap-driven list. This checks only that we have not *completely*
 disagreed with RunRepeat; it is never an objective.

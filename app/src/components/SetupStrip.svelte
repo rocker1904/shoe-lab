@@ -31,8 +31,9 @@
   const SIDE_HELP = 'Stack, energy return, shock absorption and midsole width are each measured '
     + 'twice — once at the heel, once at the forefoot. Pick the end you want the table and filters '
     + 'to use. Usually that is the end you land on, but either is fine.';
-  const STORY_HELP = 'Easy, Tempo and Race each set the filters, columns and sorting to suit that '
-    + 'kind of run. All clears them again, and you can change anything at any point.';
+  const STORY_HELP = 'Easy, Tempo and Race each rank the shoes on measurements chosen for that '
+    + 'kind of run, and set the columns to match. All clears them again, and you can change '
+    + 'anything at any point.';
 </script>
 
 <section class="strip" aria-label="Set up your table" data-testid="setup-strip">

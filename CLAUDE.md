@@ -26,7 +26,7 @@ before working in its domain.
 | docs/decisions.md | project-wide decisions: robots posture, git-as-database, testing bar |
 | docs/scraping.md | pipeline, endpoints, payload formats, politeness contract, validation gates |
 | docs/app.md | frontend contracts: view/URL ownership, sanitised-HTML boundary, presets, filters |
-| docs/shoe-stories.md | what Easy, Tempo and Race mean to a runner, and why the thresholds follow |
+| docs/shoe-stories.md | what Easy, Tempo and Race mean to a runner, and why each score's terms and weights follow |
 | docs/operations.md | workflows, refresh model, deploy chain, contract-drift runbook |
 | README.md | user-facing: what this is, attribution, quick start (not agent reference) |
 | BACKLOG.md | prioritised future work |
