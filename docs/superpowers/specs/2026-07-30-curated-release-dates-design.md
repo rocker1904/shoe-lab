@@ -101,6 +101,50 @@ Where an early limited drop exists it is recorded in `notes` rather than
 discarded — the definition may be revisited, and the observation is expensive to
 recover.
 
+**A month either side is acceptable.** Availability is not a step function, and
+the consumer of this data is a year-scale recency filter, so ±1 month changes
+nothing about what the filter shows. Accuracy is still the goal — but a
+`suspect` entry whose month may be off by one is far more useful than
+`YYYY-01-01`, and should not be withheld on those grounds. What must never
+happen is a wrong *year*.
+
+### Tie-breakers when sources disagree
+
+Apply in order. These exist because the wide-availability rule alone was abused:
+an agent invented an athlete-only drop to override a four-source majority.
+
+1. An explicit release statement ("Release Date: X", "releases X", "available
+   X") is the default answer.
+2. Move **earlier** only if a page shows unqualified general availability
+   sooner — "available now" at a mainstream retailer, no restriction mentioned.
+3. Move **later** only on *positive textual evidence* that the earlier date was
+   limited: a page must actually say limited / athlete only / exclusive / select
+   retailers / pre-order. **Never infer a limitation no page states.** Absence of
+   evidence of limitation is not evidence of limitation.
+4. Still disagreeing: take the **majority** month and name the outlier.
+
+Two things are **not** evidence of a release month:
+
+- **A retailer price link.** "Price: $140 at Running Warehouse" shows the shoe
+  was buyable when that page was published, nothing more.
+- **A review's publication date.** Reviewers receive pre-release samples
+  routinely — RoadTrailRun published an Adios Pro 4 review in October 2024 for a
+  shoe that was "broadly available January 2025". Inferring a month from when a
+  review appeared is the single largest residual error source, and it is banned:
+  with no release statement and no unqualified availability, return null.
+
+### Declared evidence strength
+
+Every entry carries `evidenceType`, set by the agent and checked by the session:
+
+- `explicit-release` — a page states a release or launch date
+- `availability-bound` — only evidence the shoe was purchasable by some date
+- `inferred` — reasoned from publication dates alone; **treat as unusable**
+
+This makes weakness sortable rather than buried in prose. In the batch where it
+was introduced, every `inferred` entry was also a `suspect` entry and every
+`suspect` entry was `inferred` — the field predicts the failure exactly.
+
 ### Released-after becomes month-granular
 
 The sidebar's released-after control is a `date` input plus 1y/2y/3y chips, so it
@@ -249,6 +293,33 @@ SERP querying is against the terms of every major engine. That fails the same
 test as working around a Cloudflare challenge
 (docs/decisions.md §Be a good citizen toward RunRepeat). Use the sanctioned
 search tool, and lean on sitemaps to need it less.
+
+### The index-first loop, as it actually runs
+
+This is the procedure that produced the best results, and it uses **no web
+search at all**:
+
+1. Build the publisher index once from sitemaps (cached; ~30 polite requests for
+   ~11,700 URLs across seven publishers).
+2. Match each undated shoe to review URLs **offline** by exact canonical token
+   equality — normalise both sides, drop publisher boilerplate words
+   (review/performance/multi/tester/initial/quick) and brand filler
+   (gel/fresh/foam/one/athletic), fold `v5` to `5`, then require set equality.
+   Loose token-containment matching is **not** good enough: it matched "Brooks
+   Hyperion" to `hyperion-elite-3`.
+3. Hand each agent its shoe *and its candidate URLs*, and forbid WebSearch.
+4. The session records results, correcting the agent where needed, and never
+   discards a value.
+
+Per-shoe cost lands around 12–16k tokens for a clean result, against 19–27k when
+agents had to search. Ten-for-ten resolution is normal.
+
+The session must expect to **adjudicate, not just accept**. Across thirty shoes
+it was necessary to override one month, downgrade one self-assessed
+`evidenceType`, and strip non-probative "sources" — price lines, byline dates,
+one null quote — from five entries. Agents also frequently leave
+`generationCheck` empty or fill it with a description of the evidence rather
+than a generation confirmation.
 
 ### What the trials established
 
