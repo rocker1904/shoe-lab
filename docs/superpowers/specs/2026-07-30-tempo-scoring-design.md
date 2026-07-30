@@ -155,12 +155,18 @@ anchors (r0, r100)
 ```
 
 **Every divisor Tempo shares with Easy is the same number**, because a divisor is a property of
-`(metric, mapping, pool)` and not of the story. So `TERM_SD` has **one owner keyed by term**, not a
-copy per score — anything else is two homes for one fact (docs/README.md §Rules, rule 1). Only the
-*anchors* are per score, because those depend on the weights.
+`(metric, mapping, pool)` — never of the story. Easy and Tempo share all three for their common
+terms, so they must share the constants: keeping two copies would be two homes for one fact
+(docs/README.md §Rules, rule 1). Only the *anchors* are per score, because those depend on weights.
 
-That property is also the strongest practical argument against the `L_OK = 2.0` I first proposed: a
-per-story cap would have been the only thing making two scores disagree about the same measurement.
+**The pool is load-bearing in that sentence and Race will prove it.** Race ranks the whole fleet
+rather than the plate-filtered pool, and carbon shoes widen the spread — its energy-return divisor is
+0.0902 against the 0.0758 here. So the shared set is keyed by *pool*, not simply by term, and Race
+carries its own. Do not "simplify" this into one global table.
+
+The same property is the strongest practical argument against the `L_OK = 2.0` I first proposed: a
+per-story cap would have been the only thing making two scores over the *same* pool disagree about
+the same measurement.
 
 Derived from the fleet at `data/` commit `baed23b` (450 shoes, 378 after the plate gate, **283
 scoreable**), dividing by the sds **as published above** rather than unrounded ones — the reasoning
