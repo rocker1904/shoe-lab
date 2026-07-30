@@ -30,7 +30,7 @@ describe('SetupStrip', () => {
 
   it('describes each story in a line, which the toolbar has no room for', () => {
     render(SetupStrip, { props: { ...props } });
-    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('Cushioned, no carbon, affordable');
+    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('Cushioned, durable, no carbon');
     expect(screen.getByRole('button', { name: /All/ })).toHaveTextContent('Everything in the catalogue');
   });
 

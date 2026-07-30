@@ -18,9 +18,9 @@
    */
   const STORIES = [
     { id: 'all', label: 'All', desc: 'Everything in the catalogue' },
-    { id: 'easy', label: 'Easy', desc: 'Cushioned, no carbon, affordable' },
-    { id: 'tempo', label: 'Tempo', desc: 'Light, fast, affordable' },
-    { id: 'race', label: 'Race', desc: 'Lightest, fastest, price no object' },
+    { id: 'easy', label: 'Easy', desc: 'Cushioned, durable, no carbon' },
+    { id: 'tempo', label: 'Tempo', desc: 'Lively, light, lasts the season' },
+    { id: 'race', label: 'Race', desc: 'Fastest, lightest, one day only' },
   ];
 
   const SIDE_LABEL = 'Use measurements from the';

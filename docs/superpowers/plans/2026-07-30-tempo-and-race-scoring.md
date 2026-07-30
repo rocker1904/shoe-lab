@@ -556,7 +556,7 @@ Also re-point `units.test.ts`, which iterates `EASY_SCORE_KEYS` for the `↑`/no
 
 ### Task 6: The presets lose their thresholds, and Tempo gains its plate gate
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 ```typescript
 it('keeps carbon out of Tempo, or Tempo collapses into Race', () => {
@@ -597,8 +597,8 @@ it('every story still round-trips and still names a side', () => {
 });
 ```
 
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3: Implement.** Delete `PRICE_PERCENTILE`, `TEMPO_ENERGY_RETURN_PERCENTILE`, `TEMPO_WEIGHT_PERCENTILE`, `RACE_MAX_WEIGHT`, `RACE_ENERGY_RETURN_PERCENTILE` and `fleetCap`.
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3: Implement.** Delete `PRICE_PERCENTILE`, `TEMPO_ENERGY_RETURN_PERCENTILE`, `TEMPO_WEIGHT_PERCENTILE`, `RACE_MAX_WEIGHT`, `RACE_ENERGY_RETURN_PERCENTILE` and `fleetCap`.
 
 **Tempo gains `v.filters.plate = ['none', 'plated-other']`** — it has none today, and this is the spec's central decision, not a detail. **Race sets no plate filter at all.** Column sets, six numeric each:
 
@@ -613,7 +613,7 @@ const raceColumns = (strike: Side) =>
 
 Rewrite all three `PRESETS[].describe` strings **and the three `desc` strings in `SetupStrip.svelte`** (`'Cushioned, no carbon, affordable'`, `'Light, fast, affordable'`, `'Lightest, fastest, price no object'`) — the cards are the first screen a runner sees and "affordable" is exactly the price-cap promise that no longer exists. Together these close BACKLOG item 13. `SetupStrip.test.ts` pins Easy's verbatim.
 
-- [ ] **Step 4: The full fallout.** `presets.test.ts`:
+- [x] **Step 4: The full fallout.** `presets.test.ts`:
   - lines 5–9, the import of five deleted constants — **compile error**.
   - line 90 `NUMERIC_COLUMNS = { easy: 6, tempo: 4, race: 4 }` → **all three become 6**, and its trailing comment is rewritten.
   - lines 166–169 `SIDE_BOUNDS` → empty, which makes three tests **vacuous rather than failing** (204, 219, and the per-story loop at 320). Delete them; a green test that checks nothing is worse than a red one.
@@ -630,7 +630,7 @@ Rewrite all three `PRESETS[].describe` strings **and the three `desc` strings in
 
   `Page.test.ts` needs **no** change: its `r.` params are hand-built URLs, not preset output.
 
-- [ ] **Step 5:** `npm run verify` → PASS. Commit — `"Rank every story by its own score rather than by bounds"`
+- [x] **Step 5:** `npm run verify` → PASS. Commit — `"Rank every story by its own score rather than by bounds"`
 
 ---
 

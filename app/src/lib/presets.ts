@@ -1,87 +1,68 @@
-import type { Shoe } from '../../../shared/types.js';
-import { numericValue, type TestIndex } from './dataset';
 import { sideKey, type Side } from './lineage';
-import { EASY } from './score-defs';
-import { quantile } from './stats';
+import { EASY, RACE, TEMPO } from './score-defs';
 import { defaultView, type ViewState } from './urlstate';
 
-// Every threshold lives here (docs/app.md §Presets). Percentiles where the story is relative to
-// the market or the bound can swap sides, absolute values only where it is a property of a shoe
-// with no sides — docs/shoe-stories.md owns which is which, and why. Read it before changing a
-// number. Exported because a percentile that is not named cannot be asserted against.
-export const PRICE_PERCENTILE = 0.8;
-// Tempo is the broad middle of the week, so both its bounds read "more than most of this fleet"
-// rather than naming a number. An absolute energy-return floor is what made it narrow: 65 happens
-// to sit at the 74th percentile, so it kept only the liveliest quarter of the catalogue.
-export const TEMPO_ENERGY_RETURN_PERCENTILE = 0.5;
-export const TEMPO_WEIGHT_PERCENTILE = 0.4;
-/** Weight has no sides, so this is the one bound left free to be a property of a shoe. */
-export const RACE_MAX_WEIGHT = 230;
-/** Race's old floor of 70 sat at the 85th percentile on heel and the 80th on forefoot — one
- *  number meaning two different things, which is exactly what a side-swappable bound must not do. */
-export const RACE_ENERGY_RETURN_PERCENTILE = 0.85;
+/**
+ * A story is a pool and a ranking, and nothing else — no story bounds a metric any more
+ * (docs/app.md §Presets). Which is why nothing here reads the fleet: a threshold resolved against
+ * the loaded catalogue was the only thing that ever needed it. What each score measures is owned by
+ * docs/shoe-stories.md and the constants behind it by `score-defs.ts`, so a number here would be a
+ * second home for one of them.
+ */
 
-/** Six numeric columns is the phone bound (docs/app.md §Columns and sorting), and Easy spends them
- *  on the score and the terms behind it. Toebox width and stack are the two the story gives up:
- *  neither is a term, and fit is the runner's own final filter rather than something a score speaks
- *  to. Outsole durability is the term left out, for want of a seventh slot. */
+/** Six numeric columns is the phone bound (docs/app.md §Columns and sorting), and each story spends
+ *  them on its score and the terms behind it. Toebox width and stack are what the stories give up:
+ *  neither is a term, and fit is the runner\'s own final filter rather than something a score speaks
+ *  to. Easy and Tempo each leave one term out for want of a seventh slot — Easy outsole durability,
+ *  Tempo shock absorption, which is the floor rather than the point. Race shows all three of its. */
 const easyColumns = (strike: Side) =>
   ['releasedAt', EASY.keys[strike], 'score', 'msrpGbp', sideKey('Shock absorption', strike),
     sideKey('Energy return', strike), 'weight', 'plate'];
-const fastColumns = (strike: Side) =>
-  ['releasedAt', 'score', 'msrpGbp', sideKey('Energy return', strike), 'weight', 'plate'];
+const tempoColumns = (strike: Side) =>
+  ['releasedAt', TEMPO.keys[strike], 'score', 'msrpGbp',
+    sideKey('Energy return', strike), 'weight', 'outsole-durability', 'plate'];
+const raceColumns = (strike: Side) =>
+  ['releasedAt', RACE.keys[strike], 'score', 'msrpGbp',
+    sideKey('Energy return', strike), 'weight', sideKey('Shock absorption', strike), 'plate'];
 
 export interface Preset { id: string; label: string; describe: string }
 
 export const PRESETS: Preset[] = [
   { id: 'easy', label: 'Easy', describe: 'The bulk of the week — ranked on cushioning, durability and how much the shoe gives back' },
-  { id: 'tempo', label: 'Tempo', describe: 'Fast twice a week — light and lively, at a price you can repeat' },
-  { id: 'race', label: 'Race', describe: 'One day, one goal — the lightest, liveliest shoes in the fleet' },
+  { id: 'tempo', label: 'Tempo', describe: 'Fast twice a week — ranked on how much the shoe gives back, how little it weighs and how long the outsole lasts' },
+  { id: 'race', label: 'Race', describe: 'One day, one goal — ranked on how much the shoe gives back and how little it weighs, with nothing asked of durability' },
 ];
 
-/** A bound the market decides rather than the story: resolved against the loaded fleet at click time. */
-function fleetCap(shoes: Shoe[], key: string, idx: TestIndex, p: number): number | null {
-  return quantile(shoes.map((s) => numericValue(s, key, idx)).filter((x): x is number => x !== undefined), p);
-}
-
-/** The mapping spec §4.0 describes: `(story, strike) -> view`, with nothing special-cased. */
-export function applyPreset(
-  id: string, shoes: Shoe[], idx: TestIndex, strike: Side, stability: boolean,
-): ViewState {
+/** The mapping `(story, strike) -> view`, with nothing special-cased. */
+export function applyPreset(id: string, strike: Side, stability: boolean): ViewState {
   const v = defaultView();
   // A preference, not part of what a story is: the marks compare whole views, so rebuilding this
   // from the default would unmark the story the moment the runner set it (docs/app.md §Presets).
   v.stability = stability;
-  // Prices resolve through numericValue, which prefers the weekly test over the field
-  // (docs/app.md §Resolved price) — reading shoe.msrpGbp here would disagree with the column.
-  const price = fleetCap(shoes, 'msrpGbp', idx, PRICE_PERCENTILE);
-  const energyKey = sideKey('Energy return', strike);
   switch (id) {
     case 'easy': {
-      // No bounds but the plate. The score ranks on shock absorption, outsole durability and energy
-      // return, so a stack floor would restate what it already rewards, and price is deliberately
-      // absent so the runner judges value themselves (docs/shoe-stories.md §Easy).
+      // The precautionary line on carbon plates, drawn for the two stories a runner repeats
+      // (docs/shoe-stories.md §Easy).
       v.filters.plate = ['none', 'plated-other'];
       v.sort = { key: EASY.keys[strike], dir: 'desc' };
       v.columns = easyColumns(strike);
       return v;
     }
     case 'tempo': {
-      const energy = fleetCap(shoes, energyKey, idx, TEMPO_ENERGY_RETURN_PERCENTILE);
-      if (energy !== null) v.filters.ranges[energyKey] = { min: energy };
-      const weight = fleetCap(shoes, 'weight', idx, TEMPO_WEIGHT_PERCENTILE);
-      if (weight !== null) v.filters.ranges['weight'] = { max: weight };
-      if (price !== null) v.filters.ranges['msrpGbp'] = { max: price };
-      v.sort = { key: energyKey, dir: 'desc' };
-      v.columns = fastColumns(strike);
+      // The same gate, and for a second reason as well: with carbon in, Tempo shares 11 of its top
+      // 20 with a pure speed ranking and stops being a second opinion about tempo at all
+      // (docs/shoe-stories.md §Tempo).
+      v.filters.plate = ['none', 'plated-other'];
+      v.sort = { key: TEMPO.keys[strike], dir: 'desc' };
+      v.columns = tempoColumns(strike);
       return v;
     }
     case 'race': {
-      v.filters.ranges['weight'] = { max: RACE_MAX_WEIGHT };
-      const energy = fleetCap(shoes, energyKey, idx, RACE_ENERGY_RETURN_PERCENTILE);
-      if (energy !== null) v.filters.ranges[energyKey] = { min: energy };
-      v.sort = { key: energyKey, dir: 'desc' };
-      v.columns = fastColumns(strike);
+      // No gate at all. Carbon is admitted because race day is where the trade is worth it, and
+      // never required — with no plate gate and no plate term the top twelve are carbon anyway
+      // (docs/shoe-stories.md §Race).
+      v.sort = { key: RACE.keys[strike], dir: 'desc' };
+      v.columns = raceColumns(strike);
       return v;
     }
     default:

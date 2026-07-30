@@ -180,7 +180,7 @@
    */
   const storyMark = $derived(
     sideMark === null ? null
-    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, sideMark, view.stability)))?.id ?? null);
+    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, sideMark, view.stability)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
 
   /**
@@ -221,13 +221,13 @@
     // Already there, so there is nothing to do. Rebuilding would be harmless — projecting onto the
     // side a view already names is the identity — but it would spend a URL write on it.
     if (next === sideMark) return;
-    setView(storyMark ? applyPreset(storyMark, data.shoes, idx, next, view.stability) : projectSide(snapshot, next));
+    setView(storyMark ? applyPreset(storyMark, next, view.stability) : projectSide(snapshot, next));
   }
   function onStory(id: string) {
     // The strip's own question, answered — the only thing the cards hold that the bar does not is
     // the descriptions, which are a first-encounter need.
     stripOpen = false;
-    setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, data.shoes, idx, workingSide, view.stability));
+    setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, workingSide, view.stability));
   }
   /** A preference, so it does not clear the story or the `All` mark: `applyPreset` and `allView`
    *  both carry it through, which is what keeps the mark derived rather than lost

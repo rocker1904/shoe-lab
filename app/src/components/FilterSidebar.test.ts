@@ -404,11 +404,10 @@ const orderOf = (container: HTMLElement) => ({
 
 describe('FilterSidebar order', () => {
   it('renders one fixed order, identical across every strike and story', () => {
-    const idx = indexTests(TESTS);
     // The cross product is the only place the order can break: a story under forefoot is what would
     // otherwise introduce a row the heel renders did not have.
     for (const strike of ['heel', 'forefoot'] as Side[]) {
-      for (const view of [projectSide(defaultView(), strike), ...PRESETS.map((p) => applyPreset(p.id, FLEET, idx, strike, false))]) {
+      for (const view of [projectSide(defaultView(), strike), ...PRESETS.map((p) => applyPreset(p.id, strike, false))]) {
         const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
         expect(orderOf(container).headings, `${strike} ${JSON.stringify(view.sort)}`).toEqual(HEADINGS);
         expect(orderOf(container).groups, `${strike} ${JSON.stringify(view.sort)}`).toEqual(GROUPS);
