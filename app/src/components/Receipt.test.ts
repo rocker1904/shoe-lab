@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Receipt from './Receipt.svelte';
 
-const base = { shown: 38, total: 42, outsideBounds: 3, hiddenMissing: 1, showingMissing: false };
+const base = { shown: 38, total: 42, outsideBounds: 3, hiddenMissing: 1, undatedHidden: 0, showingMissing: false };
 
 function setup(over: Partial<typeof base> = {}) {
   const onshowmissing = vi.fn();
@@ -51,5 +51,21 @@ describe('Receipt', () => {
     setup({ hiddenMissing: 7 });
     expect(screen.getByTestId('receipt')).not.toHaveTextContent(/would otherwise/i);
     expect(screen.getByTestId('receipt')).toHaveTextContent('7 shoes have no data for the active filters');
+  });
+});
+
+describe('Receipt undated shoes', () => {
+  it('says when a date bound is hiding shoes that have no date at all', () => {
+    setup({ undatedHidden: 5 });
+    expect(screen.getByTestId('receipt').textContent)
+      .toContain('5 shoes have no release date and cannot pass your date filter');
+  });
+  it('says nothing about undated shoes when none are hidden', () => {
+    setup({ undatedHidden: 0 });
+    expect(screen.getByTestId('receipt').textContent).not.toContain('no release date');
+  });
+  it('uses the singular for one', () => {
+    setup({ undatedHidden: 1 });
+    expect(screen.getByTestId('receipt').textContent).toContain('1 shoe has no release date');
   });
 });

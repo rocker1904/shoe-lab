@@ -224,6 +224,18 @@ population surviving the non-range filters alone, and
 `visible + outsideBounds + hiddenMissing === considered.length` holds for any
 filter state. Each excluded shoe is counted exactly once, missing-ness first.
 
+`undatedHidden` is the same idea one filter earlier: shoes an active
+released-after bound drops because they have **no release date at all**, rather
+than because they are too old. An undated shoe cannot be shown to qualify, so it
+stays hidden — but folding it into the population line would report it as
+excluded by a bound it was never measured against, which is the silence this
+count exists to break. It sits outside the `considered` reconciliation above,
+because those shoes never reach `considered`. There is deliberately no
+show-them-anyway escape: `showMissing` answers "I accept shoes with unknown
+readings inside my bounds", where this is "I asked for shoes released after a
+date, and these have no date" — a different question, and clearing the date
+filter already answers it.
+
 `hiddenMissing` is a deterministic count of shoes that pass every non-range
 filter but have **no data** for at least one active range filter. Missingness
 is settled across all active ranges before any bound is applied, so the count

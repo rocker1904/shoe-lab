@@ -17,13 +17,19 @@ export interface FilterState {
 }
 export const EMPTY_FILTERS: FilterState = { ranges: {} };
 /** `considered` is the denominator every other count reconciles against, and what coverage measures over. */
-export interface FilterResult { visible: Shoe[]; considered: Shoe[]; outsideBounds: number; hiddenMissing: number }
+export interface FilterResult {
+  visible: Shoe[]; considered: Shoe[]; outsideBounds: number; hiddenMissing: number;
+  /** Shoes an active date bound dropped for having no release date at all, rather than for being
+   *  too old. Counted separately because absence is not a failed bound (docs/app.md §Filters). */
+  undatedHidden: number;
+}
 
 export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): FilterResult {
   const visible: Shoe[] = [];
   const considered: Shoe[] = [];
   let outsideBounds = 0;
   let hiddenMissing = 0;
+  let undatedHidden = 0;
   const search = f.search?.toLowerCase();
   const active = Object.entries(f.ranges).filter(([, b]) => b.min !== undefined || b.max !== undefined);
   outer: for (const s of shoes) {
@@ -31,7 +37,12 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
     if (search && !s.name.toLowerCase().includes(search)) continue;
     if (f.brands?.length && !f.brands.includes(s.brand ?? '')) continue;
     if (f.plate?.length && !f.plate.includes(s.plate)) continue;
-    if (f.releasedAfter && (!s.releasedAt || s.releasedAt < f.releasedAfter)) continue;
+    if (f.releasedAfter) {
+      // An undated shoe cannot be shown to qualify, so it stays hidden — but it is counted, or the
+      // receipt would report it as excluded by a bound it was never measured against.
+      if (!s.releasedAt) { undatedHidden++; continue; }
+      if (s.releasedAt < f.releasedAfter) continue;
+    }
     considered.push(s);
     // Missing-ness is settled across every active range before any bound is applied (docs/app.md §Filters).
     const readings: { bound: RangeBound; v: number }[] = [];
@@ -49,5 +60,5 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
     if (outOfRange) { outsideBounds++; continue; }
     visible.push(s);
   }
-  return { visible, considered, outsideBounds, hiddenMissing };
+  return { visible, considered, outsideBounds, hiddenMissing, undatedHidden };
 }

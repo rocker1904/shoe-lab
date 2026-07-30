@@ -27,6 +27,16 @@ describe('applyFilters', () => {
   it('releasedAfter excludes older and unknown dates', () => {
     expect(slugs(applyFilters(FLEET, { ranges: {}, releasedAfter: '2025-01-01' }, idx))).toEqual(['cushy', 'racer']);
   });
+  it('counts an undated shoe a date bound hides, rather than dropping it silently', () => {
+    // `mystery` has no release date at all, so no bound can show it to qualify — but the receipt
+    // has to be able to say so (docs/app.md §Filters).
+    const r = applyFilters(FLEET, { ranges: {}, releasedAfter: '2025-01-01' }, idx);
+    expect(r.undatedHidden).toBe(1);
+    expect(r.considered.map((s) => s.slug)).not.toContain('mystery');
+  });
+  it('counts no undated shoes when there is no date bound to hide them', () => {
+    expect(applyFilters(FLEET, { ranges: {} }, idx).undatedHidden).toBe(0);
+  });
   it('brand, search, discontinued filters', () => {
     expect(slugs(applyFilters(FLEET, { ranges: {}, brands: ['Other'] }, idx))).toEqual(['oldie']);
     expect(slugs(applyFilters(FLEET, { ranges: {}, search: 'RAC' }, idx))).toEqual(['racer']);

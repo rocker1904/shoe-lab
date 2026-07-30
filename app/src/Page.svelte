@@ -301,6 +301,7 @@
   <div class="content" style:--thead-top="{chromeHeight}px">
     <Receipt shown={visibleSorted.length} total={filtered.considered.length}
              outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
+             undatedHidden={filtered.undatedHidden}
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
