@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import { columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import { EASY_SCORE_KEY } from './score';
 import { labTest } from './test-fixtures';
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: a hand-written fixture can never fail on a
@@ -97,5 +98,15 @@ describe('shortLabel', () => {
       if (prior !== undefined) expect(partner.get(prior)).toBe(t.slug);
       seen.set(label, t.slug);
     }
+  });
+});
+
+describe('the synthetic Easy score', () => {
+  it('names the synthetic Easy score, within the phone label bound', () => {
+    expect(columnLabel(EASY_SCORE_KEY, undefined)).toBe('Easy score');
+    // The catalogue-wide guards in this file iterate real tests, so the synthetic key needs its own
+    // assertion or it is the one column header nothing width-checks.
+    expect(widestWordPx('Easy score')).toBeLessThanOrEqual(MAX_LABEL_PX);
+    expect(lineCount('Easy score')).toBeLessThanOrEqual(MAX_LABEL_LINES);
   });
 });

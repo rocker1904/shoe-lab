@@ -617,7 +617,7 @@ git commit -m "Carry the stability preference in the view and the link"
 **Interfaces:**
 - Produces: `sortShoes(shoes, sort, idx, scores?: Map<string, number>)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `sort.test.ts`:
 
@@ -668,11 +668,11 @@ it('accepts the synthetic score as a sort key and a column', () => {
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- sort.test.ts labels.test.ts direction.test.ts urlstate.test.ts`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `sort.ts` — add `scores` as an optional fourth parameter of `sortShoes`, thread it into `keyValue`, and in `keyValue` before the `numericValue` fallback:
 
@@ -689,11 +689,11 @@ Run: `npm -w app run test -- sort.test.ts labels.test.ts direction.test.ts urlst
 
 `units.ts` — `headerUnits` would return a bare arrow for the score. Leave it unitless: **do not** write `/100`, because the scale deliberately exceeds 100 as shoes improve (spec §10 — the "may exceed 100" rule). Confirm `unitsOf` returns `''` for a key with no catalogue test and add a test asserting the header carries no `/100`.
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npm -w app run test && npm run typecheck` → PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/lib/sort.ts app/src/lib/sort.test.ts app/src/lib/labels.ts app/src/lib/labels.test.ts app/src/lib/direction.ts app/src/lib/direction.test.ts app/src/lib/urlstate.ts app/src/lib/urlstate.test.ts app/src/lib/units.ts app/src/lib/units.test.ts

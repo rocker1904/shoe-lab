@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
+import { EASY_SCORE_KEY } from './score';
 import { sortShoes } from './sort';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
@@ -72,5 +73,21 @@ describe('sortShoes edge cases', () => {
     const upper = shoe({ slug: 'zoom', name: 'Zoom Fly' });
     const lower = shoe({ slug: 'adidas', name: 'adidas Boston' });
     expect(slugs(sortShoes([upper, lower], { key: 'name', dir: 'asc' }, idx))).toEqual(['adidas', 'zoom']);
+  });
+});
+
+describe('the synthetic Easy score', () => {
+  it('sorts by the synthetic score from the supplied map', () => {
+    const scores = new Map([['oldie', 90], ['cushy', 10], ['trainer', 50]]);
+    const out = sortShoes(FLEET, { key: EASY_SCORE_KEY, dir: 'desc' }, idx, scores);
+    expect(out.slice(0, 3).map((s) => s.slug)).toEqual(['oldie', 'trainer', 'cushy']);
+  });
+
+  it('puts unscored shoes last whichever way the score sorts', () => {
+    const scores = new Map([['cushy', 10]]);
+    for (const dir of ['asc', 'desc'] as const) {
+      const out = sortShoes(FLEET, { key: EASY_SCORE_KEY, dir }, idx, scores);
+      expect(out[0]!.slug).toBe('cushy');
+    }
   });
 });

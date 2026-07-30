@@ -1,3 +1,5 @@
+import { EASY_SCORE_KEY } from './score';
+
 export type Direction = 'higher' | 'lower' | 'neutral';
 
 /**
@@ -17,6 +19,10 @@ export const DIRECTION: Record<string, Direction> = {
   'shock-absorption-heel': 'higher', 'shock-absorption-forefoot': 'higher',
   'forefoot-traction': 'higher', 'heel-traction': 'higher', 'forefoot-traction-stop': 'higher',
   score: 'higher',
+  // Not a catalogue test. Per-story direction is not fleet-wide direction: the score asserts a
+  // better end for the session it is built for, while the metrics it reads stay `neutral` here
+  // because docs/shoe-stories.md argues there is no fleet-wide answer for them.
+  [EASY_SCORE_KEY]: 'higher',
 
   weight: 'lower', price: 'lower', msrpGbp: 'lower', 'outsole-durability': 'lower',
   'difference-in-midsole-softness-in-cold': 'lower', 'difference-in-stiffness-in-cold': 'lower',

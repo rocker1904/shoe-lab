@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { EASY_SCORE_KEY } from './score';
 import { headerUnits } from './units';
 import { labTest } from './test-fixtures';
 
@@ -39,5 +40,14 @@ describe('headerUnits', () => {
     expect(headerUnits('releasedAt', undefined)).toBe('');
     const option = labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option' });
     expect(headerUnits('tongue-gusset-type', option)).toBe('');
+  });
+});
+
+describe('the synthetic Easy score', () => {
+  it('leaves the Easy score unitless rather than claiming a ceiling it does not have', () => {
+    // Never `/100`: the anchors are frozen, so a shoe better than the 2026-07-30 fleet reads above
+    // 100 by design. The direction arrow is all the header can honestly carry.
+    expect(headerUnits(EASY_SCORE_KEY, undefined)).toBe('↑');
+    expect(headerUnits(EASY_SCORE_KEY, undefined)).not.toContain('/100');
   });
 });

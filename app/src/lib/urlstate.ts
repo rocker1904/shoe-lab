@@ -3,6 +3,7 @@ import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
 import { CURATED_RANGE_KEYS, metricEntries, sideKey, type Side } from './lineage';
+import { EASY_SCORE_KEY } from './score';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
@@ -41,9 +42,9 @@ export function defaultColumns(side: Side): string[] {
  * story that would build it — story selection is a positional value comparison (docs/app.md §Presets).
  */
 export const PLATES: Plate[] = ['none', 'plated-other', 'carbon'];
-const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate']);
+const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate', EASY_SCORE_KEY]);
 /** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
-const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
+const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', EASY_SCORE_KEY]);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 

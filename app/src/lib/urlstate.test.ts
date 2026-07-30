@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
+import { EASY_SCORE_KEY } from './score';
 import { defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './urlstate';
 import type { FilterState } from './filters';
 import { TESTS, labTest } from './test-fixtures';
@@ -382,5 +383,12 @@ describe('the stability preference', () => {
   it('ignores a stab value that is not 1', () => {
     expect(parseView('stab=yes', idx).stability).toBe(false);
     expect(parseView('stab=0', idx).stability).toBe(false);
+  });
+});
+
+describe('the synthetic Easy score as a view key', () => {
+  it('accepts the synthetic score as a sort key and a column', () => {
+    expect(parseView(`sort=-${EASY_SCORE_KEY}`, idx).sort).toEqual({ key: EASY_SCORE_KEY, dir: 'desc' });
+    expect(parseView(`cols=${EASY_SCORE_KEY},weight`, idx).columns).toEqual([EASY_SCORE_KEY, 'weight']);
   });
 });
