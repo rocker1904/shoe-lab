@@ -51,6 +51,7 @@ export type SidePairLabel = (typeof SIDE_PAIRS)[number]['label'];
 export const DERIVED_SIDE_PAIRS = [
   { label: 'Easy score', forefoot: 'easy-score-forefoot', heel: 'easy-score-heel' },
   { label: 'Tempo score', forefoot: 'tempo-score-forefoot', heel: 'tempo-score-heel' },
+  { label: 'Race score', forefoot: 'race-score-forefoot', heel: 'race-score-heel' },
 ] as const satisfies readonly { label: string; forefoot: string; heel: string }[];
 
 export type DerivedSidePairLabel = (typeof DERIVED_SIDE_PAIRS)[number]['label'];

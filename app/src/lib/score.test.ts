@@ -7,7 +7,7 @@ import { swapSide, type Side } from './lineage';
 import {
   contributions, L_OK, SA_REF, scoreMap, scoreOf, terms, W_REF, WID_CAP, type TermKey,
 } from './score';
-import { EASY, SCORE_DEFS, TEMPO } from './score-defs';
+import { EASY, RACE, SCORE_DEFS, TEMPO } from './score-defs';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 
@@ -303,5 +303,49 @@ describe('the Tempo score against the real fleet', () => {
     expect(r[0]).toBe('asics-megablast');
     expect(r.indexOf('adidas-adizero-evo-sl')).toBeLessThan(5);
     expect(r.indexOf('adidas-adizero-takumi-sen-11')).toBeGreaterThan(30); // outsole life 1.0
+  });
+});
+
+describe('the Race score against the real fleet', () => {
+  it('pairs the Race score columns by side', () => {
+    expect(swapSide('race-score-forefoot', 'heel')).toBe('race-score-heel');
+  });
+
+  it('scores the whole fleet and anchors on it', () => {
+    for (const side of SIDES) {
+      const vs = [...scoreMap(RACE, REAL.shoes, side, false, realIdx).values()];
+      expect(vs.length, side).toBe(378);
+      expect(Math.max(...vs), side).toBeCloseTo(100, 1);
+      expect(Math.min(...vs), side).toBeCloseTo(0, 1);
+    }
+  });
+
+  it('ignores the stability preference entirely', () => {
+    // Race declares no stable variant, so the control is inert here — and the Toolbar says so.
+    for (const side of SIDES) {
+      const off = scoreMap(RACE, REAL.shoes, side, false, realIdx);
+      const on = scoreMap(RACE, REAL.shoes, side, true, realIdx);
+      expect(on.size).toBe(off.size);
+      for (const [slug, v] of off) expect(on.get(slug)).toBe(v);
+    }
+  });
+
+  it('needs its own divisors, because carbon widens every spread', () => {
+    expect(RACE.sd).not.toBe(EASY.sd);
+    expect(RACE.sd.heel.energyReturn!).toBeGreaterThan(EASY.sd.heel.energyReturn!);
+  });
+
+  it('has no durability term, and so scores shoes the other two cannot', () => {
+    expect(RACE.weights.outsoleDurability).toBeUndefined();
+    expect(scoreMap(RACE, REAL.shoes, 'heel', false, realIdx).size)
+      .toBeGreaterThan(scoreMap(EASY, REAL.shoes, 'heel', false, realIdx).size);
+  });
+
+  it('puts the supershoes on top without requiring a plate', () => {
+    const r = [...scoreMap(RACE, REAL.shoes, 'heel', false, realIdx).entries()]
+      .sort((a, b) => b[1] - a[1]).slice(0, 12).map(([slug]) => slug);
+    const plateOf = new Map(REAL.shoes.map((s) => [s.slug, s.plate]));
+    expect(r.every((slug) => plateOf.get(slug) === 'carbon')).toBe(true);
+    expect(r[0]).toBe('adidas-adizero-adios-pro-evo-3');
   });
 });

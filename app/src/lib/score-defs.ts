@@ -25,6 +25,14 @@ const PLATED_POOL_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.fr
   }),
 });
 
+/** Divisors over the whole fleet — 450 shoes. Carbon widens every spread, so Race cannot use the
+ *  table above: its energy-return divisor is 0.0902 against 0.0758. Keyed by pool, not globally by
+ *  term — do not collapse the two (docs/app.md §The story scores). */
+const WHOLE_FLEET_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({
+  heel: Object.freeze({ energyReturn: 0.0902, weight: 0.0904, shockAbsorption: 0.0902 }),
+  forefoot: Object.freeze({ energyReturn: 0.0900, weight: 0.0904, shockAbsorption: 0.0930 }),
+});
+
 export const EASY: ScoreDef = {
   id: 'easy',
   keys: { heel: derivedSideKey('Easy score', 'heel'), forefoot: derivedSideKey('Easy score', 'forefoot') },
@@ -58,7 +66,21 @@ export const TEMPO: ScoreDef = {
   },
 };
 
-export const SCORE_DEFS: readonly ScoreDef[] = [EASY, TEMPO];
+/** No `stable` variant, and that is the decision rather than an omission: race shoes are uniformly
+ *  tall and narrow, so the category has no stable member to surface — at every usable weight the
+ *  preference moves one shoe in fifteen at the top and promotes daily trainers below
+ *  (docs/shoe-stories.md §Race). The Toolbar says so rather than leaving a dead control. */
+export const RACE: ScoreDef = {
+  id: 'race',
+  keys: { heel: derivedSideKey('Race score', 'heel'), forefoot: derivedSideKey('Race score', 'forefoot') },
+  /** No durability term at all: a race shoe is used a handful of times, so cost per mile is
+   *  irrelevant — which is what makes the three stories three. */
+  weights: { energyReturn: 3, weight: 2, shockAbsorption: 1 },
+  sd: WHOLE_FLEET_SD,
+  base: { anchors: { heel: { r0: 3.7787, r100: 8.5477 }, forefoot: { r0: 3.9800, r100: 8.6001 } } },
+};
+
+export const SCORE_DEFS: readonly ScoreDef[] = [EASY, TEMPO, RACE];
 
 export const defForKey = (key: string): ScoreDef | undefined =>
   SCORE_DEFS.find((d) => d.keys.heel === key || d.keys.forefoot === key);

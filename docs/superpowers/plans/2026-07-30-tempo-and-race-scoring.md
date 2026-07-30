@@ -444,7 +444,7 @@ describe('the Tempo score against the real fleet', () => {
 
 ### Task 3: The Race definition
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 ```typescript
 it('pairs the Race score columns by side', () => {
@@ -492,9 +492,9 @@ describe('the Race score against the real fleet', () => {
 });
 ```
 
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Add `{ label: 'Race score', forefoot: 'race-score-forefoot', heel: 'race-score-heel' }`, then `RACE`: `weights: { energyReturn: 3, weight: 2, shockAbsorption: 1 }`, `sd: WHOLE_FLEET_SD`, base anchors only, **no `stable`**. Append to `SCORE_DEFS`.
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Score Race on speed alone, with no durability to answer for"`
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3:** Add `{ label: 'Race score', forefoot: 'race-score-forefoot', heel: 'race-score-heel' }`, then `RACE`: `weights: { energyReturn: 3, weight: 2, shockAbsorption: 1 }`, `sd: WHOLE_FLEET_SD`, base anchors only, **no `stable`**. Append to `SCORE_DEFS`.
+- [x] **Step 4:** `npm run verify` → PASS. Commit — `"Score Race on speed alone, with no durability to answer for"`
 
 ---
 
