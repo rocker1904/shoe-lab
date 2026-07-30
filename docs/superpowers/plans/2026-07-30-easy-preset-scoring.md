@@ -960,7 +960,7 @@ The task that makes a surprising rank diagnosable — the reason the feature shi
 - Modify: `app/src/components/DetailPanel.svelte`, `DetailPanel.test.ts`
 - Modify: `app/src/components/ShoeTable.svelte`, `ShoeTableMobile.svelte`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `DetailPanel.svelte` currently takes `shoe` only — no `data`, no `idx`. Read the file and its test before writing, then add:
 
@@ -985,11 +985,11 @@ it('says so plainly when a shoe cannot be scored', () => {
 
 `DetailPanel.test.ts` defines no `DATA` today — add one built from `TESTS` the way `ShoeTable.test.ts` does, rather than inventing a new shape.
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- DetailPanel.test.ts`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `DetailPanel.svelte` — the props go from `{ shoe }` to `{ shoe, data, side, stability }`, and `idx` is derived locally as the tables do it (`indexTests(data.tests)`). Import `displayNumber` and `easyContributions`.
 
@@ -1037,11 +1037,11 @@ Run: `npm -w app run test -- DetailPanel.test.ts`
 
 Both call sites (`ShoeTable.svelte` ~line 101, `ShoeTableMobile.svelte` ~line 110) pass `shoe` only — add `{data} {side} {stability}`. `side` must be the same one `Page` scored with, which is why Task 6 threads it as a prop rather than deriving it here: `sideOf` can return `null`, and a panel disagreeing with the column would be worse than either answer.
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npm -w app run test && npm run typecheck` → PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/components/DetailPanel.svelte app/src/components/DetailPanel.test.ts app/src/components/ShoeTable.svelte app/src/components/ShoeTableMobile.svelte
@@ -1249,16 +1249,16 @@ git commit -m "Record what the Easy score measures and why its constants are fro
 
 ### Task 12: Verify the whole branch
 
-- [ ] **Step 1: The gate**
+- [x] **Step 1: The gate**
 
 Run: `cd ~/dev/shoe-lab-preset-scoring && npm run verify`
 Expected: PASS — check:docs, typecheck, lint, test:coverage. `src/lib/**` must stay above 90% lines / 85% branches.
 
-- [ ] **Step 2: The browser suite**
+- [x] **Step 2: The browser suite**
 
 Run: `npm -w app run e2e` → PASS.
 
-- [ ] **Step 3: Look at it, and check the marks by hand**
+- [x] **Step 3: Look at it, and check the marks by hand**
 
 Run `npm -w app run dev`, then:
 - Click **Easy**. Against spec §11: the Vomero Premium leads on heel with stability off; Superblast 3 leads on forefoot.
@@ -1267,7 +1267,7 @@ Run `npm -w app run dev`, then:
 - Click **All** with stability on: `All` should be marked and the preference should survive.
 - Expand the **Novablast 5** and read its breakdown. This is the point of the build.
 
-- [ ] **Step 4: Commit any fixes, then stop**
+- [x] **Step 4: Commit any fixes, then stop**
 
 Do **not** land on `main` or push. Report the branch state and wait — the weights are expected to move once Sam has looked at the fleet.
 
