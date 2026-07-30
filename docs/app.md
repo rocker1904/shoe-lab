@@ -307,9 +307,10 @@ trap would hold the keyboard inside a panel that is no longer modal.
 ## Columns and sorting
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
-`msrpGbp`, `plate`), the synthetic `easy-score`
-(docs/app.md §The Easy score) and any test slug; `name` and `brand` are rendered
-by the table itself and have no cell, so they are sortable but never columns.
+`msrpGbp`, `plate`), the two synthetic score keys `easy-score-heel` and
+`easy-score-forefoot` (docs/app.md §The Easy score) and any test slug; `name` and
+`brand` are rendered by the table itself and have no cell, so they are sortable
+but never columns.
 
 **The default view holds six numeric columns**, plus `releasedAt` and `plate`,
 which carry words and dates rather than figures. Six is the bound: it is the
@@ -364,8 +365,8 @@ Sorting reads numbers, with missing values always last and score as the
 tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
 an ISO string; year-derived dates therefore sit at 1 January, and the table
 prints the year alone unless `preciseReleaseDate` is set. `sortShoes` takes the
-resolved score map as an optional fourth argument, because `easy-score` is the
-one sort key `numericValue` cannot answer for.
+resolved score lookup as an optional fourth argument and consults it **by column
+key**, because the score keys are the ones `numericValue` cannot answer for.
 
 **Easy shows the score and not toebox width.** Six numeric columns is the phone
 bound above, adding the score makes seven, and toebox width is the one column no
@@ -570,7 +571,7 @@ lives in one constants block at the top of `app/src/lib/presets.ts` — tuning i
 one-line edit there, and new presets are cheap (BACKLOG.md).
 
 **A story need not bound anything.** Easy resolves to the plate filter and a sort
-by `easy-score`; it sets no range at all (docs/shoe-stories.md §Easy). Two
+by its own side's score key; it sets no range at all (docs/shoe-stories.md §Easy). Two
 consequences worth stating because they change what is on screen rather than only
 what is in the code:
 
@@ -677,21 +678,22 @@ of the physical zero either: preserving true zeros through stage 2 leaves every 
 carrying a large common baseline, so an unanchored scale compresses the fleet into
 44–100 with a median of 82.
 
-**The score is a synthetic key**, `easy-score`, and it is the one column whose value
-depends on the *view* rather than on the shoe: the side decides which half every
-side-bearing term reads, and the stability toggle decides how many terms there are.
-`numericValue` therefore cannot answer for it. `Page.svelte` resolves
-`easyScoreMap(shoes, workingSide, stability, idx)` once and hands the map to
-`sortShoes`, both tables, the CSV export and the detail panel. It is computed
+**The score is two synthetic keys**, `easy-score-heel` and `easy-score-forefoot`, and
+they are the columns whose value depends on the *view* rather than on the shoe: the
+stability toggle decides how many terms there are. `numericValue` therefore cannot
+answer for them. **A score column names its own side rather than taking the derived
+one**: resolved through `sideOf`, unticking two measurement columns turned every score
+into a heel score with nothing on screen saying so, and the panel below could then
+explain a half the header did not name. There is no side fallback in scoring at all now.
+`Page.svelte` resolves one map per key and hands the whole lookup — column key to slug
+to score — to `sortShoes`, both tables, the CSV export and the detail panel, each of
+which reads it **by column key**, so Tempo's and Race's scores are further entries
+rather than further parameters (BACKLOG.md). It is computed
 **client-side at render time**, like a percentile bound and unlike anything in `data/`:
 while the weights are still moving, a dataset rebuild between experiments would defeat
 the point. Moving it to build time later is a performance decision, not a correctness
 one, and no determinism gate applies: nothing about it enters `data/`
 (docs/scraping.md §Determinism).
-
-`workingSide`, not `sideMark`: a view naming no side still scores, silently on
-`DEFAULT_SIDE`, with nothing on screen saying so. Refusing to score would blank the
-column for a view that merely unticked two measurement columns, which is worse.
 
 An unscored shoe renders an **em dash** and sorts last whichever way the column
 sorts — never a 0, which would read as the worst shoe in the fleet — and the CSV
@@ -710,7 +712,10 @@ not say which reading moved. `easyReadings` in `score.ts` owns those readings, s
 panel never re-derives them. Five columns need 354px against the 321px a 375px phone
 leaves the panel, so the block is **its own scrollport**: the page must not go sideways
 for it, and the e2e run asserts that at 375px with a row open. The panel is handed the
-same `side` and `stability` the column was scored with, so the two cannot disagree.
+view's **columns**, and renders one breakdown per score column on screen — labelled with
+that column's own header text — and none at all without one. Reading the columns rather
+than a side is what makes panel and column unable to disagree; `stability` still applies
+to both alike.
 
 ### The side is a preset too
 

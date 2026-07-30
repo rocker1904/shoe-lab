@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import type { Side } from './lineage';
 import {
-  ANCHORS, EASY_SCORE_KEY, EASY_WEIGHTS, easyContributions, easyScore, easyScoreMap, easyTerms,
+  ANCHORS, EASY_SCORE_KEYS, EASY_WEIGHTS, easyContributions, easyScore, easyScoreMap, easyTerms,
   L_OK, SA_REF, TERM_SD, WID_CAP,
 } from './score';
 import { FLEET, TESTS, shoe } from './test-fixtures';
@@ -162,8 +162,8 @@ describe('easyContributions', () => {
   });
 });
 
-it('names the synthetic key so nothing open-codes it', () => {
-  expect(EASY_SCORE_KEY).toBe('easy-score');
+it('names a synthetic key per side, so nothing open-codes one and no column derives its side', () => {
+  expect(EASY_SCORE_KEYS).toEqual({ heel: 'easy-score-heel', forefoot: 'easy-score-forefoot' });
 });
 
 /**

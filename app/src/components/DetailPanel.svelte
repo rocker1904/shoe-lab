@@ -1,15 +1,19 @@
 <script lang="ts">
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, reviewUrl } from '../lib/dataset';
+  import { columnLabel } from '../lib/labels';
   import type { Side } from '../lib/lineage';
-  import { easyContributions, type EasyReading, type EasyTermKey } from '../lib/score';
+  import { EASY_SCORE_KEYS, easyContributions, type EasyReading, type EasyTermKey } from '../lib/score';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
-  let { shoe, data, side, stability }: {
+  let { shoe, data, columns, stability }: {
     shoe: Shoe; data: ShoesFile;
-    /** Passed in rather than derived here: it must be the side the score column was computed with,
-     *  and a panel disagreeing with the cell above it would be worse than either answer. */
-    side: Side; stability: boolean;
+    /** The view's columns, not a side: the panel breaks down each score column that is on screen,
+     *  so panel and column can never disagree about which half either is about
+     *  (docs/app.md §The Easy score). */
+    columns: string[];
+    /** Applies to both sides alike — it decides how many terms there are, not which half. */
+    stability: boolean;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
@@ -18,8 +22,13 @@
     energyReturn: 'Energy return', midsoleWidth: 'Midsole width / stack',
     heelCounter: 'Heel counter stiffness',
   };
-  const terms = $derived(easyContributions(shoe, side, stability, idx));
-  const total = $derived(terms?.reduce((sum, r) => sum + r.weighted, 0) ?? 0);
+  const SIDES: Side[] = ['heel', 'forefoot'];
+  const breakdowns = $derived(SIDES.filter((s) => columns.includes(EASY_SCORE_KEYS[s])).map((side) => ({
+    side,
+    // The column's own header text, so the two are named by one function rather than two.
+    label: columnLabel(EASY_SCORE_KEYS[side], undefined),
+    terms: easyContributions(shoe, side, stability, idx),
+  })));
   // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
   // mapped 1.0 alone says nothing about which reading put them there
   // (docs/app.md §The Easy score).
@@ -79,27 +88,32 @@
       {/each}
     </ul>
   {/if}
-  <section class="score-breakdown">
-    <h4>Easy score</h4>
-    {#if terms === null}
-      <p class="missing">Not scored — this shoe is missing at least one measurement the score needs.</p>
-    {:else}
-      <table>
-        <thead><tr><th>Term</th><th>Reading</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
-        <tbody>
-          {#each terms as r (r.key)}
-            <tr>
-              <td>{TERM_LABEL[r.key]}</td>
-              <td class="raw">{readingText(r.raw)}</td>
-              <td>{displayNumber(r.term)}</td>
-              <td>{displayNumber(r.weighted)}</td>
-              <td>{Math.round((r.weighted / total) * 100)}%</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {/if}
-  </section>
+  <!-- One per score column on screen, and none at all without one: the panel explains what the
+       table is showing rather than a side of its own (docs/app.md §The Easy score). -->
+  {#each breakdowns as b (b.side)}
+    <section class="score-breakdown">
+      <h4>{b.label}</h4>
+      {#if b.terms === null}
+        <p class="missing">Not scored — this shoe is missing at least one measurement the score needs.</p>
+      {:else}
+        {@const total = b.terms.reduce((sum, r) => sum + r.weighted, 0)}
+        <table>
+          <thead><tr><th>Term</th><th>Reading</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
+          <tbody>
+            {#each b.terms as r (r.key)}
+              <tr>
+                <td>{TERM_LABEL[r.key]}</td>
+                <td class="raw">{readingText(r.raw)}</td>
+                <td>{displayNumber(r.term)}</td>
+                <td>{displayNumber(r.weighted)}</td>
+                <td>{Math.round((r.weighted / total) * 100)}%</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
+    </section>
+  {/each}
   <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
 </div>
 

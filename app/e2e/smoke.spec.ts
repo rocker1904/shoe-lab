@@ -111,13 +111,16 @@ test('switches to stacked cards on a phone, and back', async ({ page }) => {
 
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
   // inside its own box rather than take the page sideways with it (docs/app.md §The Easy score).
+  // Easy first: the panel breaks down the score columns the view holds, and the plain table has none.
+  await page.getByRole('button', { name: 'Easy' }).click();
   await page.getByText('cushy').first().click();
   await expect(page.locator('.score-breakdown table')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   await page.setViewportSize({ width: 1200, height: 800 });
   await expect(mobile).toBeHidden();
-  await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
+  // Easy's own table by now, so its score column is what says the desktop rendering is back.
+  await expect(page.getByRole('columnheader', { name: /Easy heel score/ })).toBeVisible();
 });
 
 // The drag maths is percent positions over a measured box plus gap-aware hit areas, none of which
@@ -307,7 +310,7 @@ test('renders a superseded pair once and keeps colocated halves independently so
 test('Easy ranks by its own score', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Easy' }).click();
-  await expect(page.getByRole('columnheader', { name: /Easy score/ })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: /Easy heel score/ })).toBeVisible();
   const rows = page.locator('tbody tr.shoe');
   await expect(rows.first()).toContainText('cushy');
   // The score's own cell, not the whole row: an unplated shoe renders an em dash in the plate

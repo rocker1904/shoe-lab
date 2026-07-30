@@ -1,6 +1,6 @@
 import type { Plate, Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
-import { EASY_SCORE_KEY } from './score';
+import type { ScoreColumns } from './score';
 
 export interface SortState { key: string; dir: 'asc' | 'desc' }
 
@@ -8,19 +8,21 @@ export interface SortState { key: string; dir: 'asc' | 'desc' }
 const PLATE_RANK: Record<Plate, number> = { none: 0, 'plated-other': 1, carbon: 2 };
 
 function keyValue(
-  s: Shoe, key: string, idx: TestIndex, scores?: Map<string, number>,
+  s: Shoe, key: string, idx: TestIndex, scores?: ScoreColumns,
 ): number | string | undefined {
   if (key === 'name') return s.name.toLowerCase();
   if (key === 'brand') return s.brand?.toLowerCase();
   if (key === 'plate') return PLATE_RANK[s.plate];
   if (key === 'releasedAt') return s.releasedAt ?? undefined;
-  // The score is not in the catalogue and depends on the view, so it arrives resolved.
-  if (key === EASY_SCORE_KEY) return scores?.get(s.slug);
+  // A score is not in the catalogue and depends on the view, so it arrives resolved — looked up by
+  // the column it fills, which is what makes a further score an entry rather than a branch.
+  const resolved = scores?.get(key);
+  if (resolved) return resolved.get(s.slug);
   return numericValue(s, key, idx);
 }
 
 export function sortShoes(
-  shoes: Shoe[], sort: SortState, idx: TestIndex, scores?: Map<string, number>,
+  shoes: Shoe[], sort: SortState, idx: TestIndex, scores?: ScoreColumns,
 ): Shoe[] {
   const mul = sort.dir === 'asc' ? 1 : -1;
   return [...shoes].sort((a, b) => {

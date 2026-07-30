@@ -1,6 +1,6 @@
 import type { Shoe } from '../../../shared/types.js';
 import { numericValue, reviewUrl, type TestIndex } from './dataset';
-import { EASY_SCORE_KEY } from './score';
+import type { ScoreColumns } from './score';
 
 function esc(v: unknown): string {
   if (v === null || v === undefined) return '';
@@ -8,10 +8,11 @@ function esc(v: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function cell(shoe: Shoe, col: string, idx: TestIndex, scores?: Map<string, number>): unknown {
-  // Synthetic: the score depends on the view, so it arrives resolved and an unscored shoe leaves an
-  // empty cell rather than a zero, which would read as the worst shoe in the fleet.
-  if (col === EASY_SCORE_KEY) return scores?.get(shoe.slug);
+function cell(shoe: Shoe, col: string, idx: TestIndex, scores?: ScoreColumns): unknown {
+  // Synthetic: a score depends on the view, so it arrives resolved under the column it fills, and an
+  // unscored shoe leaves an empty cell rather than a zero, which would read as the worst in the fleet.
+  const resolved = scores?.get(col);
+  if (resolved) return resolved.get(shoe.slug);
   if (col === 'plate') return shoe.plate;
   if (col === 'releasedAt') return shoe.releasedAt;
   if (col === 'name') return shoe.name;
@@ -28,7 +29,7 @@ function cell(shoe: Shoe, col: string, idx: TestIndex, scores?: Map<string, numb
  * that has left the app has no other way back to the page its numbers came from.
  */
 export function exportCsv(
-  shoes: Shoe[], columns: string[], idx: TestIndex, scores?: Map<string, number>,
+  shoes: Shoe[], columns: string[], idx: TestIndex, scores?: ScoreColumns,
 ): string {
   const header = ['slug', 'name', 'brand', 'url', ...columns];
   const lines = [header.map(esc).join(',')];

@@ -102,7 +102,7 @@ describe('Page', () => {
     expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
     settle();
     expect(location.search).toContain('plate=none%2Cplated-other');
-    expect(location.search).toContain('sort=-easy-score');
+    expect(location.search).toContain('sort=-easy-score-heel');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });

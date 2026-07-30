@@ -1,13 +1,14 @@
 import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 import DetailPanel from './DetailPanel.svelte';
+import { EASY_SCORE_KEYS } from '../lib/score';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 
 const DATA: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 /** The panel now reads the view as well as the shoe, so the cases about the shoe's own copy share
  *  one baseline rather than repeating it. */
-const VIEW = { data: DATA, side: 'heel' as const, stability: false };
+const VIEW = { data: DATA, columns: [EASY_SCORE_KEYS.heel], stability: false };
 
 describe('DetailPanel', () => {
   it('renders full details', () => {
@@ -107,14 +108,33 @@ describe('DetailPanel facts and review language', () => {
  * from the row itself rather than argued about (docs/app.md §The Easy score).
  */
 describe('DetailPanel Easy score breakdown', () => {
+  const panel = (over: { slug?: string; columns?: string[]; stability?: boolean } = {}) => render(DetailPanel, {
+    props: { shoe: FLEET.find((s) => s.slug === (over.slug ?? 'cushy'))!, data: DATA,
+             columns: over.columns ?? [EASY_SCORE_KEYS.heel], stability: over.stability ?? false },
+  });
+
   it('breaks the Easy score into its terms, so a rank can be diagnosed', () => {
-    const { container } = render(DetailPanel, {
-      props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: false },
-    });
-    expect(screen.getByText('Easy score')).toBeInTheDocument();
+    const { container } = panel();
+    expect(screen.getByText('Easy heel score')).toBeInTheDocument();
     const rows = [...container.querySelectorAll('.score-breakdown tbody tr')];
     expect(rows).toHaveLength(3);
     expect(rows[0]!.textContent).toContain('Shock absorption');
+  });
+
+  // The panel reads the columns rather than a side of its own, so it can never explain a side the
+  // table is not showing (docs/app.md §The Easy score).
+  it('breaks down every score column on screen, each named for its own side', () => {
+    const { container } = panel({ columns: [EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot] });
+    expect([...container.querySelectorAll('.score-breakdown h4')].map((h) => h.textContent))
+      .toEqual(['Easy heel score', 'Easy forefoot score']);
+    // Each reads its own half: cushy's forefoot shock absorption is 115 against 140 at the heel.
+    expect([...container.querySelectorAll('.score-breakdown tbody td.raw')].map((c) => c.textContent))
+      .toEqual(['140', '4 = 3.2 / 0.8', '70', '115', '4 = 3.2 / 0.8', '55']);
+  });
+
+  it('shows no breakdown at all when the table shows no score', () => {
+    const { container } = panel({ columns: ['score', 'weight'] });
+    expect(container.querySelector('.score-breakdown')).toBeNull();
   });
 
   it('shows the raw reading beside the mapped term, so a capped term is still diagnosable', () => {
@@ -122,9 +142,7 @@ describe('DetailPanel Easy score breakdown', () => {
     // its division for the same reason (docs/app.md §The Easy score). cushy reads 140 shock
     // absorption, an outsole life of 3.2 / 0.8 — capped — 70% energy return, a 95/40 heel lever
     // and a heel counter of 4.
-    const { container } = render(DetailPanel, {
-      props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: true },
-    });
+    const { container } = panel({ stability: true });
     expect([...container.querySelectorAll('.score-breakdown thead th')].map((h) => h.textContent))
       .toEqual(['Term', 'Reading', 'Mapped', 'Contribution', 'Share']);
     expect([...container.querySelectorAll('.score-breakdown tbody td.raw')].map((c) => c.textContent))
@@ -132,16 +150,12 @@ describe('DetailPanel Easy score breakdown', () => {
   });
 
   it('adds the two stability terms once the runner has opted in', () => {
-    const { container } = render(DetailPanel, {
-      props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: true },
-    });
+    const { container } = panel({ stability: true });
     expect(container.querySelectorAll('.score-breakdown tbody tr')).toHaveLength(5);
   });
 
   it('says so plainly when a shoe cannot be scored', () => {
-    render(DetailPanel, {
-      props: { shoe: FLEET.find((s) => s.slug === 'mystery')!, data: DATA, side: 'heel' as const, stability: false },
-    });
+    panel({ slug: 'mystery' });
     expect(screen.getByText(/not scored/i)).toBeInTheDocument();
   });
 });

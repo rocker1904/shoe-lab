@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import { DIRECTION, directionOf } from './direction';
-import { EASY_SCORE_KEY } from './score';
+import { EASY_SCORE_KEYS } from './score';
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: only `data/tests.json` carries the tests that
 // exist upstream but ship with no readings yet, which is the case this guard exists for
@@ -50,7 +50,7 @@ describe('directionOf', () => {
 });
 
 describe('the synthetic Easy score', () => {
-  it('marks the Easy score higher-is-better', () => {
-    expect(directionOf(EASY_SCORE_KEY)).toBe('higher');
+  it('marks both sides of the Easy score higher-is-better', () => {
+    for (const key of Object.values(EASY_SCORE_KEYS)) expect(directionOf(key)).toBe('higher');
   });
 });

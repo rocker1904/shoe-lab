@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exportCsv } from './csv-export';
 import { indexTests } from './dataset';
-import { EASY_SCORE_KEY } from './score';
+import { EASY_SCORE_KEYS } from './score';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -61,15 +61,18 @@ describe('exportCsv', () => {
 });
 
 describe('exportCsv and the Easy score', () => {
-  it('emits the Easy score under its raw key', () => {
-    const csv = exportCsv([FLEET.find((s) => s.slug === 'cushy')!], [EASY_SCORE_KEY], idx,
-                          new Map([['cushy', 87.4]]));
-    expect(csv.split('\n')[0]).toContain(EASY_SCORE_KEY);
-    expect(csv).toContain('87.4');
+  it('emits each side\'s score under its own raw key', () => {
+    const csv = exportCsv([FLEET.find((s) => s.slug === 'cushy')!],
+                          [EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot], idx,
+                          new Map([[EASY_SCORE_KEYS.heel, new Map([['cushy', 87.4]])],
+                                   [EASY_SCORE_KEYS.forefoot, new Map([['cushy', 71.2]])]]));
+    expect(csv.split('\n')[0]).toContain(`${EASY_SCORE_KEYS.heel},${EASY_SCORE_KEYS.forefoot}`);
+    expect(csv.split('\n')[1]).toContain('87.4,71.2');
   });
 
   it('emits an empty cell for an unscored shoe rather than a zero', () => {
-    const csv = exportCsv([FLEET.find((s) => s.slug === 'mystery')!], [EASY_SCORE_KEY], idx, new Map());
+    const csv = exportCsv([FLEET.find((s) => s.slug === 'mystery')!], [EASY_SCORE_KEYS.heel], idx,
+                          new Map([[EASY_SCORE_KEYS.heel, new Map()]]));
     const row = csv.split('\n')[1]!;
     expect(row.endsWith(',')).toBe(true);
     expect(row).not.toMatch(/,0$/);

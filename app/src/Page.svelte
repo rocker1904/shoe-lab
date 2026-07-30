@@ -28,7 +28,7 @@
   import type { Side } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
-  import { easyScoreMap } from './lib/score';
+  import { EASY_SCORE_KEYS, easyScoreMap, type ScoreColumns } from './lib/score';
   import { projectSide, sideOf } from './lib/side';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
@@ -137,10 +137,16 @@
   /** Somewhere to stand when the view names no side: the stories each bind one half, so applying
    *  one has to pick, and the baseline's own half is the least surprising pick. */
   const workingSide = $derived(sideMark ?? DEFAULT_SIDE);
-  /** The score depends on the view, not just the shoe, so it is resolved once here and handed to
-   *  everything that needs it. `workingSide` rather than `sideMark`: a view naming no side must
-   *  still score, and heel is the arbitrary half (docs/app.md §The side is a preset too). */
-  const scores = $derived(easyScoreMap(data.shoes, workingSide, view.stability, idx));
+  /**
+   * A score depends on the view, not just the shoe, so it is resolved once here and handed to
+   * everything that needs it, keyed by the column it fills. Both sides are resolved rather than the
+   * derived one: each column names its own side, so nothing here has to pick one, and a further
+   * score is a further entry (docs/app.md §The Easy score).
+   */
+  const scores = $derived<ScoreColumns>(new Map([
+    [EASY_SCORE_KEYS.heel, easyScoreMap(data.shoes, 'heel', view.stability, idx)],
+    [EASY_SCORE_KEYS.forefoot, easyScoreMap(data.shoes, 'forefoot', view.stability, idx)],
+  ]));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
 
   /**
@@ -305,10 +311,10 @@
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}
-        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} side={workingSide}
+        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores}
                          stability={view.stability} onchange={setView} />
       {:else}
-        <ShoeTable shoes={visibleSorted} {data} {view} {scores} side={workingSide}
+        <ShoeTable shoes={visibleSorted} {data} {view} {scores}
                    stability={view.stability} onchange={setView} />
       {/if}
     </div>

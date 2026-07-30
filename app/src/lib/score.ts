@@ -75,11 +75,23 @@ export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
 }
 
 /**
- * The synthetic column and sort key. Not a catalogue test: unlike every other key its value depends
- * on the *view* — which side, and whether stability is on — which is why `Page` resolves it into a
- * map and hands it down rather than letting `numericValue` answer for it.
+ * The synthetic columns and sort keys, one per side. Not catalogue tests: their value depends on
+ * the *view* — the stability preference decides how many terms there are — which is why `Page`
+ * resolves them into maps and hands them down rather than letting `numericValue` answer for them.
+ * Two self-describing keys rather than one resolved through the *derived* side: a column that names
+ * its own side cannot disagree with the panel beside it, and a view naming no side needs no silent
+ * fallback (docs/app.md §The Easy score).
  */
-export const EASY_SCORE_KEY = 'easy-score';
+export const EASY_SCORE_KEYS: Record<Side, string> = {
+  heel: 'easy-score-heel', forefoot: 'easy-score-forefoot',
+};
+
+/**
+ * Every resolved score column: column key to slug to score. Keyed by column rather than passed as
+ * one map per consumer, so Tempo's and Race's scores arrive as further **entries** and no signature
+ * moves when they do (BACKLOG.md).
+ */
+export type ScoreColumns = Map<string, Map<string, number>>;
 
 /** Editorial, and only meaningful because stage 2 makes weights control influence rather than
  *  each term's spread on its own mapped scale. */

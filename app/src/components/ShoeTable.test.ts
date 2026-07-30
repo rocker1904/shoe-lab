@@ -1,19 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
-import { EASY_SCORE_KEY } from '../lib/score';
+import { EASY_SCORE_KEYS, type ScoreColumns } from '../lib/score';
 import { defaultView, type ViewState } from '../lib/urlstate';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: Map<string, number> } = {}) {
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
   const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
-    scores: over.scores ?? new Map(), side: 'heel', stability: false } });
+    scores: over.scores ?? new Map(), stability: false } });
   return Object.assign(onchange, { rendered });
 }
 
@@ -133,14 +133,17 @@ describe('ShoeTable', () => {
 });
 
 describe('ShoeTable and the Easy score', () => {
-  it('renders the Easy score from the supplied map, and a dash where it is unscored', () => {
-    const view = { ...defaultView(), columns: [EASY_SCORE_KEY] };
+  it('renders each score column from its own map, and a dash where it is unscored', () => {
+    const view = { ...defaultView(), columns: [EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot] };
     const { container } = render(ShoeTable, {
-      props: { shoes: FLEET, data, view, scores: new Map([['cushy', 87.412]]),
-               side: 'heel' as const, stability: false, onchange: () => {} },
+      props: { shoes: FLEET, data, view,
+               scores: new Map([[EASY_SCORE_KEYS.heel, new Map([['cushy', 87.412]])],
+                                [EASY_SCORE_KEYS.forefoot, new Map([['cushy', 71.238]])]]),
+               stability: false, onchange: () => {} },
     });
     const cells = [...container.querySelectorAll('tbody tr td')].map((c) => c.textContent?.trim());
     expect(cells).toContain('87.41'); // two decimals, like every other figure
+    expect(cells).toContain('71.24');
     expect(cells).toContain('—');
   });
 });

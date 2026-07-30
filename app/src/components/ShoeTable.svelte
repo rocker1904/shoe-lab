@@ -5,21 +5,21 @@
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
   import { columnLabel } from '../lib/labels';
-  import type { Side } from '../lib/lineage';
-  import { EASY_SCORE_KEY } from '../lib/score';
+  import type { ScoreColumns } from '../lib/score';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
 
-  let { shoes, data, view, scores, side, stability, onchange }: {
+  let { shoes, data, view, scores, stability, onchange }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
-    /** Resolved in `Page.svelte`: the Easy score is the one column whose value depends on the view
-     *  rather than on the shoe alone, so it arrives ready rather than through `numericValue`. */
-    scores: Map<string, number>;
-    /** The side and preference `scores` were computed with, passed straight through to the panel so
-     *  its breakdown cannot disagree with the value rendered beside it. */
-    side: Side; stability: boolean;
+    /** Resolved in `Page.svelte` and keyed by column: a score is the one kind of column whose value
+     *  depends on the view rather than on the shoe alone, so it arrives ready rather than through
+     *  `numericValue` (docs/app.md §The Easy score). */
+    scores: ScoreColumns;
+    /** The preference `scores` were computed with, passed through to the panel so its breakdown
+     *  cannot disagree with the value rendered beside it. */
+    stability: boolean;
     onchange: (v: ViewState) => void;
   } = $props();
 
@@ -30,8 +30,11 @@
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
   // mean something different from its neighbours' in the same row.
   const percentiles = $derived(new Map(view.columns.map((c) => [c,
-    c === EASY_SCORE_KEY
-      ? rankMap(new Map(shoes.flatMap((s) => (scores.has(s.slug) ? [[s.slug, scores.get(s.slug)!] as const] : []))))
+    scores.has(c)
+      ? rankMap(new Map(shoes.flatMap((s) => {
+        const v = scores.get(c)!.get(s.slug);
+        return v === undefined ? [] : [[s.slug, v] as const];
+      })))
       : percentileMap(shoes, c, idx)])));
 
   function setSort(key: string) {
@@ -43,8 +46,9 @@
     // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
     if (col === 'releasedAt') return s.releasedAt ? (s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4)) : '—';
     if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate';
-    if (col === EASY_SCORE_KEY) {
-      const sc = scores.get(s.slug);
+    const resolved = scores.get(col);
+    if (resolved) {
+      const sc = resolved.get(s.slug);
       return sc === undefined ? '—' : displayNumber(sc);
     }
     // msrpGbp goes through numericValue so the cell shows the same resolved price the
@@ -116,7 +120,7 @@
         {/each}
       </tr>
       {#if expanded.has(s.slug)}
-        <tr class="expand" id="detail-{s.slug}"><td colspan={1 + view.columns.length}><DetailPanel shoe={s} {data} {side} {stability} /></td></tr>
+        <tr class="expand" id="detail-{s.slug}"><td colspan={1 + view.columns.length}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
       {/if}
     {/each}
   </tbody>

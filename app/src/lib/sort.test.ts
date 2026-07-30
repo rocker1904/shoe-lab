@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { EASY_SCORE_KEY } from './score';
+import { EASY_SCORE_KEYS } from './score';
 import { sortShoes } from './sort';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
@@ -77,16 +77,23 @@ describe('sortShoes edge cases', () => {
 });
 
 describe('the synthetic Easy score', () => {
-  it('sorts by the synthetic score from the supplied map', () => {
-    const scores = new Map([['oldie', 90], ['cushy', 10], ['trainer', 50]]);
-    const out = sortShoes(FLEET, { key: EASY_SCORE_KEY, dir: 'desc' }, idx, scores);
-    expect(out.slice(0, 3).map((s) => s.slug)).toEqual(['oldie', 'trainer', 'cushy']);
+  const columns = (over: Record<string, Map<string, number>>) => new Map(Object.entries(over));
+
+  it('reads the column it is sorting by, so each side ranks on its own scores', () => {
+    const scores = columns({
+      [EASY_SCORE_KEYS.heel]: new Map([['oldie', 90], ['cushy', 10], ['trainer', 50]]),
+      [EASY_SCORE_KEYS.forefoot]: new Map([['oldie', 10], ['cushy', 90], ['trainer', 50]]),
+    });
+    expect(sortShoes(FLEET, { key: EASY_SCORE_KEYS.heel, dir: 'desc' }, idx, scores).slice(0, 3).map((s) => s.slug))
+      .toEqual(['oldie', 'trainer', 'cushy']);
+    expect(sortShoes(FLEET, { key: EASY_SCORE_KEYS.forefoot, dir: 'desc' }, idx, scores).slice(0, 3).map((s) => s.slug))
+      .toEqual(['cushy', 'trainer', 'oldie']);
   });
 
   it('puts unscored shoes last whichever way the score sorts', () => {
-    const scores = new Map([['cushy', 10]]);
+    const scores = columns({ [EASY_SCORE_KEYS.heel]: new Map([['cushy', 10]]) });
     for (const dir of ['asc', 'desc'] as const) {
-      const out = sortShoes(FLEET, { key: EASY_SCORE_KEY, dir }, idx, scores);
+      const out = sortShoes(FLEET, { key: EASY_SCORE_KEYS.heel, dir }, idx, scores);
       expect(out[0]!.slug).toBe('cushy');
     }
   });
