@@ -29,7 +29,7 @@
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
   import { scoreMap, type ScoreColumns } from './lib/score';
-  import { EASY } from './lib/score-defs';
+  import { SCORE_DEFS } from './lib/score-defs';
   import { projectSide, sideOf } from './lib/side';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
@@ -141,13 +141,14 @@
   /**
    * A score depends on the view, not just the shoe, so it is resolved once here and handed to
    * everything that needs it, keyed by the column it fills. Both sides are resolved rather than the
-   * derived one: each column names its own side, so nothing here has to pick one, and a further
-   * score is a further entry (docs/app.md §The story scores).
+   * derived one: each column names its own side, so nothing here has to pick one. Iterating the
+   * registry means a fourth story needs no edit here, and a definition with no stable variant makes
+   * the preference inert inside `scoreOf` rather than through a branch here
+   * (docs/app.md §The story scores).
    */
-  const scores = $derived<ScoreColumns>(new Map([
-    [EASY.keys.heel, scoreMap(EASY, data.shoes, 'heel', view.stability, idx)],
-    [EASY.keys.forefoot, scoreMap(EASY, data.shoes, 'forefoot', view.stability, idx)],
-  ]));
+  const scores = $derived<ScoreColumns>(new Map(
+    SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((side) =>
+      [def.keys[side], scoreMap(def, data.shoes, side, view.stability, idx)] as const))));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
 
   /**

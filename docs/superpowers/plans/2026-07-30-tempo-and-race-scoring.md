@@ -536,9 +536,9 @@ Also re-point `units.test.ts`, which iterates `EASY_SCORE_KEYS` for the `↑`/no
 
 **Before Task 6, deliberately.** Task 6 makes the presets sort by keys this task resolves; the other order would ship one commit where clicking Tempo gives a column of em dashes, and nothing in the suite would catch it.
 
-- [ ] **Step 1: Failing test.** In `Page.test.ts`, render with a view showing `RACE.keys.heel`, read that column's cells, toggle `stability`, and assert the cells are unchanged.
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:**
+- [x] **Step 1: Failing test.** In `Page.test.ts`, render with a view showing `RACE.keys.heel`, read that column's cells, toggle `stability`, and assert the cells are unchanged.
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3:**
 
 ```typescript
   /** Every score column the table can show, resolved once. Iterates the registry, so a fourth story
@@ -550,7 +550,7 @@ Also re-point `units.test.ts`, which iterates `EASY_SCORE_KEYS` for the `↑`/no
 
 `RACE` having no `stable` makes the flag inert inside `scoreOf`; no branch belongs here.
 
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Resolve every story's score for the table"`
+- [x] **Step 4:** `npm run verify` → PASS. Commit — `"Resolve every story's score for the table"`
 
 ---
 

@@ -121,6 +121,17 @@ describe('Page', () => {
     expect(names.join(' ')).toMatch(/racer/);
     expect(names.join(' ')).toMatch(/trainer/);
   });
+  it('resolves every story\'s score, and leaves Race alone when stability is ticked', async () => {
+    // Race declares no stable variant, so the preference is inert on it — but `Page` resolves the
+    // scores, so nothing else in the suite would catch it resolving only the two that do.
+    history.replaceState(null, '', '/?cols=race-score-heel&sort=-race-score-heel');
+    render(Page, { props: { data } });
+    const cells = () => screen.getAllByRole('row').slice(1).map((r) => r.textContent);
+    const before = cells();
+    expect(before.join(' ')).toMatch(/\d/);   // the column resolves at all
+    await fireEvent.click(screen.getByRole('checkbox', { name: /Stability matters/ }));
+    expect(cells()).toEqual(before);
+  });
   it('sorting by a column writes the sort to the URL', async () => {
     render(Page, { props: { data } });
     const th = screen.getByRole('columnheader', { name: /Heel stack/ });
