@@ -1,4 +1,6 @@
-node_modules/
+# No trailing slash: with one, this matches only a directory, and a worktree that reaches its
+# dependencies through a `node_modules` symlink commits the symlink instead of ignoring it.
+node_modules
 .corpus/
 .solereview/
 dist/
