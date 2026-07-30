@@ -287,3 +287,36 @@ resolving to the Race score descending over the whole fleet.
 A consequence worth stating: Easy's and Tempo's eligibility invariant — the same shoes
 scoreable with the preference on or off — stays exactly true for the two scores that
 assert it, and is simply not a claim Race makes.
+
+## Decisions
+
+### No composite over the three stories
+A fourth score built *from* Easy, Tempo and Race — their mean, their spread, their
+worst-of-three — is rejected on measurement. All figures below are over the 341 shoes
+all three score, heel, stability off; the forefoot agrees.
+
+- **The three are not on one scale.** Over those same 341 shoes the raw means are Easy
+  68.9, Tempo 56.9, Race 47.3, because each story anchors on its own pool. Arithmetic
+  across raw scores therefore reports the anchors: the raw Easy−Race gap correlates
+  **0.78 with weight**. The repair — rank each story within the loaded fleet and average
+  the percentiles — is exactly the live recomputation a frozen score may not do
+  (docs/decisions.md §Frozen scores and live thresholds).
+- **Normalised, the three stories are one axis.** Spread across the three correlates
+  **0.97** with `|Easy − Race|`, and Tempo is their midpoint (0.93 heel, 0.89 forefoot).
+  A dispersion over three numbers reports a two-point quantity.
+- **A composite can only re-weight what the three already share.** All three weight
+  energy return and two weight weight, so the mean of percentiles correlates 0.83 with
+  energy return, 0.53 with price and 0.48 with carbon plate — its top 20 is 15 carbon
+  shoes at a median £250 against a fleet median of £160, while the mainstream cushioned
+  and stability trainers sit at percentile 7–27. It ranks *bouncy and light*, which is
+  not the claim "best" makes.
+
+RunRepeat's own `score` is a one-sided check here for §Checking a threshold set's
+reason, and it neither endorses nor arbitrates: the mean of percentiles agrees with it
+at Pearson 0.63 and worst-of-three at 0.58, but **each story alone reads 0.58**, so
+combining them buys no agreement — and RR's score cannot rank a shortlist anyway, since
+341 shoes take 31 distinct values with 42% of them on five integers. Do not treat a
+higher agreement figure as a better composite.
+
+The limit is structural, so do not reintroduce a composite in another form: a score
+built over these three can express no term they do not already carry.
