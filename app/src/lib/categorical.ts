@@ -12,7 +12,7 @@ export const CATEGORICAL_TEST_TYPES: ReadonlySet<string> = new Set(['option', 'b
 /**
  * Slugs a shoe field already owns as a column. Only `plate`: the catalogue has a `bool` test of
  * that slug, read on two shoes of 450, while the field of that name is derived from the whole page
- * and reads Carbon / Non-carbon plate (docs/app.md §Categorical columns). One column cannot have
+ * and reads Carbon / Non-carbon (docs/app.md §Categorical columns). One column cannot have
  * two sources, and the field is the better one, so the reading is not offered and never answers
  * for a cell.
  */

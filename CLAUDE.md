@@ -44,7 +44,8 @@ not reference; where they disagree with docs/, docs/ wins.
   re-extract from local pages with no network, `scrape:metrics` rewriting the
   catalogue only (docs/scraping.md §Re-extracting from a corpus); app
   `npm -w app run dev | build | e2e` (e2e is CI's only step outside `verify` —
-  needs the Playwright browser).
+  needs the Playwright browsers: chromium, firefox and webkit,
+  docs/operations.md §The e2e run needs three browsers).
 - **No live network in tests, ever.** Live requests happen only in the four
   scraper CLIs and `check:live`, all via `PoliteHttp` (docs/scraping.md
   §Politeness). Never call fetch directly against runrepeat.com.

@@ -136,7 +136,10 @@ describe('ShoeTableMobile categorical columns', () => {
     setup({ view: { columns: ['plate', 'removable-insole'] },
             shoes: [shoe({ slug: 'plated', plate: 'plated-other', values: { '69': true, '41': true } })] });
     const strip = screen.getByText('plated').closest('tr')!;
-    expect(strip.textContent).toContain('Non-carbon plate');
+    // Not the older "Non-carbon plate": the word the column heading already carries is dropped
+    // (docs/app.md §Categorical columns), and `toContain` alone would pass on either.
+    expect(strip.textContent).toContain('Non-carbon');
+    expect(strip.textContent).not.toContain('Non-carbon plate');
     expect(strip.querySelectorAll('.meta')).toHaveLength(2); // the plate label and one Yes, not two
   });
 });

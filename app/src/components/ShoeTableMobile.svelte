@@ -69,7 +69,7 @@
       out.push({ key: 'releasedAt', text: displayReleaseDate(s.releasedAt, s.releaseDateSource) });
     }
     if (view.columns.includes('plate') && s.plate !== 'none') {
-      out.push({ key: 'plate', text: s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate' });
+      out.push({ key: 'plate', text: s.plate === 'carbon' ? 'Carbon' : 'Non-carbon' });
     }
     // Categorical readings hold words too, so they belong on this line rather than in the numeric
     // value row (docs/app.md §Categorical columns). Two things this line does that a cell does not:

@@ -48,7 +48,7 @@
     if (col === 'releasedAt') return displayReleaseDate(s.releasedAt, s.releaseDateSource);
     const cat = categoricalValue(s, col, idx);
     if (cat !== undefined) return cat;
-    if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate';
+    if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon';
     const resolved = scores.get(col);
     if (resolved) {
       const sc = resolved.get(s.slug);
@@ -163,9 +163,11 @@
   td.name { min-width: 14rem; background: var(--surface); }
   .name-row { display: flex; gap: var(--s2); align-items: center; }
   td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: var(--r-sm); }
-  /* The plate reads "Non-carbon plate", which wrapped to three lines in an auto-sized column and
-     made the row heights ragged. On the cell rather than the header, deliberately: `nowrap` on a
-     `th` makes every column's minimum its longest header, which summed past the viewport
+  /* The plate read "Non-carbon plate", which wrapped to three lines in an auto-sized column and
+     made the row heights ragged; the label is now "Non-carbon" and the column asks 39px less, but
+     the rule stays because wrapping is what made it ragged, not the length
+     (docs/app.md §Table presentation). On the cell rather than the header, deliberately: `nowrap`
+     on a `th` makes every column's minimum its longest header, which summed past the viewport
      (docs/app.md §Columns and sorting). */
   td.num:not(.fig) { white-space: nowrap; }
   /* Expandability was signalled by `cursor: pointer` alone, which a touch reader never sees. */

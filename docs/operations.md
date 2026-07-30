@@ -6,11 +6,32 @@ deploy key. Everything runs on `ubuntu-latest` with the `.nvmrc` Node and
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main` | typecheck, lint, doc check, both suites with coverage, Playwright smoke |
+| `ci.yml` | PRs, pushes to `main` | typecheck, lint, doc check, both suites with coverage, Playwright smoke in three engines |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
 | `deploy.yml` | Push to `main` touching `app/`, `shared/`, `data/shoes.json` or itself, + dispatch | builds the app, publishes to Pages |
 | `contract-drift.yml` | 1st of the month 07:00 UTC + dispatch | `check:live`, files or comments on an issue when it fails |
+
+## The e2e run needs three browsers
+
+`npm -w app run e2e` drives Chromium, Firefox and WebKit, so a local checkout
+needs all three:
+
+```
+npx playwright install chromium firefox webkit --with-deps
+```
+
+Only `cross-browser.spec.ts` runs in Firefox and WebKit; the smoke suite stays
+on Chromium, because it asserts layout and one font stack is what makes those
+numbers mean anything. The split exists because Firefox and WebKit implement
+none of `input type="month"` and a Chromium-only suite reported the release
+filter working when it was a bare text box in both
+(docs/app.md §Released after is month-granular).
+
+On CI the two extra engines cost a measured 26s to install and 7s to run. On a
+distribution Playwright does not officially support, `--with-deps` cannot
+supply WebKit's libraries and only Chromium and Firefox will launch; CI is then
+the only place the WebKit assertions actually run.
 
 ## The refresh chain
 

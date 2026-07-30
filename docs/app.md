@@ -422,10 +422,30 @@ words and dates and are not. Those two are the cells that carry
 `white-space: nowrap`: "Non-carbon plate" wrapped to three lines in an
 auto-sized column and made the row heights ragged. It goes on the **cell**,
 never the header — `nowrap` on a `th` makes each column's minimum its longest
-header, which is the bug that pushed the document sideways. The plate cell
-widens its own column by about 80px, which costs nothing at 1200px and adds to
-the sideways scroll that already exists between 700 and 1000px, where the table
-outgrows the viewport whatever the plate does. The name cell is a
+header, which is the bug that pushed the document sideways.
+
+**The plate cell reads "Non-carbon", not "Non-carbon plate".** The dropped word
+is the one the column heading already carries, and it was costing 39px in the
+only place the table could not afford them. Measured with the real fleet at
+1200px: the plate column asks 137px with the longer label and 98px without, and
+the table's min-content is 934px against a 908px track — so the document
+scrolled 10px sideways at 1200px, and does not now.
+
+Letting the cell wrap instead was measured and rejected: the column collapses to
+73px, the label stacks onto three lines and rows carrying it grow from 44px to
+77px, which is the raggedness `nowrap` exists to prevent. The rule stays; only
+the string got shorter.
+
+**Sideways scroll still exists below 1171px**, which is where the table now
+first fits — it was 1210px before this. At 1100px the document overruns by
+71px. That band runs down to the 800px breakpoint, where the sidebar becomes a
+drawer and the content track takes the full width; below 700px the mobile
+rendering takes over and there is no horizontal scroll at all. The e2e
+assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`, because the
+exact figure is the font stack's: pinning it passed on a developer's machine
+and failed on CI's, where the same fixture measures 1213px.
+
+The name cell is a
 plain `table-cell` with an inner flex row, because `display: flex` on a `td`
 takes it out of the table-cell box, so it stops stretching to the row and
 leaves a gap the numeric cells show through under the sticky column.
@@ -557,8 +577,11 @@ is chosen directly as the first two rather than named by a token. The set is
 always ordered as `PLATES` declares it, in the UI and in `parseView` alike,
 because a selection is compared to a story's by value. As a **sort**, plate
 is ordinal: `none` 0, `plated-other` 1, `carbon` 2, so descending reads "most
-plate first" like every other column. `plated-other` reads **Non-carbon
-plate** everywhere a human sees it — the table cell and the filter box.
+plate first" like every other column. `plated-other` reads **Non-carbon**
+everywhere a human sees it — the desktop cell, the mobile name line and the
+filter box. It read "Non-carbon plate" until the trailing word was found to be
+both a repeat of the column heading and 39px the table could not spare
+(§Table presentation).
 
 ## Categorical columns
 
@@ -586,7 +609,7 @@ numeric (§Columns and sorting).
 **`plate` is the shoe field's, not the catalogue's.** The catalogue also has a
 `bool` test slugged `plate`, read on two shoes of 450, and one column cannot
 have two sources. `isCategorical` excludes the slug, so the derived field —
-which reads the whole page and says Carbon / Non-carbon plate — answers for the
+which reads the whole page and says Carbon / Non-carbon — answers for the
 cell, the picker offers the column once, and the test's own reading is simply
 never shown. Any future field/test slug collision belongs in the same set.
 

@@ -5,7 +5,7 @@
   let { value, onchange }: { value: Plate[] | undefined; onchange: (v: Plate[] | undefined) => void } = $props();
 
   /** `plated-other` is never shown to a human under its dataset name (docs/app.md §Columns and sorting). */
-  const LABELS: Record<Plate, string> = { none: 'None', 'plated-other': 'Non-carbon plate', carbon: 'Carbon' };
+  const LABELS: Record<Plate, string> = { none: 'None', 'plated-other': 'Non-carbon', carbon: 'Carbon' };
 
   function toggle(p: Plate) {
     const held = new Set(value ?? []);
