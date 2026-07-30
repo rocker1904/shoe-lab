@@ -133,6 +133,25 @@ Two things are **not** evidence of a release month:
   review appeared is the single largest residual error source, and it is banned:
   with no release statement and no unqualified availability, return null.
 
+### Retries are where the ban breaks
+
+Retrying nulls yields roughly a third of the total, but it is also the point of
+maximum pressure to manufacture an answer. Observed directly: a first agent hit a
+dead end on the Brooks Hyperion 2 and correctly returned null; a second agent,
+given the same dead end, produced a month from a byline date plus a retailer
+price line — two of the three things named above as non-evidence, stacked into
+one citation — and justified it with "reviewers do not typically cover unreleased
+shoes", the exact premise the Adios Pro 4 case disproves.
+
+So a retry prompt must state that the previous attempt returned null **and that
+the null was accepted as correct**. Otherwise the retry reads a null as failure
+and fills the vacuum.
+
+A null that has survived two full attempts should be marked `unresolved` rather
+than `unresolved-budget`, so it stops advertising itself for a third pass that
+will re-derive the same wrong answer from the same pages. Escalate the *source
+set* — a brand newsroom, a press release — not the number of attempts.
+
 ### Declared evidence strength
 
 Every entry carries `evidenceType`, set by the agent and checked by the session:
