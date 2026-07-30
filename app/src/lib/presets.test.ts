@@ -82,8 +82,25 @@ describe('presets', () => {
       }
     }
   });
-  // Six numeric columns is the phone bound, and toebox width is the one column no scoring term
-  // uses, so Easy spends its seventh slot on the score instead (docs/app.md §Columns and sorting).
+  // Six numeric columns is the phone bound (docs/app.md §Columns and sorting): the bound the story
+  // sets are checked against, so a seventh must fail here rather than clip on a phone. `releasedAt`
+  // and `plate` carry words and dates rather than figures and sit outside it. Pinned per story
+  // rather than as a range — Tempo and Race genuinely carry four, and a range would stop noticing.
+  const NUMERIC_COLUMN_BOUND = 6;
+  const NUMERIC_COLUMNS: Record<string, number> = { easy: 6, tempo: 4, race: 4 };
+  it('holds every story inside the six-numeric-column phone bound, under either strike', () => {
+    for (const strike of STRIKES) {
+      for (const p of PRESETS) {
+        const v = applyPreset(p.id, FLEET, idx, strike, false);
+        const numeric = v.columns.filter((c) => c !== 'releasedAt' && c !== 'plate');
+        expect(numeric, `${p.id}/${strike}`).toHaveLength(NUMERIC_COLUMNS[p.id]!);
+        expect(numeric.length, `${p.id}/${strike} past the phone bound`)
+          .toBeLessThanOrEqual(NUMERIC_COLUMN_BOUND);
+      }
+    }
+  });
+  // Toebox width is the one column no scoring term uses, so Easy spends its sixth numeric slot on
+  // the score instead (docs/app.md §Columns and sorting).
   it('keeps a toebox column off every story', () => {
     for (const p of PRESETS) {
       expect(applyPreset(p.id, FLEET, idx, 'heel', false).columns).not.toContain('toebox-width-widest-part');
