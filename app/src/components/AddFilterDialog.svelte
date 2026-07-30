@@ -28,7 +28,7 @@
    * stacking context whatever its z-index — so `z-index: 20` below was being measured against the
    * sidebar's own children, not the page, and the pinned chrome and the table's sticky header both
    * painted over the open dialog. Moving the node to `<body>` is what makes the number mean what it
-   * says (docs/app.md §Filters). It runs before the focus call below, because `appendChild` on a
+   * says (docs/app.md §Stacking order). It runs before the focus call below, because `appendChild` on a
    * subtree containing the active element drops the focus it is about to hand out.
    */
   function toBody(node: HTMLElement) {
@@ -46,8 +46,9 @@
 
   function onkeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-      // Under 800px the sidebar is itself a drawer, so one Escape must not dismiss both.
-      e.stopPropagation();
+      // No `stopPropagation` here, unlike the pickers that stay inside the sidebar: this node lives
+      // in `<body>` (docs/app.md §Stacking order), so the drawer's key handler is not on its bubble
+      // path at all and there is no second dismissal to suppress.
       onclose();
       return;
     }

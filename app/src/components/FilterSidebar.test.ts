@@ -163,8 +163,12 @@ describe('FilterSidebar text and toggle controls', () => {
     const view = defaultView();
     view.filters.releasedAfter = '2024-03-01';
     const onchange = vi.fn();
-    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Any' })[0]!);
+    const { container } = render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+    // Scoped to the release section rather than taken by index: "Any" also names the brand and
+    // discontinued controls, so a positional match would silently follow their order.
+    const section = [...container.querySelectorAll('section')]
+      .find((s) => s.querySelector('h3')?.textContent === 'Released after')!;
+    await fireEvent.click(within(section).getByRole('button', { name: 'Any' }));
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
@@ -221,7 +225,7 @@ describe('FilterSidebar filter set management', () => {
   /**
    * The sidebar is `position: sticky`, and sticky creates a stacking context whatever its z-index —
    * so a modal left inside it can never rise above the pinned chrome or the table's sticky header,
-   * however high its own z-index goes (docs/app.md §Filters). Escaping to `<body>` is the fix, and
+   * however high its own z-index goes (docs/app.md §Stacking order). Escaping to `<body>` is the fix, and
    * this is the cheap guard on it; smoke.spec.ts measures what a browser actually paints.
    */
   it('renders the dialog outside the sidebar, so nothing caps its stacking', async () => {

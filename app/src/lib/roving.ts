@@ -21,9 +21,20 @@ const STEPS: Record<string, Step> = {
 };
 
 export function roving(node: HTMLElement): { destroy(): void } {
-  const radios = (): HTMLElement[] => [...node.querySelectorAll<HTMLElement>('[role="radio"]')];
+  /**
+   * Disabled radios are skipped rather than counted. A disabled control can be neither focused nor
+   * clicked, so making one the tab stop leaves the group unreachable from the keyboard and stepping
+   * onto one leaves the arrows dead — both observed in the month picker, whose grid disables the
+   * months outside the fleet (docs/app.md §Released after is month-granular). The four older groups
+   * disable nothing, so this changes none of them.
+   */
+  const radios = (): HTMLElement[] =>
+    [...node.querySelectorAll<HTMLElement>('[role="radio"]')]
+      .filter((r) => !(r as HTMLButtonElement).disabled);
+  /** Cleared across *every* radio, not just the steppable ones: a radio disabled while it held the
+   *  tab stop would otherwise keep it, which is the unreachable group this guards against. */
   const mark = (active: HTMLElement | undefined): void => {
-    for (const r of radios()) r.tabIndex = r === active ? 0 : -1;
+    for (const r of node.querySelectorAll<HTMLElement>('[role="radio"]')) r.tabIndex = r === active ? 0 : -1;
   };
   /** The tab stop is whatever is checked; a group with nothing checked still needs one way in. */
   const sync = (): void => {
@@ -52,7 +63,9 @@ export function roving(node: HTMLElement): { destroy(): void } {
    * the component having to tell the action anything.
    */
   const watch = new MutationObserver(sync);
-  watch.observe(node, { subtree: true, attributes: true, attributeFilter: ['aria-checked'] });
+  // `disabled` as well as `aria-checked`: the month grid re-disables a different set of months on
+  // every year step, and a tab stop left on one of them takes the whole group out of the tab order.
+  watch.observe(node, { subtree: true, attributes: true, attributeFilter: ['aria-checked', 'disabled'] });
   node.addEventListener('keydown', onkeydown);
   sync();
 

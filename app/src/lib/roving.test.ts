@@ -103,6 +103,60 @@ describe('roving', () => {
     expect(tabs(radios)).toEqual([0, -1, -1]);
   });
 
+  /**
+   * The month picker is the first group to disable some of its radios, and a disabled control can
+   * neither be focused nor clicked — so making one the tab stop leaves the group unreachable, and
+   * stepping onto one leaves the arrows dead. Both were reproduced in a browser before this.
+   */
+  describe('disabled radios', () => {
+    const disable = (radios: HTMLElement[], ...i: number[]) => {
+      for (const n of i) (radios[n] as HTMLButtonElement).disabled = true;
+      return radios;
+    };
+
+    it('never makes a disabled radio the tab stop, even when it is the only checked one', () => {
+      const el = document.createElement('div');
+      el.setAttribute('role', 'radiogroup');
+      for (let i = 0; i < 3; i++) {
+        const b = document.createElement('button');
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-checked', 'false');
+        if (i === 0) b.disabled = true;
+        el.append(b);
+      }
+      document.body.append(el);
+      roving(el);
+      const radios = [...el.querySelectorAll<HTMLElement>('[role="radio"]')];
+      expect(tabs(radios)).toEqual([-1, 0, -1]);
+    });
+
+    it('steps over a disabled radio rather than stalling on it', () => {
+      const { radios } = group(0, 4);
+      disable(radios, 1);
+      radios[0]!.focus();
+      press(radios[0]!, 'ArrowRight');
+      expect(document.activeElement).toBe(radios[2]);
+    });
+
+    it('wraps past a disabled radio at the end of the group', () => {
+      const { radios } = group(0, 3);
+      disable(radios, 2);
+      radios[0]!.focus();
+      press(radios[0]!, 'ArrowLeft');
+      expect(document.activeElement).toBe(radios[1]);
+    });
+
+    /** Awaited because the tab stop is resynced by a MutationObserver, which fires on a microtask —
+     *  the same reason the mouse-selection test above awaits. */
+    it('gives up the tab stop when every radio becomes disabled', async () => {
+      const { radios } = group(null, 3);
+      disable(radios, 0, 1, 2);
+      await new Promise((r) => setTimeout(r, 0));
+      expect(tabs(radios)).toEqual([-1, -1, -1]);
+      expect(() => press(radios[0]!, 'ArrowRight')).not.toThrow();
+    });
+  });
+
   it('stops listening once destroyed', () => {
     const { radios, action } = group(1);
     action.destroy();

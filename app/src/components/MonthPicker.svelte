@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { monthLabel, startOfMonth } from '../lib/release-date';
+  import { MONTHS, monthLabel, startOfMonth } from '../lib/release-date';
   import { roving } from '../lib/roving';
 
   let { value, min, max, onchange }: {
@@ -11,8 +11,9 @@
     onchange: (iso: string | undefined) => void;
   } = $props();
 
-  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'];
+  /** Emitted only while the panel exists: an IDREF naming a node that is not in the document is an
+   *  unresolvable reference rather than a promise of one — the rule the table rows already follow. */
+  const PANEL_ID = 'month-picker-panel';
 
   const yearOf = (iso: string) => Number(iso.slice(0, 4));
   const monthOf = (iso: string) => Number(iso.slice(5, 7));
@@ -37,6 +38,17 @@
     if (!open) return;
     year = value ? yearOf(value) : maxYear;
     await tick();
+    // Focus must land *inside* the panel, or the Escape handler below — which is bound to the panel
+    // — never sees a key, and the picker can only be left by choosing a month. The bound month if
+    // this year holds it, so the grid opens where the runner left it.
+    focusGrid();
+  }
+  function focusGrid() {
+    const grid = panel?.querySelector<HTMLElement>('[role="radiogroup"]');
+    const target = grid?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]:not(:disabled)')
+      ?? grid?.querySelector<HTMLElement>('[role="radio"]:not(:disabled)')
+      ?? panel?.querySelector<HTMLElement>('button:not(:disabled)');
+    target?.focus();
   }
   function close() {
     open = false;
@@ -56,29 +68,60 @@
   }
   /** Clamped here rather than left to the buttons' `disabled`: that attribute is an affordance, and
    *  a guard that only exists in the markup is one a stray click or a test can walk straight past. */
-  const step = (delta: number) => (year = Math.min(maxYear, Math.max(minYear, year + delta)));
+  async function step(delta: number) {
+    year = Math.min(maxYear, Math.max(minYear, year + delta));
+    await tick();
+    // The button just pressed may have disabled itself at the end of the range. Tested for
+    // *disabled* rather than for focus having already left: the browser drops focus to `<body>` on
+    // its own schedule, and at this point it is often still reported on the dead button. Either way
+    // the keyboard user is about to be left with nothing, so catch them back into the grid — which
+    // at the end of the range is where the remaining choice is anyway.
+    const active = document.activeElement as HTMLButtonElement | null;
+    if (!panel?.contains(active) || active?.disabled) focusGrid();
+  }
 
-  /** Tabbing out of the panel closes it; a click elsewhere in the sidebar does the same, because
-   *  it moves focus off the grid. Guarded on `relatedTarget` so moving *within* the panel does not. */
+  /**
+   * Tab out of the panel and it closes. Pointer dismissal is a separate listener below, because a
+   * click on something unfocusable — a heading, the sidebar's own padding — moves focus to nothing
+   * and arrives here as a null `relatedTarget`, which is indistinguishable from a stepper disabling
+   * itself under the pointer. Guarded on the whole anchor rather than the panel so that Tabbing
+   * back to the trigger does not count as leaving.
+   */
   function onfocusout(e: FocusEvent) {
     const to = e.relatedTarget as Node | null;
-    // A stepper disables itself on reaching the end of the range, and the browser then drops focus
-    // to `<body>` — which arrives here as a null `relatedTarget`. That is the panel losing its own
-    // control, not the runner leaving it, and closing on it makes the last year unreachable.
-    if (to === null || panel?.contains(to)) return;
+    if (to === null || anchor?.contains(to)) return;
     open = false;
   }
+  /**
+   * `pointerdown`, not `click`: it fires before focus moves, so the trigger's own press is
+   * recognised as inside the anchor and left to `toggle`. On `click` the sequence is focusout →
+   * close → click → reopen, and the trigger stops being able to shut the panel it opened.
+   */
+  function onpointerdown(e: PointerEvent) {
+    if (!anchor?.contains(e.target as Node | null)) open = false;
+  }
   let panel = $state<HTMLElement | null>(null);
+  let anchor = $state<HTMLElement | null>(null);
+  $effect(() => {
+    if (!open) return;
+    document.addEventListener('pointerdown', onpointerdown, true);
+    return () => document.removeEventListener('pointerdown', onpointerdown, true);
+  });
 
-  /** A month the fleet has no side of is a bound that cannot change the table. Only the first and
-   *  last years are ever partly out; every year between them offers all twelve. */
+  /**
+   * The fleet's own ends. A bound before the first release keeps every dated shoe and drops the
+   * undated ones, and a bound after the last empties the table — neither is a comparison anyone
+   * opened this panel to make, and both are reachable only in the two edge years. Every year
+   * between them offers all twelve.
+   */
   const disabled = (month: number) =>
     (year === minYear && month < monthOf(min)) || (year === maxYear && month > monthOf(max));
 </script>
 
-<div class="anchor">
+<div class="anchor" bind:this={anchor}>
   <button type="button" class="trigger" bind:this={trigger} onclick={toggle}
-          aria-expanded={open} aria-haspopup="dialog" aria-label="Released after, {label}">
+          aria-expanded={open} aria-haspopup="dialog" aria-controls={open ? PANEL_ID : undefined}
+          aria-label="Released after, {label}">
     <span>{label}</span>
     <span class="caret" aria-hidden="true">▾</span>
   </button>
@@ -86,16 +129,16 @@
   {#if open}
     <!-- `tabindex="-1"` because Escape is answered here, and a key event only reaches this node
          while focus is inside it. -->
-    <div class="panel" role="dialog" tabindex="-1" aria-label="Choose a release month"
+    <div class="panel" id={PANEL_ID} role="dialog" tabindex="-1" aria-label="Choose a release month"
          bind:this={panel} onkeydown={onkeydown} onfocusout={onfocusout}>
       <div class="head">
         <button type="button" aria-label="Previous year" disabled={year <= minYear}
-                onclick={() => step(-1)}>‹</button>
+                onclick={() => void step(-1)}>‹</button>
         <!-- Text, not a heading: the panel is already named, and a second name for the year would
              be read as structure rather than as the state of the grid below it. -->
         <span data-testid="picker-year" aria-live="polite">{year}</span>
         <button type="button" aria-label="Next year" disabled={year >= maxYear}
-                onclick={() => step(1)}>›</button>
+                onclick={() => void step(1)}>›</button>
       </div>
       <!-- A radiogroup, so the twelve months are one tab stop and the arrows move between them:
            `roving` is the same action the four filter radiogroups use (docs/app.md §Filters). -->

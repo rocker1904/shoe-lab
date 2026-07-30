@@ -44,10 +44,11 @@ Run it in Playwright's own image instead, which is the same Ubuntu CI uses:
 npm -w app run e2e:docker
 ```
 
-That mounts the repo, runs as the calling user so nothing lands root-owned, and
-takes the image tag from the Playwright version — **bump the tag in
-`app/package.json` whenever the `@playwright/test` dependency moves**, or the
-container's bundled browsers stop matching the client and refuse to launch.
+That mounts the repo and runs as the calling user, so nothing lands root-owned.
+The image tag is **read from the installed `@playwright/test` at run time**
+rather than written down: the dependency is a caret range, so a pinned tag
+would drift silently on the next `npm install`, and a container whose bundled
+browsers do not match the client refuses to launch.
 
 ## The refresh chain
 

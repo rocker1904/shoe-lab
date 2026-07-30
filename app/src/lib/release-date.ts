@@ -1,6 +1,6 @@
 import type { ReleaseDateSource } from '../../../shared/types.js';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
 /**
@@ -18,9 +18,9 @@ export function displayReleaseDate(releasedAt: string | null, source: ReleaseDat
 
 /**
  * `March 2024` from either bound shape, degrading to the bare year on a month it cannot name.
- * Shared with the month picker's trigger so one `MONTHS` array serves both, rather than the
- * picker growing a second copy that could drift from the column beside it
- * (docs/app.md §Released after is month-granular).
+ * Shared with the month picker, which labels its trigger with this and its grid from the exported
+ * `MONTHS` beside it — one array, so the picker's months and the table's column can never disagree
+ * about a name (docs/app.md §Released after is month-granular).
  */
 export function monthLabel(iso: string): string {
   const month = MONTHS[Number(iso.slice(5, 7)) - 1];

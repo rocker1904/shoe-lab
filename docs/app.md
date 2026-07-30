@@ -193,9 +193,12 @@ different task and wants room for grouping, search and coverage bars. It is
 built from a positioned element rather than `<dialog>`: jsdom implements
 neither `showModal` nor the top layer, and the focus handling is the part that
 has to be right anyway — focus enters on the search box and returns to whatever
-held it. Escape stops propagating, because under 800px the sidebar is itself a
-drawer and one Escape must not dismiss both. The node itself is moved to
-`<body>` on mount; §Stacking order says why.
+held it. The node itself is moved to `<body>` on mount; §Stacking order says
+why. That is also why this dialog, alone among the panels here, does **not**
+stop Escape from propagating: living outside the drawer, it is not on a bubble
+path that reaches the drawer's key handler, so there is no second dismissal to
+suppress. The month picker and the help popover still do stop it, because they
+are genuinely inside the sidebar.
 
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half
@@ -440,10 +443,17 @@ the string got shorter.
 first fits — it was 1210px before this. At 1100px the document overruns by
 71px. That band runs down to the 800px breakpoint, where the sidebar becomes a
 drawer and the content track takes the full width; below 700px the mobile
-rendering takes over and there is no horizontal scroll at all. The e2e
-assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`, because the
-exact figure is the font stack's: pinning it passed on a developer's machine
-and failed on CI's, where the same fixture measures 1213px.
+rendering takes over and there is no horizontal scroll at all.
+
+The e2e assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`.
+Equality tested more than the claim: a document *narrower* than the viewport
+scrolls sideways just as little, and the exact figure is the font stack's, so
+the assertion also failed whenever those metrics merely moved. Relaxing it is
+not what fixed the red build — the plate label was. Note what this does **not**
+cover: the e2e fixture is five shoes with short names, and its `scrollWidth` is
+1200 with the long label or the short one, so nothing in the suite reproduces
+the overflow this section describes. The bound is measured against the real
+fleet and recorded here, not guarded.
 
 The name cell is a
 plain `table-cell` with an inner flex row, because `display: flex` on a `td`
