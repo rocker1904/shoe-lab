@@ -28,8 +28,9 @@ export type Side = 'heel' | 'forefoot';
  * carries no notion of side at all, so the grouping is declared: `heel-padding-durability` has no
  * forefoot counterpart, `forefoot-traction`'s secondary is unpublished, and an upstream rename
  * must not silently regroup the sidebar (docs/app.md §Columns and sorting). Agreement with the
- * catalogue is asserted by `lineage.test.ts` rather than thrown at runtime — neither test fixture
- * carries all eight slugs, so a throwing validator would take the app down.
+ * catalogue is asserted by `lineage.test.ts` rather than thrown at runtime — `metricEntries` is
+ * called on partial catalogues throughout the suite, including single-half cases it must degrade
+ * rather than reject, so a throwing validator would take down the app and most of its tests.
  */
 export const SIDE_PAIRS = [
   { label: 'Stack', forefoot: 'forefoot-stack', heel: 'heel-stack' },

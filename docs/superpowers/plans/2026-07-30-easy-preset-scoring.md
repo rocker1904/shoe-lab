@@ -72,23 +72,23 @@ The worktree has no dependencies installed and `check:docs` already fails on two
 - Modify: `docs/superpowers/specs/2026-07-30-preset-scoring-design.md` (already fixed — verify)
 - Modify: `docs/superpowers/plans/2026-07-30-easy-preset-scoring.md` (this file — verify)
 
-- [ ] **Step 1: Install dependencies**
+- [x] **Step 1: Install dependencies**
 
 ```bash
 cd ~/dev/shoe-lab-preset-scoring && npm install
 ```
 
-- [ ] **Step 2: Confirm the docs gate is green**
+- [x] **Step 2: Confirm the docs gate is green**
 
 Run: `npm run check:docs`
 Expected: PASS with no failures. If it still reports `has no heading "10"` or `has no heading "Which half a story"`, fix the offending pointer — a `§` must name a heading's real text, and a pointer must not wrap across a newline.
 
-- [ ] **Step 3: Confirm the suite runs**
+- [x] **Step 3: Confirm the suite runs**
 
 Run: `npm -w app run test`
 Expected: PASS (the branch is currently green). If this errors rather than passing, stop and report — nothing below is trustworthy until it runs.
 
-- [ ] **Step 4: Commit only if a doc pointer needed fixing**
+- [x] **Step 4: Commit only if a doc pointer needed fixing**
 
 ```bash
 git add docs/
@@ -109,7 +109,7 @@ Stage 1 only. Pure functions, each 0–1 and linear in goodness, true zeros pres
 - Consumes: `numericValue`, `TestIndex` from `./dataset`; `sideKey`, `Side` from `./lineage`.
 - Produces: `EasyTermKey`, `EasyTerms`, `SA_REF`, `L_OK`, `WID_CAP`, `easyTerms(shoe, side, idx)`.
 
-- [ ] **Step 1: Add the scoring tests and readings to the fixtures**
+- [x] **Step 1: Add the scoring tests and readings to the fixtures**
 
 The fixture catalogue carries none of the scoring metrics. Ids 68, 67, 4, 9, 19, 26, 25 collide with nothing already in `TESTS` (6, 5, 24, 65, 66, 11, 70, 39, 27, 55) or `PRICE_TEST` (52). Add to `TESTS` in `app/src/lib/test-fixtures.ts`:
 
@@ -136,7 +136,7 @@ Extend the fixture's doc comment: the scoring metrics are present on all four re
 
 `app/src/lib/lineage.ts:32` says "neither test fixture carries all eight slugs" as the reason `lineage.test.ts` asserts rather than throws. After this change the unit fixture *does* carry all eight. Correct that comment to name the real reason (the e2e fixture is the one that does not), or the comment becomes a false statement about why a validator is not throwing.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `app/src/lib/score.test.ts`:
 
@@ -209,12 +209,12 @@ describe('easyTerms', () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and confirm they fail on the import**
+- [x] **Step 3: Run the tests and confirm they fail on the import**
 
 Run: `npm -w app run test -- score.test.ts`
 Expected: FAIL — cannot resolve `./score`. (If the command errors before running, go back to Task 0.)
 
-- [ ] **Step 4: Write `score.ts` stage 1**
+- [x] **Step 4: Write `score.ts` stage 1**
 
 Create `app/src/lib/score.ts`:
 
@@ -268,12 +268,12 @@ export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass, then the whole suite**
+- [x] **Step 5: Run the tests to verify they pass, then the whole suite**
 
 Run: `npm -w app run test -- score.test.ts` → PASS.
 Run: `npm -w app run test` → fix fallout from the fixture change. Suites that build `metricEntries` from `TESTS` or assert catalogue counts are the likely ones. The two new declared side pairs (shock absorption, midsole width) now resolve as `colocated`, so any test enumerating fixture metric rows changes shape.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/lib/score.ts app/src/lib/score.test.ts app/src/lib/test-fixtures.ts app/src/lib/lineage.ts

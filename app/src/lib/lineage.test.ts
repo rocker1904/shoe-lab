@@ -165,8 +165,9 @@ describe('side pairs', () => {
     expect(swapSide('forefoot-stack', 'forefoot')).toBe('forefoot-stack');
     expect(swapSide('weight', 'forefoot')).toBe('weight');
   });
-  // Criterion 8 says all four pairs render both halves, but neither fixture carries all eight
-  // slugs, so no render test can check it. This can, and it is the property the prose argues for.
+  // Criterion 8 says all four pairs render both halves. A render test would only ever cover the
+  // pairs its own fixture catalogue happens to carry; this covers the declaration itself, which is
+  // the property the prose argues for.
   it('curates both halves of every pair, so the sidebar cannot change shape with strike', () => {
     for (const pair of SIDE_PAIRS) {
       expect(CURATED_RANGE_KEYS, pair.label).toContain(pair.forefoot);
@@ -188,8 +189,8 @@ describe('side pairs', () => {
 
 /**
  * The declaration is authoritative but must *agree* with the catalogue rather than avoid it.
- * A test rather than a runtime throw: neither component fixture carries all eight slugs, so a
- * throwing validator would take down the app and every component test. Read from disk because
+ * A test rather than a runtime throw: `metricEntries` is called on partial catalogues throughout
+ * the suite, so a throwing validator would take down the app and most of its tests. Read from disk because
  * `app/tsconfig.json` covers only `src`, `../shared` and `scripts` and leaves `resolveJsonModule`
  * unset, so importing the JSON will not compile. Resolved from this file rather than from the cwd,
  * which vitest sets to `app/`, and through `fileURLToPath` because the jsdom environment replaces

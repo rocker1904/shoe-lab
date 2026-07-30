@@ -188,9 +188,10 @@ describe('FilterSidebar filter set management', () => {
     const onchange = vi.fn();
     const { container } = render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, population: FLEET } });
     await open(within(container).getByRole('button', { name: 'Add filter' }));
-    // curated keys, the option-typed test and both retired generations are all absent
+    // curated keys, the option-typed test and both retired generations are all absent; the two
+    // outsole tests and the heel counter are the uncurated metrics the Easy score reads
     expect(within(screen.getByRole('dialog')).getAllByRole('button').map((b) => b.textContent?.trim().split(/\s+/)[0]))
-      .toEqual(['Stiffness', 'Score', 'Close']);
+      .toEqual(['Outsole', 'Outsole', 'Heel', 'Stiffness', 'Score', 'Close']);
 
     // a row, not a hollow range key: the two are different state, and only the row survives a clear
     await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Stiffness/ }));
@@ -381,7 +382,8 @@ describe('FilterSidebar metric entries', () => {
  */
 const HEADINGS = [
   'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
-  'Price (£)', 'Stack', 'Energy return', 'Weight (g)', 'Midsole softness', 'Width / Fit',
+  'Price (£)', 'Stack', 'Energy return', 'Weight (g)', 'Midsole softness',
+  'Shock absorption', 'Midsole width', 'Width / Fit',
 ];
 const GROUPS = [
   'Plate', 'Brand',
@@ -390,6 +392,8 @@ const GROUPS = [
   'Energy return — Forefoot', 'Energy return — Heel',
   'Weight (g)',
   'Midsole softness — 2022 method',
+  'Shock absorption — Forefoot', 'Shock absorption — Heel',
+  'Midsole width — Forefoot', 'Midsole width — Heel',
   'Width / Fit — current method',
 ];
 
