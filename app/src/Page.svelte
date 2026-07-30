@@ -150,7 +150,10 @@
    * the runner added is not a filter.
    */
   function allView(v: ViewState, side: Side | null): ViewState {
-    if (side !== null) return { ...defaultView(), columns: defaultColumns(side) };
+    // `stability` rather than the default: it is a property of the runner, not of the search, so
+    // `All` must not silently turn it off — and the mark is `sameValue(v, allView(v, side))`, so a
+    // reset here would also unmark `All` for anyone who had set it (docs/app.md §Presets).
+    if (side !== null) return { ...defaultView(), columns: defaultColumns(side), stability: v.stability };
     const next = structuredClone(v) as ViewState;
     next.filters = { ...EMPTY_FILTERS, ranges: {} };
     return next;
@@ -164,14 +167,14 @@
    */
   const storyMark = $derived(
     sideMark === null ? null
-    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, sideMark)))?.id ?? null);
+    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, sideMark, view.stability)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
   // `All` is a peer of the stories in the bar, so it needs a count in the same map. Three preset
   // applications over a dataset already in memory.
   const presetCounts = $derived(new Map<string, number>([
     ['all', data.shoes.length],
     ...PRESETS.map((p) => [p.id,
-      applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, workingSide).filters, idx).visible.length] as const),
+      applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, workingSide, view.stability).filters, idx).visible.length] as const),
   ]));
 
   /**
@@ -212,13 +215,13 @@
     // Already there, so there is nothing to do. Rebuilding would be harmless — projecting onto the
     // side a view already names is the identity — but it would spend a URL write on it.
     if (next === sideMark) return;
-    setView(storyMark ? applyPreset(storyMark, data.shoes, idx, next) : projectSide(snapshot, next));
+    setView(storyMark ? applyPreset(storyMark, data.shoes, idx, next, view.stability) : projectSide(snapshot, next));
   }
   function onStory(id: string) {
     // The strip's own question, answered — the toolbar carries the counts from here, and the only
     // thing the cards held exclusively was the descriptions, which are a first-encounter need.
     stripOpen = false;
-    setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, data.shoes, idx, workingSide));
+    setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, data.shoes, idx, workingSide, view.stability));
   }
   function onShowMissing() {
     const next = structuredClone($state.snapshot(view)) as ViewState;

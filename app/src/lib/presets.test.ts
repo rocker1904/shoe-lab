@@ -3,10 +3,12 @@ import { coverageOf, isSparse } from './coverage';
 import { indexTests, numericValue, type TestIndex } from './dataset';
 import { SIDE_PAIRS, sideKey, type Side, type SidePairLabel } from './lineage';
 import {
-  applyPreset, EASY_STACK_PERCENTILE, PRESETS, PRICE_PERCENTILE,
+  applyPreset, PRESETS, PRICE_PERCENTILE,
   RACE_ENERGY_RETURN_PERCENTILE, RACE_MAX_WEIGHT,
   TEMPO_ENERGY_RETURN_PERCENTILE, TEMPO_WEIGHT_PERCENTILE,
 } from './presets';
+import { EASY_SCORE_KEY } from './score';
+import { sideOf } from './side';
 import { applyFilters } from './filters';
 import { quantile } from './stats';
 import { FLEET, TESTS, shoe } from './test-fixtures';
@@ -37,7 +39,7 @@ describe('presets', () => {
   it('returns a complete ViewState for every id, under either strike', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        const v = applyPreset(p.id, FLEET, idx, strike);
+        const v = applyPreset(p.id, FLEET, idx, strike, false);
         expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'rows', 'sort', 'stability']);
         // Every key a story binds is curated, so a story never needs a hand-added row — and
         // selection derivation compares this field like any other.
@@ -48,22 +50,22 @@ describe('presets', () => {
     }
   });
   it('throws on an unknown id', () => {
-    expect(() => applyPreset('nope', FLEET, idx, 'heel')).toThrow();
+    expect(() => applyPreset('nope', FLEET, idx, 'heel', false)).toThrow();
   });
   // Recency is a strategy, not a story: buying last season's model cheap and buying the newest
   // thing are both valid, and neither is implied by the session (docs/shoe-stories.md).
   it('never sets releasedAfter', () => {
-    for (const p of PRESETS) expect(applyPreset(p.id, FLEET, idx, 'heel').filters.releasedAfter).toBeUndefined();
+    for (const p of PRESETS) expect(applyPreset(p.id, FLEET, idx, 'heel', false).filters.releasedAfter).toBeUndefined();
   });
   // None of the metrics the stories bound is half of a superseded pair, so there is no generation
   // to choose — spec §4 requires a preset to populate it only for a pair it bounds.
   it('never populates generations', () => {
-    for (const p of PRESETS) expect(applyPreset(p.id, FLEET, idx, 'heel').generations).toEqual({});
+    for (const p of PRESETS) expect(applyPreset(p.id, FLEET, idx, 'heel', false).generations).toEqual({});
   });
   it('sets its own columns rather than the global defaults', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        expect(applyPreset(p.id, FLEET, idx, strike).columns).not.toEqual(defaultColumns(strike));
+        expect(applyPreset(p.id, FLEET, idx, strike, false).columns).not.toEqual(defaultColumns(strike));
       }
     }
   });
@@ -72,7 +74,7 @@ describe('presets', () => {
   it('shows every column it sorts or filters by, under either strike', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        const v = applyPreset(p.id, FLEET, idx, strike);
+        const v = applyPreset(p.id, FLEET, idx, strike, false);
         expect(v.columns, `${p.id}/${strike} sorts by a hidden column`).toContain(v.sort.key);
         for (const key of Object.keys(v.filters.ranges)) {
           expect(v.columns, `${p.id}/${strike} bounds ${key} without showing it`).toContain(key);
@@ -80,20 +82,58 @@ describe('presets', () => {
       }
     }
   });
-  it('keeps a toebox column on Easy and leaves it off the fast stories', () => {
-    expect(applyPreset('easy', FLEET, idx, 'heel').columns).toContain('toebox-width-widest-part');
-    expect(applyPreset('tempo', FLEET, idx, 'heel').columns).not.toContain('toebox-width-widest-part');
-    expect(applyPreset('race', FLEET, idx, 'heel').columns).not.toContain('toebox-width-widest-part');
+  // Six numeric columns is the phone bound, and toebox width is the one column no scoring term
+  // uses, so Easy spends its seventh slot on the score instead (docs/app.md §Columns and sorting).
+  it('keeps a toebox column off every story', () => {
+    for (const p of PRESETS) {
+      expect(applyPreset(p.id, FLEET, idx, 'heel', false).columns).not.toContain('toebox-width-widest-part');
+    }
   });
+});
+
+describe('easy', () => {
+  it('bounds nothing but the plate, and ranks by the score instead', () => {
+    // The score rewards cushioning directly, so a stack floor would restate it; and the runner
+    // judges value themselves, so there is no price cap.
+    for (const strike of STRIKES) {
+      const v = applyPreset('easy', FLEET, idx, strike, false);
+      expect(Object.keys(v.filters.ranges)).toEqual([]);
+      expect(v.filters.plate).toEqual(['none', 'plated-other']);
+      expect(v.sort).toEqual({ key: EASY_SCORE_KEY, dir: 'desc' });
+      expect(v.columns).toContain(EASY_SCORE_KEY);
+    }
+  });
+
+  it('round-trips through the URL, so the story mark survives a link', () => {
+    for (const strike of STRIKES) {
+      const v = applyPreset('easy', FLEET, idx, strike, false);
+      expect(parseView(serializeView(v), idx)).toEqual(v);
+    }
+  });
+
+  it('names a side through its columns, so the side mark still derives', () => {
+    for (const strike of STRIKES) {
+      expect(sideOf(applyPreset('easy', FLEET, idx, strike, false))).toBe(strike);
+    }
+  });
+});
+
+it('carries the runner stability preference through every story', () => {
+  // Otherwise the derived story mark vanishes the moment the preference is set, and clicking the
+  // story again silently turns it back off.
+  for (const p of PRESETS) {
+    expect(applyPreset(p.id, FLEET, idx, 'heel', true).stability).toBe(true);
+    expect(applyPreset(p.id, FLEET, idx, 'heel', false).stability).toBe(false);
+  }
 });
 
 /**
  * Every side-swappable bound each story sets, and the percentile it must resolve to. A bound
  * missing from here is asserted absent, which is what stops a story reintroducing an absolute
- * number on a metric that has two sides (docs/shoe-stories.md §Which half a story uses).
+ * number on a metric that has two sides (docs/shoe-stories.md §Which half a story uses). Easy is
+ * absent because it bounds nothing at all: it names its side through its columns and its sort.
  */
 const SIDE_BOUNDS: Record<string, { label: SidePairLabel; percentile: number }[]> = {
-  easy: [{ label: 'Stack', percentile: EASY_STACK_PERCENTILE }],
   tempo: [{ label: 'Energy return', percentile: TEMPO_ENERGY_RETURN_PERCENTILE }],
   race: [{ label: 'Energy return', percentile: RACE_ENERGY_RETURN_PERCENTILE }],
 };
@@ -102,13 +142,11 @@ const SIDE_SLUGS = new Set(SIDE_PAIRS.flatMap((p) => [p.forefoot, p.heel] as str
 describe('the runner layer', () => {
   it('bounds, sorts by and shows the half the strike names', () => {
     for (const strike of STRIKES) {
-      const easy = applyPreset('easy', FLEET, idx, strike);
-      const stack = sideKey('Stack', strike);
-      expect(Object.keys(easy.filters.ranges)).toContain(stack);
-      expect(easy.columns).toContain(stack);
+      // Easy bounds nothing, so its side shows in the columns alone.
+      expect(applyPreset('easy', FLEET, idx, strike, false).columns).toContain(sideKey('Stack', strike));
 
       for (const id of ['tempo', 'race']) {
-        const v = applyPreset(id, FLEET, idx, strike);
+        const v = applyPreset(id, FLEET, idx, strike, false);
         const energy = sideKey('Energy return', strike);
         expect(v.sort.key, `${id}/${strike}`).toBe(energy);
         expect(v.columns, `${id}/${strike}`).toContain(energy);
@@ -121,7 +159,7 @@ describe('the runner layer', () => {
       const other = strike === 'heel' ? 'forefoot' : 'heel';
       const wrongSide = new Set(SIDE_PAIRS.map((p) => p[other] as string));
       for (const p of PRESETS) {
-        const v = applyPreset(p.id, FLEET, idx, strike);
+        const v = applyPreset(p.id, FLEET, idx, strike, false);
         expect([...Object.keys(v.filters.ranges), ...v.columns, v.sort.key].filter((k) => wrongSide.has(k)),
           `${p.id}/${strike}`).toEqual([]);
       }
@@ -136,7 +174,7 @@ describe('the runner layer', () => {
   it('resolves every side-swappable bound to a percentile of that side\'s own readings', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        const v = applyPreset(p.id, FLEET, idx, strike);
+        const v = applyPreset(p.id, FLEET, idx, strike, false);
         const expected = (SIDE_BOUNDS[p.id] ?? []).map((b) => sideKey(b.label, strike));
         expect(Object.keys(v.filters.ranges).filter((k) => SIDE_SLUGS.has(k)).sort(), `${p.id}/${strike}`)
           .toEqual([...expected].sort());
@@ -157,37 +195,38 @@ describe('the runner layer', () => {
       }
     }
   });
-  it('returns a comparable shortlist under either strike', () => {
-    const count = (strike: Side) => applyFilters(FLEET, applyPreset('easy', FLEET, idx, strike).filters, idx).visible.length;
-    expect(count('heel')).toBe(2);      // cushy and trainer
-    expect(count('forefoot')).toBe(2);
+  // Easy's only filter is the sideless plate gate, so its pool is now identical on both sides —
+  // the strike moves the ranking rather than the shortlist.
+  it('returns the same Easy pool under either strike', () => {
+    const count = (strike: Side) => applyFilters(FLEET, applyPreset('easy', FLEET, idx, strike, false).filters, idx).visible.length;
+    expect(count('heel')).toBe(4);      // everything but the carbon racer
+    expect(count('forefoot')).toBe(count('heel'));
   });
 });
 
 describe('preset stories on the fixture fleet', () => {
-  it('easy wants stack and affordability, and excludes carbon without excluding plates', () => {
-    const view = applyPreset('easy', FLEET, idx, 'heel');
+  it('easy excludes carbon without excluding plates, and asks for nothing else', () => {
+    const view = applyPreset('easy', FLEET, idx, 'heel', false);
     expect(view.filters.plate).toEqual(['none', 'plated-other']);
-    // heel stacks 40, 39, 35, 30 -> median 35
-    expect(view.filters.ranges['heel-stack']).toEqual({ min: 35 });
-    // fixture prices 140, 250, 140, 140 -> 80th percentile 140
-    expect(view.filters.ranges['msrpGbp']).toEqual({ max: 140 });
-    // explosiveness is a bonus, not the point, so sorting by it would contradict the filters
-    expect(view.sort).toEqual({ key: 'score', dir: 'desc' });
-    expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug)).toEqual(['cushy', 'trainer']);
+    // No stack floor and no price cap: the score rewards cushioning directly, and value is the
+    // runner's own call (docs/shoe-stories.md §Easy).
+    expect(view.filters.ranges).toEqual({});
+    expect(view.sort).toEqual({ key: EASY_SCORE_KEY, dir: 'desc' });
+    expect(applyFilters(FLEET, view.filters, idx).visible.map((s) => s.slug))
+      .toEqual(['cushy', 'trainer', 'oldie', 'mystery']);
   });
   it('easy keeps a non-carbon plated shoe that a carbon-only fleet would drop', () => {
     const fleet = [
       shoe({ slug: 'nylon-daily', plate: 'plated-other', values: { '6': 38 } }),
       shoe({ slug: 'carbon-racer', plate: 'carbon', values: { '6': 38 } }),
     ];
-    const view = applyPreset('easy', fleet, idx, 'heel');
+    const view = applyPreset('easy', fleet, idx, 'heel', false);
     expect(applyFilters(fleet, view.filters, idx).visible.map((s) => s.slug)).toEqual(['nylon-daily']);
   });
   it('tempo asks for more than most of the fleet, on both energy return and weight', () => {
     // Both bounds are percentiles, not numbers: an absolute energy-return floor is what made this
     // story narrow, because the number that reads as "lively" sits three quarters up the fleet.
-    const view = applyPreset('tempo', FLEET, idx, 'heel');
+    const view = applyPreset('tempo', FLEET, idx, 'heel', false);
     expect(view.filters.ranges['energy-return-heel'])
       .toEqual({ min: quantile(readingsOf('energy-return-heel'), TEMPO_ENERGY_RETURN_PERCENTILE) });
     expect(view.filters.ranges['weight']).toEqual({ max: quantile(readingsOf('weight'), TEMPO_WEIGHT_PERCENTILE) });
@@ -199,13 +238,13 @@ describe('preset stories on the fixture fleet', () => {
     // The regression this guards is a return to an absolute floor, which would report the same
     // number for both fleets and quietly keep only the liveliest slice of a lively catalogue.
     const bound = (er: number[]) =>
-      applyPreset('tempo', er.map((e, i) => shoe({ slug: `s${i}`, values: { '65': e } })), idx, 'heel')
+      applyPreset('tempo', er.map((e, i) => shoe({ slug: `s${i}`, values: { '65': e } })), idx, 'heel', false)
         .filters.ranges['energy-return-heel']?.min;
     expect(bound([40, 45, 50, 55, 60])).toBe(50);
     expect(bound([70, 75, 80, 85, 90])).toBe(80);
   });
   it('race is speed alone: no price cap and no plate requirement', () => {
-    const view = applyPreset('race', FLEET, idx, 'heel');
+    const view = applyPreset('race', FLEET, idx, 'heel', false);
     expect(view.filters.ranges).toEqual({
       weight: { max: RACE_MAX_WEIGHT },
       'energy-return-heel': { min: quantile(readingsOf('energy-return-heel'), RACE_ENERGY_RETURN_PERCENTILE) },
@@ -217,7 +256,7 @@ describe('preset stories on the fixture fleet', () => {
   // Weight has no sides, so it is the one bound left free to be a property of a shoe.
   it('keeps race\'s weight ceiling absolute under either strike', () => {
     for (const strike of STRIKES) {
-      expect(applyPreset('race', FLEET, idx, strike).filters.ranges['weight']).toEqual({ max: RACE_MAX_WEIGHT });
+      expect(applyPreset('race', FLEET, idx, strike, false).filters.ranges['weight']).toEqual({ max: RACE_MAX_WEIGHT });
     }
   });
 });
@@ -228,7 +267,9 @@ describe('preset thresholds track the fleet', () => {
   it('moves the price cap when the fleet\'s price distribution moves', () => {
     const cheap = [100, 110, 120, 130, 140].map((p, i) => priced(`c${i}`, p));
     const dear = [300, 310, 320, 330, 340].map((p, i) => priced(`d${i}`, p));
-    const capOf = (fleet: Shoe[]) => applyPreset('easy', fleet, idx, 'heel').filters.ranges['msrpGbp']?.max;
+    // Driven through Tempo, the one story that still caps price: Easy dropped its cap because the
+    // runner judges value themselves.
+    const capOf = (fleet: Shoe[]) => applyPreset('tempo', fleet, idx, 'heel', false).filters.ranges['msrpGbp']?.max;
     expect(capOf(cheap)).toBe(quantile([100, 110, 120, 130, 140], PRICE_PERCENTILE));
     expect(capOf(dear)).toBe(330);
     expect(capOf(cheap)).not.toBe(capOf(dear));
@@ -236,36 +277,36 @@ describe('preset thresholds track the fleet', () => {
   it('moves tempo\'s weight ceiling when the fleet gets heavier', () => {
     const light = [180, 190, 200, 210, 220].map((w, i) => shoe({ slug: `l${i}`, values: { '24': w } }));
     const heavy = [280, 290, 300, 310, 320].map((w, i) => shoe({ slug: `h${i}`, values: { '24': w } }));
-    const capOf = (fleet: Shoe[]) => applyPreset('tempo', fleet, idx, 'heel').filters.ranges['weight']?.max;
+    const capOf = (fleet: Shoe[]) => applyPreset('tempo', fleet, idx, 'heel', false).filters.ranges['weight']?.max;
     expect(capOf(light)).toBe(190);
     expect(capOf(heavy)).toBe(290);
   });
   it('omits a bound it cannot compute rather than throwing on an empty fleet', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        expect(() => applyPreset(p.id, [], idx, strike)).not.toThrow();
-        expect(applyPreset(p.id, [], idx, strike).filters.ranges['msrpGbp']).toBeUndefined();
+        expect(() => applyPreset(p.id, [], idx, strike, false)).not.toThrow();
+        expect(applyPreset(p.id, [], idx, strike, false).filters.ranges['msrpGbp']).toBeUndefined();
         // every side-swappable bound is a percentile now, so none of them survives an empty fleet
         for (const b of SIDE_BOUNDS[p.id] ?? []) {
-          expect(applyPreset(p.id, [], idx, strike).filters.ranges[sideKey(b.label, strike)]).toBeUndefined();
+          expect(applyPreset(p.id, [], idx, strike, false).filters.ranges[sideKey(b.label, strike)]).toBeUndefined();
         }
       }
     }
     // weight has no sides, so it is a property of a shoe rather than of the market and survives
-    expect(applyPreset('race', [], idx, 'heel').filters.ranges).toEqual({ weight: { max: RACE_MAX_WEIGHT } });
-    expect(applyPreset('tempo', [], idx, 'heel').filters.ranges['weight']).toBeUndefined();
+    expect(applyPreset('race', [], idx, 'heel', false).filters.ranges).toEqual({ weight: { max: RACE_MAX_WEIGHT } });
+    expect(applyPreset('tempo', [], idx, 'heel', false).filters.ranges['weight']).toBeUndefined();
   });
 });
 
 describe('preset determinism', () => {
   it('returns an equal but independent view on every call', () => {
     for (const p of PRESETS) {
-      const a = applyPreset(p.id, FLEET, idx, 'heel');
-      const b = applyPreset(p.id, FLEET, idx, 'heel');
+      const a = applyPreset(p.id, FLEET, idx, 'heel', false);
+      const b = applyPreset(p.id, FLEET, idx, 'heel', false);
       expect(a).toEqual(b);
       a.filters.ranges['weight'] = { min: 999 };
       a.columns.push('bogus');
-      expect(applyPreset(p.id, FLEET, idx, 'heel')).toEqual(b);
+      expect(applyPreset(p.id, FLEET, idx, 'heel', false)).toEqual(b);
     }
   });
   it('survives a URL round trip under either strike', () => {
@@ -273,7 +314,7 @@ describe('preset determinism', () => {
     // preset's columns survive the column allowlist, and that a forefoot story reloads forefoot
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        const v = applyPreset(p.id, FLEET, idx, strike);
+        const v = applyPreset(p.id, FLEET, idx, strike, false);
         expect(parseView(serializeView(v), idx)).toEqual(v);
       }
     }
@@ -284,7 +325,7 @@ describe('no preset bounds a metric its own coverage warning would flag', () => 
   it('holds for every preset over the fixture fleet, under either strike', () => {
     for (const strike of STRIKES) {
       for (const p of PRESETS) {
-        expect(sparseBoundKeys(applyPreset(p.id, FLEET, idx, strike), FLEET, idx), `${p.id}/${strike}`).toEqual([]);
+        expect(sparseBoundKeys(applyPreset(p.id, FLEET, idx, strike, false), FLEET, idx), `${p.id}/${strike}`).toEqual([]);
       }
     }
   });

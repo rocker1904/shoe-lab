@@ -97,10 +97,12 @@ describe('Page', () => {
     render(Page, { props: { data } });
     // the band's card, not the toolbar pill: one is a button, the other a radio
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument(); // cushy and trainer pass on the fixture fleet
+    // Easy's only filter is the plate gate, so its pool is everything but the carbon racer; the
+    // ranking is what the story now does (docs/app.md §Presets).
+    expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
     settle();
     expect(location.search).toContain('plate=none%2Cplated-other');
-    expect(location.search).toContain('r.heel-stack=35%7E');
+    expect(location.search).toContain('sort=-easy-score');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });
@@ -274,7 +276,7 @@ describe('Page story selection', () => {
     render(Page, { props: { data } });
     expect(strip()).toBeInTheDocument();
     expect(markedStory()).toEqual(['All']);
-    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('2');
+    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('4');
     expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2');
   });
   it('marks exactly the story that was applied', async () => {
@@ -420,8 +422,9 @@ describe('Page side toggle', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
     expect(markedStory()).toEqual(['Easy']);
     settle();
-    expect(location.search).toContain('r.forefoot-stack=');
-    expect(location.search).not.toContain('r.heel-stack=');
+    // Easy bounds nothing, so the re-derivation shows in its columns rather than in a bound.
+    expect(location.search).toContain('forefoot-stack');
+    expect(location.search).not.toContain('heel-stack');
 
     await fireEvent.click(screen.getByRole('radio', { name: 'Heel' }));
     settle();
@@ -518,6 +521,6 @@ describe('Page persistence', () => {
     render(Page, { props: { data } });
     expect(strip()).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
-    expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
   });
 });

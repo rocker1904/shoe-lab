@@ -712,7 +712,7 @@ git commit -m "Let the Easy score be a column and a sort like any other"
 **Interfaces:**
 - Produces: `applyPreset(id, shoes, idx, strike, stability)` — a fifth parameter, carried into the returned view unchanged.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `presets.test.ts`, add:
 
@@ -764,11 +764,11 @@ Then fix the six existing assertions this breaks — do not delete them, re-poin
 - `Page.test.ts` — assertions on `r.heel-stack=35%7E` (~line 101), Easy's count `'2'` (line 277), `r.forefoot-stack=` after a side flip on Easy (~line 416), and `2 of 5 shoes` (~line 520). Update each to the new behaviour rather than guessing: run the suite and read what it actually produces.
 - `e2e/smoke.spec.ts` — `2 of 5 shoes` at lines 10, 50, 55 and `/r\.forefoot-stack=/` at line 88.
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- presets.test.ts`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `presets.ts`:
 - Delete the `EASY_STACK_PERCENTILE` export and its comment. **Keep `PRICE_PERCENTILE`** — Tempo still uses it.
@@ -812,13 +812,13 @@ const easyColumns = (strike: Side) =>
 - Pass `view.stability` at all four `applyPreset` call sites (lines ~167, ~174, ~215, ~221).
 - `allView`'s `side !== null` branch returns `{ ...defaultView(), columns: defaultColumns(side) }`, which resets the preference. Preserve it: `{ ...defaultView(), columns: defaultColumns(side), stability: v.stability }`. The other branch clones the snapshot and so already carries it.
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npm -w app run test && npm run typecheck` → PASS.
 
 Then check the mark behaviour by hand in Step 3 of Task 12; the unit test above covers `applyPreset`, but `atAll` and `storyMark` are derived in the component.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/lib/presets.ts app/src/lib/presets.test.ts app/src/Page.svelte app/src/Page.test.ts app/e2e/smoke.spec.ts

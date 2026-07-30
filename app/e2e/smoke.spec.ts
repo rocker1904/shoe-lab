@@ -7,7 +7,7 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   // a bare first visit opens on the setup strip, so this is a card rather than a toolbar pill
   await expect(page.getByTestId('setup-strip')).toBeVisible();
   await page.getByRole('button', { name: 'Easy' }).click();
-  await expect(page.getByText('2 of 5 shoes')).toBeVisible();
+  await expect(page.getByText('4 of 5 shoes')).toBeVisible();
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
   // the strip hands over to the toolbar, which is where the mark and the counts live from here
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
@@ -47,12 +47,12 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Easy' }).click();
-  await expect(page.getByText('2 of 5 shoes')).toBeVisible();
+  await expect(page.getByText('4 of 5 shoes')).toBeVisible();
   await expect(strip).toHaveCount(0);
 
   // the only proof persistence works, because it spans a real page load
   await page.goto('/');
-  await expect(page.getByText('2 of 5 shoes')).toBeVisible();
+  await expect(page.getByText('4 of 5 shoes')).toBeVisible();
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
   await expect(strip).toHaveCount(0);                                  // and it never returns
   // and the restored view reaches the URL, so copying the link shares what is on screen
@@ -85,7 +85,8 @@ test('picks a side, keeps the strip open through it, and returns to that side\'s
   await page.getByRole('button', { name: 'Easy' }).click();
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
-  await expect(page).toHaveURL(/r\.forefoot-stack=/);
+  // Easy bounds nothing, so its side rides in the columns alone.
+  await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
 
   await page.getByRole('radio', { name: /All/ }).click();
   // written out in full: the side rides in `cols`, so a plain forefoot table is a verbose link
