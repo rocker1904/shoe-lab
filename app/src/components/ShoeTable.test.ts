@@ -116,6 +116,12 @@ describe('ShoeTable', () => {
     expect(plateCell('trainer').textContent).toBe('Non-carbon plate');
     expect(plateCell('cushy').textContent).toBe('—');
   });
+  // The catalogue's own `plate` test would otherwise answer for the column and render "Yes".
+  it('keeps the derived plate label for a shoe carrying the catalogue plate reading', () => {
+    setup({ shoes: [shoe({ slug: 'plated', plate: 'plated-other', values: { '69': true } })] });
+    expect(screen.getByText('plated').closest('tr')!.querySelectorAll('td')[3]!.textContent)
+      .toBe('Non-carbon plate');
+  });
   it('missing values render as em dash', () => {
     setup();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);

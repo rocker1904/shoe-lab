@@ -23,6 +23,12 @@ describe('ColumnPicker', () => {
     // Choosable as a column, though never rangeable (docs/app.md §Categorical columns).
     expect(screen.getByRole('checkbox', { name: /Tongue gusset/ })).toBeInTheDocument();
   });
+  // The catalogue's `plate` test and the shoe field name one column, and the field already has a
+  // fixed offer, so the categorical pass must not add a second.
+  it('offers plate once, from the fixed fields rather than the catalogue', () => {
+    render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
+    expect(screen.getAllByRole('checkbox', { name: /Plate/ })).toHaveLength(1);
+  });
   it('files ungrouped numeric tests under Other and reflects the selected count', () => {
     render(ColumnPicker, { props: { ...base, columns: ['score', 'weight'], onchange: vi.fn() } });
     expect(screen.getByText('Other')).toBeInTheDocument();

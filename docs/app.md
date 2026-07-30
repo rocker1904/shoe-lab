@@ -564,6 +564,13 @@ name line rather than the value row, for the same reason plate and the release
 date do: the value row stays uniformly numeric
 (docs/app.md §Columns and sorting).
 
+**`plate` is the shoe field's, not the catalogue's.** The catalogue also has a
+`bool` test slugged `plate`, read on two shoes of 450, and one column cannot
+have two sources. `isCategorical` excludes the slug, so the derived field —
+which reads the whole page and says Carbon / Non-carbon plate — answers for the
+cell, the picker offers the column once, and the test's own reading is simply
+never shown. Any future field/test slug collision belongs in the same set.
+
 **The name line keys each entry by its column, never by its text.** Two
 categorical readings saying the same word is ordinary — 265 shoes have no heel
 tab and 187 no gusset, so "None" beside "None" is the common case — and a keyed

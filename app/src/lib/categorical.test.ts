@@ -30,6 +30,12 @@ describe('categoricalValue', () => {
   it('is undefined for a column that names no test at all', () => {
     expect(categoricalValue(shoe({ slug: 'a' }), 'not-a-test', idx)).toBeUndefined();
   });
+
+  // The catalogue carries a `bool` test slugged `plate`, on two shoes of 450. The column of that
+  // name is the derived field, so the reading must not answer for it.
+  it('is undefined for plate, which the shoe field owns', () => {
+    expect(categoricalValue(shoe({ slug: 'a', values: { '69': true } }), 'plate', idx)).toBeUndefined();
+  });
 });
 
 describe('isCategorical and categoricalEntries', () => {
@@ -37,12 +43,13 @@ describe('isCategorical and categoricalEntries', () => {
     expect(isCategorical(idx.bySlug.get('tongue-gusset-type'))).toBe(true);
     expect(isCategorical(idx.bySlug.get('removable-insole'))).toBe(true);
     expect(isCategorical(idx.bySlug.get('heel-stack'))).toBe(false);
+    expect(isCategorical(idx.bySlug.get('plate'))).toBe(false);
     expect(isCategorical(undefined)).toBe(false);
   });
 
   it('offers exactly the categorical tests, carrying their group', () => {
     expect(categoricalEntries(TESTS).map((e) => e.key).sort())
-      .toEqual(['removable-insole', 'tongue-gusset-type']);
+      .toEqual(['heel-tab', 'removable-insole', 'tongue-gusset-type']);
     expect(categoricalEntries(TESTS).every((e) => e.groupId === '3')).toBe(true);
   });
 });
