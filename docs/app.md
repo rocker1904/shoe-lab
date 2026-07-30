@@ -654,9 +654,11 @@ SA ≈ bare ground); energy return is already a true percentage; outsole life is
 rate lasts twice as long — and **capped**, because past a few Dremel-units of life the
 outsole is not what retires the shoe, the midsole packing out is, and that is
 unmeasured; midsole width over stack, because stability is a lever from foot to ground
-and the dimensionless ratio also stops "stability" covertly selecting heavy shoes
-(ρ 0.15 against 0.56 on the raw width); heel counter stiffness off its own five-point
-scale, because a percentile would invent resolution the measurement does not have.
+and the dimensionless ratio also stops "stability" covertly selecting heavy shoes — measured
+against weight over the pool, the term reads ρ −0.05 on heel and −0.08 on forefoot where the
+raw width reads +0.45 and +0.29, and opting in moves the top 30's mean weight by 6 g on heel
+and none on forefoot, both still under the pool mean; heel counter stiffness off its own
+five-point scale, because a percentile would invent resolution the measurement does not have.
 
 **Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
 and never recomputed from the loaded catalogue: the reference, the outsole cap, the

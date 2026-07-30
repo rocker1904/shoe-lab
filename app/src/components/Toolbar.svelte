@@ -55,9 +55,10 @@
   <label class="stability">
     <input type="checkbox" checked={stability} onchange={(e) => onstability(e.currentTarget.checked)} />
     <span>Stability matters to me</span>
-    <!-- Said rather than discovered: midsole width correlates 0.56 with weight and heel counter
-         stiffness 0.44, so opting in genuinely selects heavier shoes (docs/shoe-stories.md §Easy). -->
-    <small>Adds midsole width and heel counter stiffness to the Easy score. Stable shoes tend to be heavier.</small>
+    <!-- Says what the switch adds and nothing more: the width term is a ratio precisely so that
+         opting in does not select heavy shoes, so there is no cost to warn about
+         (docs/app.md §The Easy score). -->
+    <small>Adds midsole width and heel counter stiffness to the Easy score.</small>
   </label>
   <div class="actions">
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
@@ -71,8 +72,9 @@
              padding: var(--s2) var(--s5); background: var(--chrome); border-bottom: 1px solid var(--border); }
   .sep { width: 1px; align-self: stretch; background: var(--divider); }
   .actions { display: flex; align-items: center; gap: var(--s3); margin-left: auto; }
-  /* A grid so the caveat sits under the label rather than beside the box: it is a sentence, and on
-     one line it pushed the actions off the bar's first row at every width below 1200px. */
+  /* A grid so the note sits under the label rather than beside the box: it explains the checkbox
+     rather than standing beside it as a peer, and inline the control measures 538px against the
+     389px it takes stacked. */
   .stability { display: grid; grid-template-columns: auto 1fr; align-items: center;
                gap: 0 var(--s2); font-size: var(--t-sm); cursor: pointer; }
   .stability small { grid-column: 2; font-size: var(--t-xs); color: var(--text-dim); }
@@ -93,9 +95,9 @@
     .sep { display: none; }
     .actions { order: 1; }
     .pace-wrap { order: 2; flex-basis: 100%; }
-    /* Its own line below the stories, measured rather than assumed: the label plus its caveat is
-       wider than the room left beside the side group, and inline it pushed the actions down to a
-       third line — the void this tier exists to eliminate (docs/app.md §Presets). */
+    /* Its own line below the stories: at this tier line one is the side group plus the actions, and
+       the 389px control does not fit beside them — leaving it to wrap on its own put the actions on
+       a third line and left the void this tier exists to eliminate (docs/app.md §Presets). */
     .stability { order: 3; flex-basis: 100%; }
   }
   @media (max-width: 800px) {

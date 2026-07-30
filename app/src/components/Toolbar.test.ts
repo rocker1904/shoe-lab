@@ -123,8 +123,11 @@ describe('Toolbar stability preference', () => {
     expect(got).toBe(true);
   });
 
-  it('says out loud that stable shoes tend to be heavier', () => {
+  it('says what the preference adds, and makes no claim about weight', () => {
+    // The width term is a ratio so that stability does not select heavy shoes, so a weight warning
+    // here would be false (docs/app.md §The Easy score).
     render(Toolbar, { props: { ...props } });
-    expect(screen.getByText(/tend to be heavier/i)).toBeInTheDocument();
+    expect(screen.getByText(/adds midsole width and heel counter stiffness/i)).toBeInTheDocument();
+    expect(screen.queryByText(/heavier/i)).not.toBeInTheDocument();
   });
 });

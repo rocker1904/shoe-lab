@@ -166,9 +166,16 @@ both directions: Fresh Foam X Evoz v4 gains 130 places and Cloudrunner 2 gains 1
 tall-narrow speed trainers fall — Mach X 2 from 25th to 189th, Sonicblast from 50th to 209th,
 Adizero Boston 12 from 87th to 220th.
 
-**Honest caveat for the receipt:** midsole width correlates 0.56 with weight and heel counter
-stiffness 0.44, so turning stability on selects heavier shoes. Defensible — that is what stable
-trainers are — but say it rather than surprise someone.
+**No caveat is needed, superseding the one this section used to carry.** An earlier draft told the
+implementation to warn the runner that stability selects heavier shoes, citing a 0.56 correlation
+between midsole width and weight and 0.44 for heel counter stiffness. Those are facts about **raw**
+midsole width, which the score does not use. Measured over the plate-filtered pool (Spearman against
+weight): the `width / stack` term the score actually reads is **−0.054 heel and −0.077 forefoot** —
+the ratio removes the confound, which is why it was chosen — against **+0.445 and +0.294** for the
+raw width. The heel counter term carries a mild one at **+0.280**. Net effect on a shortlist: the
+top 30's mean weight moves **+6.1 g on heel and +0.1 g on forefoot**, both still below the 269.8 g
+pool mean. Too small to warn about, so the toggle says what it adds and nothing more. The same
+measurement supersedes §4's `rho(ratio, weight) = 0.15` against `rho(raw width, weight) = 0.56`.
 
 ### The general metric picker is rejected
 

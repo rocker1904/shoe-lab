@@ -162,9 +162,8 @@ this section owns what each term is *for*.
   shoes take over both ends of the list.
 - **Stability is opt-in, not assumed.** It matters to some runners a great deal and to
   others not at all, and there is no fleet-wide answer, so it is the runner's own
-  switch. Say the cost out loud: midsole width correlates 0.56 with weight and heel
-  counter stiffness 0.44, so turning it on selects heavier shoes. That is what stable
-  trainers *are*, but it should not be a surprise.
+  switch. Turning it on does not quietly select heavy shoes — the width term is a ratio
+  for exactly that reason (docs/app.md §The Easy score).
 
 **Flexibility, torsional rigidity and weight are deliberately absent.** Flexibility
 correlates +0.58 with heel stack in this pool, so rewarding it pulls *against* the
