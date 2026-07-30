@@ -543,6 +543,31 @@ is ordinal: `none` 0, `plated-other` 1, `carbon` 2, so descending reads "most
 plate first" like every other column. `plated-other` reads **Non-carbon
 plate** everywhere a human sees it — the table cell and the filter box.
 
+## Categorical columns
+
+`option` and `bool` readings name a choice rather than measure a quantity.
+`lib/categorical.ts` owns them: `categoricalValue` renders one through the
+catalogue's declared labels, falling back to the raw slug so an upstream
+addition reads as an unfamiliar word rather than as no reading at all.
+
+They are **choosable as columns but never rangeable**, which is why the picker
+reads them from `categoricalEntries` rather than `metricEntries` — the
+Add-filter dialog reads `metricEntries` too, and a range over a categorical test
+would empty the fleet in one click (docs/app.md §Filters). They also carry no
+units and no direction arrow: there is no better end to point at.
+
+Four readings were already in the dataset and unreachable before this existed —
+the two option tests plus `removable-insole` and `reflective-elements`, which
+are `bool`. Sorting orders them alphabetically by the label a reader sees, not
+by the stored slug, so the order matches the column. On a phone they join the
+name line rather than the value row, for the same reason plate and the release
+date do: the value row stays uniformly numeric
+(docs/app.md §Columns and sorting).
+
+**There is no categorical filter yet.** A set-membership facet is the obvious
+next step and is a backlog item, not an oversight — the column is useful for
+comparison without it.
+
 ## Number display
 
 `displayNumber` rounds to two decimals at the cell. The dataset stores every

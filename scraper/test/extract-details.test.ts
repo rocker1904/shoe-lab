@@ -192,3 +192,24 @@ describe('extractDetails categorySlug', () => {
     }
   });
 });
+
+describe('option-typed readings', () => {
+  it('takes option readings from the page and leaves every other type to the metrics API', () => {
+    const rec = extractDetails({
+      product: { id: 1, name: 'Shoe' },
+      lab_tests: { tests: {
+        6: { id: 6, type: 'float', value: '40' },
+        39: { id: 39, type: 'option', value: 'both-sides-semi' },
+        40: { id: 40, type: 'option', value: 'none' },
+        23: { id: 23, type: 'text', value: 'US 9' },
+        50: { id: 50, type: 'option' },
+        51: { id: 51, type: 'option', value: '' },
+      } },
+    }, 'shoe', 'T');
+    expect(rec.optionValues).toEqual({ 39: 'both-sides-semi', 40: 'none' });
+  });
+
+  it('is an empty object when the page carries no option readings', () => {
+    expect(extractDetails({ product: { id: 1, name: 'Shoe' } }, 'shoe', 'T').optionValues).toEqual({});
+  });
+});

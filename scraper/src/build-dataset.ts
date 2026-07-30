@@ -105,7 +105,10 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
       discontinued: det?.discontinued ?? false,
       plate: derivePlate(slug, features, det?.hasPlateSection === true),
       imageUrl: det?.imageUrl ?? null,
-      values: m.values,
+      // Option readings come from the page rather than the metrics API, so they age with the
+      // details record instead of refreshing weekly — the same trade `msrpGbp` already makes
+      // (docs/app.md §Resolved price). Metrics win any collision.
+      values: { ...det?.optionValues, ...m.values },
       details: det ? {
         pros: det.pros, cons: det.cons, intro: det.intro,
         whoShouldBuy: det.whoShouldBuy, whoShouldNotBuy: det.whoShouldNotBuy, features: det.features,

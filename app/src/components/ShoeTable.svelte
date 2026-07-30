@@ -4,6 +4,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { categoricalValue } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
@@ -45,6 +46,8 @@
   }
   function cellText(s: Shoe, col: string): string {
     if (col === 'releasedAt') return displayReleaseDate(s.releasedAt, s.releaseDateSource);
+    const cat = categoricalValue(s, col, idx);
+    if (cat !== undefined) return cat;
     if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate';
     const resolved = scores.get(col);
     if (resolved) {
@@ -78,7 +81,7 @@
     <tr>
       <th class="name">Shoe</th>
       {#each view.columns as col (col)}
-        <th class:fig={isFigure(col)}
+        <th class:fig={isFigure(col, idx.bySlug.get(col))}
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
             <!-- A non-breaking space before the arrow: the name may now wrap, and an arrow alone
@@ -115,7 +118,7 @@
         </td>
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
-          <td class="num" class:fig={isFigure(col)} style:--p={p ?? 0} class:tinted={p !== undefined}
+          <td class="num" class:fig={isFigure(col, idx.bySlug.get(col))} style:--p={p ?? 0} class:tinted={p !== undefined}
               class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
       </tr>

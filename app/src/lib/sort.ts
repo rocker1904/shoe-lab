@@ -1,4 +1,5 @@
 import type { Plate, Shoe } from '../../../shared/types.js';
+import { categoricalValue } from './categorical';
 import { numericValue, type TestIndex } from './dataset';
 import type { ScoreColumns } from './score';
 
@@ -18,7 +19,8 @@ function keyValue(
   // the column it fills, which is what makes a further score an entry rather than a branch.
   const resolved = scores?.get(key);
   if (resolved) return resolved.get(s.slug);
-  return numericValue(s, key, idx);
+  // Alphabetical by the label rather than the stored slug, so the order matches the column.
+  return numericValue(s, key, idx) ?? categoricalValue(s, key, idx)?.toLowerCase();
 }
 
 export function sortShoes(

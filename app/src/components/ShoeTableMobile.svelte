@@ -4,6 +4,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { categoricalValue } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel, shortLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
@@ -29,7 +30,7 @@
 
   /** The value row is only ever numeric: it is what keeps every chip the same box under a header
    *  that labels it (docs/app.md §Columns and sorting). */
-  const cols = $derived(view.columns.filter(isFigure));
+  const cols = $derived(view.columns.filter((c) => isFigure(c, idx.bySlug.get(c))));
   // A card whose value row holds nothing still needs a cell to span, so the colspan never hits 0.
   const span = $derived(Math.max(cols.length, 1));
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
@@ -65,6 +66,12 @@
     }
     if (view.columns.includes('plate') && s.plate !== 'none') {
       out.push(s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate');
+    }
+    // Categorical readings hold words too, so they belong on this line rather than in the numeric
+    // value row (docs/app.md §Categorical columns). A shoe with no reading contributes nothing.
+    for (const col of view.columns) {
+      const cat = categoricalValue(s, col, idx);
+      if (cat !== undefined) out.push(cat);
     }
     return out;
   }

@@ -1,4 +1,5 @@
 import type { Shoe } from '../../../shared/types.js';
+import { categoricalValue } from './categorical';
 import { numericValue, type TestIndex } from './dataset';
 
 export interface Coverage { n: number; total: number; fraction: number }
@@ -8,9 +9,11 @@ export interface Coverage { n: number; total: number; fraction: number }
 // (docs/app.md §Coverage). Measured against the current population, never the whole fleet.
 export const SPARSE_BELOW = 0.5;
 
-/** Counts through `numericValue`, so an `option`-typed test reads as no coverage rather than full coverage. */
+/** Counts a reading of either shape, so a categorical column gets a real bar in the picker
+ *  rather than a permanent 0% (docs/app.md §Categorical columns). */
 export function coverageOf(shoes: Shoe[], key: string, idx: TestIndex): Coverage {
-  const n = shoes.filter((s) => numericValue(s, key, idx) !== undefined).length;
+  const n = shoes.filter((s) => numericValue(s, key, idx) !== undefined
+    || categoricalValue(s, key, idx) !== undefined).length;
   return { n, total: shoes.length, fraction: shoes.length ? n / shoes.length : 0 };
 }
 

@@ -72,3 +72,21 @@ describe('extractTestGroups', () => {
     expect(extractTestGroups({ lab_tests: { groups: { '1': { tests: 'not-an-array' } } } })).toEqual({});
   });
 });
+
+describe('declared option choices', () => {
+  const page = (tests: Record<string, unknown>) => ({ lab_tests: { tests, groups: {} } });
+  const many = Object.fromEntries(Array.from({ length: 50 }, (_, i) => [i + 100, { id: i + 100, slug: `t${i}`, name: `T${i}`, type: 'float' }]));
+
+  it('keeps value and English name for an option test, dropping weights and translations', () => {
+    const t = extractTestCatalogue(page({ ...many, 39: { id: 39, slug: 'g', name: 'G', type: 'option',
+      config: { options: [{ value: 'none', name: 'None' }], weights: { 1: 0 }, translations: { es: {} } } } }), 's', 'T');
+    expect(t.tests.find((x) => x.id === 39)!.options).toEqual([{ value: 'none', name: 'None' }]);
+  });
+
+  it('leaves options null on a non-option test, and on an option test that declares none', () => {
+    const t = extractTestCatalogue(page({ ...many, 6: { id: 6, slug: 'h', name: 'H', type: 'float', config: { options: [{ value: 'x', name: 'X' }] } },
+      39: { id: 39, slug: 'g', name: 'G', type: 'option', config: {} } }), 's', 'T');
+    expect(t.tests.find((x) => x.id === 6)!.options).toBeNull();
+    expect(t.tests.find((x) => x.id === 39)!.options).toBeNull();
+  });
+});

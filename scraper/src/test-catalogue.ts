@@ -3,6 +3,19 @@ import { PayloadError } from './page-payload.js';
 
 const numOrNull = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
+/**
+ * Only `option` tests declare choices, and only their English labels are kept — `config` also
+ * carries per-locale translations and scoring weights, neither of which the app reads.
+ */
+function optionsOf(t: any): { value: string; name: string }[] | null {
+  const raw = t?.config?.options;
+  if (String(t?.type) !== 'option' || !Array.isArray(raw)) return null;
+  const out = raw
+    .filter((o: any) => typeof o?.value === 'string' && o.value !== '' && typeof o?.name === 'string')
+    .map((o: any) => ({ value: String(o.value), name: String(o.name) }));
+  return out.length > 0 ? out : null;
+}
+
 export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: string, scrapedAt: string): TestsFile {
   const lt = pageData?.lab_tests;
   if (!lt?.tests || typeof lt.tests !== 'object') throw new PayloadError('lab_tests.tests missing');
@@ -26,6 +39,7 @@ export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: st
       updateId: numOrNull(t.update_id),
       primaryTestId: numOrNull(t.primary_test_id),
       secondaryTestIds: Array.isArray(t.secondary_test_ids) ? t.secondary_test_ids.filter((x: unknown) => typeof x === 'number') : [],
+      options: optionsOf(t),
     }))
     .sort((a, b) => a.id - b.id);
   if (tests.length < 50) throw new PayloadError(`only ${tests.length} tests found (<50)`);

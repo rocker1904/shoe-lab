@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { LabTest, Shoe } from '../../../shared/types.js';
+  import { categoricalEntries } from '../lib/categorical';
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
   import { columnLabel } from '../lib/labels';
@@ -36,7 +37,10 @@
   };
   const grouped = $derived.by(() => {
     const m = new Map<string, Offer[]>();
-    for (const e of metricEntries(tests)) {
+    // Categorical tests are choosable columns but never rangeable, so they are offered here and
+    // deliberately not through `metricEntries`, which the filter dialog also reads
+    // (docs/app.md §Categorical columns).
+    for (const e of [...metricEntries(tests), ...categoricalEntries(tests).map((c) => ({ kind: 'single' as const, key: c.key, label: c.label, units: '', groupId: c.groupId }))]) {
       const g = (e.groupId && groups[e.groupId]) || 'Other';
       m.set(g, [...(m.get(g) ?? []), ...offersOf(e)]);
     }

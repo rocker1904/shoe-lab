@@ -3,7 +3,7 @@ import type { LabTest, Shoe } from '../../../shared/types.js';
 export function labTest(over: Partial<LabTest> & Pick<LabTest, 'id' | 'slug' | 'name'>): LabTest {
   return {
     type: 'float', units: '', groupId: null, chartLabel: null, isNew: false,
-    previousId: null, updateId: null, primaryTestId: null, secondaryTestIds: [],
+    previousId: null, updateId: null, primaryTestId: null, secondaryTestIds: [], options: null,
     ...over,
   };
 }
@@ -18,7 +18,9 @@ export const TESTS: LabTest[] = [
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', type: 'percent', groupId: null, chartLabel: 'Energy return', primaryTestId: 65 }),
   labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', groupId: '3', updateId: 70 }),
   labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', groupId: '3', previousId: 11 }),
-  labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option' }),
+  labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', groupId: '3',
+    options: [{ value: 'none', name: 'None' }, { value: 'both-sides-semi', name: 'Both sides (semi)' }] }),
+  labTest({ id: 41, slug: 'removable-insole', name: 'Removable insole', type: 'bool', groupId: '3' }),
   // A pair carrying no method year on either side and sharing both name and units — the case the
   // generation label cannot derive from a slug (docs/scraping.md §Test lineage).
   labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', updateId: 55 }),

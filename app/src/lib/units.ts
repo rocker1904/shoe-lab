@@ -1,4 +1,5 @@
 import type { LabTest } from '../../../shared/types.js';
+import { isCategorical } from './categorical';
 import { directionOf } from './direction';
 
 const ARROW = { higher: '↑', lower: '↓', neutral: '' } as const;
@@ -18,6 +19,7 @@ function unitsOf(key: string, test: LabTest | undefined): string {
   if (key === 'msrpGbp') return '£';
   if (key === 'score') return '/100';
   if (!test) return '';
+  if (isCategorical(test)) return '';
   if (test.type === 'percent') return '%';
   if (test.type === 'score' || test.type === 'rating') return '/5';
   return test.type === 'float' ? test.units : '';
@@ -25,6 +27,8 @@ function unitsOf(key: string, test: LabTest | undefined): string {
 
 /** The second header line: units, then the direction arrow a neutral metric does not get. */
 export function headerUnits(key: string, test: LabTest | undefined): string {
+  // A categorical column has no direction either: there is no better end to point at.
+  if (isCategorical(test)) return '';
   return [unitsOf(key, test), ARROW[directionOf(key)]].filter(Boolean).join(' ');
 }
 
@@ -34,6 +38,6 @@ export function headerUnits(key: string, test: LabTest | undefined): string {
  * and the value row stays uniformly numeric (docs/app.md §Columns and sorting). Shared, so the
  * two renderings cannot disagree about which columns are figures.
  */
-export function isFigure(key: string): boolean {
-  return key !== 'plate' && key !== 'releasedAt';
+export function isFigure(key: string, test?: LabTest): boolean {
+  return key !== 'plate' && key !== 'releasedAt' && !isCategorical(test);
 }

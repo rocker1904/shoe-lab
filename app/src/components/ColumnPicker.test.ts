@@ -17,10 +17,11 @@ describe('ColumnPicker', () => {
     await fireEvent.click(screen.getByRole('checkbox', { name: /^RunRepeat Score/ }));
     expect(onchange).toHaveBeenLastCalledWith([]);
   });
-  it('groups numeric tests and excludes option-typed ones', () => {
+  it('groups numeric tests and offers categorical ones alongside them', () => {
     render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
     expect(screen.getByText('Cushioning')).toBeInTheDocument();
-    expect(screen.queryByText('Tongue gusset')).not.toBeInTheDocument();
+    // Choosable as a column, though never rangeable (docs/app.md §Categorical columns).
+    expect(screen.getByRole('checkbox', { name: /Tongue gusset/ })).toBeInTheDocument();
   });
   it('files ungrouped numeric tests under Other and reflects the selected count', () => {
     render(ColumnPicker, { props: { ...base, columns: ['score', 'weight'], onchange: vi.fn() } });

@@ -320,10 +320,39 @@ by itself the moment RunRepeat runs it again — no list to maintain, no
 non-running shoes emptied `lug-depth` and `insulation`, which only hiking boots
 ever carried.
 
-Two of the dropped tests are not empty upstream: `tongue-gusset-type` and
-`heel-tab` are populated on nearly every page but are `option`-typed, so
-§Which tests are fetched never requests them. They are recoverable from the
-details crawl at zero request cost if they are ever wanted (BACKLOG.md).
+## Option-typed readings
+
+`tongue-gusset-type` and `heel-tab` are populated on nearly every page but are
+`option`-typed, so §Which tests are fetched never requests them. They come from
+the **details crawl instead**, which already holds the page: every shoe page
+carries the whole catalogue with that shoe's reading on each test, so a
+`--from-corpus` re-extract backfills the fleet at zero request cost.
+
+Only `option` readings are taken there. Everything numeric already arrives via
+the metrics API, refreshed weekly, and taking it from the page too would let a
+stale page value shadow a fresher API one — the two disagree already, mildly:
+`size-rating` differs in the last decimal on about 19 of 12,700 values, the page
+being a rounding of the same source.
+
+`DetailRecord.optionValues` keys them by test id as string, and `build:dataset`
+merges them under the metrics values, which win any collision. They then reach
+`tests[]` on their own, because §Empty tests publishes any test with a reading
+anywhere.
+
+**The freshness contract differs from their neighbours.** A details record is
+crawled once and never refreshed, so an option reading ages with the record
+while every numeric value beside it in `Shoe.values` refreshes weekly. `msrpGbp`
+already makes that trade and docs/app.md §Resolved price is the precedent for
+saying so rather than hiding it.
+
+Readings store the option **slug** (`both-sides-semi`), so `LabTest.options`
+carries the declared choices and their English names — without them the app
+would print the slug. Only `value` and `name` are kept; `config` also holds
+per-locale translations and scoring weights, which nothing reads.
+
+The other `option` and `text` tests really are empty: `length`,
+`leather-suede-quality`, `tested-size` and `outsole-design` return nothing on any
+of the 450 shoes, so they stay dropped.
 
 ## Model lineage
 

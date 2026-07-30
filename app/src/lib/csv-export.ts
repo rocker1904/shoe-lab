@@ -1,4 +1,5 @@
 import type { Shoe } from '../../../shared/types.js';
+import { categoricalValue } from './categorical';
 import { numericValue, reviewUrl, type TestIndex } from './dataset';
 import type { ScoreColumns } from './score';
 
@@ -18,6 +19,8 @@ function cell(shoe: Shoe, col: string, idx: TestIndex, scores?: ScoreColumns): u
   if (col === 'releaseDateSource') return shoe.releaseDateSource;
   if (col === 'name') return shoe.name;
   if (col === 'brand') return shoe.brand;
+  const cat = categoricalValue(shoe, col, idx);
+  if (cat !== undefined) return cat;
   const n = numericValue(shoe, col, idx);
   if (n !== undefined) return n;
   const test = idx.bySlug.get(col);

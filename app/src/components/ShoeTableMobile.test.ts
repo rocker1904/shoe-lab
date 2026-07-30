@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
 import { defaultView, type ViewState } from '../lib/urlstate';
-import { FLEET, TESTS } from '../lib/test-fixtures';
+import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { ScoreColumns } from '../lib/score';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
@@ -79,5 +79,18 @@ describe('ShoeTableMobile', () => {
   it('missing values render as em dash', () => {
     setup({ shoes: [FLEET[4]!], view: { columns: ['heel-stack'] } });
     expect(screen.getByText('—')).toBeInTheDocument();
+  });
+});
+
+describe('ShoeTableMobile categorical columns', () => {
+  it('puts a categorical reading on the name line, not the numeric value row', () => {
+    setup({ view: { columns: ['tongue-gusset-type', 'heel-stack'] },
+            shoes: [shoe({ slug: 'gusseted', values: { '39': 'both-sides-semi', '6': 40 } })] });
+    const strip = screen.getByText('gusseted').closest('tr')!;
+    expect(strip.textContent).toContain('Both sides (semi)');
+  });
+  it('contributes nothing for a shoe with no reading', () => {
+    setup({ view: { columns: ['tongue-gusset-type'] }, shoes: [shoe({ slug: 'bare', values: {} })] });
+    expect(screen.getByText('bare').closest('tr')!.textContent).not.toContain('undefined');
   });
 });

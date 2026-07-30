@@ -7,7 +7,7 @@ export function labTest(over: Partial<LabTest> & Pick<LabTest, 'id' | 'slug'>): 
   return {
     name: over.slug, type: 'float', units: '', groupId: null,
     chartLabel: null, isNew: false, previousId: null, updateId: null,
-    primaryTestId: null, secondaryTestIds: [],
+    primaryTestId: null, secondaryTestIds: [], options: null,
     ...over,
   };
 }
@@ -19,7 +19,7 @@ export function detailRecord(over: Partial<DetailRecord> = {}): DetailRecord {
     discontinued: false, imageUrl: null, runrepeatUrl: 'https://runrepeat.com/uk/shoe',
     features: [], pros: [], cons: [], intro: '', hasPlateSection: false,
     whoShouldBuy: null, whoShouldNotBuy: null, categorySlug: null,
-    facts: {}, previousVersion: null, latestVersion: null,
+    facts: {}, optionValues: {}, previousVersion: null, latestVersion: null,
     ...over,
   };
 }

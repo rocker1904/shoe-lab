@@ -59,6 +59,18 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     s?.section_id === 'plate'
     || (Array.isArray(s?.sections) && s.sections.some((n: any) => n?.section_id === 'plate')));
 
+  // The page carries the whole catalogue with this shoe's reading on each test. Only `option`
+  // ones are taken: everything numeric already arrives via the metrics API, fresher, and mixing
+  // the two sources would let a stale page value shadow a weekly one
+  // (docs/scraping.md §Option-typed readings).
+  const optionValues: Record<string, string> = {};
+  for (const t of Object.values<any>(pageData?.lab_tests?.tests ?? {})) {
+    if (String(t?.type) !== 'option' || typeof t?.id !== 'number') continue;
+    const v = t.value;
+    if (typeof v !== 'string' || v === '') continue;
+    optionValues[String(t.id)] = v;
+  }
+
   // Anything but a non-empty string is "unknown", never a category in its own right:
   // build-dataset drops foreign categories, so a coerced junk value would drop a shoe.
   const category = pageData?.category?.slug;
@@ -86,6 +98,7 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     whoShouldNotBuy: findSection(/who should not buy/i),
     categorySlug: typeof category === 'string' && category !== '' ? category : null,
     facts,
+    optionValues,
     previousVersion: versionRef(p.previous_version),
     latestVersion: versionRef(pageData?.last_version),
   };
