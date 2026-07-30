@@ -368,10 +368,15 @@ prints the year alone unless `preciseReleaseDate` is set. `sortShoes` takes the
 resolved score lookup as an optional fourth argument and consults it **by column
 key**, because the score keys are the ones `numericValue` cannot answer for.
 
-**Easy shows the score and not toebox width.** Six numeric columns is the phone
-bound above, adding the score makes seven, and toebox width is the one column no
-scoring term reads — fit is the runner's own final filter rather than something a
-score can speak to (docs/shoe-stories.md §Easy). No story shows it now.
+**Easy shows the score and the terms behind it.** Six numeric columns is the phone
+bound above, and Easy spends them on the score, shock absorption, energy return,
+price, weight and the RunRepeat score. The two it gives up are the two the score
+does not read: toebox width, because fit is the runner's own final filter rather
+than something a score can speak to (docs/shoe-stories.md §Easy) — no story shows
+it now — and stack, because the score reads shock absorption rather than the
+millimetres behind it, so a shown stack invites a hand ranking the story argues
+against. **Outsole durability is the one term not shown**, for want of a seventh
+slot.
 
 ### Table presentation
 

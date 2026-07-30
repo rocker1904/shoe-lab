@@ -130,6 +130,17 @@ describe('easy', () => {
     }
   });
 
+  it('shows the terms it scores on rather than a metric it does not read', () => {
+    // Energy return is a scoring term and was hidden; stack is not one and was shown. The sixth
+    // numeric slot belongs to the term (docs/app.md §Columns and sorting).
+    for (const strike of STRIKES) {
+      const v = applyPreset('easy', FLEET, idx, strike, false);
+      expect(v.columns, strike).toContain(sideKey('Energy return', strike));
+      expect(v.columns, strike).toContain(sideKey('Shock absorption', strike));
+      expect(v.columns, strike).not.toContain(sideKey('Stack', strike));
+    }
+  });
+
   it('names a side through its columns, so the side mark still derives', () => {
     for (const strike of STRIKES) {
       expect(sideOf(applyPreset('easy', FLEET, idx, strike, false))).toBe(strike);
@@ -162,7 +173,7 @@ describe('the runner layer', () => {
   it('bounds, sorts by and shows the half the strike names', () => {
     for (const strike of STRIKES) {
       // Easy bounds nothing, so its side shows in the columns alone.
-      expect(applyPreset('easy', FLEET, idx, strike, false).columns).toContain(sideKey('Stack', strike));
+      expect(applyPreset('easy', FLEET, idx, strike, false).columns).toContain(sideKey('Energy return', strike));
 
       for (const id of ['tempo', 'race']) {
         const v = applyPreset(id, FLEET, idx, strike, false);

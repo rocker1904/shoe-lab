@@ -21,12 +21,13 @@ export const RACE_MAX_WEIGHT = 230;
  *  number meaning two different things, which is exactly what a side-swappable bound must not do. */
 export const RACE_ENERGY_RETURN_PERCENTILE = 0.85;
 
-/** Six numeric columns is the phone bound (docs/app.md §Columns and sorting), so the score displaces
- *  toebox width: it is the one column no scoring term reads, and fit is the runner's own final
- *  filter rather than something the score can speak to. */
+/** Six numeric columns is the phone bound (docs/app.md §Columns and sorting), and Easy spends them
+ *  on the score and the terms behind it. Toebox width and stack are the two the story gives up:
+ *  neither is a term, and fit is the runner's own final filter rather than something a score speaks
+ *  to. Outsole durability is the term left out, for want of a seventh slot. */
 const easyColumns = (strike: Side) =>
   ['releasedAt', EASY_SCORE_KEYS[strike], 'score', 'msrpGbp', sideKey('Shock absorption', strike),
-    sideKey('Stack', strike), 'weight', 'plate'];
+    sideKey('Energy return', strike), 'weight', 'plate'];
 const fastColumns = (strike: Side) =>
   ['releasedAt', 'score', 'msrpGbp', sideKey('Energy return', strike), 'weight', 'plate'];
 

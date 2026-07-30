@@ -423,8 +423,8 @@ describe('Page side toggle', () => {
     expect(markedStory()).toEqual(['Easy']);
     settle();
     // Easy bounds nothing, so the re-derivation shows in its columns rather than in a bound.
-    expect(location.search).toContain('forefoot-stack');
-    expect(location.search).not.toContain('heel-stack');
+    expect(location.search).toContain('energy-return-forefoot');
+    expect(location.search).not.toContain('energy-return-heel');
 
     await fireEvent.click(screen.getByRole('radio', { name: 'Heel' }));
     settle();
