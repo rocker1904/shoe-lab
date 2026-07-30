@@ -13,8 +13,18 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
 export function displayReleaseDate(releasedAt: string | null, source: ReleaseDateSource | null): string {
   if (!releasedAt) return '—';
   if (source === 'listing') return releasedAt.slice(0, 4);
-  const month = MONTHS[Number(releasedAt.slice(5, 7)) - 1];
-  return month === undefined ? releasedAt.slice(0, 4) : `${month} ${releasedAt.slice(0, 4)}`;
+  return monthLabel(releasedAt);
+}
+
+/**
+ * `March 2024` from either bound shape, degrading to the bare year on a month it cannot name.
+ * Shared with the month picker's trigger so one `MONTHS` array serves both, rather than the
+ * picker growing a second copy that could drift from the column beside it
+ * (docs/app.md §Released after is month-granular).
+ */
+export function monthLabel(iso: string): string {
+  const month = MONTHS[Number(iso.slice(5, 7)) - 1];
+  return month === undefined ? iso.slice(0, 4) : `${month} ${iso.slice(0, 4)}`;
 }
 
 /**

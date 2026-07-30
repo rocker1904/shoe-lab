@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { displayReleaseDate, startOfMonth } from './release-date';
+import { displayReleaseDate, monthLabel, startOfMonth } from './release-date';
+
+describe('monthLabel', () => {
+  it('names the month behind a bound, which is what the picker puts on its trigger', () => {
+    expect(monthLabel('2024-07-01')).toBe('July 2024');
+    expect(monthLabel('2024-01')).toBe('January 2024');
+  });
+
+  it('falls back to the year rather than throwing on a month out of range', () => {
+    expect(monthLabel('2024-13-01')).toBe('2024');
+  });
+});
 
 describe('displayReleaseDate', () => {
   it('shows month and year for a precise page date, never the day', () => {

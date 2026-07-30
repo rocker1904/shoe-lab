@@ -676,10 +676,49 @@ because that export has a fixed header.
 
 ## Released after is month-granular
 
-The control is a **month** input, and every bound is stored as the first of that
-month. The dataset is month-precision at best — only 24 of 450 shoes could
-supply a day (docs/scraping.md §Release-date provenance) — so a day picker would
-offer a bound the data cannot honour.
+Every bound is stored as the first of a month. The dataset is month-precision
+at best — only 24 of 450 shoes could supply a day
+(docs/scraping.md §Release-date provenance) — so a day picker would offer a
+bound the data cannot honour.
+
+**The control is `MonthPicker.svelte`, not `input type="month"`.** Firefox and
+WebKit implement none of that type: both reflect it back as `text`, so what
+Chromium drew as a picker was a bare box in the other two, with no picker, no
+format hint and no validation. Worse than cosmetic — `startOfMonth` is
+`iso.slice(0, 7) + '-01'`, so a typed "July 2024" became the bound
+`"July 20-01"` and filtered wrongly in silence. Only someone who knew to type
+`2024-07` got a correct answer, and a Chromium-only e2e suite reported it
+working throughout.
+
+The replacement is a trigger reading `July 2024` — or `Any month` — over a
+popover holding a `‹ 2024 ›` year stepper and a `role="radiogroup"` month grid,
+arrow-keyed by the same `lib/roving.ts` action the four filter radiogroups use.
+The stepper and the grid are both bounded by the fleet's own first and last
+release dates, derived from the loaded shoes: this is an affordance rather than
+a score constant, so docs/decisions.md §Frozen scores and live thresholds does
+not apply, and the brand list beside it is derived the same way. Months with no
+shoes *inside* that span stay enabled — for an "after" bound an empty month is
+still a meaningful cut, and 8 shoes span 2015–2020, so disabling by coverage
+would grey out most of the list and read as broken.
+
+The panel is `position: absolute` in the sidebar rather than portalled to
+`<body>` like the Add-filter dialog (§Stacking order): it is the width of the
+column, so it never reaches the table, and the section hangs near the top of
+the sidebar's scroll content, so it is never clipped vertically. It is sized
+`width: 100%` with `border-box` because the sidebar's `overflow-y` makes
+`overflow-x` compute to `auto` — a fixed 15rem panel lost its fourth column and
+half the next-year control to that clip, measured rather than reasoned.
+
+Two behaviours are load-bearing and easy to break. The displayed year is state
+of its own, not the bound's year, so stepping can leave the bound and return
+without emitting. And the year is **clamped in the step handler**, not only by
+the buttons' `disabled`: a guard living in markup is one a stray click walks
+past, and disabling a focused stepper drops focus to `<body>`, which arrives at
+`focusout` as a null `relatedTarget` — closing on that would make the last year
+unreachable, so a null is explicitly not treated as leaving.
+
+Firefox and WebKit run this filter in CI for exactly this reason
+(docs/operations.md §The e2e run needs three browsers).
 
 `startOfMonth` in `lib/release-date.ts` is the one normalisation, applied at
 three edges: the input, the 1y/2y/3y chips, and `parseView`. It exists because

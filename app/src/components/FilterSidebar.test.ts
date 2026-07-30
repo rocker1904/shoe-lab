@@ -143,15 +143,28 @@ describe('FilterSidebar text and toggle controls', () => {
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
 
-  it('emits the released-after month as the first of that month, and undefined once cleared', async () => {
+  /**
+   * Not `input type="month"`: Firefox and WebKit implement none of it and reflect the type back as
+   * `text`, so the control was a bare box in both and free text reached `startOfMonth`, which
+   * turned "July 2024" into the bound "July 20-01" (docs/app.md §Released after is month-granular).
+   */
+  it('emits the released-after month as the first of that month, from a picker not a month input', async () => {
     const onchange = setup();
-    const date = screen.getByLabelText('Released after');
-    expect(date).toHaveAttribute('type', 'month');
+    expect(document.querySelector('input[type="month"]')).toBeNull();
 
-    await fireEvent.input(date, { target: { value: '2024-03' } });
-    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-03-01');
+    await open(screen.getByRole('button', { name: /Released after/ }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Previous year' }));
+    await fireEvent.click(screen.getByRole('radio', { name: 'March' }));
+    const year = new Date().getFullYear() - 1;
+    expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(`${year}-03-01`);
+  });
 
-    await fireEvent.input(date, { target: { value: '' } });
+  it('clears the released-after bound from the Any chip, which is the only control that can', async () => {
+    const view = defaultView();
+    view.filters.releasedAfter = '2024-03-01';
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Any' })[0]!);
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });

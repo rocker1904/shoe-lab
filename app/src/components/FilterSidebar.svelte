@@ -11,6 +11,7 @@
   import BrandFilter from './BrandFilter.svelte';
   import DiscontinuedFilter from './DiscontinuedFilter.svelte';
   import MetricRow from './MetricRow.svelte';
+  import MonthPicker from './MonthPicker.svelte';
   import PlateFilter from './PlateFilter.svelte';
   import RangeFilter from './RangeFilter.svelte';
 
@@ -103,6 +104,19 @@
   }));
   let adding = $state(false);
 
+  /**
+   * The picker offers only months the fleet actually spans. Derived from the loaded shoes rather
+   * than frozen: this is an affordance, not a score constant, so
+   * docs/decisions.md §Frozen scores and live thresholds does not apply — the brand list and every
+   * histogram beside it are derived the same way. The fallback covers a fleet with no dated shoe
+   * at all, where a picker offering nothing would be worse than one offering this year.
+   */
+  const fleetRange = $derived.by(() => {
+    const dated = data.shoes.map((s) => s.releasedAt).filter((d): d is string => !!d).sort();
+    const thisYear = `${new Date().getFullYear()}-01-01`;
+    return { min: dated[0] ?? thisYear, max: dated.at(-1) ?? thisYear };
+  });
+
   /** The readings themselves: the row trims its own axis to p2–p98 and snaps a drag to values that
    *  exist, neither of which bucket counts can supply (docs/app.md §Filters). */
   const valuesFor = (key: string) =>
@@ -187,9 +201,11 @@
   <section>
     <h3>Released after</h3>
     <!-- Month, not date: the dataset is month-precision at best, so a day picker would offer a
-         bound the data cannot honour (docs/app.md §Released after is month-granular). -->
-    <input type="month" aria-label="Released after" value={view.filters.releasedAfter?.slice(0, 7) ?? ''}
-           oninput={(e) => patch((v) => { v.filters.releasedAfter = e.currentTarget.value ? startOfMonth(e.currentTarget.value) : undefined; })} />
+         bound the data cannot honour. Built rather than native, because Firefox and WebKit
+         implement none of `input type="month"` and rendered it as a bare text box
+         (docs/app.md §Released after is month-granular). -->
+    <MonthPicker value={view.filters.releasedAfter} min={fleetRange.min} max={fleetRange.max}
+                 onchange={(iso) => patch((v) => { v.filters.releasedAfter = iso; })} />
     <div class="chips">
       <!-- The only way to unset a date the chips set: a chip that sets one cannot also clear it. -->
       <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = undefined; })}>Any</button>
