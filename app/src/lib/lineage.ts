@@ -41,17 +41,41 @@ export const SIDE_PAIRS = [
 
 export type SidePairLabel = (typeof SIDE_PAIRS)[number]['label'];
 
+/**
+ * Side pairs the app computes rather than the catalogue publishes. Held apart from `SIDE_PAIRS`
+ * because `metricEntries` resolves that list against the catalogue, so a key with no `LabTest`
+ * behind it would drop out of the column picker — but they are side-paired in every other sense,
+ * so they follow a side click and they name a side. This is the one home of the score column keys:
+ * `score.ts` reads them from here rather than declaring a second spelling.
+ */
+export const DERIVED_SIDE_PAIRS = [
+  { label: 'Easy score', forefoot: 'easy-score-forefoot', heel: 'easy-score-heel' },
+] as const satisfies readonly { label: string; forefoot: string; heel: string }[];
+
+export type DerivedSidePairLabel = (typeof DERIVED_SIDE_PAIRS)[number]['label'];
+
+/** Every side pair, for code that cares only that a key has two halves. */
+export const ALL_SIDE_PAIRS: readonly { label: string; forefoot: string; heel: string }[] =
+  [...SIDE_PAIRS, ...DERIVED_SIDE_PAIRS];
+
 /** The half of a declared pair that the runner's strike puts in use. */
 export function sideKey(label: SidePairLabel, strike: Side): string {
   return SIDE_PAIRS.find((p) => p.label === label)![strike];
 }
 
+/** As `sideKey`, for a pair the app computes rather than the catalogue publishes. */
+export function derivedSideKey(label: DerivedSidePairLabel, strike: Side): string {
+  return DERIVED_SIDE_PAIRS.find((p) => p.label === label)![strike];
+}
+
 /**
  * The half of `slug`'s pair on `strike`'s side, or `slug` itself when it has no sides. Deliberately
  * *not* an exchange: a view can hold both halves at once, and both must land on the same side.
+ * Computed pairs are included: a score column carries no number either, so "the Easy score" means
+ * the same thing on both halves and follows the click like any other column.
  */
 export function swapSide(slug: string, strike: Side): string {
-  const pair = SIDE_PAIRS.find((p) => p.forefoot === slug || p.heel === slug);
+  const pair = ALL_SIDE_PAIRS.find((p) => p.forefoot === slug || p.heel === slug);
   return pair ? pair[strike] : slug;
 }
 

@@ -1,6 +1,6 @@
 import type { Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
-import { sideKey, type Side } from './lineage';
+import { derivedSideKey, sideKey, type Side } from './lineage';
 
 /**
  * Every constant here is **frozen**: derived once from the fleet at `data/` commit baed23b and never
@@ -83,7 +83,7 @@ export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
  * fallback (docs/app.md §The Easy score).
  */
 export const EASY_SCORE_KEYS: Record<Side, string> = {
-  heel: 'easy-score-heel', forefoot: 'easy-score-forefoot',
+  heel: derivedSideKey('Easy score', 'heel'), forefoot: derivedSideKey('Easy score', 'forefoot'),
 };
 
 /**

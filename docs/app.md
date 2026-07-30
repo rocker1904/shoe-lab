@@ -691,6 +691,15 @@ answer for them. **A score column names its own side rather than taking the deri
 one**: resolved through `sideOf`, unticking two measurement columns turned every score
 into a heel score with nothing on screen saying so, and the panel below could then
 explain a half the header did not name. There is no side fallback in scoring at all now.
+
+Naming its own side does not exempt it from the side control. The pair is declared in
+`DERIVED_SIDE_PAIRS`, held apart from `SIDE_PAIRS` because `metricEntries` resolves that
+list against the catalogue and a key with no `LabTest` behind it would drop out of the
+column picker — but `swapSide` and `sideOf` read both. So a score column **follows a side
+click**, like every other column that carries no number, and a table showing only the Easy
+heel score **names the heel**. Without that, clicking Forefoot swapped the stack column and
+left a heel score sitting beside it.
+
 `Page.svelte` resolves one map per key and hands the whole lookup — column key to slug
 to score — to `sortShoes`, both tables, the CSV export and the detail panel, each of
 which reads it **by column key**, so Tempo's and Race's scores are further entries

@@ -1,9 +1,11 @@
-import { SIDE_PAIRS, swapSide, type Side } from './lineage';
+import { ALL_SIDE_PAIRS, swapSide, type Side } from './lineage';
 import { defaultColumns, type ViewState } from './urlstate';
 
-/** Every key that names one half of a declared side pair, and which half it is. */
+/** Every key that names one half of a side pair, and which half it is. Computed pairs count: a
+ *  table showing only the Easy heel score is about the heel, and saying otherwise would leave the
+ *  side control unmarked on a view that names its side in a column header. */
 const SIDE_OF_KEY = new Map<string, Side>(
-  SIDE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
+  ALL_SIDE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
 
 /**
  * The side a view is *about*, or null when it does not commit to one. Derived rather than stored,
