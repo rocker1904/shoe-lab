@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import {
-  CURATED_RANGE_KEYS, generationLabel, metricEntries, SIDE_PAIRS, sideKey, swapSide, type ResolvedMetric,
+  CURATED_RANGE_KEYS, generationLabel, metricEntries, ZONE_PAIRS, zoneKey, swapZone, type ResolvedMetric,
 } from './lineage';
 import { labTest } from './test-fixtures';
 import type { LabTest } from '../../../shared/types.js';
@@ -17,7 +17,7 @@ describe('generationLabel', () => {
     expect(generationLabel('breathability-25', 'current')).toBe('2025 method');
   });
   it('falls back to a relative label when no year can be derived', () => {
-    // three real pairs carry no year on either side and share both name and units
+    // three real pairs carry no year on either zone and share both name and units
     expect(generationLabel('toebox-width-widest-part', 'current')).toBe('current method');
     expect(generationLabel('toebox-width-at-the-widest-part', 'previous')).toBe('previous method');
   });
@@ -46,7 +46,7 @@ describe('metricEntries', () => {
     ])[0]! as Extract<ReturnType<typeof metricEntries>[number], { kind: 'pair' }>;
     expect(e.current.generation).not.toBe(e.retired.generation);
   });
-  it('dates the retired side too when its own slug carries a year', () => {
+  it('dates the retired zone too when its own slug carries a year', () => {
     const e = metricEntries([
       labTest({ id: 1, slug: 'grip-22', name: 'Grip', updateId: 2 }),
       labTest({ id: 2, slug: 'grip-25', name: 'Grip', previousId: 1 }),
@@ -68,7 +68,7 @@ describe('metricEntries', () => {
     ])[0]!;
     expect(e).toMatchObject({ kind: 'colocated', label: 'Traction', groupId: '3' });
     expect(colocatedOf(e).parts.map((p) => p.key)).toEqual(['traction-heel', 'traction-forefoot']);
-    expect(colocatedOf(e).parts.map((p) => p.side)).toEqual([null, null]);
+    expect(colocatedOf(e).parts.map((p) => p.zone)).toEqual([null, null]);
   });
   it('ignores a secondary that is not in the published catalogue', () => {
     // real case: forefoot-traction names #61, which was dropped for having no readings
@@ -114,7 +114,7 @@ describe('metricEntries', () => {
     expect(e).toHaveLength(1);
     expect(e[0]).toMatchObject({ kind: 'colocated', label: 'Stack', groupId: '3' }); // the heel half's group
     expect(colocatedOf(e[0]!).parts.map((p) => p.key)).toEqual(['forefoot-stack', 'heel-stack']);
-    expect(colocatedOf(e[0]!).parts.map((p) => p.side)).toEqual(['forefoot', 'heel']);
+    expect(colocatedOf(e[0]!).parts.map((p) => p.zone)).toEqual(['forefoot', 'heel']);
   });
   it('keeps the full test name on each part, so the column picker can still tell them apart', () => {
     const e = metricEntries([
@@ -151,25 +151,25 @@ describe('metricEntries', () => {
   });
 });
 
-describe('side pairs', () => {
-  it('resolves each declared label to the slug of the runner\'s side', () => {
-    for (const pair of SIDE_PAIRS) {
-      expect(sideKey(pair.label, 'heel')).toBe(pair.heel);
-      expect(sideKey(pair.label, 'forefoot')).toBe(pair.forefoot);
+describe('zone pairs', () => {
+  it('resolves each declared label to the slug of the runner\'s zone', () => {
+    for (const pair of ZONE_PAIRS) {
+      expect(zoneKey(pair.label, 'heel')).toBe(pair.heel);
+      expect(zoneKey(pair.label, 'forefoot')).toBe(pair.forefoot);
     }
   });
-  it('maps either half onto the requested side and leaves an unpaired slug alone', () => {
-    expect(swapSide('heel-stack', 'forefoot')).toBe('forefoot-stack');
-    expect(swapSide('forefoot-stack', 'heel')).toBe('heel-stack');
-    // not an exchange: a slug already on the requested side stays put
-    expect(swapSide('forefoot-stack', 'forefoot')).toBe('forefoot-stack');
-    expect(swapSide('weight', 'forefoot')).toBe('weight');
+  it('maps either half onto the requested zone and leaves an unpaired slug alone', () => {
+    expect(swapZone('heel-stack', 'forefoot')).toBe('forefoot-stack');
+    expect(swapZone('forefoot-stack', 'heel')).toBe('heel-stack');
+    // not an exchange: a slug already on the requested zone stays put
+    expect(swapZone('forefoot-stack', 'forefoot')).toBe('forefoot-stack');
+    expect(swapZone('weight', 'forefoot')).toBe('weight');
   });
   // Criterion 8 says all four pairs render both halves. A render test would only ever cover the
   // pairs its own fixture catalogue happens to carry; this covers the declaration itself, which is
   // the property the prose argues for.
-  it('curates both halves of every pair, so the sidebar cannot change shape with strike', () => {
-    for (const pair of SIDE_PAIRS) {
+  it('curates both halves of every pair, so the sidebar cannot change shape with zone', () => {
+    for (const pair of ZONE_PAIRS) {
       expect(CURATED_RANGE_KEYS, pair.label).toContain(pair.forefoot);
       expect(CURATED_RANGE_KEYS, pair.label).toContain(pair.heel);
     }
@@ -181,9 +181,9 @@ describe('side pairs', () => {
     expect(new Set(CURATED_RANGE_KEYS).size).toBe(CURATED_RANGE_KEYS.length);
   });
   it('lists each slug in exactly one pair', () => {
-    const slugs = SIDE_PAIRS.flatMap((p) => [p.forefoot, p.heel]);
+    const slugs = ZONE_PAIRS.flatMap((p) => [p.forefoot, p.heel]);
     expect(new Set(slugs).size).toBe(slugs.length);
-    expect(new Set(SIDE_PAIRS.map((p) => p.label)).size).toBe(SIDE_PAIRS.length);
+    expect(new Set(ZONE_PAIRS.map((p) => p.label)).size).toBe(ZONE_PAIRS.length);
   });
 });
 
@@ -197,13 +197,13 @@ describe('side pairs', () => {
  * the global `URL` with one `readFileSync` rejects. Failure mode:
  * docs/operations.md §Contract-drift runbook.
  */
-describe('declared side pairs against the published catalogue', () => {
+describe('declared zone pairs against the published catalogue', () => {
   const tests: LabTest[] = JSON.parse(readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8')).tests;
   const bySlug = new Map(tests.map((t) => [t.slug, t]));
 
-  it('names a numeric test on both sides of every pair', () => {
-    for (const pair of SIDE_PAIRS) {
+  it('names a numeric test on both zones of every pair', () => {
+    for (const pair of ZONE_PAIRS) {
       for (const slug of [pair.forefoot, pair.heel]) {
         const t = bySlug.get(slug);
         expect(t, `${slug} is not in the catalogue`).toBeDefined();
@@ -212,7 +212,7 @@ describe('declared side pairs against the published catalogue', () => {
     }
   });
   it('agrees with every catalogue link a declared pair carries', () => {
-    for (const pair of SIDE_PAIRS) {
+    for (const pair of ZONE_PAIRS) {
       const forefoot = bySlug.get(pair.forefoot)!;
       const heel = bySlug.get(pair.heel)!;
       // where upstream links the pair it must link these two and nothing else
@@ -224,7 +224,7 @@ describe('declared side pairs against the published catalogue', () => {
   });
   it('resolves every declared pair into one entry with both halves, forefoot first', () => {
     const entries = metricEntries(tests);
-    for (const pair of SIDE_PAIRS) {
+    for (const pair of ZONE_PAIRS) {
       const found = entries.filter((e) => e.kind === 'colocated' && e.parts.some((p) => p.key === pair.heel));
       expect(found, `${pair.label} does not resolve to one entry`).toHaveLength(1);
       expect(colocatedOf(found[0]!).parts.map((p) => p.key)).toEqual([pair.forefoot, pair.heel]);

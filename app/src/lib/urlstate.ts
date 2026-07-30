@@ -3,7 +3,7 @@ import { isCategorical } from './categorical';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, DERIVED_SIDE_PAIRS, metricEntries, sideKey, type Side } from './lineage';
+import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, zoneKey, type Zone } from './lineage';
 import { startOfMonth } from './release-date';
 
 export interface ViewState {
@@ -16,7 +16,7 @@ export interface ViewState {
    *  however they were labelled (docs/app.md §Filters). */
   rows: string[];
   /** Whether the Easy score counts its two stability terms. A property of the runner rather than of
-   *  the search, so it survives a story click and a Clear, exactly as the side does — which is why
+   *  the search, so it survives a story click and a Clear, exactly as the zone does — which is why
    *  `applyPreset` and `allView` carry it through rather than rebuilding it (docs/app.md §Presets). */
   stability: boolean;
 }
@@ -24,18 +24,19 @@ export interface ViewState {
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
 /** The arbitrary half, named here and nowhere else. It is not a silent assumption: the toolbar
  *  renders Heel as marked on this view, because the mark is derived from it
- *  (docs/app.md §The side is a preset too). */
-export const DEFAULT_SIDE: Side = 'heel';
-/** The side is required rather than defaulted: a default would put a second answer to "which half"
- *  beside `DEFAULT_SIDE`, at whichever call site forgot to pass one.
+ *  (docs/app.md §The side is a preset too — the doc still says side; it is renamed there in the
+ *  commit that rewrites the prose, not in this one). */
+export const DEFAULT_ZONE: Zone = 'heel';
+/** The zone is required rather than defaulted: a default would put a second answer to "which half"
+ *  beside `DEFAULT_ZONE`, at whichever call site forgot to pass one.
  *
  *  Six numeric columns, because `releasedAt` and `plate` render as metadata rather than values on
  *  a phone and six is the widest set that fits one (docs/app.md §Columns and sorting). Softness
  *  is the one dropped: it is the sparsest of the seven and the only default column no story uses,
  *  because docs/shoe-stories.md argues it should not drive a shortlist. */
-export function defaultColumns(side: Side): string[] {
-  return ['releasedAt', 'score', 'msrpGbp', sideKey('Stack', side),
-    'plate', sideKey('Energy return', side), 'toebox-width-widest-part', 'weight'];
+export function defaultColumns(zone: Zone): string[] {
+  return ['releasedAt', 'score', 'msrpGbp', zoneKey('Stack', zone),
+    'plate', zoneKey('Energy return', zone), 'toebox-width-widest-part', 'weight'];
 }
 /**
  * Every value a shoe's `plate` can hold, in the order a selection is written. Both the filter UI
@@ -45,7 +46,7 @@ export function defaultColumns(side: Side): string[] {
 export const PLATES: Plate[] = ['none', 'plated-other', 'carbon'];
 /** Every story's score column, derived so a further story is accepted as a sort key and a column
  *  without an edit here. */
-const SCORE_KEYS = DERIVED_SIDE_PAIRS.flatMap((p) => [p.heel, p.forefoot]);
+const SCORE_KEYS = DERIVED_ZONE_PAIRS.flatMap((p) => [p.heel, p.forefoot]);
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate',
   ...SCORE_KEYS]);
 /** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
@@ -54,7 +55,7 @@ const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...SCO
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 export function defaultView(): ViewState {
-  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_SIDE), generations: {}, rows: [], stability: false };
+  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_ZONE), generations: {}, rows: [], stability: false };
 }
 
 /**
@@ -82,7 +83,7 @@ function pairsOf(idx: TestIndex): Map<string, string> {
   return pairs;
 }
 
-/** A present-but-non-finite bound is unserialisable; dropping just that side would silently widen the range. */
+/** A present-but-non-finite bound is unserialisable; dropping just that zone would silently widen the range. */
 const finite = (n: number | undefined) => n === undefined || (typeof n === 'number' && Number.isFinite(n));
 
 function parseBound(s: string): number | undefined | null {
@@ -111,8 +112,8 @@ export function serializeView(v: ViewState): string {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
   }
   if (v.rows.length) p.set('rows', v.rows.join(','));
-  // No side token: the columns already say which half the view is about (docs/app.md §URL encoding).
-  if (v.columns.join(',') !== defaultColumns(DEFAULT_SIDE).join(',')) p.set('cols', v.columns.join(','));
+  // No zone token: the columns already say which half the view is about (docs/app.md §URL encoding).
+  if (v.columns.join(',') !== defaultColumns(DEFAULT_ZONE).join(',')) p.set('cols', v.columns.join(','));
   for (const [key, chosen] of Object.entries(v.generations)) {
     if (chosen !== key) p.set(`gen.${key}`, chosen);
   }

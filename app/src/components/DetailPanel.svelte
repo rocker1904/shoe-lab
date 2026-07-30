@@ -2,18 +2,18 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, reviewUrl } from '../lib/dataset';
   import { columnLabel } from '../lib/labels';
-  import { sideOfKey } from '../lib/lineage';
+  import { zoneOfKey } from '../lib/lineage';
   import { contributions, type Reading, type TermKey } from '../lib/score';
   import { defForKey } from '../lib/score-defs';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
   let { shoe, data, columns, stability }: {
     shoe: Shoe; data: ShoesFile;
-    /** The view's columns, not a side: the panel breaks down each score column that is on screen,
+    /** The view's columns, not a zone: the panel breaks down each score column that is on screen,
      *  so panel and column can never disagree about which half either is about
      *  (docs/app.md §The story scores). */
     columns: string[];
-    /** Applies to both sides alike — it decides how many terms there are, not which half. */
+    /** Applies to both zones alike — it decides how many terms there are, not which half. */
     stability: boolean;
   } = $props();
 
@@ -23,15 +23,15 @@
     energyReturn: 'Energy return', weight: 'Weight', midsoleWidth: 'Midsole width / stack',
     heelCounter: 'Heel counter stiffness',
   };
-  // Driven off the columns rather than off the sides: with three stories on screen a side appears
-  // three times, so the column is the only key that is unique. `sideOfKey` rather than a
-  // `-heel` suffix test — inferring a side from a slug is what `lineage.ts` exists to refuse.
+  // Driven off the columns rather than off the zones: with three stories on screen a zone appears
+  // three times, so the column is the only key that is unique. `zoneOfKey` rather than a
+  // `-heel` suffix test — inferring a zone from a slug is what `lineage.ts` exists to refuse.
   const breakdowns = $derived(columns.flatMap((key) => {
     const def = defForKey(key);
-    const side = sideOfKey(key);
-    return def && side
+    const zone = zoneOfKey(key);
+    return def && zone
       // The column's own header text, so the two are named by one function rather than two.
-      ? [{ key, label: columnLabel(key, undefined), terms: contributions(def, shoe, side, stability, idx) }]
+      ? [{ key, label: columnLabel(key, undefined), terms: contributions(def, shoe, zone, stability, idx) }]
       : [];
   }));
   // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
@@ -94,7 +94,7 @@
     </ul>
   {/if}
   <!-- One per score column on screen, and none at all without one: the panel explains what the
-       table is showing rather than a side of its own (docs/app.md §The story scores). -->
+       table is showing rather than a zone of its own (docs/app.md §The story scores). -->
   {#each breakdowns as b (b.key)}
     <section class="score-breakdown">
       <h4>{b.label}</h4>

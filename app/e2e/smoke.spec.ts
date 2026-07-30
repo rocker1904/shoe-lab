@@ -57,11 +57,11 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
 });
 
-test('picks a side, keeps the strip open through it, and returns to that side\'s table via All', async ({ page }) => {
+test('picks a zone, keeps the strip open through it, and returns to that zone\'s table via All', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('setup-strip')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toBeVisible();
-  // both halves of both side pairs render, forefoot first, whichever side is chosen
+  // both halves of both zone pairs render, forefoot first, whichever zone is chosen
   const stackRows = page.locator('fieldset[aria-label^="Stack — "]');
   await expect(stackRows).toHaveCount(2);
   await expect(stackRows.first()).toHaveAttribute('aria-label', 'Stack — Forefoot');
@@ -72,10 +72,10 @@ test('picks a side, keeps the strip open through it, and returns to that side\'s
   // the strip's own card: while it is up the bar draws no second copy of either group
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Forefoot', exact: true }).click();
-  // no side token: the columns are the only record of which half the view is about
+  // no zone token: the columns are the only record of which half the view is about
   await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
   await expect(page).not.toHaveURL(/strike=/);
-  await expect(page.getByTestId('setup-strip')).toBeVisible();         // the side is the strip's own question
+  await expect(page.getByTestId('setup-strip')).toBeVisible();         // the zone is the strip's own question
   await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
@@ -83,12 +83,12 @@ test('picks a side, keeps the strip open through it, and returns to that side\'s
   await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
-  // Easy bounds nothing, so its side rides in the columns alone — the terms it scores on, stack
+  // Easy bounds nothing, so its zone rides in the columns alone — the terms it scores on, stack
   // not among them.
   await expect(page).toHaveURL(/cols=[^&]*energy-return-forefoot/);
 
   await page.getByRole('radio', { name: /All/ }).click();
-  // written out in full: the side rides in `cols`, so a plain forefoot table is a verbose link
+  // written out in full: the zone rides in `cols`, so a plain forefoot table is a verbose link
   await expect(page).toHaveURL('/?cols=releasedAt%2Cscore%2CmsrpGbp%2Cforefoot-stack%2Cplate%2Cenergy-return-forefoot%2Ctoebox-width-widest-part%2Cweight');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
@@ -174,7 +174,7 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
       return b ? Math.round(b.y + b.height / 2) : null; };
     const sep = q('[data-testid="toolbar"] .sep');
     return {
-      sideY: y('[data-testid="toolbar"] .side-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
+      zoneY: y('[data-testid="toolbar"] .zone-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
       actionsY: y('[data-testid="toolbar"] .actions'),
       sepShown: sep ? getComputedStyle(sep).display !== 'none' : false,
       paceW: q('[data-testid="toolbar"] .pace-wrap .seg')?.getBoundingClientRect().width ?? 0,
@@ -186,31 +186,31 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
   await page.goto('/');
   await settled();
   const wide = await boxes();
-  expect(wide.sideY).not.toBeNull();
-  expect(wide.sideY).toBe(wide.paceY);        // one line, all three groups
-  expect(wide.sideY).toBe(wide.actionsY);
+  expect(wide.zoneY).not.toBeNull();
+  expect(wide.zoneY).toBe(wide.paceY);        // one line, all three groups
+  expect(wide.zoneY).toBe(wide.actionsY);
   expect(wide.sepShown).toBe(true);
   // and nothing scrolls sideways: the content track is capped and the table's headers wrap
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1200);
 
   await page.setViewportSize({ width: 700, height: 800 });
   const mid = await boxes();
-  expect(mid.actionsY).toBe(mid.sideY);       // actions ride up beside the side group
-  expect(mid.paceY).toBeGreaterThan(mid.sideY!);
+  expect(mid.actionsY).toBe(mid.zoneY);       // actions ride up beside the zone group
+  expect(mid.paceY).toBeGreaterThan(mid.zoneY!);
   expect(mid.sepShown).toBe(false);             // nothing left to separate
   expect(mid.paceW).toBeLessThan(mid.wrapW);    // shrink-wrapped, not stretched
 
   await page.setViewportSize({ width: 375, height: 800 });
   const narrow = await boxes();
-  expect(narrow.paceY).toBeGreaterThan(narrow.sideY!);
+  expect(narrow.paceY).toBeGreaterThan(narrow.zoneY!);
   expect(narrow.paceW).toBe(narrow.wrapW);      // stretched to fill the line
 
   // 360px is the binding width, not 375: it is the usual Android one, and a third line there is
   // the same void the middle tier was written to eliminate at 620.
   await page.setViewportSize({ width: 360, height: 800 });
   const android = await boxes();
-  expect(android.actionsY).toBe(android.sideY);
-  expect(android.paceY).toBeGreaterThan(android.sideY!);
+  expect(android.actionsY).toBe(android.zoneY);
+  expect(android.paceY).toBeGreaterThan(android.zoneY!);
 
   // The pinned header row must clear the chrome at every width, which a constant offset cannot do:
   // the chrome is 44px at 1200 and 103px at 375.

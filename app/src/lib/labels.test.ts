@@ -4,11 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import { columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
-import type { Side } from './lineage';
+import type { Zone } from './lineage';
 import { EASY, SCORE_DEFS } from './score-defs';
 import { labTest } from './test-fixtures';
 
-const SIDES: Side[] = ['heel', 'forefoot'];
+const ZONES: Zone[] = ['heel', 'forefoot'];
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: a hand-written fixture can never fail on a
 // name that arrives upstream, which is the whole point of the bound guard below. Resolved through
@@ -122,8 +122,8 @@ describe('the synthetic story scores', () => {
     // own assertion or they are the column headers nothing width-checks. `lineCount` reads exactly
     // 3 against a MAX_LABEL_LINES of 3, so this is load-bearing rather than ceremonial.
     for (const def of SCORE_DEFS) {
-      for (const side of SIDES) {
-        const key = def.keys[side];
+      for (const zone of ZONES) {
+        const key = def.keys[zone];
         const label = columnLabel(key, undefined);
         expect(widestWordPx(shortLabel(key, label)), label).toBeLessThanOrEqual(MAX_LABEL_PX);
         expect(lineCount(shortLabel(key, label)), label).toBeLessThanOrEqual(MAX_LABEL_LINES);

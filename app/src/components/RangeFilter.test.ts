@@ -12,7 +12,7 @@ const PRICES = [
 ];
 
 const bins = (root: Element) => [...root.querySelectorAll('rect.bin')].map((r) => r.getAttribute('fill'));
-const handle = (root: Element, side: 'min' | 'max') => root.querySelector<HTMLElement>(`.handle.${side}`)!;
+const handle = (root: Element, zone: 'min' | 'max') => root.querySelector<HTMLElement>(`.handle.${zone}`)!;
 
 /** jsdom has no layout, so the plot has to be told how wide it is before any drag maths can run. */
 function widen(plot: Element, width = 200): void {
@@ -83,7 +83,7 @@ it('snaps a dragged bound to a value that exists rather than a round number', as
   expect(PRICES).toContain(dropped);
 });
 
-it('reads a grip left at its extreme as no bound on that side', async () => {
+it('reads a grip left at its extreme as no bound on that zone', async () => {
   const onchange = vi.fn();
   const { container } = render(RangeFilter, { props: { ...props, values: PRICES, bound: { max: 150 }, onchange } });
   const plot = container.querySelector('.plot')!;
@@ -150,6 +150,6 @@ it('offers nothing to clear on an empty bound, and remove only when it can be re
 });
 
 /** The grip's own pixel position, so a drag starts on it rather than near it. */
-function handleX(root: Element, side: 'min' | 'max', width = 200): number {
-  return (parseFloat(handle(root, side).style.left) / 100) * width;
+function handleX(root: Element, zone: 'min' | 'max', width = 200): number {
+  return (parseFloat(handle(root, zone).style.left) / 100) * width;
 }

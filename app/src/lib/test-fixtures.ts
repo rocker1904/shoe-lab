@@ -10,7 +10,7 @@ export function labTest(over: Partial<LabTest> & Pick<LabTest, 'id' | 'slug' | '
 
 export const TESTS: LabTest[] = [
   labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm', groupId: '3' }),
-  // The forefoot halves of two side pairs, mirroring the real catalogue: stack is unlinked
+  // The forefoot halves of two zone pairs, mirroring the real catalogue: stack is unlinked
   // upstream and energy return is linked (docs/app.md §Columns and sorting).
   labTest({ id: 5, slug: 'forefoot-stack', name: 'Forefoot stack', units: 'mm', groupId: '3' }),
   labTest({ id: 24, slug: 'weight', name: 'Weight', units: 'g', groupId: '10' }),
@@ -29,7 +29,7 @@ export const TESTS: LabTest[] = [
   // in the fixture because the collision is only visible when both exist
   // (docs/app.md §Categorical columns).
   labTest({ id: 69, slug: 'plate', name: 'Plate', type: 'bool' }),
-  // A pair carrying no method year on either side and sharing both name and units — the case the
+  // A pair carrying no method year on either zone and sharing both name and units — the case the
   // generation label cannot derive from a slug (docs/scraping.md §Test lineage).
   labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', updateId: 55 }),
   labTest({ id: 55, slug: 'toebox-width-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', previousId: 27 }),
@@ -63,16 +63,16 @@ export function shoe(overrides: Partial<Shoe> & { slug: string }): Shoe {
  * `mystery` stays bare because it exists to be the shoe with no reading at all.
  *
  * The forefoot halves (5, 66) sit on a **visibly different scale** from their heel counterparts
- * (6, 65), which is the premise of a per-side percentile: a bound computed on the wrong side is
+ * (6, 65), which is the premise of a per-zone percentile: a bound computed on the wrong zone is
  * only detectable because the two distributions do not overlap. They carry readings on all four
  * reading-carrying shoes, not three — Easy under forefoot excludes `racer` on plate, so three
  * readings would leave coverage at exactly the sparse threshold. Forefoot energy return also
- * **ranks** the fleet differently from heel, so a story's count moves when the strike does; without
- * that, counts pinned to one side would look correct.
+ * **ranks** the fleet differently from heel, so a story's count moves when the zone does; without
+ * that, counts pinned to one zone would look correct.
  *
  * Every metric the Easy score reads (68/67, 4, 9, 19, 26, 25) is carried by all four
  * reading-carrying shoes and by none of `mystery`, because `score.test.ts` needs exactly one
- * unscoreable shoe and every other shoe scoreable under either side and either stability state.
+ * unscoreable shoe and every other shoe scoreable under either zone and either stability state.
  */
 export const FLEET: Shoe[] = [
   shoe({ slug: 'cushy', values: { '5': 30, '6': 40, '24': 210, '65': 70, '66': 55, '70': 40, '68': 140, '67': 115, '4': 0.8, '9': 3.2, '19': 4, '26': 95, '25': 118 }, plate: 'none', releasedAt: '2025-06-01', score: 92 }),

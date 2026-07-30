@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type { Side } from '../lib/lineage';
+  import type { Zone } from '../lib/lineage';
   import HelpPopover from './HelpPopover.svelte';
 
-  let { side, selected, onside, onstory }: {
+  let { zone, selected, onzone, onstory }: {
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
-    side: Side | null;
+    zone: Zone | null;
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
     selected: string | null;
-    onside: (s: Side) => void; onstory: (id: string) => void;
+    onzone: (s: Zone) => void; onstory: (id: string) => void;
   } = $props();
 
-  const SIDES: { v: Side; label: string }[] = [{ v: 'heel', label: 'Heel' }, { v: 'forefoot', label: 'Forefoot' }];
+  const ZONES: { v: Zone; label: string }[] = [{ v: 'heel', label: 'Heel' }, { v: 'forefoot', label: 'Forefoot' }];
   /**
    * The only story copy a runner reads, and the reason `Preset` carries no description of its own:
    * these are read once, at a glance, against each other. They name what each score ranks on, so
@@ -23,12 +23,15 @@
     { id: 'race', label: 'Race', desc: 'Fastest, lightest, one day only' },
   ];
 
-  const SIDE_LABEL = 'Use measurements from the';
+  // "Measured at" rather than a side: the heel and the forefoot are the two *ends* of a shoe, and
+  // no runner reads them as its sides (docs/app.md §The side is a preset too, which the docs
+  // commit renames).
+  const ZONE_LABEL = 'Measured at';
   const STORY_LABEL = 'Built for';
   // Verbatim from the design, and two things it deliberately does not do: it never says "session",
   // which is our word rather than a runner's, and it does not contrast these against the labels
   // the data ships with — the reader has no idea those exist, so denying it plants the question.
-  const SIDE_HELP = 'Stack, energy return, shock absorption and midsole width are each measured '
+  const ZONE_HELP = 'Stack, energy return, shock absorption and midsole width are each measured '
     + 'twice — once at the heel, once at the forefoot. Pick the end you want the table and filters '
     + 'to use. Usually that is the end you land on, but either is fine.';
   const STORY_HELP = 'Easy, Tempo and Race each rank the shoes on measurements chosen for that '
@@ -38,10 +41,10 @@
 
 <section class="strip" aria-label="Set up your table" data-testid="setup-strip">
   <div class="grid">
-    <h2 class="label side-label">{SIDE_LABEL} <HelpPopover label={SIDE_LABEL} body={SIDE_HELP} /></h2>
-    {#each SIDES as s (s.v)}
-      <button type="button" class="card side" aria-pressed={side === s.v} class:on={side === s.v}
-              onclick={() => onside(s.v)}>
+    <h2 class="label zone-label">{ZONE_LABEL} <HelpPopover label={ZONE_LABEL} body={ZONE_HELP} /></h2>
+    {#each ZONES as s (s.v)}
+      <button type="button" class="card zone" aria-pressed={zone === s.v} class:on={zone === s.v}
+              onclick={() => onzone(s.v)}>
         <span class="name">{s.label}</span>
       </button>
     {/each}
@@ -67,7 +70,7 @@
   }
   .label { grid-row: 1; margin: 0; display: flex; align-items: center; gap: var(--s2);
            font-size: var(--t-sm); font-weight: 600; color: var(--text-dim); }
-  .side-label { grid-column: 1 / 3; }
+  .zone-label { grid-column: 1 / 3; }
   .story-label { grid-column: 4 / -1; }
   /* `--divider`, not `--border`: a border-coloured hairline is invisible against `--chrome`. */
   .divider { grid-column: 3; grid-row: 1 / 3; background: var(--divider); }
@@ -85,8 +88,8 @@
      they wrap to different line counts. */
   .name { min-height: 1em; font-size: var(--t-lg); font-weight: 700; }
   .desc { font-size: var(--t-xs); color: var(--text-dim); line-height: 1.35; }
-  .side { text-align: center; }
-  .side .name { text-align: center; }
+  .zone { text-align: center; }
+  .zone .name { text-align: center; }
   /* Six in a row is a desktop layout; on a phone each group becomes two columns at full card size.
      It costs the first screen, which is affordable exactly because the strip appears once. */
   @media (max-width: 699px) {

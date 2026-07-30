@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import { DIRECTION, directionOf } from './direction';
-import type { Side } from './lineage';
+import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
 
-const SIDES: Side[] = ['heel', 'forefoot'];
+const ZONES: Zone[] = ['heel', 'forefoot'];
 
 // The **catalogue**, not `test-fixtures.ts` `TESTS`: only `data/tests.json` carries the tests that
 // exist upstream but ship with no readings yet, which is the case this guard exists for
@@ -53,7 +53,7 @@ describe('directionOf', () => {
 });
 
 describe('the synthetic story scores', () => {
-  it('marks both sides of every story score higher-is-better', () => {
-    for (const def of SCORE_DEFS) for (const side of SIDES) expect(directionOf(def.keys[side])).toBe('higher');
+  it('marks both zones of every story score higher-is-better', () => {
+    for (const def of SCORE_DEFS) for (const zone of ZONES) expect(directionOf(def.keys[zone])).toBe('higher');
   });
 });

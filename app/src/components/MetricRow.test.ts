@@ -13,13 +13,13 @@ const pair = metricEntries([
   labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', updateId: 70 }),
   labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', previousId: 11 }),
 ])[0]!;
-// The pair whose slugs carry no year and whose name and units match on both sides: the label is the
+// The pair whose slugs carry no year and whose name and units match on both zones: the label is the
 // only thing that can tell the two generations apart.
 const yearless = metricEntries([
   labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', updateId: 55 }),
   labTest({ id: 55, slug: 'toebox-width-widest-part', name: 'Width / Fit', units: 'mm', previousId: 27 }),
 ])[0]!;
-// A declared side pair: forefoot first, under the declared heading (docs/app.md §Columns and sorting).
+// A declared zone pair: forefoot first, under the declared heading (docs/app.md §Columns and sorting).
 const colocated = metricEntries([
   labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return heel', chartLabel: 'Energy return', secondaryTestIds: [66] }),
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', primaryTestId: 65 }),
@@ -115,7 +115,7 @@ describe('MetricRow warnings', () => {
 
 describe('MetricRow colocated', () => {
   // The halves are named once, by each RangeFilter's own legend. Naming them here too was the
-  // duplication that made a side pair look like a control it is not (docs/app.md §Coverage).
+  // duplication that made a zone pair look like a control it is not (docs/app.md §Coverage).
   it('renders the heading alone — the halves are named by their own range rows', () => {
     setup(colocated, { chosen: 'energy-return-heel' });
     expect(screen.getAllByRole('heading')).toHaveLength(1);
@@ -140,21 +140,21 @@ describe('MetricRow coverage is one vocabulary', () => {
     }
   });
 
-  // Both halves of a declared side pair are measured in the same run, so a figure per half is
+  // Both halves of a declared zone pair are measured in the same run, so a figure per half is
   // duplication (docs/app.md §Coverage).
-  it('gives a side pair one coverage figure, not one per half', () => {
+  it('gives a zone pair one coverage figure, not one per half', () => {
     setup(colocated, { coverage: flat(0.84) });
     expect(screen.getAllByText('84 / 100 measured')).toHaveLength(1);
   });
 
-  it('says nothing at all when a side pair is fully covered', () => {
+  it('says nothing at all when a zone pair is fully covered', () => {
     setup(colocated, { coverage: flat(1) });
     expect(screen.queryByText(/measured/)).toBeNull();
   });
 });
 
 describe('MetricRow marks what is filtering', () => {
-  it('does not mark a half as in use — that was the strike, not the filter', () => {
+  it('does not mark a half as in use — that was the zone, not the filter', () => {
     setup(colocated);
     expect(screen.queryByText(/in use/)).toBeNull();
   });
@@ -169,7 +169,7 @@ describe('MetricRow marks what is filtering', () => {
     expect(screen.getByRole('heading', { level: 4 })).not.toHaveClass('on');
   });
 
-  it('bolds a side pair heading when either half is bounded', () => {
+  it('bolds a zone pair heading when either half is bounded', () => {
     setup(colocated, { bounded: (k) => k === 'energy-return-heel' });
     expect(screen.getByRole('heading', { level: 4 })).toHaveClass('on');
   });

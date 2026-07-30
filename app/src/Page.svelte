@@ -25,15 +25,15 @@
   import { indexTests } from './lib/dataset';
   import { debounce } from './lib/debounce';
   import { applyFilters, EMPTY_FILTERS } from './lib/filters';
-  import type { Side } from './lib/lineage';
+  import type { Zone } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
   import { scoreMap, type ScoreColumns } from './lib/score';
   import { SCORE_DEFS } from './lib/score-defs';
-  import { projectSide, sideOf } from './lib/side';
+  import { projectZone, zoneOf } from './lib/zone';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
-  import { DEFAULT_SIDE, defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './lib/urlstate';
+  import { DEFAULT_ZONE, defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './lib/urlstate';
 
   let { data }: { data: ShoesFile } = $props();
 
@@ -134,53 +134,53 @@
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
   const snapshot = $derived($state.snapshot(view) as ViewState);
-  const sideMark = $derived(sideOf(snapshot));
-  /** Somewhere to stand when the view names no side: the stories each bind one half, so applying
+  const zoneMark = $derived(zoneOf(snapshot));
+  /** Somewhere to stand when the view names no zone: the stories each bind one half, so applying
    *  one has to pick, and the baseline's own half is the least surprising pick. */
-  const workingSide = $derived(sideMark ?? DEFAULT_SIDE);
+  const workingZone = $derived(zoneMark ?? DEFAULT_ZONE);
   /**
    * A score depends on the view, not just the shoe, so it is resolved once here and handed to
-   * everything that needs it, keyed by the column it fills. Both sides are resolved rather than the
-   * derived one: each column names its own side, so nothing here has to pick one. Iterating the
+   * everything that needs it, keyed by the column it fills. Both zones are resolved rather than the
+   * derived one: each column names its own zone, so nothing here has to pick one. Iterating the
    * registry means a fourth story needs no edit here, and a definition with no stable variant makes
    * the preference inert inside `scoreOf` rather than through a branch here
    * (docs/app.md §The story scores).
    */
   const scores = $derived<ScoreColumns>(new Map(
-    SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((side) =>
-      [def.keys[side], scoreMap(def, data.shoes, side, view.stability, idx)] as const))));
+    SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((zone) =>
+      [def.keys[zone], scoreMap(def, data.shoes, zone, view.stability, idx)] as const))));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
 
   /**
-   * What `All` produces — and, because the mark is `sameValue(v, allView(v, side))`, also what
+   * What `All` produces — and, because the mark is `sameValue(v, allView(v, zone))`, also what
    * lights it. One function rather than an action and a matching predicate, so "marked means
    * pressing it changes nothing" is true by construction and cannot drift
    * (docs/app.md §What All does).
    *
-   * `All` speaks for the story group and means "all paces". With a side to work from it restores
-   * that side's plain table; with none — a deliberately mixed view — it clears the filters and
+   * `All` speaks for the story group and means "all paces". With a zone to work from it restores
+   * that zone's plain table; with none — a deliberately mixed view — it clears the filters and
    * leaves the table's shape alone, because there is no defensible column set to impose and a row
    * the runner added is not a filter.
    */
-  function allView(v: ViewState, side: Side | null): ViewState {
+  function allView(v: ViewState, zone: Zone | null): ViewState {
     // `stability` rather than the default: it is a property of the runner, not of the search, so
-    // `All` must not silently turn it off — and the mark is `sameValue(v, allView(v, side))`, so a
+    // `All` must not silently turn it off — and the mark is `sameValue(v, allView(v, zone))`, so a
     // reset here would also unmark `All` for anyone who had set it (docs/app.md §Presets).
-    if (side !== null) return { ...defaultView(), columns: defaultColumns(side), stability: v.stability };
+    if (zone !== null) return { ...defaultView(), columns: defaultColumns(zone), stability: v.stability };
     const next = structuredClone(v) as ViewState;
     next.filters = { ...EMPTY_FILTERS, ranges: {} };
     return next;
   }
 
-  const atAll = $derived(sameValue(snapshot, allView(snapshot, sideMark)));
+  const atAll = $derived(sameValue(snapshot, allView(snapshot, zoneMark)));
   /**
    * Derived, never stored: a story reads as selected while the view equals what `applyPreset`
    * would build for it *now*. A stored `preset` field would keep claiming Easy after the runner
    * had filtered it into something else (docs/app.md §Presets).
    */
   const storyMark = $derived(
-    sideMark === null ? null
-    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, sideMark, view.stability)))?.id ?? null);
+    zoneMark === null ? null
+    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, zoneMark, view.stability)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
 
   /**
@@ -213,22 +213,22 @@
   if (initial.restored) { setView(initial.view); flushView(); }
 
   /**
-   * A side click makes the view about that side (docs/app.md §Presets). A view that is a story is
-   * rebuilt as that story on the new side, so its sort key, score column and measurement columns
+   * A zone click makes the view about that zone (docs/app.md §Presets). A view that is a story is
+   * rebuilt as that story on the new zone, so its sort key, score column and measurement columns
    * move together; anything else is projected, which moves the columns and sort and drops the
    * other half's bounds.
    */
-  function onSide(next: Side) {
+  function onZone(next: Zone) {
     // Already there, so there is nothing to do. Rebuilding would be harmless — projecting onto the
-    // side a view already names is the identity — but it would spend a URL write on it.
-    if (next === sideMark) return;
-    setView(storyMark ? applyPreset(storyMark, next, view.stability) : projectSide(snapshot, next));
+    // zone a view already names is the identity — but it would spend a URL write on it.
+    if (next === zoneMark) return;
+    setView(storyMark ? applyPreset(storyMark, next, view.stability) : projectZone(snapshot, next));
   }
   function onStory(id: string) {
     // The strip's own question, answered — the only thing the cards hold that the bar does not is
     // the descriptions, which are a first-encounter need.
     stripOpen = false;
-    setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, workingSide, view.stability));
+    setView(id === 'all' ? allView(snapshot, zoneMark) : applyPreset(id, workingZone, view.stability));
   }
   /** A preference, so it does not clear the story or the `All` mark: `applyPreset` and `allView`
    *  both carry it through, which is what keeps the mark derived rather than lost
@@ -271,7 +271,7 @@
           onexport={onExport} ontheme={onTheme} />
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
-  <Toolbar side={sideMark} onside={onSide} {selected}
+  <Toolbar zone={zoneMark} onzone={onZone} {selected}
            onstory={onStory} {showFilters} showGroups={!stripOpen}
            stability={view.stability} onstability={setStability}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
@@ -287,7 +287,7 @@
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
 {#if stripOpen}
   <div transition:slide={{ duration: collapseMs }}>
-    <SetupStrip side={sideMark} {selected} onside={onSide} onstory={onStory} />
+    <SetupStrip zone={zoneMark} {selected} onzone={onZone} onstory={onStory} />
   </div>
 {/if}
 

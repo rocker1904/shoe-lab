@@ -4,7 +4,7 @@
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
   import { columnLabel } from '../lib/labels';
-  import { DERIVED_SIDE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
+  import { DERIVED_ZONE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
 
   let { tests, groups, columns, onchange, population, idx, generations }: {
     tests: LabTest[]; groups: Record<string, string>; columns: string[];
@@ -19,7 +19,7 @@
    *  without a home here the column a story sets could never be unticked. Derived from the pairs
    *  that declare them and labelled through `columnLabel`, so a further story needs no edit here
    *  and the picker cannot call a column something the header does not. */
-  const SCORE_ENTRIES: [string, string][] = DERIVED_SIDE_PAIRS.flatMap((p) =>
+  const SCORE_ENTRIES: [string, string][] = DERIVED_ZONE_PAIRS.flatMap((p) =>
     ([p.heel, p.forefoot] as const).map((key) => [key, columnLabel(key, undefined)] as [string, string]));
   const FIXED: [string, string][] = [['releasedAt', 'Release date'], ...SCORE_ENTRIES,
     ['score', 'RunRepeat Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];

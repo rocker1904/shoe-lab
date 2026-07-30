@@ -9,7 +9,7 @@
     chosen: string;
     onchoose: (key: string) => void;
     /** Whether that key currently carries a bound. Emphasis marks what is filtering, which is a
-     *  fact about the view; the old "· in use" marked the strike, which is a preset's business
+     *  fact about the view; the old "· in use" marked the zone, which is a preset's business
      *  (docs/app.md §Coverage). */
     bounded: (key: string) => boolean;
   } = $props();
@@ -21,7 +21,7 @@
     return c.total > 0 && c.n < c.total ? `${c.n} / ${c.total} measured` : null;
   };
   /**
-   * One figure for the whole metric, except a superseded pair. Both halves of a declared side pair
+   * One figure for the whole metric, except a superseded pair. Both halves of a declared zone pair
    * are read in the same test run, so a figure per half is duplication — asserted against the
    * dataset by coverage.test.ts. Two generations genuinely differ, often hugely, and that
    * difference is what the choice is made on, so those carry their own (docs/app.md §Coverage).

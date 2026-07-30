@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Toolbar from './Toolbar.svelte';
-import type { Side } from '../lib/lineage';
+import type { Zone } from '../lib/lineage';
 
 const props = {
-  side: 'heel' as Side | null, onside: vi.fn(), selected: 'all' as string | null,
+  zone: 'heel' as Zone | null, onzone: vi.fn(), selected: 'all' as string | null,
   onstory: vi.fn(), showFilters: false, onfilters: vi.fn(),
   stability: false, onstability: vi.fn(),
 };
@@ -37,8 +37,8 @@ describe('Toolbar', () => {
     expect(screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true })).toHaveLength(0);
   });
 
-  it('marks neither side when the view commits to none', () => {
-    render(Toolbar, { props: { ...props, side: null } });
+  it('marks neither zone when the view commits to none', () => {
+    render(Toolbar, { props: { ...props, zone: null } });
     expect(screen.getByRole('radio', { name: /Heel/ })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: /Forefoot/ })).not.toBeChecked();
   });
@@ -48,9 +48,9 @@ describe('Toolbar', () => {
   // reachable for the first time, so a later refactor assuming a checked radio would break
   // keyboard access silently.
   it('keeps one tab stop even with nothing selected', () => {
-    render(Toolbar, { props: { ...props, side: null } });
-    const sides = screen.getAllByRole('radio', { name: /Heel|Forefoot/ });
-    expect(sides.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+    render(Toolbar, { props: { ...props, zone: null } });
+    const zones = screen.getAllByRole('radio', { name: /Heel|Forefoot/ });
+    expect(zones.filter((r) => r.tabIndex === 0)).toHaveLength(1);
   });
 
   it('reports the story that was picked, All included', async () => {
@@ -62,9 +62,9 @@ describe('Toolbar', () => {
 
   // The words are on the group, not on a lede beside it: two unexplained pills need a name for a
   // screen reader, and the setup strip carries the visible wording (docs/app.md §Presets).
-  it('names the side group without printing a lede', () => {
+  it('names the zone group without printing a lede', () => {
     render(Toolbar, { props: { ...props } });
-    expect(screen.getByRole('radiogroup', { name: 'Measurements from' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Measured at' })).toBeInTheDocument();
     expect(screen.queryByText('I land on my')).toBeNull();
   });
 
@@ -85,13 +85,13 @@ describe('Toolbar', () => {
     expect(onstory).toHaveBeenCalledWith('easy');
   });
 
-  it('picks the other side with an arrow key', async () => {
-    const onside = vi.fn();
-    render(Toolbar, { props: { ...props, onside } });
+  it('picks the other zone with an arrow key', async () => {
+    const onzone = vi.fn();
+    render(Toolbar, { props: { ...props, onzone } });
     const heel = screen.getByRole('radio', { name: 'Heel' });
     heel.focus();
     await fireEvent.keyDown(heel, { key: 'ArrowRight' });
-    expect(onside).toHaveBeenCalledWith('forefoot');
+    expect(onzone).toHaveBeenCalledWith('forefoot');
   });
 
   // The strip asks both questions in words on a first arrival, so a bar that drew them at the same

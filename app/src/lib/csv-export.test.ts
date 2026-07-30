@@ -61,7 +61,7 @@ describe('exportCsv', () => {
 });
 
 describe('exportCsv and the Easy score', () => {
-  it('emits each side\'s score under its own raw key', () => {
+  it('emits each zone\'s score under its own raw key', () => {
     const csv = exportCsv([FLEET.find((s) => s.slug === 'cushy')!],
                           [EASY.keys.heel, EASY.keys.forefoot], idx,
                           new Map([[EASY.keys.heel, new Map([['cushy', 87.4]])],

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { Side } from './lineage';
+import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
 import { headerUnits } from './units';
 import { labTest } from './test-fixtures';
 
-const SIDES: Side[] = ['heel', 'forefoot'];
+const ZONES: Zone[] = ['heel', 'forefoot'];
 
 // `test-fixtures.ts` TESTS carries only `float`, `percent` and `option`, so the `score` and
 // `rating` branches are unreachable through ShoeTable and are exercised here instead.
@@ -50,9 +50,9 @@ describe('the synthetic story scores', () => {
   it('leaves every story score unitless rather than claiming a ceiling it does not have', () => {
     // Never `/100`: the anchors are frozen, so a shoe better than the 2026-07-30 fleet reads above
     // 100 by design. The direction arrow is all the header can honestly carry.
-    for (const def of SCORE_DEFS) for (const side of SIDES) {
-      expect(headerUnits(def.keys[side], undefined)).toBe('↑');
-      expect(headerUnits(def.keys[side], undefined)).not.toContain('/100');
+    for (const def of SCORE_DEFS) for (const zone of ZONES) {
+      expect(headerUnits(def.keys[zone], undefined)).toBe('↑');
+      expect(headerUnits(def.keys[zone], undefined)).not.toContain('/100');
     }
   });
 });

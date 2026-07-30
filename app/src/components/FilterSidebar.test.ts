@@ -4,10 +4,10 @@ import FilterSidebar from './FilterSidebar.svelte';
 import { indexTests, isoYearsAgo } from '../lib/dataset';
 import { startOfMonth } from '../lib/release-date';
 import { applyPreset, PRESETS } from '../lib/presets';
-import { projectSide } from '../lib/side';
+import { projectZone } from '../lib/zone';
 import { defaultView, parseView, sameValue } from '../lib/urlstate';
 import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
-import type { Side } from '../lib/lineage';
+import type { Zone } from '../lib/lineage';
 import type { ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
@@ -25,7 +25,7 @@ const open = (trigger: HTMLElement) => {
   return fireEvent.click(trigger);
 };
 
-/** Scoped to its own row: side pairs put several range groups on screen, so an index would drift.
+/** Scoped to its own row: zone pairs put several range groups on screen, so an index would drift.
  *  Matched by suffix, because each field is now named for the metric it bounds. */
 const boundOf = (name: RegExp, part: 'min' | 'max' = 'min') =>
   within(screen.getAllByRole('group', { name }).at(-1)!)
@@ -384,7 +384,7 @@ describe('FilterSidebar metric entries', () => {
 /**
  * The literal expected sequences, written out rather than derived from the exported list — deriving
  * them would assert that a constant equals itself. Every fixed section carries a heading so its
- * position is asserted too, and the group names carry heading *and* side so no two collide.
+ * position is asserted too, and the group names carry heading *and* zone so no two collide.
  */
 const HEADINGS = [
   'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
@@ -409,18 +409,18 @@ const orderOf = (container: HTMLElement) => ({
 });
 
 describe('FilterSidebar order', () => {
-  it('renders one fixed order, identical across every strike and story', () => {
+  it('renders one fixed order, identical across every zone and story', () => {
     // The cross product is the only place the order can break: a story under forefoot is what would
     // otherwise introduce a row the heel renders did not have.
-    for (const strike of ['heel', 'forefoot'] as Side[]) {
-      for (const view of [projectSide(defaultView(), strike), ...PRESETS.map((p) => applyPreset(p.id, strike, false))]) {
+    for (const zone of ['heel', 'forefoot'] as Zone[]) {
+      for (const view of [projectZone(defaultView(), zone), ...PRESETS.map((p) => applyPreset(p.id, zone, false))]) {
         const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
-        expect(orderOf(container).headings, `${strike} ${JSON.stringify(view.sort)}`).toEqual(HEADINGS);
-        expect(orderOf(container).groups, `${strike} ${JSON.stringify(view.sort)}`).toEqual(GROUPS);
+        expect(orderOf(container).headings, `${zone} ${JSON.stringify(view.sort)}`).toEqual(HEADINGS);
+        expect(orderOf(container).groups, `${zone} ${JSON.stringify(view.sort)}`).toEqual(GROUPS);
       }
     }
   });
-  it('renders both halves of a side pair under one heading, forefoot first', () => {
+  it('renders both halves of a zone pair under one heading, forefoot first', () => {
     const { container } = render(FilterSidebar, { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
     expect(within(container).getAllByRole('heading', { name: 'Stack' })).toHaveLength(1);
     expect(orderOf(container).groups.filter((n) => n?.startsWith('Stack')))

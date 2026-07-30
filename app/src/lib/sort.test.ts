@@ -79,7 +79,7 @@ describe('sortShoes edge cases', () => {
 describe('the synthetic Easy score', () => {
   const columns = (over: Record<string, Map<string, number>>) => new Map(Object.entries(over));
 
-  it('reads the column it is sorting by, so each side ranks on its own scores', () => {
+  it('reads the column it is sorting by, so each zone ranks on its own scores', () => {
     const scores = columns({
       [EASY.keys.heel]: new Map([['oldie', 90], ['cushy', 10], ['trainer', 50]]),
       [EASY.keys.forefoot]: new Map([['oldie', 10], ['cushy', 90], ['trainer', 50]]),

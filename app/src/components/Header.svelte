@@ -54,7 +54,7 @@
   .spacer { flex: 1; }
   .meta { font-size: var(--t-sm); color: var(--text-dim); }
   .copied { font-size: var(--t-sm); color: var(--good); }
-  /* A silent region is still a flex item, so it would carry a gap on each side and space the header
+  /* A silent region is still a flex item, so it would carry a gap on each zone and space the header
      differently depending on whether a link had ever been copied. */
   .copied:not(.said) { margin-inline-start: calc(-1 * var(--gap-x)); }
   .meta a { color: var(--accent); }

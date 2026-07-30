@@ -1,4 +1,4 @@
-import { derivedSideKey, type Side } from './lineage';
+import { derivedZoneKey, type Zone } from './lineage';
 import type { ScoreDef, TermKey } from './score';
 
 /**
@@ -14,7 +14,7 @@ import type { ScoreDef, TermKey } from './score';
  *  Tempo **by reference**: a divisor is a property of (metric, mapping, pool) and never of the
  *  story, so two copies would be two homes for one fact (docs/README.md §Rules). It carries all six
  *  terms because a definition's `weights` decides which are read, so Easy simply ignores `weight`. */
-const PLATED_POOL_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({
+const PLATED_POOL_SD: Record<Zone, Partial<Record<TermKey, number>>> = Object.freeze({
   heel: Object.freeze({
     energyReturn: 0.0758, weight: 0.0776, outsoleDurability: 0.1614,
     shockAbsorption: 0.0896, midsoleWidth: 0.0872, heelCounter: 0.2712,
@@ -28,17 +28,17 @@ const PLATED_POOL_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.fr
 /** Divisors over the whole fleet — 450 shoes. Carbon widens every spread, so Race cannot use the
  *  table above: its energy-return divisor is 0.0902 against 0.0758. Keyed by pool, not globally by
  *  term — do not collapse the two (docs/app.md §The story scores). */
-const WHOLE_FLEET_SD: Record<Side, Partial<Record<TermKey, number>>> = Object.freeze({
+const WHOLE_FLEET_SD: Record<Zone, Partial<Record<TermKey, number>>> = Object.freeze({
   heel: Object.freeze({ energyReturn: 0.0902, weight: 0.0904, shockAbsorption: 0.0902 }),
   forefoot: Object.freeze({ energyReturn: 0.0900, weight: 0.0904, shockAbsorption: 0.0930 }),
 });
 
 export const EASY: ScoreDef = {
   id: 'easy',
-  keys: { heel: derivedSideKey('Easy score', 'heel'), forefoot: derivedSideKey('Easy score', 'forefoot') },
+  keys: { heel: derivedZoneKey('Easy score', 'heel'), forefoot: derivedZoneKey('Easy score', 'forefoot') },
   weights: { shockAbsorption: 2, outsoleDurability: 1, energyReturn: 1 },
   sd: PLATED_POOL_SD,
-  /** Per side *and* per stability state: the preference changes what the score means, so putting
+  /** Per zone *and* per stability state: the preference changes what the score means, so putting
    *  both states on one scale would invite a comparison that is not meaningful. Derived by dividing
    *  by the sds **as published above** rather than by the unrounded ones, or the endpoints miss 100
    *  and 0 by enough to see (they read 100.03 and −0.01 when the two disagree). */
@@ -51,7 +51,7 @@ export const EASY: ScoreDef = {
 
 export const TEMPO: ScoreDef = {
   id: 'tempo',
-  keys: { heel: derivedSideKey('Tempo score', 'heel'), forefoot: derivedSideKey('Tempo score', 'forefoot') },
+  keys: { heel: derivedZoneKey('Tempo score', 'heel'), forefoot: derivedZoneKey('Tempo score', 'forefoot') },
   /** Energy return leads because it is the direct measure of a fast shoe; shock absorption is small
    *  **because** it is a floor, and it must exist **because** weight is large — dropping it lets
    *  lightness run away and ranks barefoot shoes as tempo picks (docs/shoe-stories.md §Tempo). */
@@ -74,7 +74,7 @@ export const TEMPO: ScoreDef = {
  *  (docs/shoe-stories.md §Race). The Toolbar says so rather than leaving a dead control. */
 export const RACE: ScoreDef = {
   id: 'race',
-  keys: { heel: derivedSideKey('Race score', 'heel'), forefoot: derivedSideKey('Race score', 'forefoot') },
+  keys: { heel: derivedZoneKey('Race score', 'heel'), forefoot: derivedZoneKey('Race score', 'forefoot') },
   /** No durability term at all: a race shoe is used a handful of times, so cost per mile is
    *  irrelevant — which is what makes the three stories three. */
   weights: { energyReturn: 3, weight: 2, shockAbsorption: 1 },

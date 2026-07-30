@@ -74,7 +74,7 @@ describe('ColumnPicker metric entries', () => {
 });
 
 describe('ColumnPicker and the Easy score', () => {
-  it('offers a tickable score column per side, each naming its own', () => {
+  it('offers a tickable score column per zone, each naming its own', () => {
     render(ColumnPicker, { props: { ...base, columns: [EASY.keys.heel], onchange: vi.fn() } });
     expect(screen.getByRole('checkbox', { name: /easy heel score/i })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /easy forefoot score/i })).not.toBeChecked();

@@ -5,12 +5,12 @@ import SetupStrip from './SetupStrip.svelte';
 import { VIEW_STORAGE_KEY } from '../lib/persist';
 import { FLEET, TESTS } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
-import type { Side } from '../lib/lineage';
+import type { Zone } from '../lib/lineage';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 const props = {
-  side: 'heel' as Side | null, selected: null as string | null,
-  onside: vi.fn(), onstory: vi.fn(),
+  zone: 'heel' as Zone | null, selected: null as string | null,
+  onzone: vi.fn(), onstory: vi.fn(),
 };
 
 describe('SetupStrip', () => {
@@ -42,22 +42,22 @@ describe('SetupStrip', () => {
   // are being mislabelled, where these describe what the control does (docs/app.md §Presets).
   it('labels the groups by what they do, not by who the runner is', () => {
     render(SetupStrip, { props: { ...props } });
-    expect(screen.getByText('Use measurements from the')).toBeInTheDocument();
+    expect(screen.getByText('Measured at')).toBeInTheDocument();
     expect(screen.getByText('Built for')).toBeInTheDocument();
     expect(screen.queryByText(/I land on/)).toBeNull();
   });
 
   it('reports the card that was picked', async () => {
-    const onside = vi.fn();
+    const onzone = vi.fn();
     const onstory = vi.fn();
-    render(SetupStrip, { props: { ...props, onside, onstory } });
+    render(SetupStrip, { props: { ...props, onzone, onstory } });
     await fireEvent.click(screen.getByRole('button', { name: /^Forefoot/ }));
-    expect(onside).toHaveBeenCalledWith('forefoot');
+    expect(onzone).toHaveBeenCalledWith('forefoot');
     await fireEvent.click(screen.getByRole('button', { name: /Race/ }));
     expect(onstory).toHaveBeenCalledWith('race');
   });
 
-  it('marks the chosen side and the chosen story, and nothing else', () => {
+  it('marks the chosen zone and the chosen story, and nothing else', () => {
     render(SetupStrip, { props: { ...props, selected: 'tempo' } });
     expect(screen.getAllByRole('button', { pressed: true }).map((b) => b.querySelector('.name')?.textContent))
       .toEqual(['Heel', 'Tempo']);
@@ -65,8 +65,8 @@ describe('SetupStrip', () => {
 
   // Anchored regexes, matching the file's own convention: the card carries a reserved count span
   // as well as its name.
-  it('presses neither card when the view commits to no side', () => {
-    render(SetupStrip, { props: { ...props, side: null } });
+  it('presses neither card when the view commits to no zone', () => {
+    render(SetupStrip, { props: { ...props, zone: null } });
     for (const name of [/^Heel/, /^Forefoot/]) {
       expect(screen.getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
     }
@@ -74,10 +74,10 @@ describe('SetupStrip', () => {
 
   it('explains a group in a popover rather than a tooltip, and hands focus back on Escape', async () => {
     render(SetupStrip, { props: { ...props } });
-    const help = screen.getByRole('button', { name: /About Use measurements from the/ });
+    const help = screen.getByRole('button', { name: /About Measured at/ });
     help.focus();
     await fireEvent.click(help);
-    const pop = screen.getByRole('dialog', { name: 'Use measurements from the' });
+    const pop = screen.getByRole('dialog', { name: 'Measured at' });
     expect(pop).toHaveTextContent(/measured twice/);
     expect(pop).toHaveTextContent(/either is fine/);
 
@@ -115,7 +115,7 @@ describe('Page setup strip', () => {
     expect(screen.queryByTestId('setup-strip')).toBeNull();
   });
 
-  it('survives a side change, which is the other half of the same question', async () => {
+  it('survives a zone change, which is the other half of the same question', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getAllByRole('button', { name: /^Forefoot/ })[0]!);
     expect(screen.getByTestId('setup-strip')).toBeInTheDocument();

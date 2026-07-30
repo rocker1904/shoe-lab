@@ -1,12 +1,12 @@
 import type { LabTest } from '../../../shared/types.js';
-import { DERIVED_SIDE_PAIRS } from './lineage';
+import { DERIVED_ZONE_PAIRS } from './lineage';
 
 /** Derived rather than listed, so a further story needs no edit here. It depends on every derived
  *  pair's label ending in " score" — which is why `labels.test.ts` keeps one exact pin beside the
  *  loop over every definition. */
-const SCORE_LABELS = new Map<string, string>(DERIVED_SIDE_PAIRS.flatMap((p) =>
-  (['heel', 'forefoot'] as const).map((side) =>
-    [p[side], `${p.label.replace(/ score$/, '')} ${side} score`] as const)));
+const SCORE_LABELS = new Map<string, string>(DERIVED_ZONE_PAIRS.flatMap((p) =>
+  (['heel', 'forefoot'] as const).map((zone) =>
+    [p[zone], `${p.label.replace(/ score$/, '')} ${zone} score`] as const)));
 
 /**
  * The header's first line. The four shoe fields that have cells carry no catalogue test behind

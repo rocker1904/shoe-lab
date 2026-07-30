@@ -1,6 +1,6 @@
 import type { Shoe } from '../../../shared/types.js';
 import { numericValue, type TestIndex } from './dataset';
-import { sideKey, type Side } from './lineage';
+import { zoneKey, type Zone } from './lineage';
 
 /**
  * The story-agnostic engine: four stages, no story numbers. A story arrives as a `ScoreDef` from
@@ -20,9 +20,9 @@ export const W_REF = 450;
  *  Deliberately one number for every story: a per-story cap is the only thing that would let two
  *  scores over one pool disagree about one measurement (docs/shoe-stories.md §Tempo). */
 export const L_OK = 3.0;
-/** p90 of each side's width/stack ratio. Per side because the halves are not on one scale: the
+/** p90 of each zone's width/stack ratio. Per zone because the halves are not on one scale: the
  *  minimalist tail caps out, a flat sandal genuinely being stable, while the real fleet stays spread. */
-export const WID_CAP: Record<Side, number> = { heel: 3.04, forefoot: 5.37 };
+export const WID_CAP: Record<Zone, number> = { heel: 3.04, forefoot: 5.37 };
 
 export type TermKey =
   | 'energyReturn' | 'weight' | 'outsoleDurability' | 'shockAbsorption'
@@ -58,15 +58,15 @@ const ratio = (a: number | undefined, b: number | undefined): Reading | null =>
 
 /** Every term any story can read. A definition picks the ones it weights; the rest are ignored,
  *  which is what lets three stories share one reader. */
-export function readings(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, Reading | null> {
+export function readings(shoe: Shoe, zone: Zone, idx: TestIndex): Record<TermKey, Reading | null> {
   const v = (key: string) => numericValue(shoe, key, idx);
   return {
-    energyReturn: reading(v(sideKey('Energy return', side))),
-    // Sideless, unlike every other term: a shoe has one weight, not a heel and a forefoot one.
+    energyReturn: reading(v(zoneKey('Energy return', zone))),
+    // Zoneless, unlike every other term: a shoe has one weight, not a heel and a forefoot one.
     weight: reading(v('weight')),
     outsoleDurability: ratio(v('outsole-thickness'), v('outsole-durability')),
-    shockAbsorption: reading(v(sideKey('Shock absorption', side))),
-    midsoleWidth: ratio(v(sideKey('Midsole width', side)), v(sideKey('Stack', side))),
+    shockAbsorption: reading(v(zoneKey('Shock absorption', zone))),
+    midsoleWidth: ratio(v(zoneKey('Midsole width', zone)), v(zoneKey('Stack', zone))),
     heelCounter: reading(v('heel-counter-stiffness')),
   };
 }
@@ -74,8 +74,8 @@ export function readings(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey
 /** Stage 1: each reading becomes 0–1 and linear in goodness, true zero preserved. Shared by every
  *  story — a metric means the same thing whichever score reads it, which is also why two stories
  *  over one pool share divisors (docs/app.md §The story scores). */
-export function terms(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, number | null> {
-  const r = readings(shoe, side, idx);
+export function terms(shoe: Shoe, zone: Zone, idx: TestIndex): Record<TermKey, number | null> {
+  const r = readings(shoe, zone, idx);
   const map = (key: TermKey, f: (x: number) => number): number | null => {
     const raw = r[key];
     return raw === null ? null : f(raw.value);
@@ -87,13 +87,13 @@ export function terms(shoe: Shoe, side: Side, idx: TestIndex): Record<TermKey, n
     weight: map('weight', (x) => 1 - x / W_REF),
     outsoleDurability: map('outsoleDurability', (x) => Math.min(x / L_OK, 1)),
     shockAbsorption: map('shockAbsorption', (x) => x / SA_REF),
-    midsoleWidth: map('midsoleWidth', (x) => Math.min(x / WID_CAP[side], 1)),
+    midsoleWidth: map('midsoleWidth', (x) => Math.min(x / WID_CAP[zone], 1)),
     heelCounter: map('heelCounter', (x) => (x - 1) / 4),
   };
 }
 
 export interface Anchor { r0: number; r100: number }
-export interface ScoreVariant { anchors: Record<Side, Anchor> }
+export interface ScoreVariant { anchors: Record<Zone, Anchor> }
 
 /**
  * One story's score, as data. The engine reads nothing story-specific, so a fourth story is a
@@ -108,14 +108,14 @@ export interface ScoreDef {
   /** The preset this score ranks, so `presets.ts` resolves a definition rather than re-listing.
    *  Deliberately `string`: the engine names no story, or a fourth one would be a change here. */
   id: string;
-  /** Synthetic column keys, from `DERIVED_SIDE_PAIRS` — the one home of a score key. */
-  keys: Record<Side, string>;
+  /** Synthetic column keys, from `DERIVED_ZONE_PAIRS` — the one home of a score key. */
+  keys: Record<Zone, string>;
   /** Editorial, and only meaningful because stage 2 makes weights control influence rather than
    *  each term's spread on its own mapped scale. */
   weights: Partial<Record<TermKey, number>>;
   /** Named for the pool it was derived over, never for the story: two stories over one pool share
    *  this object by reference (docs/app.md §The story scores). */
-  sd: Record<Side, Partial<Record<TermKey, number>>>;
+  sd: Record<Zone, Partial<Record<TermKey, number>>>;
   base: ScoreVariant;
   /** Present exactly when the stability preference applies. Structural rather than a comment, so
    *  the extra weights and the scale they anchor on cannot come from different halves. */
@@ -125,12 +125,12 @@ export interface ScoreDef {
 export interface Contribution { key: TermKey; raw: Reading; term: number; weighted: number }
 
 /**
- * The synthetic columns and sort keys, one per side per story. Not catalogue tests: their value
+ * The synthetic columns and sort keys, one per zone per story. Not catalogue tests: their value
  * depends on the *view* — the stability preference decides how many terms there are — which is why
  * `Page` resolves them into maps and hands them down rather than letting `numericValue` answer for
- * them. Two self-describing keys per story rather than one resolved through the *derived* side: a
- * column that names its own side cannot disagree with the panel beside it, and a view naming no
- * side needs no silent fallback (docs/app.md §The story scores).
+ * them. Two self-describing keys per story rather than one resolved through the *derived* zone: a
+ * column that names its own zone cannot disagree with the panel beside it, and a view naming no
+ * zone needs no silent fallback (docs/app.md §The story scores).
  *
  * Every resolved score column: column key to slug to score. Keyed by column rather than passed as
  * one map per consumer, so a further story arrives as further **entries** and no signature moves.
@@ -147,10 +147,10 @@ function variantOf(def: ScoreDef, stability: boolean) {
 }
 
 export function contributions(
-  def: ScoreDef, shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
+  def: ScoreDef, shoe: Shoe, zone: Zone, stability: boolean, idx: TestIndex,
 ): Contribution[] | null {
-  const raw = readings(shoe, side, idx);
-  const mapped = terms(shoe, side, idx);
+  const raw = readings(shoe, zone, idx);
+  const mapped = terms(shoe, zone, idx);
   const { weights } = variantOf(def, stability);
   const keys = TERM_ORDER.filter((k) => weights[k] !== undefined);
   if (keys.some((k) => mapped[k] === null)) return null; // all-terms-required
@@ -160,29 +160,29 @@ export function contributions(
     term: mapped[key]!,
     // Stage 2 then 3. Dividing without centring keeps the true zero; the differing means only add a
     // constant to every shoe, which cannot reorder anything.
-    weighted: (weights[key]! * mapped[key]!) / def.sd[side][key]!,
+    weighted: (weights[key]! * mapped[key]!) / def.sd[zone][key]!,
   }));
 }
 
 export function scoreOf(
-  def: ScoreDef, shoe: Shoe, side: Side, stability: boolean, idx: TestIndex,
+  def: ScoreDef, shoe: Shoe, zone: Zone, stability: boolean, idx: TestIndex,
 ): number | null {
-  const rows = contributions(def, shoe, side, stability, idx);
+  const rows = contributions(def, shoe, zone, stability, idx);
   if (rows === null) return null;
   const { weights, anchors } = variantOf(def, stability);
   const total = rows.reduce((sum, r) => sum + weights[r.key]!, 0);
   // A weighted mean rather than a sum, so adding the stability pair does not rescale the total.
   const mean = rows.reduce((sum, r) => sum + r.weighted, 0) / total;
-  const { r0, r100 } = anchors[side];
+  const { r0, r100 } = anchors[zone];
   return ((mean - r0) / (r100 - r0)) * 100;
 }
 
 export function scoreMap(
-  def: ScoreDef, shoes: Shoe[], side: Side, stability: boolean, idx: TestIndex,
+  def: ScoreDef, shoes: Shoe[], zone: Zone, stability: boolean, idx: TestIndex,
 ): Map<string, number> {
   const out = new Map<string, number>();
   for (const s of shoes) {
-    const v = scoreOf(def, s, side, stability, idx);
+    const v = scoreOf(def, s, zone, stability, idx);
     if (v !== null) out.set(s.slug, v);
   }
   return out;

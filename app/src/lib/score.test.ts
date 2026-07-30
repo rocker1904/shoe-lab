@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { coverageOf, isSparse } from './coverage';
 import { indexTests, type TestIndex } from './dataset';
-import { sideKey, swapSide, type Side } from './lineage';
+import { zoneKey, swapZone, type Zone } from './lineage';
 import {
   contributions, L_OK, SA_REF, scoreMap, scoreOf, terms, TERM_ORDER, W_REF, WID_CAP,
   type ScoreDef, type TermKey,
@@ -15,7 +15,7 @@ import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
 const fixture = (slug: string) => FLEET.find((s) => s.slug === slug)!;
-const SIDES: Side[] = ['heel', 'forefoot'];
+const ZONES: Zone[] = ['heel', 'forefoot'];
 
 describe('terms', () => {
   it('maps shock absorption as a ratio of a fixed reference, uncapped', () => {
@@ -37,9 +37,9 @@ describe('terms', () => {
     expect(terms(fixture('racer'), 'heel', idx).outsoleDurability).toBeCloseTo(0.75 / L_OK, 6);
   });
 
-  it('maps midsole width as a capped width-over-stack ratio, per side', () => {
+  it('maps midsole width as a capped width-over-stack ratio, per zone', () => {
     // Stability is a lever from foot to ground, so the dimensionless ratio is the physical
-    // quantity, and the cap differs per side because the halves are not on one scale.
+    // quantity, and the cap differs per zone because the halves are not on one scale.
     expect(terms(fixture('cushy'), 'heel', idx).midsoleWidth)
       .toBeCloseTo(Math.min((95 / 40) / WID_CAP.heel, 1), 6);
     expect(terms(fixture('cushy'), 'forefoot', idx).midsoleWidth)
@@ -114,7 +114,7 @@ describe('scoreOf', () => {
 
   it('pins every frozen constant, so an accidental recompute fails the build', () => {
     // Derived from data/ at commit baed23b. Changing one changes every published score, so it must
-    // be a deliberate edit rather than a refresh side effect.
+    // be a deliberate edit rather than a refresh zone effect.
     // `weight` is in the table although Easy does not read it: the divisors belong to the pool,
     // which Tempo shares, and a definition's weights decide which of them it uses.
     expect(EASY.sd.heel).toEqual({
@@ -135,8 +135,8 @@ describe('scoreOf', () => {
     expect(WID_CAP).toEqual({ heel: 3.04, forefoot: 5.37 });
   });
 
-  it('reads a different number on each side, from that side own constants', () => {
-    // Identical readings on both halves, so the difference can only come from the per-side sds,
+  it('reads a different number on each zone, from that zone own constants', () => {
+    // Identical readings on both halves, so the difference can only come from the per-zone sds,
     // width cap and anchors: no absolute number transfers between the halves.
     const even = shoe({ slug: 'even', values: {
       '68': 140, '67': 140, '65': 70, '66': 70, '4': 0.8, '9': 3.2,
@@ -166,19 +166,19 @@ describe('contributions', () => {
   });
 });
 
-it('names a synthetic key per side, so nothing open-codes one and no column derives its side', () => {
+it('names a synthetic key per zone, so nothing open-codes one and no column derives its zone', () => {
   expect(EASY.keys).toEqual({ heel: 'easy-score-heel', forefoot: 'easy-score-forefoot' });
 });
 
 describe('every story definition', () => {
-  it('every weighted term has a divisor on both sides, for every story', () => {
-    // `Partial` plus `def.sd[side][key]!` would make a missing divisor a silent NaN — stored by
+  it('every weighted term has a divisor on both zones, for every story', () => {
+    // `Partial` plus `def.sd[zone][key]!` would make a missing divisor a silent NaN — stored by
     // `scoreMap`, whose guard is `!== null`, then sorted, washed and exported as a number-shaped
     // nothing instead of an em dash.
     for (const def of SCORE_DEFS) {
       const all = { ...def.weights, ...(def.stable?.add ?? {}) };
       for (const key of Object.keys(all) as TermKey[]) {
-        for (const side of SIDES) expect(Number.isFinite(def.sd[side][key])).toBe(true);
+        for (const zone of ZONES) expect(Number.isFinite(def.sd[zone][key])).toBe(true);
       }
     }
   });
@@ -211,22 +211,22 @@ const sd = (xs: number[]) => {
 };
 
 describe('the Easy score against the real fleet', () => {
-  it('delivers the nominal weights as effective influence, on either side and either toggle', () => {
+  it('delivers the nominal weights as effective influence, on either zone and either toggle', () => {
     // Stage 2 exists for exactly this. Without it a term's influence is its sd on the mapped scale,
     // and outsole durability at weight 1 outweighs shock absorption at weight 2. Checked with the
     // stability pair in as well as out: five terms is the case where a coarse metric — five
     // subjective buckets — would otherwise dominate the whole function.
-    for (const side of SIDES) {
+    for (const zone of ZONES) {
       for (const stability of [false, true]) {
-        const rows = POOL.map((s) => contributions(EASY, s, side, stability, realIdx)).filter((r) => r !== null);
+        const rows = POOL.map((s) => contributions(EASY, s, zone, stability, realIdx)).filter((r) => r !== null);
         const keys = rows[0]!.map((r) => r.key);
-        expect(keys, `${side}/${stability ? 'on' : 'off'}`).toHaveLength(stability ? 5 : 3);
+        expect(keys, `${zone}/${stability ? 'on' : 'off'}`).toHaveLength(stability ? 5 : 3);
         const spread = new Map(keys.map((k) => [k, sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted))]));
         const total = [...spread.values()].reduce((a, b) => a + b, 0);
         const weights = { ...EASY.weights, ...EASY.stable!.add };
         const nominalTotal = keys.reduce((a, k) => a + weights[k]!, 0);
         for (const k of keys) {
-          expect(spread.get(k)! / total, `${side}/${stability ? 'on' : 'off'} ${k}`)
+          expect(spread.get(k)! / total, `${zone}/${stability ? 'on' : 'off'} ${k}`)
             .toBeCloseTo(weights[k]! / nominalTotal, 1);
         }
       }
@@ -237,9 +237,9 @@ describe('the Easy score against the real fleet', () => {
     // The property the whole toggle rests on: the opt-in metrics are the best-covered in the fleet,
     // so turning stability on can never change which shoes are eligible. If upstream coverage moves,
     // this must fail rather than silently shorten the list.
-    for (const side of SIDES) {
-      expect(scoreMap(EASY, POOL, side, true, realIdx).size)
-        .toBe(scoreMap(EASY, POOL, side, false, realIdx).size);
+    for (const zone of ZONES) {
+      expect(scoreMap(EASY, POOL, zone, true, realIdx).size)
+        .toBe(scoreMap(EASY, POOL, zone, false, realIdx).size);
     }
   });
 
@@ -248,10 +248,10 @@ describe('the Easy score against the real fleet', () => {
     // best scoreable shoe reads exactly 100 and the worst exactly 0. Freezing only takes effect on
     // future refreshes. Anchors derived from unrounded sds miss the endpoints by enough for this
     // to fail, which is the mistake it exists to catch.
-    for (const side of SIDES) {
+    for (const zone of ZONES) {
       for (const stability of [false, true]) {
-        const vs = [...scoreMap(EASY, POOL, side, stability, realIdx).values()];
-        const label = `${side}/${stability ? 'on' : 'off'}`;
+        const vs = [...scoreMap(EASY, POOL, zone, stability, realIdx).values()];
+        const label = `${zone}/${stability ? 'on' : 'off'}`;
         expect(Math.max(...vs), label).toBeCloseTo(100, 1);
         expect(Math.min(...vs), label).toBeCloseTo(0, 1);
       }
@@ -260,15 +260,15 @@ describe('the Easy score against the real fleet', () => {
 });
 
 describe('the Tempo score against the real fleet', () => {
-  it('pairs the Tempo score columns by side', () => {
-    expect(swapSide('tempo-score-heel', 'forefoot')).toBe('tempo-score-forefoot');
+  it('pairs the Tempo score columns by zone', () => {
+    expect(swapZone('tempo-score-heel', 'forefoot')).toBe('tempo-score-forefoot');
   });
 
   it('scores the plate-filtered pool and anchors on it', () => {
-    for (const side of SIDES) {
+    for (const zone of ZONES) {
       for (const stability of [false, true]) {
-        const vs = [...scoreMap(TEMPO, POOL, side, stability, realIdx).values()];
-        const label = `${side}/${stability ? 'on' : 'off'}`;
+        const vs = [...scoreMap(TEMPO, POOL, zone, stability, realIdx).values()];
+        const label = `${zone}/${stability ? 'on' : 'off'}`;
         // The eligibility invariant Easy asserts holds for Tempo too, and for the same reason: the
         // opt-in metrics are the best-covered in the fleet.
         expect(vs.length, label).toBe(283);
@@ -284,17 +284,17 @@ describe('the Tempo score against the real fleet', () => {
     expect(TEMPO.sd).toBe(EASY.sd);
   });
 
-  it('delivers every nominal weight as effective influence, on both sides', () => {
+  it('delivers every nominal weight as effective influence, on both zones', () => {
     // Covers `weight` in particular — the only term this branch introduces, with a new mapping and
     // a new divisor, and where `w/450` written instead of `1 − w/450` would land.
-    for (const side of SIDES) {
-      const rows = POOL.map((s) => contributions(TEMPO, s, side, false, realIdx)).filter((r) => r !== null);
+    for (const zone of ZONES) {
+      const rows = POOL.map((s) => contributions(TEMPO, s, zone, false, realIdx)).filter((r) => r !== null);
       const spread = (k: TermKey) => sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted));
       const keys = ['energyReturn', 'weight', 'outsoleDurability', 'shockAbsorption'] as const;
       const total = keys.reduce((a, k) => a + spread(k), 0);
       const nominal = keys.reduce((a, k) => a + TEMPO.weights[k]!, 0);
       for (const k of keys) {
-        expect(spread(k) / total, `${side} ${k}`).toBeCloseTo(TEMPO.weights[k]! / nominal, 1);
+        expect(spread(k) / total, `${zone} ${k}`).toBeCloseTo(TEMPO.weights[k]! / nominal, 1);
       }
     }
   });
@@ -309,24 +309,24 @@ describe('the Tempo score against the real fleet', () => {
 });
 
 describe('the Race score against the real fleet', () => {
-  it('pairs the Race score columns by side', () => {
-    expect(swapSide('race-score-forefoot', 'heel')).toBe('race-score-heel');
+  it('pairs the Race score columns by zone', () => {
+    expect(swapZone('race-score-forefoot', 'heel')).toBe('race-score-heel');
   });
 
   it('scores the whole fleet and anchors on it', () => {
-    for (const side of SIDES) {
-      const vs = [...scoreMap(RACE, REAL.shoes, side, false, realIdx).values()];
-      expect(vs.length, side).toBe(378);
-      expect(Math.max(...vs), side).toBeCloseTo(100, 1);
-      expect(Math.min(...vs), side).toBeCloseTo(0, 1);
+    for (const zone of ZONES) {
+      const vs = [...scoreMap(RACE, REAL.shoes, zone, false, realIdx).values()];
+      expect(vs.length, zone).toBe(378);
+      expect(Math.max(...vs), zone).toBeCloseTo(100, 1);
+      expect(Math.min(...vs), zone).toBeCloseTo(0, 1);
     }
   });
 
   it('ignores the stability preference entirely', () => {
     // Race declares no stable variant, so the control is inert here — and the Toolbar says so.
-    for (const side of SIDES) {
-      const off = scoreMap(RACE, REAL.shoes, side, false, realIdx);
-      const on = scoreMap(RACE, REAL.shoes, side, true, realIdx);
+    for (const zone of ZONES) {
+      const off = scoreMap(RACE, REAL.shoes, zone, false, realIdx);
+      const on = scoreMap(RACE, REAL.shoes, zone, true, realIdx);
       expect(on.size).toBe(off.size);
       for (const [slug, v] of off) expect(on.get(slug)).toBe(v);
     }
@@ -363,13 +363,13 @@ describe('the Race score against the real fleet', () => {
  * than an open-coded 0.5: the threshold has one owner (docs/app.md §Coverage).
  */
 function sparseTermKeys(
-  def: ScoreDef, side: Side, stability: boolean, pool: Shoe[], index: TestIndex,
+  def: ScoreDef, zone: Zone, stability: boolean, pool: Shoe[], index: TestIndex,
 ): TermKey[] {
   // The variant's weight set, restated from `variantOf` because that is private to the engine and
   // the guard must see the terms a *runner* can turn on, not just the declared ones.
   const weights = stability && def.stable ? { ...def.weights, ...def.stable.add } : def.weights;
   return TERM_ORDER.filter((k) => weights[k] !== undefined).filter((k) => {
-    const n = pool.filter((s) => terms(s, side, index)[k] !== null).length;
+    const n = pool.filter((s) => terms(s, zone, index)[k] !== null).length;
     return isSparse({ n, total: pool.length, fraction: pool.length ? n / pool.length : 0 });
   });
 }
@@ -381,12 +381,12 @@ const POOL_OF: [ScoreDef, Shoe[], string][] = [
 ];
 
 describe('no story weights a term its own coverage warning would flag', () => {
-  it('holds for every story over its own pool, on either side and either toggle', () => {
+  it('holds for every story over its own pool, on either zone and either toggle', () => {
     for (const [def, pool, id] of POOL_OF) {
-      for (const side of SIDES) {
+      for (const zone of ZONES) {
         for (const stability of [false, true]) {
-          expect(sparseTermKeys(def, side, stability, pool, realIdx),
-            `${id}/${side}/${stability ? 'on' : 'off'}`).toEqual([]);
+          expect(sparseTermKeys(def, zone, stability, pool, realIdx),
+            `${id}/${zone}/${stability ? 'on' : 'off'}`).toEqual([]);
         }
       }
     }
@@ -396,7 +396,7 @@ describe('no story weights a term its own coverage warning would flag', () => {
     // Borderline on purpose, as its sibling in presets.test.ts is: a term stripped to nothing would
     // prove only that isSparse works at zero. Energy return is the term to thin, being the one all
     // three stories weight.
-    const id = String(realIdx.bySlug.get(sideKey('Energy return', 'heel'))!.id);
+    const id = String(realIdx.bySlug.get(zoneKey('Energy return', 'heel'))!.id);
     let kept = 0;
     const thinned = REAL.shoes.map((s) => {
       if (typeof s.values[id] !== 'number' || kept >= REAL.shoes.length * 0.4) {
@@ -407,7 +407,7 @@ describe('no story weights a term its own coverage warning would flag', () => {
       kept += 1;
       return s;
     });
-    expect(coverageOf(thinned, sideKey('Energy return', 'heel'), realIdx).fraction).toBeCloseTo(0.4);
+    expect(coverageOf(thinned, zoneKey('Energy return', 'heel'), realIdx).fraction).toBeCloseTo(0.4);
     expect(sparseTermKeys(EASY, 'heel', false, thinned, realIdx)).toEqual(['energyReturn']);
     // and the well-covered terms are not swept up with it
     expect(sparseTermKeys(EASY, 'forefoot', false, thinned, realIdx)).toEqual([]);

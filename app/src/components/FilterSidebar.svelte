@@ -4,7 +4,7 @@
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import { startOfMonth } from '../lib/release-date';
   import { applyFilters, type RangeBound } from '../lib/filters';
-  import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Side } from '../lib/lineage';
+  import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
   import { excludedBy } from '../lib/relax';
   import type { ViewState } from '../lib/urlstate';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
@@ -21,7 +21,7 @@
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  const SIDE_LABEL: Record<Side, string> = { forefoot: 'Forefoot', heel: 'Heel' };
+  const SIDE_LABEL: Record<Zone, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
   /** `score` and `msrpGbp` are shoe fields, not catalogue tests, so `metricEntries` cannot emit
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
@@ -44,8 +44,8 @@
     // switched to it is what keeps that filter visible and clearable.
     return held(e.retired.key) && !held(e.current.key) ? e.retired.key : e.current.key;
   };
-  /** **Every** part of a side pair gets a row, always: the sidebar must not change shape with the
-   *  side (docs/app.md §Filters). A superseded pair still offers one generation at a time. */
+  /** **Every** part of a zone pair gets a row, always: the sidebar must not change shape with the
+   *  zone (docs/app.md §Filters). A superseded pair still offers one generation at a time. */
   const rowKeysOf = (e: ResolvedMetric): string[] =>
     e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)];
 
@@ -69,23 +69,23 @@
   });
   const shown = $derived([...curated, ...extras]);
 
-  /** Heading **and** side: two rows both called "Forefoot" would share an accessible name. */
+  /** Heading **and** zone: two rows both called "Forefoot" would share an accessible name. */
   const nameFor = (e: ResolvedMetric, key: string): string => {
     if (e.kind === 'single') return e.units ? `${e.label} (${e.units})` : e.label;
     if (e.kind === 'pair') return `${e.label} — ${(key === e.current.key ? e.current : e.retired).generation}`;
     const p = e.parts.find((x) => x.key === key)!;
-    if (p.side) return `${e.label} — ${SIDE_LABEL[p.side]}`;
+    if (p.zone) return `${e.label} — ${SIDE_LABEL[p.zone]}`;
     return p.units ? `${p.label} (${p.units})` : p.label;
   };
   /**
-   * A colocated entry renders two controls under one heading, so each needs its side on screen.
+   * A colocated entry renders two controls under one heading, so each needs its zone on screen.
    * Without it the coverage rows above read as labels for the controls below and name the wrong
    * one — the accessible name is right, so it misleads sighted users only.
    */
   const legendFor = (e: ResolvedMetric, key: string): string => {
     if (e.kind !== 'colocated') return '';
     const p = e.parts.find((x) => x.key === key)!;
-    return p.side ? SIDE_LABEL[p.side] : p.label;
+    return p.zone ? SIDE_LABEL[p.zone] : p.label;
   };
 
   const pctOf = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);
@@ -148,7 +148,7 @@
     });
   }
   // Anything not curated is removable, rather than only what is in `rows`. A row can also be on
-  // screen because it is a half of a side pair, and gating Remove on `rows` would leave such a row
+  // screen because it is a half of a zone pair, and gating Remove on `rows` would leave such a row
   // with clearing as its only exit — which is clear-means-remove, the conflation this surface
   // deleted (docs/app.md §Filters).
   const removable = (key: string) => !CURATED_RANGE_KEYS.includes(key);

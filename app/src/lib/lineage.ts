@@ -15,87 +15,87 @@ export type ResolvedMetric =
     }
   | {
       kind: 'colocated'; label: string; groupId: string | null;
-      /** `label` stays the full test name — `side` is additive. The column picker renders `label`,
+      /** `label` stays the full test name — `zone` is additive. The column picker renders `label`,
        *  and repurposing it would fill the picker with four checkboxes called "Forefoot". */
-      parts: { key: string; label: string; units: string; side: Side | null }[];
+      parts: { key: string; label: string; units: string; zone: Zone | null }[];
     };
 
 /** Which end of the shoe a reading describes, and which end the runner lands on. */
-export type Side = 'heel' | 'forefoot';
+export type Zone = 'heel' | 'forefoot';
 
 /**
- * Heel/forefoot pairs and the side of each half. The catalogue links only two of these four and
- * carries no notion of side at all, so the grouping is declared: `heel-padding-durability` has no
+ * Heel/forefoot pairs and the zone of each half. The catalogue links only two of these four and
+ * carries no notion of zone at all, so the grouping is declared: `heel-padding-durability` has no
  * forefoot counterpart, `forefoot-traction`'s secondary is unpublished, and an upstream rename
  * must not silently regroup the sidebar (docs/app.md §Columns and sorting). Agreement with the
  * catalogue is asserted by `lineage.test.ts` rather than thrown at runtime — `metricEntries` is
  * called on partial catalogues throughout the suite, including single-half cases it must degrade
  * rather than reject, so a throwing validator would take down the app and most of its tests.
  */
-export const SIDE_PAIRS = [
+export const ZONE_PAIRS = [
   { label: 'Stack', forefoot: 'forefoot-stack', heel: 'heel-stack' },
   { label: 'Energy return', forefoot: 'energy-return-forefoot', heel: 'energy-return-heel' },
   { label: 'Shock absorption', forefoot: 'shock-absorption-forefoot', heel: 'shock-absorption-heel' },
   { label: 'Midsole width', forefoot: 'midsole-width-in-the-forefoot', heel: 'midsole-width-in-the-heel' },
 ] as const satisfies readonly { label: string; forefoot: string; heel: string }[];
 
-export type SidePairLabel = (typeof SIDE_PAIRS)[number]['label'];
+export type ZonePairLabel = (typeof ZONE_PAIRS)[number]['label'];
 
 /**
- * Side pairs the app computes rather than the catalogue publishes. Held apart from `SIDE_PAIRS`
+ * Zone pairs the app computes rather than the catalogue publishes. Held apart from `ZONE_PAIRS`
  * because `metricEntries` resolves that list against the catalogue, so a key with no `LabTest`
- * behind it would drop out of the column picker — but they are side-paired in every other sense,
- * so they follow a side click and they name a side. This is the one home of the score column keys:
+ * behind it would drop out of the column picker — but they are zone-paired in every other sense,
+ * so they follow a zone click and they name a zone. This is the one home of the score column keys:
  * `score.ts` reads them from here rather than declaring a second spelling.
  */
-export const DERIVED_SIDE_PAIRS = [
+export const DERIVED_ZONE_PAIRS = [
   { label: 'Easy score', forefoot: 'easy-score-forefoot', heel: 'easy-score-heel' },
   { label: 'Tempo score', forefoot: 'tempo-score-forefoot', heel: 'tempo-score-heel' },
   { label: 'Race score', forefoot: 'race-score-forefoot', heel: 'race-score-heel' },
 ] as const satisfies readonly { label: string; forefoot: string; heel: string }[];
 
-export type DerivedSidePairLabel = (typeof DERIVED_SIDE_PAIRS)[number]['label'];
+export type DerivedZonePairLabel = (typeof DERIVED_ZONE_PAIRS)[number]['label'];
 
-/** Every side pair, for code that cares only that a key has two halves. */
-export const ALL_SIDE_PAIRS: readonly { label: string; forefoot: string; heel: string }[] =
-  [...SIDE_PAIRS, ...DERIVED_SIDE_PAIRS];
+/** Every zone pair, for code that cares only that a key has two halves. */
+export const ALL_ZONE_PAIRS: readonly { label: string; forefoot: string; heel: string }[] =
+  [...ZONE_PAIRS, ...DERIVED_ZONE_PAIRS];
 
-/** The half of a declared pair that the runner's strike puts in use. */
-export function sideKey(label: SidePairLabel, strike: Side): string {
-  return SIDE_PAIRS.find((p) => p.label === label)![strike];
+/** The half of a declared pair that the runner's zone puts in use. */
+export function zoneKey(label: ZonePairLabel, zone: Zone): string {
+  return ZONE_PAIRS.find((p) => p.label === label)![zone];
 }
 
-/** As `sideKey`, for a pair the app computes rather than the catalogue publishes. */
-export function derivedSideKey(label: DerivedSidePairLabel, strike: Side): string {
-  return DERIVED_SIDE_PAIRS.find((p) => p.label === label)![strike];
+/** As `zoneKey`, for a pair the app computes rather than the catalogue publishes. */
+export function derivedZoneKey(label: DerivedZonePairLabel, zone: Zone): string {
+  return DERIVED_ZONE_PAIRS.find((p) => p.label === label)![zone];
 }
 
 /**
- * The half of `slug`'s pair on `strike`'s side, or `slug` itself when it has no sides. Deliberately
- * *not* an exchange: a view can hold both halves at once, and both must land on the same side.
+ * The half of `slug`'s pair on `zone`'s zone, or `slug` itself when it has no zones. Deliberately
+ * *not* an exchange: a view can hold both halves at once, and both must land on the same zone.
  * Computed pairs are included: a score column carries no number either, so "the Easy score" means
  * the same thing on both halves and follows the click like any other column.
  */
-export function swapSide(slug: string, strike: Side): string {
-  const pair = ALL_SIDE_PAIRS.find((p) => p.forefoot === slug || p.heel === slug);
-  return pair ? pair[strike] : slug;
+export function swapZone(slug: string, zone: Zone): string {
+  const pair = ALL_ZONE_PAIRS.find((p) => p.forefoot === slug || p.heel === slug);
+  return pair ? pair[zone] : slug;
 }
 
-/** Every key that names one half of a side pair, and which half it is. Computed pairs count: a
+/** Every key that names one half of a zone pair, and which half it is. Computed pairs count: a
  *  table showing only the Easy heel score is about the heel, and saying otherwise would leave the
- *  side control unmarked on a view that names its side in a column header. Lives here beside
- *  `swapSide`, which searches the same list, rather than in `side.ts`: the score breakdown needs it
- *  too, and `side.ts` imports `urlstate.ts`. */
-const SIDE_OF_KEY = new Map<string, Side>(
-  ALL_SIDE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
+ *  zone control unmarked on a view that names its zone in a column header. Lives here beside
+ *  `swapZone`, which searches the same list, rather than in `zone.ts`: the score breakdown needs it
+ *  too, and `zone.ts` imports `urlstate.ts`. */
+const ZONE_OF_KEY = new Map<string, Zone>(
+  ALL_ZONE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
 
-/** The half `key` names, or null when it names no side. Declared rather than inferred from the
- *  slug, as everything about a side is here. */
-export function sideOfKey(key: string): Side | null {
-  return SIDE_OF_KEY.get(key) ?? null;
+/** The half `key` names, or null when it names no zone. Declared rather than inferred from the
+ *  slug, as everything about a zone is here. */
+export function zoneOfKey(key: string): Zone | null {
+  return ZONE_OF_KEY.get(key) ?? null;
 }
 
-const DECLARED_BY_SLUG = new Map((SIDE_PAIRS as readonly { label: string; forefoot: string; heel: string }[])
+const DECLARED_BY_SLUG = new Map((ZONE_PAIRS as readonly { label: string; forefoot: string; heel: string }[])
   .flatMap((p) => [[p.forefoot, p] as const, [p.heel, p] as const]));
 
 /**
@@ -105,8 +105,8 @@ const DECLARED_BY_SLUG = new Map((SIDE_PAIRS as readonly { label: string; forefo
  * scores read — a filter row narrows a search, a term ranks one, and the two lists answer different
  * questions. Where they do coincide the row earns its place on its own: outsole durability is here
  * because "I want a shoe that lasts" is an ordinary thing to want, not because Easy weights it.
- * Both halves of every side pair are listed, because a pair renders both
- * rows whichever strike is chosen — omitting one would make the sidebar change shape with strike.
+ * Both halves of every zone pair are listed, because a pair renders both rows whichever zone is
+ * chosen — omitting one would make the sidebar change shape with the zone.
  * Lives here rather than in the sidebar because `parseView` needs it to tell a hand-added row from
  * a curated one, and a lib module must not import a component.
  */
@@ -148,7 +148,7 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
 
     // The declaration is authoritative where it applies, so it is consulted before the catalogue's
     // own links: two of the four pairs are linked upstream and would otherwise be emitted
-    // primary-first, under `chartLabel`, with no side on either half.
+    // primary-first, under `chartLabel`, with no zone on either half.
     const declared = DECLARED_BY_SLUG.get(t.slug);
     const forefoot = declared && bySlug.get(declared.forefoot);
     const heel = declared && bySlug.get(declared.heel);
@@ -159,12 +159,12 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
       // so the heel half names the group.
       out.push({
         kind: 'colocated', label: declared.label, groupId: heel.groupId,
-        parts: [sidePart(forefoot, 'forefoot'), sidePart(heel, 'heel')],
+        parts: [zonePart(forefoot, 'forefoot'), zonePart(heel, 'heel')],
       });
       continue;
     }
 
-    // Only previousId/updateId settle which reading is current; isNew reports false on both sides
+    // Only previousId/updateId settle which reading is current; isNew reports false on both zones
     // of a pair (docs/scraping.md §Test lineage). A reference to an absent test degrades to a single.
     const update = at(t.updateId);
     const previous = at(t.previousId);
@@ -188,7 +188,7 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
       for (const p of parts) claimed.add(p.id);
       out.push({
         kind: 'colocated', label: primary.chartLabel ?? primary.name, groupId: primary.groupId,
-        parts: parts.map((p) => sidePart(p, null)),
+        parts: parts.map((p) => zonePart(p, null)),
       });
       continue;
     }
@@ -198,11 +198,11 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
   return out;
 }
 
-function sidePart(t: LabTest, side: Side | null) {
-  return { key: t.slug, label: t.name, units: t.units, side };
+function zonePart(t: LabTest, zone: Zone | null) {
+  return { key: t.slug, label: t.name, units: t.units, zone };
 }
 
-/** A dated current method dates what it replaced too: the retired side is simply the original. */
+/** A dated current method dates what it replaced too: the retired zone is simply the original. */
 function retiredGeneration(retired: LabTest, current: LabTest): string {
   if (METHOD_YEAR.test(retired.slug)) return generationLabel(retired.slug, 'previous');
   return METHOD_YEAR.test(current.slug) ? 'original' : generationLabel(retired.slug, 'previous');

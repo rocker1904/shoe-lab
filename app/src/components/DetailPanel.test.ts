@@ -122,9 +122,9 @@ describe('DetailPanel Easy score breakdown', () => {
     expect(rows[0]!.textContent).toContain('Shock absorption');
   });
 
-  // The panel reads the columns rather than a side of its own, so it can never explain a side the
+  // The panel reads the columns rather than a zone of its own, so it can never explain a zone the
   // table is not showing (docs/app.md §The story scores).
-  it('breaks down every score column on screen, each named for its own side', () => {
+  it('breaks down every score column on screen, each named for its own zone', () => {
     const { container } = panel({ columns: [EASY.keys.heel, EASY.keys.forefoot] });
     expect([...container.querySelectorAll('.score-breakdown h4')].map((h) => h.textContent))
       .toEqual(['Easy heel score', 'Easy forefoot score']);
@@ -168,8 +168,8 @@ describe('DetailPanel with every story on screen', () => {
              columns: allScoreColumns, stability },
   });
 
-  it('renders one breakdown per score column, keyed by the column rather than the side', () => {
-    // Keying by side would be a duplicate key with three stories on screen, and Svelte throws.
+  it('renders one breakdown per score column, keyed by the column rather than the zone', () => {
+    // Keying by zone would be a duplicate key with three stories on screen, and Svelte throws.
     const { container } = panel(false);
     expect([...container.querySelectorAll('.score-breakdown h4')].map((h) => h.textContent))
       .toEqual(allScoreColumns.map((k) => columnLabel(k, undefined)));

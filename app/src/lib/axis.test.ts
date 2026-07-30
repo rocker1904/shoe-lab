@@ -36,7 +36,7 @@ describe('snapToValue', () => {
     expect(snapToValue(163, [140, 150, 160, 180])).toBe(160);
   });
 
-  it('takes the nearer stop from either side, and either end', () => {
+  it('takes the nearer stop from either zone, and either end', () => {
     expect(snapToValue(171, [140, 150, 160, 180])).toBe(180);
     expect(snapToValue(-5, [140, 150])).toBe(140);
     expect(snapToValue(1000, [140, 150])).toBe(150);

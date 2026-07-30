@@ -27,7 +27,7 @@
   } = $props();
 
   const BINS = 24;
-  /** Percent of the plot each overflow bin takes, and only on the side that has one. */
+  /** Percent of the plot each overflow bin takes, and only on the zone that has one. */
   const OVERFLOW_W = 6;
   /** A 44px target is a fifth of a 222px plot each way; past this gap they would overlap and the
    *  wrong grip would answer (docs/app.md §Filters). */
@@ -42,7 +42,7 @@
     ? [...new Set(values.filter((v) => v >= axis.lo && v <= axis.hi))].sort((a, b) => a - b)
     : []);
   const extent = $derived(values.length ? { min: Math.min(...values), max: Math.max(...values) } : null);
-  // Only the side that actually overflowed gives up room, so a metric with no outliers keeps the
+  // Only the zone that actually overflowed gives up room, so a metric with no outliers keeps the
   // whole width for its axis.
   const x0 = $derived(axis && axis.under > 0 ? OVERFLOW_W : 0);
   const x1 = $derived(100 - (axis && axis.over > 0 ? OVERFLOW_W : 0));

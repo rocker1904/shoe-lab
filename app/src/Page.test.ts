@@ -275,7 +275,7 @@ const markedStory = () => [
   ...screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/, checked: true }),
   ...screen.queryAllByRole('button', { name: /All|Easy|Tempo|Race/, pressed: true }),
 ].map((r) => r.textContent?.trim().split(/\s/)[0]);
-/** The side control, which is on the strip until a story is picked and in the toolbar after. */
+/** The zone control, which is on the strip until a story is picked and in the toolbar after. */
 const clickForefoot = () => fireEvent.click([
   ...screen.queryAllByRole('radio', { name: 'Forefoot' }),
   ...screen.queryAllByRole('button', { name: /^Forefoot/ }),
@@ -321,24 +321,24 @@ describe('Page story selection', () => {
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeInTheDocument();
   });
   // A regression guard rather than a red-first test: the heel baseline already marks Heel.
-  it('marks both groups when the view is a story on a side', async () => {
+  it('marks both groups when the view is a story on a zone', async () => {
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));   // the strip's card
     expect(markedStory()).toEqual(['Easy']);
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
   });
 
-  it('marks neither side when the view mixes them, and All when nothing is filtered', () => {
+  it('marks neither zone when the view mixes them, and All when nothing is filtered', () => {
     history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack');
     render(Page, { props: { data } });
     expect(screen.getByRole('radio', { name: 'Heel' })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: 'Forefoot' })).not.toBeChecked();
-    // A view showing everything is an All view whether or not it commits to a side; the mark is
-    // `sameValue(v, allView(v, side))`, so it is lit exactly when pressing it would do nothing.
+    // A view showing everything is an All view whether or not it commits to a zone; the mark is
+    // `sameValue(v, allView(v, zone))`, so it is lit exactly when pressing it would do nothing.
     expect(markedStory()).toEqual(['All']);
   });
 
-  it('All restores the derived side\'s own plain table, and stays marked on it', async () => {
+  it('All restores the derived zone\'s own plain table, and stays marked on it', async () => {
     history.replaceState(null, '', `/?cols=${defaultColumns('forefoot').join(',')}&r.weight=~250`);
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('radio', { name: /^All/ }));
@@ -360,9 +360,9 @@ describe('Page story selection', () => {
     expect(location.search).toContain('sort=-forefoot-stack');   // the sort is left exactly as it was
   });
 
-  // Mixed *only* because of the bound, so clearing it is what gives the view a side — and the view
-  // it leaves is not that side's plain table.
-  it('All takes two presses when clearing the bound is what makes the view sided', async () => {
+  // Mixed *only* because of the bound, so clearing it is what gives the view a zone — and the view
+  // it leaves is not that zone's plain table.
+  it('All takes two presses when clearing the bound is what makes the view zoned', async () => {
     history.replaceState(null, '', '/?cols=score,heel-stack&r.forefoot-stack=20~');
     render(Page, { props: { data } });
 
@@ -379,9 +379,9 @@ describe('Page story selection', () => {
     expect(location.search).toBe('');
   });
 
-  // `workingSide`'s only reason to exist: the stories each bind one half, so one has to be picked.
+  // `workingZone`'s only reason to exist: the stories each bind one half, so one has to be picked.
   // A regression guard rather than a red-first test.
-  it('a story picked from a mixed view lands on the baseline side', async () => {
+  it('a story picked from a mixed view lands on the baseline zone', async () => {
     history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack');
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
@@ -409,7 +409,7 @@ describe('Page story selection', () => {
 const columnHeaders = () => screen.getAllByRole('columnheader')
   .map((th) => (th.querySelector('.h-name') ?? th).textContent?.trim());
 
-describe('Page side toggle', () => {
+describe('Page zone toggle', () => {
   it('changes the columns without collapsing the band', async () => {
     render(Page, { props: { data } });
     expect(columnHeaders()).toContain('Heel stack');
@@ -438,7 +438,7 @@ describe('Page side toggle', () => {
     settle();
     expect(location.search).toBe(before);
   });
-  it('picking a side drops the other half\'s bound, keeps the rest, and moves the columns', async () => {
+  it('picking a zone drops the other half\'s bound, keeps the rest, and moves the columns', async () => {
     history.replaceState(null, '', '/?cols=score,heel-stack&sort=-heel-stack&r.heel-stack=36~&r.weight=~250&q=nova');
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
@@ -449,11 +449,11 @@ describe('Page side toggle', () => {
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
     settle();
     expect(location.search).not.toContain('r.heel-stack');   // the number does not transfer
-    expect(location.search).toContain('r.weight=%7E250');    // no side, so not this control's business
+    expect(location.search).toContain('r.weight=%7E250');    // no zone, so not this control's business
     expect(location.search).toContain('q=nova');
     expect(location.search).toContain('sort=-forefoot-stack');
   });
-  it('gives a side-free view that side\'s measurements rather than doing nothing', async () => {
+  it('gives a zone-free view that zone\'s measurements rather than doing nothing', async () => {
     history.replaceState(null, '', '/?cols=score,weight');
     render(Page, { props: { data } });
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
