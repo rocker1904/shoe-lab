@@ -577,15 +577,17 @@ review link.
 Preset chips are canned view states: `applyPreset` builds a complete
 `ViewState` from the defaults, so applying one **replaces** the view rather
 than layering on it. A preset sets its own **columns** as well as its filters
-and sort, which makes it the single place a story is expressed. Every threshold
-lives in one constants block at the top of `app/src/lib/presets.ts` — tuning is a
-one-line edit there, and new presets are cheap (BACKLOG.md).
+and sort, which makes it the single place a story is expressed.
 
-**A story need not bound anything.** Easy resolves to the plate filter and a sort
-by its own side's score key; it sets no range at all (docs/shoe-stories.md §Easy).
-One consequence worth stating because it is a safety net rather than a line of code:
-**Easy no longer participates in the sparse-bound guard** below, which only ever
-looks at range keys. It has lost it by having nothing to guard.
+**A story is a pool and a ranking, and nothing else.** No story bounds a metric:
+Easy and Tempo resolve to the plate gate and a sort by their own side's score key,
+Race to a sort and **no filter at all**. `applyPreset` therefore reads nothing from
+the loaded fleet — the percentile bounds were the only thing that ever needed it, so
+its signature is `(story, side, stability)` and a fleet argument reappearing would be
+a threshold in disguise. One consequence worth stating because it is a safety net
+rather than a line of code: **no story participates in the sparse-bound guard** below,
+which only ever looks at range keys. All three have lost it by having nothing to guard
+(BACKLOG.md).
 
 **`applyPreset` carries `stability` through unchanged** rather than rebuilding it
 from `defaultView()`, and so does `allView`. Both marks are `sameValue` over the
@@ -595,32 +597,27 @@ Easy again would silently switch the preference back off, and a plain table with
 on would mark neither `All` nor any story. It is the same rule the side follows —
 who you are survives, what you searched for does not.
 
-This section owns the mechanism only. What each preset is *for*, and why its
-thresholds are what they are, is docs/shoe-stories.md — read it before changing
+This section owns the mechanism only. What each preset is *for*, and why its terms
+and weights are what they are, is docs/shoe-stories.md — read it before changing
 a number.
 
 `applyPreset` takes a side as an **input**, so the mapping is
-`(story, side) → view` with nothing special-cased: a story bounds, sorts by and
-shows the half of each side pair that the side names — why, and why a
-side-swappable bound must be a percentile, is
+`(story, side) → view` with nothing special-cased: a story sorts by and shows
+the half of each side pair that the side names — why is
 docs/shoe-stories.md §Which half a story uses.
 Nothing carries the side afterwards; the view it produces simply uses one
 half's keys, which is what `sideOf` then reads back.
 
-Thresholds are a mix, and the split is deliberate. Where the story is relative
-to the market — "affordable", "light for the fleet" — or where the bound could
-swap sides, it is a `quantile` of the loaded dataset resolved **at click
-time**, so it moves as the catalogue moves. Only a bound that is a property of
-a shoe *and* has no sides may be an absolute constant; Race's weight ceiling is
-the only one. A resolved percentile means the same click produces
-different URLs across refreshes, which is fine: the URL records the resolved
-number, not the preset. A fleet with no readings for a percentile bound omits
-that bound rather than inventing one.
+Each story's columns are six numeric — the phone bound
+(docs/app.md §Columns and sorting) — spent on its score and the terms behind it.
+Easy and Tempo each leave one term off for want of a seventh slot; Race has only
+three terms, so it is the one story that shows all of them.
 
 A preset must never bound a metric whose coverage over its own `considered`
 population falls below `SPARSE_BELOW` (docs/app.md §Coverage) — a preset that
-recommends against itself is self-inflicted. `presets.test.ts` asserts it in
-both directions.
+recommends against itself is self-inflicted. The guard is still asserted, but no
+story has a range key for it to look at, so today it can only fail on a
+counter-example `presets.test.ts` builds for it.
 
 Selection is **derived, never stored**: a story reads as chosen while the view
 equals what `applyPreset` would build for it right now. Editing a bound drops
@@ -629,8 +626,13 @@ stored `preset` field would keep claiming Easy.
 
 ### The story scores
 
-`app/src/lib/score.ts` ranks Easy. Four stages, each doing one job, and the
-separation is the design:
+`app/src/lib/score.ts` is a **story-agnostic engine**; each story arrives as a
+`ScoreDef` in `app/src/lib/score-defs.ts` — its column keys, its term weights, its
+divisors and its anchors, as data. The engine reads nothing story-specific, so a
+fourth story is a fourth definition and one `DERIVED_SIDE_PAIRS` entry rather than a
+fourth code path, and `SCORE_DEFS`/`defForKey`/`defForPreset` mean no consumer
+enumerates the stories. Four stages, each doing one job, and the separation is the
+design:
 
 1. **Physical map** — each raw reading becomes 0–1, **linear in goodness**, with its
    true zero preserved. What the measurement *means*; reaching for a percentile by
@@ -652,8 +654,13 @@ the magnitudes stage 1 exists to capture. `score.test.ts` asserts the effective
 influence against the real dataset, so this is a regression test rather than a
 measurement someone took once.
 
-Which terms there are, what each is for, and why the missing ones are missing is
-docs/shoe-stories.md §Easy. The mappings are ratios rather than percentiles because
+Which terms each story has, what each is for, and why the missing ones are missing is
+docs/shoe-stories.md. Stage 1 is **shared by all three**: a metric means the same thing
+whichever score reads it, so there is one mapping per term and one `TERM_ORDER` every
+breakdown reads in — two score columns on screen would otherwise list their shared terms
+differently. A per-story mapping constant is the one thing that would let two scores over
+one pool disagree about one measurement, which is why `L_OK` is not one.
+The mappings are ratios rather than percentiles because
 each has a defensible physical form: shock absorption over a fixed reference (a fit
 through the origin gives ≈3.6 SA per mm of stack and predicts the barefoot shoes, so 0
 SA ≈ bare ground); energy return is already a true percentage; outsole life is
@@ -668,15 +675,33 @@ and none on forefoot, both still under the pool mean; heel counter stiffness off
 five-point scale, because a percentile would invent resolution the measurement does not have.
 
 **Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
-and never recomputed from the loaded catalogue: the reference, the outsole cap, the
-per-side width caps, the five sd divisors per side, and the anchors. Why, and what an
+and never recomputed from the loaded catalogue: the two references, the outsole cap, the
+per-side width caps, the sd divisors per side, and the anchors. Why, and what an
 agent must not "fix", is docs/decisions.md §Frozen scores and live thresholds.
 Consequences, all intended: a shoe's score never
 moves because the catalogue grew, and **a future score may exceed 100**, which is why
 the column's header carries no `/100`. `score.test.ts` pins every constant, so an
 accidental recompute fails the build rather than silently moving every score.
 
-The anchors are frozen **per (side, stability state)** — four pairs. The toggle changes
+**A divisor belongs to a pool, never to a story.** It is a property of
+`(metric, mapping, pool)`, so Easy and Tempo — which rank the same plate-filtered 378 —
+share **one object by reference**, and keeping two copies would be two homes for one
+fact. Race ranks the whole fleet, where carbon widens every spread: its energy-return
+divisor is 0.0902 against 0.0758. So the frozen tables are named for their pool
+(`PLATED_POOL_SD`, `WHOLE_FLEET_SD`) and must not be collapsed into one global table.
+The shared table carries every term, including ones a given story ignores — `weights`
+decides which are read, and that is what lets two stories share one object.
+
+**The pool names where a definition's constants came from; it does not gate
+computation.** `Page` scores every loaded shoe against every definition, so a carbon
+shoe gets an Easy score and is filtered out of Easy's *view* by the plate gate. A shoe
+outside a definition's pool can therefore read above 100 or below 0, which is correct
+and **must not be clamped**. There is deliberately no `pool` predicate on `ScoreDef`: a
+callable would invite exactly that mistake.
+
+The anchors are frozen **per story, per side and per stability state** — four pairs each
+for Easy and Tempo, two for Race, which has no stable variant. Only the anchors are per
+story, because they are the one constant that depends on the weights. The toggle changes
 what the score means, so one shared scale would invite a comparison that is not
 meaningful; on shared anchors the stability-on list would top out at 77.6 purely
 because the best shoe overall is not the most stable. `r0` cannot be dropped in favour
@@ -684,10 +709,10 @@ of the physical zero either: preserving true zeros through stage 2 leaves every 
 carrying a large common baseline, so an unanchored scale compresses the fleet into
 44–100 with a median of 82.
 
-**The score is two synthetic keys**, `easy-score-heel` and `easy-score-forefoot`, and
-they are the columns whose value depends on the *view* rather than on the shoe: the
-stability toggle decides how many terms there are. `numericValue` therefore cannot
-answer for them. **A score column names its own side rather than taking the derived
+**Each score is two synthetic keys** — `easy-score-heel`, `tempo-score-forefoot` and so
+on, six in all — and they are the columns whose value depends on the *view* rather than
+on the shoe: the stability preference decides how many terms there are.
+`numericValue` therefore cannot answer for them. **A score column names its own side rather than taking the derived
 one**: resolved through `sideOf`, unticking two measurement columns turned every score
 into a heel score with nothing on screen saying so, and the panel below could then
 explain a half the header did not name. There is no side fallback in scoring at all now.
@@ -698,12 +723,22 @@ list against the catalogue and a key with no `LabTest` behind it would drop out 
 column picker — but `swapSide` and `sideOf` read both. So a score column **follows a side
 click**, like every other column that carries no number, and a table showing only the Easy
 heel score **names the heel**. Without that, clicking Forefoot swapped the stack column and
-left a heel score sitting beside it.
+left a heel score sitting beside it. `labels.ts`, `direction.ts`, `urlstate.ts` and the
+column picker all **derive** from that list rather than naming a score, so a further
+story reaches the header, the wash, the URL allowlist and the picker with no edit.
 
-`Page.svelte` resolves one map per key and hands the whole lookup — column key to slug
-to score — to `sortShoes`, both tables, the CSV export and the detail panel, each of
-which reads it **by column key**, so Tempo's and Race's scores are further entries
-rather than further parameters (BACKLOG.md). It is computed
+**The stability preference reaches Easy and Tempo only.** A definition carries a
+`stable` variant exactly when it applies, so the flag is inert inside `scoreOf` for Race
+rather than branched on by any caller — and the toolbar's caption and help derive which
+stories they name from the definitions rather than spelling them out. Why Race is
+excluded, measured rather than assumed, is docs/shoe-stories.md §Race. **One named
+preference is a deliberate decision rather than an unfinished generalisation**: a general
+metric picker for the score is rejected, not deferred (BACKLOG.md).
+
+`Page.svelte` iterates `SCORE_DEFS`, resolves one map per key and hands the whole lookup
+— column key to slug to score — to `sortShoes`, both tables, the CSV export and the
+detail panel, each of which reads it **by column key**, so a further story is a further
+entry rather than a further parameter. It is computed
 **client-side at render time**, like a percentile bound and unlike anything in `data/`:
 while the weights are still moving, a dataset rebuild between experiments would defeat
 the point. Moving it to build time later is a performance decision, not a correctness
@@ -723,14 +758,16 @@ ships before the weights settle. The **reading** column is what makes it work at
 two terms cap, and 206 of 283 shoes sit at exactly 1.0 on outsole durability, so a
 mapped value alone cannot say what put them there. Where a term reads a derived
 quantity the cell shows the division — `1.33 = 4 / 3` — because the ratio alone does
-not say which reading moved. `easyReadings` in `score.ts` owns those readings, so the
+not say which reading moved. `readings` in `score.ts` owns those readings, so the
 panel never re-derives them. Five columns need 354px against the 321px a 375px phone
 leaves the panel, so the block is **its own scrollport**: the page must not go sideways
 for it, and the e2e run asserts that at 375px with a row open. The panel is handed the
 view's **columns**, and renders one breakdown per score column on screen — labelled with
-that column's own header text — and none at all without one. Reading the columns rather
-than a side is what makes panel and column unable to disagree; `stability` still applies
-to both alike.
+that column's own header text, keyed by the column and resolved through `defForKey` and
+`sideOfKey` — and none at all without one. Keyed by the **column** rather than the side
+because with three stories on screen a side appears three times, and Svelte throws on a
+duplicate key. Reading the columns rather than a side is what makes panel and column
+unable to disagree; `stability` still applies to all alike, and Race simply ignores it.
 
 ### The side is a preset too
 

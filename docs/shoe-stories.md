@@ -2,11 +2,13 @@
 
 What a runner means by **Easy**, **Tempo** and **Race**, and why. The presets in
 `app/src/lib/presets.ts` implement these; docs/app.md §Presets owns the mechanism —
-where thresholds live, and that a preset replaces the view rather than layering on it.
+that a story is a pool and a ranking, and that a preset replaces the view rather than
+layering on it. The constants each score is built from live in
+`app/src/lib/score-defs.ts` and are explained by docs/app.md §The story scores.
 
 This is domain reasoning, not a lab fact. It is recorded because it is expensive to
-reconstruct and because every threshold in the app is downstream of it. When a
-threshold looks arbitrary, the answer is here.
+reconstruct and because every term weight in the app is downstream of it. When a weight
+looks arbitrary, the answer is here.
 
 ## The shared rules
 
@@ -18,10 +20,10 @@ threshold looks arbitrary, the answer is here.
   era-shaped (docs/app.md §There is no sparse warning), so a fleet-wide figure
   understates an arriving metric and flatters a retiring one. Shock absorption reads
   85% fleet-wide against 94% over the window; outsole durability 86% against 100%.
-- **Thresholds come from the market, not from assumptions about the user.** A price
-  cap is a percentile of the live fleet computed at click time, not a number someone
-  liked. As the catalogue moves, the preset moves with it. A **score** is the
-  opposite case and freezes its constants
+- **No story bounds a metric.** All three rank instead, each by its own score over its
+  own pool, so there is no threshold left anywhere to tune. A score **freezes** its
+  constants rather than tracking the fleet, which is the opposite of what the old
+  percentile bounds did and is deliberate
   (docs/decisions.md §Frozen scores and live thresholds).
 - **No preset filters by release date.** Recency is a strategy, not a story: buying
   last season's model at a discount and buying the newest thing are both valid, and
@@ -31,21 +33,23 @@ threshold looks arbitrary, the answer is here.
   shoe on its own (see Easy). A date filter would be machinery for a job the shape of
   the data already does.
 - **Anything that is genuinely a user decision stays with the user.** Where the
-  evidence does not settle a question, the preset takes no position and leaves the
-  filter free. Carbon plates in a tempo shoe are the standing example.
+  evidence does not settle a question, the story takes no position and leaves the
+  filter free. Price is the standing example: every score reads lab measurements only,
+  so the value call is never made for the runner. Stability is the same decision taken
+  one step further — a preference the runner sets, on the two stories that carry it.
 
-## How a story becomes a threshold
+## How a story becomes a term
 
 Each story names a quality; the fleet only measures metrics. The mapping is a
 judgement, so it is recorded here rather than left implicit in
-`app/src/lib/presets.ts`.
+`app/src/lib/score-defs.ts`.
 
 | quality | metric | why this one |
 |---|---|---|
-| repetition tolerance | shock absorption, outsole durability, energy return | Easy ranks rather than bounds; the mechanisms are below |
+| repetition tolerance | shock absorption, outsole durability, energy return | the mechanisms are below, per story |
 | speed | weight **and** energy return | the two things a fast shoe is; measured directly rather than inferred from a plate |
-| repeatability | price | cost per mile, on the stories that still cap it |
-| plate character | plate | only ever to exclude carbon, never to require it |
+| stability | midsole width / stack, heel counter stiffness | opt-in, and only where the category has a stable variant to surface |
+| plate character | plate | a **pool gate**, never a term, and only ever to exclude carbon |
 
 **Softness is bounded by nothing and read by nothing.** It is redundant with shock
 absorption, which measures the outcome rather than the material cause and correlates
@@ -69,7 +73,7 @@ of these is usually why.
 ## Which half a story uses
 
 Four metrics are measured at both ends of the shoe — stack, energy return,
-shock absorption, midsole width. Which half a story bounds, sorts by and shows
+shock absorption, midsole width. Which half a story reads, sorts by and shows
 as a column follows the **side the runner picked**, because for most runners
 that is the half describing their landing. The side is a selection rather than
 an identity: it is one of the two preset groups above the table, and it is
@@ -78,20 +82,16 @@ that uses both halves or neither has no side, which is a shape of table and not
 a runner without a strike. Nothing about a story changes with it; only which
 number it reads.
 
-The two halves are not on one scale, so a threshold cannot simply move between
+The two halves are not on one scale, so no number can simply move between
 them. 36 mm is the median heel stack and the **98th** percentile of forefoot
 stack; shock absorption runs a heel median of 131.6 against a forefoot median
-of 108.8. So **every bound that can swap sides is a percentile of that side's
-own distribution**, never a number — "as much stack as most of the fleet"
-transfers between sides, "36 mm" does not. It is the same rule as the shared
-one above, applied to a second axis.
+of 108.8.
 
-A bound on a metric with no sides may stay absolute. Race's weight ceiling is
-the only one left.
-
-The same rule governs a score's constants, for the same reason: every per-side
-figure in Easy's pipeline is derived per side, and no absolute number transfers
-between halves (docs/app.md §The story scores).
+That is what governs a score's constants: **every per-side figure in every
+story's pipeline is derived per side**, and no absolute number transfers
+between halves (docs/app.md §The story scores). A term with no sides — weight,
+outsole life, heel counter stiffness — carries one figure for both, which is a
+property of the measurement rather than a shortcut.
 
 **The interface never asks the runner to declare what they are.** This doc
 reasons in strikes, because a runner's strike is what makes one half the right
@@ -107,19 +107,20 @@ label into "I am a heel striker".
 
 RunRepeat labels each shoe with a `pace` fact — daily, tempo, competition, or a
 combination (docs/scraping.md §Editorial facts). It is one editor's judgement, not a
-lab reading, so it is **never a filter**. As a scoring function for a candidate
-threshold set it is useful: apply the thresholds, then look at what fraction of the
-shortlist carries the label you would expect.
+lab reading, so it is **never a filter**. As a check on a candidate set of terms and
+weights it is useful: rank with them, then look at what fraction of the top of the list
+carries the label you would expect.
 
 **The check is one-sided.** Disagreeing with the label is the point of this project —
 if the tool only ever reproduced RunRepeat's editorial judgement it would have nothing
 to add — so a low agreement figure is evidence to *read*, never a number to optimise.
-What it can do is catch a threshold set that has gone completely orthogonal to the
+What it can do is catch a set of weights that has gone completely orthogonal to the
 session it names. Easy's top 30 carry `daily-running` 28 and 29 times out of 30
 against a 79% base rate, which is that check passing, not a target being hit.
 
-Easy and Race both agree closely this way. Tempo does not yet, which is the evidence
-behind its open question below. A change to any threshold should be scored this way
+All three agree closely this way now. Tempo's top 30 carry `tempo` 20–24 times out of
+30 with `competition`-only at **0 of 30** on every side and toggle state, and Race's
+carry `competition` 27–28 times. A change to any weight should be scored this way
 before it lands, and a change that drops the figure sharply needs an argument.
 
 ## Easy
@@ -132,8 +133,8 @@ not teaching the legs to move fast.
 Peak force per step is *lower* than at speed, but weekly impulse is far higher. So the
 shoe's job is **repetition tolerance**, not performance — which is a question about
 degree rather than about eligibility, and Easy therefore **ranks** rather than bounds.
-It resolves to one filter and a sort: the plate gate, and `easyScore` descending. The
-pipeline, the constants and where they came from are docs/app.md §The story scores;
+It resolves to one filter and a sort: the plate gate, and the Easy score descending.
+The pipeline, the constants and where they came from are docs/app.md §The story scores;
 this section owns what each term is *for*.
 
 | term | mechanism | weight |
@@ -175,54 +176,114 @@ at easy pace, and the most cushioned durable trainers are heavy.
 
 ## Tempo
 
-The hardest of the three to pin down, because runners want different things from it.
+The session pushes the cardiovascular system toward its ceiling and trains power output
+at speed. Crucially it happens **two or three times a week**, and that frequency is what
+separates a tempo shoe from a race shoe: the shoe is used repeatedly rather than saved
+for one day, so cost per mile is real.
 
-The session pushes the cardiovascular system toward its ceiling and trains power
-output and running economy at speed. Crucially it happens **two or three times a
-week**, and that frequency is what separates a tempo shoe from a race shoe:
+Tempo bounds nothing. It resolves to the plate gate and the Tempo score descending.
 
-- **Speed is the priority**, as with racing.
-- **But comfort and durability matter too**, because the shoe is used repeatedly
-  rather than saved for one day. Cost per mile is a real consideration, so price is
-  capped at the same 80th percentile.
-- **Carbon is deliberately left open.** The evidence genuinely does not settle it:
-  carbon plates are argued to be more mechanically damaging, and argued to impose a
-  different movement pattern — notably a different calf stretch at toe-off, because
-  the shoe does not bend as much — which is itself something a runner has to adapt to.
-  Shipping separate carbon and non-carbon tempo presets would assert a distinction the
-  science does not support and would force the user to make the call anyway. One
-  preset, plate unconstrained, and a runner with a view filters on it.
+| term | mechanism | weight |
+|---|---|---|
+| energy return | at tempo pace you generate enough force to actually compress and rebound the foam | **3** |
+| weight | metabolic cost scales with shoe mass, and the penalty grows with cadence | **2** |
+| outsole durability | a repeated session, so cost per mile is real — unlike Race | **2** |
+| shock absorption | **the floor, not the point** — see below | 1 |
+| midsole width / stack | stability — **opt-in** | 1 |
+| heel counter stiffness | stability — **opt-in** | 1 |
 
-**Both of Tempo's bounds are percentiles**, resolved at click time: weight at the 40th and
-energy return at the 50th. Neither is a number about shoes in general — "light" and
-"lively" are claims about *this* fleet, and the moment one is written as a constant the
-story stops tracking the catalogue.
+- **Energy return leads, not weight.** It is the direct measure of a fast shoe and the
+  mechanism supports the ordering: over a 20–40 minute session a 40 g difference is
+  roughly 0.4% metabolic cost, where ten points of energy return is a larger effect.
+  Weight leading is *Race's* argument, where a fragile ultralight is worth it for one day.
+- **Shock absorption is a floor, and dropping it breaks the score.** Removing it
+  separates Tempo from Easy nicely and then ranks barefoot shoes as tempo picks: with
+  weight at 2 and no impact term, lightness runs away, and the Vibram FiveFingers V-Run
+  climbs from #180 to #11. So it earns its place for a completely different reason than
+  in Easy, where it is the primary comfort measure: here it is small **because** it is a
+  floor, and it must exist **because** weight is large.
+- **The outsole cap is Easy's, and the durability *weight* does the work.** Tempo does
+  fewer miles per week, which invites a lower cap. It does not follow: a shoe is retired
+  when the **midsole** packs out, which is a function of *total* miles, and both shoes
+  reach that total — the easy shoe simply gets there sooner in calendar time. Miles
+  before retirement is the quantity the cap depends on, so the cap is shared. What
+  demotes the fragile flats is the weight of 2 rather than a second constant.
+  A counter-intuitive property worth recording because it will mislead someone: a
+  *tighter* cap punishes the bad tail **harder**, not softer, because when most shoes cap
+  the surviving spread is small and stage 2's division amplifies the gap for the few
+  below. The cap sets two things at once — where "enough" is, and how hard falling short
+  hurts.
+- **No carbon plate**, on the same precautionary grounds as Easy, and with more force
+  rather than less: a session run two or three times a week is more cumulative exposure
+  than race day. There is a second, structural reason the data produced. Measured against
+  a pure speed ranking — which is what Race is — a carbon-inclusive Tempo shares **11 of
+  its top 20**; without carbon it shares **2**. Including carbon does not make Tempo fast,
+  it makes Tempo **collapse into Race**, and the two stories stop being two. The same
+  comparison rules out shipping separate carbon and non-carbon tempo presets: the carbon
+  one would be a duplicate of Race rather than a second opinion about tempo.
+- **Overlap with Easy is not a defect.** The no-carbon Tempo shares 10 of its top 20 with
+  Easy's, and that is correct: a plateless super-trainer genuinely serves both sessions.
+  Chasing distinctness would mean recommending worse shoes in both categories to make a
+  taxonomy look tidier. Overlap with **Race** is the failure mode, because Race is defined
+  by not caring about durability or repeatability at all.
+- **No price cap.** As Easy: the value call is the runner's.
+- **Stability is opt-in at weight 1 each, not 2.** Easy has four terms so the pair is a
+  third of it; Tempo has eight, so the same absolute weight is a fifth. At 2 each Tempo
+  degrades badly — stability swamps speed and budget entry-level trainers take the top of
+  the list. At 1 it does real work, demoting the tall-narrow shoes and promoting
+  stability-flavoured ones.
 
-That is not a stylistic point. Energy return was once bounded at an absolute 65, which
-happens to sit around the **74th percentile** of the fleet — so a story meant to describe
-the broad middle of the training week was quietly keeping only its liveliest quarter, and
-returned a fifth of what it should. Tempo is the widest of the three stories by intent:
-it is where most weeks' hard running happens.
-
-Both numbers remain provisional and are the first thing to score against the `pace` fact
-after real use (BACKLOG.md item 1). Note that any energy-return bound also drops every
-shoe with no reading — a real cost on this metric, which the receipt reports plainly.
+**Flexibility-stiffness is rejected here too**, and it was tested on the hypothesis that
+Easy's rejection would invert at speed — that a stiffer shoe is efficient under high
+force. It does not: ρ(stiffness, energy return) is −0.02 on **both** sides. It tracks
+weight (0.31) and nothing about speed. Stack, softness and torsional rigidity are
+rejected for Easy's reasons, which carry.
 
 ## Race
 
 One day, one goal. Everything is subordinate to speed.
 
-- **No price cap.** Absolute performance is the point and cost per mile is irrelevant
-  over a handful of race days.
-- **Energy return floors at the 85th percentile** of the runner's side, and
-  weight at an absolute 230 g. The energy-return floor was once 70, which sits
-  at the 85th percentile on heel and the 80th on forefoot — one number meaning
-  two different things, which is precisely what a side-swappable bound must not
-  do. Weight has no sides, so it stays a number.
-- **Carbon is not required.** A plate is a means to an end, and the end is speed —
-  measured directly by weight and energy return. Gating on carbon is both less
-  accurate and less honest: it admits heavy carbon max-cushion trainers while
-  excluding genuinely fast unplated flats.
-- **Stability is not baked in.** It matters to some runners a great deal and to others
-  not at all, and there is no fleet-wide answer, so it stays the runner's — a filter
-  here, and a toggle on the one story that ranks (see Easy).
+Race bounds nothing and gates nothing — it is the one story with **no filter at all**,
+resolving to the Race score descending over the whole fleet.
+
+| term | mechanism | weight |
+|---|---|---|
+| energy return | the direct measure of a fast shoe | **3** |
+| weight | metabolic cost scales with mass, and at race effort you carry it for the whole distance | **2** |
+| shock absorption | the floor — and at marathon distance, three hours of loading at speed | 1 |
+
+- **No durability term at all.** This is the sharpest difference between Race and the
+  other two, and it comes straight from the story: a race shoe is used a handful of
+  times, so cost per mile is irrelevant. The argument that earns Tempo a durability
+  weight of 2 goes to exactly zero here, and it is what makes the three stories three.
+- **Carbon is admitted, and never required.** Race is where the precautionary line drawn
+  for Easy and Tempo stops applying: race day is a handful of uses, which is the context
+  where the trade is clearly worth it. But a plate is a means to an end, and the end is
+  speed — with no plate gate and no plate term, **the top twelve are carbon anyway**.
+  They win on merit rather than by decree, and gating would be both less accurate and
+  less honest: it admits heavy carbon max-cushion trainers and excludes genuinely fast
+  unplated flats.
+- **No weight ceiling.** The score reads weight directly, so an absolute 230 g cut would
+  only truncate the list at an arbitrary point while the score was already ranking by the
+  same quantity. This was the last absolute number in any story.
+- **Energy return leads weight**, for Tempo's reason, and the fleet shows it: the fastest
+  shoes are not the lightest. Alphafly 3 is 201 g and Endorphin Elite 3 is 210 g, and both
+  beat lighter shoes on the strength of foam and plate.
+- **Shock absorption is still the floor**, but it earns its place on mechanism rather than
+  on rescue. Dropping it does not break Race the way it breaks Tempo — carbon supershoes
+  dominate energy return so decisively that minimalist shoes cannot reach the top either
+  way — yet a marathon is two to four hours of loading at speed, and impact attenuation
+  over that duration is real.
+- **Stability is not baked in, and the toggle does not reach Race at all.** This is
+  measured rather than assumed: at every usable weight the preference moves **one shoe in
+  fifteen** at the top, all the movement is in the middle and deep field, and what it
+  promotes there is daily trainers; push it hard enough to matter and slow budget shoes
+  climb. The cause is structural rather than a tuning failure — **race shoes are uniformly
+  tall and narrow, so the category has no stable variant to surface.** There is no Race
+  equivalent of the Hurricane or the Tempus. The control is therefore inert while Race is
+  selected, and the toolbar **says so**: an unexplained dead control is worse than either
+  applying it or removing it.
+
+A consequence worth stating: Easy's and Tempo's eligibility invariant — the same shoes
+scoreable with the preference on or off — stays exactly true for the two scores that
+assert it, and is simply not a claim Race makes.

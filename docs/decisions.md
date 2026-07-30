@@ -38,10 +38,11 @@ honoured and re-checked before every crawl. Agents must not raise request
 rates, add concurrency, or widen scraping scope without a user decision.
 
 ### Frozen scores and live thresholds (2026-07-30)
-The market-relative convention above is right for a **bound** and wrong for a
-**score**. "As much stack as most of the fleet" is a claim about the fleet, so it
-must move with the fleet; "how well does this shoe tolerate repetition" is a claim
-about the shoe, and a number that drifts because the catalogue grew is a bug.
+A market-relative threshold is right for a **bound** and wrong for a **score**, and
+that is why no story has bounds left. "As much stack as most of the fleet" is a claim
+about the fleet, so it must move with the fleet; "how well does this shoe tolerate
+repetition" is a claim about the shoe, and a number that drifts because the catalogue
+grew is a bug.
 So every constant in a scoring function — references, caps, spread divisors and
 display anchors alike — is **derived once and frozen**, and a score is comparable
 across refreshes and may read above 100 as shoes improve
@@ -95,9 +96,9 @@ spec and plan under `docs/superpowers/` are frozen artifacts — docs/ wins on
 any disagreement.
 
 Four domain docs, not the original three. docs/shoe-stories.md earns its own
-file because the reasoning behind a preset threshold is neither a frontend
+file because the reasoning behind a story's terms is neither a frontend
 contract nor a scraping fact — it is what a runner means by an easy or a tempo
-session. It took real effort to articulate, every threshold in the app descends
+session. It took real effort to articulate, every weight in the app descends
 from it, and folding it into docs/app.md would put training physiology inside a
 document about view state. A fifth doc needs the same test: a body of knowledge
 that is expensive to reconstruct and that no existing doc can own without
