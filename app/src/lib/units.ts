@@ -33,11 +33,14 @@ export function headerUnits(key: string, test: LabTest | undefined): string {
 }
 
 /**
- * The two columns that hold words and dates rather than figures. It decides more than alignment:
- * the phone rendering has no grid cell either would fit, so both move onto the shoe's name line
- * and the value row stays uniformly numeric (docs/app.md §Columns and sorting). Shared, so the
- * two renderings cannot disagree about which columns are figures.
+ * The columns that hold words and dates rather than figures. It decides more than alignment:
+ * the phone rendering has no grid cell any of them would fit, so they move onto the shoe's name
+ * line and the value row stays uniformly numeric (docs/app.md §Columns and sorting). Shared, so
+ * the two renderings cannot disagree about which columns are figures.
+ *
+ * The test is required rather than optional: whether a column holds words is now partly the
+ * catalogue's answer, and a caller that omitted it would silently get the old one.
  */
-export function isFigure(key: string, test?: LabTest): boolean {
+export function isFigure(key: string, test: LabTest | undefined): boolean {
   return key !== 'plate' && key !== 'releasedAt' && !isCategorical(test);
 }
