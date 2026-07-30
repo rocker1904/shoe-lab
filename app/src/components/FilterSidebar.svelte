@@ -21,7 +21,7 @@
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  const SIDE_LABEL: Record<Zone, string> = { forefoot: 'Forefoot', heel: 'Heel' };
+  const ZONE_LABEL: Record<Zone, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
   /** `score` and `msrpGbp` are shoe fields, not catalogue tests, so `metricEntries` cannot emit
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
@@ -74,7 +74,7 @@
     if (e.kind === 'single') return e.units ? `${e.label} (${e.units})` : e.label;
     if (e.kind === 'pair') return `${e.label} — ${(key === e.current.key ? e.current : e.retired).generation}`;
     const p = e.parts.find((x) => x.key === key)!;
-    if (p.zone) return `${e.label} — ${SIDE_LABEL[p.zone]}`;
+    if (p.zone) return `${e.label} — ${ZONE_LABEL[p.zone]}`;
     return p.units ? `${p.label} (${p.units})` : p.label;
   };
   /**
@@ -85,7 +85,7 @@
   const legendFor = (e: ResolvedMetric, key: string): string => {
     if (e.kind !== 'colocated') return '';
     const p = e.parts.find((x) => x.key === key)!;
-    return p.zone ? SIDE_LABEL[p.zone] : p.label;
+    return p.zone ? ZONE_LABEL[p.zone] : p.label;
   };
 
   const pctOf = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);

@@ -164,10 +164,10 @@ describe('the runner layer', () => {
   it('names no slug from the other zone, anywhere in the view', () => {
     for (const zone of ZONES) {
       const other = zone === 'heel' ? 'forefoot' : 'heel';
-      const wrongSide = new Set(ZONE_PAIRS.map((p) => p[other] as string));
+      const wrongZone = new Set(ZONE_PAIRS.map((p) => p[other] as string));
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);
-        expect([...Object.keys(v.filters.ranges), ...v.columns, v.sort.key].filter((k) => wrongSide.has(k)),
+        expect([...Object.keys(v.filters.ranges), ...v.columns, v.sort.key].filter((k) => wrongZone.has(k)),
           `${p.id}/${zone}`).toEqual([]);
       }
     }

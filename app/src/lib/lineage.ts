@@ -71,7 +71,7 @@ export function derivedZoneKey(label: DerivedZonePairLabel, zone: Zone): string 
 }
 
 /**
- * The half of `slug`'s pair on `zone`'s zone, or `slug` itself when it has no zones. Deliberately
+ * The half of `slug`'s pair in `zone`, or `slug` itself when it names no zone. Deliberately
  * *not* an exchange: a view can hold both halves at once, and both must land on the same zone.
  * Computed pairs are included: a score column carries no number either, so "the Easy score" means
  * the same thing on both halves and follows the click like any other column.
@@ -164,7 +164,7 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
       continue;
     }
 
-    // Only previousId/updateId settle which reading is current; isNew reports false on both zones
+    // Only previousId/updateId settle which reading is current; isNew reports false on both halves
     // of a pair (docs/scraping.md §Test lineage). A reference to an absent test degrades to a single.
     const update = at(t.updateId);
     const previous = at(t.previousId);
@@ -202,7 +202,7 @@ function zonePart(t: LabTest, zone: Zone | null) {
   return { key: t.slug, label: t.name, units: t.units, zone };
 }
 
-/** A dated current method dates what it replaced too: the retired zone is simply the original. */
+/** A dated current method dates what it replaced too: the retired half is simply the original. */
 function retiredGeneration(retired: LabTest, current: LabTest): string {
   if (METHOD_YEAR.test(retired.slug)) return generationLabel(retired.slug, 'previous');
   return METHOD_YEAR.test(current.slug) ? 'original' : generationLabel(retired.slug, 'previous');

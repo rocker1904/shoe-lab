@@ -159,7 +159,7 @@
   .bleed { margin-inline: calc(-1 * var(--s4)); }
   /* Fixed layout with spacing-derived gaps: content-sized columns made every chip a different
      width and detached each header from the values it labels. The min-width is the six-column
-     bound — 57px a column plus the spacing either zone of each — so past six columns the geometry
+     bound — 57px a column plus the spacing either side of each — so past six columns the geometry
      the labels were validated against holds and the page scrolls instead
      (docs/app.md §Columns and sorting). */
   table {
@@ -169,7 +169,7 @@
   }
   /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 57px column, which is
      the difference between "softness" fitting the header and clipping (docs/app.md §Columns and sorting). */
-  /* The two zone shadows paint the `border-spacing` gaps: a cell background stops at the cell, so a
+  /* The two side shadows paint the `border-spacing` gaps: a cell background stops at the cell, so a
      sticky header made of them is see-through in 2px slits and scrolled rows show through the band. */
   th { padding: var(--s1) 2px; background: var(--bg); vertical-align: bottom;
        position: sticky; top: var(--thead-top); z-index: 2;

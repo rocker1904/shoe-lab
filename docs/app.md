@@ -598,9 +598,10 @@ a `false` bool, or the `none` choice both option tests spell that way — becaus
 column**: an option reads `Gusset: Both sides (semi)`, because the value alone
 answers a question nothing on that line asked, while a true `bool` reads as the
 feature alone (`Removable insole`), since naming it is the whole reading. The
-noun comes from `chipLabel`, which is neither `SHORT_LABELS` — "Remv. insole"
-reads as an abbreviation in a sentence — nor the catalogue name, because
-"Tongue: gusset type" already carries a colon and the line would add a second.
+noun comes from `chipLabel`: the catalogue name for most tests, overridden for
+the two whose name already carries a colon, since "Tongue: gusset type" would
+put a second one on the line. Not `SHORT_LABELS` — those are bounded to a 53px
+header, and "Remv. insole" reads as an abbreviation in a sentence.
 
 **That line keys each entry by its column, never by its text.** A keyed
 `{#each}` over the text itself throws `each_key_duplicate`, which blanks the
@@ -1002,9 +1003,7 @@ description each.
 
 **Neither label makes a claim about the person.** "I land on my heel" tells a
 curious browser they are being mislabelled; "Measured at" describes what the
-control does to the table, and "Built for" puts the claim on the shoe. It also
-describes the shoe rather than the runner, which is why it survived the rename
-away from "side" unchanged in meaning (§The zone is a preset too). This is a
+control does to the table, and "Built for" puts the claim on the shoe. This is a
 deliberate stance — do not "fix" it back to something friendlier.
 
 No card carries a count (docs/app.md §The toolbar). The descriptions align to a
@@ -1092,7 +1091,7 @@ label is a click on the label: the help would toggle the preference it explains.
 
 `ZoneToggle` carries **no visible lede**. Two segmented groups side by side
 are one language, and the words live on the setup strip, where the question is
-asked once; the group keeps `aria-label="Measurements from"` so it is still
+asked once; the group keeps `aria-label="Measured at"` so it is still
 named for a screen reader.
 
 The cascade has three tiers, and the rule is whether all three groups fit on
@@ -1101,7 +1100,7 @@ one line rather than phone-versus-desktop:
 | width | layout |
 |---|---|
 | above 880px | one line, actions right-aligned |
-| 560–880px | actions ride up beside the side group on line 1; pace takes line 2, shrink-wrapped |
+| 560–880px | actions ride up beside the zone group on line 1; pace takes line 2, shrink-wrapped |
 | 560px and below | as above, with pace stretched to fill the line and its pills `flex: 1` |
 
 Three details that were bugs first. The **divider is removed** the moment the

@@ -174,7 +174,7 @@ describe('extractDetails model lineage', () => {
 });
 
 // The category is what keeps hiking footwear out of the dataset
-// (docs/scraping.md §Non-running shoes), so both zones of the split are pinned
+// (docs/scraping.md §Non-running shoes), so both sides of the split are pinned
 // against real payloads, and every shape that is not a usable slug reads null.
 describe('extractDetails categorySlug', () => {
   it('reads running-shoes from the real running-shoe fixture', () => {

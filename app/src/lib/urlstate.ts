@@ -82,7 +82,7 @@ function pairsOf(idx: TestIndex): Map<string, string> {
   return pairs;
 }
 
-/** A present-but-non-finite bound is unserialisable; dropping just that zone would silently widen the range. */
+/** A present-but-non-finite bound is unserialisable; dropping just that bound would silently widen the range. */
 const finite = (n: number | undefined) => n === undefined || (typeof n === 'number' && Number.isFinite(n));
 
 function parseBound(s: string): number | undefined | null {

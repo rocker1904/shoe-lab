@@ -90,8 +90,8 @@ taken, heel or forefoot — because for most runners that is the half describing
 their landing. The zone is a selection rather than an identity: it is one of the
 two preset groups above the table, and it is derived from the view rather than
 stored on it (docs/app.md §Presets). A table that uses both halves or neither
-has no zone, which is a shape of table and not a runner without a landing. Nothing about a story changes with it; only which
-number it reads.
+has no zone, which is a shape of table and not a runner without a landing.
+Nothing about a story changes with it; only which number it reads.
 
 The two halves are not on one scale, so no number can simply move between
 them. The median heel stack sits in the top few percent of forefoot stacks, and

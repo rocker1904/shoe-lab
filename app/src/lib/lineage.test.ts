@@ -46,7 +46,7 @@ describe('metricEntries', () => {
     ])[0]! as Extract<ReturnType<typeof metricEntries>[number], { kind: 'pair' }>;
     expect(e.current.generation).not.toBe(e.retired.generation);
   });
-  it('dates the retired zone too when its own slug carries a year', () => {
+  it('dates the retired half too when its own slug carries a year', () => {
     const e = metricEntries([
       labTest({ id: 1, slug: 'grip-22', name: 'Grip', updateId: 2 }),
       labTest({ id: 2, slug: 'grip-25', name: 'Grip', previousId: 1 }),
