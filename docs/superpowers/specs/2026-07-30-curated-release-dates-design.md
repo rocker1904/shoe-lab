@@ -82,6 +82,25 @@ does not have. The day survives where it is useful — `releasedAt` still holds
 it, so sorting stays exact and the CSV still exports full precision, consistent
 with docs/app.md §Number display.
 
+### Released-after becomes month-granular
+
+The sidebar's released-after control is a `date` input plus 1y/2y/3y chips, so it
+offers day precision over data that will be month precision at best. Once
+curated months land, the control should take a **month** (`YYYY-MM`), because a
+day picker invites a bound the data cannot honour — asking for "after 14 March
+2024" over a fleet of `YYYY-MM-01` values is answering a question we never had
+the resolution for.
+
+One trap when implementing: `releasedAfter` is compared as a raw string against
+`releasedAt`, and a bare `YYYY-MM` bound sorts *before* every day in that month
+(`'2024-03' < '2024-03-01'`), so a March bound would silently include the whole
+of March rather than excluding it, or vice versa depending on the operator.
+Normalise the bound to `YYYY-MM-01` at the edge and keep the comparison over
+full ISO strings — the same trick the dataset already uses for the date itself.
+
+The chips keep working unchanged: `isoYearsAgo` already yields a full ISO date,
+which stays a valid bound.
+
 ### CSV
 
 `releaseDateSource` becomes a column in both `shoes.csv` and the in-app export.
