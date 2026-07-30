@@ -206,6 +206,34 @@ crops to an indistinguishable grey strip; they cost a column of width and
 carry no information at that size. `imageUrl` stays in the dataset and in the
 detail panel.
 
+### The direction arrow leaves the header
+
+`headerUnits` stops appending `directionOf`'s `↑`/`↓`. The units line becomes
+units alone; the sorted column carries a single accent caret beside its name,
+revealed on hover for any other sortable header.
+
+Two arrows in one header is the visible problem — a descending caret directly
+above an "up is better" arrow is worse than either alone. The reason it is
+safe to drop is that **the wash already encodes direction**: `percentileMap`
+inverts for a `lower` metric, so on price and weight the strongest blue sits on
+the *lowest* numbers. Which end of a column is tinted is the same fact the
+arrow was stating, and blue-versus-grey still separates "has a better end" from
+"neutral scale".
+
+The cost is that direction becomes a colour-only signal in the table, so the
+fact moves rather than disappears: **the column picker and the add-filter
+dialog carry it**, which is where a metric is chosen and the better end is
+most useful. Those lists have no sort control, so there is no second arrow to
+collide with.
+
+Mechanically this is small and it removes a coupling. `headerUnits` has exactly
+two consumers, both table renderings; nothing else reads it and the CSV export
+does not. The `ARROW` map and the `directionOf` import leave `units.ts` for
+`direction.ts`, so units are units and direction is direction.
+`directionOf`'s other consumers — the percentile inversion in `stats.ts` and
+`washOf` — are untouched. docs/app.md §Table presentation must be updated: it
+currently states the arrow is `directionOf`'s.
+
 The `discontinued` chip becomes a neutral uppercase micro-label in
 `--text-dim` with a hairline border. Red is error semantics and this is
 metadata — and dimming or alarming the row argues against the
@@ -296,6 +324,50 @@ one-shot `clientHeight` read reintroduces this, and only on a cold cache.
 that narrow the window in which the swap is visible; they do not remove the
 requirement.
 
+## The filter sidebar
+
+**Unbounded, not panelled.** The table sits in a panel; the sidebar does not.
+It is a control surface rather than content, and two panels side by side read
+as a settings dialog.
+
+A set bound is drawn as **two accent edge lines**, not a shaded band, and the
+**drag grips stay hover-revealed** — fading in on row hover or focus-within,
+and permanently visible under `@media (hover: none)`, where hover never fires.
+
+Also settled: the number fields are **mono and right-aligned**, so a typed
+bound lines up against its placeholder; the clear control is an **SVG ✕ in a
+bordered button** rather than a text glyph; and `N excluded` and
+`378 / 450 measured` are both mono, so every figure in the sidebar shares the
+grid with every figure in the table.
+
+### Two defects this pass fixes
+
+**An unbounded row painted every bar in the accent.** "In range" is trivially
+true when there is no bound, so a sidebar with no filters set was a solid wall
+of blue — which was most of what made it noisy. Accent now means *your bound
+selects this*: an unbounded row draws its distribution in the neutral
+histogram colour and colour appears only once a bound exists. Scanning the
+sidebar then answers "what is constraining this shortlist?" in colour as well
+as in the existing bold heading.
+
+**The number placeholders were unrounded floats.** They are `String(extent.min)`,
+so shock absorption offered `24.884597678267` and overflowed its own field.
+Round at the view, like every other figure (docs/app.md §Number display).
+
+## The setup strip
+
+Structure is unchanged — six equal cards, two groups divided in the gutter, a
+`?` per label, and a fixed-height name line that puts every description on a
+common baseline.
+
+A chosen card is **tinted with a hairline accent border**, not filled. Two
+cards are lit at once here, a side and a story, and a filled pair would put two
+loud blocks on the one screen the strip exists to own — even though the toolbar
+it hands over to does fill its selected pill.
+
+The side cards carry no description, so their name must **centre vertically**
+in a box whose height is set by the story cards beside it.
+
 ## Controls
 
 **The Columns control stops being a bare `<details>` marker.** A button with a
@@ -308,18 +380,52 @@ Segmented radiogroups keep their structure and roving-focus behaviour
 `--bg`-filled track with a 2px pad, and the selected pill filled in the accent
 with white text.
 
-Histograms keep their form. In-range bars take the accent; out-of-range bars
-keep `--hist-dim`, which must continue to clear **3:1 against the surface** —
-that is a flat mark, governed by a different rule from the gradient wash
-(docs/app.md §Theming).
+Histograms keep their form. In-range bars take the accent **only while a bound
+exists**; every other bar keeps `--hist-dim`, which must continue to clear
+**3:1 against the surface** — that is a flat mark, governed by a different rule
+from the gradient wash (docs/app.md §Theming).
+
+**The theme toggle becomes an icon button** with an SVG per state. It keeps
+cycling auto → light → dark rather than becoming a two-way switch, because
+there are three states; a three-way segmented control was rejected on header
+width.
+
+### One focus ring, everywhere
+
+A **2px surface-coloured ring inside a 2px accent ring**, drawn with
+`box-shadow` rather than `outline` so both rings are painted rather than
+transparent.
+
+The reason is the hard case: a chip sitting on a strong wash, and the selected
+segment pill, which is itself filled with the accent. A plain
+`outline: 2px solid var(--accent); outline-offset: 2px` leaves the 2px gap
+showing *whatever is behind*, so on a 0.93-alpha chip the ring sits
+accent-on-accent and nearly disappears. Painting the gap in the surface colour
+guarantees separation on any background — the same trick the phone's sticky
+header already uses on its own `border-spacing` gaps.
+
+This replaces today's inconsistent mix of `outline-offset: -2px` and `+2px`.
+It is one rule for every focusable thing: buttons, pills, inputs, chips, table
+rows, strip cards.
 
 ## Not specified here
 
-The setup strip, detail panel, help popover, column picker panel and
-add-filter dialog **inherit the tokens** — surfaces, radii, type scale, focus
-ring, accent — and keep their current layouts. They were not mocked and this
-spec does not redesign them. If any reads badly once the tokens land, that is
-a follow-up with its own decision, not an implicit licence here.
+The detail panel, help popover, column picker panel, add-filter dialog, the
+sub-800px drawer and the loading, empty and error states are **not yet
+designed**. They inherit the tokens — surfaces, radii, type scale, focus ring,
+accent — and keep their current layouts until they get their own pass.
+
+Two of them carry known work already:
+
+- The **column picker and add-filter dialog** gain the direction marker the
+  table header gives up (§The direction arrow leaves the header). A bare
+  `↑` with no units beside it is ambiguous, so those lists need a legend line
+  or a worded tag rather than the glyph alone.
+- The **loading skeleton** is shaped like the chrome and the rows that are
+  coming, so the layout does not jump when data arrives. Row height, the
+  dropped thumbnails and the new panel all change that shape, and a skeleton
+  that no longer matches *causes* the jump it exists to prevent. This is a
+  correctness follow-on, not a taste call.
 
 ## Verification
 
@@ -336,5 +442,9 @@ a follow-up with its own decision, not an implicit licence here.
   scroll sideways at six columns, and columns past the sixth remain reachable.
 - e2e: the pinned header sits flush against the chrome after
   `document.fonts.ready`.
+- `units.test.ts` — `headerUnits` no longer emits a direction arrow for any
+  key, including the `lower` and `higher` ones that carried it.
+- A sidebar test that an unbounded row paints no accent bar, and that a bounded
+  one paints accent only within its bound.
 - Both engines. The e2e run already covers chromium, firefox and webkit
   (docs/operations.md §The e2e run needs three browsers).
