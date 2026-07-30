@@ -2,8 +2,7 @@
   import type { Side } from '../lib/lineage';
   import HelpPopover from './HelpPopover.svelte';
 
-  let { counts, side, selected, onside, onstory }: {
-    counts: Map<string, number>;
+  let { side, selected, onside, onstory }: {
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
     side: Side | null;
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
@@ -43,9 +42,6 @@
       <button type="button" class="card side" aria-pressed={side === s.v} class:on={side === s.v}
               onclick={() => onside(s.v)}>
         <span class="name">{s.label}</span>
-        <!-- Reserved, not removed: the side does not change how many shoes exist, and a card that
-             drops the slot is a different height from its neighbours. -->
-        <span class="count" aria-hidden="true"></span>
       </button>
     {/each}
     <span class="divider" aria-hidden="true"></span>
@@ -54,7 +50,6 @@
       <button type="button" class="card story" aria-pressed={selected === s.id} class:on={selected === s.id}
               onclick={() => onstory(s.id)}>
         <span class="name">{s.label}</span>
-        <span class="count">{counts.get(s.id) ?? ''}</span>
         <span class="desc">{s.desc}</span>
       </button>
     {/each}
@@ -84,11 +79,10 @@
   .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Not colour alone: the chosen card is also the only one carrying aria-pressed. */
   .card.on { border-color: var(--accent); border-width: 2px; padding: calc(var(--s3) - 1px); background: var(--accent-dim); }
-  .name { font-size: var(--t-lg); font-weight: 700; }
-  /* Both lines keep their height whether or not they carry text, which is what puts every card's
-     description on the same baseline — bottom-aligning them leaves them ragged, because they wrap
-     to different line counts. */
-  .count { min-height: 1em; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+  /* The name line keeps its height whether or not the card carries a description, which is what
+     puts every description on the same baseline — bottom-aligning them leaves them ragged, because
+     they wrap to different line counts. */
+  .name { min-height: 1em; font-size: var(--t-lg); font-weight: 700; }
   .desc { font-size: var(--t-xs); color: var(--text-dim); line-height: 1.35; }
   .side { text-align: center; }
   .side .name { text-align: center; }

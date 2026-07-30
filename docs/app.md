@@ -582,15 +582,10 @@ lives in one constants block at the top of `app/src/lib/presets.ts` — tuning i
 one-line edit there, and new presets are cheap (BACKLOG.md).
 
 **A story need not bound anything.** Easy resolves to the plate filter and a sort
-by its own side's score key; it sets no range at all (docs/shoe-stories.md §Easy). Two
-consequences worth stating because they change what is on screen rather than only
-what is in the code:
-
-- **Easy's toolbar count is the size of its pool**, not a count of
-  recommendations. Every non-carbon shoe passes, scored or not. Whether it should
-  count scoreable shoes instead is a product question (BACKLOG.md).
-- **Easy no longer participates in the sparse-bound guard** below, which only ever
-  looks at range keys. It has lost that safety net by having nothing to guard.
+by its own side's score key; it sets no range at all (docs/shoe-stories.md §Easy).
+One consequence worth stating because it is a safety net rather than a line of code:
+**Easy no longer participates in the sparse-bound guard** below, which only ever
+looks at range keys. It has lost it by having nothing to guard.
 
 **`applyPreset` carries `stability` through unchanged** rather than rebuilding it
 from `defaultView()`, and so does `allView`. Both marks are `sameValue` over the
@@ -807,9 +802,7 @@ bind one half — and `DEFAULT_SIDE` is that pick.
 `SetupStrip.svelte` asks **both** questions once and then hands over to the
 toolbar for good. Six equal cards in one row, in two divided groups: *Use
 measurements from the* — Heel, Forefoot; *Built for* — All, Easy, Tempo, Race
-with live counts and a one-line description each. `Page.svelte` applies every
-preset and runs `applyFilters` to get the counts, which is three passes over a
-dataset already in memory.
+with a one-line description each.
 
 **Neither label makes a claim about the person.** "I land on my heel" tells a
 curious browser they are being mislabelled; "Use measurements from the"
@@ -817,11 +810,10 @@ describes what the control does to the table, and "Built for" puts the claim on
 the shoe. This is a deliberate stance — do not "fix" it back to something
 friendlier.
 
-Side cards carry **no count**, because the side does not change how many shoes
-exist; the slot is reserved rather than removed, so the cards are the same
-height. The descriptions align to a common baseline by giving the name and
-count lines fixed heights: bottom-aligning with `margin-top: auto` leaves them
-ragged, because the descriptions wrap to different line counts. The grid is
+No card carries a count (docs/app.md §The toolbar). The descriptions align to a
+common baseline by giving the **name** line a fixed height: bottom-aligning with
+`margin-top: auto` leaves them ragged, because the descriptions wrap to different
+line counts. The grid is
 `repeat(2, minmax(0, 1fr)) 1px repeat(4, minmax(0, 1fr))`, so the group divider
 gets a track of its own in the gutter and no card is resized to make room for
 it; it is drawn in `--divider`, which exists because `--border` is invisible
@@ -845,18 +837,17 @@ under a `prefers-reduced-motion` guard. The strip's `All` card stays marked
 through a side click, because the click leaves the view equal to that side's
 plain table, which is what `allView` produces.
 
-**The strip never returns**, and nothing is lost by that: the toolbar carries
-the counts, so the only thing the cards held exclusively is the descriptions,
-which are a first-encounter need. That split — **descriptions at first
-encounter, counts permanently** — is what makes the model work, and it is why
-the strip needs no card of its own for "everything": `All` is a permanent
-toolbar peer, reachable long after the strip has gone.
+**The strip never returns**, and nothing is lost by that: the only thing the
+cards hold that the bar does not is the descriptions, which are a
+first-encounter need. It is also why the strip needs no card of its own for
+"everything": `All` is a permanent toolbar peer, reachable long after the strip
+has gone.
 
 ### The toolbar
 
 `Toolbar.svelte` is the permanent surface: two segmented radiogroups in one
-visual language — the side, a divider, then `All | Easy | Tempo | Race` with live
-counts — and an actions group (`Filters`, `Columns`) pushed right by
+visual language — the side, a divider, then `All | Easy | Tempo | Race` — and an
+actions group (`Filters`, `Columns`) pushed right by
 `margin-left: auto`. The strip cannot hold the controls that reset it, because
 it is gone by the time they are needed.
 
@@ -864,6 +855,15 @@ it is gone by the time they are needed.
 strip *hands over* rather than sharing the screen: both surfaces drawing the
 same two groups put the four stories on screen twice on a first arrival, which
 is the one screen the strip exists to own.
+
+**The stories carry no counts**, on the bar or on the strip. A scored story's
+count is the size of its **pool** rather than of a shortlist — every non-carbon
+shoe passes Easy, scored or not — so the number promised a filtering that no
+longer happens; and once Tempo and Race are scores too (BACKLOG.md) all three
+would be near-identical pool sizes distinguishing nothing. The receipt's
+`N of M shoes` is a different number and stays: it counts what is on screen.
+Dropping them also drops three `applyPreset` passes over the whole dataset per
+render.
 
 **There is no `Clear` button.** `All` is the fourth peer of the stories and the
 same state a Clear produced, `allView` (docs/app.md §What All does), named for

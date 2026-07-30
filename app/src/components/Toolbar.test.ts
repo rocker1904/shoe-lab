@@ -3,9 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import Toolbar from './Toolbar.svelte';
 import type { Side } from '../lib/lineage';
 
-const counts = new Map([['all', 450], ['easy', 150], ['tempo', 54], ['race', 39]]);
 const props = {
-  side: 'heel' as Side | null, onside: vi.fn(), selected: 'all' as string | null, counts,
+  side: 'heel' as Side | null, onside: vi.fn(), selected: 'all' as string | null,
   onstory: vi.fn(), showFilters: false, onfilters: vi.fn(),
   stability: false, onstability: vi.fn(),
 };
@@ -22,9 +21,11 @@ describe('Toolbar', () => {
     expect(screen.queryByRole('button', { name: /^Clear$/ })).toBeNull();
   });
 
-  it('shows a live count on each story', () => {
-    render(Toolbar, { props: { ...props, counts: new Map([['easy', 150]]) } });
-    expect(screen.getByText('150')).toBeInTheDocument();
+  // A scored story's count is the size of its pool rather than of a shortlist, so the number
+  // promised a filtering that no longer happens (docs/app.md §The toolbar).
+  it('names the stories without counting them', () => {
+    render(Toolbar, { props: { ...props } });
+    for (const r of screen.getAllByRole('radio')) expect(r.textContent).not.toMatch(/\d/);
   });
 
   it('marks exactly the selected story, and nothing when the view is hand-edited', () => {

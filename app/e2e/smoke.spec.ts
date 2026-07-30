@@ -31,8 +31,6 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await page.goto('/');
   const strip = page.getByTestId('setup-strip');
   await expect(strip).toBeVisible();
-  // counts are computed from the live dataset, not hard-coded in the strip
-  await expect(strip.getByRole('button', { name: /Race/ })).toContainText('2');
   // six equal cards in one row, with the group divider drawn in the gutter between them
   await expect(strip.locator('.card')).toHaveCount(6);
   const widths = await strip.locator('.card').evaluateAll((els) =>

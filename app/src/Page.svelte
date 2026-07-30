@@ -180,13 +180,6 @@
     sideMark === null ? null
     : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, data.shoes, idx, sideMark, view.stability)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
-  // `All` is a peer of the stories in the bar, so it needs a count in the same map. Three preset
-  // applications over a dataset already in memory.
-  const presetCounts = $derived(new Map<string, number>([
-    ['all', data.shoes.length],
-    ...PRESETS.map((p) => [p.id,
-      applyFilters(data.shoes, applyPreset(p.id, data.shoes, idx, workingSide, view.stability).filters, idx).visible.length] as const),
-  ]));
 
   /**
    * Still the one write path, now asynchronous. A drag fires about sixty view updates a second, so
@@ -229,8 +222,8 @@
     setView(storyMark ? applyPreset(storyMark, data.shoes, idx, next, view.stability) : projectSide(snapshot, next));
   }
   function onStory(id: string) {
-    // The strip's own question, answered — the toolbar carries the counts from here, and the only
-    // thing the cards held exclusively was the descriptions, which are a first-encounter need.
+    // The strip's own question, answered — the only thing the cards hold that the bar does not is
+    // the descriptions, which are a first-encounter need.
     stripOpen = false;
     setView(id === 'all' ? allView(snapshot, sideMark) : applyPreset(id, data.shoes, idx, workingSide, view.stability));
   }
@@ -276,7 +269,7 @@
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
   <Toolbar side={sideMark} onside={onSide} {selected}
-           counts={presetCounts} onstory={onStory} {showFilters} showGroups={!stripOpen}
+           onstory={onStory} {showFilters} showGroups={!stripOpen}
            stability={view.stability} onstability={setStability}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
@@ -291,8 +284,7 @@
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
 {#if stripOpen}
   <div transition:slide={{ duration: collapseMs }}>
-    <SetupStrip counts={presetCounts} side={sideMark} {selected}
-                onside={onSide} onstory={onStory} />
+    <SetupStrip side={sideMark} {selected} onside={onSide} onstory={onStory} />
   </div>
 {/if}
 

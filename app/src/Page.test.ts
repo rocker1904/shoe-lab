@@ -5,7 +5,6 @@ import Page, { VIEW_WRITE_MS } from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { indexTests } from './lib/dataset';
 import { VIEW_STORAGE_KEY } from './lib/persist';
-import { PRESETS } from './lib/presets';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { defaultColumns, parseView } from './lib/urlstate';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
@@ -272,12 +271,10 @@ const clickForefoot = () => fireEvent.click([
 ][0]!);
 
 describe('Page story selection', () => {
-  it('opens on the strip, with the live count of each story', () => {
+  it('opens on the strip, with the baseline marked', () => {
     render(Page, { props: { data } });
     expect(strip()).toBeInTheDocument();
     expect(markedStory()).toEqual(['All']);
-    expect(screen.getByRole('button', { name: /^Easy/ })).toHaveTextContent('4');
-    expect(screen.getByRole('button', { name: /^Race/ })).toHaveTextContent('2');
   });
   it('marks exactly the story that was applied', async () => {
     render(Page, { props: { data } });
@@ -451,14 +448,6 @@ describe('Page side toggle', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
     expect(columnHeaders()).toContain('Forefoot stack');
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
-  });
-  it('recounts the stories on the other side', async () => {
-    render(Page, { props: { data } });
-    const countOf = (label: RegExp) => screen.getByRole('button', { name: label }).textContent;
-    const before = PRESETS.map((p) => countOf(new RegExp(`^${p.label}`)));
-    await clickForefoot();
-    // the fixture's two sides sit on different scales, so at least one story must move
-    expect(PRESETS.map((p) => countOf(new RegExp(`^${p.label}`)))).not.toEqual(before);
   });
 });
 

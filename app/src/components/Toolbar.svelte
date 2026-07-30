@@ -6,7 +6,7 @@
   import HelpPopover from './HelpPopover.svelte';
   import SideToggle from './SideToggle.svelte';
 
-  let { side, onside, selected, counts, onstory, showFilters, onfilters, columns,
+  let { side, onside, selected, onstory, showFilters, onfilters, columns,
         stability, onstability, showGroups = true }: {
     /** Derived in `Page.svelte`, never stored: null while the view names both halves or neither
      *  (docs/app.md §Presets). */
@@ -15,7 +15,6 @@
      *  baseline, a story id while it equals that story, null once it is neither
      *  (docs/app.md §Presets). */
     selected: string | null;
-    counts: Map<string, number>;
     onstory: (id: string) => void;
     showFilters: boolean; onfilters: () => void;
     /** The column picker, passed through rather than imported: it needs the whole dataset, which
@@ -55,13 +54,11 @@
     <span class="sep" aria-hidden="true"></span>
     <div class="pace-wrap">
       <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
+        <!-- No count: a scored story's is the size of its pool rather than of a shortlist
+             (docs/app.md §The toolbar). -->
         {#each STORIES as s (s.id)}
-          {@const n = counts.get(s.id)}
           <button type="button" role="radio" class="s" aria-checked={selected === s.id}
-                  class:on={selected === s.id} onclick={() => onstory(s.id)}>
-            {s.label}
-            {#if n !== undefined}<span class="n">{n}</span>{/if}
-          </button>
+                  class:on={selected === s.id} onclick={() => onstory(s.id)}>{s.label}</button>
         {/each}
       </span>
     </div>
@@ -107,8 +104,6 @@
   .s { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); border: none;
        background: none; color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); white-space: nowrap; }
   .s.on { background: var(--accent-dim); color: var(--text); font-weight: 600; }
-  .n { font-variant-numeric: tabular-nums; font-size: var(--t-xs); color: var(--text-dim); }
-  .s.on .n { color: var(--accent); }
   /* Above 800px the sidebar is always on screen, so the drawer toggle has nothing to toggle. */
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
                     background: var(--surface); color: var(--text); border-radius: var(--r-sm); }

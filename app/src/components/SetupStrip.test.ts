@@ -8,9 +8,8 @@ import type { ShoesFile } from '../../../shared/types.js';
 import type { Side } from '../lib/lineage';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
-const counts = new Map([['all', 450], ['easy', 150], ['tempo', 54], ['race', 39]]);
 const props = {
-  counts, side: 'heel' as Side | null, selected: null as string | null,
+  side: 'heel' as Side | null, selected: null as string | null,
   onside: vi.fn(), onstory: vi.fn(),
 };
 
@@ -22,12 +21,11 @@ describe('SetupStrip', () => {
     expect(names).toEqual(['Heel', 'Forefoot', 'All', 'Easy', 'Tempo', 'Race']);
   });
 
-  // The side does not change how many shoes exist, so a count there would be four copies of the
-  // same number; the slot stays, empty, so the cards are the same height.
-  it('counts the stories and not the sides', () => {
+  // A scored story's count is its pool rather than a shortlist, so no card carries one
+  // (docs/app.md §The toolbar).
+  it('counts nothing, on either kind of card', () => {
     render(SetupStrip, { props: { ...props } });
-    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('150');
-    expect(screen.getByRole('button', { name: /^Heel/ })).not.toHaveTextContent(/\d/);
+    for (const b of screen.getAllByRole('button')) expect(b).not.toHaveTextContent(/\d/);
   });
 
   it('describes each story in a line, which the toolbar has no room for', () => {
