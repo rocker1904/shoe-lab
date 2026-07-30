@@ -34,12 +34,18 @@ export function percentileMap(shoes: Shoe[], key: string, idx: TestIndex): Map<s
  */
 export function rankMap(values: Map<string, number>): Map<string, number> {
   const sorted = [...values.values()].sort((a, b) => a - b);
-  const out = new Map<string, number>();
-  for (const [slug, v] of values) {
-    const below = sorted.filter((x) => x < v).length;
-    const equal = sorted.filter((x) => x === v).length;
-    out.set(slug, (below + equal / 2) / sorted.length);
+  // One walk of the sorted run per distinct value rather than two `filter` passes per entry: the
+  // start of a run is how many values fall below it and its length is how many tie with it, which
+  // is the same `(below + equal / 2) / n` convention resolved once instead of per shoe.
+  const pct = new Map<number, number>();
+  for (let i = 0; i < sorted.length;) {
+    let j = i;
+    while (j < sorted.length && sorted[j] === sorted[i]) j++;
+    pct.set(sorted[i]!, (i + (j - i) / 2) / sorted.length);
+    i = j;
   }
+  const out = new Map<string, number>();
+  for (const [slug, v] of values) out.set(slug, pct.get(v)!);
   return out;
 }
 
