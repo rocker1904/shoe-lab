@@ -1195,7 +1195,7 @@ its siblings:
 | pinned `thead` (its name cell, 3) | 2 |
 | pinned chrome — header and toolbar | 5 |
 | column picker panel | 10 |
-| help popover | 20 |
+| help popover, and the month picker's panel | 20 |
 | filter drawer, below 800px | 30 |
 | Add-filter dialog | 35 |
 | skip link | 40 |

@@ -28,10 +28,26 @@ none of `input type="month"` and a Chromium-only suite reported the release
 filter working when it was a bare text box in both
 (docs/app.md §Released after is month-granular).
 
-On CI the two extra engines cost a measured 26s to install and 7s to run. On a
-distribution Playwright does not officially support, `--with-deps` cannot
-supply WebKit's libraries and only Chromium and Firefox will launch; CI is then
-the only place the WebKit assertions actually run.
+On CI the two extra engines cost a measured 26s to install and 7s to run.
+
+**WebKit does not launch on a distribution Playwright supports only through
+apt.** Its bundle wants 19 sonames pinned to Ubuntu 24.04 — `libicu*.so.74`,
+`libxml2.so.2`, `libjxl.so.0.8`, `libbacktrace.so.0` and fourteen `libflite`
+libraries. On Arch those are ICU 78, `libxml2.so.16` and jxl 0.11, which are
+ABI-incompatible major bumps rather than missing packages, so symlinking them
+crashes instead of fixing anything, and `flite` and `libbacktrace` are absent
+outright. Chromium and Firefox launch natively; WebKit does not.
+
+Run it in Playwright's own image instead, which is the same Ubuntu CI uses:
+
+```
+npm -w app run e2e:docker
+```
+
+That mounts the repo, runs as the calling user so nothing lands root-owned, and
+takes the image tag from the Playwright version — **bump the tag in
+`app/package.json` whenever the `@playwright/test` dependency moves**, or the
+container's bundled browsers stop matching the client and refuse to launch.
 
 ## The refresh chain
 
