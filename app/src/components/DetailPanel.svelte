@@ -1,9 +1,25 @@
 <script lang="ts">
-  import type { Shoe } from '../../../shared/types.js';
-  import { reviewUrl } from '../lib/dataset';
+  import type { Shoe, ShoesFile } from '../../../shared/types.js';
+  import { displayNumber, indexTests, reviewUrl } from '../lib/dataset';
+  import type { Side } from '../lib/lineage';
+  import { easyContributions, type EasyTermKey } from '../lib/score';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
-  let { shoe }: { shoe: Shoe } = $props();
+  let { shoe, data, side, stability }: {
+    shoe: Shoe; data: ShoesFile;
+    /** Passed in rather than derived here: it must be the side the score column was computed with,
+     *  and a panel disagreeing with the cell above it would be worse than either answer. */
+    side: Side; stability: boolean;
+  } = $props();
+
+  const idx = $derived(indexTests(data.tests));
+  const TERM_LABEL: Record<EasyTermKey, string> = {
+    shockAbsorption: 'Shock absorption', outsoleDurability: 'Outsole durability',
+    energyReturn: 'Energy return', midsoleWidth: 'Midsole width / stack',
+    heelCounter: 'Heel counter stiffness',
+  };
+  const terms = $derived(easyContributions(shoe, side, stability, idx));
+  const total = $derived(terms?.reduce((sum, r) => sum + r.weighted, 0) ?? 0);
 
   const lineage = $derived([
     { label: 'Replaced', ref: shoe.previousVersion },
@@ -57,6 +73,26 @@
       {/each}
     </ul>
   {/if}
+  <section class="score-breakdown">
+    <h4>Easy score</h4>
+    {#if terms === null}
+      <p class="missing">Not scored — this shoe is missing at least one measurement the score needs.</p>
+    {:else}
+      <table>
+        <thead><tr><th>Term</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
+        <tbody>
+          {#each terms as r (r.key)}
+            <tr>
+              <td>{TERM_LABEL[r.key]}</td>
+              <td>{displayNumber(r.term)}</td>
+              <td>{displayNumber(r.weighted)}</td>
+              <td>{Math.round((r.weighted / total) * 100)}%</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+  </section>
   <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
 </div>
 
@@ -79,6 +115,13 @@
   .tag { font-size: var(--t-xs); padding: 0.1rem var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); color: var(--text-dim); }
   a { display: inline-block; margin-top: var(--s3); color: var(--accent); }
   .missing { color: var(--text-dim); }
+  /* Its own block rather than a column of the details grid: the breakdown is about the view, not
+     about the shoe's copy, and it must still be there for a shoe RunRepeat never wrote up. */
+  .score-breakdown { margin-top: var(--s4); border-top: 1px solid var(--border); padding-top: var(--s3); }
+  .score-breakdown table { border-collapse: collapse; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+  .score-breakdown th, .score-breakdown td { text-align: right; padding: var(--s1) var(--s3) var(--s1) 0; }
+  .score-breakdown th:first-child, .score-breakdown td:first-child { text-align: left; }
+  .score-breakdown th { color: var(--text-dim); font-weight: 400; font-size: var(--t-xs); }
   /* Stripping embedded videos at sanitise time leaves empty paragraphs behind; collapse them. */
   .detail :global(p:empty) { display: none; }
   .detail :global(p) { margin: var(--s2) 0; }

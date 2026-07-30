@@ -5,17 +5,21 @@
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
   import { columnLabel, shortLabel } from '../lib/labels';
+  import type { Side } from '../lib/lineage';
   import { EASY_SCORE_KEY } from '../lib/score';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
 
-  let { shoes, data, view, scores, onchange }: {
+  let { shoes, data, view, scores, side, stability, onchange }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
     /** Resolved in `Page.svelte`: the Easy score is the one column whose value depends on the view
      *  rather than on the shoe alone, so it arrives ready rather than through `numericValue`. */
     scores: Map<string, number>;
+    /** The side and preference `scores` were computed with, passed straight through to the panel so
+     *  its breakdown cannot disagree with the value rendered beside it. */
+    side: Side; stability: boolean;
     onchange: (v: ViewState) => void;
   } = $props();
 
@@ -121,7 +125,7 @@
           {/each}
         </tr>
         {#if expanded.has(s.slug)}
-          <tr class="expand" id="detail-{s.slug}"><td colspan={span}><DetailPanel shoe={s} /></td></tr>
+          <tr class="expand" id="detail-{s.slug}"><td colspan={span}><DetailPanel shoe={s} {data} {side} {stability} /></td></tr>
         {/if}
         <tr class="gap" aria-hidden="true"><td colspan={span}></td></tr>
       {/each}

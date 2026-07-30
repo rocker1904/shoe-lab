@@ -1,11 +1,17 @@
 import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 import DetailPanel from './DetailPanel.svelte';
-import { shoe } from '../lib/test-fixtures';
+import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
+import type { ShoesFile } from '../../../shared/types.js';
+
+const DATA: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
+/** The panel now reads the view as well as the shoe, so the cases about the shoe's own copy share
+ *  one baseline rather than repeating it. */
+const VIEW = { data: DATA, side: 'heel' as const, stability: false };
 
 describe('DetailPanel', () => {
   it('renders full details', () => {
-    render(DetailPanel, { props: { shoe: shoe({
+    render(DetailPanel, { props: { ...VIEW, shoe: shoe({
       slug: 'full', name: 'Full Shoe',
       details: { pros: ['Bouncy'], cons: ['Pricey'], intro: 'Great shoe.',
         whoShouldBuy: '<p>Everyone <strong>fast</strong></p>', whoShouldNotBuy: null, features: ['Rocker'] },
@@ -18,11 +24,11 @@ describe('DetailPanel', () => {
     expect(screen.getByRole('link', { name: /Full review/ })).toHaveAttribute('href', 'https://runrepeat.com/full');
   });
   it('shows not-yet-crawled message when details are null', () => {
-    render(DetailPanel, { props: { shoe: shoe({ slug: 'bare', details: null }) } });
+    render(DetailPanel, { props: { ...VIEW, shoe: shoe({ slug: 'bare', details: null }) } });
     expect(screen.getByText(/not yet crawled/i)).toBeInTheDocument();
   });
   it('escapes every field except the two sanitised buy blocks', () => {
-    const { container } = render(DetailPanel, { props: { shoe: shoe({
+    const { container } = render(DetailPanel, { props: { ...VIEW, shoe: shoe({
       slug: 'raw', name: '<img src=x>Raw',
       details: { pros: ['<b>pro</b>'], cons: ['<b>con</b>'], intro: '<script>alert(1)</script>',
         whoShouldBuy: null, whoShouldNotBuy: '<p>Nobody</p>', features: ['<i>feat</i>'] },
@@ -46,7 +52,7 @@ const withDetails = (over: Record<string, unknown>) => shoe({
 // (docs/app.md §Model lineage).
 describe('DetailPanel model lineage', () => {
   it('links both directions when the fleet knows them', () => {
-    render(DetailPanel, { props: { shoe: withDetails({
+    render(DetailPanel, { props: { ...VIEW, shoe: withDetails({
       previousVersion: { slug: 'ghost-16', name: 'Brooks Ghost 16' },
       nextVersion: { slug: 'ghost-18', name: 'Brooks Ghost 18' },
     }) } });
@@ -56,7 +62,7 @@ describe('DetailPanel model lineage', () => {
     expect(screen.getByText(/Superseded by/)).toBeInTheDocument();
   });
   it('does not repeat the successor as the newest in line', () => {
-    render(DetailPanel, { props: { shoe: withDetails({
+    render(DetailPanel, { props: { ...VIEW, shoe: withDetails({
       nextVersion: { slug: 'ghost-18', name: 'Brooks Ghost 18' },
       latestVersion: { slug: 'ghost-18', name: 'Brooks Ghost 18' },
     }) } });
@@ -64,7 +70,7 @@ describe('DetailPanel model lineage', () => {
     expect(screen.queryByText(/Newest in line/)).not.toBeInTheDocument();
   });
   it('shows the newest in line when it skips a generation', () => {
-    render(DetailPanel, { props: { shoe: withDetails({
+    render(DetailPanel, { props: { ...VIEW, shoe: withDetails({
       nextVersion: { slug: 'cumulus-26', name: 'Cumulus 26' },
       latestVersion: { slug: 'cumulus-28', name: 'Cumulus 28' },
     }) } });
@@ -72,14 +78,14 @@ describe('DetailPanel model lineage', () => {
     expect(screen.getByRole('link', { name: 'Cumulus 28' })).toBeInTheDocument();
   });
   it('renders no lineage list when there are no siblings', () => {
-    const { container } = render(DetailPanel, { props: { shoe: withDetails({}) } });
+    const { container } = render(DetailPanel, { props: { ...VIEW, shoe: withDetails({}) } });
     expect(container.querySelector('.lineage')).toBeNull();
   });
 });
 
 describe('DetailPanel facts and review language', () => {
   it('lists each kept fact with its labels', () => {
-    render(DetailPanel, { props: { shoe: withDetails({
+    render(DetailPanel, { props: { ...VIEW, shoe: withDetails({
       facts: { pace: [{ slug: 'tempo', text: 'Tempo' }, { slug: 'daily-running', text: 'Daily running' }] },
     }) } });
     expect(screen.getByText('pace')).toBeInTheDocument();
@@ -87,11 +93,41 @@ describe('DetailPanel facts and review language', () => {
     expect(screen.getByText('Daily running')).toBeInTheDocument();
   });
   it('names the language when the review is not in English', () => {
-    render(DetailPanel, { props: { shoe: withDetails({ reviewLanguage: 'es' }) } });
+    render(DetailPanel, { props: { ...VIEW, shoe: withDetails({ reviewLanguage: 'es' }) } });
     expect(screen.getByText(/published this review in Spanish/)).toBeInTheDocument();
   });
   it('says nothing about language for an ordinary review', () => {
-    render(DetailPanel, { props: { shoe: withDetails({}) } });
+    render(DetailPanel, { props: { ...VIEW, shoe: withDetails({}) } });
     expect(screen.queryByText(/published this review in/)).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The reason the feature ships before the weights settle: a surprising rank has to be diagnosable
+ * from the row itself rather than argued about (docs/app.md §The Easy score).
+ */
+describe('DetailPanel Easy score breakdown', () => {
+  it('breaks the Easy score into its terms, so a rank can be diagnosed', () => {
+    const { container } = render(DetailPanel, {
+      props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: false },
+    });
+    expect(screen.getByText('Easy score')).toBeInTheDocument();
+    const rows = [...container.querySelectorAll('.score-breakdown tbody tr')];
+    expect(rows).toHaveLength(3);
+    expect(rows[0]!.textContent).toContain('Shock absorption');
+  });
+
+  it('adds the two stability terms once the runner has opted in', () => {
+    const { container } = render(DetailPanel, {
+      props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA, side: 'heel' as const, stability: true },
+    });
+    expect(container.querySelectorAll('.score-breakdown tbody tr')).toHaveLength(5);
+  });
+
+  it('says so plainly when a shoe cannot be scored', () => {
+    render(DetailPanel, {
+      props: { shoe: FLEET.find((s) => s.slug === 'mystery')!, data: DATA, side: 'heel' as const, stability: false },
+    });
+    expect(screen.getByText(/not scored/i)).toBeInTheDocument();
   });
 });

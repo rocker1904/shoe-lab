@@ -14,7 +14,7 @@ function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: Map<s
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['releasedAt', 'score', 'heel-stack', 'plate'];
   const rendered = render(ShoeTableMobile, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
-    scores: over.scores ?? new Map() } });
+    scores: over.scores ?? new Map(), side: 'heel', stability: false } });
   return Object.assign(onchange, { rendered });
 }
 

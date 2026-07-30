@@ -298,9 +298,11 @@
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}
-        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} onchange={setView} />
+        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} side={workingSide}
+                         stability={view.stability} onchange={setView} />
       {:else}
-        <ShoeTable shoes={visibleSorted} {data} {view} {scores} onchange={setView} />
+        <ShoeTable shoes={visibleSorted} {data} {view} {scores} side={workingSide}
+                   stability={view.stability} onchange={setView} />
       {/if}
     </div>
     {#if visibleSorted.length === 0}

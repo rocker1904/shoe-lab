@@ -13,7 +13,7 @@ function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: Map<s
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
   const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
-    scores: over.scores ?? new Map() } });
+    scores: over.scores ?? new Map(), side: 'heel', stability: false } });
   return Object.assign(onchange, { rendered });
 }
 
@@ -136,7 +136,8 @@ describe('ShoeTable and the Easy score', () => {
   it('renders the Easy score from the supplied map, and a dash where it is unscored', () => {
     const view = { ...defaultView(), columns: [EASY_SCORE_KEY] };
     const { container } = render(ShoeTable, {
-      props: { shoes: FLEET, data, view, scores: new Map([['cushy', 87.412]]), onchange: () => {} },
+      props: { shoes: FLEET, data, view, scores: new Map([['cushy', 87.412]]),
+               side: 'heel' as const, stability: false, onchange: () => {} },
     });
     const cells = [...container.querySelectorAll('tbody tr td')].map((c) => c.textContent?.trim());
     expect(cells).toContain('87.41'); // two decimals, like every other figure
