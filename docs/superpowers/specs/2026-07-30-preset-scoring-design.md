@@ -342,11 +342,16 @@ sd  (heel / forefoot)
   heel counter stiffness 0.2712 / 0.2712     (no sides)
 
 anchors (r0, r100) per side per stability state — four pairs
-  heel,     stability off   3.7277 / 8.4742
-  heel,     stability on    4.3967 / 7.4117
-  forefoot, stability off   3.7118 / 7.6761
-  forefoot, stability on    3.9452 / 6.5653
+  heel,     stability off   3.7275 / 8.4740
+  heel,     stability on    4.3963 / 7.4104
+  forefoot, stability off   3.7119 / 7.6771
+  forefoot, stability on    3.9456 / 6.5670
 ```
+
+The anchors are derived dividing by the **four-decimal sds above**, not by the unrounded ones: the
+implementation divides by what is published, and an anchor from an unrounded sd puts the endpoints
+0.03 out — the top forefoot shoe reading 100.03 and the worst heel shoe −0.01. This supersedes the
+first four pairs recorded here.
 
 Every figure above is derived from the fleet at `data/` commit `baed23b` (450 shoes, 378 after the
 plate gate, 283 scoreable). Rederiving them is a deliberate act, not a refresh side effect.

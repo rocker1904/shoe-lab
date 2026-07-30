@@ -75,10 +75,12 @@ export const TERM_SD: Record<Side, Record<EasyTermKey, number>> = {
 };
 
 /** Per side *and* per stability state: the toggle changes what the score means, so putting both
- *  states on one scale would invite a comparison that is not meaningful. */
+ *  states on one scale would invite a comparison that is not meaningful. Derived by dividing by
+ *  `TERM_SD` **as published above** rather than by the unrounded sds, or the endpoints miss 100 and
+ *  0 by enough to see (they read 100.03 and −0.01 when the two disagree). */
 export const ANCHORS: Record<Side, Record<'on' | 'off', { r0: number; r100: number }>> = {
-  heel: { off: { r0: 3.7277, r100: 8.4742 }, on: { r0: 4.3967, r100: 7.4117 } },
-  forefoot: { off: { r0: 3.7118, r100: 7.6761 }, on: { r0: 3.9452, r100: 6.5653 } },
+  heel: { off: { r0: 3.7275, r100: 8.474 }, on: { r0: 4.3963, r100: 7.4104 } },
+  forefoot: { off: { r0: 3.7119, r100: 7.6771 }, on: { r0: 3.9456, r100: 6.567 } },
 };
 
 const termsFor = (stability: boolean): EasyTermKey[] =>

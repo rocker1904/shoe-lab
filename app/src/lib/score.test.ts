@@ -71,6 +71,11 @@ describe('easyTerms', () => {
     // Less wear is better, so the term rises as the reading falls.
     expect(t({ '4': 1.0, '9': 2.0 }).outsoleDurability!)
       .toBeGreaterThan(t({ '4': 2.0, '9': 2.0 }).outsoleDurability!);
+    // Both stability terms too, and below their caps, where the mapping is still free to move: a
+    // wider midsole on the same stack is the longer lever, and a stiffer counter holds more.
+    expect(t({ '26': 95, '6': 40 }).midsoleWidth!)
+      .toBeGreaterThan(t({ '26': 80, '6': 40 }).midsoleWidth!);
+    expect(t({ '19': 4 }).heelCounter!).toBeGreaterThan(t({ '19': 3 }).heelCounter!);
   });
 });
 
@@ -117,18 +122,26 @@ describe('easyScore', () => {
       shockAbsorption: 0.0961, outsoleDurability: 0.1614, energyReturn: 0.0790,
       midsoleWidth: 0.1133, heelCounter: 0.2712,
     });
-    expect(ANCHORS.heel.off).toEqual({ r0: 3.7277, r100: 8.4742 });
-    expect(ANCHORS.heel.on).toEqual({ r0: 4.3967, r100: 7.4117 });
-    expect(ANCHORS.forefoot.off).toEqual({ r0: 3.7118, r100: 7.6761 });
-    expect(ANCHORS.forefoot.on).toEqual({ r0: 3.9452, r100: 6.5653 });
+    expect(ANCHORS.heel.off).toEqual({ r0: 3.7275, r100: 8.474 });
+    expect(ANCHORS.heel.on).toEqual({ r0: 4.3963, r100: 7.4104 });
+    expect(ANCHORS.forefoot.off).toEqual({ r0: 3.7119, r100: 7.6771 });
+    expect(ANCHORS.forefoot.on).toEqual({ r0: 3.9456, r100: 6.567 });
     expect(SA_REF).toBe(200);
     expect(L_OK).toBe(3.0);
     expect(WID_CAP).toEqual({ heel: 3.04, forefoot: 5.37 });
   });
 
   it('reads a different number on each side, from that side own constants', () => {
-    const s = fixture('cushy');
-    expect(easyScore(s, 'heel', false, idx)).not.toBeCloseTo(easyScore(s, 'forefoot', false, idx)!, 3);
+    // Identical readings on both halves, so the difference can only come from the per-side sds,
+    // width cap and anchors: no absolute number transfers between the halves.
+    const even = shoe({ slug: 'even', values: {
+      '68': 140, '67': 140, '65': 70, '66': 70, '4': 0.8, '9': 3.2,
+      '26': 95, '25': 95, '6': 40, '5': 40, '19': 4,
+    } });
+    for (const stability of [false, true]) {
+      expect(easyScore(even, 'heel', stability, idx))
+        .not.toBeCloseTo(easyScore(even, 'forefoot', stability, idx)!, 3);
+    }
   });
 });
 
@@ -170,17 +183,24 @@ const sd = (xs: number[]) => {
 };
 
 describe('the score against the real fleet', () => {
-  it('delivers the nominal weights as effective influence', () => {
+  it('delivers the nominal weights as effective influence, on either side and either toggle', () => {
     // Stage 2 exists for exactly this. Without it a term's influence is its sd on the mapped scale,
-    // and outsole durability at weight 1 outweighs shock absorption at weight 2.
+    // and outsole durability at weight 1 outweighs shock absorption at weight 2. Checked with the
+    // stability pair in as well as out: five terms is the case where a coarse metric — five
+    // subjective buckets — would otherwise dominate the whole function.
     for (const side of SIDES) {
-      const rows = POOL.map((s) => easyContributions(s, side, false, realIdx)).filter((r) => r !== null);
-      const spread = new Map((['shockAbsorption', 'outsoleDurability', 'energyReturn'] as const)
-        .map((k) => [k, sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted))]));
-      const total = [...spread.values()].reduce((a, b) => a + b, 0);
-      expect(spread.get('shockAbsorption')! / total).toBeCloseTo(0.5, 1);
-      expect(spread.get('outsoleDurability')! / total).toBeCloseTo(0.25, 1);
-      expect(spread.get('energyReturn')! / total).toBeCloseTo(0.25, 1);
+      for (const stability of [false, true]) {
+        const rows = POOL.map((s) => easyContributions(s, side, stability, realIdx)).filter((r) => r !== null);
+        const keys = rows[0]!.map((r) => r.key);
+        expect(keys, `${side}/${stability ? 'on' : 'off'}`).toHaveLength(stability ? 5 : 3);
+        const spread = new Map(keys.map((k) => [k, sd(rows.map((r) => r!.find((x) => x.key === k)!.weighted))]));
+        const total = [...spread.values()].reduce((a, b) => a + b, 0);
+        const nominalTotal = keys.reduce((a, k) => a + EASY_WEIGHTS[k], 0);
+        for (const k of keys) {
+          expect(spread.get(k)! / total, `${side}/${stability ? 'on' : 'off'} ${k}`)
+            .toBeCloseTo(EASY_WEIGHTS[k] / nominalTotal, 1);
+        }
+      }
     }
   });
 
@@ -195,19 +215,16 @@ describe('the score against the real fleet', () => {
   });
 
   it('anchors the scale at the fleet it was derived from', () => {
-    // r0 and r100 were taken from this fleet, so today the best scoreable shoe reads 100 and the
-    // worst reads 0. Freezing only takes effect on future refreshes.
-    //
-    // A tenth of a point of slack, not exact equality: every constant is published to four
-    // decimals, and the weighted mean an anchor is compared against divides by five of them, so the
-    // rounding alone puts the endpoints up to 0.07 out. Anything that actually moved the scale —
-    // an sd recomputed from the loaded fleet, a mistyped anchor — misses by whole points.
+    // r0 and r100 were taken from this fleet through the *published* TERM_SD values, so today the
+    // best scoreable shoe reads exactly 100 and the worst exactly 0. Freezing only takes effect on
+    // future refreshes. Anchors derived from unrounded sds miss the endpoints by enough for this
+    // to fail, which is the mistake it exists to catch.
     for (const side of SIDES) {
       for (const stability of [false, true]) {
         const vs = [...easyScoreMap(POOL, side, stability, realIdx).values()];
         const label = `${side}/${stability ? 'on' : 'off'}`;
-        expect(Math.abs(Math.max(...vs) - 100), label).toBeLessThan(0.1);
-        expect(Math.abs(Math.min(...vs)), label).toBeLessThan(0.1);
+        expect(Math.max(...vs), label).toBeCloseTo(100, 1);
+        expect(Math.min(...vs), label).toBeCloseTo(0, 1);
       }
     }
   });
