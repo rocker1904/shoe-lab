@@ -194,7 +194,8 @@ built from a positioned element rather than `<dialog>`: jsdom implements
 neither `showModal` nor the top layer, and the focus handling is the part that
 has to be right anyway — focus enters on the search box and returns to whatever
 held it. Escape stops propagating, because under 800px the sidebar is itself a
-drawer and one Escape must not dismiss both.
+drawer and one Escape must not dismiss both. The node itself is moved to
+`<body>` on mount; §Stacking order says why.
 
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half
@@ -1120,6 +1121,38 @@ measurement columns. In all three, the other half's bounds are **dropped rather
 than translated**, and everything with no zone is untouched — the reasoning is
 §The zone is a preset too. A no-op click on the marked zone returns
 early, so it cannot rebuild the view.
+
+## Stacking order
+
+One scale, read as a whole, because a z-index only ever means something next to
+its siblings:
+
+| Layer | z-index |
+|---|---|
+| sticky shoe-name column | 1 |
+| pinned `thead` (its name cell, 3) | 2 |
+| pinned chrome — header and toolbar | 5 |
+| column picker panel | 10 |
+| help popover | 20 |
+| filter drawer, below 800px | 30 |
+| Add-filter dialog | 35 |
+| skip link | 40 |
+
+**A modal has to be a child of `<body>`, or its number is not on this scale at
+all.** `position: sticky` creates a stacking context whatever its z-index, so
+the desktop sidebar is one; the Add-filter dialog was written inside it and its
+`z-index: 20` was therefore ranked against the sidebar's own children, never
+against the page. The pinned chrome and the table's sticky header both painted
+over the open dialog, and no value would have fixed it — 2000 inside a context
+that sits at 0 still loses. The dialog moves itself to `<body>` on mount and is
+removed from there when it closes.
+
+The drawer is the reason the dialog sits at 35 rather than below 30: below
+800px the dialog opens *from* the drawer, and once it is no longer a descendant
+of that drawer it has to outrank it explicitly. Both facts are measured in
+`smoke.spec.ts`, at 1200px and at 375px, by sampling `elementFromPoint` across
+the open dialog's box — the desktop fix broke the phone once, and each width
+only catches its own failure.
 
 ## Theming
 

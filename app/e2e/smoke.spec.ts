@@ -227,6 +227,40 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
   }
 });
 
+// Which element paints on top is a question only a browser answers: jsdom applies no component CSS,
+// so every z-index in the app is inert there and `elementFromPoint` has nothing to report. Both
+// widths, because the dialog opens from a sticky sidebar on the desktop and from a fixed drawer on
+// the phone — two different layers to clear, and fixing one has already broken the other once.
+for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned table header' },
+                                { width: 375, label: 'the filter drawer it opens from' }]) {
+  test(`keeps the Add-filter dialog above ${label}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/');
+    // Scrolled on purpose: unpinned, the chrome and the table header sit above the dialog's box and
+    // no amount of wrong stacking would be visible.
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    if (width < 800) await page.getByRole('button', { name: 'Filters' }).click();
+    await page.getByRole('button', { name: 'Add filter' }).click();
+    await expect(page.getByRole('dialog', { name: 'Add filter' })).toBeVisible();
+
+    // Sampled across the whole box rather than at its centre: the failure this guards against
+    // covered the top third of the dialog and left the rest of it clear.
+    const covered = await page.evaluate(() => {
+      const dialog = document.querySelector('[role="dialog"][aria-label="Add filter"]')!;
+      const box = dialog.getBoundingClientRect();
+      const hits: string[] = [];
+      for (let dy = 0.02; dy < 1; dy += 0.04) {
+        for (let dx = 0.1; dx < 1; dx += 0.2) {
+          const el = document.elementFromPoint(box.left + box.width * dx, box.top + box.height * dy);
+          if (el && !dialog.contains(el)) hits.push(`${el.tagName}.${el.className}`);
+        }
+      }
+      return [...new Set(hits)];
+    });
+    expect(covered, 'something paints over the open dialog').toEqual([]);
+  });
+}
+
 // jsdom moves focus for nothing: neither Tab order nor a drawer that is hidden by `visibility` can
 // be observed there, and both are the whole point of these two.
 test('puts the skip link first and makes each radiogroup one tab stop', async ({ page }) => {

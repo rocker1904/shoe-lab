@@ -205,6 +205,20 @@ describe('FilterSidebar filter set management', () => {
     expect(within(container).getByRole('button', { name: 'Add filter' })).toHaveFocus();
   });
 
+  /**
+   * The sidebar is `position: sticky`, and sticky creates a stacking context whatever its z-index —
+   * so a modal left inside it can never rise above the pinned chrome or the table's sticky header,
+   * however high its own z-index goes (docs/app.md §Filters). Escaping to `<body>` is the fix, and
+   * this is the cheap guard on it; smoke.spec.ts measures what a browser actually paints.
+   */
+  it('renders the dialog outside the sidebar, so nothing caps its stacking', async () => {
+    const { container } = render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+    await open(within(container).getByRole('button', { name: 'Add filter' }));
+    const dialog = screen.getByRole('dialog');
+    expect(container.contains(dialog)).toBe(false);
+    expect(dialog.parentElement).toBe(document.body);
+  });
+
   it('renders an already-active non-curated filter and stops offering it', async () => {
     const view = defaultView();
     view.filters.ranges['stiffness'] = { min: 5 };

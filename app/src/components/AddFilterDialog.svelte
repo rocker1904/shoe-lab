@@ -23,6 +23,19 @@
     return [...m.entries()];
   });
 
+  /**
+   * The sidebar this dialog is written inside is `position: sticky`, and a sticky element creates a
+   * stacking context whatever its z-index — so `z-index: 20` below was being measured against the
+   * sidebar's own children, not the page, and the pinned chrome and the table's sticky header both
+   * painted over the open dialog. Moving the node to `<body>` is what makes the number mean what it
+   * says (docs/app.md §Filters). It runs before the focus call below, because `appendChild` on a
+   * subtree containing the active element drops the focus it is about to hand out.
+   */
+  function toBody(node: HTMLElement) {
+    document.body.appendChild(node);
+    return { destroy: () => node.remove() };
+  }
+
   // Built from a positioned element rather than `<dialog>`: jsdom implements neither `showModal`
   // nor the top layer, and the focus handling below is the part that has to be right anyway.
   onMount(() => {
@@ -51,7 +64,8 @@
   }
 </script>
 
-<div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" onkeydown={onkeydown} bind:this={panel}>
+<div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" onkeydown={onkeydown}
+     bind:this={panel} use:toBody>
   <input class="q" type="search" aria-label="Filter metrics" placeholder="Search metrics…"
          bind:value={query} bind:this={search} />
   <div class="list">
@@ -71,8 +85,12 @@
 </div>
 
 <style>
+  /* 35 puts it over the filter drawer's 30, which is the layer it opens from below 800px, and under
+     the skip link's 40. Moving the node to `<body>` is what makes these numbers comparable at all:
+     inside the sticky sidebar they were measured against that sidebar's children
+     (docs/app.md §Stacking order). */
   .dialog {
-    position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); z-index: 20;
+    position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); z-index: 35;
     display: flex; flex-direction: column; gap: var(--s2); width: min(28rem, 92vw); max-height: 80vh;
     padding: var(--s4); background: var(--surface); color: var(--text);
     border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-dialog);
