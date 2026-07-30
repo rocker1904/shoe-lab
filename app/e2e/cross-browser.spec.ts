@@ -21,9 +21,9 @@ test('bounds the fleet by release month without a native month input', async ({ 
 
   // A real grid, in an engine that would have rendered no picker at all.
   const panel = page.getByRole('dialog', { name: 'Choose a release month' });
-  await expect(panel.getByRole('radio')).toHaveCount(12);
+  await expect(panel.getByRole('gridcell')).toHaveCount(12);
   await panel.getByRole('button', { name: 'Previous year' }).click();
-  await panel.getByRole('radio', { name: 'March' }).click();
+  await panel.getByRole('gridcell', { name: 'March' }).click();
 
   await expect(page).toHaveURL(/after=\d{4}-03/);
   await expect(trigger).toHaveText(/March \d{4}/);
@@ -68,6 +68,33 @@ test('closes the month picker every way out, and hands focus back', async ({ pag
   await expect(panel).toHaveCount(0);
 });
 
+/**
+ * The grid is browsable by keyboard: arrows move, Enter commits. It was a `radiogroup` driven by
+ * `lib/roving.ts`, which activates whatever it moves to — correct for a radiogroup, and here it
+ * meant the first arrow press wrote a bound the runner never chose and shut the panel on them.
+ */
+test('browses the month grid with the arrows and commits on Enter', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/?after=2024-03');
+  const trigger = page.getByRole('button', { name: /Released after/ });
+  const panel = page.getByRole('dialog', { name: 'Choose a release month' });
+  await trigger.click();
+  await expect(panel.getByRole('gridcell', { name: 'March' })).toBeFocused();
+
+  // Three moves across and one down: still open, still March, nothing written.
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowDown');
+  await expect(panel.getByRole('gridcell', { name: 'September' })).toBeFocused();
+  await expect(panel).toBeVisible();
+  await expect(page).toHaveURL(/after=2024-03/);
+
+  await page.keyboard.press('Enter');
+  await expect(panel).toHaveCount(0);
+  await expect(page).toHaveURL(/after=2024-09/);
+  await expect(trigger).toHaveText(/September 2024/);
+});
+
 /** Stepping to either end disables the button under the pointer, and the browser then drops focus
  *  to `<body>`. The panel must neither close on that nor strand the keyboard user on nothing. */
 test('keeps the month grid reachable at the ends of the fleet', async ({ page }) => {
@@ -84,7 +111,7 @@ test('keeps the month grid reachable at the ends of the fleet', async ({ page })
 
   // The earliest year has months the fleet never reached, and a disabled radio cannot be a tab stop.
   const reachable = await panel.evaluate((p) =>
-    [...p.querySelectorAll('[role="radio"]')].some((r) => r.tabIndex === 0 && !r.disabled));
+    [...p.querySelectorAll('[role="gridcell"]')].some((r) => r.tabIndex === 0 && !r.disabled));
   expect(reachable, 'the month grid has no reachable tab stop').toBe(true);
 });
 

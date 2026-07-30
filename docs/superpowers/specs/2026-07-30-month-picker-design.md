@@ -34,8 +34,13 @@ A trigger button plus a popover, replacing the input. The chips
 sidebar's own stacking context, sized `width: 100%` with `border-box` so it
 matches the column — the sidebar's `overflow-y` makes `overflow-x` compute to
 `auto`, and a fixed 15rem panel was measured losing its fourth column. A year
-stepper `‹ 2024 ›` over a `role="radiogroup"` month grid of twelve
-`role="radio"` buttons, arrow-keyed by the existing `lib/roving.ts` action.
+stepper `‹ 2024 ›` over a month grid of twelve buttons.
+
+Built first as a `role="radiogroup"` driven by the existing `lib/roving.ts`, and
+changed after review: that action activates whatever it moves to, so one arrow
+press committed a bound and closed the panel. It is now a `role="grid"` with its
+own key handler — arrows move focus, Enter and Space commit through the buttons'
+own semantics (docs/app.md §Released after is month-granular).
 
 Both stepper arrows disable at the ends of the fleet's real range, and months
 outside it are disabled. Empty months *inside* the range stay enabled: for an

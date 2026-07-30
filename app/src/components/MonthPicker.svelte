@@ -1,7 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { MONTHS, monthLabel, startOfMonth } from '../lib/release-date';
-  import { roving } from '../lib/roving';
 
   let { value, min, max, onchange }: {
     /** The live bound, always the first of its month, or undefined for no bound. */
@@ -45,12 +44,44 @@
     // this year holds it, so the grid opens where the runner left it.
     focusGrid();
   }
+  /** Every month button in document order, disabled ones included: the arrows need the geometry to
+   *  step *over* one, and the tab stop has to be able to skip it. */
+  const cells = (): HTMLButtonElement[] =>
+    [...(panel?.querySelectorAll<HTMLButtonElement>('[role="gridcell"]') ?? [])];
   function focusGrid() {
-    const grid = panel?.querySelector<HTMLElement>('[role="radiogroup"]');
-    const target = grid?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]:not(:disabled)')
-      ?? grid?.querySelector<HTMLElement>('[role="radio"]:not(:disabled)')
+    const list = cells();
+    const target = list.find((c) => c.getAttribute('aria-selected') === 'true' && !c.disabled)
+      ?? list.find((c) => !c.disabled)
       ?? panel?.querySelector<HTMLElement>('button:not(:disabled)');
     target?.focus();
+  }
+
+  /**
+   * The grid's own keys, deliberately not `lib/roving.ts`. That action activates whatever it moves
+   * to, which is right for a radiogroup — the role promises selection follows focus — and wrong
+   * here, where activating commits a filter and shuts the panel: one arrow press was a committed
+   * bound the runner never chose. So this is a `grid` and the arrows only move
+   * (docs/app.md §Released after is month-granular).
+   */
+  const COLUMNS = 4;
+  function onGridKey(e: KeyboardEvent) {
+    const list = cells();
+    const from = list.indexOf(document.activeElement as HTMLButtonElement);
+    if (from === -1) return;
+    const delta = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: COLUMNS, ArrowUp: -COLUMNS }[e.key];
+    let next: number;
+    let stride: number;
+    if (delta !== undefined) { next = from + delta; stride = Math.sign(delta); }
+    else if (e.key === 'Home') { next = 0; stride = 1; }
+    else if (e.key === 'End') { next = list.length - 1; stride = -1; }
+    else return;
+    e.preventDefault();
+    // Clamped, not wrapped: twelve months are a calendar, and running off December into January of
+    // the same year reads as a bug rather than a convenience. A disabled month is stepped over in
+    // the direction of travel, and if nothing enabled lies that way focus simply stays put.
+    for (let i = next; i >= 0 && i < list.length; i += stride) {
+      if (!list[i]!.disabled) { list[i]!.focus(); return; }
+    }
   }
   function close() {
     open = false;
@@ -119,6 +150,17 @@
    */
   const disabled = (month: number) =>
     (year === minYear && month < monthOf(min)) || (year === maxYear && month > monthOf(max));
+
+  /**
+   * The grid's single tab stop. The bound's own month when this year holds it, and otherwise the
+   * first month the fleet reached — never nothing, and never a disabled month: either leaves the
+   * twelve buttons unreachable by Tab, which is the whole reason the grid manages `tabindex` at all.
+   */
+  const tabStop = $derived.by(() => {
+    const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].filter((m) => !disabled(m));
+    const bound = value && yearOf(value) === year ? monthOf(value) : undefined;
+    return bound !== undefined && months.includes(bound) ? bound : months[0];
+  });
 </script>
 
 <div class="anchor" bind:this={anchor}>
@@ -143,14 +185,23 @@
         <button type="button" aria-label="Next year" disabled={year >= maxYear}
                 onclick={() => void step(1)}>›</button>
       </div>
-      <!-- A radiogroup, so the twelve months are one tab stop and the arrows move between them:
-           `roving` is the same action the four filter radiogroups use (docs/app.md §Filters). -->
-      <div class="grid" role="radiogroup" aria-label="Month" use:roving>
-        {#each MONTHS as name, i (name)}
-          {@const month = i + 1}
-          <button type="button" role="radio" aria-label={name} disabled={disabled(month)}
-                  aria-checked={value === `${year}-${String(month).padStart(2, '0')}-01`}
-                  onclick={() => choose(month)}>{name.slice(0, 3)}</button>
+      <!-- Enter and Space need no handler: these are real buttons, so the browser turns both into
+           the click below. Only the arrows are ours, in `onGridKey`. -->
+      <!-- `tabindex="-1"` on the grid itself: the cells carry the tab order, and the role wants the
+           container reachable for the arrow handler bound to it. -->
+      <div class="grid" role="grid" tabindex="-1" aria-label="Month" onkeydown={onGridKey}>
+        {#each [0, 1, 2] as row (row)}
+          <!-- `display: contents`, so the rows the grid role requires do not break the four columns
+               the buttons are actually laid out in. -->
+          <div role="row">
+            {#each MONTHS.slice(row * COLUMNS, row * COLUMNS + COLUMNS) as name, col (name)}
+              {@const month = row * COLUMNS + col + 1}
+              {@const checked = value === `${year}-${String(month).padStart(2, '0')}-01`}
+              <button type="button" role="gridcell" aria-label={name} disabled={disabled(month)}
+                      aria-selected={checked} tabindex={month === tabStop ? 0 : -1}
+                      onclick={() => choose(month)}>{name.slice(0, 3)}</button>
+            {/each}
+          </div>
         {/each}
       </div>
     </div>
@@ -189,11 +240,12 @@
   }
   .head button:disabled { opacity: 0.4; cursor: default; }
   .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s1); }
+  .grid [role='row'] { display: contents; }
   .grid button {
     padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
     background: none; color: var(--text); font: inherit; font-size: var(--t-sm); cursor: pointer;
   }
   .grid button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-dim); }
-  .grid button[aria-checked='true'] { background: var(--accent); color: var(--surface); }
+  .grid button[aria-selected='true'] { background: var(--accent); color: var(--surface); }
   .grid button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 </style>

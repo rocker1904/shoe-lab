@@ -704,9 +704,22 @@ format hint and no validation. Worse than cosmetic — `startOfMonth` is
 working throughout.
 
 The replacement is a trigger reading `July 2024` — or `Any month` — over a
-popover holding a `‹ 2024 ›` year stepper and a `role="radiogroup"` month grid,
-arrow-keyed by the same `lib/roving.ts` action the four filter radiogroups use.
-The stepper and the grid are both bounded by the fleet's own first and last
+popover holding a `‹ 2024 ›` year stepper and a `role="grid"` of twelve months.
+**A grid, not a radiogroup, and not `lib/roving.ts`.** That action activates
+whatever it moves to, which is exactly right where the role promises selection
+follows focus — and exactly wrong here, where activating writes a filter and
+shuts the panel. As a radiogroup the first arrow press committed a neighbouring
+month the runner never chose and dismissed the picker on them, so the grid was
+un-browsable by keyboard. Now the arrows only move: left and right by one, up
+and down by four, Home and End to either end of the year, clamped rather than
+wrapped and stepping over any month the fleet never reached. Enter and Space
+need no handler at all, because these are real buttons and the browser turns
+both into the click that commits.
+
+The grid owns its own `tabindex`, and the one tab stop is the bound's month
+when the year on screen holds it and the first offered month otherwise —
+never nothing, and never a disabled month, either of which takes all twelve
+buttons out of the tab order. The stepper and the grid are both bounded by the fleet's own first and last
 release dates, derived from the loaded shoes: this is an affordance rather than
 a score constant, so docs/decisions.md §Frozen scores and live thresholds does
 not apply, and the brand list beside it is derived the same way. Months with no

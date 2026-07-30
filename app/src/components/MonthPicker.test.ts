@@ -40,9 +40,9 @@ describe('MonthPicker', () => {
   it('emits the first of the chosen month and closes', async () => {
     const { trigger, onchange } = setup({ value: '2024-07-01' });
     await open(trigger);
-    await fireEvent.click(screen.getByRole('radio', { name: 'March' }));
+    await fireEvent.click(screen.getByRole('gridcell', { name: 'March' }));
     expect(onchange).toHaveBeenCalledExactlyOnceWith('2024-03-01');
-    expect(screen.queryByRole('radio', { name: 'March' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('gridcell', { name: 'March' })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
 
@@ -65,21 +65,93 @@ describe('MonthPicker', () => {
   it('disables the months outside the fleet in the edge years', async () => {
     const { trigger } = setup({ value: '2015-06-01' });
     await open(trigger);
-    expect(screen.getByRole('radio', { name: 'January' })).toBeDisabled();
-    expect(screen.getByRole('radio', { name: 'February' })).toBeEnabled();
+    expect(screen.getByRole('gridcell', { name: 'January' })).toBeDisabled();
+    expect(screen.getByRole('gridcell', { name: 'February' })).toBeEnabled();
 
     for (let i = 0; i < 11; i++) await fireEvent.click(screen.getByRole('button', { name: 'Next year' }));
     expect(screen.getByTestId('picker-year')).toHaveTextContent('2026');
-    expect(screen.getByRole('radio', { name: 'August' })).toBeEnabled();
-    expect(screen.getByRole('radio', { name: 'September' })).toBeDisabled();
+    expect(screen.getByRole('gridcell', { name: 'August' })).toBeEnabled();
+    expect(screen.getByRole('gridcell', { name: 'September' })).toBeDisabled();
   });
 
   it('marks the bound month, and marks nothing in a year that does not hold it', async () => {
     const { trigger } = setup({ value: '2024-07-01' });
     await open(trigger);
-    expect(screen.getByRole('radio', { name: 'July' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('gridcell', { name: 'July' })).toHaveAttribute('aria-selected', 'true');
     await fireEvent.click(screen.getByRole('button', { name: 'Previous year' }));
-    expect(screen.getByRole('radio', { name: 'July' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('gridcell', { name: 'July' })).toHaveAttribute('aria-selected', 'false');
+  });
+
+  /**
+   * The grid is a `grid`, not a `radiogroup`, and the difference is the whole point: a radiogroup
+   * promises selection follows focus, so every arrow press committed a bound and shut the panel —
+   * one keystroke was a filter. Here the arrows only move.
+   */
+  describe('arrow keys browse rather than commit', () => {
+    const cell = (name: string) => screen.getByRole('gridcell', { name });
+    const arrow = (from: HTMLElement, key: string) => {
+      from.focus();
+      return fireEvent.keyDown(from, { key });
+    };
+
+    it('moves along a row and down a row without emitting anything', async () => {
+      const { trigger, onchange } = setup({ value: '2024-03-01' });
+      await open(trigger);
+      await arrow(cell('March'), 'ArrowRight');
+      expect(document.activeElement).toBe(cell('April'));
+      await arrow(cell('April'), 'ArrowDown');
+      expect(document.activeElement).toBe(cell('August'));   // four columns
+      await arrow(cell('August'), 'ArrowUp');
+      expect(document.activeElement).toBe(cell('April'));
+      expect(onchange).not.toHaveBeenCalled();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('jumps to either end of the year on Home and End', async () => {
+      const { trigger } = setup({ value: '2024-06-01' });
+      await open(trigger);
+      await arrow(cell('June'), 'Home');
+      expect(document.activeElement).toBe(cell('January'));
+      await arrow(cell('January'), 'End');
+      expect(document.activeElement).toBe(cell('December'));
+    });
+
+    it('steps over a month the fleet never reached', async () => {
+      const { trigger } = setup({ value: '2026-08-01' });   // fleet ends 2026-08
+      await open(trigger);
+      await arrow(cell('August'), 'ArrowRight');
+      expect(cell('September')).toBeDisabled();
+      expect(document.activeElement).toBe(cell('August'));  // nothing enabled after it
+    });
+
+    it('keeps the grid a single tab stop, on the month the bound names', async () => {
+      const { trigger } = setup({ value: '2024-03-01' });
+      await open(trigger);
+      expect(cell('March').tabIndex).toBe(0);
+      expect(cell('April').tabIndex).toBe(-1);
+    });
+
+    /** Most years hold no bound, and a grid whose only candidate tab stop is a month that is not in
+     *  it — or is disabled — is a grid no keyboard can enter at all. */
+    const stops = () => screen.getAllByRole('gridcell').filter((c) => c.tabIndex === 0);
+
+    it('still has exactly one tab stop in a year that holds no bound', async () => {
+      const { trigger } = setup({ value: '2024-03-01' });
+      await open(trigger);
+      await fireEvent.click(screen.getByRole('button', { name: 'Previous year' }));
+      expect(stops()).toHaveLength(1);
+      expect(stops()[0]).toBe(cell('January'));
+    });
+
+    it('never puts the tab stop on a month the fleet never reached', async () => {
+      const { trigger } = setup({ value: '2015-06-01' });   // fleet starts 2015-02
+      await open(trigger);
+      await fireEvent.click(screen.getByRole('button', { name: 'Next year' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Previous year' }));
+      expect(cell('January')).toBeDisabled();
+      expect(stops()).toHaveLength(1);
+      expect(stops()[0]!).not.toBeDisabled();
+    });
   });
 
   it('closes on Escape and hands focus back, without emitting', async () => {

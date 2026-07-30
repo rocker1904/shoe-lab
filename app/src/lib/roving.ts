@@ -22,11 +22,12 @@ const STEPS: Record<string, Step> = {
 
 export function roving(node: HTMLElement): { destroy(): void } {
   /**
-   * Disabled radios are skipped rather than counted. A disabled control can be neither focused nor
-   * clicked, so making one the tab stop leaves the group unreachable from the keyboard and stepping
-   * onto one leaves the arrows dead — both observed in the month picker, whose grid disables the
-   * months outside the fleet (docs/app.md §Released after is month-granular). The four older groups
-   * disable nothing, so this changes none of them.
+   * Disabled radios are skipped rather than counted, because the role's promise has to hold even
+   * when one is: a disabled control can be neither focused nor clicked, so making it the tab stop
+   * takes the whole group out of the tab order and stepping onto it leaves the arrows dead. Both
+   * were observed, in a grid that has since stopped using this action for an unrelated reason
+   * (docs/app.md §Released after is month-granular); none of the four current groups disables
+   * anything, so the filter is inert for all of them today.
    */
   const all = (): HTMLElement[] => [...node.querySelectorAll<HTMLElement>('[role="radio"]')];
   const radios = (): HTMLElement[] => all().filter((r) => !(r as HTMLButtonElement).disabled);

@@ -154,7 +154,7 @@ describe('FilterSidebar text and toggle controls', () => {
 
     await open(screen.getByRole('button', { name: /Released after/ }));
     await fireEvent.click(screen.getByRole('button', { name: 'Previous year' }));
-    await fireEvent.click(screen.getByRole('radio', { name: 'March' }));
+    await fireEvent.click(screen.getByRole('gridcell', { name: 'March' }));
     // The picker opens on the newest shoe the fleet has, not on today: reading the clock here made
     // this pass only for as long as the fixture's last release year happened to be the current one.
     const newest = Math.max(...FLEET.map((s) => Number(s.releasedAt?.slice(0, 4) ?? 0)));
