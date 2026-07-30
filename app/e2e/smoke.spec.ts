@@ -295,3 +295,32 @@ test('renders a superseded pair once and keeps colocated halves independently so
   await page.getByRole('columnheader', { name: /Energy return forefoot/ }).getByRole('button').click();
   await expect(page).toHaveURL(/sort=-energy-return-forefoot/);
 });
+
+// The one end-to-end check of the score, and the reason the e2e fixture carries the scoring tests
+// at all: without readings the column renders all em dashes and would pass while proving nothing.
+test('Easy ranks by its own score', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Easy' }).click();
+  await expect(page.getByRole('columnheader', { name: /Easy score/ })).toBeVisible();
+  const rows = page.locator('tbody tr.shoe');
+  await expect(rows.first()).toContainText('cushy');
+  // The score's own cell, not the whole row: an unplated shoe renders an em dash in the plate
+  // column, so "this row holds no dash" would be a claim about plates.
+  const score = (row: number) => rows.nth(row).locator('td').nth(2);
+  await expect(score(0)).toHaveText('85.04');
+  // mystery carries no readings at all, so it sorts last as unscored rather than as a zero
+  await expect(rows.last()).toContainText('mystery');
+  await expect(score(3)).toHaveText('—');
+});
+
+test('the runner can opt stability into the score without losing the story', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('checkbox', { name: /Stability matters to me/ }).check();
+  await expect(page).toHaveURL(/stab=1/);
+  // the preference is the runner's, not the search's, so the story stays marked through it
+  await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
+  await page.getByRole('radio', { name: /All/ }).click();
+  await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Stability matters to me/ })).toBeChecked();
+});

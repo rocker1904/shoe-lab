@@ -3,7 +3,8 @@
   "source": "RunRepeat",
   "groups": {
     "3": "Cushioning",
-    "5": "Sizing"
+    "5": "Sizing",
+    "2": "Outsole"
   },
   "tests": [
     {
@@ -161,6 +162,78 @@
       "id": 26,
       "slug": "midsole-width-in-the-heel",
       "name": "Midsole width - heel"
+    },
+    {
+      "id": 68,
+      "slug": "shock-absorption-heel",
+      "name": "Shock absorption (heel)",
+      "type": "float",
+      "units": "SA",
+      "groupId": "3",
+      "chartLabel": "Shock absorption",
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [
+        67
+      ]
+    },
+    {
+      "id": 67,
+      "slug": "shock-absorption-forefoot",
+      "name": "Shock absorption forefoot",
+      "type": "float",
+      "units": "SA",
+      "groupId": null,
+      "chartLabel": "Shock absorption",
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": 68,
+      "secondaryTestIds": []
+    },
+    {
+      "id": 4,
+      "slug": "outsole-durability",
+      "name": "Outsole durability",
+      "type": "float",
+      "units": "mm",
+      "groupId": "2",
+      "chartLabel": "Outsole wear",
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": []
+    },
+    {
+      "id": 9,
+      "slug": "outsole-thickness",
+      "name": "Outsole thickness",
+      "type": "float",
+      "units": "mm",
+      "groupId": "2",
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": []
+    },
+    {
+      "id": 19,
+      "slug": "heel-counter-stiffness",
+      "name": "Heel counter stiffness",
+      "type": "score",
+      "units": "",
+      "groupId": "5",
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": []
     }
   ],
   "shoes": [
@@ -177,15 +250,20 @@
       "plate": "none",
       "imageUrl": null,
       "values": {
+        "4": 0.8,
         "5": 30,
         "6": 40,
+        "9": 3.2,
         "11": 25,
+        "19": 4,
         "24": 210,
         "25": 112,
         "26": 92,
         "55": 99,
         "65": 70,
         "66": 62,
+        "67": 115,
+        "68": 140,
         "70": 40
       },
       "details": {
@@ -231,15 +309,20 @@
       "plate": "carbon",
       "imageUrl": null,
       "values": {
+        "4": 2.0,
         "5": 29,
         "6": 39,
+        "9": 1.5,
         "11": 27,
+        "19": 2,
         "24": 220,
         "25": 108,
         "26": 88,
         "55": 96,
         "65": 75,
         "66": 68,
+        "67": 125,
+        "68": 150,
         "70": 42
       },
       "details": null,
@@ -262,15 +345,20 @@
       "plate": "plated-other",
       "imageUrl": null,
       "values": {
+        "4": 0.5,
         "5": 25,
         "6": 35,
+        "9": 3.0,
         "11": 30,
+        "19": 5,
         "24": 280,
         "25": 118,
         "26": 98,
         "55": 101,
         "65": 60,
         "66": 51,
+        "67": 100,
+        "68": 120,
         "70": 30
       },
       "details": null,
@@ -293,14 +381,19 @@
       "plate": "none",
       "imageUrl": null,
       "values": {
+        "4": 1.2,
         "5": 20,
         "6": 30,
+        "9": 2.4,
+        "19": 3,
         "24": 300,
         "25": 120,
         "26": 100,
         "55": 94,
         "65": 55,
-        "66": 45
+        "66": 45,
+        "67": 90,
+        "68": 100
       },
       "details": null,
       "facts": {},

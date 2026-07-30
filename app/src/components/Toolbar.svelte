@@ -93,6 +93,10 @@
     .sep { display: none; }
     .actions { order: 1; }
     .pace-wrap { order: 2; flex-basis: 100%; }
+    /* Its own line below the stories, measured rather than assumed: the label plus its caveat is
+       wider than the room left beside the side group, and inline it pushed the actions down to a
+       third line — the void this tier exists to eliminate (docs/app.md §Presets). */
+    .stability { order: 3; flex-basis: 100%; }
   }
   @media (max-width: 800px) {
     .toolbar { padding: var(--s2) var(--s3); }

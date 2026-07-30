@@ -1168,11 +1168,11 @@ git commit -m "Export the Easy score alongside the columns it sits with"
 **Files:**
 - Modify: `app/e2e/fixtures/shoes.json`, `app/e2e/smoke.spec.ts`
 
-- [ ] **Step 1: Add the seven tests and readings to the e2e fixture**
+- [x] **Step 1: Add the seven tests and readings to the e2e fixture**
 
 Mirror Task 1: the same seven `tests` entries, and readings on enough shoes that Easy's list has a real order. Keep at least one shoe unscoreable so the em dash is exercised.
 
-- [ ] **Step 2: Assert the column and its order**
+- [x] **Step 2: Assert the column and its order**
 
 Add to `smoke.spec.ts`:
 
@@ -1186,12 +1186,12 @@ test('Easy ranks by its own score', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 3: Run**
+- [x] **Step 3: Run**
 
 Run: `npm -w app run e2e`
 Expected: PASS. Needs the Playwright browser installed; if absent, `npx playwright install chromium`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/e2e/
