@@ -82,6 +82,25 @@ does not have. The day survives where it is useful — `releasedAt` still holds
 it, so sorting stays exact and the CSV still exports full precision, consistent
 with docs/app.md §Number display.
 
+### What counts as the release month
+
+**The earliest month in which any colourway of the exact model was *widely
+available* at retail** — general sale through the brand's own site or mainstream
+running retailers. Explicitly excluded: athlete-only or elite-only drops,
+single-region limited releases, pre-orders, trade-show samples, and
+one-colourway early-access drops ahead of general launch.
+
+The definition has teeth because racing shoes routinely break it. The FuelCell
+Rebel v5 had an "Urgent Red" colourway out by mid-May 2025 against an official
+1 July launch; the Endorphin Elite 2 had a limited Olympics drop in August 2024
+against a March 2025 retail release. Under an earliest-anything rule both shoes
+would land two months and seven months early respectively, and the recency
+filter would rank them against shoes that were genuinely buyable.
+
+Where an early limited drop exists it is recorded in `notes` rather than
+discarded — the definition may be revisited, and the observation is expensive to
+recover.
+
 ### Released-after becomes month-granular
 
 The sidebar's released-after control is a `date` input plus 1y/2y/3y chips, so it
