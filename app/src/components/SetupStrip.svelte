@@ -23,9 +23,8 @@
     { id: 'race', label: 'Race', desc: 'Fastest, lightest, one day only' },
   ];
 
-  // "Measured at" rather than a side: the heel and the forefoot are the two *ends* of a shoe, and
-  // a runner asked for a side thinks of the medial and lateral ones, which nothing here measures
-  // (docs/app.md §The zone is a preset too).
+  // Describes where the reading was taken, not how the runner lands: naming a strike would claim
+  // a self-diagnosis the tool cannot check (docs/app.md §The zone is a preset too).
   const ZONE_LABEL = 'Measured at';
   const STORY_LABEL = 'Built for';
   // Verbatim from the design, and two things it deliberately does not do: it never says "session",

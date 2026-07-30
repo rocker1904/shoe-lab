@@ -74,7 +74,6 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
   await page.getByRole('button', { name: 'Forefoot', exact: true }).click();
   // no zone token: the columns are the only record of which half the view is about
   await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
-  await expect(page).not.toHaveURL(/strike=/);
   await expect(page.getByTestId('setup-strip')).toBeVisible();         // the zone is the strip's own question
   await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);

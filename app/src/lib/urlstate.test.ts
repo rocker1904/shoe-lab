@@ -293,19 +293,14 @@ describe('equality against the baseline', () => {
 
 describe('the zone the view is about', () => {
   it('never writes a zone key', () => {
-    // `zone=` as well as `strike=`: the shorthand is deferred, not built (BACKLOG.md), and one
-    // encoding of the zone is the property this asserts (docs/app.md §URL encoding).
+    // The shorthand is deferred, not built (BACKLOG.md), and one encoding of the zone is the
+    // property this asserts (docs/app.md §URL encoding).
     const qs = serializeView({ ...defaultView(), columns: defaultColumns('forefoot') });
     expect(qs).not.toContain('zone=');
-    expect(qs).not.toContain('strike=');
   });
   it('carries the zone in the columns instead', () => {
     const v = { ...defaultView(), columns: defaultColumns('forefoot') };
     expect(parseView(serializeView(v), idx).columns).toEqual(defaultColumns('forefoot'));
-  });
-  it('ignores the legacy strike key rather than honouring it', () => {
-    // No compatibility branch: the tool was never shared, so no such link is in anyone's hands.
-    expect(parseView('strike=forefoot', idx)).toEqual(defaultView());
   });
   it('round-trips a mixed-zone view losslessly', () => {
     // Both halves must exist in the fixture, or parseView drops the column and the round trip is

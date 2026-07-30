@@ -11,7 +11,7 @@ import { defaultColumns, defaultView, parseView, serializeView, type ViewState }
 import type { Shoe } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
-const STRIKES: Zone[] = ['heel', 'forefoot'];
+const ZONES: Zone[] = ['heel', 'forefoot'];
 /**
  * Acceptance criterion 9 as a function rather than an inline loop, so it can be pointed at a
  * counter-example as well as at the presets. Uses `isSparse` rather than open-coding the
@@ -28,7 +28,7 @@ describe('presets', () => {
     expect(PRESETS.map((p) => p.label)).toEqual(['Easy', 'Tempo', 'Race']);
   });
   it('returns a complete ViewState for every id, under either zone', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);
         expect(Object.keys(v).sort()).toEqual(['columns', 'filters', 'generations', 'rows', 'sort', 'stability']);
@@ -54,7 +54,7 @@ describe('presets', () => {
     for (const p of PRESETS) expect(applyPreset(p.id, 'heel', false).generations).toEqual({});
   });
   it('sets its own columns rather than the global defaults', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         expect(applyPreset(p.id, zone, false).columns).not.toEqual(defaultColumns(zone));
       }
@@ -63,7 +63,7 @@ describe('presets', () => {
   // Without this, dropping a key from a column set leaves a story sorted or filtered by a
   // number the table never shows, and every other assertion here still passes.
   it('shows every column it sorts or filters by, under either zone', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);
         expect(v.columns, `${p.id}/${zone} sorts by a hidden column`).toContain(v.sort.key);
@@ -81,7 +81,7 @@ describe('presets', () => {
   const NUMERIC_COLUMN_BOUND = 6;
   const NUMERIC_COLUMNS: Record<string, number> = { easy: 6, tempo: 6, race: 6 };
   it('holds every story inside the six-numeric-column phone bound, under either zone', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);
         const numeric = v.columns.filter((c) => c !== 'releasedAt' && c !== 'plate');
@@ -104,7 +104,7 @@ describe('easy', () => {
   it('bounds nothing but the plate, and ranks by the score instead', () => {
     // The score rewards cushioning directly, so a stack floor would restate it; and the runner
     // judges value themselves, so there is no price cap.
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       const v = applyPreset('easy', zone, false);
       expect(Object.keys(v.filters.ranges)).toEqual([]);
       expect(v.filters.plate).toEqual(['none', 'plated-other']);
@@ -116,7 +116,7 @@ describe('easy', () => {
   });
 
   it('round-trips through the URL, so the story mark survives a link', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       const v = applyPreset('easy', zone, false);
       expect(parseView(serializeView(v), idx)).toEqual(v);
     }
@@ -125,7 +125,7 @@ describe('easy', () => {
   it('shows the terms it scores on rather than a metric it does not read', () => {
     // Energy return is a scoring term and was hidden; stack is not one and was shown. The sixth
     // numeric slot belongs to the term (docs/app.md §Columns and sorting).
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       const v = applyPreset('easy', zone, false);
       expect(v.columns, zone).toContain(zoneKey('Energy return', zone));
       expect(v.columns, zone).toContain(zoneKey('Shock absorption', zone));
@@ -134,7 +134,7 @@ describe('easy', () => {
   });
 
   it('names a zone through its columns, so the zone mark still derives', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       expect(zoneOf(applyPreset('easy', zone, false))).toBe(zone);
     }
   });
@@ -153,7 +153,7 @@ describe('the runner layer', () => {
   it('sorts by and shows the half the zone names', () => {
     // No story bounds anything now, so a story names its zone through its score key and its
     // columns alone (docs/shoe-stories.md §Which half a story uses).
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);
         expect(v.sort.key, `${p.id}/${zone}`).toBe(defForPreset(p.id)!.keys[zone]);
@@ -162,7 +162,7 @@ describe('the runner layer', () => {
     }
   });
   it('names no slug from the other zone, anywhere in the view', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       const other = zone === 'heel' ? 'forefoot' : 'heel';
       const wrongSide = new Set(ZONE_PAIRS.map((p) => p[other] as string));
       for (const p of PRESETS) {
@@ -227,7 +227,7 @@ describe('a story is a pool and a ranking', () => {
   it('reads nothing from the fleet, so an empty catalogue builds the same view', () => {
     // What the old percentile bounds needed the fleet for. A story that started reading it again
     // would be a threshold in disguise (docs/app.md §Presets).
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         expect(() => applyPreset(p.id, zone, false)).not.toThrow();
         expect(applyPreset(p.id, zone, false).filters.ranges).toEqual({});
@@ -250,7 +250,7 @@ describe('preset determinism', () => {
   it('survives a URL round trip under either zone', () => {
     // the only place asserting that Easy's plate set survives parseView's allowlist, that each
     // preset's columns survive the column allowlist, and that a forefoot story reloads forefoot
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);
         expect(parseView(serializeView(v), idx)).toEqual(v);
@@ -261,7 +261,7 @@ describe('preset determinism', () => {
 
 describe('no preset bounds a metric its own coverage warning would flag', () => {
   it('holds for every preset over the fixture fleet, under either zone', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       for (const p of PRESETS) {
         expect(sparseBoundKeys(applyPreset(p.id, zone, false), FLEET, idx), `${p.id}/${zone}`).toEqual([]);
       }
@@ -284,25 +284,25 @@ describe('every story ranks by its own score rather than by bounds', () => {
   it('keeps carbon out of Tempo, or Tempo collapses into Race', () => {
     // The Tempo spec's central decision: a carbon-inclusive Tempo shares 11 of its top 20 with a
     // pure speed ranking against 2 without (docs/shoe-stories.md §Tempo).
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       expect(applyPreset('tempo', zone, false).filters.plate).toEqual(['none', 'plated-other']);
     }
   });
 
   it('race admits carbon and never requires it', () => {
-    for (const zone of STRIKES) {
+    for (const zone of ZONES) {
       expect(applyPreset('race', zone, false).filters.plate).toBeUndefined();
     }
   });
 
   it('no story carries a range bound any more', () => {
-    for (const p of PRESETS) for (const zone of STRIKES) {
+    for (const p of PRESETS) for (const zone of ZONES) {
       expect(Object.keys(applyPreset(p.id, zone, false).filters.ranges), `${p.id}/${zone}`).toEqual([]);
     }
   });
 
   it('each story sorts by its own score and shows it', () => {
-    for (const p of PRESETS) for (const zone of STRIKES) {
+    for (const p of PRESETS) for (const zone of ZONES) {
       const v = applyPreset(p.id, zone, false);
       const def = defForPreset(p.id)!;
       expect(v.sort, `${p.id}/${zone}`).toEqual({ key: def.keys[zone], dir: 'desc' });
@@ -311,7 +311,7 @@ describe('every story ranks by its own score rather than by bounds', () => {
   });
 
   it('every story still round-trips and still names a zone', () => {
-    for (const p of PRESETS) for (const zone of STRIKES) {
+    for (const p of PRESETS) for (const zone of ZONES) {
       const v = applyPreset(p.id, zone, false);
       expect(parseView(serializeView(v), idx)).toEqual(v);
       expect(zoneOf(v), `${p.id}/${zone}`).toBe(zone);

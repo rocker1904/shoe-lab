@@ -116,9 +116,7 @@ that records it (§The zone is a preset too), so a plain forefoot table is a ver
 link: eight column slugs where `zone=forefoot` would be one. That is the
 accepted cost of having one encoding of the zone rather than two that can
 disagree. A `zone=` shorthand expanding to `defaultColumns(zone)` is the remedy
-if the length ever becomes annoying in practice (BACKLOG.md). An old link may
-still carry `strike=` from the vocabulary before this one; `parseView` ignores it
-rather than honouring it, because the tool was never shared under that spelling.
+if the length ever becomes annoying in practice (BACKLOG.md).
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, always falling back to the default rather than throwing:
@@ -913,13 +911,14 @@ unable to disagree; `stability` still applies to all alike, and Race simply igno
 
 ### The zone is a preset too
 
-**Not "side".** The heel and the forefoot are the two *ends* of a shoe, and a
-runner asked to pick a "side" reasonably thinks of the medial and lateral ones,
-which this tool has no readings for at all. The control reads **Measured at**,
-the type is `Zone`, and the word "side" appears nowhere a runner can see it. An
-earlier framing called it the *strike*, which claimed to know how the reader
-runs; `strike=` survives only as a URL key `parseView` ignores
-(§URL encoding).
+**A zone, and never a "side".** The heel and the forefoot are the two *ends* of
+a shoe: a runner asked to pick a side reasonably thinks of the medial and
+lateral ones, which this tool has no readings for at all. The control reads
+**Measured at**, which describes where the number came from rather than how the
+reader runs — naming the runner's strike would claim a self-diagnosis the tool
+cannot check (docs/shoe-stories.md §Which half a story uses). The type is
+`Zone`; "side" is not a synonym for it anywhere in the code, the copy or these
+docs.
 
 Both groups above the table are derived marks over one view, not a field and a
 mark. `lib/zone.ts` is the whole mechanism:
