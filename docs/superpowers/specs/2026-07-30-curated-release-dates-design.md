@@ -163,6 +163,43 @@ abandoned after 18 tool calls, and the article carries a visible byline date
 a URL list makes `clifton-9` versus `clifton-9-gtx` an explicit choice rather
 than something a search engine blurs.
 
+**The publisher roster.** All probed with an honest User-Agent; all returned 200
+and none disallow `/`. Sitemap paths are as declared in their own robots.txt:
+
+| publisher | sitemap | notes |
+|---|---|---|
+| believeintherun.com | `/shoe-sitemap.xml` | dedicated shoe sitemap, 1001 reviews |
+| weartesters.com | `/sitemap_index.xml` | also `/news-sitemap.xml` |
+| doctorsofrunning.com | `/sitemap_index.xml` | **year in the URL slug** — see below |
+| irunfar.com | `/sitemap.xml` | trail-leaning |
+| meta-endurance.com | `/sitemap_index.xml` | |
+| shoeography.com | `/sitemap.xml` | launch announcements, light on review depth |
+| weartested.org | `/sitemap.xml` | |
+| trailrunnermag.com | `/sitemap_index.xml` | trail-leaning |
+| runningshoesguru.com, longermiles.com, marathonhandbook.com, runningmagazine.ca | none declared | reachable, but need site search |
+
+Three of these (believeintherun, weartesters, doctorsofrunning) indexed in about
+eight requests give 2,603 URLs and directly locate 6 of 14 shoes that agent
+search had failed on, including `hoka-clifton-9-gtx` and
+`topo-athletic-specter-2`. doctorsofrunning encodes the review year in the slug
+(`…-review-2022`), which is both a free coarse date and a generation check.
+
+Misses are informative too: searching the index for `hyperboost` returns only
+*Edge*, never *Run*, which corroborates the naming doubt over
+`adidas-hyperboost-run`; `vongo` returns v4, v5 and the original but no v6.
+
+**Brand newsrooms are the best article source and the worst index.** The two
+cleanest results in the whole exercise came from `corp.asics.com/en/press/…` and
+`about.underarmour.com/en/stories/…`. But as indexes they mostly fail:
+`news.adidas.com` answers HTTP 202 with an empty body (bot mitigation),
+`www.newbalance.com/robots.txt` 403s, `press.on.com` redirects to
+`press.on-running.com` whose 1,055-URL sitemap is category pages in every
+language with no individual releases, and Brooks/Hoka/Saucony/Altra publish only
+retail product sitemaps. So: try the brand newsroom **first for a shoe less than
+about two years old**, where the release is still up and is the highest-tier
+source available; fall back to the publisher index for anything older, where the
+brand page is gone anyway.
+
 **`lastmod` is not the publication date.** Many entries cluster on bulk re-save
 dates, so the sitemap locates the article; the article dates it. Coverage is
 per-publisher and partial — `forever-run-nitro` has no BelieveInTheRun review —
