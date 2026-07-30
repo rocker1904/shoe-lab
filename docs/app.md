@@ -559,10 +559,12 @@ units and no direction arrow: there is no better end to point at.
 Four readings were already in the dataset and unreachable before this existed —
 the two option tests plus `removable-insole` and `reflective-elements`, which
 are `bool`. Sorting orders them alphabetically by the label a reader sees, not
-by the stored slug, so the order matches the column. On a phone they join the
-name line rather than the value row, for the same reason plate and the release
-date do: the value row stays uniformly numeric
-(docs/app.md §Columns and sorting).
+by the stored slug, so the order matches the column; that sort is a URL-legal
+one, because a header that offers a sort a link cannot carry would make
+`Copy link` hand back a different view (§Columns are permissive, ranges and
+sorts are strict). On a phone they join the name line rather than the value row,
+for the same reason plate and the release date do: the value row stays uniformly
+numeric (§Columns and sorting).
 
 **`plate` is the shoe field's, not the catalogue's.** The catalogue also has a
 `bool` test slugged `plate`, read on two shoes of 450, and one column cannot
@@ -1224,10 +1226,14 @@ row's click target is the expander. Do not remove or defer-load either link
 (docs/decisions.md §Be a good citizen toward RunRepeat).
 
 ### Columns are permissive, ranges and sorts are strict
-`cols` accepts any test slug — showing an `option`-typed column is harmless,
-it just prints its value — while range and sort keys are restricted to numeric
-tests. The asymmetry is the point: a bad column costs one ugly cell, a bad
-range hides the entire fleet. Do not unify the two allowlists.
+`cols` accepts any test slug — showing a column the catalogue no longer carries
+is harmless, it just prints nothing — while range keys are restricted to numeric
+tests and sort keys to the keys that have an order: numeric tests, the shoe
+fields, and the categorical columns, which sort by their label
+(§Categorical columns). The asymmetry is the point: a bad column costs one ugly
+cell, a bad range hides the entire fleet. Do not unify the allowlists — but
+every sort a header offers has to be one the parser accepts, or `Copy link`
+hands out a URL that reopens on a different view than the one that was shared.
 
 ### The dataset is a fetched asset, not a bundled import
 `sync-data` copies `data/shoes.json` into `public/` and the app fetches it at

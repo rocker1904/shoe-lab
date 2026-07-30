@@ -149,8 +149,18 @@ describe('urlstate hostile input', () => {
     expect(serializeView(v)).toBe('sort=plate');
     expect(parseView(serializeView(v), idx)).toEqual(v);
   });
-  it('rejects sort keys that are not numerically sortable', () => {
-    expect(parseView('sort=tongue-gusset-type', idx).sort).toEqual(defaultView().sort);
+  // A categorical column sorts alphabetically by its label and its header offers that sort, so the
+  // link has to carry it: writing a sort the parser drops makes Copy link lose the view
+  // (docs/app.md §Columns are permissive, ranges and sorts are strict).
+  it('round-trips a categorical sort', () => {
+    expect(parseView('sort=-tongue-gusset-type', idx).sort).toEqual({ key: 'tongue-gusset-type', dir: 'desc' });
+    const v = defaultView();
+    v.sort = { key: 'removable-insole', dir: 'asc' };
+    expect(serializeView(v)).toBe('sort=removable-insole');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  it('rejects sort keys that name no test at all', () => {
+    expect(parseView('sort=not-a-test', idx).sort).toEqual(defaultView().sort);
     expect(parseView('sort=-', idx).sort).toEqual(defaultView().sort);
     expect(parseView('sort=', idx).sort).toEqual(defaultView().sort);
   });

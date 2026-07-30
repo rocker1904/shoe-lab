@@ -1,4 +1,5 @@
 import type { Plate } from '../../../shared/types.js';
+import { isCategorical } from './categorical';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
@@ -121,13 +122,16 @@ export function serializeView(v: ViewState): string {
 export function parseView(qs: string, idx: TestIndex): ViewState {
   const p = new URLSearchParams(qs);
   const v = defaultView();
-  // Ranges and sorts take numeric keys only while columns stay permissive
-  // (docs/app.md §Columns are permissive, ranges and sorts are strict).
+  // Ranges take numeric keys only and sorts take every key that has an order, while columns stay
+  // permissive (docs/app.md §Columns are permissive, ranges and sorts are strict). A categorical
+  // column sorts by its label, and its header offers that sort, so a link has to survive it.
   const numericTest = (k: string) => {
     const test = idx.bySlug.get(k);
     return !!test && NUMERIC_TEST_TYPES.has(test.type);
   };
   const validRangeKey = (k: string) => FIELD_RANGE_KEYS.has(k) || numericTest(k);
+  const validSortKey = (k: string) =>
+    SORT_FIELDS.has(k) || numericTest(k) || isCategorical(idx.bySlug.get(k));
   const genRaw = new Map<string, string>();
   for (const [key, raw] of p.entries()) {
     if (key.startsWith('gen.')) {
@@ -168,7 +172,7 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     } else if (key === 'sort') {
       const dir = raw.startsWith('-') ? 'desc' : 'asc';
       const k = raw.replace(/^-/, '');
-      if (SORT_FIELDS.has(k) || numericTest(k)) v.sort = { key: k, dir };
+      if (validSortKey(k)) v.sort = { key: k, dir };
     } else if (key === 'cols' && raw) {
       const cols = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c));
       if (cols.length) v.columns = cols;
