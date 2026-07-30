@@ -2,8 +2,7 @@ import type { Plate } from '../../../shared/types.js';
 import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, metricEntries, sideKey, type Side } from './lineage';
-import { EASY } from './score-defs';
+import { CURATED_RANGE_KEYS, DERIVED_SIDE_PAIRS, metricEntries, sideKey, type Side } from './lineage';
 
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
@@ -42,10 +41,13 @@ export function defaultColumns(side: Side): string[] {
  * story that would build it — story selection is a positional value comparison (docs/app.md §Presets).
  */
 export const PLATES: Plate[] = ['none', 'plated-other', 'carbon'];
+/** Every story's score column, derived so a further story is accepted as a sort key and a column
+ *  without an edit here. */
+const SCORE_KEYS = DERIVED_SIDE_PAIRS.flatMap((p) => [p.heel, p.forefoot]);
 const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 'plate',
-  ...Object.values(EASY.keys)]);
+  ...SCORE_KEYS]);
 /** ShoeTable renders name/brand itself, so they sort but have no cell to become a column (docs/app.md §Columns and sorting). */
-const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...Object.values(EASY.keys)]);
+const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...SCORE_KEYS]);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 

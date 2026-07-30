@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { EASY } from './score-defs';
+import type { Side } from './lineage';
+import { SCORE_DEFS } from './score-defs';
 import { defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './urlstate';
 import type { FilterState } from './filters';
 import { TESTS, labTest } from './test-fixtures';
+
+const SIDES: Side[] = ['heel', 'forefoot'];
 
 const idx = indexTests(TESTS);
 
@@ -386,9 +389,10 @@ describe('the stability preference', () => {
   });
 });
 
-describe('the synthetic Easy score as a view key', () => {
-  it('accepts either side\'s score as a sort key and a column', () => {
-    for (const key of Object.values(EASY.keys)) {
+describe('the synthetic story scores as view keys', () => {
+  it('accepts every story score, either side, as a sort key and a column', () => {
+    for (const def of SCORE_DEFS) for (const side of SIDES) {
+      const key = def.keys[side];
       expect(parseView(`sort=-${key}`, idx).sort).toEqual({ key, dir: 'desc' });
       expect(parseView(`cols=${key},weight`, idx).columns).toEqual([key, 'weight']);
     }

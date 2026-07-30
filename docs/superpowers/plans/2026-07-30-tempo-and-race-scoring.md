@@ -500,7 +500,7 @@ describe('the Race score against the real fleet', () => {
 
 ### Task 4: Derive the plumbing instead of enumerating it
 
-- [ ] **Step 1: Failing tests.** Each of `labels.test.ts`, `direction.test.ts`, `urlstate.test.ts` needs `import { SCORE_DEFS } from './score-defs';` and `const SIDES: Side[] = ['heel', 'forefoot'];` — none defines `SIDES` today.
+- [x] **Step 1: Failing tests.** Each of `labels.test.ts`, `direction.test.ts`, `urlstate.test.ts` needs `import { SCORE_DEFS } from './score-defs';` and `const SIDES: Side[] = ['heel', 'forefoot'];` — none defines `SIDES` today.
 
 ```typescript
 // labels.test.ts — keep one exact pin, so the string surgery is anchored to what it must reproduce
@@ -517,8 +517,8 @@ it('names every score column, within the phone label bound', () => {
 
 plus the `directionOf` and `parseView` loops over `SCORE_DEFS`.
 
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3: The four derivations**
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3: The four derivations**
   - `labels.ts` — a `Map` from `DERIVED_SIDE_PAIRS` replacing the two `if`s; the composition is `` `${p.label.replace(/ score$/, '')} ${side} score` ``. Add a WHY comment: it depends on every derived pair's label ending in " score", which is why the exact pin above stays.
   - `direction.ts` — spread `Object.fromEntries(DERIVED_SIDE_PAIRS.flatMap((p) => [[p.heel, 'higher'], [p.forefoot, 'higher']]))` into `DIRECTION`. Add a WHY comment: this asserts every *derived* pair is a score and higher is better, which is a property of that list rather than an inference from a slug — `direction.ts` refuses inference everywhere else.
   - `urlstate.ts` — replace the `EASY_SCORE_KEYS` spread in `SORT_FIELDS` and `COLUMN_FIELDS`.
@@ -528,7 +528,7 @@ plus the `directionOf` and `parseView` loops over `SCORE_DEFS`.
 
 Also re-point `units.test.ts`, which iterates `EASY_SCORE_KEYS` for the `↑`/no-`/100` guard — otherwise it silently covers one story of three. `units.ts` itself needs no change.
 
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Derive the score columns from the pairs that declare them"`
+- [x] **Step 4:** `npm run verify` → PASS. Commit — `"Derive the score columns from the pairs that declare them"`
 
 ---
 

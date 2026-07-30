@@ -1,4 +1,4 @@
-import { EASY } from './score-defs';
+import { DERIVED_SIDE_PAIRS } from './lineage';
 
 export type Direction = 'higher' | 'lower' | 'neutral';
 
@@ -22,7 +22,11 @@ export const DIRECTION: Record<string, Direction> = {
   // Not catalogue tests. Per-story direction is not fleet-wide direction: the score asserts a
   // better end for the session it is built for, while the metrics it reads stay `neutral` here
   // because docs/shoe-stories.md argues there is no fleet-wide answer for them.
-  [EASY.keys.heel]: 'higher', [EASY.keys.forefoot]: 'higher',
+  // Derived from the pair list rather than inferred from a slug: this asserts that every *derived*
+  // pair is a score and that higher is better, which is a property of that list. `direction.ts`
+  // refuses inference everywhere else, and it refuses it here too.
+  ...Object.fromEntries(DERIVED_SIDE_PAIRS.flatMap((p) =>
+    [[p.heel, 'higher' as const], [p.forefoot, 'higher' as const]])),
 
   weight: 'lower', price: 'lower', msrpGbp: 'lower', 'outsole-durability': 'lower',
   'difference-in-midsole-softness-in-cold': 'lower', 'difference-in-stiffness-in-cold': 'lower',

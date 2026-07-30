@@ -2,8 +2,8 @@
   import type { LabTest, Shoe } from '../../../shared/types.js';
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
-  import { metricEntries, type ResolvedMetric } from '../lib/lineage';
-  import { EASY } from '../lib/score-defs';
+  import { columnLabel } from '../lib/labels';
+  import { DERIVED_SIDE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
 
   let { tests, groups, columns, onchange, population, idx, generations }: {
     tests: LabTest[]; groups: Record<string, string>; columns: string[];
@@ -13,11 +13,14 @@
     generations: Record<string, string>;
   } = $props();
 
-  /** The two Easy scores sit with the shoe fields rather than among the metrics: they have no
+  /** The story scores sit with the shoe fields rather than among the metrics: they have no
    *  catalogue test, so `metricEntries` never offers them and `coverageOf` would read 0% — and
-   *  without a home here the column a story sets could never be unticked. */
-  const FIXED: [string, string][] = [['releasedAt', 'Release date'],
-    [EASY.keys.heel, 'Easy heel score'], [EASY.keys.forefoot, 'Easy forefoot score'],
+   *  without a home here the column a story sets could never be unticked. Derived from the pairs
+   *  that declare them and labelled through `columnLabel`, so a further story needs no edit here
+   *  and the picker cannot call a column something the header does not. */
+  const SCORE_ENTRIES: [string, string][] = DERIVED_SIDE_PAIRS.flatMap((p) =>
+    ([p.heel, p.forefoot] as const).map((key) => [key, columnLabel(key, undefined)] as [string, string]));
+  const FIXED: [string, string][] = [['releasedAt', 'Release date'], ...SCORE_ENTRIES,
     ['score', 'RunRepeat Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];
 
   interface Offer { key: string; label: string }

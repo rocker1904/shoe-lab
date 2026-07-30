@@ -1,5 +1,12 @@
 import type { LabTest } from '../../../shared/types.js';
-import { EASY } from './score-defs';
+import { DERIVED_SIDE_PAIRS } from './lineage';
+
+/** Derived rather than listed, so a further story needs no edit here. It depends on every derived
+ *  pair's label ending in " score" — which is why `labels.test.ts` keeps one exact pin beside the
+ *  loop over every definition. */
+const SCORE_LABELS = new Map<string, string>(DERIVED_SIDE_PAIRS.flatMap((p) =>
+  (['heel', 'forefoot'] as const).map((side) =>
+    [p[side], `${p.label.replace(/ score$/, '')} ${side} score`] as const)));
 
 /**
  * The header's first line. The four shoe fields that have cells carry no catalogue test behind
@@ -13,8 +20,8 @@ export function columnLabel(key: string, test: LabTest | undefined): string {
   if (key === 'score') return 'RunRepeat Score';
   if (key === 'msrpGbp') return 'Price';
   if (key === 'plate') return 'Plate';
-  if (key === EASY.keys.heel) return 'Easy heel score';
-  if (key === EASY.keys.forefoot) return 'Easy forefoot score';
+  const score = SCORE_LABELS.get(key);
+  if (score) return score;
   return test?.name ?? key;
 }
 
