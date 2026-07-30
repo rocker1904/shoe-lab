@@ -290,7 +290,7 @@ git commit -m "Map each Easy scoring metric onto what it physically measures"
 **Interfaces:**
 - Produces: `EASY_SCORE_KEY`, `EASY_WEIGHTS`, `TERM_SD`, `ANCHORS`, `easyScore(shoe, side, stability, idx)`, `easyScoreMap(shoes, side, stability, idx)`, `easyContributions(shoe, side, stability, idx)`.
 
-- [ ] **Step 1: Write the failing fixture tests**
+- [x] **Step 1: Write the failing fixture tests**
 
 Append to `app/src/lib/score.test.ts`:
 
@@ -379,7 +379,7 @@ it('names the synthetic key so nothing open-codes it', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing real-dataset tests**
+- [x] **Step 2: Write the failing real-dataset tests**
 
 The two properties that matter most — that stage 2 delivers the weights, and that the toggle cannot change eligibility — are properties of **real coverage** and cannot be checked on four fixture shoes. On the fixture the shares come out near 42/37/21 against a nominal 50/25/25, so a fixture-based test would pass while the failure mode §5 exists to prevent went undetected.
 
@@ -439,12 +439,12 @@ describe('the score against the real fleet', () => {
 });
 ```
 
-- [ ] **Step 3: Run and confirm failure**
+- [x] **Step 3: Run and confirm failure**
 
 Run: `npm -w app run test -- score.test.ts`
 Expected: FAIL — `easyScore` is not exported.
 
-- [ ] **Step 4: Implement the pipeline**
+- [x] **Step 4: Implement the pipeline**
 
 Append to `app/src/lib/score.ts`:
 
@@ -523,12 +523,12 @@ export function easyScoreMap(
 }
 ```
 
-- [ ] **Step 5: Run and verify**
+- [x] **Step 5: Run and verify**
 
 Run: `npm -w app run test -- score.test.ts`
 Expected: PASS, including the three real-dataset tests. If the anchor test fails, the constants and the dataset disagree — stop and report rather than editing the constants to fit.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/lib/score.ts app/src/lib/score.test.ts
