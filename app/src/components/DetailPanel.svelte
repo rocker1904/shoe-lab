@@ -10,7 +10,7 @@
     shoe: Shoe; data: ShoesFile;
     /** The view's columns, not a side: the panel breaks down each score column that is on screen,
      *  so panel and column can never disagree about which half either is about
-     *  (docs/app.md §The Easy score). */
+     *  (docs/app.md §The story scores). */
     columns: string[];
     /** Applies to both sides alike — it decides how many terms there are, not which half. */
     stability: boolean;
@@ -31,7 +31,7 @@
   })));
   // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
   // mapped 1.0 alone says nothing about which reading put them there
-  // (docs/app.md §The Easy score).
+  // (docs/app.md §The story scores).
   const readingText = (r: EasyReading) => (r.over
     ? `${displayNumber(r.value)} = ${displayNumber(r.over[0])} / ${displayNumber(r.over[1])}`
     : displayNumber(r.value));
@@ -89,7 +89,7 @@
     </ul>
   {/if}
   <!-- One per score column on screen, and none at all without one: the panel explains what the
-       table is showing rather than a side of its own (docs/app.md §The Easy score). -->
+       table is showing rather than a side of its own (docs/app.md §The story scores). -->
   {#each breakdowns as b (b.side)}
     <section class="score-breakdown">
       <h4>{b.label}</h4>

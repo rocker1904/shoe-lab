@@ -106,7 +106,7 @@ default is not written at all — a generation choice naming its own key is the
 default and never appears.
 
 `stab=1` is written only when the stability preference is on
-(docs/app.md §The Easy score), so a shared link carries the sender's own
+(docs/app.md §The story scores), so a shared link carries the sender's own
 preference alongside their filters. That is accepted rather than overlooked: the
 preference changes what the score means, so a link that dropped it would show
 the recipient a different ranking under the same URL.
@@ -308,7 +308,7 @@ trap would hold the keyboard inside a panel that is no longer modal.
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
 `msrpGbp`, `plate`), the two synthetic score keys `easy-score-heel` and
-`easy-score-forefoot` (docs/app.md §The Easy score) and any test slug; `name` and
+`easy-score-forefoot` (docs/app.md §The story scores) and any test slug; `name` and
 `brand` are rendered by the table itself and have no cell, so they are sortable
 but never columns.
 
@@ -627,7 +627,7 @@ equals what `applyPreset` would build for it right now. Editing a bound drops
 the highlight because the view genuinely is not that story any more, where a
 stored `preset` field would keep claiming Easy.
 
-### The Easy score
+### The story scores
 
 `app/src/lib/score.ts` ranks Easy. Four stages, each doing one job, and the
 separation is the design:
@@ -896,7 +896,7 @@ control that alters the score, so the `?` beside its label opens the same
 score reads, what it deliberately leaves out — price and release date, so the value
 call stays the runner's — that a shoe missing a measurement is unscored rather than
 zero, and that the scale is fixed to a dated fleet so a future shoe may read above
-100. No maths: docs/app.md §The Easy score owns that, and a second copy would drift.
+100. No maths: docs/app.md §The story scores owns that, and a second copy would drift.
 The checkbox's label is explicit rather than wrapping it, because a button inside a
 label is a click on the label: the help would toggle the preference it explains.
 

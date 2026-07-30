@@ -15,7 +15,7 @@
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
     /** Resolved in `Page.svelte` and keyed by column: a score is the one kind of column whose value
      *  depends on the view rather than on the shoe alone, so it arrives ready rather than through
-     *  `numericValue` (docs/app.md §The Easy score). */
+     *  `numericValue` (docs/app.md §The story scores). */
     scores: ScoreColumns;
     /** The preference `scores` were computed with, passed through to the panel so its breakdown
      *  cannot disagree with the value rendered beside it. */

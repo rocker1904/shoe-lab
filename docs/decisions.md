@@ -45,7 +45,7 @@ about the shoe, and a number that drifts because the catalogue grew is a bug.
 So every constant in a scoring function — references, caps, spread divisors and
 display anchors alike — is **derived once and frozen**, and a score is comparable
 across refreshes and may read above 100 as shoes improve
-(docs/app.md §The Easy score). Agents must not "fix" a frozen constant by
+(docs/app.md §The story scores). Agents must not "fix" a frozen constant by
 recomputing it from the loaded fleet, and must not renormalise a score's scale so
 its top is always 100: both reintroduce exactly the drift freezing removes.
 Rederiving the set is a deliberate act — edit the constants, say so in the commit,

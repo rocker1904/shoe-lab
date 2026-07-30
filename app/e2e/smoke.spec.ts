@@ -109,7 +109,7 @@ test('switches to stacked cards on a phone, and back', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
-  // inside its own box rather than take the page sideways with it (docs/app.md §The Easy score).
+  // inside its own box rather than take the page sideways with it (docs/app.md §The story scores).
   // Easy first: the panel breaks down the score columns the view holds, and the plain table has none.
   await page.getByRole('button', { name: /^Easy/ }).click();
   await page.getByText('cushy').first().click();

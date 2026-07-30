@@ -37,7 +37,7 @@
   const SCORE_LABEL = 'the Easy score';
   /**
    * What the score reads and what it deliberately does not — the three things a runner would
-   * otherwise have to infer from the table. No maths: docs/app.md §The Easy score owns that, and a
+   * otherwise have to infer from the table. No maths: docs/app.md §The story scores owns that, and a
    * second copy here would drift from it.
    */
   const SCORE_HELP = 'Easy ranks on lab measurements: shock absorption, which counts double, '
@@ -75,7 +75,7 @@
     </div>
     <!-- Says what the switch adds and nothing more: the width term is a ratio precisely so that
          opting in does not select heavy shoes, so there is no cost to warn about
-         (docs/app.md §The Easy score). -->
+         (docs/app.md §The story scores). -->
     <small>Adds midsole width and heel counter stiffness to the Easy score.</small>
   </div>
   <div class="actions">

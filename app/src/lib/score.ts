@@ -8,7 +8,7 @@ import { derivedSideKey, sideKey, type Side } from './lineage';
  * what lets a future shoe read above 100 rather than renormalising the improvement away. Recomputing
  * any of them from `shoes` reintroduces exactly the drift the design exists to remove — the reasoning
  * is owned by docs/decisions.md §Frozen scores and live thresholds, and the pipeline the constants
- * belong to by docs/app.md §The Easy score.
+ * belong to by docs/app.md §The story scores.
  */
 
 /** Cosmetic: an uncapped linear factor cancels when the term is divided by its sd, so this sets the
@@ -30,7 +30,7 @@ export type EasyTerms = Record<EasyTermKey, number | null>;
  * The quantity a term's mapping reads, before the mapping. Two of the five terms **cap**, so past
  * saturation the reading is not recoverable from the mapped value — and the breakdown exists to make
  * a surprising rank diagnosable, which it cannot do while the reading is hidden
- * (docs/app.md §The Easy score).
+ * (docs/app.md §The story scores).
  */
 export interface EasyReading {
   value: number;
@@ -80,7 +80,7 @@ export function easyTerms(shoe: Shoe, side: Side, idx: TestIndex): EasyTerms {
  * resolves them into maps and hands them down rather than letting `numericValue` answer for them.
  * Two self-describing keys rather than one resolved through the *derived* side: a column that names
  * its own side cannot disagree with the panel beside it, and a view naming no side needs no silent
- * fallback (docs/app.md §The Easy score).
+ * fallback (docs/app.md §The story scores).
  */
 export const EASY_SCORE_KEYS: Record<Side, string> = {
   heel: derivedSideKey('Easy score', 'heel'), forefoot: derivedSideKey('Easy score', 'forefoot'),

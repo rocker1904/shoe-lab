@@ -91,7 +91,7 @@ the only one left.
 
 The same rule governs a score's constants, for the same reason: every per-side
 figure in Easy's pipeline is derived per side, and no absolute number transfers
-between halves (docs/app.md §The Easy score).
+between halves (docs/app.md §The story scores).
 
 **The interface never asks the runner to declare what they are.** This doc
 reasons in strikes, because a runner's strike is what makes one half the right
@@ -133,7 +133,7 @@ Peak force per step is *lower* than at speed, but weekly impulse is far higher. 
 shoe's job is **repetition tolerance**, not performance — which is a question about
 degree rather than about eligibility, and Easy therefore **ranks** rather than bounds.
 It resolves to one filter and a sort: the plate gate, and `easyScore` descending. The
-pipeline, the constants and where they came from are docs/app.md §The Easy score;
+pipeline, the constants and where they came from are docs/app.md §The story scores;
 this section owns what each term is *for*.
 
 | term | mechanism | weight |
@@ -163,7 +163,7 @@ this section owns what each term is *for*.
 - **Stability is opt-in, not assumed.** It matters to some runners a great deal and to
   others not at all, and there is no fleet-wide answer, so it is the runner's own
   switch. Turning it on does not quietly select heavy shoes — the width term is a ratio
-  for exactly that reason (docs/app.md §The Easy score).
+  for exactly that reason (docs/app.md §The story scores).
 
 **Flexibility, torsional rigidity and weight are deliberately absent.** Flexibility
 correlates +0.58 with heel stack in this pool, so rewarding it pulls *against* the

@@ -5,7 +5,7 @@
 **Date:** 2026-07-30
 **Status:** Approved design, pending an implementation plan
 **Size:** Small–medium — the pipeline, the plumbing and the toggle already exist for Easy
-(docs/app.md §The Easy score). Tempo adds a second entry to `DERIVED_SIDE_PAIRS`, a second
+(docs/app.md §The story scores). Tempo adds a second entry to `DERIVED_SIDE_PAIRS`, a second
 constant set, and its own terms. Race is **not** designed here.
 
 ## 1. What this replaces
@@ -199,7 +199,7 @@ sort   = tempoScore desc, on the runner's side
   qualities directly, so bounding them restates the ranking and truncates the list.
 - **Two new synthetic keys**, `tempo-score-heel` and `tempo-score-forefoot`, added to
   `DERIVED_SIDE_PAIRS` — which is the extension point built for exactly this, so they follow a side
-  click and name a side with no further machinery (docs/app.md §The Easy score).
+  click and name a side with no further machinery (docs/app.md §The story scores).
 - **Columns** show the score's terms, as Easy's do: `releasedAt`, the Tempo score, RunRepeat Score,
   price, energy return, weight, outsole durability, plate. Six numeric, the phone bound
   (docs/app.md §Columns and sorting). Shock absorption is the term not shown — it is the floor

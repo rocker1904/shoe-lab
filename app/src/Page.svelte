@@ -141,7 +141,7 @@
    * A score depends on the view, not just the shoe, so it is resolved once here and handed to
    * everything that needs it, keyed by the column it fills. Both sides are resolved rather than the
    * derived one: each column names its own side, so nothing here has to pick one, and a further
-   * score is a further entry (docs/app.md §The Easy score).
+   * score is a further entry (docs/app.md §The story scores).
    */
   const scores = $derived<ScoreColumns>(new Map([
     [EASY_SCORE_KEYS.heel, easyScoreMap(data.shoes, 'heel', view.stability, idx)],

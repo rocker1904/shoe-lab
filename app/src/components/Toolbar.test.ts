@@ -158,7 +158,7 @@ describe('Toolbar stability preference', () => {
 
   it('says what the preference adds, and makes no claim about weight', () => {
     // The width term is a ratio so that stability does not select heavy shoes, so a weight warning
-    // here would be false (docs/app.md §The Easy score).
+    // here would be false (docs/app.md §The story scores).
     render(Toolbar, { props: { ...props } });
     expect(screen.getByText(/adds midsole width and heel counter stiffness/i)).toBeInTheDocument();
     expect(screen.queryByText(/heavier/i)).not.toBeInTheDocument();

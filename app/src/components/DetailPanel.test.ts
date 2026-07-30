@@ -105,7 +105,7 @@ describe('DetailPanel facts and review language', () => {
 
 /**
  * The reason the feature ships before the weights settle: a surprising rank has to be diagnosable
- * from the row itself rather than argued about (docs/app.md §The Easy score).
+ * from the row itself rather than argued about (docs/app.md §The story scores).
  */
 describe('DetailPanel Easy score breakdown', () => {
   const panel = (over: { slug?: string; columns?: string[]; stability?: boolean } = {}) => render(DetailPanel, {
@@ -122,7 +122,7 @@ describe('DetailPanel Easy score breakdown', () => {
   });
 
   // The panel reads the columns rather than a side of its own, so it can never explain a side the
-  // table is not showing (docs/app.md §The Easy score).
+  // table is not showing (docs/app.md §The story scores).
   it('breaks down every score column on screen, each named for its own side', () => {
     const { container } = panel({ columns: [EASY_SCORE_KEYS.heel, EASY_SCORE_KEYS.forefoot] });
     expect([...container.querySelectorAll('.score-breakdown h4')].map((h) => h.textContent))
@@ -139,7 +139,7 @@ describe('DetailPanel Easy score breakdown', () => {
 
   it('shows the raw reading beside the mapped term, so a capped term is still diagnosable', () => {
     // Two terms cap, so a mapped 1.0 cannot say what put the shoe there; a derived reading shows
-    // its division for the same reason (docs/app.md §The Easy score). cushy reads 140 shock
+    // its division for the same reason (docs/app.md §The story scores). cushy reads 140 shock
     // absorption, an outsole life of 3.2 / 0.8 — capped — 70% energy return, a 95/40 heel lever
     // and a heel counter of 4.
     const { container } = panel({ stability: true });
