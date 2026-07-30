@@ -673,8 +673,8 @@ Four assertion sites in `Toolbar.test.ts` (around lines 131, 134, 154, 162) pin 
 
 `app/e2e/fixtures/shoes.json` already carries weight (test 24), energy return, shock absorption and both outsole tests on all four reading-carrying shoes, so **Tempo and Race each score four shoes in a strict order and the fixture needs no extension.**
 
-- [ ] **Step 1:** Add specs: Tempo shows a Tempo score column and ranks by it; Race shows a Race score column, applies **no filter at all**, and ticking stability leaves the Race order unchanged.
-- [ ] **Step 2:** `npm -w app run e2e` → PASS. Commit — `"Exercise all three scores in the browser suite"`
+- [x] **Step 1:** Add specs: Tempo shows a Tempo score column and ranks by it; Race shows a Race score column, applies **no filter at all**, and ticking stability leaves the Race order unchanged.
+- [x] **Step 2:** `npm -w app run e2e` → PASS. Commit — `"Exercise all three scores in the browser suite"`
 
 ---
 

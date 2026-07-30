@@ -332,3 +332,42 @@ test('the runner can opt stability into the score without losing the story', asy
   await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Stability matters to me/ })).toBeChecked();
 });
+
+// Tempo and Race in the browser, for the same reason Easy is here: the score column is resolved in
+// `Page` and rendered through two table components, so a broken wiring shows as em dashes rather
+// than as a failing unit test.
+test('Tempo ranks by its own score and keeps carbon out', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Tempo/ }).click();
+  await expect(page.getByRole('columnheader', { name: /Tempo heel score/ })).toBeVisible();
+  const rows = page.locator('tbody tr.shoe');
+  // The carbon racer is the shoe the plate gate removes, and the one a speed ranking would promote.
+  await expect(rows).toHaveCount(4);
+  await expect(page.locator('tbody')).not.toContainText('racer');
+  const score = (row: number) => rows.nth(row).locator('td').nth(2);
+  await expect(rows.first()).toContainText('cushy');
+  await expect(score(0)).toHaveText('92.7');
+  await expect(rows.last()).toContainText('mystery');
+  await expect(score(3)).toHaveText('—');
+});
+
+test('Race applies no filter at all, and the stability preference does not move it', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Race/ }).click();
+  await expect(page.getByRole('columnheader', { name: /Race heel score/ })).toBeVisible();
+  const rows = page.locator('tbody tr.shoe');
+  // No plate gate and no bound: the whole fixture fleet is on screen, carbon included and first.
+  await expect(rows).toHaveCount(5);
+  const score = (row: number) => rows.nth(row).locator('td').nth(2);
+  await expect(rows.first()).toContainText('racer');
+  await expect(score(0)).toHaveText('76.52');
+  await expect(score(1)).toHaveText('70.49');
+
+  // Race declares no stable variant, so the preference is inert on it — the Toolbar says so, and
+  // this is where that claim meets the rendered table.
+  await page.getByRole('checkbox', { name: /Stability matters to me/ }).check();
+  await expect(page).toHaveURL(/stab=1/);
+  await expect(rows.first()).toContainText('racer');
+  await expect(score(0)).toHaveText('76.52');
+  await expect(score(1)).toHaveText('70.49');
+});
