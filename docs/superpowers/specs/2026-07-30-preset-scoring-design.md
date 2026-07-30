@@ -94,8 +94,8 @@ force per step is *lower* than at speed but weekly impulse is far higher, so the
   shoes. Capped because the top end is degenerate — Vapor Glove scores 10.13, and a flat sandal
   genuinely *is* stable. The cap is **the p90 of that side's own ratio distribution across the pool**
   (heel 3.04, forefoot 5.37), so the minimalist tail caps out while the real fleet stays spread. It
-  must be per side: the two halves are not on one scale (docs/shoe-stories.md §Which half a story
-  uses).
+  must be per side, because the two halves are not on one scale — the reasoning is owned by
+  docs/shoe-stories.md §Which half a story uses.
 - **Heel counter stiffness → `(x − 1) / 4`.** Five integer buckets (counts 62/87/153/91/51).
   Percentiles here would invent resolution the measurement does not have.
 
@@ -210,6 +210,21 @@ sort   = easyScore desc
   judges value themselves. Tempo's cap is untouched here — Tempo is not designed yet.
 - **Sides:** every side-bearing term reads the selected side, and per-side constants are computed
   per side. Weight has no sides and is not a term here.
+
+### Stability is a preference, so it survives a story click
+
+The story and `All` marks are derived by comparing the whole view against what `applyPreset` and
+`allView` would build (docs/app.md §Presets). A new `ViewState` field therefore participates in that
+comparison whether or not it should — so **`applyPreset` and `allView` must carry the incoming
+`stability` through unchanged** rather than resetting it from `defaultView()`.
+
+Without that, turning stability on unmarks Easy, clicking Easy again silently switches the preference
+back off, and a plain table with stability on marks neither `All` nor any story. It also sends the
+side control down `projectSide` instead of re-applying the preset, so one click follows two different
+code paths depending on a preference.
+
+This is the same rule the side already follows — "who you are survives, what you searched for does
+not". Stability is a property of the runner, not of the search.
 
 ## 10. Display, and why it comes first
 
