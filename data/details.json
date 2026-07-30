@@ -50,9 +50,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "adidas Adistar 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -123,9 +125,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Adistar 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -198,9 +202,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "adidas Adistar BYD",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -272,9 +278,11 @@
       },
       "msrpGbp": 130,
       "name": "adidas Adizero Adios 8",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -347,9 +355,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Adizero Adios 9",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -426,9 +436,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "adidas Adizero Adios Pro 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -503,9 +515,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "adidas Adizero Adios Pro 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -578,9 +592,11 @@
       "latestVersion": null,
       "msrpGbp": 500,
       "name": "adidas Adizero Adios Pro Evo 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": false,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -648,9 +664,11 @@
       "latestVersion": null,
       "msrpGbp": 500,
       "name": "adidas Adizero Adios Pro Evo 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -729,9 +747,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "adidas Adizero Boston 12",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -810,9 +830,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "adidas Adizero Boston 13",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -896,9 +918,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "adidas Adizero EVO SL",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -981,9 +1005,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "adidas Adizero EVO SL ATR",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1062,9 +1088,11 @@
       "latestVersion": null,
       "msrpGbp": 300,
       "name": "adidas Adizero Prime X 2 Strung",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1145,9 +1173,11 @@
       "latestVersion": null,
       "msrpGbp": 300,
       "name": "adidas Adizero Prime X3 STRUNG",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1230,9 +1260,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "adidas Adizero SL",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -1313,9 +1345,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "adidas Adizero SL2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -1395,9 +1429,11 @@
       },
       "msrpGbp": 180,
       "name": "adidas Adizero Takumi Sen 10",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1473,9 +1509,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "adidas Adizero Takumi Sen 11",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -1546,9 +1584,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "adidas Alphabounce+",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1622,9 +1662,10 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "adidas Duramo 10",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1696,9 +1737,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "adidas Duramo Speed",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1775,9 +1818,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "adidas Duramo Speed 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -1852,9 +1897,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "adidas Fluidflow 2.0",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -1929,9 +1976,11 @@
       },
       "msrpGbp": 60,
       "name": "adidas Galaxy 6",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2008,9 +2057,11 @@
       "latestVersion": null,
       "msrpGbp": 60,
       "name": "adidas Galaxy 7",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -2091,9 +2142,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "adidas Hyperboost Edge",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -2166,9 +2219,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "adidas Hyperboost Run",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2245,9 +2300,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Pureboost 23",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2319,9 +2376,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "adidas Pureboost 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -2392,9 +2451,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "adidas Questar",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2466,9 +2527,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "adidas Questar 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -2542,9 +2605,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "adidas Racer TR21",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2617,9 +2682,11 @@
       "latestVersion": null,
       "msrpGbp": 60,
       "name": "adidas Runfalcon",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2690,9 +2757,11 @@
       "latestVersion": null,
       "msrpGbp": 65,
       "name": "adidas Runfalcon 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -2776,9 +2845,11 @@
       "latestVersion": null,
       "msrpGbp": 65,
       "name": "adidas Runfalcon 5",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -2853,9 +2924,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "adidas Solarboost 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2923,9 +2996,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "adidas Supernova 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -2994,9 +3069,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "adidas Supernova 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -3069,9 +3146,10 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "adidas Supernova+",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -3144,9 +3222,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "adidas Supernova Prima",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -3220,9 +3300,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "adidas Supernova Prima 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -3304,9 +3386,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Supernova Rise",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -3383,9 +3467,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Supernova Rise 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -3462,9 +3548,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Supernova Rise 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -3541,9 +3629,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Supernova Solution",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -3611,9 +3701,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "adidas Supernova Solution 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -3689,9 +3781,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "adidas Supernova Solution 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -3744,9 +3838,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "adidas Terrex Trailmaker",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -3822,7 +3918,7 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "adidas Ultraboost 1.0",
-      "optionValues": {
+      "pageValues": {
         "40": "extended-heel-collar"
       },
       "preciseReleaseDate": false,
@@ -3892,7 +3988,7 @@
       "latestVersion": null,
       "msrpGbp": 190,
       "name": "adidas Ultraboost 22",
-      "optionValues": {},
+      "pageValues": {},
       "preciseReleaseDate": false,
       "previousVersion": {
         "name": "adidas Ultraboost 1.0",
@@ -3964,9 +4060,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "adidas Ultraboost 5",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -4047,9 +4145,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "adidas Ultraboost 5X",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4122,9 +4222,11 @@
       "latestVersion": null,
       "msrpGbp": 190,
       "name": "adidas Ultraboost Light",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -4200,9 +4302,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "adidas Ultrabounce",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4274,9 +4378,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "adidas Ultrarun 5",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4350,9 +4456,11 @@
       "latestVersion": null,
       "msrpGbp": 135,
       "name": "Allbirds Tree Dasher 2",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4424,9 +4532,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Allbirds Tree Flyer 2",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4500,9 +4610,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "ALLSWIFIT Active5K",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4576,9 +4688,11 @@
       },
       "msrpGbp": 140,
       "name": "Altra Escalante 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4647,9 +4761,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Altra Escalante 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -4726,9 +4842,11 @@
       },
       "msrpGbp": 140,
       "name": "Altra Escalante Racer",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4799,9 +4917,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Altra Escalante Racer 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -4872,9 +4992,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Altra Experience Flow",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -4943,9 +5065,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Altra Experience Flow 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -5017,9 +5141,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Altra Experience Flow 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -5093,9 +5219,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Altra Experience Form",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5169,9 +5297,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Altra FWD VIA",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5239,9 +5369,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Altra FWD VIA 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -5316,9 +5448,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Altra Paradigm 7",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5391,9 +5525,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Altra Paradigm 8",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -5463,9 +5599,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Altra Provision 8",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5535,9 +5673,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Altra Rivera 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5619,9 +5759,11 @@
       },
       "msrpGbp": 150,
       "name": "Altra Torin 7",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5697,9 +5839,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Altra Torin 8",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -5777,9 +5921,11 @@
       },
       "msrpGbp": 240,
       "name": "Altra Vanish Carbon",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -5856,9 +6002,11 @@
       "latestVersion": null,
       "msrpGbp": 260,
       "name": "Altra Vanish Carbon 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -5932,9 +6080,11 @@
       },
       "msrpGbp": 170,
       "name": "Altra VIA Olympus",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6002,9 +6152,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Altra VIA Olympus 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -6075,9 +6227,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "ANTA Mach 6 Pro",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6151,9 +6305,11 @@
       "latestVersion": null,
       "msrpGbp": 115,
       "name": "ANTA Zone 2 90",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6228,9 +6384,11 @@
       "latestVersion": null,
       "msrpGbp": 95,
       "name": "Ardiles Runergize",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6305,9 +6463,11 @@
       },
       "msrpGbp": 110,
       "name": "ASICS Dynablast 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6379,9 +6539,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "ASICS Dynablast 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -6467,9 +6629,11 @@
       },
       "msrpGbp": 70,
       "name": "ASICS Gel Contend 8",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6546,9 +6710,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "ASICS Gel Contend 9",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -6636,9 +6802,11 @@
       },
       "msrpGbp": 140,
       "name": "ASICS Gel Cumulus 25",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -6727,9 +6895,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "ASICS Gel Cumulus 26",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -6812,9 +6982,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "ASICS Gel Cumulus 27",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -6899,9 +7071,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "ASICS Gel Cumulus 28",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -6986,9 +7160,11 @@
       },
       "msrpGbp": 85,
       "name": "ASICS Gel Excite 10",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7073,9 +7249,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "ASICS Gel Excite 11",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7158,9 +7336,11 @@
       },
       "msrpGbp": 75,
       "name": "ASICS Gel Excite 9",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -7245,9 +7425,10 @@
       },
       "msrpGbp": 160,
       "name": "ASICS Gel Kayano 29",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -7325,9 +7506,11 @@
       },
       "msrpGbp": 160,
       "name": "ASICS Gel Kayano 30",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7408,9 +7591,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "ASICS Gel Kayano 31",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7498,9 +7683,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "ASICS Gel Kayano 32",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7588,9 +7775,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "ASICS Gel Kayano 33",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7668,9 +7857,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "ASICS Gel Kinsei Max",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -7751,9 +7942,11 @@
       },
       "msrpGbp": 160,
       "name": "ASICS Gel Nimbus 25",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -7835,9 +8028,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "ASICS Gel Nimbus 26",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -7926,9 +8121,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "ASICS Gel Nimbus 27",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8015,9 +8212,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "ASICS Gel Nimbus 28",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8093,9 +8292,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "ASICS Gel Pulse 15",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -8165,9 +8366,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "ASICS Gel Pulse 16",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8243,9 +8446,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "ASICS Glideride Max",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -8319,9 +8524,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "ASICS Glideride Max 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8403,9 +8610,11 @@
       },
       "msrpGbp": 100,
       "name": "ASICS GT 1000 12",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -8486,9 +8695,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "ASICS GT 1000 13",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8572,9 +8783,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "ASICS GT 1000 14",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8658,9 +8871,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "ASICS GT 1000 15",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8746,9 +8961,11 @@
       },
       "msrpGbp": 140,
       "name": "ASICS GT 2000 11",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -8834,9 +9051,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "ASICS GT 2000 12",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -8924,9 +9143,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "ASICS GT 2000 13",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -9016,9 +9237,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "ASICS GT 2000 14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -9101,9 +9324,11 @@
       "latestVersion": null,
       "msrpGbp": 60,
       "name": "ASICS Jolt 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9182,9 +9407,11 @@
       },
       "msrpGbp": 160,
       "name": "ASICS Magic Speed 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9263,9 +9490,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "ASICS Magic Speed 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -9352,9 +9581,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "ASICS Magic Speed 5",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -9435,9 +9666,11 @@
       "latestVersion": null,
       "msrpGbp": 225,
       "name": "ASICS Megablast",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9512,9 +9745,11 @@
       "latestVersion": null,
       "msrpGbp": 270,
       "name": "ASICS Metaspeed Edge Tokyo",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9586,9 +9821,11 @@
       "latestVersion": null,
       "msrpGbp": 300,
       "name": "ASICS Metaspeed Ray",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9663,9 +9900,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "ASICS Metaspeed Sky Paris",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9737,9 +9976,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "ASICS Metaspeed Sky+",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9811,9 +10052,11 @@
       "latestVersion": null,
       "msrpGbp": 270,
       "name": "ASICS Metaspeed Sky Tokyo",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9892,9 +10135,10 @@
       },
       "msrpGbp": 130,
       "name": "ASICS Noosa Tri 14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -9970,9 +10214,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "ASICS Noosa Tri 15",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -10049,9 +10295,11 @@
       "latestVersion": null,
       "msrpGbp": 135,
       "name": "ASICS Noosa Tri 16",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -10132,9 +10380,10 @@
       },
       "msrpGbp": 140,
       "name": "ASICS Novablast 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -10215,9 +10464,11 @@
       },
       "msrpGbp": 140,
       "name": "ASICS Novablast 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -10296,9 +10547,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "ASICS Novablast 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -10380,9 +10633,11 @@
       "latestVersion": null,
       "msrpGbp": 155,
       "name": "ASICS Novablast 6",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -10466,9 +10721,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "ASICS S4+ Yogiri",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -10547,9 +10804,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "ASICS Sonicblast",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -10626,9 +10885,11 @@
       },
       "msrpGbp": 200,
       "name": "ASICS Superblast",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -10712,9 +10973,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "ASICS Superblast 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -10795,9 +11058,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "ASICS Superblast 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": {
@@ -10877,9 +11142,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "ASICS Versablast 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -10959,9 +11226,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Brooks Addiction GTS 15",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -11039,7 +11308,7 @@
       },
       "msrpGbp": 140,
       "name": "Brooks Adrenaline GTS 22",
-      "optionValues": {},
+      "pageValues": {},
       "preciseReleaseDate": false,
       "previousVersion": null,
       "productId": 37951,
@@ -11116,9 +11385,11 @@
       },
       "msrpGbp": 140,
       "name": "Brooks Adrenaline GTS 23",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11202,9 +11473,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Brooks Adrenaline GTS 24",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11288,9 +11561,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Brooks Adrenaline GTS 25",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11371,9 +11646,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Brooks Beast GTS 24",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -11451,9 +11728,10 @@
       },
       "msrpGbp": 140,
       "name": "Brooks Ghost 14",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -11533,9 +11811,11 @@
       },
       "msrpGbp": 140,
       "name": "Brooks Ghost 15",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11621,9 +11901,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Brooks Ghost 16",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11709,9 +11991,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Brooks Ghost 17",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11795,9 +12079,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Brooks Ghost 17 GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -11877,9 +12163,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Brooks Ghost 18",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -11966,9 +12254,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Brooks Ghost Max",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -12053,9 +12343,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Brooks Ghost Max 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12140,9 +12432,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Brooks Ghost Max 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12228,9 +12522,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Brooks Ghost Max 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12312,9 +12608,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Brooks Glycerin 20",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -12390,9 +12688,11 @@
       },
       "msrpGbp": 160,
       "name": "Brooks Glycerin 21",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12472,9 +12772,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Brooks Glycerin 22",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12560,9 +12862,11 @@
       "latestVersion": null,
       "msrpGbp": 175,
       "name": "Brooks Glycerin 23",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12639,9 +12943,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Brooks Glycerin Flex",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -12720,9 +13026,11 @@
       },
       "msrpGbp": 160,
       "name": "Brooks Glycerin GTS 20",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -12793,9 +13101,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Brooks Glycerin GTS 21",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12874,9 +13184,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Brooks Glycerin GTS 22",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -12951,9 +13263,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "Brooks Glycerin Max",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -13026,9 +13340,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "Brooks Glycerin Max 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -13099,9 +13415,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Brooks Glycerin StealthFit 21",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -13171,9 +13489,11 @@
       },
       "msrpGbp": 130,
       "name": "Brooks Hyperion",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -13252,9 +13572,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Brooks Hyperion 2",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -13333,9 +13655,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Brooks Hyperion 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -13414,9 +13738,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "Brooks Hyperion Elite 4",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -13486,9 +13812,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "Brooks Hyperion Elite 4 PB",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -13560,9 +13888,11 @@
       "latestVersion": null,
       "msrpGbp": 275,
       "name": "Brooks Hyperion Elite 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -13638,9 +13968,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Brooks Hyperion GTS 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -13720,9 +14052,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Brooks Hyperion Max",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -13796,9 +14130,11 @@
       },
       "msrpGbp": 180,
       "name": "Brooks Hyperion Max 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -13876,9 +14212,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "Brooks Hyperion Max 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -13960,9 +14298,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "Brooks Hyperion Max 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -14038,9 +14378,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Brooks Hyperion Tempo",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14124,9 +14466,11 @@
       },
       "msrpGbp": 110,
       "name": "Brooks Launch 10",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14211,9 +14555,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "Brooks Launch 11",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -14292,9 +14638,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "Brooks Launch 12",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -14368,9 +14716,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Brooks Levitate Stealthfit 6",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14445,9 +14795,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Brooks Revel 7",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14526,9 +14878,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Brooks Revel 8",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -14605,9 +14959,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Brooks Trace 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14663,9 +15019,11 @@
       "latestVersion": null,
       "msrpGbp": 350,
       "name": "Danner Cascade Crest",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14734,9 +15092,11 @@
       "latestVersion": null,
       "msrpGbp": 149,
       "name": "Darimati BR-001",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14807,9 +15167,11 @@
       "latestVersion": null,
       "msrpGbp": 240,
       "name": "Diadora Atomo Star",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14879,9 +15241,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Diadora Cellula",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -14954,9 +15318,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Diadora Frequenza 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15028,9 +15394,11 @@
       "latestVersion": null,
       "msrpGbp": 300,
       "name": "Diadora Gara Carbon",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15099,9 +15467,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Diadora Mythos Blushield Volo 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15178,9 +15548,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Diadora Nucleo 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15255,9 +15627,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "HOKA Arahi 7",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15335,9 +15709,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "HOKA Arahi 8",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -15419,9 +15795,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "HOKA Bondi 8",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -15506,9 +15884,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "HOKA Bondi 9",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -15586,9 +15966,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "HOKA Carbon X 3",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15661,9 +16043,11 @@
       "latestVersion": null,
       "msrpGbp": 275,
       "name": "HOKA Cielo X1 2.0",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15735,9 +16119,11 @@
       "latestVersion": null,
       "msrpGbp": 275,
       "name": "HOKA Cielo X1 3.0",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -15821,9 +16207,11 @@
       "latestVersion": null,
       "msrpGbp": 275,
       "name": "HOKA Cielo X1",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -15905,9 +16293,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "HOKA Clifton 10",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -15986,9 +16376,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "HOKA Clifton 9",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -16064,9 +16456,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "HOKA Clifton 9 GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -16140,9 +16534,11 @@
       "latestVersion": null,
       "msrpGbp": 175,
       "name": "HOKA Gaviota 5",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -16219,9 +16615,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "HOKA Gaviota 6",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -16274,9 +16672,11 @@
       "latestVersion": null,
       "msrpGbp": 240,
       "name": "HOKA Kaha 3 GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -16349,9 +16749,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "HOKA Kawana 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -16431,9 +16833,11 @@
       },
       "msrpGbp": 140,
       "name": "HOKA Mach 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -16513,9 +16917,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "HOKA Mach 6",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -16599,9 +17005,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "HOKA Mach 7",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -16684,9 +17092,11 @@
       },
       "msrpGbp": 180,
       "name": "HOKA Mach X",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -16759,9 +17169,11 @@
       "latestVersion": null,
       "msrpGbp": 190,
       "name": "HOKA Mach X 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -16846,9 +17258,11 @@
       "latestVersion": null,
       "msrpGbp": 190,
       "name": "HOKA Mach X 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -16927,9 +17341,11 @@
       },
       "msrpGbp": 125,
       "name": "HOKA Rincon 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -17007,9 +17423,11 @@
       "latestVersion": null,
       "msrpGbp": 125,
       "name": "HOKA Rincon 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -17081,9 +17499,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "HOKA Rocket X 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17158,9 +17578,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "HOKA Rocket X 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -17240,9 +17662,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "HOKA Skyflow",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17320,9 +17744,11 @@
       "latestVersion": null,
       "msrpGbp": 225,
       "name": "HOKA Skyward X",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17392,9 +17818,11 @@
       "latestVersion": null,
       "msrpGbp": 225,
       "name": "HOKA Skyward X 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -17467,9 +17895,11 @@
       "latestVersion": null,
       "msrpGbp": 125,
       "name": "HOKA Solimar",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17547,9 +17977,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "HOKA Transport X",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17623,9 +18055,11 @@
       "latestVersion": null,
       "msrpGbp": 175,
       "name": "Hylo Axis",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17702,9 +18136,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Inov8 Roadfly",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17772,9 +18208,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "K-Swiss Shadx",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17826,9 +18264,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "KEEN NXIS Speed",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17887,9 +18327,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "KEEN Pyrenees",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -17945,9 +18387,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "KEEN Targhee III Waterproof Mid",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18022,9 +18466,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "KIPRUN Kipstorm Elite",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18103,9 +18549,11 @@
       "latestVersion": null,
       "msrpGbp": 169,
       "name": "KURU Atom 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18154,9 +18602,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "KURU Ridge Motion",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18226,9 +18676,11 @@
       "latestVersion": null,
       "msrpGbp": 185,
       "name": "KURU Triple Max Ion",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18298,9 +18750,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "Merrell Vapor Glove 6",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18380,9 +18834,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Mizuno Neo Vista",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18466,9 +18922,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "Mizuno Neo Vista 2",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -18549,9 +19007,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "Mizuno Neo Vista 3",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -18633,9 +19093,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Mizuno Neo Zen",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18710,9 +19172,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Mizuno Neo Zen 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -18792,9 +19256,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Mizuno Wave Horizon 7",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18867,9 +19333,11 @@
       },
       "msrpGbp": 140,
       "name": "Mizuno Wave Inspire 20",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -18948,9 +19416,11 @@
       },
       "msrpGbp": 140,
       "name": "Mizuno Wave Inspire 21",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19026,9 +19496,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Mizuno Wave Inspire 22",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19100,9 +19572,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Mizuno Wave Rebellion",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -19169,9 +19643,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Mizuno Wave Rebellion Flash 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -19245,9 +19721,12 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Mizuno Wave Rebellion Flash 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true,
+        "69": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19320,9 +19799,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "Mizuno Wave Rebellion Pro 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -19397,9 +19878,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "Mizuno Wave Rebellion Pro 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19479,9 +19962,11 @@
       },
       "msrpGbp": 140,
       "name": "Mizuno Wave Rider 27",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -19557,9 +20042,11 @@
       },
       "msrpGbp": 140,
       "name": "Mizuno Wave Rider 28",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19639,9 +20126,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Mizuno Wave Rider 29",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19722,9 +20211,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Mizuno Wave Sky 8",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -19797,9 +20288,12 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Mizuno Wave Sky 9",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true,
+        "69": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -19870,9 +20364,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Mount to Coast C1",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -19955,9 +20451,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "New Balance 1080 v15",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20043,9 +20541,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "New Balance Ellipse",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20123,9 +20623,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "New Balance Fresh Foam 680 v8",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20206,9 +20708,11 @@
       "latestVersion": null,
       "msrpGbp": 85,
       "name": "New Balance Fresh Foam 680 v9",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -20289,9 +20793,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "New Balance Fresh Foam Arishi v4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20371,9 +20877,11 @@
       },
       "msrpGbp": 150,
       "name": "New Balance Fresh Foam X More v4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20450,9 +20958,11 @@
       "latestVersion": null,
       "msrpGbp": 85,
       "name": "New Balance Fresh Foam Roav V2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20534,9 +21044,10 @@
       },
       "msrpGbp": 160,
       "name": "New Balance Fresh Foam X 1080 v12",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20622,9 +21133,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "New Balance Fresh Foam X 1080 v13",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -20710,9 +21223,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "New Balance Fresh Foam X 1080 v14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -20796,9 +21311,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "New Balance Fresh Foam X 860 v15",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -20886,9 +21403,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "New Balance Fresh Foam X 860 v14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -20977,9 +21496,11 @@
       },
       "msrpGbp": 140,
       "name": "New Balance Fresh Foam X 880 v14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21062,9 +21583,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "New Balance Fresh Foam X 880 v15",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -21145,9 +21668,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "New Balance Fresh Foam X 880 v14 GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21222,9 +21747,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "New Balance Fresh Foam X Balos",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21303,9 +21830,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "New Balance Fresh Foam X Evoz v4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -21386,9 +21915,11 @@
       },
       "msrpGbp": 100,
       "name": "New Balance Fresh Foam X Evoz v3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21466,9 +21997,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "New Balance Fresh Foam X Kaiha Road",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21550,9 +22083,11 @@
       "latestVersion": null,
       "msrpGbp": 155,
       "name": "New Balance Fresh Foam X More v6",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -21635,9 +22170,11 @@
       "latestVersion": null,
       "msrpGbp": 155,
       "name": "New Balance Fresh Foam X More v5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -21719,9 +22256,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "New Balance Fresh Foam X Tempo v2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21800,9 +22339,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "New Balance Fresh Foam X Vongo v6",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21880,9 +22421,11 @@
       },
       "msrpGbp": 130,
       "name": "New Balance FuelCell Rebel v3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -21959,9 +22502,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "New Balance FuelCell Rebel v5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -22045,9 +22590,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "New Balance FuelCell SuperComp Elite v4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -22122,9 +22669,11 @@
       "latestVersion": null,
       "msrpGbp": 265,
       "name": "New Balance FuelCell SuperComp Elite v5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -22205,9 +22754,11 @@
       "latestVersion": null,
       "msrpGbp": 200,
       "name": "New Balance FuelCell SuperComp Pacer v2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -22288,9 +22839,11 @@
       },
       "msrpGbp": 180,
       "name": "New Balance FuelCell SuperComp Trainer v2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -22365,9 +22918,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "New Balance FuelCell SuperComp Trainer v3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -22441,9 +22996,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "New Balance FuelCell Propel v4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -22521,9 +23078,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "New Balance FuelCell Propel v5",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -22602,9 +23161,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "New Balance FuelCell Rebel v4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -22678,9 +23239,11 @@
       },
       "msrpGbp": 275,
       "name": "Nike Alphafly 2",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -22753,9 +23316,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Nike Air Zoom Pegasus 39",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -22828,9 +23393,11 @@
       "latestVersion": null,
       "msrpGbp": 285,
       "name": "Nike Alphafly 3",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": {
@@ -22918,9 +23485,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "Nike Downshifter 12",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23001,9 +23570,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "Nike Downshifter 13",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -23083,9 +23654,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "Nike Downshifter 14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -23162,9 +23735,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "Nike Flex Experience Run 12",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23232,9 +23807,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Nike Free RN NN",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23306,9 +23883,10 @@
       },
       "msrpGbp": 100,
       "name": "Nike Free Run 5.0",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23387,9 +23965,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Nike InfinityRN 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23461,9 +24041,11 @@
       "latestVersion": null,
       "msrpGbp": 85,
       "name": "Nike Interact Run",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23536,9 +24118,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "Nike Journey Run",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23619,9 +24203,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Nike Pegasus 40",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23700,9 +24286,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Nike Pegasus 41",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -23782,9 +24370,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Nike Pegasus 41 GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -23861,9 +24451,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Nike Pegasus 42",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -23938,9 +24530,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Nike Pegasus EasyOn",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24021,9 +24615,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Nike Pegasus Plus",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24105,9 +24701,11 @@
       "latestVersion": null,
       "msrpGbp": 210,
       "name": "Nike Pegasus Premium",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24183,9 +24781,11 @@
       "latestVersion": null,
       "msrpGbp": 80,
       "name": "Nike Quest 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24254,9 +24854,11 @@
       "latestVersion": null,
       "msrpGbp": 85,
       "name": "Nike Quest 6",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -24335,9 +24937,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Nike React Infinity Run Flyknit 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24410,9 +25014,10 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "Nike React Miler 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24487,9 +25092,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "Nike Revolution 7",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24562,9 +25169,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "Nike Revolution 7 EasyOn",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24645,9 +25254,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "Nike Revolution 8",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -24723,9 +25334,10 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "Nike Run Swift 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24795,9 +25407,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Nike Streakfly 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24875,9 +25489,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Nike Structure 25",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -24955,9 +25571,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Nike Structure 26",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -25031,9 +25649,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Nike Structure Plus",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25107,9 +25727,11 @@
       "latestVersion": null,
       "msrpGbp": 260,
       "name": "Nike Vaporfly 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -25186,9 +25808,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Nike Vomero 17",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25271,9 +25895,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Nike Vomero 18",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -25361,9 +25987,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Nike Vomero Plus",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25439,9 +26067,11 @@
       "latestVersion": null,
       "msrpGbp": 230,
       "name": "Nike Vomero Premium",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25515,9 +26145,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Nike Winflo 10",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25597,9 +26229,11 @@
       "latestVersion": null,
       "msrpGbp": 105,
       "name": "Nike Winflo 11",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -25673,9 +26307,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Nike Winflo 11 GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25752,9 +26388,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "Nike Winflo 12",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -25836,9 +26474,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Nike Zoom Fly 6",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -25914,9 +26554,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Nike Invincible 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -25985,9 +26627,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Nike ZoomX Streakfly",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26055,9 +26699,10 @@
       "latestVersion": null,
       "msrpGbp": 225,
       "name": "Nike ZoomX Vaporfly NEXT% 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -26124,9 +26769,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "Nike Vaporfly 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -26193,9 +26840,10 @@
       "latestVersion": null,
       "msrpGbp": 159,
       "name": "NOBULL Allday Knit",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26262,9 +26910,11 @@
       "latestVersion": null,
       "msrpGbp": 139,
       "name": "NOBULL Allday Ripstop",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26335,9 +26985,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "On Cloud Waterproof",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26409,9 +27061,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "On Cloud X",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26482,9 +27136,11 @@
       "latestVersion": null,
       "msrpGbp": 290,
       "name": "On Cloudboom Echo 3",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26562,9 +27218,11 @@
       "latestVersion": null,
       "msrpGbp": 230,
       "name": "On Cloudboom Max",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26636,9 +27294,11 @@
       "latestVersion": null,
       "msrpGbp": 280,
       "name": "On Cloudboom Strike",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26713,9 +27373,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "On Cloudeclipse",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26788,9 +27450,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "On Cloudflow 4",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -26859,9 +27523,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "On Cloudflow 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -26938,9 +27604,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "On Cloudflyer 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27006,9 +27674,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "On Cloudflyer 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -27087,9 +27757,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "On Cloudgo",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27166,9 +27838,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "On Cloudmonster",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27242,9 +27916,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "On Cloudmonster 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -27320,9 +27996,11 @@
       "latestVersion": null,
       "msrpGbp": 190,
       "name": "On Cloudmonster 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -27405,9 +28083,11 @@
       "latestVersion": null,
       "msrpGbp": 220,
       "name": "On Cloudmonster 3 Hyper",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -27486,9 +28166,11 @@
       "latestVersion": null,
       "msrpGbp": 220,
       "name": "On Cloudmonster Hyper",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27561,9 +28243,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "On Cloudmonster Void",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27637,9 +28321,10 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "On Cloudrunner",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27717,9 +28402,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "On Cloudrunner 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -27794,9 +28481,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "On Cloudrunner 2 Waterproof",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -27874,9 +28563,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "On Cloudrunner 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -27952,9 +28643,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "On Cloudstratus",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -28027,9 +28720,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "On Cloudstratus 3",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -28108,9 +28803,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "On Cloudsurfer 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -28188,9 +28885,11 @@
       },
       "msrpGbp": 160,
       "name": "On Cloudsurfer 7",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -28267,9 +28966,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "On Cloudsurfer Max",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -28343,9 +29044,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "On Cloudsurfer Next",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -28417,9 +29120,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "On Cloudswift 3",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -28493,9 +29198,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "On Cloudswift 4",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -28572,9 +29279,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Ortuseight Solar 2.0",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -28650,9 +29359,10 @@
       },
       "msrpGbp": 160,
       "name": "PUMA Deviate Nitro",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -28726,9 +29436,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "PUMA Deviate Nitro 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -28804,9 +29516,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "PUMA Deviate Nitro 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -28885,9 +29599,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "PUMA Deviate Nitro 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -28964,9 +29680,11 @@
       },
       "msrpGbp": 200,
       "name": "PUMA Deviate Nitro Elite",
-      "optionValues": {
+      "pageValues": {
         "39": "one-side-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -29040,9 +29758,11 @@
       },
       "msrpGbp": 230,
       "name": "PUMA Deviate Nitro Elite 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29120,9 +29840,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "PUMA Deviate Nitro Elite 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29201,9 +29923,11 @@
       },
       "msrpGbp": 260,
       "name": "PUMA Fast-R Nitro Elite 2",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -29271,9 +29995,11 @@
       "latestVersion": null,
       "msrpGbp": 300,
       "name": "PUMA Fast-R Nitro Elite 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29349,9 +30075,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "PUMA ForeverRun Nitro",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -29429,9 +30157,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "PUMA ForeverRun Nitro 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29504,9 +30234,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "PUMA MagMax Nitro 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29583,9 +30315,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "PUMA MagMax Nitro",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -29658,9 +30392,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "PUMA Magnify Nitro 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -29731,9 +30467,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "PUMA Magnify Nitro 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29809,7 +30547,7 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "PUMA Velocity Nitro 2",
-      "optionValues": {},
+      "pageValues": {},
       "preciseReleaseDate": false,
       "previousVersion": null,
       "productId": 38037,
@@ -29886,9 +30624,11 @@
       "latestVersion": null,
       "msrpGbp": 135,
       "name": "PUMA Velocity Nitro 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -29972,9 +30712,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "PUMA Velocity Nitro 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -30047,9 +30789,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "Reebok Floatride Energy 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -30124,9 +30868,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Reebok FloatZig 1",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30191,9 +30937,11 @@
       "latestVersion": null,
       "msrpGbp": 65,
       "name": "Reebok Lite 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30261,9 +31009,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "Reebok Zig Dynamica 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30331,9 +31081,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Salomon Aero Glide",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30406,9 +31158,11 @@
       },
       "msrpGbp": 160,
       "name": "Salomon Aero Glide 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -30479,9 +31233,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Salomon Aero Glide 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -30557,9 +31313,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Salomon Aero Glide 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -30637,9 +31395,11 @@
       "latestVersion": null,
       "msrpGbp": 275,
       "name": "Salomon S/Lab Phantasm 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30712,9 +31472,11 @@
       "latestVersion": null,
       "msrpGbp": 220,
       "name": "Salomon S/Lab Spectur",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30784,9 +31546,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Salomon Spectur 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30836,9 +31600,11 @@
       "latestVersion": null,
       "msrpGbp": 135,
       "name": "Salomon X Ultra 360 Edge",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30893,9 +31659,11 @@
       "latestVersion": null,
       "msrpGbp": 185,
       "name": "Salomon X Ultra 5 Mid GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -30971,9 +31739,11 @@
       },
       "msrpGbp": 100,
       "name": "Saucony Axon 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -31044,9 +31814,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Saucony Axon 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -31130,9 +31902,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Saucony Endorphin Azura",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -31211,9 +31985,11 @@
       },
       "msrpGbp": 275,
       "name": "Saucony Endorphin Elite",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -31284,9 +32060,11 @@
       "latestVersion": null,
       "msrpGbp": 290,
       "name": "Saucony Endorphin Elite 2",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -31361,9 +32139,11 @@
       "latestVersion": null,
       "msrpGbp": 290,
       "name": "Saucony Endorphin Elite 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -31443,9 +32223,11 @@
       "latestVersion": null,
       "msrpGbp": 225,
       "name": "Saucony Endorphin Pro 4",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -31518,9 +32300,11 @@
       "latestVersion": null,
       "msrpGbp": 225,
       "name": "Saucony Endorphin Pro 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -31594,9 +32378,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Saucony Endorphin Shift 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -31670,9 +32456,10 @@
       },
       "msrpGbp": 160,
       "name": "Saucony Endorphin Speed 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "pull-tab"
+        "40": "pull-tab",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -31747,9 +32534,11 @@
       },
       "msrpGbp": 160,
       "name": "Saucony Endorphin Speed 3",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": {
@@ -31827,9 +32616,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Saucony Endorphin Speed 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -31906,9 +32697,11 @@
       "latestVersion": null,
       "msrpGbp": 175,
       "name": "Saucony Endorphin Speed 5",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -31988,9 +32781,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Saucony Endorphin Trainer",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -32057,9 +32852,10 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Saucony Freedom 4",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -32134,9 +32930,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Guide 16",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -32214,9 +33012,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Guide 17",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -32299,9 +33099,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Guide 18",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -32381,9 +33183,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Guide 19",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -32461,9 +33265,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Saucony Hurricane 24",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -32537,9 +33343,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Saucony Hurricane 25",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -32618,9 +33426,11 @@
       },
       "msrpGbp": 120,
       "name": "Saucony Kinvara 14",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -32700,9 +33510,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "Saucony Kinvara 15",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -32778,9 +33590,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Saucony Kinvara 16",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -32862,9 +33676,11 @@
       "latestVersion": null,
       "msrpGbp": 180,
       "name": "Saucony Kinvara Pro",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -32937,9 +33753,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Omni 22",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33018,9 +33836,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Ride 17",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33095,9 +33915,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Saucony Ride 18",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -33180,9 +34002,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Saucony Ride 19",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -33255,9 +34079,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Saucony Sinister",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33340,9 +34166,10 @@
       },
       "msrpGbp": 160,
       "name": "Saucony Tempus",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33412,9 +34239,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Saucony Tempus 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -33488,9 +34317,10 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Saucony Triumph 20",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true
       },
       "preciseReleaseDate": true,
       "previousVersion": null,
@@ -33566,9 +34396,11 @@
       },
       "msrpGbp": 160,
       "name": "Saucony Triumph 21",
-      "optionValues": {
+      "pageValues": {
         "39": "bootie",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -33647,9 +34479,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Saucony Triumph 22",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -33729,9 +34563,11 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Saucony Triumph 23",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -33786,9 +34622,11 @@
       "latestVersion": null,
       "msrpGbp": 229,
       "name": "Scarpa Vento GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33839,9 +34677,11 @@
       "latestVersion": null,
       "msrpGbp": 249,
       "name": "Scarpa Rush TRK GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33896,9 +34736,11 @@
       "latestVersion": null,
       "msrpGbp": 249,
       "name": "Scarpa Terra GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -33976,8 +34818,10 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Skechers Aero Burst",
-      "optionValues": {
-        "40": "extended-heel-collar"
+      "pageValues": {
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34055,9 +34899,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Skechers Aero Razor",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34133,9 +34979,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Skechers Aero Tempo",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34208,9 +35056,11 @@
       "latestVersion": null,
       "msrpGbp": 145,
       "name": "Skechers GO RUN Max Road 6",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34280,9 +35130,11 @@
       "latestVersion": null,
       "msrpGbp": 125,
       "name": "Skechers GO RUN Ride 11",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34361,9 +35213,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Skechers Max Cushioning Elite 2.0",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34412,9 +35266,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Teva Grandview GTX Low",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34488,9 +35344,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Topo Atmos",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34565,9 +35423,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Topo Cyclone 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34642,9 +35502,11 @@
       },
       "msrpGbp": 145,
       "name": "Topo Phantom 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34722,9 +35584,11 @@
       "latestVersion": null,
       "msrpGbp": 165,
       "name": "Topo Specter 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34798,9 +35662,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Topo Phantom 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -34873,9 +35739,11 @@
       "latestVersion": null,
       "msrpGbp": 115,
       "name": "Topo ST-5",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -34945,9 +35813,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Topo Ultrafly 5",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35018,9 +35888,11 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "TYR Maverick V1 Runner",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35099,9 +35971,11 @@
       "latestVersion": null,
       "msrpGbp": 75,
       "name": "Under Armour Charged Assert 10",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -35182,9 +36056,11 @@
       },
       "msrpGbp": 70,
       "name": "Under Armour Charged Assert 9",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35262,9 +36138,11 @@
       "latestVersion": null,
       "msrpGbp": 70,
       "name": "Under Armour Charged Pursuit 3",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35331,9 +36209,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Under Armour HOVR Phantom 3",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "none"
+        "40": "none",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35404,9 +36284,11 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Under Armour HOVR Sonic 6",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35480,9 +36362,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Under Armour Infinite Elite",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35550,9 +36434,11 @@
       "latestVersion": null,
       "msrpGbp": 160,
       "name": "Under Armour Infinite Elite 2",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-semi",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": {
@@ -35629,9 +36515,11 @@
       "latestVersion": null,
       "msrpGbp": 130,
       "name": "Under Armour Infinite Pro",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35701,9 +36589,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Under Armour SlipSpeed Mega",
-      "optionValues": {
+      "pageValues": {
         "39": "sock-like",
-        "40": "extended-heel-collar"
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35785,9 +36675,11 @@
       "latestVersion": null,
       "msrpGbp": 65,
       "name": "Under Armour Surge 4",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35858,9 +36750,11 @@
       "latestVersion": null,
       "msrpGbp": 250,
       "name": "Under Armour Velociti Elite 2",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -35927,9 +36821,11 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "Vibram FiveFingers V-Run",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": false,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -36002,9 +36898,11 @@
       "latestVersion": null,
       "msrpGbp": 120,
       "name": "Xero Shoes HFS II",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -36077,9 +36975,11 @@
       "latestVersion": null,
       "msrpGbp": 90,
       "name": "Xero Shoes Prio",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "finger-loop"
+        "40": "finger-loop",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -36151,9 +37051,11 @@
       "latestVersion": null,
       "msrpGbp": 110,
       "name": "Xero Shoes Speed Force II",
-      "optionValues": {
+      "pageValues": {
         "39": "none",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": true
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
@@ -36206,9 +37108,11 @@
       "latestVersion": null,
       "msrpGbp": 300,
       "name": "Zamberlan 320 Trail Lite Evo GTX",
-      "optionValues": {
+      "pageValues": {
         "39": "both-sides-full",
-        "40": "none"
+        "40": "none",
+        "41": true,
+        "45": false
       },
       "preciseReleaseDate": false,
       "previousVersion": null,
