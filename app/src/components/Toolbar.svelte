@@ -3,6 +3,7 @@
   import type { Side } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
   import { roving } from '../lib/roving';
+  import { SCORE_DEFS } from '../lib/score-defs';
   import HelpPopover from './HelpPopover.svelte';
   import SideToggle from './SideToggle.svelte';
 
@@ -34,18 +35,27 @@
   // `Clear` button used to produce, named for what you get (docs/app.md §Presets).
   const STORIES = [{ id: 'all', label: 'All' }, ...PRESETS.map((p) => ({ id: p.id, label: p.label }))];
 
-  const SCORE_LABEL = 'the Easy score';
+  /** Derived from the definitions that declare a stable variant rather than written out, so a
+   *  fourth story reaches this copy without an edit here. */
+  const STABLE_STORIES = PRESETS
+    .filter((p) => SCORE_DEFS.some((d) => d.id === p.id && d.stable)).map((p) => p.label);
+  const listed = (xs: string[]) =>
+    xs.length < 2 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+
+  const SCORE_LABEL = 'the story scores';
   /**
-   * What the score reads and what it deliberately does not — the three things a runner would
-   * otherwise have to infer from the table. No maths: docs/app.md §The story scores owns that, and a
-   * second copy here would drift from it.
+   * What the scores read and what they deliberately do not — the things a runner would otherwise
+   * have to infer from the table. **Which terms each story reads is deliberately not here**: that
+   * is `score-defs.ts`'s to own and the breakdown panel's to show, and a second copy would drift
+   * from both. No maths either: docs/app.md §The story scores owns that.
    */
-  const SCORE_HELP = 'Easy ranks on lab measurements: shock absorption, which counts double, '
-    + 'outsole durability and energy return — plus midsole width against stack and heel counter '
-    + 'stiffness when stability is ticked. Price and release date are deliberately left out, so the '
-    + 'value call stays yours. A shoe missing any of those measurements is not scored at all rather '
-    + 'than scored zero, and sorts last. The scale is fixed to the fleet as it stood on 2026-07-30, '
-    + 'so scores stay comparable over time and a future shoe can read above 100.';
+  const SCORE_HELP = 'Each story ranks on lab measurements chosen for that kind of run — expand a '
+    + 'row to see which, and what each one contributed. Price and release date are deliberately '
+    + 'left out of every score, so the value call stays yours. A shoe missing any measurement a '
+    + 'story reads is not scored at all rather than scored zero, and sorts last. The scale is fixed '
+    + 'to the fleet as it stood on 2026-07-30, so scores stay comparable over time and a future '
+    + `shoe can read above 100. Stability reaches ${listed(STABLE_STORIES)} only: race shoes are `
+    + 'uniformly tall and narrow, so there is no stable racer to surface.';
 </script>
 
 <div class="toolbar" data-testid="toolbar">
@@ -76,7 +86,7 @@
     <!-- Says what the switch adds and nothing more: the width term is a ratio precisely so that
          opting in does not select heavy shoes, so there is no cost to warn about
          (docs/app.md §The story scores). -->
-    <small>Adds midsole width and heel counter stiffness to the Easy score.</small>
+    <small>Adds midsole width and heel counter stiffness to the {listed(STABLE_STORIES)} scores.</small>
   </div>
   <div class="actions">
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"

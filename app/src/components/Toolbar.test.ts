@@ -128,14 +128,15 @@ describe('Toolbar stability preference', () => {
   // in the same popover the setup strip uses, not a second mechanism (docs/app.md §The toolbar).
   it('explains what the score reads, and what it deliberately does not', async () => {
     render(Toolbar, { props: { ...props } });
-    const help = screen.getByRole('button', { name: 'About the Easy score' });
+    const help = screen.getByRole('button', { name: 'About the story scores' });
     help.focus();
     await fireEvent.click(help);
-    const pop = screen.getByRole('dialog', { name: 'the Easy score' });
-    expect(pop).toHaveTextContent(/shock absorption/i);
-    expect(pop).toHaveTextContent(/outsole durability/i);
-    expect(pop).toHaveTextContent(/energy return/i);
-    expect(pop).toHaveTextContent(/heel counter stiffness/i);
+    const pop = screen.getByRole('dialog', { name: 'the story scores' });
+    // Which terms each story reads is deliberately absent: `score-defs.ts` owns that and the
+    // breakdown panel shows it, so a copy here would be a second home for one fact — and it would
+    // have to name three stories' terms at once on a control that is on screen for all of them.
+    expect(pop).toHaveTextContent(/expand a row/i);
+    expect(pop).not.toHaveTextContent(/outsole durability/i);
     // The three things a runner would otherwise have to infer from the table.
     expect(pop).toHaveTextContent(/price/i);
     expect(pop).toHaveTextContent(/not scored/i);
@@ -151,7 +152,7 @@ describe('Toolbar stability preference', () => {
   it('opens the help without touching the preference', async () => {
     const onstability = vi.fn();
     render(Toolbar, { props: { ...props, onstability } });
-    await fireEvent.click(screen.getByRole('button', { name: 'About the Easy score' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'About the story scores' }));
     expect(onstability).not.toHaveBeenCalled();
     expect(screen.getByRole('checkbox', { name: /stability/i })).not.toBeChecked();
   });
@@ -162,5 +163,20 @@ describe('Toolbar stability preference', () => {
     render(Toolbar, { props: { ...props } });
     expect(screen.getByText(/adds midsole width and heel counter stiffness/i)).toBeInTheDocument();
     expect(screen.queryByText(/heavier/i)).not.toBeInTheDocument();
+  });
+
+  // Every string here is on screen whichever story is selected, so an Easy-specific one reads as a
+  // caption about a score that is not on the table, attached to a control that does nothing.
+  it('names the stories the preference reaches, and says why Race is not one', async () => {
+    render(Toolbar, { props: { ...props } });
+    const caption = screen.getByText(/adds midsole width and heel counter stiffness/i);
+    // Derived from the definitions that declare a stable variant, so a fourth story needs no edit.
+    expect(caption).toHaveTextContent(/Easy and Tempo/);
+    expect(caption).not.toHaveTextContent(/Race/);
+    const help = screen.getByRole('button', { name: 'About the story scores' });
+    await fireEvent.click(help);
+    const pop = screen.getByRole('dialog', { name: 'the story scores' });
+    expect(pop).toHaveTextContent(/Easy and Tempo/);
+    expect(pop).toHaveTextContent(/race shoes/i);
   });
 });

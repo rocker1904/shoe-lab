@@ -659,13 +659,13 @@ Rewrite all three `PRESETS[].describe` strings **and the three `desc` strings in
 
 Three Easy-specific strings live here, visible whichever story is selected: `SCORE_LABEL = 'the Easy score'`, `SCORE_HELP`, and the always-visible caption `<small>Adds midsole width and heel counter stiffness to the Easy score.</small>`. Ship as-is and a runner on Race reads a caption about a score that is not on screen, attached to a control that does nothing — the exact failure the Race spec forbids.
 
-- [ ] **Step 1: Failing test** — the caption and popover name the stories the preference reaches and say why Race is excluded.
-- [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Make all three story-neutral. **Derive the story list** — `SCORE_DEFS.filter((d) => d.stable)` mapped through `PRESETS` for labels — rather than writing "Easy and Tempo", so a fourth story needs no edit here. **Do not enumerate each story's terms in `SCORE_HELP`**: that would be a second home for `score-defs.ts`, which the file's own comment refuses. Say what the preference adds, which stories it reaches, and that race shoes have no stable variant to surface; leave per-story terms to the breakdown panel.
+- [x] **Step 1: Failing test** — the caption and popover name the stories the preference reaches and say why Race is excluded.
+- [x] **Step 2:** Run → FAIL.
+- [x] **Step 3:** Make all three story-neutral. **Derive the story list** — `SCORE_DEFS.filter((d) => d.stable)` mapped through `PRESETS` for labels — rather than writing "Easy and Tempo", so a fourth story needs no edit here. **Do not enumerate each story's terms in `SCORE_HELP`**: that would be a second home for `score-defs.ts`, which the file's own comment refuses. Say what the preference adds, which stories it reaches, and that race shoes have no stable variant to surface; leave per-story terms to the breakdown panel.
 
 Four assertion sites in `Toolbar.test.ts` (around lines 131, 134, 154, 162) pin the current strings; the popover test also asserts `/not scored/i` and `/2026-07-30/`, both of which must survive.
 
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Say which stories the stability preference reaches"`
+- [x] **Step 4:** `npm run verify` → PASS. Commit — `"Say which stories the stability preference reaches"`
 
 ---
 
