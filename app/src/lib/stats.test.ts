@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { histogram, percentileMap, quantile } from './stats';
+import { histogram, percentileMap, quantile, rankMap } from './stats';
 import { FLEET, TESTS, labTest, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -131,5 +131,19 @@ describe('percentileMap polarity', () => {
     const fleet = [4, 6, 8, 10].map((v, i) => shoe({ slug: `s${i}`, values: { '91': v } }));
     const p = percentileMap(fleet, 'drop', extra);
     expect(p.get('s3')!).toBeGreaterThan(p.get('s0')!);
+  });
+});
+
+describe('rankMap', () => {
+  it('ranks a resolved map into percentiles, splitting ties', () => {
+    const m = rankMap(new Map([['a', 10], ['b', 20], ['c', 20], ['d', 30]]));
+    expect(m.get('a')).toBeCloseTo(0.125, 3);
+    expect(m.get('b')).toBeCloseTo(0.5, 3);
+    expect(m.get('c')).toBeCloseTo(0.5, 3);
+    expect(m.get('d')).toBeCloseTo(0.875, 3);
+  });
+
+  it('returns an empty map for an empty input rather than dividing by zero', () => {
+    expect(rankMap(new Map()).size).toBe(0);
   });
 });

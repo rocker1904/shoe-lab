@@ -3,6 +3,7 @@
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
   import { metricEntries, type ResolvedMetric } from '../lib/lineage';
+  import { EASY_SCORE_KEY } from '../lib/score';
 
   let { tests, groups, columns, onchange, population, idx, generations }: {
     tests: LabTest[]; groups: Record<string, string>; columns: string[];
@@ -12,7 +13,11 @@
     generations: Record<string, string>;
   } = $props();
 
-  const FIXED = [['releasedAt', 'Release date'], ['score', 'Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']] as const;
+  /** The Easy score sits with the shoe fields rather than among the metrics: it has no catalogue
+   *  test, so `metricEntries` never offers it and `coverageOf` would read 0% for it — and without a
+   *  home here the one column a story sets could never be unticked. */
+  const FIXED = [['releasedAt', 'Release date'], [EASY_SCORE_KEY, 'Easy score'], ['score', 'Score'],
+    ['msrpGbp', 'Price'], ['plate', 'Plate']] as const;
 
   interface Offer { key: string; label: string }
   // A pair offers whichever generation is chosen and never both; a colocated metric offers both

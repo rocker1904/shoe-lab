@@ -5,20 +5,30 @@
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
   import { columnLabel } from '../lib/labels';
-  import { percentileMap } from '../lib/stats';
+  import { EASY_SCORE_KEY } from '../lib/score';
+  import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
 
-  let { shoes, data, view, onchange }: {
-    shoes: Shoe[]; data: ShoesFile; view: ViewState; onchange: (v: ViewState) => void;
+  let { shoes, data, view, scores, onchange }: {
+    shoes: Shoe[]; data: ShoesFile; view: ViewState;
+    /** Resolved in `Page.svelte`: the Easy score is the one column whose value depends on the view
+     *  rather than on the shoe alone, so it arrives ready rather than through `numericValue`. */
+    scores: Map<string, number>;
+    onchange: (v: ViewState) => void;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
   // A set, not a single slug: comparing two shoes means having both panels open at once.
   const expanded = new SvelteSet<string>();
 
-  const percentiles = $derived(new Map(view.columns.map((c) => [c, percentileMap(shoes, c, idx)])));
+  // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
+  // mean something different from its neighbours' in the same row.
+  const percentiles = $derived(new Map(view.columns.map((c) => [c,
+    c === EASY_SCORE_KEY
+      ? rankMap(new Map(shoes.flatMap((s) => (scores.has(s.slug) ? [[s.slug, scores.get(s.slug)!] as const] : []))))
+      : percentileMap(shoes, c, idx)])));
 
   function setSort(key: string) {
     const next = structuredClone($state.snapshot(view)) as ViewState;
@@ -29,6 +39,10 @@
     // A false `preciseReleaseDate` means only the year is real (docs/scraping.md §Release-year supplement).
     if (col === 'releasedAt') return s.releasedAt ? (s.preciseReleaseDate ? s.releasedAt : s.releasedAt.slice(0, 4)) : '—';
     if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon plate';
+    if (col === EASY_SCORE_KEY) {
+      const sc = scores.get(s.slug);
+      return sc === undefined ? '—' : displayNumber(sc);
+    }
     // msrpGbp goes through numericValue so the cell shows the same resolved price the
     // filter and the sort use (docs/app.md §Resolved price).
     const v = col === 'score' ? s.score : numericValue(s, col, idx);

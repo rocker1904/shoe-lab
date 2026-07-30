@@ -5,13 +5,18 @@
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
   import { columnLabel, shortLabel } from '../lib/labels';
-  import { percentileMap } from '../lib/stats';
+  import { EASY_SCORE_KEY } from '../lib/score';
+  import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
 
-  let { shoes, data, view, onchange }: {
-    shoes: Shoe[]; data: ShoesFile; view: ViewState; onchange: (v: ViewState) => void;
+  let { shoes, data, view, scores, onchange }: {
+    shoes: Shoe[]; data: ShoesFile; view: ViewState;
+    /** Resolved in `Page.svelte`: the Easy score is the one column whose value depends on the view
+     *  rather than on the shoe alone, so it arrives ready rather than through `numericValue`. */
+    scores: Map<string, number>;
+    onchange: (v: ViewState) => void;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
@@ -22,7 +27,12 @@
   const cols = $derived(view.columns.filter(isFigure));
   // A card whose value row holds nothing still needs a cell to span, so the colspan never hits 0.
   const span = $derived(Math.max(cols.length, 1));
-  const percentiles = $derived(new Map(cols.map((c) => [c, percentileMap(shoes, c, idx)])));
+  // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
+  // mean something different from its neighbours' in the same row.
+  const percentiles = $derived(new Map(cols.map((c) => [c,
+    c === EASY_SCORE_KEY
+      ? rankMap(new Map(shoes.flatMap((s) => (scores.has(s.slug) ? [[s.slug, scores.get(s.slug)!] as const] : []))))
+      : percentileMap(shoes, c, idx)])));
 
   function setSort(key: string) {
     const next = structuredClone($state.snapshot(view)) as ViewState;
@@ -30,6 +40,10 @@
     onchange(next);
   }
   function cellText(s: Shoe, col: string): string {
+    if (col === EASY_SCORE_KEY) {
+      const sc = scores.get(s.slug);
+      return sc === undefined ? '—' : displayNumber(sc);
+    }
     const v = col === 'score' ? s.score : numericValue(s, col, idx);
     return v === null || v === undefined ? '—' : displayNumber(v);
   }

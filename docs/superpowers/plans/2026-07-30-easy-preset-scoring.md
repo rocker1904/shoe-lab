@@ -838,7 +838,7 @@ git commit -m "Rank Easy by its own score rather than RunRepeat's"
 **Interfaces:**
 - Produces: `ShoeTable`/`ShoeTableMobile` gain `scores: Map<string, number>`, `side: Side` and `stability: boolean` props (the latter two for Task 7's panel); `stats.ts` exports `rankMap(values: Map<string, number>): Map<string, number>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `stats.test.ts` — `rankMap` needs its own test, because `app/vitest.config.ts` enforces 90% lines / 85% branches over `src/lib/**`:
 
@@ -880,11 +880,11 @@ it('offers the Easy score as a tickable column', () => {
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- stats.test.ts ShoeTable.test.ts ColumnPicker.test.ts`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `stats.ts` — add, so both tables share one implementation:
 
@@ -939,11 +939,11 @@ Pass `{scores}`, `side={workingSide}` and `stability={view.stability}` to both t
 
 `ColumnPicker.svelte` — `easy-score` is in neither `FIXED` nor `metricEntries`, so once Easy sets it the column cannot be removed while the summary still counts it. Add it to `FIXED`. It has no catalogue test, so `coverageOf` reads 0% — give it no coverage bar rather than a misleading empty one.
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npm -w app run test && npm run typecheck` → PASS. Every existing render of either table needs the three new props; `grep -rn 'render(ShoeTable' app/src` to find them.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/Page.svelte app/src/components/ShoeTable.svelte app/src/components/ShoeTable.test.ts app/src/components/ShoeTableMobile.svelte app/src/components/ShoeTableMobile.test.ts app/src/components/ColumnPicker.svelte app/src/components/ColumnPicker.test.ts app/src/lib/stats.ts app/src/lib/stats.test.ts

@@ -2,19 +2,19 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
 import { defaultView, type ViewState } from '../lib/urlstate';
-import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
+import { FLEET, TESTS } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
 // A test whose real name is one `labels.ts` shortens, so the mobile header can be shown to use the
 // short one rather than the catalogue name.
-const WEAR = labTest({ id: 80, slug: 'outsole-durability', name: 'Outsole durability', units: 'mm' });
-const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: [...TESTS, WEAR], shoes: FLEET };
+const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState> } = {}) {
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: Map<string, number> } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['releasedAt', 'score', 'heel-stack', 'plate'];
-  const rendered = render(ShoeTableMobile, { props: { shoes: over.shoes ?? FLEET, data, view, onchange } });
+  const rendered = render(ShoeTableMobile, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
+    scores: over.scores ?? new Map() } });
   return Object.assign(onchange, { rendered });
 }
 

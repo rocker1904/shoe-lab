@@ -28,6 +28,21 @@ export function percentileMap(shoes: Shoe[], key: string, idx: TestIndex): Map<s
   return out;
 }
 
+/**
+ * Percentiles for a map of already-resolved values. `percentileMap` cannot serve the Easy score:
+ * that key is synthetic, so `numericValue` returns nothing for it.
+ */
+export function rankMap(values: Map<string, number>): Map<string, number> {
+  const sorted = [...values.values()].sort((a, b) => a - b);
+  const out = new Map<string, number>();
+  for (const [slug, v] of values) {
+    const below = sorted.filter((x) => x < v).length;
+    const equal = sorted.filter((x) => x === v).length;
+    out.set(slug, (below + equal / 2) / sorted.length);
+  }
+  return out;
+}
+
 export interface Histogram { min: number; max: number; counts: number[] }
 
 /**

@@ -28,6 +28,7 @@
   import type { Side } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
+  import { easyScoreMap } from './lib/score';
   import { projectSide, sideOf } from './lib/side';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
@@ -131,12 +132,16 @@
   }
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
-  const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx));
   const snapshot = $derived($state.snapshot(view) as ViewState);
   const sideMark = $derived(sideOf(snapshot));
   /** Somewhere to stand when the view names no side: the stories each bind one half, so applying
    *  one has to pick, and the baseline's own half is the least surprising pick. */
   const workingSide = $derived(sideMark ?? DEFAULT_SIDE);
+  /** The score depends on the view, not just the shoe, so it is resolved once here and handed to
+   *  everything that needs it. `workingSide` rather than `sideMark`: a view naming no side must
+   *  still score, and heel is the arbitrary half (docs/app.md §The side is a preset too). */
+  const scores = $derived(easyScoreMap(data.shoes, workingSide, view.stability, idx));
+  const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
 
   /**
    * What `All` produces — and, because the mark is `sameValue(v, allView(v, side))`, also what
@@ -293,9 +298,9 @@
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}
-        <ShoeTableMobile shoes={visibleSorted} {data} {view} onchange={setView} />
+        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} onchange={setView} />
       {:else}
-        <ShoeTable shoes={visibleSorted} {data} {view} onchange={setView} />
+        <ShoeTable shoes={visibleSorted} {data} {view} {scores} onchange={setView} />
       {/if}
     </div>
     {#if visibleSorted.length === 0}

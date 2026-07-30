@@ -1,17 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
+import { EASY_SCORE_KEY } from '../lib/score';
 import { defaultView, type ViewState } from '../lib/urlstate';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState> } = {}) {
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: Map<string, number> } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
-  const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange } });
+  const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
+    scores: over.scores ?? new Map() } });
   return Object.assign(onchange, { rendered });
 }
 
@@ -127,5 +129,17 @@ describe('ShoeTable', () => {
     });
     expect(screen.getByText('2024')).toBeInTheDocument();
     expect(screen.getByText('2025-03-14')).toBeInTheDocument();
+  });
+});
+
+describe('ShoeTable and the Easy score', () => {
+  it('renders the Easy score from the supplied map, and a dash where it is unscored', () => {
+    const view = { ...defaultView(), columns: [EASY_SCORE_KEY] };
+    const { container } = render(ShoeTable, {
+      props: { shoes: FLEET, data, view, scores: new Map([['cushy', 87.412]]), onchange: () => {} },
+    });
+    const cells = [...container.querySelectorAll('tbody tr td')].map((c) => c.textContent?.trim());
+    expect(cells).toContain('87.41'); // two decimals, like every other figure
+    expect(cells).toContain('—');
   });
 });
