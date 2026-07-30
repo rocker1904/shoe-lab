@@ -123,6 +123,38 @@ describe('Toolbar stability preference', () => {
     expect(got).toBe(true);
   });
 
+  // The runner meets the score at the one control that changes it, so the explanation lives there —
+  // in the same popover the setup strip uses, not a second mechanism (docs/app.md §The toolbar).
+  it('explains what the score reads, and what it deliberately does not', async () => {
+    render(Toolbar, { props: { ...props } });
+    const help = screen.getByRole('button', { name: 'About the Easy score' });
+    help.focus();
+    await fireEvent.click(help);
+    const pop = screen.getByRole('dialog', { name: 'the Easy score' });
+    expect(pop).toHaveTextContent(/shock absorption/i);
+    expect(pop).toHaveTextContent(/outsole durability/i);
+    expect(pop).toHaveTextContent(/energy return/i);
+    expect(pop).toHaveTextContent(/heel counter stiffness/i);
+    // The three things a runner would otherwise have to infer from the table.
+    expect(pop).toHaveTextContent(/price/i);
+    expect(pop).toHaveTextContent(/not scored/i);
+    expect(pop).toHaveTextContent(/2026-07-30/);
+
+    await fireEvent.keyDown(pop, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(help).toHaveFocus();
+  });
+
+  // A button inside the label would be a click on the label, so opening the help would toggle the
+  // preference it is there to explain.
+  it('opens the help without touching the preference', async () => {
+    const onstability = vi.fn();
+    render(Toolbar, { props: { ...props, onstability } });
+    await fireEvent.click(screen.getByRole('button', { name: 'About the Easy score' }));
+    expect(onstability).not.toHaveBeenCalled();
+    expect(screen.getByRole('checkbox', { name: /stability/i })).not.toBeChecked();
+  });
+
   it('says what the preference adds, and makes no claim about weight', () => {
     // The width term is a ratio so that stability does not select heavy shoes, so a weight warning
     // here would be false (docs/app.md §The Easy score).

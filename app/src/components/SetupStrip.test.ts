@@ -121,7 +121,7 @@ describe('Page setup strip', () => {
 
   it('collapses for good once a story is chosen', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     // The collapse is a height transition, so the node outlives the click by its duration.
     await waitFor(() => expect(screen.queryByTestId('setup-strip')).toBeNull());
     await fireEvent.click(screen.getByRole('radio', { name: /All/ }));

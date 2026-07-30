@@ -3,6 +3,7 @@
   import type { Side } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
   import { roving } from '../lib/roving';
+  import HelpPopover from './HelpPopover.svelte';
   import SideToggle from './SideToggle.svelte';
 
   let { side, onside, selected, counts, onstory, showFilters, onfilters, columns,
@@ -33,6 +34,19 @@
   // `All` leads so the group reads as everything → narrow to a story, and it is the same state a
   // `Clear` button used to produce, named for what you get (docs/app.md §Presets).
   const STORIES = [{ id: 'all', label: 'All' }, ...PRESETS.map((p) => ({ id: p.id, label: p.label }))];
+
+  const SCORE_LABEL = 'the Easy score';
+  /**
+   * What the score reads and what it deliberately does not — the three things a runner would
+   * otherwise have to infer from the table. No maths: docs/app.md §The Easy score owns that, and a
+   * second copy here would drift from it.
+   */
+  const SCORE_HELP = 'Easy ranks on lab measurements: shock absorption, which counts double, '
+    + 'outsole durability and energy return — plus midsole width against stack and heel counter '
+    + 'stiffness when stability is ticked. Price and release date are deliberately left out, so the '
+    + 'value call stays yours. A shoe missing any of those measurements is not scored at all rather '
+    + 'than scored zero, and sorts last. The scale is fixed to the fleet as it stood on 2026-07-30, '
+    + 'so scores stay comparable over time and a future shoe can read above 100.';
 </script>
 
 <div class="toolbar" data-testid="toolbar">
@@ -52,14 +66,21 @@
       </span>
     </div>
   {/if}
-  <label class="stability">
-    <input type="checkbox" checked={stability} onchange={(e) => onstability(e.currentTarget.checked)} />
-    <span>Stability matters to me</span>
+  <div class="stability">
+    <input id="stability-pref" type="checkbox" checked={stability}
+           onchange={(e) => onstability(e.currentTarget.checked)} />
+    <!-- The label is explicit rather than wrapping, because the help sits beside it: a button
+         inside a label is a click on the label, so opening the help would toggle the preference it
+         explains. -->
+    <div class="pref">
+      <label for="stability-pref">Stability matters to me</label>
+      <HelpPopover label={SCORE_LABEL} body={SCORE_HELP} />
+    </div>
     <!-- Says what the switch adds and nothing more: the width term is a ratio precisely so that
          opting in does not select heavy shoes, so there is no cost to warn about
          (docs/app.md §The Easy score). -->
     <small>Adds midsole width and heel counter stiffness to the Easy score.</small>
-  </label>
+  </div>
   <div class="actions">
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
             onclick={onfilters}>Filters</button>
@@ -76,7 +97,11 @@
      rather than standing beside it as a peer, and inline the control measures 538px against the
      389px it takes stacked. */
   .stability { display: grid; grid-template-columns: auto 1fr; align-items: center;
-               gap: 0 var(--s2); font-size: var(--t-sm); cursor: pointer; }
+               gap: 0 var(--s2); font-size: var(--t-sm); }
+  /* The `?` rides with the label rather than taking a grid track of its own: the note below spans
+     the same track, so a third column would be sized by the note and strand the `?` at its end. */
+  .pref { display: flex; align-items: center; gap: var(--s2); }
+  .stability label { cursor: pointer; }
   .stability small { grid-column: 2; font-size: var(--t-xs); color: var(--text-dim); }
   .seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r-full); overflow: hidden; }
   .s { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); border: none;

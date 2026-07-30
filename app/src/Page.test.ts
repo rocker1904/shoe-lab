@@ -96,7 +96,7 @@ describe('Page', () => {
   it('applying a preset filters the table and updates the URL', async () => {
     render(Page, { props: { data } });
     // the band's card, not the toolbar pill: one is a button, the other a radio
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     // Easy's only filter is the plate gate, so its pool is everything but the carbon racer; the
     // ranking is what the story now does (docs/app.md §Presets).
     expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
@@ -276,17 +276,17 @@ describe('Page story selection', () => {
     render(Page, { props: { data } });
     expect(strip()).toBeInTheDocument();
     expect(markedStory()).toEqual(['All']);
-    expect(screen.getByRole('button', { name: /Easy/ })).toHaveTextContent('4');
-    expect(screen.getByRole('button', { name: /Race/ })).toHaveTextContent('2');
+    expect(screen.getByRole('button', { name: /^Easy/ })).toHaveTextContent('4');
+    expect(screen.getByRole('button', { name: /^Race/ })).toHaveTextContent('2');
   });
   it('marks exactly the story that was applied', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     expect(markedStory()).toEqual(['Easy']);
   });
   it('drops the mark once a bound is edited past what any story describes', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     await fireEvent.input(screen.getByRole('group', { name: 'Stack — Heel' }).querySelector('input')!,
       { target: { value: '20' } });
     expect(markedStory()).toEqual([]);
@@ -308,14 +308,14 @@ describe('Page story selection', () => {
     expect(strip()).toBeInTheDocument();
     expect(screen.queryAllByRole('radio', { name: /All|Easy|Tempo|Race/ })).toHaveLength(0);
 
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     expect(screen.getAllByRole('radio', { name: /All|Easy|Tempo|Race/ })).toHaveLength(4);
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeInTheDocument();
   });
   // A regression guard rather than a red-first test: the heel baseline already marks Heel.
   it('marks both groups when the view is a story on a side', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));   // the strip's card
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));   // the strip's card
     expect(markedStory()).toEqual(['Easy']);
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
   });
@@ -415,7 +415,7 @@ describe('Page side toggle', () => {
   });
   it('re-derives a story rather than only setting the field, and flips back to the same view', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     settle();
     const before = location.search;
 
@@ -455,10 +455,10 @@ describe('Page side toggle', () => {
   it('recounts the stories on the other side', async () => {
     render(Page, { props: { data } });
     const countOf = (label: RegExp) => screen.getByRole('button', { name: label }).textContent;
-    const before = PRESETS.map((p) => countOf(new RegExp(p.label)));
+    const before = PRESETS.map((p) => countOf(new RegExp(`^${p.label}`)));
     await clickForefoot();
     // the fixture's two sides sit on different scales, so at least one story must move
-    expect(PRESETS.map((p) => countOf(new RegExp(p.label)))).not.toEqual(before);
+    expect(PRESETS.map((p) => countOf(new RegExp(`^${p.label}`)))).not.toEqual(before);
   });
 });
 
@@ -520,7 +520,7 @@ describe('Page persistence', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     render(Page, { props: { data } });
     expect(strip()).toBeInTheDocument();
-    await fireEvent.click(screen.getByRole('button', { name: /Easy/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
   });
 });

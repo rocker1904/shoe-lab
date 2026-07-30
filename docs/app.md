@@ -881,6 +881,16 @@ neither; the side group takes `sideOf` and marks nothing on a mixed view. Each
 group is a nullable mark, so either can show nothing selected, and `roving`
 still gives a group with nothing checked one tab stop.
 
+**The score is explained where it is changed.** The stability checkbox is the one
+control that alters the score, so the `?` beside its label opens the same
+`HelpPopover` the setup strip uses rather than a second mechanism. It says what the
+score reads, what it deliberately leaves out — price and release date, so the value
+call stays the runner's — that a shoe missing a measurement is unscored rather than
+zero, and that the scale is fixed to a dated fleet so a future shoe may read above
+100. No maths: docs/app.md §The Easy score owns that, and a second copy would drift.
+The checkbox's label is explicit rather than wrapping it, because a button inside a
+label is a click on the label: the help would toggle the preference it explains.
+
 `SideToggle` carries **no visible lede**. Two segmented groups side by side
 are one language, and the words live on the setup strip, where the question is
 asked once; the group keeps `aria-label="Measurements from"` so it is still

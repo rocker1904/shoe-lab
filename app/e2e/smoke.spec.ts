@@ -6,7 +6,7 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
 
   // a bare first visit opens on the setup strip, so this is a card rather than a toolbar pill
   await expect(page.getByTestId('setup-strip')).toBeVisible();
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByText('4 of 5 shoes')).toBeVisible();
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
   // the strip hands over to the toolbar, which is where the mark and the counts live from here
@@ -46,7 +46,7 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByText('4 of 5 shoes')).toBeVisible();
   await expect(strip).toHaveCount(0);
 
@@ -82,7 +82,7 @@ test('picks a side, keeps the strip open through it, and returns to that side\'s
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Midsole width — Forefoot' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
   // Easy bounds nothing, so its side rides in the columns alone.
@@ -112,7 +112,7 @@ test('switches to stacked cards on a phone, and back', async ({ page }) => {
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
   // inside its own box rather than take the page sideways with it (docs/app.md §The Easy score).
   // Easy first: the panel breaks down the score columns the view holds, and the plain table has none.
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: /^Easy/ }).click();
   await page.getByText('cushy').first().click();
   await expect(page.locator('.score-breakdown table')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -309,7 +309,7 @@ test('renders a superseded pair once and keeps colocated halves independently so
 // at all: without readings the column renders all em dashes and would pass while proving nothing.
 test('Easy ranks by its own score', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByRole('columnheader', { name: /Easy heel score/ })).toBeVisible();
   const rows = page.locator('tbody tr.shoe');
   await expect(rows.first()).toContainText('cushy');
@@ -324,7 +324,7 @@ test('Easy ranks by its own score', async ({ page }) => {
 
 test('the runner can opt stability into the score without losing the story', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: /^Easy/ }).click();
   await page.getByRole('checkbox', { name: /Stability matters to me/ }).check();
   await expect(page).toHaveURL(/stab=1/);
   // the preference is the runner's, not the search's, so the story stays marked through it
