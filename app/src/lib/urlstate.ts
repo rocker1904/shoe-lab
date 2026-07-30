@@ -13,6 +13,10 @@ export interface ViewState {
    *  Deriving this from the bound keys is what would make clearing and removing the same action
    *  however they were labelled (docs/app.md §Filters). */
   rows: string[];
+  /** Whether the Easy score counts its two stability terms. A property of the runner rather than of
+   *  the search, so it survives a story click and a Clear, exactly as the side does — which is why
+   *  `applyPreset` and `allView` carry it through rather than rebuilding it (docs/app.md §Presets). */
+  stability: boolean;
 }
 
 export const DEFAULT_SORT: SortState = { key: 'score', dir: 'desc' };
@@ -44,7 +48,7 @@ const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate']);
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 export function defaultView(): ViewState {
-  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_SIDE), generations: {}, rows: [] };
+  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_SIDE), generations: {}, rows: [], stability: false };
 }
 
 /**
@@ -95,6 +99,7 @@ export function serializeView(v: ViewState): string {
   if (v.filters.search) p.set('q', v.filters.search);
   if (v.filters.discontinued) p.set('disc', v.filters.discontinued);
   if (v.filters.showMissing) p.set('missing', '1');
+  if (v.stability) p.set('stab', '1');
   if (v.sort.key !== DEFAULT_SORT.key || v.sort.dir !== DEFAULT_SORT.dir) {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
   }
@@ -150,6 +155,8 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       v.filters.discontinued = raw;
     } else if (key === 'missing' && raw === '1') {
       v.filters.showMissing = true;
+    } else if (key === 'stab' && raw === '1') {
+      v.stability = true;
     } else if (key === 'sort') {
       const dir = raw.startsWith('-') ? 'desc' : 'asc';
       const k = raw.replace(/^-/, '');

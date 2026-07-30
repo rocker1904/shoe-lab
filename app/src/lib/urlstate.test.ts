@@ -20,6 +20,7 @@ describe('urlstate', () => {
       columns: ['score', 'heel-stack'],
       generations: {},
       rows: [],
+      stability: true,
     };
     expect(parseView(serializeView(v), idx)).toEqual(v);
   });
@@ -95,7 +96,7 @@ describe('urlstate hostile input', () => {
     a.filters.ranges['weight'] = { min: 1 };
     a.columns.push('bogus');
     a.sort.key = 'weight';
-    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {}, rows: [] });
+    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {}, rows: [], stability: false });
     expect(defaultColumns('heel')).toEqual(columns);
   });
   it('resolves repeated keys to the last valid occurrence', () => {
@@ -360,5 +361,26 @@ describe('the hand-added row list', () => {
     const v = defaultView();
     v.rows = ['stiffness'];
     expect(sameValue(v, defaultView())).toBe(false);
+  });
+});
+
+describe('the stability preference', () => {
+  it('defaults stability off', () => {
+    expect(defaultView().stability).toBe(false);
+  });
+
+  it('serialises stability only when on, so a default view still has an empty query', () => {
+    expect(serializeView(defaultView())).not.toContain('stab');
+    expect(serializeView({ ...defaultView(), stability: true })).toContain('stab=1');
+  });
+
+  it('round-trips stability', () => {
+    expect(parseView(serializeView({ ...defaultView(), stability: true }), idx).stability).toBe(true);
+    expect(parseView('', idx).stability).toBe(false);
+  });
+
+  it('ignores a stab value that is not 1', () => {
+    expect(parseView('stab=yes', idx).stability).toBe(false);
+    expect(parseView('stab=0', idx).stability).toBe(false);
   });
 });

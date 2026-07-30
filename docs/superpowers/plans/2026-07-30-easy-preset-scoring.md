@@ -542,7 +542,7 @@ git commit -m "Build the Easy score from frozen constants so it holds over time"
 **Files:**
 - Modify: `app/src/lib/urlstate.ts`, `app/src/lib/urlstate.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `app/src/lib/urlstate.test.ts`:
 
@@ -567,12 +567,12 @@ it('ignores a stab value that is not 1', () => {
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `npm -w app run test -- urlstate.test.ts`
 Expected: FAIL — `stability` does not exist on `ViewState`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `app/src/lib/urlstate.ts`, add to `ViewState`:
 
@@ -590,7 +590,7 @@ Add `stability: false` to `defaultView()`. In `serializeView`, after the `missin
       v.stability = true;
 ```
 
-- [ ] **Step 4: Fix the typecheck and test fallout**
+- [x] **Step 4: Fix the typecheck and test fallout**
 
 This adds a required property, so it is a `svelte-check` error rather than only a test failure. Known sites:
 - `urlstate.test.ts:14` — a `const v: ViewState = { … }` literal with no `stability`.
@@ -600,7 +600,7 @@ This adds a required property, so it is a `svelte-check` error rather than only 
 Run: `npm -w app run test && npm run typecheck`
 Expected: PASS both. Search for other whole-`ViewState` literals: `grep -rn ': ViewState = {' app/src`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/lib/urlstate.ts app/src/lib/urlstate.test.ts app/src/lib/presets.test.ts
