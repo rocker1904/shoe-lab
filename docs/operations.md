@@ -129,6 +129,12 @@ something long fails the build rather than clipping silently on a phone. Add a
 short label; **do not raise `MAX_LABEL_PX`**, which is a measured column width
 and not a preference.
 
+`score.test.ts` is the fourth, and the only one that reads coverage rather than
+names: it fails when a metric a story's score *weights* drops below
+`SPARSE_BELOW` over that story's pool (docs/app.md §The story scores). The
+thinnest term has 83% today, so this fires only on a real collapse upstream —
+retire the term or the story rather than the threshold.
+
 ## Resuming release-date curation
 
 Curation is author-side work: it spends the author's Claude Code budget and

@@ -639,8 +639,9 @@ the loaded fleet — the percentile bounds were the only thing that ever needed 
 its signature is `(story, side, stability)` and a fleet argument reappearing would be
 a threshold in disguise. One consequence worth stating because it is a safety net
 rather than a line of code: **no story participates in the sparse-bound guard** below,
-which only ever looks at range keys. All three have lost it by having nothing to guard
-(BACKLOG.md).
+which only ever looks at range keys. All three have lost it by having nothing to guard,
+and what replaces it is asserted over terms instead of bounds
+(docs/app.md §The story scores).
 
 **`applyPreset` carries `stability` through unchanged** rather than rebuilding it
 from `defaultView()`, and so does `allView`. Both marks are `sameValue` over the
@@ -670,7 +671,8 @@ A preset must never bound a metric whose coverage over its own `considered`
 population falls below `SPARSE_BELOW` (docs/app.md §Coverage) — a preset that
 recommends against itself is self-inflicted. The guard is still asserted, but no
 story has a range key for it to look at, so today it can only fail on a
-counter-example `presets.test.ts` builds for it.
+counter-example `presets.test.ts` builds for it. The equivalent claim for a ranking
+is made per term, and belongs to the scores (docs/app.md §The story scores).
 
 Selection is **derived, never stored**: a story reads as chosen while the view
 equals what `applyPreset` would build for it right now. Editing a bound drops
@@ -726,6 +728,17 @@ against weight over the pool, the term reads ρ −0.05 on heel and −0.08 on f
 raw width reads +0.45 and +0.29, and opting in moves the top 30's mean weight by 6 g on heel
 and none on forefoot, both still under the pool mean; heel counter stiffness off its own
 five-point scale, because a percentile would invent resolution the measurement does not have.
+
+**No story weights a thin term.** This is the score's half of the sparse-bound guard
+(§Presets), and it is the half that still has something to check: `score.test.ts` counts
+every weighted term over the pool its story is scored on — the plate-filtered 378 for
+Easy and Tempo, the fleet for Race — and fails when one falls below `SPARSE_BELOW`
+(§Coverage). The stability pair is counted too, because a runner can turn those terms on.
+Counting is on the **mapped term** rather than a metric slug: outsole life and midsole
+width are ratios, and a shoe missing either half is as unscoreable as one missing a
+reading outright. The thinnest term today is energy return at 83%, so a failure means
+upstream coverage has genuinely collapsed — drop the term, or the story that weights it.
+Do not lower the threshold, which is owned elsewhere and shared with the presets.
 
 **Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
 and never recomputed from the loaded catalogue: the two references, the outsole cap, the

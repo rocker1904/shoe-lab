@@ -2,14 +2,16 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { indexTests } from './dataset';
-import { swapSide, type Side } from './lineage';
+import { coverageOf, isSparse } from './coverage';
+import { indexTests, type TestIndex } from './dataset';
+import { sideKey, swapSide, type Side } from './lineage';
 import {
-  contributions, L_OK, SA_REF, scoreMap, scoreOf, terms, W_REF, WID_CAP, type TermKey,
+  contributions, L_OK, SA_REF, scoreMap, scoreOf, terms, TERM_ORDER, W_REF, WID_CAP,
+  type ScoreDef, type TermKey,
 } from './score';
 import { EASY, RACE, SCORE_DEFS, TEMPO } from './score-defs';
 import { FLEET, TESTS, shoe } from './test-fixtures';
-import type { ShoesFile } from '../../../shared/types.js';
+import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
 const fixture = (slug: string) => FLEET.find((s) => s.slug === slug)!;
@@ -347,5 +349,67 @@ describe('the Race score against the real fleet', () => {
     const plateOf = new Map(REAL.shoes.map((s) => [s.slug, s.plate]));
     expect(r.every((slug) => plateOf.get(slug) === 'carbon')).toBe(true);
     expect(r[0]).toBe('adidas-adizero-adios-pro-evo-3');
+  });
+});
+
+/**
+ * The score half of the coverage guard. `presets.test.ts` asserts that no preset *bounds* a thin
+ * metric, and every story now bounds nothing — so that guard passes vacuously while six score
+ * columns read metrics nothing checks. The property that survives the move from bounds to scores
+ * is that no term a story weights is thin over the pool it is scored on.
+ *
+ * Counted on the *mapped* term rather than on a metric slug, because two terms are ratios and a
+ * shoe missing either half is as unscoreable as one missing a reading outright. `isSparse` rather
+ * than an open-coded 0.5: the threshold has one owner (docs/app.md §Coverage).
+ */
+function sparseTermKeys(
+  def: ScoreDef, side: Side, stability: boolean, pool: Shoe[], index: TestIndex,
+): TermKey[] {
+  // The variant's weight set, restated from `variantOf` because that is private to the engine and
+  // the guard must see the terms a *runner* can turn on, not just the declared ones.
+  const weights = stability && def.stable ? { ...def.weights, ...def.stable.add } : def.weights;
+  return TERM_ORDER.filter((k) => weights[k] !== undefined).filter((k) => {
+    const n = pool.filter((s) => terms(s, side, index)[k] !== null).length;
+    return isSparse({ n, total: pool.length, fraction: pool.length ? n / pool.length : 0 });
+  });
+}
+
+/** Each story's pool, restated from the preset that selects it: Easy and Tempo drop carbon
+ *  (docs/shoe-stories.md §Tempo), Race takes the fleet. */
+const POOL_OF: [ScoreDef, Shoe[], string][] = [
+  [EASY, POOL, 'easy'], [TEMPO, POOL, 'tempo'], [RACE, REAL.shoes, 'race'],
+];
+
+describe('no story weights a term its own coverage warning would flag', () => {
+  it('holds for every story over its own pool, on either side and either toggle', () => {
+    for (const [def, pool, id] of POOL_OF) {
+      for (const side of SIDES) {
+        for (const stability of [false, true]) {
+          expect(sparseTermKeys(def, side, stability, pool, realIdx),
+            `${id}/${side}/${stability ? 'on' : 'off'}`).toEqual([]);
+        }
+      }
+    }
+  });
+
+  it('the guard can fail: it names a term whose reading covers only 40% of the pool', () => {
+    // Borderline on purpose, as its sibling in presets.test.ts is: a term stripped to nothing would
+    // prove only that isSparse works at zero. Energy return is the term to thin, being the one all
+    // three stories weight.
+    const id = String(realIdx.bySlug.get(sideKey('Energy return', 'heel'))!.id);
+    let kept = 0;
+    const thinned = REAL.shoes.map((s) => {
+      if (typeof s.values[id] !== 'number' || kept >= REAL.shoes.length * 0.4) {
+        const values = { ...s.values };
+        delete values[id];
+        return { ...s, values };
+      }
+      kept += 1;
+      return s;
+    });
+    expect(coverageOf(thinned, sideKey('Energy return', 'heel'), realIdx).fraction).toBeCloseTo(0.4);
+    expect(sparseTermKeys(EASY, 'heel', false, thinned, realIdx)).toEqual(['energyReturn']);
+    // and the well-covered terms are not swept up with it
+    expect(sparseTermKeys(EASY, 'forefoot', false, thinned, realIdx)).toEqual([]);
   });
 });
