@@ -126,6 +126,51 @@ something long fails the build rather than clipping silently on a phone. Add a
 short label; **do not raise `MAX_LABEL_PX`**, which is a measured column width
 and not a preference.
 
+## Resuming release-date curation
+
+Curation is author-side work: it spends the author's Claude Code budget and
+produces a committed file, and adds nothing to the weekly refresh
+(docs/decisions.md §Free tools only). Nothing here runs in CI. Semantics and
+gates are docs/scraping.md §Curated release months; method and evidence rules
+are the spec under docs/superpowers/specs.
+
+**State when you pick this up.** `curated/release-dates.jsonl` holds the work so
+far; `grep -c '"month":null' curated/release-dates.jsonl` counts the evidenced
+dead ends. The population needing a month is every shoe whose
+`releaseDateSource` is `listing` or null — all of them, because the listing year
+runs late in only one direction, so no shoe can be assumed outside a recency
+window.
+
+**The loop.** Discovery is offline and costs no web search:
+
+1. Build the publisher index once from sitemaps, then match shoes to review URLs
+   by exact canonical token equality. Loose containment matches the wrong
+   generation — it once matched "Brooks Hyperion" to `hyperion-elite-3`.
+2. Hand each lookup its shoe *and its candidate URLs*, ordered **WearTesters and
+   meta-endurance first**. Yield is set almost entirely by publisher: WearTesters
+   prints a literal `Release Date:` row and resolved 21 of 22; Doctors of Running
+   and Believe in the Run never print one and resolved 1 of 19. A candidate from
+   a specs-table publisher costs about a quarter as much as grinding to a null
+   without one.
+3. For those publishers, rendering the page directly beats dispatching an agent —
+   one render both finds the row and verifies it.
+4. Re-fetch and substring-match **every** quote before recording. One outright
+   fabrication appeared in fifty lookups, rated "high confidence" and
+   indistinguishable from genuine results by that field. Sampling would have
+   missed it.
+5. Record nulls as carefully as months, then commit.
+
+**What is left, and why it is harder.** Roughly 108 shoes have no indexed review
+at all. This is not an age problem — their years and scores match the rest. They
+are budget models, variants of covered models (GTX/GTS/EasyOn), and brands with
+no English coverage. A publisher only helps if it reviews that tier at all, so
+no further sitemap will move it: adding two trail publications grew the index by
+6,000 URLs and matched one extra shoe. The tested lead is the Wayback CDX API,
+which is public, free and honest-User-Agent reachable, and finds brand product
+pages for exactly these shoes with style codes in the URL. It yields an
+availability *bound* rather than a month, first capture lags release, and
+captures are regional — so treat a lone hit as a bound recorded in `notes`.
+
 ## Deploy
 
 Pages is configured to publish from the workflow (build type: workflow), not

@@ -1,4 +1,4 @@
-import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, ReleaseYearsFile, Shoe, ShoesFile, TestsFile, Tombstone, VersionRef } from '../../shared/types.js';
+import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, ReleaseDateSource, ReleaseYearsFile, Shoe, ShoesFile, TestsFile, Tombstone, VersionRef } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { csvLine } from './csv.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
@@ -54,7 +54,7 @@ function publishedTests(tests: LabTest[], shoes: Shoe[], testGroups: Record<stri
 }
 
 // `releaseYears` deliberately does not feed builtAt (docs/scraping.md §Determinism).
-export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate> } {
+export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile, curated?: Map<string, string>): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate>; pageDated: Map<string, boolean> } {
   let builtAt = metrics.scrapedAt;
   for (const rec of Object.values(details.shoes)) {
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;
@@ -64,6 +64,8 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
   // category-excluded shoe is genuinely stale and the gate should say so
   // (docs/scraping.md §Decisions).
   const ruleDerived = new Map<string, Plate>();
+  // Slug -> whether the page gave a precise date, so the curated gate can see the whole fleet.
+  const pageDated = new Map<string, boolean>();
   const shoes: Shoe[] = Object.keys(metrics.shoes).sort().filter((slug) => isRunningShoe(details.shoes[slug])).map((slug) => {
     const m = metrics.shoes[slug]!;
     const rec = details.shoes[slug];
@@ -72,13 +74,25 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
     ruleDerived.set(slug, plateFromRules(features, det?.hasPlateSection === true));
     const year = releaseYears?.years[slug];
     const pageDate = det?.releasedAt ?? null;
-    const releasedAt = pageDate ?? (year === undefined ? null : `${year}-01-01`);
-    // Provenance rather than a precision flag: a boolean could not tell RunRepeat's own estimate
-    // apart from a year we materialised ourselves, and only the second is fiction
-    // (docs/scraping.md §Release-date provenance).
-    const releaseDateSource = pageDate !== null
-      ? (det!.preciseReleaseDate ? 'page' as const : 'page-estimated' as const)
-      : (releasedAt === null ? null : 'listing' as const);
+    const precise = pageDate !== null && det!.preciseReleaseDate;
+    pageDated.set(slug, precise);
+    const curatedMonth = curated?.get(slug);
+    // Precedence, highest first (docs/scraping.md §Release-date provenance). A curated month beats
+    // RunRepeat's own estimate and its listing year — justified only by the listing year running
+    // late and never early — but never beats a date RunRepeat states precisely.
+    let releasedAt: string | null;
+    let releaseDateSource: ReleaseDateSource | null;
+    if (precise) {
+      releasedAt = pageDate; releaseDateSource = 'page';
+    } else if (curatedMonth !== undefined && curatedMonth !== '') {
+      releasedAt = `${curatedMonth}-01`; releaseDateSource = 'curated';
+    } else if (pageDate !== null) {
+      releasedAt = pageDate; releaseDateSource = 'page-estimated';
+    } else if (year !== undefined) {
+      releasedAt = `${year}-01-01`; releaseDateSource = 'listing';
+    } else {
+      releasedAt = null; releaseDateSource = null;
+    }
     return {
       slug,
       name: det?.name ?? m.name,
@@ -125,5 +139,5 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
       ...csvTests.map((t) => s.values[String(t.id)]),
     ]));
   }
-  return { shoesFile, csv: lines.join('\n') + '\n', ruleDerived };
+  return { shoesFile, csv: lines.join('\n') + '\n', ruleDerived, pageDated };
 }

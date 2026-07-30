@@ -464,3 +464,59 @@ describe('buildDataset facts and review language', () => {
     }
   });
 });
+
+describe('curated release months', () => {
+  const curated = (m: Record<string, string>) => new Map(Object.entries(m));
+  const years = (y: Record<string, number>): ReleaseYearsFile => ({ scrapedAt: '2026-07-20T00:00:00Z', years: y });
+
+  it('uses a curated month over a listing year, materialised as the first of the month', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details, years({ 'shoe-005': 2025 }),
+      curated({ 'shoe-005': '2025-09' }));
+    const five = shoesFile.shoes.find((s) => s.slug === 'shoe-005')!;
+    expect(five.releasedAt).toBe('2025-09-01');
+    expect(five.releaseDateSource).toBe('curated');
+  });
+
+  it('uses a curated month over a page date RunRepeat flagged imprecise', () => {
+    const { metrics, details } = baseInputs();
+    const rec = details.shoes['shoe-000']!;
+    if (!('gone' in rec)) rec.preciseReleaseDate = false;
+    const { shoesFile } = buildDataset(tests, metrics, details, undefined, curated({ 'shoe-000': '2024-02' }));
+    const zero = shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
+    expect(zero.releasedAt).toBe('2024-02-01');
+    expect(zero.releaseDateSource).toBe('curated');
+  });
+
+  it('never overrides a precise page date, which RunRepeat states outright', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details, undefined, curated({ 'shoe-000': '2024-02' }));
+    const zero = shoesFile.shoes.find((s) => s.slug === 'shoe-000')!;
+    expect(zero.releasedAt).toBe('2025-06-01');
+    expect(zero.releaseDateSource).toBe('page');
+  });
+
+  it('dates a shoe that had no date at all', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details, undefined, curated({ 'shoe-002': '2021-05' }));
+    const two = shoesFile.shoes.find((s) => s.slug === 'shoe-002')!;
+    expect(two.releasedAt).toBe('2021-05-01');
+    expect(two.releaseDateSource).toBe('curated');
+  });
+
+  it('leaves a seen-but-undated entry to fall through to the year below it', () => {
+    const { metrics, details } = baseInputs();
+    const { shoesFile } = buildDataset(tests, metrics, details, years({ 'shoe-005': 2025 }),
+      curated({ 'shoe-005': '' }));
+    const five = shoesFile.shoes.find((s) => s.slug === 'shoe-005')!;
+    expect(five.releasedAt).toBe('2025-01-01');
+    expect(five.releaseDateSource).toBe('listing');
+  });
+
+  it('reports which shoes carry a precise page date so the curated gate can see the fleet', () => {
+    const { metrics, details } = baseInputs();
+    const { pageDated } = buildDataset(tests, metrics, details);
+    expect(pageDated.get('shoe-000')).toBe(true);
+    expect(pageDated.get('shoe-002')).toBe(false);
+  });
+});

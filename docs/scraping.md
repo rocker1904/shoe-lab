@@ -151,12 +151,13 @@ anything downstream should branch on. `DetailRecord.preciseReleaseDate` stays a
 faithful transcript of RunRepeat's own flag and is an input to this, not a
 substitute for it.
 
-| source | n today | `releasedAt` holds |
+| source | precedence | `releasedAt` holds |
 |---|---|---|
-| `page` | 24 | a date the page gave and flagged precise |
-| `page-estimated` | 94 | a date the page gave and flagged imprecise |
-| `listing` | 315 | `YYYY-01-01`, materialised from the year supplement |
-| `null` | 17 | nothing anywhere had a date |
+| `page` | 1 | a date the page gave and flagged precise |
+| `curated` | 2 | `YYYY-MM-01` from a cited month we researched (§Curated release months) |
+| `page-estimated` | 3 | a date the page gave and flagged imprecise |
+| `listing` | 4 | `YYYY-01-01`, materialised from the year supplement |
+| `null` | — | nothing anywhere had a date |
 
 A boolean could not carry this. It collapsed `page-estimated` and `listing`
 together, yet only the second is fiction: those 94 shoes have a real month from
@@ -165,9 +166,45 @@ the app previously discarded by rendering the year alone. The distinction is
 also the one a CSV consumer needs, so `releaseDateSource` is a column in
 `shoes.csv` (docs/app.md §Release-date provenance).
 
-Precedence is the table order: a confirmed page date beats an estimate, which
-beats a listing year. Hand-curated months, when that work lands, slot between
-`page` and `page-estimated`.
+Precedence is the table order.
+
+## Curated release months
+
+`curated/release-dates.jsonl` holds hand-researched months, one JSON object per
+line, sorted by slug. It lives outside `data/` because `data/` is
+machine-generated and must not be hand-edited
+(docs/decisions.md §Git is the database), and it is JSONL rather than a
+TypeScript module because it holds hundreds of entries with prose quotes:
+appends are safe, diffs are one line per shoe, and a malformed quote is a
+validation error rather than a syntax error that breaks the build.
+
+**A curated month outranks RunRepeat's own listing year and its own estimate.**
+That inverts the usual posture, and is justified by one measured fact: the
+listing year is the year RunRepeat *catalogued* the shoe, not the year it
+shipped. Across roughly forty checks it has run late twenty-plus times and early
+zero times — errors of one, two, three and eight years, and eleven months of
+error inside a technically correct year (`asics-novablast-4` shipped 1 December
+2023 against a stamp of 1 January). It does **not** outrank a `page` date.
+
+Rows with `"month": null` are kept, not deleted: they record that a shoe was
+searched and what was found, so the next pass does not re-litigate it, and the
+slug stays known to the stale gate.
+
+Gates, all fatal, for the reason plate overrides are (§Decisions) — a curated
+file that silently diverges from the fleet is worse than a red build, because it
+outranks the scraped data wherever it applies:
+
+- a month that is not `YYYY-MM`, or carried on an `unresolved` row
+- a month with no cited `https` source and non-empty quote
+- malformed JSON, a missing slug, a duplicate slug
+- an entry naming a slug no longer in the dataset — **stale**
+- an entry on a shoe whose page already gives a precise date — **unusable**,
+  since `page` outranks `curated` and the row can never take effect
+
+The gathering method, the evidence rules, and every failure mode found while
+building the file are in docs/superpowers/specs — that spec is the reference for
+adding entries. For the operational runbook see
+docs/operations.md §Resuming release-date curation
 
 ## Data quirks
 

@@ -53,11 +53,11 @@ export interface ShoeDetails {
 }
 /**
  * Where a shoe's `releasedAt` came from, in precedence order — `page` is RunRepeat's own
- * confirmed date, `page-estimated` its own date flagged imprecise, `listing` a year from the
- * category listing materialised as 1 January (docs/scraping.md §Release-date provenance).
- * Null only when no source had a date at all.
+ * confirmed date, `curated` a hand-researched month we cited, `page-estimated` RunRepeat's own
+ * date flagged imprecise, `listing` a year from the category listing materialised as 1 January
+ * (docs/scraping.md §Release-date provenance). Null only when no source had a date at all.
  */
-export type ReleaseDateSource = 'page' | 'page-estimated' | 'listing';
+export type ReleaseDateSource = 'page' | 'curated' | 'page-estimated' | 'listing';
 export interface Shoe {
   slug: string; name: string; brand: string | null; url: string;
   releasedAt: string | null; releaseDateSource: ReleaseDateSource | null;
