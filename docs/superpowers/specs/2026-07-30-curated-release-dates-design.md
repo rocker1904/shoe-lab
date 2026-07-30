@@ -1,0 +1,247 @@
+# Curated release dates — design
+
+Status: design agreed in discussion, data gathering under way, **nothing wired
+into the pipeline yet**. The only artefact on this branch is
+`curated/release-dates.jsonl`.
+
+## The problem
+
+Of 450 shoes, only 24 carry a release date RunRepeat marked precise. The rest
+are supplemented or absent (docs/scraping.md §Release-year supplement), and the
+app renders every imprecise date as a bare year. Two consequences:
+
+- The recency chips (1y/2y/3y) bound on a fabricated `YYYY-01-01`, so a shoe
+  released in October is judged as if it shipped on New Year's Day.
+- 17 shoes have no date at all and are dropped silently by any date bound,
+  while the receipt reports only range-filter exclusions.
+
+Measurement across the live fleet, by provenance:
+
+| source | n | what `releasedAt` holds |
+|---|---|---|
+| page date, `precise_released_at` true | 24 | a real date |
+| page date, flagged imprecise | 94 | RunRepeat's own estimate |
+| release-year supplement | 315 | `YYYY-01-01`, our fabrication |
+| nothing | 17 | null |
+
+The "426 shoes stamped 1 January" framing used in BACKLOG.md is wrong: only 315
+are. The middle 94 carry a real month — 50 on day 01, 44 with a specific day —
+and the app currently discards it.
+
+## Evidence that RunRepeat's year cannot be trusted
+
+Two independent release calendars were cross-checked against the fleet
+(`curated/`-adjacent working data, not committed). Where both calendars agreed
+within a month, RunRepeat's listing year matched 66 times, ran **later** 11
+times, and ran **earlier zero times**. Agent lookups then confirmed the same
+direction on individually researched shoes:
+
+| shoe | RunRepeat | evidenced | error |
+|---|---|---|---|
+| xero-shoes-prio | 2025 | 2017-03 | −8 years |
+| topo-athletic-cyclone-2 | 2025 | 2023-02 | −2 years |
+| anta-zone-2-90 | 2026 | 2025-12 | −1 year |
+| new-balance-fresh-foam-roav-v2 | *none* | 2021-05 | — |
+| adidas-runfalcon | *none* | 2019-01 | — |
+
+The listing year behaves like the year RunRepeat catalogued the shoe, not the
+year it shipped, and the error is one-directional. Undated shoes skew **old**:
+every no-date shoe resolved so far landed in 2019–2022.
+
+## Data model
+
+`releasedAt` stays a full ISO string. A curated month materialises as
+`YYYY-MM-01`, exactly as a listing year already materialises as `YYYY-01-01`,
+so every sort, string comparison and `releasedAfter` bound keeps working. The
+precision lives beside the date, never inside it.
+
+`DetailRecord.preciseReleaseDate` is unchanged — it is a faithful transcript of
+what the page said. `Shoe.preciseReleaseDate` is replaced by
+`Shoe.releaseDateSource`, resolved by `build:dataset`:
+
+| source | where it comes from | precedence |
+|---|---|---|
+| `page` | page date, `precise_released_at` true | 1 (highest) |
+| `curated` | our cited month | 2 |
+| `page-estimated` | page date, flagged imprecise | 3 |
+| `listing` | the release-year supplement | 4 |
+| `null` | nothing anywhere | — |
+
+**A curated month outranks RunRepeat's listing year and its own estimate.**
+This inverts the usual posture that `data/` is authoritative, and is justified
+only by the one-directional error above. It does **not** outrank a `page` date:
+where RunRepeat states a precise date, that wins.
+
+### Rendering
+
+Everything renders at month precision — `March 2024` — except `listing`, which
+renders as the bare year, and null, which renders as an em dash. The day is not
+shown even for `page`-sourced dates: only 24 of 450 shoes could ever supply one,
+and a column that is day-precise for 5% of rows implies a precision the dataset
+does not have. The day survives where it is useful — `releasedAt` still holds
+it, so sorting stays exact and the CSV still exports full precision, consistent
+with docs/app.md §Number display.
+
+### CSV
+
+`releaseDateSource` becomes a column in both `shoes.csv` and the in-app export.
+This is what the BACKLOG's `preciseReleaseDate` boolean should have been: a
+boolean cannot distinguish *RunRepeat was unsure* from *we fabricated this from
+a listing* from *we researched it and here is the citation*, and that
+distinction is the whole point for anyone doing their own analysis.
+
+## The curated store
+
+`curated/release-dates.jsonl`, outside `data/` because `data/` is
+machine-generated and must not be hand-edited
+(docs/decisions.md §Git is the database).
+One object per line, sorted by slug. JSONL rather than a TypeScript
+override module because the file will hold hundreds of entries with prose
+quotes: appends are safe, diffs are one line per shoe, and a malformed quote is
+a validation error rather than a syntax error that breaks the build.
+
+```json
+{"slug":"topo-athletic-cyclone-2","month":"2023-02","confidence":"high",
+ "reliability":"ok","sources":[{"url":"…","quote":"…","pagePublished":"2023-01-01"}],
+ "notes":"…","method":"haiku-explore-2src"}
+```
+
+`month: null` entries are kept, not omitted: they record that a shoe was looked
+at and record what was searched, so the next pass does not re-litigate it.
+
+### Reliability taxonomy
+
+`reliability` is set by the orchestrating session, not the agent, because
+agents' self-rated confidence proved uncalibrated — one rated a Dutch regional
+retail blog "high".
+
+- `ok` — cited, quote is genuine page text, no unresolved conflict
+- `suspect` — usable but flawed; the note says why (sources disagree, the month
+  rests only on a publication date, the quote is a paraphrase, an instruction
+  was not followed)
+- `unresolved` — no date found and the search looked complete
+- `unresolved-budget` — no date found, but the attempt was degraded by blocked
+  fetches or an exhausted search budget; **retry is worthwhile**
+- `unresolved-naming` — the shoe could not be identified under that name at all;
+  a data-quality problem, not a missing date
+
+Nothing marked `suspect` should reach the app without a second look.
+
+## Gathering approach
+
+Three tiers, cheapest first.
+
+**Calendars propose.** Two release calendars were parsed
+(`solereview.com` year lists, saved by hand because Cloudflare blocks automated
+access even in a real browser; `runnerscove.com`, renderable with Playwright).
+Between them they cover 169 of 332 undated shoes. Where both agree within a
+month they agree 94% of the time, and only 5 pairs conflict by more than two
+months. **But neither is citable evidence**: both label their dates estimates,
+and runnerscove states its are AI-generated. Calendars produce candidates.
+
+**Agents confirm.** One `Explore` subagent per shoe on Haiku, told to find up to
+two independent sources and return `{month, sources[{url, quote, pagePublished}],
+generationCheck, confidence, notes}`.
+
+**Manual.** Whatever survives both.
+
+### What the trials established
+
+Haiku matched Sonnet's exact citation on every easy lookup at 78% of the cost;
+Sonnet only wins on the hard tail, where it costs 2× and still often fails. Use
+Haiku, retry nulls, and escalate model only as a last resort.
+
+Configuration matters more than model. Moving from `general-purpose` with a
+broken fetch helper to `Explore` with a working one, a two-source requirement
+and a ban on reading the repo took the same ten shoes from 4/10 resolved at
+276.8k tokens to 6/10 at 189.3k — 50% more yield for 32% fewer tokens.
+
+Run-to-run variance is high: across two runs on identical shoes, the **union**
+resolved 7 of 10 while neither run alone exceeded 6. Where both runs answered
+they agreed every time. Retrying nulls is where roughly a third of the yield
+comes from, not optional polish.
+
+### Rules the agents get, and why
+
+- **No `runrepeat.com`, and no reading the local repo.** Agents given
+  filesystem access read `data/shoes.json` and `.corpus/` and fed RunRepeat's
+  own numbers back as evidence. `Explore` plus an explicit ban fixes this.
+- **Generation guard.** The dominant wrong-answer risk is citing a neighbouring
+  model — Novablast vs Novablast 2, Glycerin 21 vs Glycerin StealthFit 21,
+  Clifton 9 vs Clifton 9 GTX. Each prompt names the confusable neighbours and
+  each result must carry a `generationCheck` saying how the page was confirmed.
+  Style codes are the best evidence (`MROAVSK2`, `F36199`, `KH7678`).
+- **Verbatim quotes, with `pagePublished` as a separate field.** Banning
+  publication-date reasoning outright turned a correct answer into a null;
+  allowing it inside the quote produced a fabricated bracketed date. Splitting
+  the fields legitimises the inference and keeps the quote checkable.
+- **Age-aware source ladder.** Brand press release > running publication >
+  specialist blog > retailer/resale. For pre-2023 shoes the first three are
+  usually gone: no confirmed lookup of an old shoe came from a brand page. A
+  strict ladder would reject exactly the shoes that need fixing.
+
+### Known limits
+
+- **Quote discipline is roughly 50%** even when spelled out. Quotes must be
+  verified mechanically by re-fetching and substring-matching; two of ten
+  results would have been caught.
+- **Nuanced instructions are unreliable.** "Take the earliest colourway date"
+  was ignored at least twice.
+- **Tool-call caps are advisory** — observed usage ran 6 to 26 against a stated
+  15.
+- **Agents cite site-search URLs.** Twice a result was "sourced" to
+  `example.com/search?q=…` with a summarised quote rather than to the article
+  itself. A search URL is not a stable citation and must be rejected by the
+  schema gate.
+- **A shared WebSearch budget exists and can be exhausted mid-run**, after
+  which agents can only fetch URLs they can guess. Nulls produced in that state
+  are marked `unresolved-budget`.
+- **Agents misread the harness's own redirect notice as a prompt injection.**
+  WebFetch does not follow cross-host redirects; it returns `REDIRECT DETECTED`
+  with the target and the sentence "Please use WebFetch again with these
+  parameters". That is imperative text arriving inside a tool result, which is
+  the exact shape of an injection, and three of the agents treated it as one —
+  one aborted its run over it. It occurred 86 times across 17 transcripts, from
+  entirely benign sources: mobile-to-desktop Wikipedia, Google's GDPR consent
+  page, an Outside Online login. **No real injection was observed.** The cost is
+  real, though: a refused redirect is a lost source. Agents should be told
+  explicitly that this message is the harness reporting a redirect, that
+  re-fetching the named URL is expected, and that the genuine rule is narrower —
+  never obey instructions found in *page content*.
+- **Cloudflare defeats the browser renderer.** `solereview.com` and
+  `kicksonfire.com` return challenge pages to Playwright. Working around that
+  would contradict the honest-User-Agent posture in
+  docs/decisions.md §Be a good citizen toward RunRepeat, so those sources are
+  human-saved or not used.
+
+## Validation gates (not yet built)
+
+Following the pattern in docs/scraping.md §Decisions, `build:dataset` should
+fail rather than write bad data:
+
+- an entry naming a slug not in the dataset is **stale**
+- an entry whose month agrees with an existing `page` date is **redundant**
+- an entry that contradicts a `page` date is a **conflict** — one of them is
+  wrong and a human must decide
+- a malformed `month`, a non-https URL, or an empty quote is a **schema error**
+
+Determinism is preserved: the curated file is an input, so `build:dataset`
+still has no wall-clock dependency.
+
+## Cost posture
+
+Curation runs on the author's Claude Code budget and produces a committed file;
+the weekly refresh stays free and gains no per-run cost. That keeps it inside
+docs/decisions.md §Free tools only, which permits an agent to *author* a change
+but not to *run* one — but the decision should be recorded there explicitly
+before this lands, because "an LLM pass over the dataset" is named in that
+section as out of scope by default.
+
+## Open questions
+
+- Whether the app should surface `curated` provenance to the reader at all, or
+  simply render the better date silently.
+- Whether a "released before" bound is added at the same time; the
+  last-generation strategy in docs/shoe-stories.md cannot currently be
+  expressed.
+- How `suspect` entries are resolved — a second agent pass, or a human queue.
