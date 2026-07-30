@@ -638,9 +638,9 @@ Rewrite all three `PRESETS[].describe` strings **and the three `desc` strings in
 
 `DetailPanel.svelte` does **not** iterate columns today: it derives from `SIDES`, filters on `columns.includes(EASY.keys[s])`, and keys its `{#each}` by `(b.side)` (line 93). With three definitions on screen `heel` appears three times and Svelte throws **duplicate key**.
 
-- [ ] **Step 1: Failing test** — a view showing all six score columns renders six breakdowns, each titled by `columnLabel`; Race's has three rows and never a stability row even with `stability: true`.
-- [ ] **Step 2:** Run → FAIL (duplicate key, or three breakdowns not six).
-- [ ] **Step 3:**
+- [x] **Step 1: Failing test** — a view showing all six score columns renders six breakdowns, each titled by `columnLabel`; Race's has three rows and never a stability row even with `stability: true`.
+- [x] **Step 2:** Run → FAIL (duplicate key, or three breakdowns not six).
+- [x] **Step 3:**
 
 ```typescript
   const breakdowns = $derived(view.columns.flatMap((key) => {
@@ -651,7 +651,7 @@ Rewrite all three `PRESETS[].describe` strings **and the three `desc` strings in
 
 `{#each breakdowns as b (b.key)}`. Use `sideOfKey` from `lineage.ts` — **not** a `key.endsWith('-heel')` heuristic, which would be a second spelling of something `lineage.ts` owns and the slug-inference pattern it refuses everywhere. `TERM_LABEL` becomes `Record<TermKey, string>` and gains a `weight` entry.
 
-- [ ] **Step 4:** `npm run verify` → PASS. Commit — `"Break down whichever story's score is on screen"`
+- [x] **Step 4:** `npm run verify` → PASS. Commit — `"Break down whichever story's score is on screen"`
 
 ---
 

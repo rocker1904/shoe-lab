@@ -2,9 +2,9 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, reviewUrl } from '../lib/dataset';
   import { columnLabel } from '../lib/labels';
-  import type { Side } from '../lib/lineage';
+  import { sideOfKey } from '../lib/lineage';
   import { contributions, type Reading, type TermKey } from '../lib/score';
-  import { EASY } from '../lib/score-defs';
+  import { defForKey } from '../lib/score-defs';
   // {@html} below is confined to the two build-time-sanitised fields; every other field is untrusted
   // scrape text and must stay plain interpolation (docs/app.md §Sanitised-HTML boundary).
   let { shoe, data, columns, stability }: {
@@ -23,13 +23,17 @@
     energyReturn: 'Energy return', weight: 'Weight', midsoleWidth: 'Midsole width / stack',
     heelCounter: 'Heel counter stiffness',
   };
-  const SIDES: Side[] = ['heel', 'forefoot'];
-  const breakdowns = $derived(SIDES.filter((s) => columns.includes(EASY.keys[s])).map((side) => ({
-    side,
-    // The column's own header text, so the two are named by one function rather than two.
-    label: columnLabel(EASY.keys[side], undefined),
-    terms: contributions(EASY, shoe, side, stability, idx),
-  })));
+  // Driven off the columns rather than off the sides: with three stories on screen a side appears
+  // three times, so the column is the only key that is unique. `sideOfKey` rather than a
+  // `-heel` suffix test — inferring a side from a slug is what `lineage.ts` exists to refuse.
+  const breakdowns = $derived(columns.flatMap((key) => {
+    const def = defForKey(key);
+    const side = sideOfKey(key);
+    return def && side
+      // The column's own header text, so the two are named by one function rather than two.
+      ? [{ key, label: columnLabel(key, undefined), terms: contributions(def, shoe, side, stability, idx) }]
+      : [];
+  }));
   // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
   // mapped 1.0 alone says nothing about which reading put them there
   // (docs/app.md §The story scores).
@@ -91,7 +95,7 @@
   {/if}
   <!-- One per score column on screen, and none at all without one: the panel explains what the
        table is showing rather than a side of its own (docs/app.md §The story scores). -->
-  {#each breakdowns as b (b.side)}
+  {#each breakdowns as b (b.key)}
     <section class="score-breakdown">
       <h4>{b.label}</h4>
       {#if b.terms === null}

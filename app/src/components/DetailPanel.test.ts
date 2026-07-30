@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 import DetailPanel from './DetailPanel.svelte';
-import { EASY } from '../lib/score-defs';
+import { columnLabel } from '../lib/labels';
+import { EASY, RACE, SCORE_DEFS } from '../lib/score-defs';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 
@@ -157,5 +158,41 @@ describe('DetailPanel Easy score breakdown', () => {
   it('says so plainly when a shoe cannot be scored', () => {
     panel({ slug: 'mystery' });
     expect(screen.getByText(/not scored/i)).toBeInTheDocument();
+  });
+});
+
+describe('DetailPanel with every story on screen', () => {
+  const allScoreColumns = SCORE_DEFS.flatMap((d) => [d.keys.heel, d.keys.forefoot]);
+  const panel = (stability: boolean) => render(DetailPanel, {
+    props: { shoe: FLEET.find((s) => s.slug === 'cushy')!, data: DATA,
+             columns: allScoreColumns, stability },
+  });
+
+  it('renders one breakdown per score column, keyed by the column rather than the side', () => {
+    // Keying by side would be a duplicate key with three stories on screen, and Svelte throws.
+    const { container } = panel(false);
+    expect([...container.querySelectorAll('.score-breakdown h4')].map((h) => h.textContent))
+      .toEqual(allScoreColumns.map((k) => columnLabel(k, undefined)));
+  });
+
+  it('gives Race three rows and never a stability row, even when the preference is on', () => {
+    const { container } = panel(true);
+    const race = [...container.querySelectorAll('.score-breakdown')]
+      .find((s) => s.querySelector('h4')!.textContent === columnLabel(RACE.keys.heel, undefined))!;
+    const rows = [...race.querySelectorAll('tbody tr')].map((r) => r.querySelector('td')!.textContent);
+    expect(rows).toEqual(['Shock absorption', 'Energy return', 'Weight']);
+  });
+
+  it('lists the terms two stories share in the same order in both tables', () => {
+    // One shared TERM_ORDER, so a runner comparing two breakdowns is not re-reading the same terms
+    // in a different sequence.
+    const { container } = panel(false);
+    const order = (key: string) => {
+      const s = [...container.querySelectorAll('.score-breakdown')]
+        .find((x) => x.querySelector('h4')!.textContent === columnLabel(key, undefined))!;
+      return [...s.querySelectorAll('tbody tr')].map((r) => r.querySelector('td')!.textContent);
+    };
+    const easy = order(EASY.keys.heel).filter((t) => t !== 'Outsole durability');
+    expect(order(RACE.keys.heel).filter((t) => t !== 'Weight')).toEqual(easy);
   });
 });
