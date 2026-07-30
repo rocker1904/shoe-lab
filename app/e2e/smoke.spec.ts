@@ -83,8 +83,9 @@ test('picks a side, keeps the strip open through it, and returns to that side\'s
   await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
-  // Easy bounds nothing, so its side rides in the columns alone.
-  await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
+  // Easy bounds nothing, so its side rides in the columns alone — the terms it scores on, stack
+  // not among them.
+  await expect(page).toHaveURL(/cols=[^&]*energy-return-forefoot/);
 
   await page.getByRole('radio', { name: /All/ }).click();
   // written out in full: the side rides in `cols`, so a plain forefoot table is a verbose link
