@@ -32,7 +32,7 @@
   /** The value row is only ever numeric: it is what keeps every chip the same box under a header
    *  that labels it (docs/app.md §Columns and sorting). */
   const cols = $derived(view.columns.filter((c) => isFigure(c, idx.bySlug.get(c))));
-  // A card whose value row holds nothing still needs a cell to span, so the colspan never hits 0.
+  // A shoe whose value row holds nothing still needs a cell to span, so the colspan never hits 0.
   const span = $derived(Math.max(cols.length, 1));
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
   // mean something different from its neighbours' in the same row.
@@ -90,7 +90,7 @@
   async function toggle(slug: string, row: HTMLElement | null) {
     if (expanded.delete(slug)) return;
     expanded.add(slug);
-    // The panel opens below the card, so a card near the fold opens off screen. Awaited so the
+    // The panel opens below the shoe, so a shoe near the fold opens off screen. Awaited so the
     // panel exists to be scrolled to. jsdom implements no layout and defines neither
     // `scrollIntoView` nor `matchMedia`, hence the optional calls.
     await tick();
@@ -126,7 +126,7 @@
     <tbody>
       {#each shoes as s, i (s.slug)}
         {#if i > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
-        <!-- `aria-expanded` says the card controls something; `aria-controls` is the only thing
+        <!-- `aria-expanded` says the row controls something; `aria-controls` is the only thing
              that says what, and the panel is a sibling row rather than a child of the control.
              Emitted only while it is open: the panel exists only then, and an IDREF naming a node
              that is not in the document is an unresolvable reference rather than a promise of one. -->
@@ -251,7 +251,7 @@
           letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
   .chip.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
   .chip.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
-  /* The name's size, not the metadata's: it is the affordance for the whole card. */
+  /* The name's size, not the metadata's: it is the affordance for the whole shoe. */
   .chev { display: inline-block; color: var(--text-dim); }
   @media (prefers-reduced-motion: no-preference) {
     .chev { transition: transform 120ms ease-out; }

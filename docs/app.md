@@ -1538,12 +1538,18 @@ over the page instead of over the surface, which is the one thing the rule
 above is about. The sticky name cell carries a surface of its own as well,
 because the numeric cells scroll underneath it rather than behind the row.
 
-The page sits one step behind the chrome and two behind the row surface
-(`--bg`, `--chrome`, `--surface`), which is what makes the phone's cards read
-as surfaces rather than as the page. Both themes keep that ordering: at
-`#eeeeea` the light identity strip was 1.04:1 against the page and only the
-white value row read as a card, where `#e6e6e1` gives 1.12:1 — the separation
-dark already had.
+**Elevation follows what is pinned**: page, then the table's panel, then the
+sticky header on top of it. The neutrals are warm-grey, and the page sits one
+step behind the chrome and two behind the row surface (`--bg`, `--chrome`,
+`--surface`), with `--well` a **recessed** fourth: it is where an expanded row
+sits, in both renderings, because an open row belongs to the row above it rather
+than floating over the table. Dark lifts off near-black — `#0f1113` page against
+a `#1a1d21` surface — where a nearly pure black drove the wash to mud.
+
+Two shadows carry the two raised planes: `--shadow-panel` on the table's panel,
+which is `none` in dark because the surface step already carries it there, and
+`--shadow-sticky`, which the pinned header casts onto the rows sliding under it.
+`--shadow-dialog` is the third, for anything floating free of the page.
 
 Direction is **declared**, in `app/src/lib/direction.ts`, and never inferred
 from a slug or a name: `outsole-durability` is Dremel dent depth in mm, so

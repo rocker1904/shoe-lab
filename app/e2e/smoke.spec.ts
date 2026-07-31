@@ -96,7 +96,7 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
 
 // The 700px switch is invisible to jsdom: it applies no component CSS and evaluates no media
 // query, so only a real browser can say which of the two tables is on screen.
-test('switches to stacked cards on a phone, and back', async ({ page }) => {
+test('switches to the stacked list on a phone, and back', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto('/');
   const mobile = page.getByTestId('shoe-table-mobile');
