@@ -368,6 +368,74 @@ it hands over to does fill its selected pill.
 The side cards carry no description, so their name must **centre vertically**
 in a box whose height is set by the story cards beside it.
 
+## The expanded row
+
+The panel is a **recessed well**, not another raised surface: an open row belongs
+to the row above it rather than floating over the table, which is the same
+elevation rule the phone rendering follows.
+
+### Measure was the defect
+
+The prose had no maximum width, so it ran the full width of the table:
+**124 characters per line at 1440px, 195 at 1920px**, growing without bound.
+Comfortable measure is 45–75.
+
+### Layout
+
+A 12-column grid in three zones. **Identity** — the image and the feature
+chips and facts. **Opinion** — RunRepeat's summary, pros and cons, and the
+who-should-(not)-buy prose. **Our working** — the score breakdown.
+
+| container width | layout |
+|---|---|
+| ≥ 1120px | breakdown pulled up beside the image and facts; summary, then pros/cons beside the prose |
+| 700–1120px | image beside facts; summary, then pros/cons beside the prose; **breakdown at the foot** |
+| < 700px | one column, breakdown last |
+
+Three things this gets right that earlier attempts did not, each established by
+measuring rather than by eye:
+
+**Empty space beside prose is margin; empty space beside a bordered card is a
+hole.** Balancing column heights is the wrong goal — the fix is never to stand
+a short bordered card next to tall prose. That is why the breakdown sits in the
+top band with the other short things, or at the foot, and never in a rail
+beside the review.
+
+**The summary and the two columns beneath it are one box**, capped at 800px
+wide, 430px when stacked. Capping the prose column alone made the summary
+overshoot it on a wide panel; capping nothing pushed the prose back to 95
+characters. Sizing one shared box satisfies both, and the prose measure then
+falls out of the box rather than being set separately. Measured per tier:
+**69 / 69 / 54 / 69 / 54 characters**, zero horizontal overflow, identical in
+both engines.
+
+**Multi-column prose was tried and rejected.** It came out *taller* than the
+layout it was meant to shorten — `break-inside: avoid` refuses to split the
+long lists — and it costs a read-down-then-back-up path inside a row that is
+itself inside a scrolling table.
+
+### Container queries, not media queries
+
+The panel sizes itself with `@container`, because **its width is the table's,
+not the viewport's**: the sidebar takes 260px, and past six columns the table
+is wider than the screen. A viewport media query is wrong on both counts, and
+wrong in exactly the half-a-window case.
+
+### Image
+
+Every one of the 450 images is **720×480** at source and was rendered at 200px
+— 28% of what is there. It renders at **280px**. On a 2× display 360px is the
+largest size still sampling at or above native; past that it upscales.
+
+### The breakdown
+
+`Share` renders as a small bar beside the percentage, borrowing the coverage-bar
+idiom the column picker already uses, so "shock absorption is doing most of the
+work here" reads without comparing three numbers. `Reading` stays dim, so
+`3.33 = 3 / 0.9` reads as working rather than as a value. The block keeps its
+own horizontal scrollport — five columns need about 354px against the 321px a
+375px phone leaves the panel.
+
 ## Controls
 
 **The Columns control stops being a bare `<details>` marker.** A button with a
@@ -410,9 +478,8 @@ rows, strip cards.
 
 ## Not specified here
 
-The detail panel, help popover, column picker panel, add-filter dialog, the
-sub-800px drawer and the loading, empty and error states are **not yet
-designed**. They inherit the tokens — surfaces, radii, type scale, focus ring,
+The help popover, column picker panel, add-filter dialog, the sub-800px
+drawer and the loading, empty and error states are **not yet designed**. They inherit the tokens — surfaces, radii, type scale, focus ring,
 accent — and keep their current layouts until they get their own pass.
 
 Two of them carry known work already:
@@ -440,6 +507,8 @@ Two of them carry known work already:
   enforceable rather than remembered.
 - e2e at 360px and 390px: six columns fit, nothing clips, the page does not
   scroll sideways at six columns, and columns past the sixth remain reachable.
+- e2e over the expanded row at several panel widths: no horizontal overflow, and
+  the summary shares a right edge with the columns beneath it.
 - e2e: the pinned header sits flush against the chrome after
   `document.fonts.ready`.
 - `units.test.ts` — `headerUnits` no longer emits a direction arrow for any
