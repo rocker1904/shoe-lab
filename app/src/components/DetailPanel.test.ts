@@ -33,6 +33,24 @@ it('gives the breakdown its own scrollport', () => {
   expect(container.querySelector('.score-breakdown .scroll table')).not.toBeNull();
 });
 
+// The default `All` view carries no score column, so the widest tier had a grid area with nothing
+// in it: the panel's right half went blank while the image and facts were held to 6 of 12 columns.
+// An absent block AND an absent marker are what let the tier below take over.
+it('drops the breakdown block entirely when no score column is on screen', () => {
+  const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL, columns: ['price'] } });
+  expect(container.querySelector('.a-bd')).toBeNull();
+  expect(container.querySelector('.grid')).not.toHaveClass('has-bd');
+  // and the rest of the panel is still there to take the width
+  expect(container.querySelector('.a-img')).not.toBeNull();
+  expect(container.querySelector('.a-facts')).not.toBeNull();
+});
+
+it('marks the grid so the widest tier only places a breakdown that exists', () => {
+  const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL } });
+  expect(container.querySelector('.a-bd')).not.toBeNull();
+  expect(container.querySelector('.grid')).toHaveClass('has-bd');
+});
+
 describe('DetailPanel', () => {
   it('renders full details', () => {
     render(DetailPanel, { props: { ...VIEW, shoe: shoe({

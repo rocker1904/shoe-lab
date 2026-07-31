@@ -51,7 +51,12 @@
 </script>
 
 <div class="detail">
-  <div class="grid">
+  <!-- `has-bd` gates the widest tier's explicit placement. In the default `All` view no score column
+       is on screen, so there is no breakdown to stand beside the image — and a grid area with
+       nothing in it is not empty space, it is a hole: the panel's right half went blank while the
+       image and facts were held to 6 of 12 columns. Without one, the tier below is the right
+       layout and this class is what lets it through (docs/app.md §The story scores). -->
+  <div class="grid" class:has-bd={breakdowns.length > 0}>
     <div class="a-img">
       {#if shoe.details && shoe.imageUrl}<img src={shoe.imageUrl} alt={shoe.name} loading="lazy" />{/if}
     </div>
@@ -114,9 +119,11 @@
         </div>
       {/if}
     </div>
+    <!-- One per score column on screen, and the block itself is absent without one: the panel
+         explains what the table is showing rather than a zone of its own
+         (docs/app.md §The story scores). -->
+    {#if breakdowns.length}
     <div class="a-bd">
-      <!-- One per score column on screen, and none at all without one: the panel explains what the
-           table is showing rather than a zone of its own (docs/app.md §The story scores). -->
       {#each breakdowns as b (b.key)}
         <section class="score-breakdown">
           <h4>{b.label}</h4>
@@ -149,6 +156,7 @@
         </section>
       {/each}
     </div>
+    {/if}
   </div>
 </div>
 
@@ -179,12 +187,16 @@
     .a-body { max-width: 800px; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
   }
   /* `a-bd` is LAST in the DOM and pulled up by explicit placement here, which is what makes it fall
-     to the bottom when the space is not there, with no `order` juggling. */
+     to the bottom when the space is not there, with no `order` juggling.
+     Gated on `has-bd`, because this placement only makes sense when something occupies columns 7-12:
+     the default `All` view carries no score column, and the ungated rule left the panel's right half
+     blank while squeezing the image and facts into half the grid. With no breakdown the tier above
+     is the correct layout, and the image and facts take the width instead. */
   @container (min-width: 1120px) {
-    .a-img   { grid-area: 1 / 1 / 2 / 4; }
-    .a-facts { grid-area: 1 / 4 / 2 / 7; }
-    .a-bd    { grid-area: 1 / 7 / 2 / 13; }
-    .a-body  { grid-area: 2 / 1 / 3 / 13; }
+    .has-bd .a-img   { grid-area: 1 / 1 / 2 / 4; }
+    .has-bd .a-facts { grid-area: 1 / 4 / 2 / 7; }
+    .has-bd .a-bd    { grid-area: 1 / 7 / 2 / 13; }
+    .has-bd .a-body  { grid-area: 2 / 1 / 3 / 13; }
   }
   /* aspect-ratio, so the box is the right height BEFORE the image loads and the panel does not
      shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. Neither
