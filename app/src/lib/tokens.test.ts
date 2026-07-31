@@ -22,8 +22,9 @@ describe('design tokens', () => {
     expect(css).toContain('hsl(211 70% 54%)');
     expect(css).toContain('--accent-solid:');
     expect(css).toContain('hsl(211 84% 44%)');
-    // A token rather than a literal `#fff` in nine components: the pass exists to move colour
-    // choices into app.css, and the guard below is what keeps them there.
+    // A token rather than a literal `#fff` in each component that fills with the accent: the pass
+    // exists to move colour choices into app.css, and the guard below is what keeps them there.
+    // docs/app.md §Theming names the readers; a count here would be a second home for that list.
     expect(css).toContain('--on-accent:');
   });
 
@@ -84,7 +85,8 @@ describe('design tokens', () => {
 
   it('self-hosts both faces and names them as tokens', () => {
     expect(css).toContain('@font-face');
-    // Relative, so Vite fingerprints them and the Pages subpath survives (Task 1 Step 2).
+    // Relative, so Vite fingerprints them and the Pages subpath survives; `app.css` owns why, and
+    // the failure it prevents shows up only in production.
     expect(css).toContain("url('./assets/fonts/inter-tight.woff2')");
     expect(css).toContain("url('./assets/fonts/jetbrains-mono.woff2')");
     expect(css).toContain('--font-ui:');

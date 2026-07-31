@@ -357,8 +357,8 @@
 <style>
   .chrome { position: sticky; top: 0; z-index: 5; }
   /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes an automatic minimum of min-content, and
-     the table's 14rem name column plus its nowrap headers inflate that past the viewport, so the
-     whole document scrolled sideways at desktop widths. */
+     the table's 14rem name column plus its headers' own longest words inflate that past the
+     viewport, so the whole document scrolled sideways at desktop widths. */
   .layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); align-items: start; }
   /* A sticky column taller than the viewport can never scroll to its own bottom, and ten range
      filters easily outgrow it — give the sidebar its own scrollbar. The offset is the measured

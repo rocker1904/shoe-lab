@@ -95,9 +95,10 @@
      they wrap to different line counts. */
   .name { min-height: 1em; font-size: var(--t-lg); font-weight: 700; }
   .desc { font-size: var(--t-xs); color: var(--text-dim); line-height: 1.35; }
-  /* The zone cards carry no description, so their name centres in a box the story cards size. */
+  /* The zone cards carry no description, so their name centres in a box the story cards size. The
+     alignment is inherited by the name rather than restated on it: `.zone` and `.card` are the same
+     specificity and this rule is the later one, so it wins outright. */
   .zone { text-align: center; justify-content: center; }
-  .zone .name { text-align: center; }
   /* Six in a row is a desktop layout; on a phone each group becomes two columns at full card size.
      It costs the first screen, which is affordable exactly because the strip appears once. */
   @media (max-width: 699px) {

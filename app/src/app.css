@@ -30,7 +30,7 @@
   --text-dim: #5f6673;
   --border: #e5e5e3; --border-soft: #eeeeec;
   /* Darker than --border on purpose: a group divider sits on --chrome, where a border-coloured
-     hairline measures 1.22:1 and simply is not there. 1.61:1 (SetupStrip's own comment). */
+     hairline measures 1.22:1 and simply is not there. This one measures 1.61:1 there. */
   --divider: #c9c9c3;
   --accent: hsl(211 84% 46%); --accent-dim: hsl(211 84% 95%);
   /* ONLY for a filled accent carrying --on-accent text — the toolbar pill, the month grid's chosen

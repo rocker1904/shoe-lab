@@ -225,9 +225,10 @@
   td.name { min-width: 14rem; background: var(--surface); }
   .name-row { display: flex; gap: var(--s2); align-items: center; }
   /* The plate read "Non-carbon plate", which wrapped to three lines in an auto-sized column and
-     made the row heights ragged; the label is now "Non-carbon" and the column asks 39px less, but
-     the rule stays because wrapping is what made it ragged, not the length
-     (docs/app.md §Table presentation). On the cell rather than the header, deliberately: `nowrap`
+     made the row heights ragged; the label is now "Non-carbon" and the rule stays anyway, because
+     wrapping is what made it ragged rather than the length — what the shorter string buys is
+     measured in docs/app.md §Table presentation and lives only there. On the cell rather than the
+     header, deliberately: `nowrap`
      on a `th` makes every column's minimum its longest header, which summed past the viewport
      (docs/app.md §Columns and sorting). */
   td.num:not(.fig) { white-space: nowrap; }
@@ -244,11 +245,10 @@
   td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
   @media (prefers-reduced-motion: no-preference) {
     .chev { transition: transform 120ms ease-out; }
-    .chev.open { transform: rotate(90deg); }
     tr.expand td { animation: reveal 140ms ease-out; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .chev.open { transform: rotate(90deg); }
-  }
+  /* Outside the query, like the phone rendering's: the turned chevron is STATE, not motion, so it
+     must be drawn under `reduce` as well — only the transition into it is a preference. */
+  .chev.open { transform: rotate(90deg); }
   @keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
 </style>

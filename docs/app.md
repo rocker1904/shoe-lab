@@ -225,8 +225,11 @@ would mean `isDefaultView` never returned true again and the toolbar could
 never mark `All` again. Its control is an **✕** icon rather than the word
 "Clear": ten rows spelling it out is most of the sidebar's width, and the
 `aria-label="Clear {name}"` still says which row it belongs to. Removing drops
-the row and its bound together, and is offered
-only on a hand-added row. That needs somewhere to record which rows are
+the row and its bound together, and is offered on **any row that is not
+curated**, not only on a hand-added one: a row can also be on screen as one half
+of a zone pair, and gating Remove on the hand-added list would leave such a row
+with clearing as its only exit — which is clear-means-remove, the conflation
+this surface deleted. That still needs somewhere to record which rows are
 *shown*, so `ViewState.rows` carries the hand-added list; deriving it from the
 bound keys is exactly what made clearing and removing the same action. A row
 that arrived by link holding a non-curated bound is seeded into the list by
@@ -260,9 +263,10 @@ and its click runs the same `onclose` Escape does, so there is one dismissal
 path and not two. It renders at **every** width, unlike the drawer's, because
 this dialog is modal on the desktop too: it declares `aria-modal` and traps Tab,
 and without a scrim it floated over live content with nothing saying the page
-behind it was inert. **The dimming is provisional** — it is the only full-page
-dim in the app, so the element and its rules are deliberately kept droppable and
-both sites say so (BACKLOG.md). The outside-press dismissal it carries is not
+behind it was inert. **The dimming is provisional** — it is the only dim a
+runner meets at a desktop width, where the loop is *change a bound, read the
+table*, so the element and its rules are deliberately kept droppable and both
+sites say so (BACKLOG.md). The outside-press dismissal it carries is not
 provisional and would have to survive it
 (§Every floating panel dismisses the same way).
 
@@ -655,7 +659,7 @@ of the claim, not a bug fix.
 
 **The overflow above is measured, not guarded.** The e2e fixture is five shoes
 with one-word names, and its `scrollWidth` is 1200 with the long plate label or
-the short one, so no test in the suite reproduces the 10px the real fleet
+the short one, so no test in the suite reproduces the 27px the real fleet
 overran by. Widening the fixture is what a guard would take, and the counts and
 score values that every other e2e assertion pins are what makes that expensive.
 
@@ -715,8 +719,10 @@ suite Firefox and WebKit run (§Two renderings, and only one of them mounted).
 The `.layout` grid is `var(--sidebar-w) minmax(0, 1fr)`. The token is the one
 home for that width — the loading placeholder reserves the same track (§Decisions)
 — and the `minmax` is load-bearing: a bare `1fr` track takes an automatic minimum
-of `min-content`, which the table's 14rem name column and `white-space: nowrap`
-headers inflate past the viewport, taking the whole document sideways with them.
+of `min-content`, which the table's 14rem name column and its headers' own
+longest words inflate past the viewport, taking the whole document sideways with
+them. The headers themselves **wrap** — `nowrap` on a `th` was what made every
+column's minimum its longest header, and it is gone.
 
 Both sticky rules also depend on `Page.svelte`'s `.content` having **no
 `overflow-x`**: setting
@@ -925,7 +931,8 @@ chosen:
 - **The sort mark is `SortCaret.svelte`, the desktop's**, and only its placement
   differs. It sits in the header cell's bottom-right corner here, out of flow,
   because it is rendered in every column whether or not that column is the sorted
-  one — inline it would spend 12px of the 49px text budget permanently, enough to
+  one — inline it would spend its whole `--caret-w` of the 49px text budget
+  permanently, enough to
   put `Weight` on a second line and grow a header that is pinned and therefore
   paid by every screen. Any inline mark costs the same, a text glyph joined by a
   space most of all, because the space is a wrap opportunity.
@@ -1578,9 +1585,13 @@ The cascade is driven by what fits on a line rather than by phone-versus-desktop
 
 | width | layout |
 |---|---|
-| above 880px | one line while it holds all three groups; the actions are right-aligned |
-| 880px and below | zone and pace share line 1, actions follow on it; stability takes a line of its own |
-| 610px and below | the same rows, bought with tighter padding |
+| 880px and above | one line while it holds all three groups; the actions are right-aligned |
+| below 880px | zone and pace share line 1, actions follow on it; stability takes a line of its own |
+| below 610px | the same rows, bought with tighter padding |
+
+Both boundaries are written `879.98px` and `609.98px` rather than `880px` and
+`610px`: the tier is "880 and up is one line", and a `max-width: 880px` matches
+*at* 880 and splits the bar on the width that is supposed to be the wide one.
 
 **Chrome height is monotonic in width.** Narrowing the window may add a row, but
 it must never add one that a narrower width then gives back: a band that stands
@@ -1963,8 +1974,8 @@ The group never wraps inside itself — 232px against the 269px beside the credi
 at 360px — which matters because `smoke.spec.ts` counts chrome rows from the
 header's direct children.
 
-**The count steps down to `--t-xs` below 560px, and the month is what decides
-it.** `en-GB` renders September as `Sept`, so the widest string the formatter
+**The count steps down to `--t-xs` at 560px and below, and the month is what
+decides it.** `en-GB` renders September as `Sept`, so the widest string the formatter
 can emit is 8px wider than the July one this tier was first measured against:
 256px against the 255px left beside the title at 360px. It wrapped, took the
 credit and all three buttons with it, and cost 26px of chrome — one month in
