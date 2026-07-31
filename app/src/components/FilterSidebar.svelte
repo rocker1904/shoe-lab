@@ -264,6 +264,12 @@
 
 <style>
   aside { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+  /* Two heading styles in one column, and both are deliberate. These `h3`s are uppercase micro-
+     labels naming a SECTION of the sidebar — Search, Brand, Plate — and they set at the same size
+     and tracking as the setup strip's group labels, because they do the same job. The metric rows
+     below use `MetricRow`'s sentence-case `h4`, because those name a MEASUREMENT and carry a
+     coverage figure beside them: uppercasing "Toebox width — widest part" makes a data label shout
+     and costs the reading of the units in brackets after it. */
   h3 { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
        color: var(--text-dim); margin: 0 0 var(--s2); }
   .search { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box; }

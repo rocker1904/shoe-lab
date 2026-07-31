@@ -17,7 +17,11 @@
 <!-- `details` maps to role=group, so it needs a name of its own or it joins the sidebar's
      range groups as an unnamed one. -->
 <details aria-label="Brand">
-  <summary>{selected.length ? `${selected.length} selected` : 'Any brand'}</summary>
+  <!-- Marker suppressed and drawn instead, exactly as `ColumnPicker.svelte` does it: the two are the
+       only `<details>` in the app, and one of them showing the UA triangle read as an oversight. -->
+  <summary>{selected.length ? `${selected.length} selected` : 'Any brand'}
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </summary>
   <!-- Fifty brands in a 14rem scroll box is a list you scroll rather than read. -->
   <input class="q" type="search" aria-label="Search brands" placeholder="Search brands…" bind:value={query} />
   <ul>
@@ -33,7 +37,9 @@
 </details>
 
 <style>
-  summary { cursor: pointer; font-size: var(--t-sm); color: var(--text-dim); }
+  summary { cursor: pointer; font-size: var(--t-sm); color: var(--text-dim); list-style: none;
+            display: inline-flex; align-items: center; gap: var(--s2); }
+  summary::-webkit-details-marker { display: none; }
   .q { width: 100%; box-sizing: border-box; margin-top: var(--s1); padding: var(--s1) var(--s2);
        border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font-size: var(--t-sm); }
   ul { list-style: none; padding: var(--s1) 0 0; margin: 0; max-height: 14rem; overflow-y: auto; }

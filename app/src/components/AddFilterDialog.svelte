@@ -108,7 +108,10 @@
   .q { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); }
   .list { overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
-  .legend { display: flex; gap: var(--s3); margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
+  /* Separated, and the same rule and the same margin as the column picker's: the three clauses are
+     one sentence and read as three headings without them. */
+  .legend { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
+  .legend span + span::before { content: '·'; margin-right: var(--s2); }
   .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
   .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
   .list button { display: grid; grid-template-columns: 1fr auto 4rem 2.4rem; align-items: center; gap: var(--s2);

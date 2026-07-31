@@ -234,7 +234,17 @@ and clicking one of those still returns shoes, because brands are OR'd. The key
 set is seeded from the whole fleet, so a brand matching nothing keeps its row:
 it stays in the list, greyed, showing `(0)` and clickable — the list does not
 reflow under the cursor, and a 0 is an answer. A search box narrows the
-fifty-odd brands in a 14rem scroll box.
+fifty-odd brands in a 14rem scroll box. Its `<summary>` **suppresses the UA
+marker and draws an SVG chevron**, exactly as the column picker's does: those two
+are the only `<details>` in the app, and one of them showing the browser's
+triangle read as an oversight rather than a choice.
+
+The sidebar carries **two heading styles on purpose**. `h3` names a *section* —
+Search, Brand, Plate — and is an uppercase micro-label at the same size and
+tracking as the setup strip's group labels, which do the same job. `MetricRow`'s
+`h4` names a *measurement* and is sentence case, because uppercasing "Toebox
+width — widest part" makes a data label shout and costs the reading of the units
+in brackets after it.
 
 **Every bounded row states what it is costing**: `N excluded`, from
 `lib/relax.ts`, is the number of shoes that would return if *that one bound*

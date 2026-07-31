@@ -60,12 +60,16 @@
   </summary>
   <div class="panel">
     <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
-         beside it a lone ↑ says nothing (docs/app.md §Table presentation). -->
+         beside it a lone ↑ says nothing (docs/app.md §Table presentation).
+         OUTSIDE the scrollport, which is what `.list` below is for: inside it the legend scrolled
+         away with the first few rows and every glyph under it stopped meaning anything. The
+         add-filter dialog already had this shape; now the two lists have one. -->
     <p class="legend">
       <span><b>↑</b> higher is better</span>
       <span><b>↓</b> lower is better</span>
       <span>no mark — neutral</span>
     </p>
+    <div class="list">
     {#each FIXED as [key, label] (key)}
       <label>
         <input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} />
@@ -85,6 +89,7 @@
         </label>
       {/each}
     {/each}
+    </div>
   </div>
 </details>
 
@@ -97,10 +102,14 @@
   .count-badge { font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1;
                  padding: 2px var(--s1); border-radius: var(--r-sm);
                  background: var(--bg); color: var(--text-dim); }
-  .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); min-width: 20rem; box-shadow: var(--shadow-dialog); }
+  .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); min-width: 20rem; box-shadow: var(--shadow-dialog); }
+  .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }
-  .legend { display: flex; gap: var(--s3); margin: 0 0 var(--s2); font-size: var(--t-xs); color: var(--text-dim); }
+  /* Separated, and the same rule and the same margin as the add-filter dialog's: the three clauses
+     are one sentence and read as three headings without them. */
+  .legend { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
+  .legend span + span::before { content: '·'; margin-right: var(--s2); }
   .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
   .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
   /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
