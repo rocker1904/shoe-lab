@@ -294,7 +294,7 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
   }
 
   // The pinned header row must clear the chrome at every width, which a constant offset cannot do:
-  // the chrome is 44px at 1200 and 103px at 375.
+  // the chrome roughly doubles between these two (docs/app.md §Columns and sorting has the figures).
   for (const width of [1200, 700, 375]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
@@ -306,6 +306,46 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
       return Math.round(th.top - chrome.bottom);
     });
     expect(gap, `header row occluded at ${width}px`).toBeGreaterThanOrEqual(0);
+  }
+});
+
+/**
+ * While the setup strip is up the bar carries no groups, and the rule giving the stability
+ * preference a whole row is written against them — "the 389px control does not fit beside the two
+ * groups". Applied without them it left the ACTIONS alone on the bar's first row with its left half
+ * empty: 211px of void at 390px and 597px at 800px, on the phone's landing screen.
+ *
+ * The property, not the pixel count: the preference never sits below the actions. Either they share
+ * a row, or the preference leads and the actions trail at the right edge they hold at every other
+ * width. jsdom lays nothing out and evaluates no media query, so only a browser can answer it.
+ */
+test('never opens the bar with the actions alone on a row', async ({ page }) => {
+  for (const width of [360, 390, 430, 560, 610, 700, 800, 840, 900, 1200, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    // A bare arrival, so the strip still holds the two questions and the bar is group-less.
+    await expect(page.getByTestId('setup-strip')).toBeVisible();
+    const seen = await page.evaluate(() => {
+      const y = (s: string) => {
+        const b = document.querySelector(s)?.getBoundingClientRect();
+        return b ? Math.round(b.y + b.height / 2) : null;
+      };
+      const el = document.querySelector('[data-testid="toolbar"]')!;
+      const bar = el.getBoundingClientRect();
+      const act = document.querySelector('[data-testid="toolbar"] .actions')!.getBoundingClientRect();
+      return { stabY: y('[data-testid="toolbar"] .stability'), actY: y('[data-testid="toolbar"] .actions'),
+               groups: !!document.querySelector('[data-testid="toolbar"] .zone-wrap'),
+               // against the bar's OWN padding, not a constant: it is `--s5` at the widest tier and
+               // `--s2` at the narrowest, so a fixed slack passes one tier and fails another.
+               actRightGap: Math.round(bar.right - parseFloat(getComputedStyle(el).paddingRight)
+                                       - act.right) };
+    });
+    expect(seen.groups, `the bar drew its groups beside the strip at ${width}px`).toBe(false);
+    expect(seen.stabY).not.toBeNull();
+    expect(seen.stabY, `the actions lead the bar alone at ${width}px, leaving its left half empty`)
+      .toBeLessThanOrEqual(seen.actY!);
+    // and wherever they land they sit flush against the bar's trailing edge, as at every other width
+    expect(seen.actRightGap, `the actions left the right edge at ${width}px`).toBeLessThanOrEqual(1);
   }
 });
 

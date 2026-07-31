@@ -383,7 +383,8 @@ and further typing would append to what it rewrote.
 
 Two details the plot has to get right. **It is not a tab stop**: giving it
 `tabindex` so `:focus-within` could reveal the grips would add an empty stop in
-an app that already has 49, so the reveal hangs off the **row** — hover or
+an app that already spends 55 before the first shoe
+(docs/app.md §Table presentation), so the reveal hangs off the **row** — hover or
 focus-within on the fieldset — which also means tabbing into either number
 field reveals them. And **the touch hit areas are gap-aware**: 44px on a 222px
 plot is a fifth of the width each way, so each shrinks to half the gap once the
@@ -636,9 +637,11 @@ is the one the column heading already carries, and it is 35px in the only place
 the table cannot afford them. Measured with the real fleet at 1200px, where the
 content track is 908px: the plate column asks 128px with the trailing word and
 93px without, taking the table's min-content from 935px to **900px** — the
-difference between a document that overruns the viewport by 27px and one that
-fits with 8px in hand. This is the one home for that figure; the rule in
-`ShoeTable.svelte` states only why it stays.
+difference between a document that overruns the viewport by 12px and one that
+fits with 8px in hand. (27px is the *other* subtraction — min-content against
+the track. The overrun a runner sees is `scrollWidth` against the viewport, and
+this section uses that measure throughout.) This is the one home for that
+figure; the rule in `ShoeTable.svelte` states only why it stays.
 
 Letting the cell wrap instead is measured and rejected: it takes the column to
 68px, but the plated rows then stand 71px against every other row's 36px, which
@@ -659,7 +662,7 @@ of the claim, not a bug fix.
 
 **The overflow above is measured, not guarded.** The e2e fixture is five shoes
 with one-word names, and its `scrollWidth` is 1200 with the long plate label or
-the short one, so no test in the suite reproduces the 27px the real fleet
+the short one, so no test in the suite reproduces the 12px the real fleet
 overran by. Widening the fixture is what a guard would take, and the counts and
 score values that every other e2e assertion pins are what makes that expensive.
 
@@ -676,8 +679,10 @@ a *sibling* row rather than a child of the control, so nothing else says what
 the row expands, and it exists only while the row does — an IDREF naming a node
 that is not in the document resolves to nothing.
 
-**A skip link is the first element in the page.** It is 49 tab stops from the
-top to the first table row, and `SkipLink.svelte` moves focus to
+**A skip link is the first element in the page.** It is 55 tab stops from the
+top to the first table row once the strip has handed over, and 70 while the
+strip is still up — measured at 1200px with the real fleet; the sidebar's rows
+move it, so it is a scale rather than a constant. `SkipLink.svelte` moves focus to
 `TABLE_ANCHOR_ID` (`lib/anchor.ts`) itself rather than letting the `href`
 navigate: the query string is the view and nothing else may write to the
 address bar, so a `#shoe-table` left behind would ride along in every copied
@@ -699,10 +704,14 @@ The `thead` pins at `--thead-top`, and the first column pins left.
 and the toolbar in one `.chrome` box, pins that box at `top: 0`, and binds its
 `clientHeight`; the same number gives the sidebar its `top` and its
 `max-height`. There is no fallback value, because there is no width at which a
-constant is right: the chrome is 44px at 1200px, 70px at 700px once the header
-wraps, and 103px at 375px once the toolbar wraps too. A hard-coded `3.2rem`
-pinned the header row 19px behind the chrome at 700px and 52px behind it at
-375px, so the row was partly invisible on every phone.
+constant is right: measured with the real fleet, once the strip has handed over,
+the chrome is 96px at 1200px (a one-line masthead over a one-row bar), 154px at
+700px (both have wrapped to two), and 198px at 375px, where the bar takes a
+third row. A hard-coded `3.2rem` is 51px, so it pinned the header row about
+103px behind the chrome at 700px and 147px at 375px — the row was not merely
+partly invisible, it was off the screen. This is the one home for these
+figures; `ShoeTable.svelte` and `smoke.spec.ts` point here rather than
+restating them.
 
 It varies with **time** as well as width, now that the app self-hosts its faces:
 the face swaps in after first paint, the chrome reflows by about 6px, and a
@@ -745,6 +754,14 @@ Three zones on a 12-column grid: **identity** (the image, the feature chips and 
 | ≥ 1120px | breakdown pulled up beside the image and facts; pros/cons beside the prose |
 | 700–1120px | image beside facts; pros/cons beside the prose; breakdown at the foot |
 | < 700px | one column, breakdown last |
+
+**The widest tier needs a breakdown to exist.** It places the image, the facts
+and the breakdown by explicit grid area, so with no score column on screen —
+which is the default `All` view, and therefore the desktop landing state —
+columns 7–12 held nothing while the image and facts were squeezed into six of
+twelve. An empty area is not white space, it is a hole. The block is dropped
+from the DOM when `breakdowns` is empty and the grid carries `has-bd` only when
+it is not, so the tier below takes over and the image reaches its full 280px.
 
 Inside that opinion column **pros and cons stack, one under the other**, at every tier.
 `.a-lists` sits in the 20rem track, so splitting it in two left each list about 18
@@ -1593,6 +1610,17 @@ Both boundaries are written `879.98px` and `609.98px` rather than `880px` and
 `610px`: the tier is "880 and up is one line", and a `max-width: 880px` matches
 *at* 880 and splits the bar on the width that is supposed to be the wide one.
 
+**Whole-row stability is a rule about the groups, so it lifts when they are
+gone.** While the setup strip still holds the two questions the bar draws only
+its actions and the preference (`showGroups`), and the row rule — written
+because the 389px control does not fit *beside* the two groups — then left the
+actions alone on line 1 with the bar's left half empty: 211px of void at 390px
+and 597px at 800px, on the phone's landing screen. The bar carries `no-groups`
+in that state, the preference leads, and the actions keep the trailing edge they
+hold at every other width; from 610px up the two share one row. Forcing them to
+share it below that was measured and rejected — it breaks the label onto two
+lines and the bar comes out *taller* at 360px, which is the binding width.
+
 **Chrome height is monotonic in width.** Narrowing the window may add a row, but
 it must never add one that a narrower width then gives back: a band that stands
 taller than both the viewport above it and the viewport below it is height
@@ -1686,6 +1714,22 @@ nested (§Filters). Both facts are measured in
 the open dialog's box — the desktop fix broke the phone once, and each width
 only catches its own failure.
 
+**Two floating boxes size against the viewport, and neither may exceed it.**
+There is no global `box-sizing` reset — the components that size against their
+container set it themselves — so a width meant as a total has to say so:
+
+- the **Add-filter dialog** is `width: min(28rem, 92vw)`, which is meant to
+  leave 4% of the screen each side. Measured in content-box the 16px padding and
+  1px border each side landed on top of it and the box came out 34px wider than
+  asked: 365px inside a 360px screen, clipping its own border and both left
+  corners off the edge at every phone width. It carries
+  `box-sizing: border-box`, and now sits 14px clear of each edge at 360px.
+- the **column picker panel** is `min-width: 20rem` of *content*, so 354px in
+  total against the 352px the bar leaves it at 360px — its left hairline fell
+  off the screen. The 4px a side comes out of the **padding** below 400px, never
+  out of the 20rem: at 20rem the direction legend holds one line, and border-box
+  sizing shrinks it to 320px and wraps it, which the design forbids.
+
 ## Theming
 
 Three-state cycle (auto → light → dark) persisted in `localStorage` and
@@ -1725,6 +1769,14 @@ luminance where both inks are equally bad, and the best obtainable there is
 4.22:1 against this theme's ink. With one ink contrast falls monotonically as
 the wash strengthens, which is what makes the endpoint genuinely the worst
 case. Do not reintroduce a second ink without redoing that arithmetic.
+
+**The endpoint is not the worst case once a row is hovered.** `--hover-wash` is
+painted as a background *image* over the cell's wash, so a pointed-at peak cell
+is a third layer and lands below the ramp's own endpoint: 4.67:1 in both themes
+against 4.73 light and 4.80 dark at rest. `wash.test.ts` sweeps both ramps
+under that overlay too, because nothing else in the suite would fail if
+`--hover-wash` grew — the light peak tolerates a hover alpha up to 0.194 and the
+dark up to 0.149, against the 0.06 that ships.
 
 **`--accent`, `--accent-solid` and `--on-accent` are three tokens with three
 jobs.** `--accent` is the small mark — hairlines, carets, in-range bars, links
