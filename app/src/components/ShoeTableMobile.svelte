@@ -13,6 +13,8 @@
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
+  import DiscontinuedTag from './DiscontinuedTag.svelte';
+  import SortCaret from './SortCaret.svelte';
 
   let { shoes, data, view, scores, stability, onchange }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
@@ -116,7 +118,8 @@
         {#each cols as col (col)}
           <th aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
             <button type="button" onclick={() => setSort(col)}>
-              <span class="h-name">{shortLabel(col, columnLabel(col, idx.bySlug.get(col)))}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
+              <span class="h-name">{shortLabel(col, columnLabel(col, idx.bySlug.get(col)))}</span><SortCaret
+                dir={view.sort.key === col ? view.sort.dir : null} placement="corner" />
               <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
             </button>
           </th>
@@ -137,7 +140,7 @@
             <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
             <strong>{s.name}</strong>
             {#each metaOf(s) as m (m.key)}<span class="meta">{m.text}</span>{/each}
-            {#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}
+            {#if s.discontinued}<DiscontinuedTag />{/if}
           </td>
         </tr>
         <tr class="values">
@@ -221,15 +224,13 @@
      it and its own chips — and it recovers roughly one shoe per screen, which is the direct price
      docs/app.md flags for the two-row geometry. */
   tr.shoe { cursor: pointer; }
-  td.ident { background: none; border-radius: 0; padding: var(--s2) var(--s1) var(--s1); font-size: var(--t-sm); }
+  td.ident { padding: var(--s2) var(--s1) var(--s1); font-size: var(--t-sm); }
   td.ident strong { font-weight: 600; }
-  .meta::before, .disc-tag::before { content: '·'; margin: 0 var(--s1); color: var(--text-dim); }
+  /* The separator belongs to the metadata run, which is prose. The discontinued chip is a bordered
+     micro-label owned by `DiscontinuedTag.svelte` and carries its own margin, so a `·` in front of
+     it would punctuate a box. */
+  .meta::before { content: '·'; margin: 0 var(--s1); color: var(--text-dim); }
   .meta { color: var(--text-dim); font-size: var(--t-xs); }
-  /* Neutral, not red — red is error semantics and this is metadata. The same rule the desktop
-     table follows, or one chip means two different things on two screens. */
-  .disc-tag { color: var(--text-dim); font-size: var(--t-xs); letter-spacing: 0.06em;
-              text-transform: uppercase; }
-  tr.values { background: none; }
   tr.values td { padding: 0 0 var(--s2); }
   /* One hairline between shoes, drawn by its own row so it spans the border-spacing gaps. */
   tr.rule td { border-top: 1px solid var(--border-soft); height: 0; padding: 0; }

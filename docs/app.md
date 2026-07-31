@@ -469,12 +469,19 @@ it renders at a size worth having.
 The `discontinued` chip is a **neutral uppercase micro-label** in `--text-dim`
 with a hairline border. Red is error semantics and this is metadata — and
 dimming or alarming the row would argue against the `discontinued=only` filter,
-which exists because those shoes are worth finding.
+which exists because those shoes are worth finding. It lives in
+`DiscontinuedTag.svelte` and both renderings mount that, which is the only
+arrangement in which "the two chips match" is a fact rather than a claim.
 
-A focused row keeps an **inset `outline`** rather than taking §Theming's one
-focus ring: that ring is a `box-shadow`, drawn outside the box, and a row spans
-the whole table and abuts its neighbours with no gap. It is the single
-exemption, and `app.css` states it as `:not(tr)` so the two can never both draw.
+A focused row keeps an **inset ring** rather than taking §Theming's one focus
+ring: that ring is a `box-shadow`, drawn outside the box, and a row spans the
+whole table and abuts its neighbours with no gap. It is the single exemption, and
+`app.css` states it as `:not(tr)` so the two can never both draw. The desktop
+draws it as one `outline` on the row — plus three inset edges on `td.name`,
+because that cell is sticky and opaque and paints over the row's own outline for
+the width of the name column. Three, not four: an `outline` on the cell adds a
+side at the column's right boundary and lands an accent bar down the middle of
+the row.
 
 Figures are right-aligned in `--font-mono` with `tabular-nums`; `plate` and
 `releasedAt` hold words and dates and are not. Those two are the cells that carry
@@ -758,9 +765,18 @@ chosen:
 - `releasedAt` and `plate` render as dim metadata after the name and **wrap
   rather than truncate**. Neither fits a ~49px cell and neither is a thing you
   scan down a column; moving them is what keeps the value row uniformly
-  numeric. The `discontinued` chip beside them is a neutral micro-label, as it
-  is on the desktop — red is error semantics and this is metadata, and one chip
-  must not mean two different things on two screens.
+  numeric. The `discontinued` chip beside them is `DiscontinuedTag.svelte`, the
+  same component the desktop mounts, which is what makes "one chip does not mean
+  two different things on two screens" a fact rather than a comment. The `·` that
+  separates the metadata run stops before it: the run is prose and the chip is a
+  bordered box carrying its own margin.
+- **The sort mark is `SortCaret.svelte`, the desktop's**, and only its placement
+  differs. It sits in the header cell's bottom-right corner here, out of flow,
+  because it is rendered in every column whether or not that column is the sorted
+  one — inline it would spend 12px of the 49px text budget permanently, enough to
+  put `Weight` on a second line and grow a header that is pinned and therefore
+  paid by every screen. The plain `▲`/`▼` it replaced did the same, joined to the
+  label by a space that wrapped.
 
 Rows are double height in this rendering, so roughly half as many shoes fit a
 screen. That is the direct price of keeping the numbers in columns, and it is

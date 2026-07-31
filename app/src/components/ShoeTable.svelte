@@ -13,6 +13,8 @@
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
   import DetailPanel from './DetailPanel.svelte';
+  import DiscontinuedTag from './DiscontinuedTag.svelte';
+  import SortCaret from './SortCaret.svelte';
 
   let { shoes, data, view, scores, stability, onchange }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
@@ -86,13 +88,8 @@
         <th class:fig={isFigure(col, idx.bySlug.get(col))}
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
-            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}<span class="caret" class:on={view.sort.key === col}>
-              {#if view.sort.key === col && view.sort.dir === 'asc'}
-                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 6l3-3 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              {:else}
-                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              {/if}
-            </span></span>
+            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}<SortCaret
+              dir={view.sort.key === col ? view.sort.dir : null} /></span>
             <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
                  second line would make the header rows different heights. -->
             <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
@@ -118,7 +115,7 @@
             <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
             <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
                  shorten it rather than drop it (docs/app.md §Columns and sorting). -->
-            <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}</div>
+            <div><strong>{s.name}</strong>{#if s.discontinued}<DiscontinuedTag />{/if}</div>
           </div>
         </td>
         {#each view.columns as col (col)}
@@ -190,11 +187,6 @@
   td.num:not(.fig) { white-space: nowrap; }
   /* Expandability was signalled by `cursor: pointer` alone, which a touch reader never sees. */
   .chev { display: inline-block; color: var(--text-dim); }
-  /* The direction of the sort is still announced by `aria-sort` on the th; the caret is decoration. */
-  .caret { display: inline-flex; margin-left: 3px; color: var(--text-dim); opacity: 0; }
-  .caret.on { color: var(--accent); opacity: 1; }
-  th:hover .caret { opacity: 0.55; }
-  th:hover .caret.on { opacity: 1; }
   /* Unconditional, because this component is the desktop rendering: below 700px `Page.svelte`
      mounts `ShoeTableMobile` instead, which has no horizontal scroll to pin against
      (docs/app.md §Columns and sorting). */
@@ -204,10 +196,6 @@
      grey stays linear (docs/app.md §Theming). */
   td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
   td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
-  /* Neutral, not red: this is metadata, and red is error semantics. Dimming the row would argue
-     against the `discontinued=only` filter, which exists because those shoes are worth finding. */
-  .disc-tag { margin-left: var(--s2); font-size: var(--t-xs); letter-spacing: 0.06em; text-transform: uppercase;
-              color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0 var(--s1); }
   @media (prefers-reduced-motion: no-preference) {
     .chev { transition: transform 120ms ease-out; }
     .chev.open { transform: rotate(90deg); }
