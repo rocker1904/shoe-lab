@@ -157,16 +157,23 @@
   th button { display: flex; flex-direction: column; gap: 1px; background: none; border: none; color: var(--text);
               font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-align: inherit; }
   /* Two lines of name are RESERVED whether or not this column's name needs them, so the pinned
-     header's height stops being a function of which columns are ticked: it already stands at two
-     lines for the default set at every desktop width, and a view of short names alone would
-     otherwise shrink it and shift the whole table under the runner. It is also what lets the
-     loading placeholder reserve a band that matches — `smoke.spec.ts` measures the two against each
-     other, and an un-reservable header makes that contract unassertable
-     (docs/app.md §Decisions). Bottom-aligned inside that box, so a one-line name reads as extra
-     air above the header rather than as a hole between the name and the units under it — and every
-     column's name and unit line then land on a common baseline. */
+     header's height stops being a function of which columns are ticked and a view of short names
+     alone cannot shrink it and shift the whole table under the runner. It is a floor, not a cap:
+     a name still takes a third line where its column is short enough, so the reserve buys stability
+     against the column set rather than against width. The price is paid at the wide end — once the
+     table track reaches 1280px every default name fits on one line, and the second reserved line is
+     18px of header pinned above every screenful. It is also what lets the loading placeholder
+     reserve a band that matches; `smoke.spec.ts` measures the two against each other on both sides
+     of the third-line threshold (docs/app.md §Decisions). Bottom-aligned inside that box, so a
+     one-line name reads as extra air above the header rather than as a hole between the name and
+     the units under it — and every column's name and unit line then land on a common baseline. */
   .h-name { display: flex; align-items: flex-end; min-height: 2lh; }
-  .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1em; }
+  /* `1lh`, not `1em`: the reserve has to be the LINE BOX a unit string would occupy, and at
+     `--t-xs` JetBrains Mono renders a 16px line box against a 12px em. A 12px reserve leaves the
+     columns that carry no unit — `Released` and `Plate` are both in the default set — 4px short, so
+     their names sit 2px below every other column's and the common baseline the reserve above exists
+     to produce is not one. */
+  .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1lh; }
   th.fig, td.fig { text-align: right; }
   th.fig button { align-items: flex-end; }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }

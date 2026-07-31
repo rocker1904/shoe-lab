@@ -102,44 +102,54 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
  *
  * Both shapes are measured in one run, with the dataset held at the route rather than mocked, so the
  * comparison is between this build's placeholder and this build's table.
+ *
+ * TWO viewports, because the header band is the part that varies: the table's header takes a third
+ * name line once a column is short enough to wrap one, and the placeholder reserves that third line
+ * through a container query on its own width (docs/app.md §Decisions). A single viewport can only
+ * ever measure one side of that threshold, and 1440 is on the two-line side. The fixture's labels
+ * are not the shipped catalogue's, so it flips at a different track width — these two sit well
+ * inside each band under both, which is what makes them a check on the reserve rather than on the
+ * fixture's wording.
  */
-test('the loading skeleton reserves the geometry the table lands in', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  let release = () => {};
-  const held = new Promise<void>((resolve) => { release = resolve; });
-  await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
+for (const width of [1440, 1200]) {
+  test(`the loading skeleton reserves the geometry the table lands in at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    let release = () => {};
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
 
-  await page.goto('/');
-  const skeleton = await page.locator('.skeleton').evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    const head = el.querySelector('.head')!.getBoundingClientRect();
-    const row = el.querySelector('.row')!;
-    return { x: Math.round(box.x), w: Math.round(box.width), headH: Math.round(head.height),
-             rowH: Math.round(row.getBoundingClientRect().height),
-             cols: row.querySelectorAll('i').length };
+    await page.goto('/');
+    const skeleton = await page.locator('.skeleton').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const head = el.querySelector('.head')!.getBoundingClientRect();
+      const row = el.querySelector('.row')!;
+      return { x: Math.round(box.x), w: Math.round(box.width), headH: Math.round(head.height),
+               rowH: Math.round(row.getBoundingClientRect().height),
+               cols: row.querySelectorAll('i').length };
+    });
+
+    release();
+    await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+    const table = await page.locator('.tblwrap').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return { x: Math.round(box.x), w: Math.round(box.width),
+               headH: Math.round(el.querySelector('thead')!.getBoundingClientRect().height),
+               rowH: Math.round(el.querySelector('tbody tr.shoe')!.getBoundingClientRect().height),
+               cols: el.querySelectorAll('thead th').length };
+    });
+
+    expect(skeleton.cols, 'the skeleton draws a different number of columns').toBe(table.cols);
+    expect(skeleton.x, 'the skeleton does not reserve the sidebar track').toBe(table.x);
+    expect(skeleton.w, 'the skeleton is not the width of the table').toBe(table.w);
+    // A line box or two of slack, and no more: these are line-box reservations against the real
+    // thing, so rounding is fair and a design difference is not. A whole missing name line is 18px,
+    // so this bound is what makes the reserve assertable at all.
+    expect(Math.abs(skeleton.headH - table.headH),
+      `head band ${skeleton.headH}px against the table's ${table.headH}px`).toBeLessThanOrEqual(2);
+    expect(Math.abs(skeleton.rowH - table.rowH),
+      `row ${skeleton.rowH}px against the table's ${table.rowH}px`).toBeLessThanOrEqual(1);
   });
-
-  release();
-  await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
-  const table = await page.locator('.tblwrap').evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    return { x: Math.round(box.x), w: Math.round(box.width),
-             headH: Math.round(el.querySelector('thead')!.getBoundingClientRect().height),
-             rowH: Math.round(el.querySelector('tbody tr.shoe')!.getBoundingClientRect().height),
-             cols: el.querySelectorAll('thead th').length };
-  });
-
-  expect(skeleton.cols, 'the skeleton draws a different number of columns').toBe(table.cols);
-  expect(skeleton.x, 'the skeleton does not reserve the sidebar track').toBe(table.x);
-  expect(skeleton.w, 'the skeleton is not the width of the table').toBe(table.w);
-  // A line box or two of slack, and no more: these are line-box reservations against the real
-  // thing, so rounding is fair and a design difference is not. The band this replaced stood 30px
-  // against 71px, which is 41.
-  expect(Math.abs(skeleton.headH - table.headH),
-    `head band ${skeleton.headH}px against the table's ${table.headH}px`).toBeLessThanOrEqual(2);
-  expect(Math.abs(skeleton.rowH - table.rowH),
-    `row ${skeleton.rowH}px against the table's ${table.rowH}px`).toBeLessThanOrEqual(1);
-});
+}
 
 // The 700px switch is invisible to jsdom: it applies no component CSS and evaluates no media
 // query, so only a real browser can say which of the two tables is on screen.
@@ -245,7 +255,7 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
     const sep = q('[data-testid="toolbar"] .sep');
     return {
       zoneY: y('[data-testid="toolbar"] .zone-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
-      actionsY: y('[data-testid="toolbar"] .actions'),
+      actionsY: y('[data-testid="toolbar"] .actions'), stabY: y('[data-testid="toolbar"] .stability'),
       sepShown: sep ? getComputedStyle(sep).display !== 'none' : false,
       paceW: q('[data-testid="toolbar"] .pace-wrap .seg')?.getBoundingClientRect().width ?? 0,
       wrapW: q('[data-testid="toolbar"] .pace-wrap')?.getBoundingClientRect().width ?? 0,
@@ -268,15 +278,15 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
 
   await page.setViewportSize({ width: 840, height: 800 });
   const mid = await boxes();
-  expect(mid.actionsY).toBe(mid.zoneY);       // actions ride up beside the zone group
-  expect(mid.paceY).toBeGreaterThan(mid.zoneY!);
+  expect(mid.actionsY).toBe(mid.zoneY);       // all three groups still share line 1
+  expect(mid.paceY).toBe(mid.zoneY);
+  expect(mid.stabY).toBeGreaterThan(mid.zoneY!);  // stability is the only item taking a line
   expect(mid.sepShown).toBe(false);             // nothing left to separate
-  expect(mid.paceW).toBeLessThan(mid.wrapW);    // shrink-wrapped, not stretched
 
-  // Below 800px the two segmented groups pair up on one row and stay paired to the narrowest phone:
-  // they ask one question each and are read together, and the tighter padding at this tier is what
-  // pays for it. 360px is the binding width, not 375 — it is the usual Android one.
-  for (const width of [700, 390, 375, 360]) {
+  // The two segmented groups pair up from 880px down and stay paired to the narrowest phone: they
+  // ask one question each and are read together, and the tighter padding below 610px is what pays
+  // for it. 360px is the binding width, not 375 — it is the usual Android one.
+  for (const width of [880, 840, 801, 800, 700, 610, 600, 560, 390, 375, 360]) {
     await page.setViewportSize({ width, height: 800 });
     const phone = await boxes();
     expect(phone.paceY, `the groups split at ${width}px`).toBe(phone.zoneY);
@@ -296,6 +306,56 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
       return Math.round(th.top - chrome.bottom);
     });
     expect(gap, `header row occluded at ${width}px`).toBeGreaterThanOrEqual(0);
+  }
+});
+
+/**
+ * Every row of chrome is paid before the first shoe, so narrowing the window may ADD a row — the
+ * content genuinely stops fitting — but must never add one that a narrower window then hands back.
+ * A band standing taller than the viewports on both sides of it is height nothing on screen asked
+ * for, and that is a property rather than a number: it holds across every tier boundary at once and
+ * survives a retune of any of them.
+ *
+ * Counted in ROWS, not pixels. The 800px tier halves the bar's vertical padding by design and the
+ * chrome legitimately gets shorter there, so a pixel-monotone claim would fail on the design rather
+ * than on a bug. The ladder steps either side of all three declared boundaries — 880, 800 and 610 —
+ * because that is where a rule can move a row.
+ *
+ * jsdom evaluates no media query and lays nothing out, so only a browser can answer it.
+ */
+test('never adds a chrome row that a narrower window hands back', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await page.goto('/');
+  // The bar carries the two segmented groups only once the strip has handed them over, and the
+  // handover is what the tiers below have to lay out.
+  await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
+  await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready.then(() => null));
+
+  // Flex lines, counted by clustering child centres: `align-items: center` puts items of different
+  // heights on one line at different tops, so counting distinct top edges over-reports.
+  const chromeRows = () => page.evaluate(() => {
+    const lines = (sel: string) => {
+      const root = document.querySelector(sel)!;
+      const ys = [...root.children]
+        .filter((e) => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0)
+        .map((e) => { const r = e.getBoundingClientRect(); return r.y + r.height / 2; })
+        .sort((a, b) => a - b);
+      return ys.reduce((n, y, i) => (i === 0 || y - ys[i - 1] > 4 ? n + 1 : n), 0);
+    };
+    return lines('header') + lines('[data-testid="toolbar"]');
+  });
+
+  let widest = 0;
+  let rows = 0;
+  for (const width of [1440, 1200, 1000, 940, 900, 881, 880, 879, 860, 840, 820, 801, 800, 790,
+                       780, 760, 700, 640, 611, 610, 600, 561, 560, 480, 430, 390, 375, 360]) {
+    await page.setViewportSize({ width, height: 800 });
+    const next = await chromeRows();
+    expect(next, `the chrome takes ${rows} rows at ${widest}px and only ${next} at ${width}px, so `
+      + `${widest}px is paying for a row nothing on screen needs`).toBeGreaterThanOrEqual(rows);
+    widest = width;
+    rows = next;
   }
 });
 

@@ -136,18 +136,18 @@ describe('flat marks stand off every surface they sit on', () => {
 
 /**
  * The same shape as the flat-mark guard above, for TEXT: `--text-dim` is small text, so 4.5:1 is
- * the bar, and it is set on more than one backdrop. `--bg` is the one this pass introduced — the
- * segmented groups' recessed track and the pickers' count badge sit in it, and an unselected pill's
- * label measured 4.44:1 there against `--surface`'s 4.85:1. `--accent-dim` is the other, under a
- * chosen setup card's description, and it is the binding case in both themes.
+ * the bar, and it is set on more than one backdrop. `--bg` carries the segmented groups' recessed
+ * track, `--border-soft` the column picker's count badge, and `--accent-dim` a chosen setup card's
+ * description — that last one is the binding case in both themes.
  *
  * Against the surfaces the token is ACTUALLY drawn on, not one representative surface: choosing a
- * dim ink against white alone is exactly how both of those regressions passed unnoticed.
+ * dim ink against white alone is how an unselected pill's label reached production at 4.44:1.
  */
 describe('dim text stands off every surface it is set on', () => {
   for (const t of THEMES) {
     for (const [what, bg] of [['--surface', t.surface], ['--bg', t.page], ['--chrome', t.chrome],
-                              ['--well', t.well], ['--accent-dim', t.accentDim]] as const) {
+                              ['--well', t.well], ['--border-soft', t.track],
+                              ['--accent-dim', t.accentDim]] as const) {
       it(`${t.name}: --text-dim clears 4.5:1 against ${what}`, () => {
         const c = contrast(t.dimInk, bg);
         expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);

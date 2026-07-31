@@ -83,21 +83,32 @@
      `Page.svelte`'s two-column layout, not a full-bleed block: without it the placeholder starts at
      x=16 and the table lands at x=276, which is the jump measured. Below 800px the sidebar is a
      drawer and the track is gone, so the reservation goes with it. */
-  .skeleton { margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); background: var(--surface);
+  .skeleton { container-type: inline-size;
+              margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); background: var(--surface);
               border: 1px solid var(--border); border-radius: var(--r-md);
               box-shadow: var(--shadow-panel); overflow: hidden; }
   @media (max-width: 800px) { .skeleton { margin-left: var(--s4); } }
   /* The band the table's `thead` builds, stated in line boxes of the same two faces rather than as
-     a pixel height, so it follows the type scale: 8px of padding, the header name's TWO lines — at
-     the default column count every name wraps, which is what makes the real band 71px rather than
-     53 — a 1px gap, the mono unit line, 8px of padding and the 2px rule under it. `e2e/smoke.spec.ts`
-     measures this band against the real one rather than trusting the arithmetic. */
+     a pixel height, so it follows the type scale: 8px of padding, the header name's lines, a 1px
+     gap, the mono unit line, 8px of padding and the 2px rule under it. `e2e/smoke.spec.ts` measures
+     this band against the real one on both sides of the threshold below, rather than trusting the
+     arithmetic. */
   .skeleton .head { padding: var(--s2); border-bottom: 2px solid var(--border);
                     display: flex; flex-direction: column; gap: 1px; }
   .skeleton .head .h-names { display: grid; grid-template-columns: 14rem repeat(var(--skel-cols), minmax(0, 1fr));
                              gap: var(--s3); align-items: end;
                              font-family: var(--font-ui); font-size: var(--t-md); font-weight: 600;
                              min-height: 2lh; }
+  /* The header's `2lh` floor (`ShoeTable.svelte`, `.h-name`) is only a floor: a name wraps to a
+     third line once its column is short enough, and at the default set `Energy return heel` does so
+     while the table track is 1025px or under. The placeholder cannot read that from the labels —
+     they arrive in the dataset it is waiting for — so it keys off the one input that does drive it,
+     the width of the track the header wraps in, which is this element's own. A container query
+     rather than a media query because the relation is to the track, not the viewport: the sidebar
+     and the gutters can move without this number meaning something different. */
+  @container (max-width: 1025px) {
+    .skeleton .head .h-names { min-height: 3lh; }
+  }
   .skeleton .head .h-units { font-family: var(--font-mono); font-size: var(--t-xs); min-height: 1lh; }
   /* `min-height: 1lh` in the FIGURE face, not a px height: a table row is 8px of padding, one line
      box, and a 1px hairline — and the line box is the mono cells', because JetBrains Mono's metrics

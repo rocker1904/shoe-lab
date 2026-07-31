@@ -194,7 +194,11 @@
      beside it room. */
   img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 3 / 2; object-fit: contain;
         display: block; border-radius: var(--r-md); background: var(--surface); }
-  .intro { font-style: italic; color: var(--text-dim); }
+  /* Dim ink alone marks this as the reviewer's voice. The self-hosted Inter Tight ships an upright
+     axis only, so `font-style: italic` here buys a browser-synthesised oblique — a sheared upright
+     rather than a cut — and self-hosting exists so the type is the same face everywhere
+     (docs/app.md §Theming). */
+  .intro { color: var(--text-dim); }
   /* Pros then cons, in ONE column at every width. `.a-lists` sits in `.a-body`'s 20rem track, so
      splitting it in two left each list about 18 characters a line — narrower than the phone shows
      them, on the widest screen there is. Stacked they get the whole track. */

@@ -174,14 +174,14 @@ a single renders when it is curated, active, or listed.
 
 **Accent in a range row means "your bound selects this."** An unbounded row
 draws its whole distribution in `--hist-dim` and shows no accent at all: "in
-range" is trivially true with no bound, so a sidebar with nothing set was a
-solid wall of blue, which was most of what made it noisy. Colour appears only
-once a bound exists, so scanning the sidebar answers "what is constraining this
-shortlist?" in colour as well as in the bold heading it already had.
+range" is trivially true with no bound, so painting it would make a sidebar with
+nothing set a solid wall of blue. Colour appears only once a bound exists, so
+scanning the sidebar answers "what is constraining this shortlist?" in colour as
+well as in the bold heading.
 
 **The number placeholders are rounded at the view**, like every other figure
-(docs/app.md §Number display): they were `String(extent.min)`, so shock
-absorption offered `24.884597678267` and overflowed its own field. The fields
+(docs/app.md §Number display): a raw `String(extent.min)` offers
+`24.884597678267` for shock absorption and overflows its own field. The fields
 are mono and right-aligned, so a typed bound lines up against its placeholder,
 and they step back up to **16px under `@media (hover: none)`** — iOS Safari
 zooms the whole viewport for a focused input smaller than that, with no way out
@@ -443,8 +443,16 @@ against.
 
 ### Table presentation
 
-Every header is two lines: the metric name, then the units line `headerUnits`
-derives in `app/src/lib/units.ts`. Units are **derived, never authored** —
+Every header is a **name box over a units line**. The name box reserves `2lh`
+whether or not the name fills it, so the pinned header's height is a function of
+width alone and not of which columns are ticked; it is a floor, not a cap, and a
+name still takes a third line where its column is short enough. The units line
+reserves `1lh` — the mono line box, not `1em`, which is 4px shorter at `--t-xs`
+and drops the names of the columns that carry no unit below their neighbours'.
+Both reservations are load-bearing beyond the header: the loading placeholder
+reserves the same band and `smoke.spec.ts` measures the two against each other
+(§Decisions). Units come from `headerUnits` in `app/src/lib/units.ts` and are
+**derived, never authored** —
 `float` carries its own, `percent` is `%`, `score` and `rating` are `/5`, the
 `score` field is `/100` and `msrpGbp` is `£`. There is **no direction arrow
 here**: the sorted column carries a caret, and two arrows in one header
@@ -504,30 +512,32 @@ the width of the name column. Three, not four: an `outline` on the cell adds a
 side at the column's right boundary and lands an accent bar down the middle of
 the row.
 
-Figures are right-aligned in `--font-mono` with `tabular-nums`; `plate` and
-`releasedAt` hold words and dates and are not. Those two are the cells that carry
-`white-space: nowrap`: "Non-carbon plate" wrapped to three lines in an
-auto-sized column and made the row heights ragged. It goes on the **cell**,
-never the header — `nowrap` on a `th` makes each column's minimum its longest
-header, which is the bug that pushed the document sideways.
+Figures are right-aligned in `--font-mono` with `tabular-nums`. The cells that
+are not are exactly the ones `isFigure` excludes, and there are **three** kinds:
+`plate`, `releasedAt`, and every categorical column, which holds an upstream
+phrase. Those are the cells `white-space: nowrap` applies to — the selector is
+`td.num:not(.fig)`, so it tracks `isFigure` rather than naming columns. A phrase
+allowed to wrap in an auto-sized column makes the row heights ragged. The rule
+goes on the **cell**, never the header: `nowrap` on a `th` makes each column's
+minimum its longest header, which pushes the document sideways.
 
 **The plate cell reads "Non-carbon", not "Non-carbon plate".** The dropped word
-is the one the column heading already carries, and it was costing 39px in the
-only place the table could not afford them. Measured with the real fleet at
-1200px: the plate column asks 137px with the longer label and 98px without, and
-the table's min-content is 934px against a 908px track — so the document
-scrolled 10px sideways at 1200px, and does not now.
+is the one the column heading already carries, and it is 35px in the only place
+the table cannot afford them. Measured with the real fleet at 1200px, where the
+content track is 908px: the plate column asks 128px with the trailing word and
+93px without, taking the table's min-content from 937px to **902px** — the
+difference between a document that overruns the viewport by 12px and one that
+fits.
 
-Letting the cell wrap instead was measured and rejected: the column collapses to
-73px, the label stacks onto three lines and rows carrying it grow from 44px to
-77px, which is the raggedness `nowrap` exists to prevent. The rule stays; only
-the string got shorter.
+Letting the cell wrap instead is measured and rejected: it takes the column to
+68px, but the plated rows then stand 71px against every other row's 36px, which
+is the raggedness `nowrap` exists to prevent.
 
-**Sideways scroll still exists below 1171px**, which is where the table now
-first fits — it was 1210px before this. At 1100px the document overruns by
-71px. That band runs down to the 800px breakpoint, where the sidebar becomes a
-drawer and the content track takes the full width; below 700px the mobile
-rendering takes over and there is no horizontal scroll at all.
+**Sideways scroll still exists below 1177px**, which is where the document first
+fits. At 1100px it overruns by 77px. That band runs down to the 800px
+breakpoint, where the sidebar becomes a drawer and the content track takes the
+full width; below 700px the mobile rendering takes over and there is no
+horizontal scroll at all.
 
 The e2e assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`.
 Equality tested more than the claim: a document *narrower* than the viewport
@@ -595,10 +605,11 @@ phone header sits flush against the chrome after `document.fonts.ready`;
 scroll-extent facts rather than font-metric ones and therefore belong in the
 suite Firefox and WebKit run (§Two renderings, and only one of them mounted).
 
-The `.layout` grid is `260px minmax(0, 1fr)`, and the `minmax` is load-bearing:
-a bare `1fr` track takes an automatic minimum of `min-content`, which the
-table's 14rem name column and `white-space: nowrap` headers inflate past the
-viewport. It scrolled the whole document 42px sideways at 1200px.
+The `.layout` grid is `var(--sidebar-w) minmax(0, 1fr)`. The token is the one
+home for that width — the loading placeholder reserves the same track (§Decisions)
+— and the `minmax` is load-bearing: a bare `1fr` track takes an automatic minimum
+of `min-content`, which the table's 14rem name column and `white-space: nowrap`
+headers inflate past the viewport, taking the whole document sideways with them.
 
 Both sticky rules also depend on `Page.svelte`'s `.content` having **no
 `overflow-x`**: setting
@@ -699,8 +710,10 @@ chosen:
   chassis. Elevation follows what is **pinned**: page, then this panel, then the
   sticky header on top of it.
 - **53px minimum column**, so six columns need 332px and fit any phone from
-  360px up. It was 57px against `system-ui`; Inter Tight pays for the drop, and
-  the 24px freed is what buys the panel its inset. The table bleeds most of the
+  360px up. The self-hosted Inter Tight is what makes 53px enough — `system-ui`
+  needs 57px — and the 24px that buys is what pays for the panel's inset. The
+  labels are validated against the 53px column, so a face change is a relabelling
+  (`MAX_LABEL_PX` in `labels.ts`). The table bleeds most of the
   way out of `.content`'s inline padding to get there. Past six columns the
   minimum holds and the page scrolls, so every column always has the geometry
   the labels were validated against.
@@ -807,8 +820,8 @@ chosen:
   because it is rendered in every column whether or not that column is the sorted
   one — inline it would spend 12px of the 49px text budget permanently, enough to
   put `Weight` on a second line and grow a header that is pinned and therefore
-  paid by every screen. The plain `▲`/`▼` it replaced did the same, joined to the
-  label by a space that wrapped.
+  paid by every screen. Any inline mark costs the same, a text glyph joined by a
+  space most of all, because the space is a wrap opportunity.
 
 Rows are double height in this rendering, so roughly half as many shoes fit a
 screen. That is the direct price of keeping the numbers in columns, and it is
@@ -822,9 +835,7 @@ because a selection is compared to a story's by value. As a **sort**, plate
 is ordinal: `none` 0, `plated-other` 1, `carbon` 2, so descending reads "most
 plate first" like every other column. `plated-other` reads **Non-carbon**
 everywhere a human sees it — the desktop cell, the mobile name line and the
-filter box. It read "Non-carbon plate" until the trailing word was found to be
-both a repeat of the column heading and 39px the table could not spare
-(§Table presentation).
+filter box; §Table presentation owns what the shorter string buys.
 
 ## Categorical columns
 
@@ -1389,14 +1400,16 @@ actions group (`Filters`, `Columns`) pushed right by
 it is gone by the time they are needed.
 
 **The selected pill is filled with `--accent-solid` carrying `--on-accent`**, on
-a `--bg` track with a 2px pad. The fill cannot be `--accent`: white on that
-value measures 3.71:1 in dark, so the two themes need a darker solid variant,
-which is the only kind of site `--accent-solid` exists for
-(docs/app.md §Theming). The ink is a **token** rather than a `#fff` written into
-each component, because the fill and its ink are one fact and a literal splits
-it across files — `tokens.test.ts` fails the build on a raw white in a
-component's style block. Each track keeps `overflow: visible`, because the focus
-ring is a `box-shadow` and a clipped track would swallow it.
+a `--bg` track with a 2px pad — §Theming owns why that pair is two tokens rather
+than `--accent` and a literal white. Each track keeps `overflow: visible`,
+because the focus ring is a `box-shadow` and a clipped track would swallow it.
+
+**`Filters` and `Columns` are the same control twice**, so they are sized and
+filled alike: the picker is a `<details>` whose `summary` inherits the document's
+16px and paints nothing unless told to, which puts a 16px unfilled label beside a
+13px filled button. Both carry `--t-sm` on `--surface`. The picker's count badge
+sits on `--border-soft` rather than `--bg`, which the summary's own fill would
+otherwise swallow.
 
 **The bar draws only its actions while the strip is up** (`showGroups`). The
 strip *hands over* rather than sharing the screen: both surfaces drawing the
@@ -1449,20 +1462,34 @@ The cascade is driven by what fits on a line rather than by phone-versus-desktop
 
 | width | layout |
 |---|---|
-| above 880px | one line, actions right-aligned |
-| 800–880px | actions ride up beside the zone group on line 1; pace takes line 2, shrink-wrapped |
-| 800px and below | zone and pace share line 1; actions follow, on that line while it holds them |
+| above 880px | one line while it holds all three groups; the actions are right-aligned |
+| 880px and below | zone and pace share line 1, actions follow on it; stability takes a line of its own |
+| 610px and below | the same rows, bought with tighter padding |
 
-Three details that were bugs first. The **divider is removed** the moment the
-groups stop sharing a line, or it wraps with the zone group and dangles after
-Forefoot. `flex-basis: 100%` belongs on the **wrapper**, never on the
-segment: on the segment, the bordered pill container stretches the full width
-with its pills clustered at the left. And the phone tier **tightens the bar's own
-padding, gaps and button padding** rather than dropping a control, because that
-is what pays for the two groups sharing a row: they need 366px at the wider pill
-padding, against the 344px a 360px phone leaves, and 334px at the narrower one.
-The pills stop stretching there for the same reason — filling a line was right
-while the group owned one.
+**Chrome height is monotonic in width.** Narrowing the window may add a row, but
+it must never add one that a narrower width then gives back: a band that stands
+taller than both the viewport above it and the viewport below it is height
+nothing on screen asked for. `smoke.spec.ts` walks a ladder from 1440px to 360px
+and asserts the bar's row count never falls as the window narrows — rows rather
+than pixels, because the 800px tier halves the bar's vertical padding by design
+and a pixel-monotone claim would fail on that alone. Two rules follow from it.
+`flex-basis: 100%` belongs to **stability alone**: it is the one item wide enough
+to need a line to itself, and putting it on either segmented group forces a third
+row at a width where both fit on one. And the tighter tier engages at **610px**,
+not at the phone widths its padding was drawn for, because the actions stop
+fitting beside the two groups at 601px at the wider padding — a tier that arrived
+after that break would hand back a row it had just charged for.
+
+The **divider is removed** the moment the groups stop sharing a line with the
+actions, or it wraps with the zone group and dangles after Forefoot. And
+`flex-basis: 100%` goes on the **wrapper**, never on the segment: on the segment,
+the bordered pill container stretches the full width with its pills clustered at
+the left. The tighter tier **narrows the bar's own padding, gaps and button
+padding** rather than dropping a control, because that is what pays for the two
+groups sharing a row: they need 366px at the wider pill padding, against the
+344px a 360px phone leaves, and 334px at the narrower one. The pills stop
+stretching there for the same reason — beside the zone group the pace group takes
+the row it is given rather than filling one of its own.
 
 **Below 800px the chrome has a budget**, and it is a number rather than a taste:
 everything above the first shoe is paid on the screen with the least of it. The
@@ -1473,8 +1500,9 @@ been handed the two groups**, asserted at 360px and 390px in `smoke.spec.ts`.
 Three things buy it, and none drops a control: the masthead credit's micro-label
 sets at 9px (§The header names the catalogue, the receipt owns the count), both bars trade their desktop gutter for `--s3` and their
 vertical padding for `--s1`, and the two segmented groups share a row. The credit
-stays **stacked** here — set on one line it is 142px against 75px and only 3px
-shorter, so it takes a third row out of the masthead to save three pixels.
+stays **stacked** here — set on one line it is 142px wide against 75px and only
+12px shorter, so at 390px it pushes the theme button onto a third row and takes
+the masthead from 77px to 106px: 29px spent to save 12.
 
 Picking a zone always leaves the view about that zone, in three states: a view
 equal to a story is rebuilt as that story on the new zone; a view that names a
@@ -1538,7 +1566,8 @@ Colour, spacing, radius, type and elevation all live in `app.css` as tokens on
 `:root`, with dark values under both `prefers-color-scheme` and `[data-theme]`
 so the toggle wins in either direction. Components choose none of them: the
 scales are `--s1`…`--s6`, `--r-sm`/`--r-md`/`--r-full`, `--t-xs`…`--t-xl` and
-the two shadows, and `app/src/lib/tokens.test.ts` fails the build on a
+the three shadows — `--shadow-panel`, `--shadow-sticky`, `--shadow-dialog`, all
+three pinned in `app/src/lib/tokens.test.ts`, which also fails the build on a
 component that writes its own rem font size or px radius.
 
 The row surface sits at the end of the lightness axis in each theme — white in
@@ -1573,8 +1602,10 @@ where a filled accent carries text: `--on-accent` on `--accent` is 4.74:1 in
 light but **3.71:1 in dark**, so the two themes cannot share one solid value.
 `--on-accent` is the one ink allowed on it, and it is a token rather than a
 `#fff` written into each component, because the fill and its ink are one fact
-and a literal splits it across nine files — `tokens.test.ts` fails the build on
-a raw white in a component's style block.
+and a literal splits it across the four components that read it —
+`Toolbar.svelte`, `ZoneToggle.svelte`, `MonthPicker.svelte` and
+`DiscontinuedFilter.svelte`. `tokens.test.ts` fails the build on a raw white in
+a component's style block.
 
 `--divider` is deliberately **darker than `--border`**: a group divider sits on
 `--chrome`, where a border-coloured hairline measures 1.22:1 and simply is not
@@ -1599,12 +1630,13 @@ thing it describes. Two outlines would draw a line between the rows and read as
 two rings.
 
 **`--text-dim` is held to 4.5:1 against every surface it is set on**, not against
-one representative surface: `--surface`, `--bg`, `--chrome`, `--well` and
-`--accent-dim`, all asserted in `wash.test.ts` and pinned from the other side by
-`tokens.test.ts`. That set grew this pass — the segmented groups' recessed track
-and the pickers' count badge are `--bg`, and a chosen setup card's description
-sits on `--accent-dim` — and the old value cleared only white, at 4.44:1 and
-4.28:1 on the two new ones. A chosen setup card's **name** takes no accent
+one representative surface: `--surface`, `--bg`, `--chrome`, `--well`,
+`--border-soft` and `--accent-dim`, all asserted in `wash.test.ts` and pinned
+from the other side by `tokens.test.ts`. The segmented groups' recessed track is
+`--bg`, the column picker's count badge `--border-soft`, and a chosen setup
+card's description sits on `--accent-dim`; a value chosen against white alone
+clears it there and misses those, by as much as 4.28:1 against 4.5. A chosen
+setup card's **name** takes no accent
 colour for the same reason: `--accent` on `--accent-dim` is 4.19:1 in light and
 3.28:1 in dark, and the accent border is what says "chosen".
 
@@ -1766,8 +1798,8 @@ screen said so. `Header.svelte` therefore takes no `visible` prop.
 
 The build date is formatted with locale **and** time zone pinned. `builtAt` is a
 UTC instant, so formatting it locally renders the previous day for every reader
-west of Greenwich — the ISO slice it replaced had no such problem, which makes
-dropping the zone a regression rather than an omission.
+west of Greenwich. Both pins are load-bearing: dropping the zone is what makes
+the string vary by visitor.
 
 Attribution is a **masthead credit**: a `LAB DATA BY` micro-label over
 `RunRepeat ↗` at normal text weight. The label is the one place the type scale is
@@ -1809,18 +1841,31 @@ a thumbnail-free row per shoe on the table's own `14rem` name column. A skeleton
 that stops matching **causes the jump it exists to prevent**, so its row height
 is reserved as `min-height: 1lh` in the **figure** face rather than as a number:
 a row is 8px of padding, one line box and a 1px hairline, and the line box is the
-mono cells', whose metrics run a pixel taller than the UI face's at this size.
-Left at a px height the placeholder row stood 29px against the table's 36px.
+mono cells', whose metrics run a pixel taller than the UI face's at this size. A
+px height reserves 29px against the table's 36px.
 
-Three more parts of that contract, each of which was a jump before it was a rule.
-The placeholder **reserves the sidebar track** (`--sidebar-w`, the token
-`Page.svelte` lays out against), because what replaces it is the second cell of a
-two-column layout rather than a full-bleed block — without it the skeleton stood
-at x=16 and the table landed at x=276. Its **cell count is derived** from
-`defaultColumns` plus one for the name column, never written out. And its **head
-band is the table's**, stated in line boxes of the same two faces: two lines of
-the header name, a gap and the mono unit line, which is 71px against a 30px band
-before.
+Three more parts of that contract. The placeholder **reserves the sidebar track**
+(`--sidebar-w`, the token `Page.svelte` lays out against), because what replaces
+it is the second cell of a two-column layout rather than a full-bleed block:
+without the reservation the placeholder starts at x=16 and the table lands at
+x=276. Its **cell count is derived** from `defaultColumns` plus one for the name
+column, never written out. And its **head band is the table's**, stated in line
+boxes of the same two faces: the header name's lines, a gap and the mono unit
+line.
+
+**The head band's line count is the one thing here that cannot be derived**, and
+it is the difference between a 71px band and an 89px one. The table's own header
+takes a third name line once a column is short enough to wrap one
+(§Table presentation), but which names those are arrives in the dataset the
+placeholder is waiting for — so the reserve keys off the input that does drive
+it, the width of the track the header wraps in, through a `@container` query on
+the placeholder's own box. At the default column set that threshold is **1025px
+of track**. It is a claim about the shipped catalogue's labels rather than a
+constant: `smoke.spec.ts` measures the placeholder against the real header on
+both sides of it, so a rename that moves it fails the build rather than the
+layout. The e2e fixture's own labels are not the catalogue's, so the two flip at
+different widths and the test probes a viewport well inside each band rather than
+the boundary itself.
 
 `App.test.ts` pins the row count, the cell count and the structure — the parts
 that are DOM facts — and `smoke.spec.ts` measures the geometry against the real

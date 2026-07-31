@@ -22,11 +22,11 @@
      and only the white value row read as a card (docs/app.md §Theming). */
   --bg: #f5f5f4; --surface: #ffffff; --chrome: #fbfbfa; --well: #faf9f8;
   --text: #16181b;
-  /* Held to 4.5:1 against every surface it is set on, not just the white one, and that set grew
-     this pass: the segmented groups' track and the pickers' count badge are now `--bg`, and a
-     chosen setup card's description sits on `--accent-dim`. #6a7280 cleared `--surface` at 4.85:1
-     and failed both of the new ones (4.44:1 and 4.28:1). 5.10:1 at the worst of them, asserted in
-     wash.test.ts (docs/app.md §Theming). */
+  /* Held to 4.5:1 against every surface it is set on, not just the white one: the segmented groups'
+     track is `--bg`, the column picker's count badge `--border-soft`, and a chosen setup card's
+     description sits on `--accent-dim`. A value picked against `--surface` alone clears it at
+     4.85:1 and fails those three; this one is 5.10:1 at the worst of them, asserted in wash.test.ts
+     (docs/app.md §Theming). */
   --text-dim: #5f6673;
   --border: #e5e5e3; --border-soft: #eeeeec;
   /* Darker than --border on purpose: a group divider sits on --chrome, where a border-coloured

@@ -95,10 +95,11 @@
   @media (max-width: 800px) {
     header { --gap-x: var(--s3); flex-wrap: wrap; gap: var(--s2) var(--gap-x);
              padding: var(--s2) var(--s3); }
-    /* The credit stays STACKED here, and that is the measurement rather than the obvious answer: set
-       on one line it is 142px against the stacked 75px and only 3px shorter, so it takes 67px out of
-       a 366px line and pushes the theme button onto a third row — 33px, to save 3. The 9px label
-       above is what made the stacked form cheap enough to keep. */
+    /* The credit stays STACKED here, and that is the measurement rather than the obvious answer: on
+       one line it is 142px wide against the stacked 75px, and only 12px shorter — a 16px line box
+       against 28px of stack. At 390px those 67px of extra line push the theme button onto a third
+       row and the masthead goes from 77px to 106px, so the 12px saving costs 29. The 9px micro-label
+       above the name is what keeps the stacked form that cheap. */
     /* The spacer exists to push the credit to the far right of a bar that is ONE line. Once the bar
        wraps it is a growing item on whichever line it lands on, so it opens a hole there and forces
        the credit onto a row of its own — which is the row this tier is trying not to pay for. */

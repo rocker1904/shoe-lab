@@ -95,13 +95,22 @@
 
 <style>
   .picker { position: relative; }
+  /* Sized and filled like the `Filters` button it stands beside on the toolbar: `summary` inherits
+     the document's 16px rather than the bar's `--t-sm`, and an unpainted control shows `--chrome`
+     where its neighbour shows `--surface` — two controls that do the same kind of job reading as
+     two kinds of control (docs/app.md §The toolbar). */
   summary { cursor: pointer; padding: var(--s1) var(--s3); border: 1px solid var(--border);
             border-radius: var(--r-sm); white-space: nowrap; list-style: none;
+            font-size: var(--t-sm); background: var(--surface);
             display: inline-flex; align-items: center; gap: var(--s2); }
   summary::-webkit-details-marker { display: none; }
+  /* `--border-soft`, not `--bg`: the fill has to separate from the control it sits in, and `--bg`
+     against the summary's `--surface` is a step the eye does not resolve — the number then reads as
+     part of the label rather than as a count. `--text-dim` on this track is the reason
+     `wash.test.ts` asserts that pair (docs/app.md §Theming). */
   .count-badge { font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1;
                  padding: 2px var(--s1); border-radius: var(--r-sm);
-                 background: var(--bg); color: var(--text-dim); }
+                 background: var(--border-soft); color: var(--text-dim); }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); min-width: 20rem; box-shadow: var(--shadow-dialog); }
   .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }

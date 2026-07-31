@@ -218,8 +218,10 @@
               font-weight: 600; letter-spacing: -0.02em; cursor: pointer; padding: 0; text-align: center; }
   /* The unit line is a figure line like every other (docs/app.md §Table presentation), and the
      desktop header's already is — leaving this one proportional makes one column heading read
-     differently on the two renderings. */
-  .h-units { font-family: var(--font-mono); font-weight: 400; color: var(--text-dim); min-height: 1em; }
+     differently on the two renderings. `1lh` for the same reason it is `1lh` there: the reserve is
+     the line box a unit string occupies, and the mono face renders that taller than its em, so a
+     `1em` floor drops a unitless column's name below its neighbours'. */
+  .h-units { font-family: var(--font-mono); font-weight: 400; color: var(--text-dim); min-height: 1lh; }
   /* A list, not cards. Proximity does the grouping — there is more space above a name than between
      it and its own chips — and it recovers roughly one shoe per screen, which is the direct price
      docs/app.md flags for the two-row geometry. */

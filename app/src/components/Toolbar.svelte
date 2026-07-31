@@ -132,10 +132,12 @@
        otherwise dangle after Forefoot at the end of line one. */
     .sep { display: none; }
     .actions { order: 1; }
-    .pace-wrap { order: 2; flex-basis: 100%; }
-    /* Its own line below the stories: at this tier line one is the zone group plus the actions, and
-       the 389px control does not fit beside them — leaving it to wrap on its own put the actions on
-       a third line and left the void this tier exists to eliminate (docs/app.md §Presets). */
+    /* Its own line below the two groups, and the ONLY item at any tier that claims a whole one: the
+       389px control does not fit beside them, and left to wrap on its own it puts the actions on a
+       third line and opens the void this tier exists to eliminate. The two groups keep their source
+       order and their shrink-wrapped width all the way down to 360px, so the bar gains no row at
+       this boundary that a narrower tier then gives back — `smoke.spec.ts` walks the ladder and
+       asserts exactly that (docs/app.md §Presets). */
     .stability { order: 3; flex-basis: 100%; }
   }
   /* Below 800px the bar is chrome above the first shoe on the screen with the least room for it, so
@@ -144,21 +146,23 @@
   @media (max-width: 800px) {
     .toolbar { padding: var(--s1) var(--s3); gap: var(--s1) var(--s3); }
     .filters-toggle { display: inline-block; }
-    /* The two segmented groups share a row here. They ask one question each and are read together,
-       and at 390px they need 133px and 202px against the 366px this padding leaves — so the row that
-       used to hold the zone group alone, with the actions floated off to its right, holds both. */
-    .pace-wrap { order: 0; flex-basis: auto; }
+    /* The two segmented groups share a row from 880px down. They ask one question each and are read
+       together, and at 390px they need 133px and 202px against the 366px this padding leaves. */
     .actions { order: 1; }
     .stability { order: 2; }
   }
   /* Last of the three, because every tier below 880px is narrower than the one before and the later
-     rule is the one that wins. 360px is the binding width, not 375: it is the usual Android one
+     rule is the one that wins. 609.98px, not 560: at `--s3` a pill the actions stop fitting beside
+     the two groups at 601px and the bar takes a third row, which the tighter padding then hands
+     back — the same non-monotonic step the 880px boundary must not make either. Engaging the tier
+     before that break is what keeps the bar two rows from 800px down to 545px
      (docs/app.md §Presets). */
-  @media (max-width: 560px) {
-    /* The two groups share a row from 800px down, so the story pills stop stretching: filling a line
-       was right while this group owned one, and beside the zone group it just takes the row. Their
-       own padding is what buys the fit — the pair need 366px at `--s3` a pill against the 344px this
-       padding leaves at 360px, and 334px at `--s2`.
+  @media (max-width: 609.98px) {
+    /* The two groups share a row from 880px down, so the story pills stop stretching: beside the
+       zone group this group takes the row it is given rather than filling one of its own. Their own
+       padding is what buys the fit — the pair need 366px at `--s3` a pill against the 344px this
+       padding leaves at 360px, and 334px at `--s2`. 360px is the binding width, not 375: it is the
+       usual Android one.
        The `:global` reaches the column picker's summary, which is the bar's own line budget rather
        than the picker's. */
     .s { padding-inline: var(--s2); }

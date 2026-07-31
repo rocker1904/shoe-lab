@@ -101,10 +101,12 @@ export function widestWordPx(label: string): number {
 }
 
 /**
- * Three lines, not two: a two-line rule was an invention rather than a requirement, and relaxing
- * it keeps eight real names. Beyond three nothing improves, because what is left is word overflow
- * rather than line count — and the header is sticky, so a fourth line is paid once by every screen
- * (docs/app.md §Columns and sorting).
+ * Three, not two: six catalogue names need a third line at the 48px bound and keep their upstream
+ * wording because they are allowed one — `Energy return heel` and `forefoot`, both generations of
+ * `Midsole softness in cold`, `Heel counter stiffness` and `Lateral stability test`. A two-line
+ * cap would put all six in `SHORT_LABELS`. Beyond three nothing improves, because what is left is
+ * word overflow rather than line count — and the header is sticky, so a fourth line is paid once by
+ * every screen (docs/app.md §Columns and sorting).
  */
 export const MAX_LABEL_LINES = 3;
 
