@@ -97,7 +97,9 @@
   /* A silent region is still a flex item, so it would carry a gap on each side and space the header
      differently depending on whether a link had ever been copied. */
   .copied:not(.said) { margin-inline-start: calc(-1 * var(--gap-x)); }
-  button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
+  /* `--t-sm` stated rather than left to the UA's 13.33px: the size is part of the one secondary-button
+     treatment (docs/app.md §Theming), and matching it by 0.05px of luck is not carrying it. */
+  button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); font-size: var(--t-sm); }
   button:hover { background: var(--accent-dim); }
   /* Below 800px every pixel of chrome is paid before the first shoe, on the screen with the least
      of it — so this tier buys height back three ways and none of them drops a control.
