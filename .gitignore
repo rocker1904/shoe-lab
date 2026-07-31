@@ -10,3 +10,7 @@ playwright-report/
 test-results/
 .notes/
 .superpowers/
+# The bug hunt's scratch rig and finding queue. Must be ignored before the first finding is
+# written: check:docs scans untracked-but-unignored files for dead doc pointers, so a finding
+# that correctly reports a broken pointer would fail the build by being right.
+.hunt/
