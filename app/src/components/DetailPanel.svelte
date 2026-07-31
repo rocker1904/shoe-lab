@@ -158,9 +158,15 @@
      A media query is wrong on both counts (docs/app.md §Columns and sorting).
      A recessed well, not another raised surface: an open row belongs to the row above it rather
      than floating over the table, which is the elevation rule the phone rendering follows too. */
-  .detail { background: var(--well); padding: var(--s5) var(--s4) var(--s5);
-            border-top: 1px solid var(--border); container-type: inline-size; }
-  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s4) var(--s5); align-items: start; }
+  /* The padding is on the INNER box, and that placement is load-bearing: `container-type:
+     inline-size` resolves against this element's CONTENT box, so padding here makes the container
+     narrower than the panel it is supposed to be measuring. With 16px each side a 1440px viewport
+     gave a 1098px container and the 1120px tier below could never fire at any window size — the
+     table would have to be wider than the screen to reach it. */
+  .detail { background: var(--well); border-top: 1px solid var(--border);
+            container-type: inline-size; }
+  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s4) var(--s5);
+          align-items: start; padding: var(--s5) var(--s4); }
   .a-img, .a-facts, .a-body, .a-bd { grid-column: span 12; }
   /* The summary and the two columns beneath it are ONE box, so they share a right edge at every
      width, and the prose measure falls out of the box rather than being set separately. */
@@ -189,7 +195,13 @@
   img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 3 / 2; object-fit: contain;
         display: block; border-radius: var(--r-md); background: var(--surface); }
   .intro { font-style: italic; color: var(--text-dim); }
-  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+  /* Pros then cons, in ONE column at every width. `.a-lists` sits in `.a-body`'s 20rem track, so
+     splitting it in two left each list about 18 characters a line — narrower than the phone shows
+     them, on the widest screen there is. Stacked they get the whole track. */
+  .proscons { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+  /* The default 40px indent is sized for decimal markers; these are a single `+` or `−` and the
+     characters it costs come straight out of a line that is already the narrowest on the panel. */
+  .proscons ul { padding-left: var(--s5); }
   .pros li::marker { content: '+ '; color: var(--good); }
   .cons li::marker { content: '− '; color: var(--bad); }
   h4 { margin: var(--s3) 0 var(--s1); font-size: var(--t-sm); }
@@ -207,13 +219,17 @@
   /* The wrapper the markup adds, so the heading sits on the well and the figures sit on a surface. */
   .score-breakdown .card { background: var(--surface); border: 1px solid var(--border);
                            border-radius: var(--r-md); padding: var(--s3) var(--s3); }
-  /* Its own scrollport: five columns need about 354px against the 321px a 375px phone leaves the
-     panel, and the page must not go sideways for it (docs/app.md §The story scores). On an INNER
-     box, so the section heading stays put while the figures scroll — on `.score-breakdown` itself
-     the heading scrolled away from the figures it names. Safe here, unlike on `.content`, which
-     must stay unscrolled or the table header rides off with the page. */
+  /* Its own scrollport: five columns of readings measure 417px — 424px with stability opted in —
+     against the 285px a 375px phone leaves the panel, and the page must not go sideways for it
+     (docs/app.md §The story scores). On an INNER box, so the section heading stays put while the
+     figures scroll — on `.score-breakdown` itself the heading scrolled away from the figures it
+     names. Safe here, unlike on `.content`, which must stay unscrolled or the table header rides
+     off with the page.
+     No `min-width`: the block carried one asserting 380px under a comment claiming 354px, and both
+     were under the table's own min-content, so the declaration decided nothing. The term names and
+     the nowrap readings set the width, and the scrollport is what handles it. */
   .score-breakdown .scroll { overflow-x: auto; }
-  .score-breakdown table { width: 100%; border-collapse: collapse; min-width: 380px; }
+  .score-breakdown table { width: 100%; border-collapse: collapse; }
   .score-breakdown th, .score-breakdown td { text-align: right; padding: var(--s1) var(--s3) var(--s1) 0; }
   .score-breakdown td { font-family: var(--font-mono); font-size: var(--t-xs);
                         font-variant-numeric: tabular-nums; }
@@ -233,8 +249,4 @@
   /* Stripping embedded videos at sanitise time leaves empty paragraphs behind; collapse them. */
   .detail :global(p:empty) { display: none; }
   .detail :global(p) { margin: var(--s2) 0; }
-  /* Two columns of pros and cons leave about twenty characters a line on a phone. */
-  @media (max-width: 699px) {
-    .proscons { grid-template-columns: 1fr; }
-  }
 </style>

@@ -608,16 +608,27 @@ Three zones on a 12-column grid: **identity** (the image, the feature chips and 
 
 | container width | layout |
 |---|---|
-| ≥ 1120px | breakdown pulled up beside the image and facts; summary, then pros/cons beside the prose |
-| 700–1120px | image beside facts; summary, then pros/cons beside the prose; breakdown at the foot |
+| ≥ 1120px | breakdown pulled up beside the image and facts; pros/cons beside the prose |
+| 700–1120px | image beside facts; pros/cons beside the prose; breakdown at the foot |
 | < 700px | one column, breakdown last |
 
+Inside that opinion column **pros and cons stack, one under the other**, at every tier.
+`.a-lists` sits in the 20rem track, so splitting it in two left each list about 18
+characters a line — narrower than the phone shows them, on the widest screen there is.
+
 **Container queries, not media queries**, because the panel's width is the **table's**,
-not the viewport's: the sidebar takes 260px and past six columns the table is wider than
-the screen. A viewport query is wrong on both counts, and wrong in exactly the
-half-a-window case. `.a-bd` is **last in the DOM** and pulled up by explicit grid
-placement at the widest tier, which is what makes it fall to the bottom when the space is
-not there, with no `order` juggling.
+not the viewport's: the sidebar takes `--sidebar-w` and past six columns the table is wider
+than the screen. A viewport query is wrong on both counts, and wrong in exactly the
+half-a-window case — and there is **no viewport query in this component at all**, which is
+the only form in which that rule is checkable. `.a-bd` is **last in the DOM** and pulled up
+by explicit grid placement at the widest tier, which is what makes it fall to the bottom
+when the space is not there, with no `order` juggling.
+
+**The panel's padding sits on an inner box, and that placement is load-bearing.**
+`container-type: inline-size` resolves against the declaring element's *content* box, so
+padding on the container narrows what every query below measures: at 16px each side a
+1440px viewport gave a 1098px container and the 1120px tier could not fire at any window
+size. The container is the panel; the padding is inside it.
 
 **The summary and the two columns beneath it are one box**, capped at 800px and 430px when
 stacked. Capping the prose column alone made the summary overshoot it on a wide panel;
@@ -1199,10 +1210,13 @@ two terms cap, and most of the scoreable pool sits at exactly 1.0 on outsole dur
 so a mapped value alone cannot say what put them there. Where a term reads a derived
 quantity the cell shows the division — `1.33 = 4 / 3` — because the ratio alone does
 not say which reading moved. `readings` in `score.ts` owns those readings, so the
-panel never re-derives them. Five columns need 354px against the 321px a 375px phone
-leaves the panel, so the block keeps **its own scrollport**, on an inner `.scroll` box
-rather than on the section: the page must not go sideways for it, and the e2e run
-asserts that at 375px with a row open. The scrollport is inner so the section heading
+panel never re-derives them. Five columns of readings measure 417px — 424px with
+stability opted in — against the 285px a 375px phone leaves the panel, so the block keeps
+**its own scrollport**, on an inner `.scroll` box rather than on the section: the page must
+not go sideways for it, and the e2e run asserts that at 375px with a row open. The table
+declares **no `min-width`**: the term names and the nowrap readings already set a
+min-content wider than any figure worth writing down, so a declaration there decides
+nothing and only invites a second, staler number. The scrollport is inner so the section heading
 stays put while the figures scroll — on the section itself the heading scrolled away
 from the figures it names. `Share` renders as a small accent bar beside the percentage,
 borrowing the coverage-bar idiom, so "shock absorption is doing most of the work here"
