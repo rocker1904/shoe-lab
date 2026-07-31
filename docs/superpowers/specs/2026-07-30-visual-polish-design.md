@@ -16,8 +16,9 @@ rather than a side effect, and each is argued where it appears:
    (§The direction arrow leaves the header).
 4. The phone column minimum drops from 57px to 53px
    (§The column minimum drops to 53px).
-5. Six `SHORT_LABELS` entries are deleted, so the phone shows real names
-   (§Inter Tight is ~10% narrower).
+5. Some `SHORT_LABELS` entries are deleted, so the phone shows real names
+   (§Inter Tight is ~10% narrower). How many is a measurement against the
+   column this spec actually adopts, not a list written against a wider one.
 6. Accent in the sidebar comes to mean "your bound selects this", so an
    unbounded row draws no accent at all (§The filter sidebar).
 7. The sub-800px drawer gains a scrim (§The drawer gets a scrim).
@@ -46,9 +47,17 @@ absorbed.
 | UI, body, headings, labels | Inter Tight |
 | every figure, unit line, badge, count | JetBrains Mono |
 
-Self-hosted woff2 in `app/public/`, not a CDN link: the app has no runtime
-dependency and a third-party font request is one. Both faces are subset to
-Latin. Weights: Inter Tight 400/500/600/700, JetBrains Mono 400/500.
+Self-hosted woff2 under `app/src/assets/`, not a CDN link: the app has no
+runtime dependency and a third-party font request is one. **Not `app/public/`** —
+`vite.config.ts` sets `base: './'` for the Pages subpath, and Vite leaves
+root-absolute `public/` references alone, so a `public/` font resolves off the
+subpath and 404s in production while working perfectly in `dev`. An asset under
+`src/` is fingerprinted and rewritten, which is the only form that survives.
+
+Both faces are subset to Latin. Weights: Inter Tight 400/500/600/700, JetBrains
+Mono 400/500. One consequence of the subset: `Δ` (U+0394) is outside it, so the
+two short labels that use it fall back per glyph and their width measurement is
+a `system-ui` measurement rather than an Inter Tight one.
 
 New tokens carry both stacks. `app/src/lib/tokens.test.ts` already fails the
 build on a component writing its own rem font size or px radius, so both
@@ -66,13 +75,35 @@ widest word per catalogue test name, over all 43 tests:
 
 Two consequences.
 
-**`labels.ts` must be re-measured, and `SHORT_LABELS` shrinks.** Seven entries
-come back inside the bound: `Toebox durability`, `Heel padding durability`,
-`Outsole durability`, `Outsole thickness`, `Insole thickness`,
-`Flexibility / Stiffness`, `Reflective elements`. Six of them can be deleted.
-**`outsole-durability` keeps `Outsole wear`** — that entry was never a length
-fix; the test is Dremel dent depth in mm, so "durability" contradicts its own
-units, and that divergence from RunRepeat's name is deliberate.
+**`labels.ts` must be re-measured, and `SHORT_LABELS` shrinks.** The seven
+entries that come back inside a **53px text** budget are `Toebox durability`,
+`Heel padding durability`, `Outsole durability`, `Outsole thickness`,
+`Insole thickness`, `Flexibility / Stiffness`, `Reflective elements`.
+
+**That list is not the answer**, because this spec then adopts a 53px *column*,
+whose text budget is 49px (§The column minimum drops to 53px). Against the
+budget that actually ships, a different and shorter set comes back. The count is
+therefore whatever the catalogue says at the shipped bound, and it is produced by
+running the measurement rather than by copying the list above.
+
+Two rules constrain what that measurement is allowed to delete.
+
+**A real name earns its place back only if it fits in two lines.** `labels.ts`
+already argues that a fourth line is unacceptable because the header is sticky
+and is paid once by every screen; the third line is paid exactly the same way,
+for as long as the column is on screen, and one line of permanent header height
+is not worth `Midsole width - heel` over `Heel midsole width`. `MAX_LABEL_LINES`
+stays 3 — names with no short label at all still need somewhere to go — but a
+*deletion* may not spend the third line.
+
+**Two entries are exempt whatever they measure, because neither was ever a
+length fix.** `outsole-durability` keeps `Outsole wear`: the test is Dremel dent
+depth in mm, so "durability" contradicts its own units, and that divergence from
+RunRepeat's name is deliberate. `forefoot-traction-stop` keeps `Forefoot stop`:
+`forefoot-traction` carries the **same** upstream name and the two are not a
+superseded pair, so both can be on screen at once and this label is the only
+thing telling them apart. Deleting it fails `labels.test.ts`'s collision guard,
+which is the one guard the width bound cannot stand in for.
 
 **The bound becomes deterministic.** `system-ui` resolves to a different face
 per OS, so the widths `labels.ts` validates against are only true on the
@@ -192,7 +223,10 @@ docs/decisions.md §Be a good citizen toward RunRepeat makes it structural
 rather than decorative and forbids removing or defer-loading it. Moving it to
 a footer, a menu or a tooltip is out of bounds.
 
-The date renders as `27 Jul 2026`, not `2026-07-27`.
+The date renders as `27 Jul 2026`, not `2026-07-27` — formatted with both the
+locale and the **time zone** pinned, because `builtAt` is a UTC instant and
+formatting it locally renders the previous day for every reader west of
+Greenwich.
 
 ### The header stops counting the visible fleet
 
@@ -309,6 +343,16 @@ The panel is therefore **square at the top and rounded only at the bottom** —
 - **it is the right shape anyway.** The panel's top sits flush under the
   full-bleed chrome, where a rounded corner rounds against nothing.
 
+A fourth thing follows that the header row cannot supply on its own: **a
+`border-top` on the cells is not a lid.** `border-spacing: 2px 0` means the
+header row is not a continuous band — there is a 2px gap between every pair of
+cells, and another between the outermost cells and the table's edge — so a plain
+border draws the lid as dashes that stop short of the panel's side borders at
+both ends. The gaps are bridged in the header's own `box-shadow` stack, which is
+the same mechanism already carrying the cell background across them, extended to
+carry `--border` as well. Being one pixel wide, it is verified by rendering at
+4× zoom rather than by an assertion.
+
 ### Two overflow constraints, both measured
 
 The header cell itself is **square** — no `border-radius`. A rounded opaque
@@ -369,6 +413,11 @@ bordered button** rather than a text glyph; and `N excluded` and
 `378 / 450 measured` are both mono, so every figure in the sidebar shares the
 grid with every figure in the table.
 
+The number fields step back up to **16px under `@media (hover: none)`**. iOS
+Safari zooms the whole viewport when a focused input's text is smaller than
+that, with no way out but a pinch, and these rows live in a drawer at exactly
+the widths where it fires. A bigger field on touch is the cheaper of the two.
+
 ### Two defects this pass fixes
 
 **An unbounded row painted every bar in the accent.** "In range" is trivially
@@ -401,7 +450,9 @@ in a box whose height is set by the story cards beside it.
 
 The panel is a **recessed well**, not another raised surface: an open row belongs
 to the row above it rather than floating over the table, which is the same
-elevation rule the phone rendering follows.
+elevation rule the phone rendering follows. **Both** renderings put it on
+`--well` — the phone's expanded row is on `--surface` today, and leaving it there
+would answer the same question two ways on two screens.
 
 ### Measure was the defect
 
@@ -456,6 +507,11 @@ Every one of the 450 images is **720×480** at source and was rendered at 200px
 — 28% of what is there. It renders at **280px**. On a 2× display 360px is the
 largest size still sampling at or above native; past that it upscales.
 
+Only the size changes. The existing `aspect-ratio: 3 / 2` and `object-fit:
+contain` both stay: the ratio is what gives the box its height *before* the
+image loads, and without it an already-open row reflows the rows beneath it
+mid-read, which is the most conspicuous place in the app for a jump.
+
 ### The breakdown
 
 `Share` renders as a small bar beside the percentage, borrowing the coverage-bar
@@ -474,13 +530,20 @@ no accent.
 
 Segmented radiogroups keep their structure and roving-focus behaviour
 (`lib/roving.ts`, four groups, arrow keys, one tab stop). Visually: a
-`--bg`-filled track with a 2px pad, and the selected pill filled in the accent
-with white text.
+`--bg`-filled track with a 2px pad, and the selected pill filled in
+`--accent-solid` carrying `--on-accent`. The ink is a **token**, not a `#fff`
+written into each component: the fill and its ink are one fact, and a literal
+splits it across nine files.
 
 Histograms keep their form. In-range bars take the accent **only while a bound
 exists**; every other bar keeps `--hist-dim`, which must continue to clear
-**3:1 against the surface** — that is a flat mark, governed by a different rule
-from the gradient wash (docs/app.md §Theming).
+**3:1 against every surface it is drawn on** — that is a flat mark, governed by
+a different rule from the gradient wash (docs/app.md §Theming). "Every surface"
+is the load-bearing part, and it is three: above 800px the sidebar declares no
+background of its own, so the bars sit on `--bg`; below it they sit on the
+drawer's `--surface`; and the pickers' coverage fill sits in a `--border-soft`
+track. A value chosen against `--surface` alone clears the bar in the one case
+that only happens inside the drawer.
 
 **The theme toggle becomes an icon button** with an SVG per state. It keeps
 cycling auto → light → dark rather than becoming a two-way switch, because
@@ -502,8 +565,16 @@ guarantees separation on any background — the same trick the phone's sticky
 header already uses on its own `border-spacing` gaps.
 
 This replaces today's inconsistent mix of `outline-offset: -2px` and `+2px`.
-It is one rule for every focusable thing: buttons, pills, inputs, chips, table
-rows, strip cards.
+It is one rule for every focusable thing: buttons, pills, inputs, chips, strip
+cards.
+
+**One exemption: table rows.** A `box-shadow` ring is drawn *outside* the box,
+and a row spans the full width of the table and abuts the rows above and below
+it with no gap — so an outside ring paints over both of them, and inside the
+phone's panel `overflow-y: clip` cuts it off entirely on the first and last
+shoe. Rows keep the inset `outline-offset: -2px` ring they already have. The
+global rule excludes `tr` explicitly rather than leaving the component rule to
+win on specificity, so the two can never both draw.
 
 ## Dialogs, drawer and states
 
@@ -548,16 +619,30 @@ live region created together with its text is not reliably announced.
 ## Verification
 
 - `tokens.test.ts` — extend to the new type tokens; no component names a font
-  family or size directly.
+  family or size directly, and none writes a raw white onto an accent fill. The
+  font-family guard must test the captured **value**: a negative lookahead
+  behind `\s*` backtracks to zero width and passes on the space, so it flags
+  every compliant rule instead of the offenders.
 - `labels.ts` / `labels.test.ts` — re-measure the width bound against Inter
-  Tight; delete the six short labels that no longer earn their place; keep
-  `Outsole wear`.
-- A contrast test over the ramp: sample `p` across `[0, 1]`, composite the
+  Tight; delete the short labels whose real name fits in **two** lines at the
+  shipped bound; keep `Outsole wear` and `Forefoot stop`, neither of which was
+  a length fix.
+- A contrast test over **both** ramps: sample `p` across `[0, 1]`, composite the
   fill over the surface at `a(p)`, assert the theme ink clears 4.5:1 at every
   step in both themes. This is the guard that makes the single-ink rule
-  enforceable rather than remembered.
+  enforceable rather than remembered. The grey ramp clears by a wide margin,
+  which is the reason it needs the assertion rather than a reason to skip it.
+- A flat-mark test against **each** surface `--hist-dim` is drawn on — `--bg`,
+  `--surface` and `--border-soft` — at 3:1.
 - e2e at 360px and 390px: six columns fit, nothing clips, the page does not
   scroll sideways at six columns, and columns past the sixth remain reachable.
+  The six-column fit at 360px leaves only a couple of pixels once the panel's
+  inset and borders are paid, so the real slack is **measured in Firefox and
+  WebKit** and written down rather than assumed from the arithmetic.
+- Rendered, not asserted, because jsdom has no layout and both failures are one
+  pixel wide: the phone panel's lid is one continuous hairline that meets the
+  panel's side borders, read at 4× zoom; and a focused table row draws exactly
+  one ring, inside the row, complete at the ends of the list.
 - e2e over the expanded row at several panel widths: no horizontal overflow, and
   the summary shares a right edge with the columns beneath it.
 - e2e: the pinned header sits flush against the chrome after

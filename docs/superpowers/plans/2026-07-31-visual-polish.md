@@ -12,17 +12,24 @@
 
 - **No behaviour changes** beyond the seven departures the spec enumerates. No URL encoding, score constant, filter semantic or politeness rule moves.
 - **Accent** — `hsl(211 84% 46%)` light, `hsl(211 70% 54%)` dark. Small marks only. **These two values are signed off and do not move.**
-- **Accent-solid** — the darker accent used *only* where white text sits on a filled accent: `hsl(211 84% 44%)` light, `hsl(211 70% 44%)` dark. Never a hairline, a bar or a text colour.
+- **Accent-solid** — the darker accent used *only* where `--on-accent` text sits on a filled accent: `hsl(211 84% 44%)` light, `hsl(211 70% 44%)` dark. Never a hairline, a bar or a text colour.
+- **`--on-accent`** — the one ink that may sit on `--accent-solid`. A token, not a literal `#fff`: the pass exists to move colour choices into `app.css`, and a hard-coded white in a component is exactly the bypass `tokens.test.ts` guards against for every other scale.
 - **Wash fill** — `hsl(211 84% 50%)` light, `hsl(211 70% 44%)` dark. Never the accent value.
 - **Wash ramp** — `a(p) = max(0, (p - 0.15) / 0.85) ^ 1.8 * 0.94`; below `a = 0.015` paint nothing.
 - **Neutral grey ramp stays linear** — `a = p * 0.34`.
 - **One ink at every step of the ramp.** No white-text flip. Never reintroduce a second ink.
-- **Three colour rules, each with its own test in `wash.test.ts`:**
-  - ranked wash — theme ink clears **4.5:1** at every step of the ramp;
-  - flat marks (`--hist-dim` histogram bars, coverage bars) — **3:1** against the surface they sit on;
-  - white on a filled accent (`--accent-solid`) — **4.5:1**.
-- **Focus ring** — 2px surface-coloured ring inside a 2px accent ring, drawn with `box-shadow`, one rule everywhere. **Every per-component `outline`/`outline-offset` focus rule is deleted by the task that owns its component** — a zero-specificity `:where()` rule cannot beat them, so leaving one draws both.
-- **`tokens.test.ts` must keep passing**: no component may write a literal rem font-size, a px border-radius, or a font family name. All scales live in `app.css`.
+- **Four colour rules, each with its own test in `wash.test.ts`:**
+  - ranked (blue) wash — theme ink clears **4.5:1** at every step of the ramp;
+  - neutral (grey) wash — the same **4.5:1**, over the same sweep. It passes comfortably today, which is
+    exactly why it needs the guard: an unasserted rule is one a retune deletes silently;
+  - flat marks (`--hist-dim` histogram bars, picker coverage bars) — **3:1** against **every** surface
+    they actually sit on. That is `--bg` *and* `--surface` for the histogram — above 800px the sidebar
+    declares no background of its own, so the bars sit on the page — and `--border-soft` for the picker
+    bars, which sit in their own track. Asserting against `--surface` alone measures a case that only
+    occurs below 800px;
+  - `--on-accent` on a filled accent (`--accent-solid`) — **4.5:1**.
+- **Focus ring** — 2px surface-coloured ring inside a 2px accent ring, drawn with `box-shadow`, one rule everywhere **except table rows**. `tr.shoe` in both renderings, and the phone's `tr.values`, keep an inset `outline: 2px solid var(--accent); outline-offset: -2px`: a row spans the whole table and abuts its neighbours with no gap, so an outside ring paints over the rows above and below it, and inside the phone panel `overflow-y: clip` would cut it off at the first and last row. **Every other per-component `outline`/`outline-offset` focus rule is deleted by the task that owns its component** — a zero-specificity `:where()` rule cannot beat them, so leaving one draws both. The exemption is the reverse: it must be *kept*, and commented at its own site so nobody deletes it as an oversight.
+- **`tokens.test.ts` must keep passing**: no component may write a literal rem font-size, a px border-radius, or a font family name. All scales live in `app.css`. The font-family guard must test the **captured value**, never a lookahead behind `\s*` — `\s*` backtracks to zero width and the lookahead then passes on the space, so `/font-family:\s*(?!var\(|inherit)/` flags every compliant rule (Task 1 Step 5).
 - **No live network in tests, ever.** Any test that mounts `App.svelte` must stub `fetch`.
 - **Commits**: concise single-line subjects, no embedded measurements, and the trailer
   `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>` on every commit.
@@ -40,7 +47,7 @@
 | `app/scripts/sync-fonts.mjs` | Copies the two woff2 files out of `node_modules` into `app/src/assets/fonts/`, so the build has no third-party font request. |
 | `app/src/assets/fonts/*.woff2` | The two self-hosted faces (gitignored; produced by `sync-fonts`). Under `src/`, not `public/` — Task 1 Step 2 says why. |
 | `app/src/lib/wash.ts` | The wash ramp as a pure function. Owns the floor/curve/peak constants and the grey linear ramp. |
-| `app/src/lib/wash.test.ts` | Ramp shape plus the three contrast guards that make the colour rules enforceable. |
+| `app/src/lib/wash.test.ts` | Ramp shape plus the four contrast guards that make the colour rules enforceable. |
 | `app/scripts/measure-label-widths.mjs` | One-shot rig: measures per-character advance widths for the header face and prints a `CHAR_PX` table. Not run in CI. |
 
 **Modified**
@@ -50,15 +57,20 @@
 | `app/src/app.css` | Whole token layer: `@font-face`, families, colour, elevation, focus ring. | §Theming (Task 4) |
 | `app/index.html` | Preload the two woff2 files. | — |
 | `app/src/lib/tokens.test.ts` | Assert the new tokens; extend the no-literal guard to font families. | — |
-| `app/src/lib/labels.ts` | Regenerated `CHAR_PX` and `FALLBACK_PX`, re-derived `MAX_LABEL_PX`, the measured set of `SHORT_LABELS` deleted. | §Columns and sorting (Task 2) |
+| `app/src/lib/labels.ts` | Regenerated `CHAR_PX` and `FALLBACK_PX`, re-derived `MAX_LABEL_PX`, the measured set of `SHORT_LABELS` deleted, and the three stale bound comments corrected. | §Columns and sorting (Task 2) |
 | `app/src/lib/units.ts` | `headerUnits` stops emitting the direction arrow; `ARROW` and the `directionOf` import leave. | §Table presentation (Task 5) |
+| `app/src/lib/units.test.ts` | **Seven** existing arrow assertions rewritten, including the whole synthetic-score block. | — |
 | `app/src/lib/direction.ts` | Gains the exported `DIRECTION_ARROW` map for the pickers. | §Table presentation (Task 5) |
+| `app/src/Page.test.ts` | **Ten** header-count assertions retargeted at the receipt; the `▼` column-header pin. | — |
 | `app/src/components/ShoeTable.svelte` | Panel container, mono figures, thumbnails removed, sort caret, wash via `--a`. | §Table presentation (Task 6) |
-| `app/src/components/ShoeTableMobile.svelte` | List rendering, one panel, lid on the sticky header, 53px columns, overflow rules. | §Two renderings, and only one of them mounted (Task 10) |
+| `app/src/components/ShoeTable.test.ts` | The `▲` pin, the `--p:` pin, **and** the `'g ↓'` units pin. | — |
+| `app/src/components/ShoeTableMobile.svelte` | List rendering, one panel, an unbroken lid on the sticky header, 53px columns, overflow rules, `.h-units` in mono, `tr.expand` on `--well`. | §Two renderings, and only one of them mounted (Task 10) |
+| `app/src/components/ShoeTableMobile.test.ts` | The `--p:` pin **and** the `'mm ↓'` units pin. | — |
 | `app/src/components/Header.svelte` | Masthead credit, humanised date, `visible` prop dropped. | §Decisions (Task 7) |
 | `app/src/components/DetailPanel.svelte` | L6 layout on a 12-column container-query grid. | §The story scores + a new §The expanded row (Task 11) |
 | `app/src/components/FilterSidebar.svelte` | Micro-labels, section rhythm. | §Filters (Task 8) |
-| `app/src/components/RangeFilter.svelte` | Neutral bars when unbounded, rounded placeholders, mono fields, SVG clear. | §Filters (Task 8) |
+| `app/src/components/RangeFilter.svelte` | Neutral bars when unbounded, rounded placeholders, mono fields, SVG clear, a 16px touch tier on the number inputs. | §Filters (Task 8) |
+| `app/src/components/RangeFilter.test.ts` | The open-bound accent assertion inverted, **and** the `✕` glyph pin. | — |
 | `app/src/components/MetricRow.svelte` | Heading line and `.cov` coverage figure restyle. | §Coverage (Task 8) |
 | `app/src/components/ColumnPicker.svelte`, `AddFilterDialog.svelte` | Direction legend + marker in **both** row loops, neutral coverage bars, dialog surface. | §Table presentation (Task 5) |
 | `app/src/components/SetupStrip.svelte` | Tinted selected card, border-only hover, zone-card centring. | §The setup strip (Task 9) |
@@ -200,9 +212,26 @@ Extend the existing no-literal guard in the same file — the spec requires that
       // A literal rem font-size, px radius, or font family means the scale was bypassed.
       if (/font-size:\s*[\d.]+rem/.test(style)) offenders.push(`${f} font-size`);
       if (/border-radius:\s*\d+px/.test(style)) offenders.push(`${f} border-radius`);
+      // Capture the VALUE and test it. A negative lookahead behind `\s*` cannot work here:
+      // `\s*` backtracks to zero width and the lookahead is then evaluated against " var(…)",
+      // which does not begin with `var(`, so `/font-family:\s*(?!var\(|inherit)/` matches every
+      // compliant rule. It reads correct and is exactly backwards.
       // `font: inherit` and `font-family: inherit` are not a choice of face, so they pass.
-      if (/font-family:\s*(?!var\(|inherit)/.test(style)) offenders.push(`${f} font-family`);
+      for (const m of style.matchAll(/font-family:\s*([^;}]+)/g)) {
+        const value = m[1]!.trim();
+        if (!value.startsWith('var(') && value !== 'inherit') offenders.push(`${f} font-family`);
+      }
 ```
+
+This guard bites nothing at Task 1 — no component names a face today — so it can only be shown to
+work once Task 5 adds the first `font-family: var(--font-mono)`. Prove it now instead, in a Node
+one-liner, or the mistake above ships silently and fails nine tasks later:
+
+```bash
+node -e "const re=/font-family:\s*([^;}]+)/g; const v=[...'x{font-family: var(--font-mono);}'.matchAll(re)][0][1].trim(); console.log(v.startsWith('var('))"
+```
+
+Expected: `true`.
 
 - [ ] **Step 6: Run it and watch it fail**
 
@@ -329,7 +358,14 @@ const out = await page.evaluate(async ({ b64, chars }) => {
   document.fonts.add(face);
   const s = document.createElement('span');
   // Exactly the phone header's spec: 12px, weight 600, -0.02em tracking.
-  s.style.cssText = 'position:absolute;white-space:pre;font-family:M;font-size:12px;font-weight:600;letter-spacing:-0.02em';
+  //
+  // `M, system-ui`, not `M` alone: the shipped file is the LATIN subset, and `Δ` (U+0394) is not
+  // in it — the subset stops at the Latin block plus a short punctuation tail. The browser falls
+  // back per glyph, so `Δ` is measured against whatever comes next in the stack, and the stack
+  // here must therefore be the app's own (`--font-ui` is `'Inter Tight', system-ui, sans-serif`)
+  // rather than the headless default. Two SHORT_LABELS depend on it: `Cold softness Δ` and
+  // `Cold stiffness Δ`.
+  s.style.cssText = 'position:absolute;white-space:pre;font-family:M,system-ui;font-size:12px;font-weight:600;letter-spacing:-0.02em';
   document.body.appendChild(s);
   const table = {};
   for (const ch of chars) {
@@ -353,7 +389,7 @@ await browser.close();
 cd /home/sam/dev/shoe-lab-visual-polish && node app/scripts/measure-label-widths.mjs
 ```
 
-Expected: a JSON object mapping each character to a number, then a `FALLBACK_PX` line. Sanity check: `m` should be the widest lowercase letter and `i` among the narrowest. If every value is identical, the font did not load and it measured a fallback — stop and fix that before continuing.
+Expected: a JSON object mapping each character to a number, then a `FALLBACK_PX` line. Sanity check: `m` should be the widest lowercase letter and `i` among the narrowest, and `m` should land near 10.3 — a value still around 11.5 means the face did not apply and `system-ui` answered for the whole table. `Δ` is the one measurement that is *expected* to come from the fallback (Step 1's comment says why); record that in the regenerated docstring rather than treating it as a fault.
 
 - [ ] **Step 3: Write the failing test that pins the new face**
 
@@ -393,6 +429,10 @@ In `app/src/lib/labels.ts`, replace the `CHAR_PX` object with the table Step 2 p
  *
  * Self-hosting the face is what makes this table meaningful everywhere: `system-ui` resolved to a
  * different face on every OS, so the widths were only ever true on the machine that measured them.
+ *
+ * `Δ` is the exception, and stays one: it is outside the latin subset the app ships, so the browser
+ * falls back for that glyph and this number is a `system-ui` measurement. It is here because two
+ * short labels use it, and it is approximate for the same reason the whole table used to be.
  */
 ```
 
@@ -407,6 +447,16 @@ In `app/src/lib/labels.ts`, replace the `CHAR_PX` object with the table Step 2 p
  */
 export const MAX_LABEL_PX = 48;
 ```
+
+**Three other comments in this file still state the old geometry and are corrected in this same
+step** — CLAUDE.md's docs-ride-the-change rule covers comments, and each of these is now simply
+false:
+
+| line | says today | must say |
+|---|---|---|
+| the `SHORT_LABELS` docstring | "Mobile column headers get ~53px of text" | ~49px |
+| the `score:` entry's comment | "'RunRepeat' alone is 63.5px against a 52px column" | re-measure against the new table and the 48px bound; state the new figure |
+| the `CHIP_LABELS` docstring | "where it is prose rather than a 53px header" | 53px column, 49px of text |
 
 - [ ] **Step 6: Run the label suite and reconcile the three exact `lineCount` pins**
 
@@ -424,30 +474,61 @@ They are expected to survive — a ~10% narrower face against a ~7% narrower bud
 
 - [ ] **Step 7: Delete only the short labels the narrower face actually makes unnecessary**
 
-Do not delete from a list — **measure**. The spec's §Inter Tight is ~10% narrower names seven entries that come back inside the bound and says six can be deleted, but **that count is stated against the 53px text budget**; the same spec then adopts the 53px *column*, whose budget is 49px, and its own table says nine names still need a short label there. The number is therefore whatever the catalogue says at `MAX_LABEL_PX = 48`, not six. Add a temporary check and run it:
+Do not delete from a list — **measure**. The spec's §Inter Tight is ~10% narrower names seven entries that come back inside the bound and says six can be deleted, but **that count is stated against the 53px text budget**; the same spec then adopts the 53px *column*, whose budget is 49px, and its own table says nine names still need a short label there. The number is therefore whatever the catalogue says at `MAX_LABEL_PX = 48`, not six.
+
+**Two lines, not three.** A real name only earns its place back if it fits in **two** lines. `labels.ts`
+already argues that a fourth line is unacceptable "because the header is sticky, so a fourth line is
+paid once by every screen" — and the third line is paid the same way, by every row on every screen,
+forever, in exchange for one column reading `Midsole width - heel` instead of `Heel midsole width`.
+`MAX_LABEL_LINES` stays 3 because names with no short label at all still need somewhere to go; it is
+the ceiling the build fails at, not the price a *deletion* may charge. At three lines the criterion
+deletes `Cold stiffness Δ`, `Forefoot midsole width` and `Heel midsole width` and makes the sticky
+header permanently taller on the default view; at two it does not.
+
+Add a temporary check and run it. `SHORT_LABELS` is **not currently imported** by this file — add it
+to the import on line 7 or the test will not compile:
 
 ```ts
 it('reports which short labels their real name no longer needs', () => {
+  // Two entries are exempt whatever they measure, because neither was ever a length fix:
+  //   outsole-durability — the test is Dremel dent depth in mm, so "durability" contradicts its
+  //     own units, and the divergence from RunRepeat's name is deliberate;
+  //   forefoot-traction-stop — `forefoot-traction` carries the SAME upstream name and the two are
+  //     not a superseded pair (both have updateId and previousId null), so this label is the only
+  //     thing keeping two simultaneously-visible columns apart. Deleting it fails the collision
+  //     guard below, which is the one guard the width bound cannot stand in for.
+  const NEVER_A_LENGTH_FIX = new Set(['outsole-durability', 'forefoot-traction-stop']);
   const unnecessary = Object.keys(SHORT_LABELS)
+    .filter((slug) => !NEVER_A_LENGTH_FIX.has(slug))
     .map((slug) => ({ slug, real: numeric.find((t) => t.slug === slug)?.name }))
-    .filter((x) => x.real && widestWordPx(x.real) <= MAX_LABEL_PX && lineCount(x.real) <= MAX_LABEL_LINES);
+    // `<= 2`, not `<= MAX_LABEL_LINES`: a third line is paid by every screen forever.
+    .filter((x) => x.real && widestWordPx(x.real) <= MAX_LABEL_PX && lineCount(x.real) <= 2);
   console.log(unnecessary.map((x) => `${x.slug}: ${x.real}`));
   expect(true).toBe(true);
 });
 ```
 
-Run it, delete exactly the entries it names, then delete the temporary test.
-
-**Keep `'outsole-durability': 'Outsole wear'` whatever it reports** — that entry was never a length fix. The test is Dremel dent depth in mm, so "durability" contradicts its own units, and the divergence from RunRepeat's name is deliberate.
+Run it, delete exactly the entries it names, then delete the temporary test. Expect a short list —
+two entries, on the catalogue as it stands. If it names more than three, re-read the criterion before
+deleting: the whole point of this step is that the count is a measurement, and the whole point of the
+two exemptions is that a measurement cannot see why a label exists.
 
 - [ ] **Step 8: Run the whole label suite**
 
 Run: `npm -w app run test -- labels`
-Expected: PASS. Any deleted entry whose real name now exceeds `MAX_LABEL_PX` fails the existing catalogue-wide guard — put that one back.
+
+Expected: PASS. Two existing guards can catch a bad deletion and they catch different things — read
+which one failed rather than reverting the whole set:
+
+- `keeps every catalogue label inside one column at the six-column bound` (and its three-line
+  sibling) — the deleted entry's real name does not fit. Put that one back.
+- `never gives two simultaneously visible metrics the same label` — the deleted entry was
+  disambiguating, not shortening. Put it back **and** add its slug to `NEVER_A_LENGTH_FIX` in
+  Step 7, because the reporter will name it again on the next regeneration.
 
 - [ ] **Step 9: Update the owning doc**
 
-In `docs/app.md` §Columns and sorting, update the header-budget paragraph: the table is measured against **Inter Tight 600 at 12px with -0.02em tracking** rather than `system-ui`, the bound is **48px inside a 53px column**, `FALLBACK_PX` is face-specific too, and the assertion now means the same thing on every OS because the face ships with the app. Record how many `SHORT_LABELS` entries survive and that the number is a measurement rather than a list.
+In `docs/app.md` §Columns and sorting, update the header-budget paragraph: the table is measured against **Inter Tight 600 at 12px with -0.02em tracking** rather than `system-ui`, the bound is **48px inside a 53px column**, `FALLBACK_PX` is face-specific too, and the assertion now means the same thing on every OS because the face ships with the app — except `Δ`, which is outside the shipped latin subset and is therefore still a fallback measurement. Record how many `SHORT_LABELS` entries survive and that the number is a measurement rather than a list; that a short label is only deleted when the real name fits in **two** lines, because the third is paid by every screen for as long as the column is on it; and that two entries are exempt from the measurement entirely — `outsole-durability` because it corrects a name that contradicts its own units, and `forefoot-traction-stop` because it is the only thing separating two columns the catalogue gives the same name.
 
 - [ ] **Step 10: Commit**
 
@@ -500,18 +581,29 @@ function over(fill: number[], alpha: number, surface: number[]): number[] {
  * The resolved values of the tokens in `app.css`. A token this file does not know about cannot be
  * asserted, and a value that drifts from its token is exactly what these tests exist to catch —
  * `tokens.test.ts` pins the same literals from the other side (docs/app.md §Theming).
+ *
+ * `page` is `--bg` and `track` is `--border-soft`, because a flat mark is only legible against the
+ * surface it is ACTUALLY on: above 800px the sidebar declares no background, so the histogram bars
+ * sit on the page rather than on `--surface`, and the pickers' coverage fill sits in a
+ * `--border-soft` groove. Asserting against `--surface` alone measures the case that only happens
+ * inside the drawer.
  */
 const THEMES = [
-  { name: 'light', surface: [0xff, 0xff, 0xff], ink: [0x16, 0x18, 0x1b],
+  { name: 'light', surface: [0xff, 0xff, 0xff], page: [0xf5, 0xf5, 0xf4],
+    track: [0xee, 0xee, 0xec], ink: [0x16, 0x18, 0x1b],
     washFill: [0x14, 0x7c, 0xeb],      // hsl(211 84% 50%)
-    histDim: [0x8b, 0x92, 0x9d],       // --hist-dim
+    greyFill: [0x82, 0x89, 0x97],      // hsl(220 9% 55%)
+    histDim: [0x7f, 0x87, 0x94],       // --hist-dim
     accentSolid: [0x12, 0x6d, 0xce] }, // hsl(211 84% 44%)
-  { name: 'dark', surface: [0x1a, 0x1d, 0x21], ink: [0xec, 0xee, 0xf1],
+  { name: 'dark', surface: [0x1a, 0x1d, 0x21], page: [0x0f, 0x11, 0x13],
+    track: [0x22, 0x26, 0x2a], ink: [0xec, 0xee, 0xf1],
     washFill: [0x22, 0x6e, 0xbf],      // hsl(211 70% 44%)
+    greyFill: [0x96, 0x9c, 0xa6],      // hsl(220 8% 62%)
     histDim: [0x6b, 0x74, 0x82],
     accentSolid: [0x22, 0x6e, 0xbf] }, // hsl(211 70% 44%)
 ];
-const WHITE = [0xff, 0xff, 0xff];
+/** `--on-accent`. A token, not a literal, everywhere it is used (Global Constraints). */
+const ON_ACCENT = [0xff, 0xff, 0xff];
 
 describe('washAlpha', () => {
   it('paints nothing at or below the floor', () => {
@@ -534,51 +626,76 @@ describe('greyAlpha', () => {
   it('stays linear, because a neutral metric is a scale rather than a podium', () => {
     expect(greyAlpha(0.5) / greyAlpha(0.25)).toBeCloseTo(2, 5);
   });
+
+  it('paints nothing rather than a tint no one can see', () => {
+    // The floor branch, which the linearity case alone never reaches: 0.04 * 0.34 is under
+    // WASH_MIN_PAINT and must round to bare, and the step above it must not.
+    expect(greyAlpha(0.04)).toBe(0);
+    expect(greyAlpha(0.05)).toBeGreaterThan(0);
+  });
 });
 
 /**
  * The guard that makes the single-ink rule enforceable rather than remembered. A ramp that
  * switched ink could not clear 4.5:1 anywhere near the switch — the best obtainable at the
  * crossover is 4.22:1 against this theme's own ink (spec §One ink, always).
+ *
+ * BOTH ramps, not just the blue one. The grey ramp clears by a wide margin today, which is the
+ * reason it needs the assertion rather than a reason to skip it: its peak alpha and its fill are
+ * both retunable, and an unasserted rule is one a retune deletes in silence.
  */
-describe('the ranked ramp is legible at every step', () => {
-  for (const { name, washFill, surface, ink } of THEMES) {
-    it(`${name}: theme ink clears 4.5:1 across the whole ramp`, () => {
-      let worst = Infinity;
-      let worstAt = 0;
-      for (let i = 0; i <= 200; i++) {
-        const p = i / 200;
-        const c = contrast(over(washFill, washAlpha(p), surface), ink);
-        if (c < worst) { worst = c; worstAt = p; }
-      }
-      expect(worst, `worst ${worst.toFixed(2)}:1 at p=${worstAt.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
-    });
+describe('both ramps are legible at every step', () => {
+  const RAMPS = [
+    { ramp: 'ranked', fill: (t: typeof THEMES[number]) => t.washFill, alpha: washAlpha },
+    { ramp: 'neutral', fill: (t: typeof THEMES[number]) => t.greyFill, alpha: greyAlpha },
+  ];
+  for (const { ramp, fill, alpha } of RAMPS) {
+    for (const theme of THEMES) {
+      it(`${theme.name}: the ${ramp} ramp keeps theme ink at 4.5:1 across its whole range`, () => {
+        let worst = Infinity;
+        let worstAt = 0;
+        for (let i = 0; i <= 200; i++) {
+          const p = i / 200;
+          const c = contrast(over(fill(theme), alpha(p), theme.surface), theme.ink);
+          if (c < worst) { worst = c; worstAt = p; }
+        }
+        expect(worst, `worst ${worst.toFixed(2)}:1 at p=${worstAt.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+      });
+    }
   }
 });
 
 /**
  * A flat mark is governed by a different rule from the gradient wash: it is opaque and it is not
- * text, so 3:1 against its surface is the bar (docs/app.md §Theming). Without this the histogram
- * and coverage bars can be lightened into invisibility by a token retune with nothing failing.
+ * text, so 3:1 is the bar (docs/app.md §Theming). Without this the histogram and coverage bars can
+ * be lightened into invisibility by a token retune with nothing failing.
+ *
+ * Against every surface the mark actually sits on, not just one. `--surface` is only the
+ * histogram's backdrop below 800px, inside the drawer; above it the sidebar has no background of
+ * its own and the bars sit on `--bg`, which is the lighter of the two in light mode and therefore
+ * the binding case. The pickers' coverage fill sits in a `--border-soft` track, which is lighter
+ * again.
  */
-describe('flat marks stand off their surface', () => {
-  for (const { name, histDim, surface } of THEMES) {
-    it(`${name}: --hist-dim clears 3:1 against the surface`, () => {
-      const c = contrast(histDim, surface);
-      expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
-    });
+describe('flat marks stand off every surface they sit on', () => {
+  for (const { name, histDim, surface, page, track } of THEMES) {
+    for (const [what, bg] of [['--surface', surface], ['--bg', page], ['--border-soft', track]] as const) {
+      it(`${name}: --hist-dim clears 3:1 against ${what}`, () => {
+        const c = contrast(histDim, bg);
+        expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+      });
+    }
   }
 });
 
 /**
- * `--accent` is a signed-off value and is never used behind white text; `--accent-solid` is the
- * darker variant that is. White on the dark accent measures 3.71:1, which is why the two cannot be
+ * `--accent` is a signed-off value and is never used behind text; `--accent-solid` is the darker
+ * variant that is. `--on-accent` on the dark accent measures 3.71:1, which is why the two cannot be
  * one token (docs/app.md §Theming).
  */
-describe('white on a filled accent', () => {
+describe('--on-accent on a filled accent', () => {
   for (const { name, accentSolid } of THEMES) {
-    it(`${name}: --accent-solid clears 4.5:1 with white text`, () => {
-      const c = contrast(accentSolid, WHITE);
+    it(`${name}: --accent-solid clears 4.5:1 with --on-accent`, () => {
+      const c = contrast(accentSolid, ON_ACCENT);
       expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
     });
   }
@@ -633,7 +750,22 @@ export function greyAlpha(p: number): number {
 - [ ] **Step 4: Run the test**
 
 Run: `npm -w app run test -- wash`
-Expected: PASS, all three contrast groups. Measured: ranked ramp **4.73:1** light and **4.80:1** dark, both worst at `p = 1`; `--hist-dim` **3.14:1** light and **3.58:1** dark; `--accent-solid` with white **5.12:1** light and **5.18:1** dark.
+
+Expected: PASS, all four contrast groups. Measured:
+
+| rule | light | dark |
+|---|---|---|
+| ranked ramp, worst over `p` | **4.73:1** at `p = 1` | **4.80:1** at `p = 1` |
+| neutral ramp, worst over `p` | **12.35:1** at `p = 1` | **7.91:1** at `p = 1` |
+| `--hist-dim` on `--surface` | 3.62:1 | 3.58:1 |
+| `--hist-dim` on `--bg` | **3.32:1** | 4.01:1 |
+| `--hist-dim` on `--border-soft` | **3.12:1** | 3.22:1 |
+| `--accent-solid` with `--on-accent` | 5.12:1 | 5.18:1 |
+
+The two bold rows are why light `--hist-dim` moves to `#7f8794` in Task 4 rather than staying at
+`#8b929d`: the old value is 3.14:1 on `--surface` but only **2.88:1** on `--bg` and **2.70:1** on
+`--border-soft`, so it failed the stated rule everywhere it was actually drawn and passed the only
+place the test looked. Both ramps are monotonic, so `p = 1` genuinely is each one's worst case.
 
 - [ ] **Step 5: Commit**
 
@@ -666,17 +798,33 @@ Replace the `defines the wash endpoints for both themes` test in `app/src/lib/to
     expect(css).toContain('hsl(211 70% 44%)');
   });
 
-  it('defines the accent, and a darker solid variant for white text to sit on', () => {
+  it('defines the accent, a darker solid variant, and the one ink allowed on it', () => {
     expect(css).toContain('hsl(211 84% 46%)');
     expect(css).toContain('hsl(211 70% 54%)');
     expect(css).toContain('--accent-solid:');
     expect(css).toContain('hsl(211 84% 44%)');
+    // A token rather than a literal `#fff` in nine components: the pass exists to move colour
+    // choices into app.css, and the guard below is what keeps them there.
+    expect(css).toContain('--on-accent:');
+  });
+
+  it('leaves no component writing a raw white onto an accent fill', () => {
+    // `--accent-solid` and `#fff` are a pair, and a pair split across files drifts. The literal is
+    // banned outright rather than checked for adjacency, because adjacency is not greppable.
+    const offenders: string[] = [];
+    for (const f of readdirSync(componentDir).filter((n) => n.endsWith('.svelte'))) {
+      const style = readFileSync(join(componentDir, f), 'utf8');
+      if (/color:\s*#(fff|ffffff)\b/i.test(style.slice(style.indexOf('<style>')))) offenders.push(f);
+    }
+    expect(offenders).toEqual([]);
   });
 
   it('keeps --hist-dim at the values wash.test.ts holds to 3:1', () => {
     // The token and the literal in wash.test.ts are one fact in two files; drifting them apart is
-    // how a flat mark gets lightened into invisibility with nothing failing.
-    expect(css).toContain('--hist-dim: #8b929d');
+    // how a flat mark gets lightened into invisibility with nothing failing. Light moved off
+    // #8b929d because that value cleared 3:1 only against --surface, and the sidebar's bars sit on
+    // --bg above 800px (2.88:1) and in a --border-soft track in the pickers (2.70:1).
+    expect(css).toContain('--hist-dim: #7f8794');
     expect(css).toContain('--hist-dim: #6b7482');
   });
 
@@ -698,7 +846,7 @@ Replace the `defines the wash endpoints for both themes` test in `app/src/lib/to
 - [ ] **Step 2: Run it and watch it fail**
 
 Run: `npm -w app run test -- tokens`
-Expected: FAIL — `--wash-blue:` is present but the hsl values, `--accent-solid`, `--well` and `--border-soft` are not.
+Expected: FAIL — `--wash-blue:` is present but the hsl values, `--accent-solid`, `--on-accent`, `--well` and `--border-soft` are not. The `#fff` guard passes at this point and only starts doing work in Tasks 9 and 12, which are the two that would otherwise introduce the literal.
 
 - [ ] **Step 3: Rewrite the token block**
 
@@ -712,14 +860,21 @@ In `app/src/app.css`, replace the light `:root` colour lines and both dark block
      hairline measures 1.22:1 and simply is not there. 1.61:1 (SetupStrip's own comment). */
   --divider: #c9c9c3;
   --accent: hsl(211 84% 46%); --accent-dim: hsl(211 84% 95%);
-  /* ONLY for a filled accent carrying white text — the toolbar pill, the month grid's chosen cell.
-     White on --accent is 4.74:1 in light but 3.71:1 in dark, so the two themes cannot share one
-     value; this one is 5.12:1 light / 5.18:1 dark. Never a hairline, a bar or a text colour;
-     `wash.test.ts` holds it to 4.5:1 (docs/app.md §Theming). */
+  /* ONLY for a filled accent carrying --on-accent text — the toolbar pill, the month grid's chosen
+     cell. --on-accent on --accent is 4.74:1 in light but 3.71:1 in dark, so the two themes cannot
+     share one value; this one is 5.12:1 light / 5.18:1 dark. Never a hairline, a bar or a text
+     colour; `wash.test.ts` holds it to 4.5:1 (docs/app.md §Theming). */
   --accent-solid: hsl(211 84% 44%);
+  /* The one ink allowed on --accent-solid, and a token so no component hard-codes it. Both themes
+     fill with a dark enough accent that this stays white in both — which is a fact worth stating
+     once here rather than nine times in the components. */
+  --on-accent: #ffffff;
   --good: #15803d; --bad: #b4331f;
-  /* Flat mark: 3.14:1 against the surface, asserted in wash.test.ts — docs/app.md §Theming */
-  --hist-dim: #8b929d;
+  /* Flat mark. 3.62:1 on --surface, 3.32:1 on --bg, 3.12:1 on --border-soft — all three asserted in
+     wash.test.ts, because the histogram sits on --bg above 800px and the pickers' coverage fill
+     sits in a --border-soft track. The old #8b929d cleared only the first of the three
+     (docs/app.md §Theming). */
+  --hist-dim: #7f8794;
   /* The FILL, not the accent: a large translucent area needs less chroma than a small solid mark.
      Alpha comes from lib/wash.ts, which is where the contrast rule is enforced. */
   --wash-blue: hsl(211 84% 50%); --wash-grey: hsl(220 9% 55%);
@@ -738,8 +893,12 @@ Both dark blocks (`@media (prefers-color-scheme: dark) :root:not([data-theme='li
     --border: #282c31; --border-soft: #22262a; --divider: #434c59;
     --accent: hsl(211 70% 54%); --accent-dim: hsl(211 55% 22%);
     --accent-solid: hsl(211 70% 44%);
+    /* Still white: the dark fill is dark enough to carry it at 5.18:1. Restated rather than
+       inherited, so the two blocks stay symmetric and a future retune has somewhere to land. */
+    --on-accent: #ffffff;
     --good: #4ade80; --bad: #f0836f;
-    --hist-dim: #6b7482;   /* 3.58:1 against --surface */
+    /* 3.58:1 on --surface, 4.01:1 on --bg, 3.22:1 on --border-soft */
+    --hist-dim: #6b7482;
     /* Darker than light, not lighter. On a near-black surface the wash must stay dark enough for
        light text to sit on it; a lighter dark fill fails contrast at the top of the ramp. */
     --wash-blue: hsl(211 70% 44%); --wash-grey: hsl(220 8% 62%);
@@ -755,21 +914,32 @@ At the end of `app/src/app.css`:
 
 ```css
 /**
- * One ring for every focusable thing. The 2px gap is PAINTED in the surface colour rather than left
- * transparent, because a plain `outline-offset` shows whatever is behind: on a 0.93-alpha wash chip
- * the ring would sit accent-on-accent and nearly vanish. Same trick the phone's sticky header uses
- * on its own border-spacing gaps (docs/app.md §Theming).
+ * One ring for every focusable thing EXCEPT a table row. The 2px gap is PAINTED in the surface
+ * colour rather than left transparent, because a plain `outline-offset` shows whatever is behind:
+ * on a 0.93-alpha wash chip the ring would sit accent-on-accent and nearly vanish. Same trick the
+ * phone's sticky header uses on its own border-spacing gaps (docs/app.md §Theming).
  *
  * `:where()` keeps specificity at zero, which means it loses to any component rule naming the same
- * element — so the three per-component `outline` rules this replaces are DELETED by the tasks that
- * own their components (Tasks 6, 9, 10), never left to be overridden.
+ * element — so the one per-component `outline` rule this replaces, on the setup strip's cards, is
+ * DELETED by the task that owns it (Task 9) rather than left to be overridden. The other two are
+ * the table rows below, and those are kept on purpose.
+ *
+ * `:not(tr)` is the exemption, and it is deliberate rather than an omission. A `box-shadow` ring is
+ * drawn OUTSIDE the element; a row spans the full width of the table and abuts the rows above and
+ * below it with no gap, so an outside ring paints over both of them, and inside the phone's panel
+ * `overflow-y: clip` cuts it off entirely at the first and last row. Rows keep the inset
+ * `outline-offset: -2px` ring they have today, in their own components, and Tasks 6 and 10 KEEP
+ * those two rules rather than deleting them (docs/app.md §Theming).
  */
 :root { --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+:where(a, button, input, select, textarea, summary, [tabindex]):not(tr):focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 ```
+
+`:not(tr)` inside `:where()` still contributes no specificity, so nothing about the override
+behaviour changes — it only narrows what the rule claims.
 
 - [ ] **Step 5: Run the tests**
 
@@ -782,7 +952,7 @@ Run the dev server and confirm the page is warm-grey rather than the old cool gr
 
 - [ ] **Step 7: Update the owning doc**
 
-In `docs/app.md` §Theming, record: the three colour rules and where each is asserted (`lib/wash.test.ts`, mirrored by `tokens.test.ts`); that alpha now comes from `lib/wash.ts` rather than CSS arithmetic and is checked across the whole ramp rather than at its endpoint; that `--accent` and `--accent-solid` are different tokens with different jobs and why the two themes cannot share one solid value; and that `--divider` is deliberately darker than `--border`.
+In `docs/app.md` §Theming, record: the four colour rules and where each is asserted (`lib/wash.test.ts`, mirrored by `tokens.test.ts`); that alpha now comes from `lib/wash.ts` rather than CSS arithmetic and is checked across the whole of **both** ramps rather than at an endpoint; that `--accent`, `--accent-solid` and `--on-accent` are three tokens with three jobs, why the two themes cannot share one solid value, and that no component may write the white literal itself; that a flat mark is held to 3:1 against **every** surface it sits on — `--surface`, `--bg` and `--border-soft` — because the sidebar has no background of its own above 800px; and that `--divider` is deliberately darker than `--border`. Record the focus ring as one rule with **one** exemption: table rows keep an inset outline, because an outside ring on a full-width row paints over its neighbours and is clipped by the phone panel.
 
 - [ ] **Step 8: Commit**
 
@@ -797,38 +967,64 @@ git commit -m "Lay the colour, elevation and focus tokens the design settles on"
 ## Task 5: Direction leaves the table header for the pickers
 
 **Files:**
-- Modify: `app/src/lib/units.ts`, `app/src/lib/direction.ts`, `app/src/lib/units.test.ts`, `app/src/components/ColumnPicker.svelte`, `app/src/components/ColumnPicker.test.ts`, `app/src/components/AddFilterDialog.svelte`, `docs/app.md`
+- Modify: `app/src/lib/units.ts`, `app/src/lib/direction.ts`, `app/src/lib/units.test.ts`, `app/src/components/ColumnPicker.svelte`, `app/src/components/ColumnPicker.test.ts`, `app/src/components/AddFilterDialog.svelte`, `app/src/components/ShoeTable.test.ts`, `app/src/components/ShoeTableMobile.test.ts`, `docs/app.md`
 
 **Interfaces:**
 - Consumes: tokens (Task 4).
 - Produces: `headerUnits(key, test)` returns units alone. `direction.ts` exports `DIRECTION_ARROW: Record<Direction, string>` for the pickers.
 
-- [ ] **Step 1: Write the failing test**
+**`headerUnits` has two consumers and each has a test that renders its arrow.** Both are edited in
+this task, not in the tasks that own those components — the arrow is this task's to remove, and a
+component test left red until Task 6 or Task 10 makes every intermediate `npm run test` lie.
 
-In `app/src/lib/units.test.ts`, add:
+- [ ] **Step 1: Rewrite the assertions this makes false, in place**
+
+`units.test.ts` carries **seven** live arrow assertions. They are not additions to work around —
+they are the test of the behaviour being removed, and every one of them must be edited here rather
+than left for the suite run. Do not add a parallel `describe` that duplicates them:
+
+| line | today | becomes |
+|---|---|---|
+| 19 | `headerUnits('weight', floatTest)).toBe('g ↓')` | `'g'` |
+| 23 | `headerUnits('energy-return-heel', percentTest)).toBe('% ↑')` | `'%'` |
+| 24 | `headerUnits('breathability', scoreTest)).toBe('/5 ↑')` | `'/5'` |
+| 28 | `headerUnits('toebox-durability', ratingTest)).toBe('/5 ↑')` | `'/5'` |
+| 36 | `headerUnits('score', undefined)).toBe('/100 ↑')` | `'/100'` |
+| 37 | `headerUnits('msrpGbp', undefined)).toBe('£ ↓')` | `'£'` |
+| 54 | `headerUnits(def.keys[zone], undefined)).toBe('↑')` | `''` |
+
+Line 54 is the one that needs more than a literal swapped. It sits in
+`describe('the synthetic story scores')` under the claim *"The direction arrow is all the header can
+honestly carry"*, and after this change the header carries **nothing** for a story score — a
+synthetic key has no catalogue test, so `unitsOf` returns `''`. Rewrite the block and its comment:
 
 ```ts
-describe('headerUnits carries units alone', () => {
-  it('drops the direction arrow from a higher-is-better metric', () => {
-    const t = labTest({ id: 1, slug: 'energy-return-heel', name: 'Energy return', type: 'percent' });
-    expect(headerUnits('energy-return-heel', t)).toBe('%');
-  });
-
-  it('drops it from a lower-is-better one too', () => {
-    expect(headerUnits('msrpGbp', undefined)).toBe('£');
-  });
-
-  it('leaves a neutral metric exactly as it was', () => {
-    const t = labTest({ id: 2, slug: 'heel-stack', name: 'Heel stack', type: 'float', units: 'mm' });
-    expect(headerUnits('heel-stack', t)).toBe('mm');
+describe('the synthetic story scores', () => {
+  it('leaves every story score with no unit line at all', () => {
+    // Never `/100`: the anchors are frozen, so a shoe better than the 2026-07-30 fleet reads above
+    // 100 by design. There is nothing else honest to put here either — the direction arrow that
+    // used to fill this line now lives in the column picker (docs/app.md §Table presentation), so
+    // the line is empty and `min-height: 1em` is what keeps the header rows the same height.
+    for (const def of SCORE_DEFS) for (const zone of ZONES) {
+      expect(headerUnits(def.keys[zone], undefined)).toBe('');
+      expect(headerUnits(def.keys[zone], undefined)).not.toContain('/100');
+    }
   });
 });
 ```
 
+The three assertions that were already arrow-free — `'3 = true'`, `'mm'`, and the three empty cases
+at lines 41–45 — are untouched and must stay passing, because they are what proves the change took
+only the arrow.
+
+Also rename the two test titles that now describe the wrong behaviour: line 18's *"takes a float
+test at its declared units and marks the direction"* drops the second clause, and the file's
+top-level `describe('headerUnits')` keeps its name.
+
 - [ ] **Step 2: Run it and watch it fail**
 
 Run: `npm -w app run test -- units`
-Expected: FAIL — got `'% ↑'`, expected `'%'`.
+Expected: FAIL, seven assertions — the first reporting got `'g ↓'`, expected `'g'`.
 
 - [ ] **Step 3: Move the arrow out of `units.ts`**
 
@@ -860,12 +1056,35 @@ In `app/src/lib/direction.ts`, add below the `Direction` type:
 export const DIRECTION_ARROW: Record<Direction, string> = { higher: '↑', lower: '↓', neutral: '' };
 ```
 
-- [ ] **Step 5: Run the test**
+- [ ] **Step 5: Fix the two rendered-header assertions in the table suites**
 
-Run: `npm -w app run test -- units`
-Expected: PASS.
+Both renderings read `headerUnits`, and both have a test that asserts the arrow it rendered. Neither
+is listed in Task 6 or Task 10, and both go red the moment Step 3 lands:
 
-- [ ] **Step 6: Write the failing picker test**
+`app/src/components/ShoeTable.test.ts` — the whole case is named for the arrow, so the title moves
+with the assertion:
+
+```ts
+  it('carries units and a direction arrow in the header', () => {     // → 'carries units in the header'
+    setup({ view: { columns: ['weight'] } });
+    expect(screen.getByText('g ↓')).toBeInTheDocument();               // → getByText('g')
+  });
+```
+
+`app/src/components/ShoeTableMobile.test.ts` — inside `heads a column with its short label rather
+than the catalogue name`:
+
+```ts
+    expect(screen.getByText('mm ↓')).toBeInTheDocument();              // → getByText('mm')
+```
+
+- [ ] **Step 6: Run the test**
+
+Run: `npm -w app run test -- units ShoeTable ShoeTableMobile`
+Expected: PASS. Run the three together rather than `units` alone: the point of Step 5 is that this
+change reaches past its own module, and a filtered run that only names `units` cannot show that.
+
+- [ ] **Step 7: Write the failing picker test**
 
 `ColumnPicker.test.ts` has **no `baseProps()` helper**. It defines `const base = { tests: TESTS, groups, population: FLEET, idx, generations: {} }` — an object, missing the required `columns` and `onchange`. Use the file's own idiom. The `<details>` contents are in the DOM whether or not it is open, so nothing needs clicking:
 
@@ -887,12 +1106,12 @@ it('marks direction on the fixed columns too, where price lives', () => {
 });
 ```
 
-- [ ] **Step 7: Run it and watch it fail**
+- [ ] **Step 8: Run it and watch it fail**
 
 Run: `npm -w app run test -- ColumnPicker`
 Expected: FAIL — text not found.
 
-- [ ] **Step 8: Add the legend and the marker to both lists**
+- [ ] **Step 9: Add the legend and the marker to both lists**
 
 In `ColumnPicker.svelte`, import `directionOf, DIRECTION_ARROW` from `../lib/direction`, and add above the first group inside `.panel`:
 
@@ -930,13 +1149,20 @@ Widen the grid on `label` to make room, and style the new parts:
   .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
   .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
   /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
-     mark, --border-soft the groove it sits in. Neutral rather than accent because accent means
+     mark, --border-soft the groove it sits in. The fill is a flat mark and the track is the surface
+     it sits on, so the pair is held to the same 3:1 as the histogram — 3.12:1 light and 3.22:1
+     dark, asserted in wash.test.ts. The old --hist-dim managed 2.70:1 here, which is why Task 4
+     retuned it rather than only changing the track. Neutral rather than accent because accent means
      "you selected this" in a CONTROL, and a picker row is a control. Where a bar encodes MAGNITUDE
      it is a data mark and keeps the accent — the score breakdown's share bar does
      (docs/app.md §Theming). */
   .bar { background: var(--border-soft); }
   .fill { display: block; height: 100%; background: var(--hist-dim); }
 ```
+
+Both `.bar` and `.fill` already exist in each file with a `--hist-dim` track and an `--accent` fill.
+**Edit those declarations rather than appending a second rule** — a duplicate selector that wins only
+on source order leaves the old colour in the file as a decoy for the next reader.
 
 **`AddFilterDialog.svelte` has different markup and different selectors.** Its rows are `<button>` elements inside `.list`, styled `.list button { grid-template-columns: 1fr 4rem 2.4rem }` — three tracks, not four — and its offers carry `o.coverage` rather than a `pct()` call. Add the same legend above `.list`, insert the glyph after `.name`, and widen to four tracks:
 
@@ -948,12 +1174,12 @@ plus the same `.legend`, `.dir`, `.bar` and `.fill` rules.
 
 A screen reader gets the direction from nothing here — that is deliberate and matches the table, where it is a colour-carried fact; do not add an `aria-label` restating it per row, which would make every row twice as long to hear.
 
-- [ ] **Step 9: Run the tests**
+- [ ] **Step 10: Run the tests**
 
 Run: `npm -w app run test -- ColumnPicker AddFilterDialog units`
 Expected: PASS.
 
-- [ ] **Step 10: Update the owning doc**
+- [ ] **Step 11: Update the owning doc**
 
 In `docs/app.md` §Table presentation, replace the sentence stating that the arrow is `directionOf`'s with:
 
@@ -967,7 +1193,7 @@ fields carry it too and price keeps its `↓` — and in the table it is carried
 numeric end that is (docs/app.md §Theming).
 ```
 
-- [ ] **Step 11: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
 git add -A
@@ -980,7 +1206,7 @@ git commit -m "Move the direction mark to where a metric is chosen" \
 ## Task 6: The desktop table
 
 **Files:**
-- Modify: `app/src/components/ShoeTable.svelte`, `app/src/components/ShoeTable.test.ts`, `docs/app.md`
+- Modify: `app/src/components/ShoeTable.svelte`, `app/src/components/ShoeTable.test.ts`, `app/src/Page.test.ts`, `docs/app.md`
 
 **Interfaces:**
 - Consumes: `washAlpha`, `greyAlpha` (Task 3); tokens (Task 4); `headerUnits` (Task 5).
@@ -1006,7 +1232,8 @@ it('hands the cell a resolved alpha rather than a raw percentile', () => {
 });
 ```
 
-Two existing assertions become false and are **changed in this step, not left for a later run**:
+Three existing assertions become false and are **changed in this step, not left for a later run**.
+Two are in this file:
 
 ```ts
     expect(th.textContent).toContain('▲');                    // delete — the line above it already
@@ -1015,9 +1242,24 @@ Two existing assertions become false and are **changed in this step, not left fo
     expect(heel.getAttribute('style')).toContain('--p:');      // → '--a:'
 ```
 
+The third is in **`app/src/Page.test.ts`**, which pins the rendered header text of the whole table
+and therefore pins the glyph this step deletes:
+
+```ts
+    // An escaped nbsp, not a space: the sort arrow is nbsp-joined inside `.h-name` and
+    // `columnHeaders()` reads that span, so a copy-paste must not silently lose it.
+    expect(columnHeaders()).toEqual(['Shoe', 'RunRepeat Score', 'Forefoot stack ▼']);
+```
+
+Becomes `['Shoe', 'RunRepeat Score', 'Forefoot stack']`, and **the two-line comment above it goes
+with it** — the nbsp it explains no longer exists, so a comment left behind describes a join that
+is not there. The sort direction is still asserted three lines below by `sort=-forefoot-stack` in
+the URL, and by `aria-sort` in this file's own header test, so nothing is lost by dropping the
+glyph from the string.
+
 - [ ] **Step 2: Run it and watch it fail**
 
-Run: `npm -w app run test -- ShoeTable`
+Run: `npm -w app run test -- ShoeTable Page`
 Expected: FAIL — the img is present and `--p` is set.
 
 - [ ] **Step 3: Swap the percentile for an alpha and drop the image**
@@ -1050,7 +1292,17 @@ Replace the wash rules:
   td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
 ```
 
-Delete `tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }` — the row carries `tabindex="0"`, so `app.css`'s single ring already covers it, and leaving this rule draws both.
+**Keep `tr.shoe:focus-visible`, and comment why.** This is the one focus rule the pass does *not*
+delete: `app.css`'s ring is `:not(tr)` precisely so this survives. Replace the bare declaration with
+
+```css
+  /* The one exemption from app.css's single focus ring, and it must stay. That ring is a
+     `box-shadow`, which draws OUTSIDE the element — on a row that spans the whole table and abuts
+     the rows above and below it with no gap, an outside ring paints over both of them. The inset
+     outline stays inside the row instead. `app.css` excludes `tr` from the global rule rather than
+     relying on this one to win, so the two cannot both draw (docs/app.md §Theming). */
+  tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+```
 
 Add the panel container and the figure face. Wrap the `<table>` in the markup:
 
@@ -1107,16 +1359,25 @@ In the header button, replace the `{#if view.sort.key === col}…{/if}` text arr
 
 - [ ] **Step 6: Run the tests**
 
-Run: `npm -w app run test -- ShoeTable`
+Run: `npm -w app run test -- ShoeTable Page`
 Expected: PASS.
 
-- [ ] **Step 7: Look at it**
+- [ ] **Step 7: Look at it, and put a real focus ring on a real row**
 
-Dev server at 1440px. Check: the table sits in a rounded panel, figures are mono and aligned, no thumbnails, the sorted column shows an accent caret and others reveal a dim one on hover, and a focused row draws exactly one ring.
+Dev server at 1440px. Check: the table sits in a rounded panel, figures are mono and aligned, no thumbnails, and the sorted column shows an accent caret while others reveal a dim one on hover.
+
+Then tab to a table row and **screenshot it**. Two things to confirm, neither of which any test can see, because jsdom applies no component CSS and has no layout:
+
+- exactly **one** ring, not two. Two means `app.css`'s `:not(tr)` is missing or misspelt.
+- the ring is **inside** the row — it must not overlap the row above or below, and the row's own
+  bottom hairline must still be visible under it. If the ring sits outside, the exemption did not
+  take and the global `box-shadow` won.
+
+Do this at 1440px here; Task 10 repeats it at 390px, where the phone panel's `overflow-y: clip` is the failure mode instead.
 
 - [ ] **Step 8: Update the owning doc**
 
-In `docs/app.md` §Table presentation, record: the table sits in a `--surface` panel with `--shadow-panel` and **no `overflow`**, and what that costs; figures are mono with `tabular-nums`; row thumbnails are gone while `imageUrl` survives in the dataset and the detail panel; the sorted column carries an accent caret and `aria-sort` remains the accessible contract; the `discontinued` chip is a neutral micro-label because red is error semantics.
+In `docs/app.md` §Table presentation, record: the table sits in a `--surface` panel with `--shadow-panel` and **no `overflow`**, and what that costs; figures are mono with `tabular-nums`; row thumbnails are gone while `imageUrl` survives in the dataset and the detail panel; the sorted column carries an accent caret and `aria-sort` remains the accessible contract; the `discontinued` chip is a neutral micro-label because red is error semantics; and that the row's focus ring is the single exemption from §Theming's one-ring rule, with the reason (an outside ring on a full-width row paints over its neighbours).
 
 - [ ] **Step 9: Commit**
 
@@ -1131,7 +1392,11 @@ git commit -m "Give the desktop table a surface, mono figures and a real sort ma
 ## Task 7: The header
 
 **Files:**
-- Modify: `app/src/components/Header.svelte`, `app/src/components/Header.test.ts`, `app/src/Page.svelte`, `app/e2e/smoke.spec.ts`, `app/e2e/cross-browser.spec.ts`, `docs/app.md`
+- Modify: `app/src/components/Header.svelte`, `app/src/components/Header.test.ts`, `app/src/Page.svelte`, `app/src/Page.test.ts`, `app/e2e/smoke.spec.ts`, `app/e2e/cross-browser.spec.ts`, `docs/app.md`
+
+**The count string `N of M shoes` appears in eighteen assertions across three files.** Ten are unit
+tests in `Page.test.ts`, seven are in `smoke.spec.ts`, one is in `cross-browser.spec.ts`. Steps 5 and
+7 handle them, and both are load-bearing — a grep scoped to `app/e2e/` finds eight of the eighteen.
 
 **Interfaces:**
 - Consumes: tokens (Task 4).
@@ -1169,10 +1434,18 @@ Expected: FAIL.
 Drop `visible` from the props type and destructuring. Replace `updated`:
 
 ```ts
-  /** `2026-07-27` reads like debug output. Fixed locale so the string does not vary by visitor. */
+  /**
+   * `2026-07-27` reads like debug output. Locale AND zone are both pinned, so the string does not
+   * vary by visitor: `builtAt` is a UTC instant, and formatting it in local time renders the
+   * previous day for every reader west of Greenwich. The old `builtAt.slice(0, 10)` had no such
+   * problem, so dropping the zone would be a regression rather than an omission.
+   */
   const updated = $derived(new Intl.DateTimeFormat('en-GB',
-    { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(builtAt)));
+    { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(builtAt)));
 ```
+
+Without `timeZone: 'UTC'` the Step 1 test also becomes a test of the runner's clock: it passes in
+Europe and fails in the Americas, which is the worst kind of red.
 
 Replace the markup between `<h1>` and the buttons:
 
@@ -1210,31 +1483,83 @@ it('keeps one accessible name per theme state while the glyph becomes an icon', 
 });
 ```
 
-- [ ] **Step 5: Stop passing `visible`**
+- [ ] **Step 5: Stop passing `visible`, and retarget the ten unit assertions on the count**
 
 In `app/src/Page.svelte`, drop `visible={visibleSorted.length}` from the Header usage. `visibleSorted` stays in use by `Receipt` and the CSV export, so nothing else moves.
+
+`Page.test.ts` then has **ten** assertions reading a string the header no longer prints. They do not
+fail loudly in a useful way — `getByText` throws on not-found, so all ten report as missing elements
+rather than as a changed count:
+
+```
+:86  /5 of 5 shoes/   :93  /1 of 5 shoes/   :101 /4 of 5 shoes/   :119 /2 of 5 shoes/
+:161 /3 of 5 shoes/   :213 /0 of 5 shoes/   :470 /1 of 5 shoes/   :478 /1 of 5 shoes/
+:493 /5 of 5 shoes/   :524 /4 of 5 shoes/
+```
+
+**Read the denominator off the filter, not off the old string.** `applyFilters` pushes to
+`considered` *after* the chip filters (discontinued, search, brand, plate, date) and *before* the
+range bounds, so `considered.length` equals the shown count for a chip filter and the whole
+population for a range bound. That is the entire difficulty in this step:
+
+| line | what the test sets | shown / considered | becomes |
+|---|---|---|---|
+| 86 | nothing | 5 / 5 | `Showing 5 of the 5 shoes` |
+| 93 | `plate=carbon` | 1 / 1 | `Showing 1 of the 1 shoes` |
+| 101 | Easy — a plate gate | 4 / 4 | `Showing 4 of the 4 shoes` |
+| 119 | `plate=carbon,plated-other` | 2 / 2 | `Showing 2 of the 2 shoes` |
+| 161 | **`r.heel-stack=36~` + `missing=1`** | 3 / **5** | `Showing 3 of the 5 shoes` |
+| 213 | `q=nothing-matches-this` | 0 / 0 | `Showing 0 of the 0 shoes` |
+| 470 | `plate=carbon` beats storage | 1 / 1 | `Showing 1 of the 1 shoes` |
+| 478 | `plate=carbon` from storage | 1 / 1 | `Showing 1 of the 1 shoes` |
+| 493 | stale schema → defaults | 5 / 5 | `Showing 5 of the 5 shoes` |
+| 524 | Easy, storage blocked | 4 / 4 | `Showing 4 of the 4 shoes` |
+
+Line 161 is the only range-bound site and the only row where the two numbers differ. It is also
+already in a test that reads the receipt by test id, so use that form everywhere rather than
+`getByText` — it is unambiguous, it is the idiom three assertions in this file already use, and it
+does not depend on which element happens to be the deepest text match:
+
+```ts
+expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 3 of the 5 shoes');
+```
+
+Line 86's test is named `renders count, attribution and table`; the count it renders is now the
+catalogue's, so add `expect(screen.getByText(/^450 shoes/))`-style coverage there only if the
+fixture's `total` makes it meaningful — the fixture ships 5 shoes, so `Showing 5 of the 5 shoes` on
+the receipt plus the existing attribution link is enough and no second assertion is needed.
 
 - [ ] **Step 6: Run the tests**
 
 Run: `npm -w app run test`
-Expected: PASS.
+Expected: PASS. This is the first step that runs the whole unit suite since the header changed, so a
+red here is a count assertion Step 5's table missed rather than anything subtler.
 
 - [ ] **Step 7: Fix the e2e assertions this breaks**
 
-**Both** spec files assert on the header's count. Grep first so none is missed — `cross-browser.spec.ts` carries one too:
+**Both** spec files assert on the header's count — seven in `smoke.spec.ts` and one in `cross-browser.spec.ts`. Grep so none is missed:
 
 ```bash
 grep -rn "of 5 shoes" app/e2e/
 ```
 
-Replace each with the receipt's own wording. **The denominators are not the same number**: the header's was `data.shoes.length` (the catalogue, always 5 in the fixture); the receipt's is `filtered.considered.length` (the population the range filters were applied to). So a filtered view that read `4 of 5 shoes` now reads `Showing 4 of the 4 shoes left by your other filters`. Translate per site, not by pattern:
+Replace each with the receipt's own wording, applying the **same** `considered` rule as Step 5 rather than a find-and-replace. The header's denominator was `data.shoes.length` (the catalogue, always 5 in the fixture); the receipt's is `filtered.considered.length`:
 
-| was | becomes |
-|---|---|
-| `'5 of 5 shoes'` | `/Showing 5 of the 5 shoes/` |
-| `'4 of 5 shoes'` | `/Showing 4 of the 4 shoes/` |
-| `'3 of 5 shoes'` | `/Showing 3 of the 3 shoes/` |
-| `'1 of 5 shoes'` | `/Showing 1 of the 1 shoes/` |
+| site | what is filtering | becomes |
+|---|---|---|
+| `smoke:5` — bare visit | nothing | `/Showing 5 of the 5 shoes/` |
+| `smoke:10`, `:48`, `:53` — Easy | a plate gate | `/Showing 4 of the 4 shoes/` |
+| `smoke:26` — `?plate=carbon` | a plate gate | `/Showing 1 of the 1 shoes/` |
+| `smoke:94` — All | nothing | `/Showing 5 of the 5 shoes/` |
+| `smoke:142` — **the price drag** | **a range bound** | `/Showing 3 of the 5 shoes/` |
+| `cross-browser:12` — bare visit | nothing | `/Showing 5 of the 5 shoes/` |
+
+`smoke:142` is the trap: it follows a drag that writes `r.msrpGbp=~140`, and a range bound leaves
+`considered` at the full fleet, so the receipt reads **3 of the 5**, not 3 of the 3. It is the one
+site where a per-pattern translation gives the wrong number, which is why the table is per site.
+
+Prefer `page.getByTestId('receipt')` over `getByText` here too — the receipt already carries the
+attribute, and it removes any question about which element Playwright's text engine resolves to.
 
 Run `npm -w app run e2e` after the swap and read the actual receipt text out of any failure rather than guessing a second time.
 
@@ -1336,6 +1661,13 @@ Import the existing rounder and use it:
 ```css
   input { font-family: var(--font-mono); font-size: var(--t-xs); text-align: right;
           font-variant-numeric: tabular-nums; }
+  /* iOS Safari zooms the whole viewport when a focused input's text is under 16px, and there is no
+     way back out of that zoom except a pinch. These rows live in a drawer at exactly the widths
+     where it fires, so the touch tier pays a bigger field rather than a viewport jump. A literal,
+     not `--t-*`: 16px is the threshold in the engine, not a step on our scale. */
+  @media (hover: none) {
+    input { font-size: 16px; }
+  }
   .excluded { font-family: var(--font-mono); }
 ```
 
@@ -1346,6 +1678,18 @@ Replace the `✕` text glyph in the clear button with an inline SVG, keeping `ar
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
 ```
+
+**`RangeFilter.test.ts` pins that glyph and is changed in this step**, not left for the suite run:
+
+```ts
+  // An icon, because ten of these rows spelling out "Clear" is most of the sidebar's width; the
+  // row's name rides on the label instead.
+  expect(clear.textContent?.trim()).toBe('✕');        // → assert the SVG, not the text
+```
+
+Becomes `expect(clear.querySelector('svg')).not.toBeNull()`. The `aria-label` assertion two lines
+above it is what actually protects the contract and stays exactly as it is — the glyph was never
+the accessible name, which is the whole reason it can become a drawing.
 
 Leave the grip visibility rules exactly as they are — hover/focus-within reveal, permanently visible under `@media (hover: none)`. That split is deliberate and signed off.
 
@@ -1372,7 +1716,7 @@ Expected: PASS.
 
 - [ ] **Step 8: Update the owning docs**
 
-In `docs/app.md` §Filters, record that an unbounded row draws no accent and that this is what lets colour answer "what is constraining this shortlist?" alongside the existing bold heading, and that the number placeholders are rounded at the view like every other figure. In §Coverage, record that `N / M measured` is mono, so every figure in the sidebar shares the grid with every figure in the table.
+In `docs/app.md` §Filters, record that an unbounded row draws no accent and that this is what lets colour answer "what is constraining this shortlist?" alongside the existing bold heading; that the number placeholders are rounded at the view like every other figure; and that the number fields step up to 16px under `@media (hover: none)` because iOS Safari zooms the viewport for anything smaller and the drawer is where that bites. In §Coverage, record that `N / M measured` is mono, so every figure in the sidebar shares the grid with every figure in the table.
 
 - [ ] **Step 9: Commit**
 
@@ -1460,9 +1804,11 @@ Remove the `border-width: 2px` / `padding: calc(var(--s3) - 1px)` pair from `.ca
   .s { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); border: none;
        border-radius: var(--r-sm); background: none; color: var(--text-dim); cursor: pointer;
        font-size: var(--t-sm); white-space: nowrap; }
-  /* `--accent-solid`, not `--accent`: white on the accent is 3.71:1 in dark. A filled accent under
-     white text is the only kind of site that token exists for (docs/app.md §Theming). */
-  .s.on { background: var(--accent-solid); color: #fff; font-weight: 600; }
+  /* `--accent-solid`, not `--accent`: --on-accent on the accent is 3.71:1 in dark. A filled accent
+     under --on-accent text is the only kind of site that token exists for (docs/app.md §Theming).
+     `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
+     `tokens.test.ts` fails the build on a raw white in a component's style block. */
+  .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
 ```
 
 `overflow: visible` matters: the focus ring is a `box-shadow` and a clipped container would swallow it. `.pace-wrap .seg { width: 100%; box-sizing: border-box; }` at ≤560px still applies and the 2px padding sits inside the border box, so that tier is unaffected.
@@ -1474,18 +1820,18 @@ Remove the `border-width: 2px` / `padding: calc(var(--s3) - 1px)` pair from `.ca
           border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
   button { padding: var(--s1) var(--s3); border: none; border-radius: var(--r-sm); background: none;
            color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
-  button.on { background: var(--accent-solid); color: #fff; font-weight: 600; }
+  button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
 ```
 
 Read `DiscontinuedFilter.svelte`, `PlateFilter.svelte` and `BrandFilter.svelte` first and apply whichever of the two forms each one actually uses — the idiom is shared, the selectors are not.
 
 - [ ] **Step 5: Look at it**
 
-Check the strip at 1200px: both lit cards should read as chosen without shouting, a *hovered* card should read as merely hovered, and the zone names should sit vertically centred against the baseline the story cards set. Check a selected toolbar pill in dark mode — white on `--accent-solid`, not on `--accent`.
+Check the strip at 1200px: both lit cards should read as chosen without shouting, a *hovered* card should read as merely hovered, and the zone names should sit vertically centred against the baseline the story cards set. Check a selected toolbar pill in dark mode — `--on-accent` on `--accent-solid`, not on `--accent`.
 
 - [ ] **Step 6: Update the owning doc**
 
-In `docs/app.md` §The setup strip, record that a chosen card is tinted with a hairline rather than filled, and that hover is border-only so the two states stay distinct. In §The toolbar, record that the selected pill is filled with `--accent-solid` and why the fill cannot use `--accent`.
+In `docs/app.md` §The setup strip, record that a chosen card is tinted with a hairline rather than filled, and that hover is border-only so the two states stay distinct. In §The toolbar, record that the selected pill is filled with `--accent-solid` carrying `--on-accent`, why the fill cannot use `--accent`, and that the ink is a token so the two halves of the pair cannot drift apart across files.
 
 - [ ] **Step 7: Commit**
 
@@ -1571,18 +1917,44 @@ In `ShoeTableMobile.svelte`, import `greyAlpha, washAlpha` from `../lib/wash`, w
   }
 ```
 
-- [ ] **Step 4: Move the lid onto the pinned header**
+- [ ] **Step 4: Move the lid onto the pinned header, unbroken**
+
+A `border-top` on the `th` alone does **not** produce a lid. `border-collapse: separate` with
+`border-spacing: 2px 0` means the header row is not a continuous band: there is a 2px gap between
+every pair of cells — five of them on a six-column view — and another 2px between the outermost
+cells and the table's own edge. A plain `border-top` therefore draws the panel's lid as six dashes
+that stop 2px short of the panel's left and right borders at both ends. The existing side shadows
+fill those gaps with *background*, which is why scrolled rows do not show through them, but a
+box-shadow reproduces the border-box silhouette in a flat colour and carries no border with it.
+
+Bridge the gaps in the shadow stack instead:
 
 ```css
   /* The lid belongs to the thing that is pinned. Square corners, deliberately: a rounded opaque
      cell over scrolling content leaves its corner arcs transparent and a coloured chip passing
      behind shows through as a sliver — and the panel cannot clip that away, because overflow-x is
      visible. The panel is square-topped to match, which is right because it sits flush under the
-     chrome (docs/app.md §Two renderings, and only one of them mounted). */
+     chrome (docs/app.md §Two renderings, and only one of them mounted).
+     Four shadow layers, and the ORDER is the trick — an earlier shadow paints over a later one:
+       · the two --border copies are full height and offset by exactly the border-spacing, so they
+         carry both hairlines across each 2px gap and out to the table's edge, where they meet the
+         panel's side borders;
+       · the two --surface copies sit on top, offset one pixel further out and inset one pixel top
+         and bottom (the `-1px` spread), so they cover everything between the two hairlines and
+         leave precisely 1px of border showing at each edge — flush with this cell's own
+         border-top and border-bottom rather than a pixel above them.
+     Without the --surface copies a cell background stops at the cell and scrolled rows show through
+     the gaps; without the --border copies the lid is a dashed line. Both are load-bearing. */
   th { padding: var(--s1) 2px; background: var(--surface); vertical-align: bottom;
        position: sticky; top: var(--thead-top); z-index: 2;
        border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-       box-shadow: var(--shadow-sticky), 2px 0 0 var(--surface), -2px 0 0 var(--surface); }
+       box-shadow: var(--shadow-sticky),
+                   3px 0 0 -1px var(--surface), -3px 0 0 -1px var(--surface),
+                   2px 0 0 var(--border), -2px 0 0 var(--border); }
+  /* The unit line is a figure line like every other (docs/app.md §Table presentation), and the
+     desktop header's already is — leaving this one proportional makes one column heading read
+     differently on the two renderings. */
+  .h-units { font-family: var(--font-mono); font-weight: 400; color: var(--text-dim); min-height: 1em; }
 ```
 
 - [ ] **Step 5: Turn the cards into a list**
@@ -1609,7 +1981,33 @@ In `ShoeTableMobile.svelte`, import `greyAlpha, washAlpha` from `../lib/wash`, w
   .chip.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
 ```
 
-Delete the `tr.values td:first-child` / `:last-child` radius rules and the `tr.gap` row and rule entirely — the spacer is replaced by `<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>` emitted **between** shoes rather than after each one, so guard it on the each-block index (`{#if i > 0}`). Delete `tr.shoe:focus-visible { outline: … }`; `app.css` owns the ring. Bind `--a` on the chip exactly as Task 6 does on the desktop cell:
+Delete the `tr.values td:first-child` / `:last-child` radius rules and the `tr.gap` row and rule entirely. The spacer is replaced by a hairline row emitted **between** shoes rather than after each one, which needs an index the each-block does not currently declare — **add `, i` to the `{#each}` opening tag**, or `i` is undefined and the guard silently never renders:
+
+```svelte
+      {#each shoes as s, i (s.slug)}
+        {#if i > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
+```
+
+**Keep `tr.shoe:focus-visible` and comment it**, exactly as Task 6 does on the desktop table. This is the second half of the one exemption in `app.css`'s ring rule, and here the reason is sharper still:
+
+```css
+  /* Exempt from app.css's single focus ring, which is `:not(tr)` for these two rows. A box-shadow
+     ring draws OUTSIDE the box: on a full-width row it would paint over the row above and below,
+     and inside this panel `overflow-y: clip` would cut it off completely on the first and last
+     shoe. The inset outline stays within the row. `tr.values` never takes focus itself — it is the
+     same shoe's second row — so it needs no rule, only the same exclusion (docs/app.md §Theming). */
+  tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+```
+
+The expanded row follows the desktop panel onto the recessed surface, so an open row reads as belonging to the row above it in both renderings rather than as a raised card on one and a well on the other:
+
+```css
+  /* --well, not --surface: the same elevation rule the desktop expanded row follows. A panel that
+     is raised on the phone and recessed on the desktop is two answers to one question. */
+  tr.expand td { background: var(--well); }
+```
+
+Bind `--a` on the chip exactly as Task 6 does on the desktop cell:
 
 ```svelte
               <span class="chip" class:tinted={p !== undefined}
@@ -1622,7 +2020,29 @@ Delete the `tr.values td:first-child` / `:last-child` radius rules and the `tr.g
 Run: `npm -w app run test -- ShoeTableMobile`
 Expected: PASS.
 
-- [ ] **Step 7: State the `--thead-top` coupling the webfont makes load-bearing**
+- [ ] **Step 7: Render the lid and the focus ring, and read them at 4× before committing**
+
+Neither of the two things Steps 4 and 5 just built is visible to any test in this repo: jsdom applies no component CSS, and the failures are both one pixel wide. Drive Playwright from the repo root against the dev server at **390 × 780** and read the screenshots — CLAUDE.md §Working approach is explicit that this class of question is answered by rendering rather than by reasoning about the CSS.
+
+**The lid.** Screenshot the top of the panel and open it at **4× zoom**. What must be true:
+
+- one continuous hairline across the whole header, with **no 2px interruptions** at the five column
+  boundaries. A dashed line means the `--border` copies are missing or their offset does not match
+  `border-spacing`.
+- the line **reaches the panel's left and right borders** and turns the corner into them. A line that
+  stops 2px short at each end means the outermost cells' copies are not offsetting outward far enough.
+- the bridged segments sit **flush** with each cell's own `border-top`, not a pixel above or below it.
+  A visible step means the `-1px` spread on the `--surface` copies is wrong, or their offset is not
+  one pixel further out than the `--border` copies'.
+- **one** hairline, not two. A doubled line means `.panel` kept a `border-top`.
+
+Then scroll the list and confirm the lid stays put and rows pass cleanly under it, with nothing showing through the gaps.
+
+**The focus ring.** Tab to a shoe row and screenshot it. Exactly as Task 6 Step 7, but here the panel is what makes it interesting: the ring must be **inside** the row, must not paint over the row above or below, and — this is the case the desktop cannot show — must still be **complete on the first and last shoe in the list**, where an outside ring would be cut off by `overflow-y: clip`. Two rings means `app.css`'s `:not(tr)` is missing.
+
+If any of these is wrong, fix it here. Do not commit a lid nobody has looked at; the whole reason the panel is square-topped is a rendering question that was settled by measurement, and this is the other half of it.
+
+- [ ] **Step 8: State the `--thead-top` coupling the webfont makes load-bearing**
 
 The face swaps in after first paint and the chrome reflows — measured at 75px before the swap and 69px after. `bind:clientHeight` is ResizeObserver-backed and re-measures, which is why this survives; that was luck before and is a requirement now, so it has to be **stated** as well as asserted. In `app/src/Page.svelte`, extend the `chromeHeight` comment:
 
@@ -1641,7 +2061,7 @@ The face swaps in after first paint and the chrome reflows — measured at 75px 
    */
 ```
 
-- [ ] **Step 8: Add the font-swap assertion to the chromium suite**
+- [ ] **Step 9: Add the font-swap assertion to the chromium suite**
 
 Font metrics differ per engine, so this one belongs with the other layout measurements. In `app/e2e/smoke.spec.ts`, inside the existing phone test, after the mobile table is visible:
 
@@ -1663,7 +2083,46 @@ Font metrics differ per engine, so this one belongs with the other layout measur
   expect(gap, 'the pinned header is occluded after the font swap').toBeGreaterThanOrEqual(0);
 ```
 
-- [ ] **Step 9: Add the two overflow assertions to the cross-engine suite**
+- [ ] **Step 10: Measure the 360px six-column fit in Firefox and WebKit, and write the number down**
+
+The spec says six 53px columns "need **332px**, leaving 28px spare at 360px — enough for a 12px inset each side". That 28px is spent almost entirely on the inset, and what is left is far tighter than the sentence implies. The arithmetic:
+
+```
+360  viewport
+-32  .content padding (var(--s4) each side)
+ +8  .bleed negative margin (calc(-1 * var(--s4) + var(--s3)) = -4px each side)
+────
+336  .bleed content box
+ -2  .panel's two 1px side borders
+────
+334  available to the table
+-332 table min-width at six columns: 6 * 53 + 7 * 2
+────
+  2px of slack
+```
+
+Two pixels, and none of that accounts for a classic scrollbar. Chromium headless is where every existing layout measurement in this repo was taken; Firefox and WebKit are where Step 11's new assertions actually run, and they are the two engines nobody has measured this in. **Measure it rather than assuming the 2px holds**, in both engines, at 360px:
+
+```js
+// Drive from the repo root against the preview server, once per engine.
+const slack = await page.evaluate(() => {
+  const panel = document.querySelector('.panel');
+  const table = document.querySelector('[data-testid="shoe-table-mobile"]');
+  return {
+    panelInner: panel.getBoundingClientRect().width - 2,
+    tableWidth: table.getBoundingClientRect().width,
+    docScroll: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+    clientWidth: document.documentElement.clientWidth,
+  };
+});
+```
+
+Record the real slack per engine in the commit's own working notes and, if it is negative in either, say so in `docs/app.md` §Two renderings rather than letting Step 11's assertion pass on a technicality. It *can* pass while the panel overflows: `window.innerWidth` includes the vertical scrollbar and `documentElement.scrollWidth` does not, so a 15px scrollbar hides up to 15px of horizontal overflow from that comparison. `clientWidth` is the honest number, which is why it is in the readout above.
+
+If the slack is negative, the fix is the inset, not the column: `--s3` → `--s2` on `.bleed` buys 8px and keeps the panel inset. Do not narrow the column below 53px — Task 2's entire label bound is measured against it.
+
+- [ ] **Step 11: Add the two overflow assertions to the cross-engine suite**
 
 The spec's §Two overflow constraints claims these are "identical in both engines", and the `overflow: clip` trap — a default six-column view that looks perfect while silently swallowing every column past the sixth — is the single failure this pass most needs a guard for. It is a scroll-extent fact rather than a font-metric one, so it goes in `app/e2e/cross-browser.spec.ts`, which is the suite Firefox and WebKit run:
 
@@ -1704,16 +2163,16 @@ for (const width of [360, 390]) {
 
 Check the seven slugs against `app/e2e/fixtures` before running; substitute any the fixture does not carry, keeping the count at seven.
 
-- [ ] **Step 10: Run both e2e suites**
+- [ ] **Step 12: Run both e2e suites**
 
 Run: `npm -w app run e2e`
-Expected: PASS. If the gap assertion fails, `--thead-top` is being read once rather than observed — check `bind:clientHeight` on `.chrome` in `Page.svelte`. If `maxScrollLeft` is 0, `.panel` has picked up an `overflow-x` that is not `visible`.
+Expected: PASS. If the gap assertion fails, `--thead-top` is being read once rather than observed — check `bind:clientHeight` on `.chrome` in `Page.svelte`. If `maxScrollLeft` is 0, `.panel` has picked up an `overflow-x` that is not `visible`. If the sideways-scroll assertion fails at 360px only, read Step 10's measurement back — the slack went negative in that engine.
 
-- [ ] **Step 11: Update the owning doc**
+- [ ] **Step 13: Update the owning doc**
 
-In `docs/app.md` §Two renderings, and only one of them mounted: replace the 57px bound with 53px and its reasoning, record the cards-become-a-list change and the single panel, and add the `overflow` table with what each option breaks — `hidden` misplaces the sticky header, plain `clip` makes columns past the sixth unreachable, `overflow-x: visible; overflow-y: clip` does both correctly. Record that the panel is square-topped with the lid on the sticky header, and that this follows from `overflow-x: visible` rather than being a taste call. In §Columns and sorting, add the time-varying `--thead-top` note and point at the two e2e assertions and the suite each lives in.
+In `docs/app.md` §Two renderings, and only one of them mounted: replace the 57px bound with 53px and its reasoning, record the cards-become-a-list change and the single panel, and add the `overflow` table with what each option breaks — `hidden` misplaces the sticky header, plain `clip` makes columns past the sixth unreachable, `overflow-x: visible; overflow-y: clip` does both correctly. Record that the panel is square-topped with the lid on the sticky header, and that this follows from `overflow-x: visible` rather than being a taste call; that the lid is drawn by the header's shadow stack rather than by `border-top` alone, because `border-spacing` breaks the cell row into segments; the **measured** slack at 360px in each engine from Step 10, so the next person to change the inset knows what they are spending; and that the expanded row sits on `--well` here as it does on the desktop. In §Columns and sorting, add the time-varying `--thead-top` note and point at the two e2e assertions and the suite each lives in.
 
-- [ ] **Step 12: Commit**
+- [ ] **Step 14: Commit**
 
 ```bash
 git add -A
@@ -1734,12 +2193,22 @@ git commit -m "Rebuild the phone table as a list inside one panel" \
 
 - [ ] **Step 1: Write the failing test**
 
-`DetailPanel.test.ts` has no `baseProps()`; it has `const VIEW = { data: DATA, columns: [EASY.keys.heel], stability: false }` and a `shoe()` fixture. `.intro` renders only when the shoe has one, so the fixture has to carry details or the first assertion fails for the wrong reason:
+`DetailPanel.test.ts` has no `baseProps()`; it has `const VIEW = { data: DATA, columns: [EASY.keys.heel], stability: false }` and a `shoe()` fixture. The fixture has to satisfy **two** independent conditions or one of the two assertions below fails for the wrong reason:
+
+- `.intro` renders only when the shoe has `details`, so it needs those;
+- the breakdown renders a `<table>` only when `contributions()` returns non-null, and that function is
+  **all-terms-required** — `if (keys.some((k) => mapped[k] === null)) return null`. `shoe()` defaults
+  to `values: {}`, so a fixture built from it alone renders `<p class="missing">Not scored…</p>` and
+  has no table at all, before *or* after this change.
+
+Spread a `FLEET` shoe that already carries every reading Easy needs rather than listing test ids here, which would put a second copy of the score's term list in a component test:
 
 ```ts
-const FULL = shoe({ slug: 'full', name: 'Full Shoe',
+// `...FLEET[0]` — cushy carries readings for every Easy term; a bare `shoe()` carries none, and the
+// breakdown then renders its not-scored message instead of the table this asserts on.
+const FULL = { ...FLEET[0]!, slug: 'full', name: 'Full Shoe',
   details: { pros: ['Bouncy'], cons: ['Pricey'], intro: 'Great shoe.',
-    whoShouldBuy: '<p>Everyone</p>', whoShouldNotBuy: null, features: ['Rocker'] } });
+    whoShouldBuy: '<p>Everyone</p>', whoShouldNotBuy: null, features: ['Rocker'] } };
 
 it('puts the summary and the two columns beneath it in one box', () => {
   const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL } });
@@ -1784,7 +2253,18 @@ Reorganise `DetailPanel.svelte`'s template into exactly these children of a `.gr
 
 `a-bd` is **last in the DOM** and pulled up by explicit placement at wide widths. That is what makes it fall to the bottom when the space is not there, with no `order` juggling. The `{#each breakdowns}` loop keeps emitting one `<section class="score-breakdown">` per score column on screen; they all sit inside the single `.a-bd`.
 
-Wrap each breakdown's `<table>` in `<div class="scroll">` — the scrollport moves off `.score-breakdown` onto an inner box so the section heading does not scroll away from the figures it names.
+Wrap each breakdown's `<table>` in `<div class="scroll">` — the scrollport moves off `.score-breakdown` onto an inner box so the section heading does not scroll away from the figures it names. **Remove `overflow-x: auto` from `.score-breakdown` in the same edit**; left there it makes two nested scrollports and the outer one still scrolls the heading away.
+
+The breakdown's surface goes on a wrapper this step must also add. `.score-breakdown` today is a bare `<section>` holding an `<h4>` and a `<table>` — there is **no `.card`** in this component, so a rule naming one styles nothing and `svelte-check` reports it as an unused selector. Give the section an inner card so the heading sits on the well and the figures sit on a surface:
+
+```svelte
+    <section class="score-breakdown">
+      <h4>{b.label}</h4>
+      <div class="card">
+        <div class="scroll"><table>…</table></div>
+      </div>
+    </section>
+```
 
 - [ ] **Step 4: Add the container-query grid**
 
@@ -1819,9 +2299,27 @@ Wrap each breakdown's `<table>` in `<div class="scroll">` — the scrollport mov
 
 280px, not larger: every source image is 720×480, so 280 CSS is well inside the sharp limit on a 2× display (360 is the ceiling) while leaving the facts beside it room.
 
+**This is a MERGE into the existing `img` rule, not a replacement.** That rule carries
+`aspect-ratio: 3 / 2` and `object-fit: contain`, and both stay:
+
+```css
+  /* aspect-ratio, so the box is the right height BEFORE the image loads and the panel does not
+     shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. Neither
+     is decoration — dropping the ratio reintroduces a reflow inside an already-open row, which is
+     the one place a jump is most obvious. Only the sizing changes: 220px/30vw becomes 100% capped
+     at 280px, because the grid now gives this column a width worth filling. */
+  img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 3 / 2; object-fit: contain;
+        display: block; border-radius: var(--r-md); background: var(--surface); }
+```
+
+Write it as the one rule above rather than as `img` plus a `.detail img` override — two rules where
+the second wins only on specificity leaves the old 220px and 30vw in the file as a decoy.
+
 - [ ] **Step 5: Style the breakdown**
 
 ```css
+  /* The wrapper Step 3 adds. It does not exist in the component today — a rule naming `.card` here
+     without that markup change styles nothing and svelte-check reports an unused selector. */
   .score-breakdown .card { background: var(--surface); border: 1px solid var(--border);
                            border-radius: var(--r-md); padding: var(--s3) var(--s3); }
   /* Its own scrollport: five columns need about 354px against the 321px a 375px phone leaves the
@@ -1977,7 +2475,7 @@ In `ColumnPicker.svelte`, `AddFilterDialog.svelte`, `HelpPopover.svelte` and `Mo
   box-shadow: var(--shadow-dialog);
 ```
 
-In `MonthPicker.svelte` specifically: `.trigger` takes `border-radius: var(--r-md)`, the caret becomes the same inline chevron SVG the Columns button uses, `.grid button[aria-selected='true']` becomes `background: var(--accent-solid); color: #fff` — **`--accent-solid`, because white sits on it** — and `.grid button:hover:not(:disabled)` becomes `background: var(--accent-dim); border-color: var(--accent)`. Nothing structural changes; the keyboard grid and its roles stay exactly as they are, which `cross-browser.spec.ts` already asserts across three tests.
+In `MonthPicker.svelte` specifically: `.trigger` takes `border-radius: var(--r-md)`, the caret becomes the same inline chevron SVG the Columns button uses, `.grid button[aria-selected='true']` becomes `background: var(--accent-solid); color: var(--on-accent)` — **`--accent-solid`, because an ink sits on it, and `--on-accent` rather than `#fff`, because `tokens.test.ts` fails the build on a raw white in a component** — and `.grid button:hover:not(:disabled)` becomes `background: var(--accent-dim); border-color: var(--accent)`. Nothing structural changes; the keyboard grid and its roles stay exactly as they are, which `cross-browser.spec.ts` already asserts across three tests.
 
 - [ ] **Step 5: Replace the Columns `<details>` marker**
 
@@ -2158,13 +2656,13 @@ Re-read these against the shipped code. Each is owned above; this is the check, 
 
 | § | owner |
 |---|---|
-| §Theming — ramp, the three contrast rules, `--accent-solid`, `--divider` | Task 4 |
-| §Columns and sorting — the 53px column, the 48px budget, `--thead-top` over time | Tasks 2, 10 |
-| §Table presentation — direction arrow, panel, caret, thumbnails, §The expanded row | Tasks 5, 6, 11 |
-| §Filters — accent means a bound is active, the drawer scrim | Tasks 8, 12 |
+| §Theming — both ramps, the four contrast rules and which surfaces each is measured against, `--accent-solid`, `--on-accent`, `--divider`, the one focus-ring exemption | Task 4 |
+| §Columns and sorting — the 53px column, the 48px budget, the two-line deletion rule and the two exempt labels, `--thead-top` over time | Tasks 2, 10 |
+| §Table presentation — direction arrow, panel, caret, thumbnails, the row's inset ring, §The expanded row | Tasks 5, 6, 11 |
+| §Filters — accent means a bound is active, rounded placeholders, the 16px touch tier, the drawer scrim | Tasks 8, 12 |
 | §Coverage — mono figures | Task 8 |
-| §Two renderings, and only one of them mounted — list, panel, overflow | Task 10 |
-| §The setup strip / §The toolbar — selected states | Task 9 |
+| §Two renderings, and only one of them mounted — list, panel, overflow, the shadow-drawn lid, the measured 360px slack, `--well` under the expanded row | Task 10 |
+| §The setup strip / §The toolbar — selected states, `--on-accent` | Task 9 |
 | §Stacking order — the scrim's layer | Task 12 |
 | §Decisions — the header/receipt split, the skeleton contract | Tasks 7, 13 |
 
@@ -2179,7 +2677,9 @@ Expected: `check:docs ok`. A dangling `§` pointer means a heading was renamed �
 cd /home/sam/dev/shoe-lab-visual-polish && npm run verify && npm -w app run e2e
 ```
 
-Expected: both green. `verify` is `check:docs + typecheck + lint + test:coverage`. `svelte-check` reports unused CSS selectors as warnings rather than errors — read them anyway, because every one is a rule whose markup a task above deleted.
+Expected: both green. `verify` is `check:docs + typecheck + lint + test:coverage`. `svelte-check` reports unused CSS selectors as warnings rather than errors — read them anyway, because every one is either a rule whose markup a task above deleted, or a rule whose markup a task above forgot to add. `.score-breakdown .card` is the second kind and Task 11 Step 3 is where it comes from.
+
+`test:coverage` holds `src/lib/**` to 90% lines and 85% branches. `wash.ts` is new and small, so both of its floor branches need a case — Task 3 Step 1 covers `washAlpha`'s through the ramp sweep and `greyAlpha`'s explicitly, and a coverage drop here means one of those was dropped.
 
 - [ ] **Step 4: Commit, only if Step 1 found something**
 
