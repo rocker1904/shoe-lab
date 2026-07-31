@@ -260,7 +260,11 @@ and its click runs the same `onclose` Escape does, so there is one dismissal
 path and not two. It renders at **every** width, unlike the drawer's, because
 this dialog is modal on the desktop too: it declares `aria-modal` and traps Tab,
 and without a scrim it floated over live content with nothing saying the page
-behind it was inert.
+behind it was inert. **The dimming is provisional** — it is the only full-page
+dim in the app, so the element and its rules are deliberately kept droppable and
+both sites say so (BACKLOG.md). The outside-press dismissal it carries is not
+provisional and would have to survive it
+(§Every floating panel dismisses the same way).
 
 The sidebar's **two whole-surface actions sit as a pair** at its foot — Add
 filter, then Clear filters, in one wrapping row. Add leads because it grows the
