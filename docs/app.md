@@ -1841,6 +1841,30 @@ cheap enough to keep on a phone (§The toolbar). The link itself stays permanent
 visible and immediately clickable — that is structural, not decorative
 (docs/decisions.md §Be a good citizen toward RunRepeat).
 
+**Below 800px the masthead has one left edge**, and three rules hold it there.
+The credit's own two lines align **left** rather than right once the bar wraps,
+because it is then the leftmost thing on its row — right-aligned it set
+`LAB DATA BY` 12px in from `RunRepeat`, and the block read as two edges. The
+`.spacer` is **deleted** at that tier rather than neutralised: it exists to push
+the credit to the end of a bar that is one line, and a zero-width flex item
+still takes a gap and still wraps — at 360px it landed at the head of row two
+and indented the credit 8px past the title, so `display: none` is the only form
+of "off" that works. And the three actions are **one box**, so they wrap as a
+group: as loose items the bar broke mid-group between 560px and 800px, leaving
+Copy link at the end of the masthead and the other two starting the row below.
+The group never wraps inside itself — 232px against the 269px beside the credit
+at 360px — which matters because `smoke.spec.ts` counts chrome rows from the
+header's direct children.
+
+**The count steps down to `--t-xs` below 560px, and the month is what decides
+it.** `en-GB` renders September as `Sept`, so the widest string the formatter
+can emit is 8px wider than the July one this tier was first measured against:
+256px against the 255px left beside the title at 360px. It wrapped, took the
+credit and all three buttons with it, and cost 26px of chrome — one month in
+twelve, on the narrowest phone only. At `--t-xs` the widest month measures 231px
+and the line has 24px in hand. Re-measure this bound against the **widest**
+month, not the current build's, if the string ever grows again.
+
 ### Columns are permissive, ranges and sorts are strict
 `cols` accepts any test slug — showing a column the catalogue no longer carries
 is harmless, it just prints nothing — while range keys are restricted to numeric

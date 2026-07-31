@@ -46,23 +46,29 @@
     <span class="credit-label">Lab data by</span>
     <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </a>
-  <button type="button" onclick={copyLink}>Copy link</button>
-  <!-- Rendered whether or not there is anything to say: a live region created together with its
-       text is not reliably announced, so only the text may arrive late. -->
-  <span class="copied" class:said={copied} role="status">{copied ? 'Copied' : ''}</span>
-  <button type="button" onclick={onexport}>Export CSV</button>
-  <!-- An icon per state, and the `aria-label` is what makes the three-way cycle usable without
-       sight — the drawing is decoration and carries no accessible name of its own. -->
-  <button type="button" class="icon" onclick={ontheme} aria-label="Toggle theme (currently {theme})"
-          title="Theme: {theme}">
-    {#if theme === 'auto'}
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 010 12z" fill="currentColor"/></svg>
-    {:else if theme === 'light'}
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    {:else}
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-    {/if}
-  </button>
+  <!-- One box, so the three actions wrap as a group. Left loose they are three flex items competing
+       for the end of a line: between 560px and 800px the bar broke mid-group, leaving Copy link
+       alone at the end of the masthead and the other two starting the row below
+       (docs/app.md §The header names the catalogue, the receipt owns the count). -->
+  <div class="actions">
+    <button type="button" onclick={copyLink}>Copy link</button>
+    <!-- Rendered whether or not there is anything to say: a live region created together with its
+         text is not reliably announced, so only the text may arrive late. -->
+    <span class="copied" class:said={copied} role="status">{copied ? 'Copied' : ''}</span>
+    <button type="button" onclick={onexport}>Export CSV</button>
+    <!-- An icon per state, and the `aria-label` is what makes the three-way cycle usable without
+         sight — the drawing is decoration and carries no accessible name of its own. -->
+    <button type="button" class="icon" onclick={ontheme} aria-label="Toggle theme (currently {theme})"
+            title="Theme: {theme}">
+      {#if theme === 'auto'}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 010 12z" fill="currentColor"/></svg>
+      {:else if theme === 'light'}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {:else}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      {/if}
+    </button>
+  </div>
 </header>
 
 <style>
@@ -73,6 +79,11 @@
   h1 { font-size: var(--t-xl); margin: 0; }
   .count { color: var(--text-dim); font-family: var(--font-mono); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
+  /* The header's own gap inside it, so grouping the three changes no spacing at any width. It never
+     wraps internally: at 360px it measures 232px against the 269px left beside the credit, and the
+     e2e row count reads the header's direct children, so a group that broke its own line would be
+     counted as one row (`smoke.spec.ts`). */
+  .actions { display: flex; align-items: center; gap: var(--gap-x); }
   .credit { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-decoration: none; color: var(--text); }
   /* 9px as a literal, deliberately below the scale: `--t-xs` is 12px and the type scale bottoms out
      there, because 12px is the floor for anything a reader has to READ. This label is not read — it
@@ -99,11 +110,18 @@
        one line it is 142px wide against the stacked 75px, and only 12px shorter — a 16px line box
        against 28px of stack. At 390px those 67px of extra line push the theme button onto a third
        row and the masthead goes from 77px to 106px, so the 12px saving costs 29. The 9px micro-label
-       above the name is what keeps the stacked form that cheap. */
-    /* The spacer exists to push the credit to the far right of a bar that is ONE line. Once the bar
-       wraps it is a growing item on whichever line it lands on, so it opens a hole there and forces
-       the credit onto a row of its own — which is the row this tier is trying not to pay for. */
-    .spacer { flex: none; }
+       above the name is what keeps the stacked form that cheap.
+       Stacked and LEFTMOST: once the bar wraps this block starts its row, so its two lines share a
+       left edge with each other and with the title above them. Aligning them right — which is what
+       the desktop wants, where it is the last item on a single line — set `LAB DATA BY` 12px in
+       from `RunRepeat` and made the masthead three different left edges. */
+    .credit { align-items: flex-start; }
+    /* The spacer exists to push the credit to the far right of a bar that is ONE line, so once the
+       bar wraps it has nothing left to push and is DELETED rather than neutralised. A zero-width
+       flex item is still a flex item: it takes a gap and it wraps, and at 360px it did not fit
+       after the count, landed at the head of row two, and indented the credit 8px past the title's
+       left edge — the one width at which the masthead's left column was ragged. */
+    .spacer { display: none; }
   }
   /* 360px is the binding width, not 375 — it is the usual Android one. At `--s3` of side padding the
      title line alone measures 341px against the 336px available, so the catalogue count wrapped and
@@ -111,5 +129,12 @@
      gutter. */
   @media (max-width: 560px) {
     header { --gap-x: var(--s2); padding-inline: var(--s2); }
+    /* Down one step, to the scale's 12px floor, and it is the month that decides it. `en-GB` sets
+       September as `Sept`, so the widest string the formatter can emit is 8px wider than the July
+       one this tier was measured against: 256px against the 255px left beside the title at 360px.
+       It wrapped, took the credit and all three buttons with it, and cost 26px of chrome — one
+       month in twelve, on the narrowest phone only. At `--t-xs` the widest month measures 231px, so
+       the line has 24px in hand rather than -1. */
+    .count { font-size: var(--t-xs); }
   }
 </style>
