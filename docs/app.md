@@ -631,9 +631,10 @@ minimum its longest header, which pushes the document sideways.
 is the one the column heading already carries, and it is 35px in the only place
 the table cannot afford them. Measured with the real fleet at 1200px, where the
 content track is 908px: the plate column asks 128px with the trailing word and
-93px without, taking the table's min-content from 937px to **902px** — the
-difference between a document that overruns the viewport by 12px and one that
-fits.
+93px without, taking the table's min-content from 935px to **900px** — the
+difference between a document that overruns the viewport by 27px and one that
+fits with 8px in hand. This is the one home for that figure; the rule in
+`ShoeTable.svelte` states only why it stays.
 
 Letting the cell wrap instead is measured and rejected: it takes the column to
 68px, but the plated rows then stand 71px against every other row's 36px, which
@@ -1743,9 +1744,14 @@ as a bare UA control among styled ones — which is exactly what it looks like.
 
 **One focus ring, with one exemption.** A 2px surface-coloured ring inside a
 2px accent ring, drawn with `box-shadow` so both rings are painted rather than
-transparent — a plain `outline-offset` shows whatever is behind, and on a
-0.93-alpha wash chip the ring would sit accent-on-accent and nearly vanish. The
-rule lives once in `app.css` inside `:where()`, so it carries no specificity.
+transparent — a plain `outline-offset` shows whatever is behind, and on a chip
+carrying the wash's peak alpha the ring would sit accent-on-accent and nearly
+vanish. The rule lives once in `app.css` inside `:where()`, so it carries no
+specificity. Because it is drawn **outside** the element, every scrollport a
+focusable thing sits in has to leave 4px of room for it: both metric lists take
+`padding` plus a matching `scroll-padding` — the padding for a row at rest, the
+`scroll-padding` for one Tab has just scrolled flush against the edge — and
+`smoke.spec.ts` measures the slack rather than reading the CSS back.
 The exemption is **table rows**: a `box-shadow` ring draws outside the box, and
 a row spans the full table width and abuts its neighbours with no gap, so an
 outside ring paints over both of them and inside the phone panel

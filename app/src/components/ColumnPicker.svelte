@@ -167,7 +167,10 @@
                  padding: 2px var(--s1); border-radius: var(--r-sm);
                  background: var(--border-soft); color: var(--text-dim); }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); min-width: 20rem; box-shadow: var(--shadow-dialog); }
-  .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); }
+  /* Padding as room for the focus ring, and the same treatment as the add-filter dialog's list,
+     which owns the reasoning. */
+  .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
+          margin-inline: calc(-1 * var(--s1)); padding: var(--s1); scroll-padding: var(--s1); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }
   /* Separated, and the same rule and the same margin as the add-filter dialog's: the three clauses

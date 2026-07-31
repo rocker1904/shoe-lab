@@ -124,8 +124,12 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 /**
  * One ring for every focusable thing EXCEPT a table row. The 2px gap is PAINTED in the surface
  * colour rather than left transparent, because a plain `outline-offset` shows whatever is behind:
- * on a 0.93-alpha wash chip the ring would sit accent-on-accent and nearly vanish. Same trick the
- * phone's sticky header uses on its own border-spacing gaps (docs/app.md §Theming).
+ * on a chip carrying the wash's peak alpha the ring would sit accent-on-accent and nearly vanish
+ * (`WASH_PEAK` in lib/wash.ts owns that number). Same trick the phone's sticky header uses on its
+ * own border-spacing gaps (docs/app.md §Theming).
+ *
+ * It is drawn OUTSIDE the element, so every scrollport a focusable thing sits in has to leave 4px
+ * of room for it — the two metric lists say so where they pay it.
  *
  * `:where()` keeps specificity at zero, which means it loses to any component rule naming the same
  * element — so the one per-component `outline` rule this replaces, on the setup strip's cards, is

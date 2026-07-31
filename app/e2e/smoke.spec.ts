@@ -549,6 +549,39 @@ test('sets the help popover in its own type, whatever it is mounted in', async (
   expect(type.rendered.startsWith('Easy, Tempo and Race')).toBe(true);
 });
 
+/**
+ * A focus ring drawn as an outside `box-shadow` needs 4px of room outside the element, and both
+ * metric lists are scrollports — `overflow-y: auto` computes `overflow-x` to `auto` as well, so a
+ * row flush against the port's edge has its ring clipped on the sides and at whichever end it is
+ * scrolled to (docs/app.md §Theming). Measured rather than asserted from the CSS, because the slack
+ * is the sum of the port's padding and the row's own inset.
+ */
+test('leaves both metric lists room for the focus ring they draw', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+
+  const slack = async (port: string, row: string) => page.evaluate(([p, r]) => {
+    const list = document.querySelector(p)!.getBoundingClientRect();
+    const el = document.querySelector(r)!.getBoundingClientRect();
+    return { left: Math.round(el.left - list.left), right: Math.round(list.right - el.right),
+             top: Math.round(el.top - list.top) };
+  }, [port, row]);
+
+  await page.getByRole('button', { name: /^Add filter/ }).click();
+  const dialog = await slack('.dialog .list', '.dialog .list button');
+  await page.keyboard.press('Escape');
+
+  await page.locator('details.picker summary').click();
+  const picker = await slack('.picker .list', '.picker .list input');
+
+  // 4px is the ring's outer radius; anything less and it is drawn cropped.
+  for (const [name, s] of [['add-filter dialog', dialog], ['column picker', picker]] as const) {
+    expect(s.left, `${name}: ring clipped on the left`).toBeGreaterThanOrEqual(4);
+    expect(s.right, `${name}: ring clipped on the right`).toBeGreaterThanOrEqual(4);
+    expect(s.top, `${name}: ring clipped at the top`).toBeGreaterThanOrEqual(4);
+  }
+});
+
 test('traps focus in the filter drawer and hands it back on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto('/');
