@@ -29,14 +29,39 @@ describe('design tokens', () => {
     }
   });
 
-  it('leaves no component choosing its own font size or radius', () => {
+  it('self-hosts both faces and names them as tokens', () => {
+    expect(css).toContain('@font-face');
+    // Relative, so Vite fingerprints them and the Pages subpath survives (Task 1 Step 2).
+    expect(css).toContain("url('./assets/fonts/inter-tight.woff2')");
+    expect(css).toContain("url('./assets/fonts/jetbrains-mono.woff2')");
+    expect(css).toContain('--font-ui:');
+    expect(css).toContain('--font-mono:');
+  });
+
+  it('never asks a third party for a font, nor for one from the site root', () => {
+    expect(css).not.toContain('fonts.googleapis.com');
+    expect(css).not.toContain('fonts.gstatic.com');
+    // A leading slash resolves off the Pages subpath and 404s in production only.
+    expect(css).not.toMatch(/url\(['"]?\/fonts/);
+  });
+
+  it('leaves no component choosing its own font size, radius or face', () => {
     const offenders: string[] = [];
     for (const f of readdirSync(componentDir).filter((n) => n.endsWith('.svelte'))) {
       const src = readFileSync(join(componentDir, f), 'utf8');
       const style = src.slice(src.indexOf('<style>'));
-      // A literal rem font-size or px radius means the scale was bypassed.
+      // A literal rem font-size, px radius, or font family means the scale was bypassed.
       if (/font-size:\s*[\d.]+rem/.test(style)) offenders.push(`${f} font-size`);
       if (/border-radius:\s*\d+px/.test(style)) offenders.push(`${f} border-radius`);
+      // Capture the VALUE and test it. A negative lookahead behind `\s*` cannot work here:
+      // `\s*` backtracks to zero width and the lookahead is then evaluated against " var(…)",
+      // which does not begin with `var(`, so `/font-family:\s*(?!var\(|inherit)/` matches every
+      // compliant rule. It reads correct and is exactly backwards.
+      // `font: inherit` and `font-family: inherit` are not a choice of face, so they pass.
+      for (const m of style.matchAll(/font-family:\s*([^;}]+)/g)) {
+        const value = m[1]!.trim();
+        if (!value.startsWith('var(') && value !== 'inherit') offenders.push(`${f} font-family`);
+      }
     }
     expect(offenders).toEqual([]);
   });

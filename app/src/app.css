@@ -1,3 +1,20 @@
+/* Self-hosted, copied into src/assets by scripts/sync-fonts.mjs and fingerprinted by Vite — a
+   root-absolute URL would 404 under the Pages subpath (`base: './'`). `swap` rather than `block`:
+   a blocked first paint is worse than a reflow, and the reflow is handled — `--thead-top` is
+   re-measured by a ResizeObserver, which is load-bearing for exactly this
+   (docs/app.md §Columns and sorting). */
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('./assets/fonts/inter-tight.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('./assets/fonts/jetbrains-mono.woff2') format('woff2-variations');
+  font-weight: 400 600;
+  font-display: swap;
+}
 :root {
   color-scheme: light dark;
   /* The page sits a step behind the chrome and two behind the row surface, so the phone's cards
@@ -18,7 +35,11 @@
   --t-xs: 0.75rem; --t-sm: 0.83rem; --t-md: 0.92rem; --t-lg: 1.05rem; --t-xl: 1.2rem;
   --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.35);
   --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.14);
-  font-family: system-ui, sans-serif;
+  --font-ui: 'Inter Tight', system-ui, sans-serif;
+  /* Every figure, unit line, badge and count. Tabular by construction, so columns of numbers
+     line up without per-site `font-variant-numeric`. */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-ui);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {

@@ -6,6 +6,7 @@ node_modules
 dist/
 coverage/
 app/public/shoes.json
+app/src/assets/fonts/
 playwright-report/
 test-results/
 .notes/
