@@ -292,17 +292,30 @@ minimum holds and the page scrolls, as today.
 
 ### The lid belongs to the pinned header
 
-The panel's top border and its two top corner radii go on the **sticky header
-row**, not on the panel. Otherwise the panel's lid scrolls up and out from
-under the pinned header and the box stays visibly open at the top for the rest
-of the session.
+The panel's top border goes on the **sticky header row**, not on the panel.
+Otherwise the panel's lid scrolls up and out from under the pinned header and
+the box stays visibly open at the top for the rest of the session.
+
+The panel is therefore **square at the top and rounded only at the bottom** —
+`border-radius: 0 0 --r-md --r-md`, with `border-left`, `border-right` and
+`border-bottom` only. Three things follow from that one decision:
+
+- **no double lid.** A panel top border plus the sticky header's own would
+  draw two hairlines a pixel apart at rest.
+- **no clip contradiction.** The panel must keep `overflow-x: visible` (see
+  below), and a box that cannot clip horizontally cannot clip a square header
+  cell out of a rounded top corner — so a rounded top would have had the cell
+  painting straight over its own arcs.
+- **it is the right shape anyway.** The panel's top sits flush under the
+  full-bleed chrome, where a rounded corner rounds against nothing.
 
 ### Two overflow constraints, both measured
 
 The header cell itself is **square** — no `border-radius`. A rounded opaque
 cell over scrolling content leaves its corner arcs transparent, and a coloured
-chip passing behind shows through as a sliver. The panel does the rounding and
-clips the square cell.
+chip passing behind shows through as a sliver. Nothing clips it: the panel
+cannot, per the constraint below, and it does not need to, because the panel is
+square-topped too.
 
 Which clip is not a free choice:
 
