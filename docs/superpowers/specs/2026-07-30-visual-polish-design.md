@@ -476,23 +476,45 @@ This replaces today's inconsistent mix of `outline-offset: -2px` and `+2px`.
 It is one rule for every focusable thing: buttons, pills, inputs, chips, table
 rows, strip cards.
 
-## Not specified here
+## Dialogs, drawer and states
 
-The help popover, column picker panel, add-filter dialog, the sub-800px
-drawer and the loading, empty and error states are **not yet designed**. They inherit the tokens — surfaces, radii, type scale, focus ring,
-accent — and keep their current layouts until they get their own pass.
+These keep their current structure and inherit the tokens. Three carry a
+decision beyond that.
 
-Two of them carry known work already:
+### The pickers carry the direction marker
 
-- The **column picker and add-filter dialog** gain the direction marker the
-  table header gives up (§The direction arrow leaves the header). A bare
-  `↑` with no units beside it is ambiguous, so those lists need a legend line
-  or a worded tag rather than the glyph alone.
-- The **loading skeleton** is shaped like the chrome and the rows that are
-  coming, so the layout does not jump when data arrives. Row height, the
-  dropped thumbnails and the new panel all change that shape, and a skeleton
-  that no longer matches *causes* the jump it exists to prevent. This is a
-  correctness follow-on, not a taste call.
+The column picker and the add-filter dialog take the `↑`/`↓` the table header
+gives up (§The direction arrow leaves the header). A bare glyph with no units
+beside it is ambiguous, so each list opens with **one legend line** —
+`↑ higher is better · ↓ lower is better · no mark — neutral` — and every row
+then carries a single dim glyph in a column of its own. A neutral metric shows
+nothing, which is itself the signal that it has no better end.
+
+Their **coverage bars stay** — docs/app.md keeps them here deliberately,
+because choosing among forty-odd metrics against a constant denominator is a
+comparison device rather than a claim about a pool — but they move to the
+neutral histogram colour. Accent means "you selected this" everywhere now
+(§The filter sidebar).
+
+### The drawer gets a scrim
+
+Below 800px the sidebar is a focus-trapping drawer, and today it slides over
+the page with **no scrim**. The new elevation language makes that conspicuous:
+nothing else floats above content without one. It also states in the interface
+what the focus trap already enforces — the page behind is inert.
+
+### The loading skeleton must be reshaped
+
+Not a taste call. The skeleton is deliberately shaped like the chrome and the
+rows that are coming, so the layout does not jump when data arrives. The new
+row height, the dropped thumbnails and the table panel all change that shape,
+and a skeleton that no longer matches **causes the jump it exists to prevent**.
+It still waits `SKELETON_AFTER_MS` before appearing, and its pulse stays behind
+a `prefers-reduced-motion` guard.
+
+The empty, error and copied-confirmation states are token work only. The
+copied region stays always-rendered with only its text arriving late, because a
+live region created together with its text is not reliably announced.
 
 ## Verification
 
@@ -515,5 +537,7 @@ Two of them carry known work already:
   key, including the `lower` and `higher` ones that carried it.
 - A sidebar test that an unbounded row paints no accent bar, and that a bounded
   one paints accent only within its bound.
+- A skeleton test that its row geometry matches the rendered table, so the
+  placeholder cannot drift from what replaces it.
 - Both engines. The e2e run already covers chromium, firefox and webkit
   (docs/operations.md §The e2e run needs three browsers).
