@@ -20,21 +20,39 @@
   /* The page sits a step behind the chrome and two behind the row surface, so the phone's cards
      read as surfaces rather than as the page: at #eeeeea the identity strip was 1.04:1 against it
      and only the white value row read as a card (docs/app.md §Theming). */
-  --bg: #e6e6e1; --surface: #ffffff; --chrome: #f2f2ef;
-  --text: #1a1d21; --text-dim: #5c6470; --border: #dcdfe3; --divider: #c9ced6;
-  --accent: #2563eb; --accent-dim: #e6efff;
-  --good: #15803d; --bad: #b91c1c;
-  --hist-dim: #8b929d;   /* flat mark: clears 3:1 against the surface — docs/app.md §Theming */
-  /* The endpoint IS the cap: each is chosen so cell text clears 4.5:1 against it, and the
-     endpoint is the worst case of the ramp, so no separate strength factor is needed
+  --bg: #f5f5f4; --surface: #ffffff; --chrome: #fbfbfa; --well: #faf9f8;
+  --text: #16181b; --text-dim: #6a7280;
+  --border: #e5e5e3; --border-soft: #eeeeec;
+  /* Darker than --border on purpose: a group divider sits on --chrome, where a border-coloured
+     hairline measures 1.22:1 and simply is not there. 1.61:1 (SetupStrip's own comment). */
+  --divider: #c9c9c3;
+  --accent: hsl(211 84% 46%); --accent-dim: hsl(211 84% 95%);
+  /* ONLY for a filled accent carrying --on-accent text — the toolbar pill, the month grid's chosen
+     cell. --on-accent on --accent is 4.74:1 in light but 3.71:1 in dark, so the two themes cannot
+     share one value; this one is 5.12:1 light / 5.18:1 dark. Never a hairline, a bar or a text
+     colour; `wash.test.ts` holds it to 4.5:1 (docs/app.md §Theming). */
+  --accent-solid: hsl(211 84% 44%);
+  /* The one ink allowed on --accent-solid, and a token so no component hard-codes it. Both themes
+     fill with a dark enough accent that this stays white in both — which is a fact worth stating
+     once here rather than nine times in the components. */
+  --on-accent: #ffffff;
+  --good: #15803d; --bad: #b4331f;
+  /* Flat mark. 3.62:1 on --surface, 3.32:1 on --bg, 3.12:1 on --border-soft — all three asserted in
+     wash.test.ts, because the histogram sits on --bg above 800px and the pickers' coverage fill
+     sits in a --border-soft track. The old #8b929d cleared only the first of the three
      (docs/app.md §Theming). */
-  --wash-grey: #b0b6bf; --wash-blue: #4a86f0;
-  --hover-wash: color-mix(in oklab, var(--accent) 8%, transparent);
+  --hist-dim: #7f8794;
+  /* The FILL, not the accent: a large translucent area needs less chroma than a small solid mark.
+     Alpha comes from lib/wash.ts, which is where the contrast rule is enforced. */
+  --wash-blue: hsl(211 84% 50%); --wash-grey: hsl(220 9% 55%);
+  --hover-wash: color-mix(in oklab, var(--accent) 6%, transparent);
   --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.5rem; --s6: 2rem;
   --r-sm: 4px; --r-md: 8px; --r-full: 999px;
   --t-xs: 0.75rem; --t-sm: 0.83rem; --t-md: 0.92rem; --t-lg: 1.05rem; --t-xl: 1.2rem;
-  --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.35);
-  --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.14);
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.30);
+  --shadow-dialog: 0 12px 32px -12px rgb(0 0 0 / 0.28), 0 2px 6px rgb(0 0 0 / 0.06);
+  --scrim: rgb(10 12 15 / 0.42);
   --font-ui: 'Inter Tight', system-ui, sans-serif;
   /* Every figure, unit line, badge and count. Tabular by construction, so columns of numbers
      line up without per-site `font-variant-numeric`. */
@@ -44,26 +62,69 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #08090c; --surface: #0e1014; --chrome: #15181d;
-    --text: #eef0f3; --text-dim: #98a0ac; --border: #2a3039; --divider: #3a424e;
-    --accent: #5b9dff; --accent-dim: #16304f;
-    --good: #22c55e; --bad: #f08a84;
-    --hist-dim: #717b88;
-    --wash-grey: #454b54; --wash-blue: #2b6cb0;
-    --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.6);
-    --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.5);
+    --bg: #0f1113; --surface: #1a1d21; --chrome: #15181b; --well: #16191d;
+    --text: #eceef1; --text-dim: #98a0ab;
+    --border: #282c31; --border-soft: #22262a; --divider: #434c59;
+    --accent: hsl(211 70% 54%); --accent-dim: hsl(211 55% 22%);
+    --accent-solid: hsl(211 70% 44%);
+    /* Still white: the dark fill is dark enough to carry it at 5.18:1. Restated rather than
+       inherited, so the two blocks stay symmetric and a future retune has somewhere to land. */
+    --on-accent: #ffffff;
+    --good: #4ade80; --bad: #f0836f;
+    /* 3.58:1 on --surface, 4.01:1 on --bg, 3.22:1 on --border-soft */
+    --hist-dim: #6b7482;
+    /* Darker than light, not lighter. On a near-black surface the wash must stay dark enough for
+       light text to sit on it; a lighter dark fill fails contrast at the top of the ramp. */
+    --wash-blue: hsl(211 70% 44%); --wash-grey: hsl(220 8% 62%);
+    --shadow-panel: none;
+    --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.7);
+    --shadow-dialog: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+    --scrim: rgb(0 0 0 / 0.55);
   }
 }
 :root[data-theme='light'] { color-scheme: light; }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #08090c; --surface: #0e1014; --chrome: #15181d;
-  --text: #eef0f3; --text-dim: #98a0ac; --border: #2a3039; --divider: #3a424e;
-  --accent: #5b9dff; --accent-dim: #16304f;
-  --good: #22c55e; --bad: #f08a84;
-  --hist-dim: #717b88;
-  --wash-grey: #454b54; --wash-blue: #2b6cb0;
-  --shadow-sticky: 0 4px 8px -6px rgb(0 0 0 / 0.6);
-  --shadow-dialog: 0 8px 24px rgb(0 0 0 / 0.5);
+  --bg: #0f1113; --surface: #1a1d21; --chrome: #15181b; --well: #16191d;
+  --text: #eceef1; --text-dim: #98a0ab;
+  --border: #282c31; --border-soft: #22262a; --divider: #434c59;
+  --accent: hsl(211 70% 54%); --accent-dim: hsl(211 55% 22%);
+  --accent-solid: hsl(211 70% 44%);
+  /* Still white: the dark fill is dark enough to carry it at 5.18:1. Restated rather than
+     inherited, so the two blocks stay symmetric and a future retune has somewhere to land. */
+  --on-accent: #ffffff;
+  --good: #4ade80; --bad: #f0836f;
+  /* 3.58:1 on --surface, 4.01:1 on --bg, 3.22:1 on --border-soft */
+  --hist-dim: #6b7482;
+  /* Darker than light, not lighter. On a near-black surface the wash must stay dark enough for
+     light text to sit on it; a lighter dark fill fails contrast at the top of the ramp. */
+  --wash-blue: hsl(211 70% 44%); --wash-grey: hsl(220 8% 62%);
+  --shadow-panel: none;
+  --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.7);
+  --shadow-dialog: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --scrim: rgb(0 0 0 / 0.55);
 }
 body { margin: 0; background: var(--bg); color: var(--text); }
+
+/**
+ * One ring for every focusable thing EXCEPT a table row. The 2px gap is PAINTED in the surface
+ * colour rather than left transparent, because a plain `outline-offset` shows whatever is behind:
+ * on a 0.93-alpha wash chip the ring would sit accent-on-accent and nearly vanish. Same trick the
+ * phone's sticky header uses on its own border-spacing gaps (docs/app.md §Theming).
+ *
+ * `:where()` keeps specificity at zero, which means it loses to any component rule naming the same
+ * element — so the one per-component `outline` rule this replaces, on the setup strip's cards, is
+ * DELETED by the task that owns it rather than left to be overridden. The other two are the table
+ * rows below, and those are kept on purpose.
+ *
+ * `:not(tr)` is the exemption, and it is deliberate rather than an omission. A `box-shadow` ring is
+ * drawn OUTSIDE the element; a row spans the full width of the table and abuts the rows above and
+ * below it with no gap, so an outside ring paints over both of them, and inside the phone's panel
+ * `overflow-y: clip` cuts it off entirely at the first and last row. Rows keep the inset
+ * `outline-offset: -2px` ring they have today, in their own components (docs/app.md §Theming).
+ */
+:root { --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+:where(a, button, input, select, textarea, summary, [tabindex]):not(tr):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

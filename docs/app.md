@@ -1290,10 +1290,54 @@ component that writes its own rem font size or px radius.
 The row surface sits at the end of the lightness axis in each theme — white in
 light, near-black in dark — and both washes travel inward from it, separated
 only by hue. **Grey means "more"; blue means "better".** A metric with a
-declared direction gets `--wash-blue` **squared**, so only leaders read as
-tinted, which is what a ranking wants; a neutral metric gets `--wash-grey`
+declared direction gets `--wash-blue` on the ranked ramp, so only leaders read
+as tinted, which is what a ranking wants; a neutral metric gets `--wash-grey`
 **linear**, because a scale must read as a gradient rather than a podium.
 Row hover paints as a translucent layer so the wash underneath survives it.
+
+**Alpha is resolved in `app/src/lib/wash.ts`, not in CSS.** The cell binds
+`--a` and the stylesheet only composites it. The ramp lives in a module for two
+reasons: the ranked curve needs a power, which `calc()` cannot express, and the
+contrast rule has to be asserted across the **whole** of both ramps rather than
+at an endpoint. `wash.test.ts` sweeps `p` over `[0, 1]`, composites the fill
+over the surface at `a(p)` and holds the theme's own ink to 4.5:1 in both
+themes and on both ramps. The neutral ramp clears by a wide margin, which is
+why it needs the assertion rather than a reason to skip it: an unasserted rule
+is one a retune deletes in silence.
+
+**One ink at every step.** A ramp that switched to white numerals cannot
+satisfy 4.5:1 anywhere near the switch: it must pass through a crossover
+luminance where both inks are equally bad, and the best obtainable there is
+4.22:1 against this theme's ink. With one ink contrast falls monotonically as
+the wash strengthens, which is what makes the endpoint genuinely the worst
+case. Do not reintroduce a second ink without redoing that arithmetic.
+
+**`--accent`, `--accent-solid` and `--on-accent` are three tokens with three
+jobs.** `--accent` is the small mark — hairlines, carets, in-range bars, links
+— and never sits behind text. `--accent-solid` is the darker variant used only
+where a filled accent carries text: `--on-accent` on `--accent` is 4.74:1 in
+light but **3.71:1 in dark**, so the two themes cannot share one solid value.
+`--on-accent` is the one ink allowed on it, and it is a token rather than a
+`#fff` written into each component, because the fill and its ink are one fact
+and a literal splits it across nine files — `tokens.test.ts` fails the build on
+a raw white in a component's style block.
+
+`--divider` is deliberately **darker than `--border`**: a group divider sits on
+`--chrome`, where a border-coloured hairline measures 1.22:1 and simply is not
+there.
+
+**One focus ring, with one exemption.** A 2px surface-coloured ring inside a
+2px accent ring, drawn with `box-shadow` so both rings are painted rather than
+transparent — a plain `outline-offset` shows whatever is behind, and on a
+0.93-alpha wash chip the ring would sit accent-on-accent and nearly vanish. The
+rule lives once in `app.css` inside `:where()`, so it carries no specificity.
+The exemption is **table rows**: a `box-shadow` ring draws outside the box, and
+a row spans the full table width and abuts its neighbours with no gap, so an
+outside ring paints over both of them and inside the phone panel
+`overflow-y: clip` cuts it off at the first and last row. Rows keep an inset
+`outline-offset: -2px` ring in their own components, and the global rule
+excludes `tr` explicitly rather than leaving the component rule to win on
+specificity, so the two can never both draw.
 
 **The surface is painted on the row** — `tr.shoe` in the desktop table,
 `tr.values` on a phone — and never on the numeric cell. The wash is a
@@ -1325,14 +1369,21 @@ an upstream numeric test arrives unclassified (docs/operations.md
 The contrast obligation splits by the kind of mark, because one rule cannot
 cover both:
 
-- **Flat mark** — the inactive histogram bars and the coverage rule are a
-  single fill, drawn or not. They clear **3:1 against the surface**.
-- **Gradient wash** — governed by **text over the endpoint at 4.5:1**, with no
+- **Flat mark** — the inactive histogram bars and the pickers' coverage bars are
+  a single fill, drawn or not. They clear **3:1 against every surface they are
+  actually drawn on**, which is three: `--surface` inside the drawer below
+  800px, `--bg` above it, where the sidebar declares no background of its own,
+  and `--border-soft`, the track the pickers' coverage fill sits in. "Every
+  surface" is the load-bearing part — a value chosen against `--surface` alone
+  clears the bar in the one case that only happens inside the drawer.
+  `wash.test.ts` asserts all three, per theme.
+- **Gradient wash** — governed by **text over the ramp at 4.5:1**, with no
   surface floor. Every intermediate value of a ramp is closer to the surface
   than its endpoint and tends to 1:1 as p→0, so a surface floor is
-  unsatisfiable by construction. The endpoint *is* the cap: it is the worst
-  case of the ramp, so checking it is sufficient and no separate strength
-  factor exists. Retune `--wash-grey` and `--wash-blue` against that.
+  unsatisfiable by construction. The ramp is swept rather than sampled at its
+  endpoint, so a future non-monotonic curve cannot slip through; on today's
+  monotonic ramps the worst case is `p = 1` in both. Retune `--wash-grey`,
+  `--wash-blue` and `WASH_PEAK` against that.
 
 ## Coverage
 
