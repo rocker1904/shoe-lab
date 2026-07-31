@@ -29,8 +29,14 @@
    * cell and this is the element that changes: a sortable column shows a dim caret under the
    * pointer, the sorted one is accent and always on. `@media (hover: none)` never fires either rule,
    * so a phone shows the sorted column's caret and nothing else — which is what it showed before.
+   *
+   * Its footprint is `--caret-w` — the glyph plus the air before it — declared as a token rather
+   * than as a margin here, because the desktop header has to RESERVE the same width to the right of
+   * its text column and a number owned by two files drifts (docs/app.md §Table presentation).
+   * `flex: none` so a tight header cell squashes the name rather than the mark.
    */
-  .caret { display: inline-flex; margin-left: 3px; color: var(--text-dim); opacity: 0; }
+  .caret { display: inline-flex; justify-content: flex-end; flex: none; width: var(--caret-w);
+           color: var(--text-dim); opacity: 0; }
   .caret.on { color: var(--accent); opacity: 1; }
   :global(th:hover) .caret { opacity: 0.55; }
   :global(th:hover) .caret.on { opacity: 1; }
@@ -38,11 +44,11 @@
    * The phone's placement, and the only thing that differs between the two renderings. A header cell
    * there is 53px wide with a 49px text budget that `lib/labels.ts` validates every short label
    * against, and this mark is rendered in EVERY column whether or not it is the sorted one — so
-   * inline it spends 12px of that budget permanently, which is enough to put `Weight` on a second
+   * inline it spends `--caret-w` of that budget permanently, which is enough to put `Weight` on a second
    * line and grow a header that is pinned and therefore paid by every screen. Out of flow it costs
    * the budget nothing. The `th` is already `position: sticky`, so it is the containing block, and
    * `bottom` lands the caret on the unit line, clear of the centred text at every unit string the
    * catalogue emits.
    */
-  .caret.corner { position: absolute; right: 2px; bottom: var(--s1); margin-left: 0; }
+  .caret.corner { position: absolute; right: 2px; bottom: var(--s1); }
 </style>

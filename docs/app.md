@@ -504,6 +504,17 @@ no text. `SortCaret.svelte` owns it and **both** renderings mount it, so one
 header cannot mean the same thing two ways; only its placement differs, and the
 component argues that difference where it makes it.
 
+Its footprint is `--caret-w`, and the desktop header **reserves that width to
+the right of its own text**. The mark is drawn in every sortable column, sorted
+or not, so it always occupies the end of the name line; right-aligning both
+lines of a figure header to the cell's edge therefore put the unit string under
+the *caret* rather than under the name's last glyph, and the two things a header
+states did not share an edge. Reserving it instead ends the text column before
+the mark, which leaves the caret alone in a gutter of its own — the same gutter
+in every figure column, since every one of them draws a caret. The width is a
+token rather than a number in each file precisely because two components measure
+against it.
+
 **Row thumbnails are gone.** At 40×27 with `object-fit: cover` every shoe
 cropped to an indistinguishable grey strip, so they cost a column of width and
 carried nothing. `imageUrl` stays in the dataset and in the expanded row, where

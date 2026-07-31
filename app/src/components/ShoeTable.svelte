@@ -176,6 +176,13 @@
   .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1lh; }
   th.fig, td.fig { text-align: right; }
   th.fig button { align-items: flex-end; }
+  /* The caret is drawn in EVERY sortable column, sorted or not, so it always occupies `--caret-w` at
+     the end of the name line. Right-aligning both lines to the button's own edge therefore landed
+     the unit string under the CARET rather than under the name's last glyph, and the two figures a
+     header states — what the column is and what it is measured in — did not share an edge. Reserving
+     the caret's width here ends the text column before the mark instead, which leaves the caret
+     alone in the gutter to its right (docs/app.md §Table presentation). */
+  th.fig .h-units { margin-right: var(--caret-w); }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
   td.fig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   /* No `overflow` here, deliberately: it would make the wrapper a scrollport and detach the sticky

@@ -458,6 +458,38 @@ for (const width of [360, 390]) {
   });
 }
 
+/**
+ * A figure header states two things — what the column is and what it is measured in — and they
+ * share a right edge, with the sort caret alone in the gutter to their right
+ * (docs/app.md §Table presentation). The caret is drawn in every column, so without the reserve the
+ * unit line sits under the mark instead and no two-line header lines up with itself. Measured off a
+ * Range over the name's own text, because the name box contains the caret as well.
+ */
+test('lines a figure header up with its own unit line at 1440px', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready.then(() => null));
+
+  const cols = await page.evaluate(() => [...document.querySelectorAll('table thead th.fig')].map((th) => {
+    const name = th.querySelector('.h-name')!;
+    const text = [...name.childNodes].filter((n) => n.nodeType === 3 && n.textContent!.trim());
+    const range = document.createRange();
+    range.setStart(text[0]!, 0);
+    range.setEnd(text.at(-1)!, text.at(-1)!.textContent!.length);
+    const units = th.querySelector('.h-units')!.getBoundingClientRect().right;
+    const caret = th.querySelector('.caret')!.getBoundingClientRect();
+    return { col: (th as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+             drift: Math.round(units - range.getBoundingClientRect().right),
+             caretClear: Math.round(caret.left - range.getBoundingClientRect().right) };
+  }));
+  expect(cols.length).toBeGreaterThan(2);
+  for (const c of cols) {
+    expect(c.drift, `${c.col}: unit line off the name's right edge`).toBe(0);
+    // And the mark is beside the name rather than over it, in its own reserved width.
+    expect(c.caretClear, `${c.col}: caret does not clear the name`).toBeGreaterThanOrEqual(0);
+  }
+});
+
 // jsdom moves focus for nothing: neither Tab order nor a drawer that is hidden by `visibility` can
 // be observed there, and both are the whole point of these two.
 test('puts the skip link first and makes each radiogroup one tab stop', async ({ page }) => {

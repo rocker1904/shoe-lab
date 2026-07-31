@@ -56,6 +56,11 @@
      loading skeleton reserves it, and a skeleton reserving a different width IS the layout jump it
      exists to prevent (docs/app.md §Decisions). */
   --sidebar-w: 260px;
+  /* The sort caret's whole footprint — the 9px glyph and the air before it. Named once because two
+     components measure against it: `SortCaret.svelte` draws it, and the desktop table header
+     reserves the same width to the right of its text column so a right-aligned unit line ends level
+     with the name above it rather than under the caret (docs/app.md §Table presentation). */
+  --caret-w: 12px;
   --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.5rem; --s6: 2rem;
   --r-sm: 4px; --r-md: 8px; --r-full: 999px;
   --t-xs: 0.75rem; --t-sm: 0.83rem; --t-md: 0.92rem; --t-lg: 1.05rem; --t-xl: 1.2rem;
