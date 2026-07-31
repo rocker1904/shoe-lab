@@ -121,3 +121,36 @@ test('renders the filter sidebar and the table together', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Released after' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Shoe/ })).toBeVisible();
 });
+
+/**
+ * The phone panel's clipping. `overflow: hidden` makes the panel a scroll container and the sticky
+ * header lands out of place; plain `overflow: clip` fixes that and silently makes every column past
+ * the sixth unreachable. Only `overflow-x: visible; overflow-y: clip` does both, and the spec claims
+ * that is engine-independent — so it is asserted in the two engines `smoke.spec.ts` never runs.
+ */
+for (const width of [360, 390]) {
+  test(`fits six columns and keeps the rest reachable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 780 });
+    await page.goto('/');
+    const mobile = page.getByTestId('shoe-table-mobile');
+    await expect(mobile).toBeVisible();
+    await expect(mobile.getByRole('columnheader')).toHaveCount(6);
+
+    // Six fit with room for the panel's inset, and the page does not go sideways for them.
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      `the page scrolls sideways at ${width}px`).toBe(true);
+
+    // A seventh column must still be reachable: the panel may clip vertically, never horizontally.
+    // Seven FIGURE columns that the e2e fixture actually carries — `cols` is permissive, but the
+    // phone table drops every non-figure column, so `releasedAt` or `plate` here would silently
+    // leave six. The superseded softness pair is avoided for the same reason.
+    await page.goto('/?cols=score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,toebox-width-widest-part');
+    await expect(mobile.getByRole('columnheader')).toHaveCount(7);
+    const maxScrollLeft = await page.evaluate(() => {
+      const el = document.scrollingElement!;
+      return el.scrollWidth - el.clientWidth;
+    });
+    expect(maxScrollLeft,
+      'columns past the sixth are unreachable — the panel is clipping x').toBeGreaterThan(0);
+  });
+}

@@ -549,6 +549,18 @@ wraps, and 103px at 375px once the toolbar wraps too. A hard-coded `3.2rem`
 pinned the header row 19px behind the chrome at 700px and 52px behind it at
 375px, so the row was partly invisible on every phone.
 
+It varies with **time** as well as width, now that the app self-hosts its faces:
+the face swaps in after first paint, the chrome reflows by about 6px, and a
+header pinned against a value measured before the swap leaves a strip of page
+that rows visibly scroll through. `bind:clientHeight` is ResizeObserver-backed
+and re-measures on that reflow, so this holds — but it is now load-bearing
+rather than incidental, and a refactor to a one-shot `clientHeight` read
+reintroduces the gap, only on a cold cache. `smoke.spec.ts` asserts the pinned
+phone header sits flush against the chrome after `document.fonts.ready`;
+`cross-browser.spec.ts` carries the panel's two overflow claims, which are
+scroll-extent facts rather than font-metric ones and therefore belong in the
+suite Firefox and WebKit run (§Two renderings, and only one of them mounted).
+
 The `.layout` grid is `260px minmax(0, 1fr)`, and the `minmax` is load-bearing:
 a bare `1fr` track takes an automatic minimum of `min-content`, which the
 table's 14rem name column and `white-space: nowrap` headers inflate past the
@@ -588,18 +600,67 @@ chosen:
   Content-sized columns made every chip a different width and detached each
   header from the values it labels. The spacing-derived gap is what makes
   every chip one box.
-- **57px minimum column**, so six columns need 358px and fit any phone from
-  360px up. The table bleeds out of `.content`'s inline padding to get there.
-  Past six columns the minimum holds and the page scrolls, so every column
-  always has the geometry the labels were validated against — measured at
-  360px with nine columns: 57px each, page scrolling to 533px, nothing clipped.
+- **A list, not cards.** The name sits on the panel with its chip row beneath it
+  and a hairline between shoes; proximity does the grouping, because there is
+  more space above a name than between it and its own chips. It recovers roughly
+  one shoe per screen against the card layout, which is the direct cost this
+  section flags below for the two-row geometry. The hairline is emitted by its
+  own row **between** shoes rather than after each one, so it spans the
+  `border-spacing` gaps.
+- **The whole list sits in one panel** — a single inset, rounded, hairline
+  `--surface` box. One card for the table, not one per shoe: it supplies the
+  missing depth without spending any of the density, and it matches the desktop
+  chassis. Elevation follows what is **pinned**: page, then this panel, then the
+  sticky header on top of it.
+- **53px minimum column**, so six columns need 332px and fit any phone from
+  360px up. It was 57px against `system-ui`; Inter Tight pays for the drop, and
+  the 24px freed is what buys the panel its inset. The table bleeds most of the
+  way out of `.content`'s inline padding to get there. Past six columns the
+  minimum holds and the page scrolls, so every column always has the geometry
+  the labels were validated against.
+- **The 360px slack is 2px, measured.** 360 viewport, less 32px of `.content`
+  padding, plus 8px of `.bleed` negative margin, less the panel's two 1px side
+  borders, leaves **334px** to a table whose six-column minimum is 332px.
+  Measured at 360px in **Firefox and WebKit**: panel inner 334px, table 334px,
+  `scrollWidth` 360 against a `clientWidth` of 360 — no overflow and no classic
+  scrollbar in either engine. If the inset ever has to grow, `--s3` → `--s2` on
+  `.bleed` buys 8px; **do not narrow the column below 53px**, because the whole
+  label bound is measured against it.
 - **2px of horizontal header padding, deliberately not the nearest token.**
-  `--s1` is 4px and would take 4px off a 57px column, which is the difference
-  between "softness" fitting its header and clipping. It is the one place the
+  `--s1` is 4px and would take 4px off a 53px column, which is the difference
+  between a name fitting its header and clipping. It is the one place the
   token scale is overridden.
-- The sticky header **paints its own `border-spacing` gaps**, with `--bg` side
-  shadows either side of each `th`. A cell background stops at the cell, so the
-  band was see-through in 2px slits and scrolled rows showed through them.
+- **Which clip the panel takes is not a free choice.** `overflow: hidden` makes
+  the panel a scroll container and the sticky header lands 19px out of place —
+  the same failure this doc records for `.content` and `overflow-x`. Plain
+  `overflow: clip` fixes that and silently makes every column past the sixth
+  unreachable, which is the trap: it looks perfect on a default six-column view.
+  Only **`overflow-x: visible; overflow-y: clip`** does both, and
+  `cross-browser.spec.ts` asserts it at 360px and 390px in Firefox and WebKit —
+  six columns fit, the page does not go sideways, and a seventh column leaves a
+  non-zero `maxScrollLeft`.
+- **The panel is square-topped and the lid belongs to the pinned header.** That
+  follows from `overflow-x: visible` rather than being a taste call: a box that
+  cannot clip horizontally cannot clip a square header cell out of a rounded top
+  corner, and a panel lid would scroll up and out from under the pinned row
+  anyway, leaving the box visibly open for the rest of the session. The panel's
+  top sits flush under the full-bleed chrome, where a rounded corner rounds
+  against nothing.
+- **The lid is drawn by the header's shadow stack, not by `border-top` alone.**
+  `border-spacing: 2px 0` means the header row is not a continuous band — there
+  is a 2px gap between every pair of cells and another between the outermost
+  cells and the table's edge — so a plain border draws the lid as dashes that
+  stop short of the panel's side borders. Four layers, and the order is the
+  trick, because an earlier shadow paints over a later one: two `--border`
+  copies offset by exactly the border-spacing carry both hairlines across each
+  gap and out to the table's edge, and two `--surface` copies on top, offset one
+  pixel further out and inset one pixel top and bottom, cover everything between
+  them. The same mechanism carries the cell background across those gaps, which
+  is what stops scrolled rows showing through in 2px slits. Being one pixel
+  wide, it is verified by rendering at 4× zoom rather than by an assertion.
+- **The expanded row sits on `--well`** here as it does on the desktop. A panel
+  that is raised on the phone and recessed on the desktop is two answers to one
+  question.
 - That leaves **49px of header text** inside the 53px column at 360px, which is
   what `app/src/lib/labels.ts` validates every catalogue name against, at a
   `MAX_LABEL_PX` of 48 — a pixel under, because `CHAR_PX` sums approximate the
@@ -637,18 +698,22 @@ chosen:
   sticky, so a fourth line is paid once by every screen. Every label is at or
   inside the bound today, several exactly on it, so the guard is what an
   upstream name one word longer runs into.
-- Values are **centred**, not right-aligned: with fixed equal columns that is
+- Values stay **centred**, not right-aligned: with fixed equal columns that is
   the more composed object and leaves no dead colour. The cost is that `73`,
   `74.3` and `80.38` centre on different axes, judged acceptable at real
   density. If it is ever revisited, right-alignment is the rigorous choice and
   column-sized widths are its necessary partner.
 - The wash is **inset as a rounded chip** rather than filling the cell. At this
   density full-bleed cells read as a solid band of colour, far louder than the
-  desktop table where borders and wider cells break the wash up.
+  desktop table where borders and wider cells break the wash up. The chip and
+  the unit line are both `--font-mono`, so a column heading reads the same on
+  the two renderings.
 - `releasedAt` and `plate` render as dim metadata after the name and **wrap
-  rather than truncate**. Neither fits a ~53px cell and neither is a thing you
+  rather than truncate**. Neither fits a ~49px cell and neither is a thing you
   scan down a column; moving them is what keeps the value row uniformly
-  numeric.
+  numeric. The `discontinued` chip beside them is a neutral micro-label, as it
+  is on the desktop — red is error semantics and this is metadata, and one chip
+  must not mean two different things on two screens.
 
 Rows are double height in this rendering, so roughly half as many shoes fit a
 screen. That is the direct price of keeping the numbers in columns, and it is

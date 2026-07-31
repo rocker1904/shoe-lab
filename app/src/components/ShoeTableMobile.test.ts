@@ -1,4 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
 import { defaultView, type ViewState } from '../lib/urlstate';
@@ -73,7 +76,6 @@ describe('ShoeTableMobile', () => {
   it('insets the percentile wash as a chip rather than filling the cell', () => {
     const { container } = setup().rendered;
     const chip = container.querySelector('tr.values .chip')!;
-    expect(chip.getAttribute('style')).toContain('--p:');
     expect(chip.className).toContain('blue'); // score — higher is better
   });
 
@@ -142,4 +144,24 @@ describe('ShoeTableMobile categorical columns', () => {
     expect(strip.textContent).not.toContain('Non-carbon plate');
     expect(strip.querySelectorAll('.meta')).toHaveLength(2); // the plate label and one Yes, not two
   });
+});
+
+// The column minimum is declared in a `<style>` block and built out of `var()`, so neither
+// `table.style.minWidth` nor `getComputedStyle` can see it — jsdom applies no component CSS and
+// substitutes no custom properties. Read the source, the way `tokens.test.ts` reads `app.css`.
+const here = dirname(fileURLToPath(import.meta.url));
+
+it('narrows the column minimum the shorter face pays for', () => {
+  // 53px, not 57px: Inter Tight needs fewer short labels at a 49px text budget than system-ui did
+  // at 53px, and the 24px freed is what buys the panel its inset (docs/app.md §Columns and sorting).
+  const src = readFileSync(join(here, 'ShoeTableMobile.svelte'), 'utf8');
+  expect(src).toContain('var(--cols) * 53px');
+  expect(src).not.toContain('57px');
+});
+
+it('hands the chip a resolved alpha rather than a raw percentile', () => {
+  const { rendered } = setup();
+  const chip = rendered.container.querySelector('.chip.tinted')!;
+  expect(chip.getAttribute('style')).toContain('--a:');
+  expect(chip.getAttribute('style')).not.toContain('--p:');
 });

@@ -107,6 +107,22 @@ test('switches to stacked cards on a phone, and back', async ({ page }) => {
   // and all six fit — the bound the short labels were measured against
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
+  // The pinned header must sit flush against the chrome AFTER the face swaps in — a webfont
+  // reflows the chrome after first paint, and a one-shot measurement leaves a strip of page that
+  // rows visibly scroll through (docs/app.md §Columns and sorting).
+  // `.then(() => null)`: `document.fonts.ready` resolves to a FontFaceSet, which has to cross the
+  // wire back to the test.
+  await page.evaluate(() => document.fonts.ready.then(() => null));
+  await page.evaluate(() => window.scrollBy(0, 400));
+  const gap = await page.evaluate(() => {
+    const chrome = document.querySelector('.chrome')!.getBoundingClientRect();
+    const th = document.querySelector('[data-testid="shoe-table-mobile"] th')!.getBoundingClientRect();
+    return Math.round(th.top - chrome.bottom);
+  });
+  // `>= 0` rather than `=== 0`, like the desktop check at the foot of this file: a sub-pixel sticky
+  // offset is not a bug, a header behind the chrome is.
+  expect(gap, 'the pinned header is occluded after the font swap').toBeGreaterThanOrEqual(0);
+
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
   // inside its own box rather than take the page sideways with it (docs/app.md §The story scores).
   // Easy first: the panel breaks down the score columns the view holds, and the plain table has none.

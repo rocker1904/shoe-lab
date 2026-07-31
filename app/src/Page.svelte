@@ -65,6 +65,12 @@
    * below 880px, so the pinned `thead` and the sticky sidebar both sit under a box whose height
    * is a function of the viewport. A hard-coded offset put the table's header row *behind* the
    * chrome on every width where the chrome grew (docs/app.md §Columns and sorting).
+   *
+   * It is also a function of TIME, now that the app self-hosts its faces: the face swaps in after
+   * first paint and the chrome reflows by ~6px. `bind:clientHeight` is ResizeObserver-backed and
+   * re-measures on that reflow, so this holds; a refactor to a one-shot `clientHeight` read would
+   * reintroduce a strip of page that rows visibly scroll through, and only on a cold cache.
+   * `smoke.spec.ts` asserts it after `document.fonts.ready`.
    */
   let chromeHeight = $state(0);
 

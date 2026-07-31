@@ -4,6 +4,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { greyAlpha, washAlpha } from '../lib/wash';
   import { categoricalValue, isNegativeReading } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { chipLabel, columnLabel, shortLabel } from '../lib/labels';
@@ -104,11 +105,12 @@
   }
 </script>
 
-<!-- Bled out of `.content`'s inline padding rather than given less of it: six 57px columns need
-     358px, which is more than a 360px phone has left once the page is padded, and the receipt
-     above still wants its margin (docs/app.md §Columns and sorting). -->
+<!-- Bled most of the way out of `.content`'s inline padding: six 53px columns need 332px, which a
+     360px phone can pay for only if the page's own padding is nearly given back — and what is left
+     buys the panel its inset (docs/app.md §Columns and sorting). -->
 <div class="bleed">
-  <table data-testid="shoe-table-mobile" style:--cols={span}>
+  <div class="panel">
+    <table data-testid="shoe-table-mobile" style:--cols={span}>
     <thead>
       <tr>
         {#each cols as col (col)}
@@ -122,7 +124,8 @@
       </tr>
     </thead>
     <tbody>
-      {#each shoes as s (s.slug)}
+      {#each shoes as s, i (s.slug)}
+        {#if i > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
         <!-- `aria-expanded` says the card controls something; `aria-controls` is the only thing
              that says what, and the panel is a sibling row rather than a child of the control.
              Emitted only while it is open: the panel exists only then, and an IDREF naming a node
@@ -141,7 +144,8 @@
           {#each cols as col (col)}
             {@const p = percentiles.get(col)?.get(s.slug)}
             <td>
-              <span class="chip" class:tinted={p !== undefined} style:--p={p ?? 0}
+              <span class="chip" class:tinted={p !== undefined}
+                    style:--a={p === undefined ? 0 : washOf(col) === 'blue' ? washAlpha(p) : greyAlpha(p)}
                     class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</span>
             </td>
           {/each}
@@ -149,62 +153,104 @@
         {#if expanded.has(s.slug)}
           <tr class="expand" id="detail-{s.slug}"><td colspan={span}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
         {/if}
-        <tr class="gap" aria-hidden="true"><td colspan={span}></td></tr>
       {/each}
     </tbody>
   </table>
+  </div>
 </div>
 
 <style>
-  .bleed { margin-inline: calc(-1 * var(--s4)); }
+  .bleed { margin-inline: calc(-1 * var(--s4) + var(--s3)); }
+  /* One panel for the table, not one card per shoe. Three planes, and the rule is that elevation
+     follows what is PINNED: page, then this panel, then the sticky header on top of it
+     (docs/app.md §Theming).
+     Square top, rounded bottom, and no top border: the panel sits flush under the full-bleed
+     chrome, so a lid here would be a second line beside the sticky header's own — and it could not
+     be drawn correctly anyway, because `overflow-x` must stay `visible` and a box that cannot clip
+     horizontally cannot clip the square header cell out of a rounded top corner. The header carries
+     the lid instead, which is also what stops it scrolling up and out from under the pinned row.
+     `overflow-y: clip` rounds the bottom without breaking `position: sticky` — `overflow: hidden`
+     makes this a scroll container and the header lands 19px out of place, the same failure mode
+     `.content` has with `overflow-x`. Plain `overflow: clip` makes every column past the sixth
+     unreachable, which `cross-browser.spec.ts` now asserts. */
+  .panel { background: var(--surface);
+           border: 1px solid var(--border); border-top: none;
+           border-radius: 0 0 var(--r-md) var(--r-md);
+           box-shadow: var(--shadow-panel); overflow-x: visible; overflow-y: clip; }
   /* Fixed layout with spacing-derived gaps: content-sized columns made every chip a different
      width and detached each header from the values it labels. The min-width is the six-column
-     bound — 57px a column plus the spacing either side of each — so past six columns the geometry
+     bound — 53px a column plus the spacing either side of each — so past six columns the geometry
      the labels were validated against holds and the page scrolls instead
      (docs/app.md §Columns and sorting). */
   table {
     table-layout: fixed; border-collapse: separate; border-spacing: 2px 0; width: 100%;
-    min-width: calc(var(--cols) * 57px + (var(--cols) + 1) * 2px);
+    min-width: calc(var(--cols) * 53px + (var(--cols) + 1) * 2px);
     font-size: var(--t-md);
   }
-  /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 57px column, which is
-     the difference between "softness" fitting the header and clipping (docs/app.md §Columns and sorting). */
-  /* The two side shadows paint the `border-spacing` gaps: a cell background stops at the cell, so a
-     sticky header made of them is see-through in 2px slits and scrolled rows show through the band. */
-  th { padding: var(--s1) 2px; background: var(--bg); vertical-align: bottom;
+  /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 53px column, which is
+     the difference between a name fitting the header and clipping (docs/app.md §Columns and sorting).
+     The lid belongs to the thing that is pinned. Square corners, deliberately: a rounded opaque
+     cell over scrolling content leaves its corner arcs transparent and a coloured chip passing
+     behind shows through as a sliver — and the panel cannot clip that away, because overflow-x is
+     visible. The panel is square-topped to match, which is right because it sits flush under the
+     chrome (docs/app.md §Two renderings, and only one of them mounted).
+     Four shadow layers, and the ORDER is the trick — an earlier shadow paints over a later one:
+       · the two --border copies are full height and offset by exactly the border-spacing, so they
+         carry both hairlines across each 2px gap and out to the table's edge, where they meet the
+         panel's side borders;
+       · the two --surface copies sit on top, offset one pixel further out and inset one pixel top
+         and bottom (the `-1px` spread), so they cover everything between the two hairlines and
+         leave precisely 1px of border showing at each edge — flush with this cell's own
+         border-top and border-bottom rather than a pixel above them.
+     Without the --surface copies a cell background stops at the cell and scrolled rows show through
+     the gaps; without the --border copies the lid is a dashed line. Both are load-bearing. */
+  th { padding: var(--s1) 2px; background: var(--surface); vertical-align: bottom;
        position: sticky; top: var(--thead-top); z-index: 2;
-       box-shadow: var(--shadow-sticky), 2px 0 0 var(--bg), -2px 0 0 var(--bg); }
+       border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+       box-shadow: var(--shadow-sticky),
+                   3px 0 0 -1px var(--surface), -3px 0 0 -1px var(--surface),
+                   2px 0 0 var(--border), -2px 0 0 var(--border); }
   th button { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%;
               background: none; border: none; color: var(--text); font: inherit; font-size: var(--t-xs);
               font-weight: 600; letter-spacing: -0.02em; cursor: pointer; padding: 0; text-align: center; }
-  .h-units { font-weight: 400; color: var(--text-dim); min-height: 1em; }
-  /* The identity strip and the value row are one card: the strip rounds its top, the values row
-     its bottom, and the spacer row below is what separates one card from the next. */
+  /* The unit line is a figure line like every other (docs/app.md §Table presentation), and the
+     desktop header's already is — leaving this one proportional makes one column heading read
+     differently on the two renderings. */
+  .h-units { font-family: var(--font-mono); font-weight: 400; color: var(--text-dim); min-height: 1em; }
+  /* A list, not cards. Proximity does the grouping — there is more space above a name than between
+     it and its own chips — and it recovers roughly one shoe per screen, which is the direct price
+     docs/app.md flags for the two-row geometry. */
   tr.shoe { cursor: pointer; }
-  td.ident { background: var(--chrome); border-radius: var(--r-md) var(--r-md) 0 0;
-             padding: var(--s2) var(--s3); font-size: var(--t-sm); }
+  td.ident { background: none; border-radius: 0; padding: var(--s2) var(--s1) var(--s1); font-size: var(--t-sm); }
   td.ident strong { font-weight: 600; }
   .meta::before, .disc-tag::before { content: '·'; margin: 0 var(--s1); color: var(--text-dim); }
   .meta { color: var(--text-dim); font-size: var(--t-xs); }
-  .disc-tag { color: var(--bad); font-size: var(--t-xs); }
-  /* In the separate borders model the row's background paints through the border-spacing, so one
-     declaration here gives the whole value row a continuous card surface behind the chips. */
-  tr.values { background: var(--surface); }
-  /* Symmetric, so a chip sits centred in its band rather than riding high. */
-  tr.values td { padding: var(--s2) 0; }
-  tr.values td:first-child { border-bottom-left-radius: var(--r-md); }
-  tr.values td:last-child { border-bottom-right-radius: var(--r-md); }
-  tr.gap td { height: var(--s2); }
-  tr.expand td { background: var(--surface); }
+  /* Neutral, not red — red is error semantics and this is metadata. The same rule the desktop
+     table follows, or one chip means two different things on two screens. */
+  .disc-tag { color: var(--text-dim); font-size: var(--t-xs); letter-spacing: 0.06em;
+              text-transform: uppercase; }
+  tr.values { background: none; }
+  tr.values td { padding: 0 0 var(--s2); }
+  /* One hairline between shoes, drawn by its own row so it spans the border-spacing gaps. */
+  tr.rule td { border-top: 1px solid var(--border-soft); height: 0; padding: 0; }
+  /* --well, not --surface: the same elevation rule the desktop expanded row follows. A panel that
+     is raised on the phone and recessed on the desktop is two answers to one question. */
+  tr.expand td { background: var(--well); }
+  /* Exempt from app.css's single focus ring, which is `:not(tr)` for these two rows. A box-shadow
+     ring draws OUTSIDE the box: on a full-width row it would paint over the row above and below,
+     and inside this panel `overflow-y: clip` would cut it off completely on the first and last
+     shoe. The inset outline stays within the row. `tr.values` never takes focus itself — it is the
+     same shoe's second row — so it needs no rule, only the same exclusion (docs/app.md §Theming). */
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   /* Inset rather than full-bleed: at this density edge-to-edge cells read as a solid band of
      colour, far louder than the desktop table (docs/app.md §Theming). */
+  /* Values stay centred: at this density the wash does most of the parsing work, and centred is
+     the more composed object with fixed equal columns (docs/app.md §Columns and sorting). */
   .chip { display: block; margin: 0 var(--s1); padding: var(--s1) 0; border-radius: var(--r-sm);
-          text-align: center; font-variant-numeric: tabular-nums; }
-  /* Squared so only leaders read as tinted; linear where the metric has no better end
-     (docs/app.md §Theming). */
-  .chip.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--p) * var(--p) * 100%), transparent); }
-  .chip.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--p) * 100%), transparent); }
+          text-align: center; font-family: var(--font-mono); font-size: var(--t-xs);
+          letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .chip.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
+  .chip.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
   /* The name's size, not the metadata's: it is the affordance for the whole card. */
   .chev { display: inline-block; color: var(--text-dim); }
   @media (prefers-reduced-motion: no-preference) {
