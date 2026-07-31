@@ -51,83 +51,143 @@
 </script>
 
 <div class="detail">
-  {#if shoe.details}
-    <div class="cols">
-      {#if shoe.imageUrl}<img src={shoe.imageUrl} alt={shoe.name} loading="lazy" />{/if}
-      <div>
-        {#if shoe.reviewLanguage}
-          <p class="note">RunRepeat published this review in {LANGUAGE_NAMES[shoe.reviewLanguage] ?? shoe.reviewLanguage}.</p>
+  <div class="grid">
+    <div class="a-img">
+      {#if shoe.details && shoe.imageUrl}<img src={shoe.imageUrl} alt={shoe.name} loading="lazy" />{/if}
+    </div>
+    <div class="a-facts">
+      {#if shoe.details}
+        {#if shoe.details.features.length}
+          <div class="tags">{#each shoe.details.features as f, i (i)}<span class="tag">{f}</span>{/each}</div>
         {/if}
+      {/if}
+      <!-- `?? {}` covers the deploy lag: the bundle and shoes.json are fetched separately, so a
+           new build can briefly meet a cached dataset written before the field existed. -->
+      {#each Object.entries(shoe.facts ?? {}) as [name, values] (name)}
+        <div class="fact"><span class="fact-name">{name.replace(/-/g, ' ')}</span>{#each values as v (v.slug)}<span class="tag">{v.text}</span>{/each}</div>
+      {/each}
+      {#if shoe.reviewLanguage}
+        <p class="note">RunRepeat published this review in {LANGUAGE_NAMES[shoe.reviewLanguage] ?? shoe.reviewLanguage}.</p>
+      {/if}
+    </div>
+    <div class="a-body">
+      {#if shoe.details}
         {#if shoe.details.intro}<p class="intro">{shoe.details.intro}</p>{/if}
         <!-- Keyed by index, not by value: 85 of 450 shoes repeat a pro and 27 repeat a con, and a
              duplicate key is a runtime error. These lists are positional and hold no per-item
              state, so the index is the honest key. Do not "improve" this to `(p)`. -->
-        <div class="proscons">
-          <ul class="pros">{#each shoe.details.pros as p, i (i)}<li>{p}</li>{/each}</ul>
-          <ul class="cons">{#each shoe.details.cons as c, i (i)}<li>{c}</li>{/each}</ul>
+        <div class="a-lists">
+          <div class="proscons">
+            <ul class="pros">{#each shoe.details.pros as p, i (i)}<li>{p}</li>{/each}</ul>
+            <ul class="cons">{#each shoe.details.cons as c, i (i)}<li>{c}</li>{/each}</ul>
+          </div>
         </div>
-        <!-- The only two {@html} sinks in the app. Both fields are sanitised at build time by the
-             allowlist in scraper/src/sanitize.ts; adding a third is a security decision, not a
-             formatting one (docs/app.md §Sanitised-HTML boundary). -->
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {#if shoe.details.whoShouldBuy}<h4>Who should buy</h4><div>{@html shoe.details.whoShouldBuy}</div>{/if}
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {#if shoe.details.whoShouldNotBuy}<h4>Who should NOT buy</h4><div>{@html shoe.details.whoShouldNotBuy}</div>{/if}
-        {#if shoe.details.features.length}
-          <div class="tags">{#each shoe.details.features as f, i (i)}<span class="tag">{f}</span>{/each}</div>
-        {/if}
-        <!-- `?? {}` covers the deploy lag: the bundle and shoes.json are fetched separately, so a
-             new build can briefly meet a cached dataset written before the field existed. -->
-        {#each Object.entries(shoe.facts ?? {}) as [name, values] (name)}
-          <div class="fact"><span class="fact-name">{name.replace(/-/g, ' ')}</span>{#each values as v (v.slug)}<span class="tag">{v.text}</span>{/each}</div>
-        {/each}
-      </div>
-    </div>
-  {:else}
-    <p class="missing">Details not yet crawled for this shoe.</p>
-  {/if}
-  {#if lineage.length}
-    <ul class="lineage">
-      {#each lineage as { label, ref } (label)}
-        <li>{label}: <a href={reviewUrl(ref!.slug)} rel="noopener" target="_blank">{ref!.name}</a></li>
-      {/each}
-    </ul>
-  {/if}
-  <!-- One per score column on screen, and none at all without one: the panel explains what the
-       table is showing rather than a zone of its own (docs/app.md §The story scores). -->
-  {#each breakdowns as b (b.key)}
-    <section class="score-breakdown">
-      <h4>{b.label}</h4>
-      {#if b.terms === null}
-        <p class="missing">Not scored — this shoe is missing at least one measurement the score needs.</p>
+        <div class="a-prose">
+          <!-- The only two {@html} sinks in the app. Both fields are sanitised at build time by the
+               allowlist in scraper/src/sanitize.ts; adding a third is a security decision, not a
+               formatting one (docs/app.md §Sanitised-HTML boundary). -->
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+          {#if shoe.details.whoShouldBuy}<h4>Who should buy</h4><div>{@html shoe.details.whoShouldBuy}</div>{/if}
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+          {#if shoe.details.whoShouldNotBuy}<h4>Who should NOT buy</h4><div>{@html shoe.details.whoShouldNotBuy}</div>{/if}
+          {#if lineage.length}
+            <ul class="lineage">
+              {#each lineage as { label, ref } (label)}
+                <li>{label}: <a href={reviewUrl(ref!.slug)} rel="noopener" target="_blank">{ref!.name}</a></li>
+              {/each}
+            </ul>
+          {/if}
+          <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
+        </div>
       {:else}
-        {@const total = b.terms.reduce((sum, r) => sum + r.weighted, 0)}
-        <table>
-          <thead><tr><th>Term</th><th>Reading</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
-          <tbody>
-            {#each b.terms as r (r.key)}
-              <tr>
-                <td>{TERM_LABEL[r.key]}</td>
-                <td class="raw">{readingText(r.raw)}</td>
-                <td>{displayNumber(r.term)}</td>
-                <td>{displayNumber(r.weighted)}</td>
-                <td>{Math.round((r.weighted / total) * 100)}%</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+        <p class="intro missing">Details not yet crawled for this shoe.</p>
+        <div class="a-lists"></div>
+        <div class="a-prose">
+          {#if lineage.length}
+            <ul class="lineage">
+              {#each lineage as { label, ref } (label)}
+                <li>{label}: <a href={reviewUrl(ref!.slug)} rel="noopener" target="_blank">{ref!.name}</a></li>
+              {/each}
+            </ul>
+          {/if}
+          <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
+        </div>
       {/if}
-    </section>
-  {/each}
-  <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
+    </div>
+    <div class="a-bd">
+      <!-- One per score column on screen, and none at all without one: the panel explains what the
+           table is showing rather than a zone of its own (docs/app.md §The story scores). -->
+      {#each breakdowns as b (b.key)}
+        <section class="score-breakdown">
+          <h4>{b.label}</h4>
+          {#if b.terms === null}
+            <p class="missing">Not scored — this shoe is missing at least one measurement the score needs.</p>
+          {:else}
+            {@const total = b.terms.reduce((sum, r) => sum + r.weighted, 0)}
+            <div class="card">
+              <div class="scroll">
+                <table>
+                  <thead><tr><th>Term</th><th>Reading</th><th>Mapped</th><th>Contribution</th><th>Share</th></tr></thead>
+                  <tbody>
+                    {#each b.terms as r (r.key)}
+                      <tr>
+                        <td>{TERM_LABEL[r.key]}</td>
+                        <td class="raw">{readingText(r.raw)}</td>
+                        <td>{displayNumber(r.term)}</td>
+                        <td>{displayNumber(r.weighted)}</td>
+                        <td>
+                          <!-- The number is the accessible value; the bar is decoration beside it. -->
+                          <span class="sharecell"><span class="sharebar" aria-hidden="true"><i style:width="{Math.round((r.weighted / total) * 100)}%"></i></span>{Math.round((r.weighted / total) * 100)}%</span>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          {/if}
+        </section>
+      {/each}
+    </div>
+  </div>
 </div>
 
 <style>
-  .detail { padding: var(--s4) var(--s5); background: var(--surface); border-top: 1px solid var(--border); }
-  .cols { display: flex; gap: var(--s5); align-items: flex-start; }
-  /* An aspect ratio, so the box is the right height before the image loads and the panel does not
-     shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. */
-  img { width: 220px; max-width: 30vw; aspect-ratio: 3 / 2; object-fit: contain; border-radius: var(--r-md); }
+  /* A container, not a viewport reader: this panel's width is the TABLE's, which is not the
+     screen's — the sidebar takes 260px and past six columns the table is wider than the viewport.
+     A media query is wrong on both counts (docs/app.md §Columns and sorting).
+     A recessed well, not another raised surface: an open row belongs to the row above it rather
+     than floating over the table, which is the elevation rule the phone rendering follows too. */
+  .detail { background: var(--well); padding: var(--s5) var(--s4) var(--s5);
+            border-top: 1px solid var(--border); container-type: inline-size; }
+  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s4) var(--s5); align-items: start; }
+  .a-img, .a-facts, .a-body, .a-bd { grid-column: span 12; }
+  /* The summary and the two columns beneath it are ONE box, so they share a right edge at every
+     width, and the prose measure falls out of the box rather than being set separately. */
+  .a-body { max-width: 430px; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s6); }
+  .a-body .intro { grid-column: 1 / -1; }
+
+  @container (min-width: 700px) {
+    .a-img { grid-column: span 4; }
+    .a-facts { grid-column: span 8; }
+    .a-body { max-width: 800px; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
+  }
+  /* `a-bd` is LAST in the DOM and pulled up by explicit placement here, which is what makes it fall
+     to the bottom when the space is not there, with no `order` juggling. */
+  @container (min-width: 1120px) {
+    .a-img   { grid-area: 1 / 1 / 2 / 4; }
+    .a-facts { grid-area: 1 / 4 / 2 / 7; }
+    .a-bd    { grid-area: 1 / 7 / 2 / 13; }
+    .a-body  { grid-area: 2 / 1 / 3 / 13; }
+  }
+  /* aspect-ratio, so the box is the right height BEFORE the image loads and the panel does not
+     shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. Neither
+     is decoration — dropping the ratio reintroduces a reflow inside an already-open row, which is
+     the one place a jump is most obvious. 280px, not larger: every source image is 720×480, so 280
+     CSS is well inside the sharp limit on a 2× display (360 is the ceiling) while leaving the facts
+     beside it room. */
+  img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 3 / 2; object-fit: contain;
+        display: block; border-radius: var(--r-md); background: var(--surface); }
   .intro { font-style: italic; color: var(--text-dim); }
   .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
   .pros li::marker { content: '+ '; color: var(--good); }
@@ -143,18 +203,33 @@
   .missing { color: var(--text-dim); }
   /* Its own block rather than a column of the details grid: the breakdown is about the view, not
      about the shoe's copy, and it must still be there for a shoe RunRepeat never wrote up. */
-  /* And its own scrollport, measured: five columns need 354px against the 321px a 375px phone
-     leaves this panel, and without it the *page* scrolls sideways instead — 381px of document at
-     375px of viewport. Safe on this box, unlike on `.content`, which must stay unscrolled or the
-     table header rides off with the page (docs/app.md §Table presentation). */
-  .score-breakdown { margin-top: var(--s4); border-top: 1px solid var(--border); padding-top: var(--s3);
-                     overflow-x: auto; }
-  .score-breakdown table { border-collapse: collapse; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+  .score-breakdown + .score-breakdown { margin-top: var(--s4); }
+  /* The wrapper the markup adds, so the heading sits on the well and the figures sit on a surface. */
+  .score-breakdown .card { background: var(--surface); border: 1px solid var(--border);
+                           border-radius: var(--r-md); padding: var(--s3) var(--s3); }
+  /* Its own scrollport: five columns need about 354px against the 321px a 375px phone leaves the
+     panel, and the page must not go sideways for it (docs/app.md §The story scores). On an INNER
+     box, so the section heading stays put while the figures scroll — on `.score-breakdown` itself
+     the heading scrolled away from the figures it names. Safe here, unlike on `.content`, which
+     must stay unscrolled or the table header rides off with the page. */
+  .score-breakdown .scroll { overflow-x: auto; }
+  .score-breakdown table { width: 100%; border-collapse: collapse; min-width: 380px; }
   .score-breakdown th, .score-breakdown td { text-align: right; padding: var(--s1) var(--s3) var(--s1) 0; }
-  .score-breakdown th:first-child, .score-breakdown td:first-child { text-align: left; }
+  .score-breakdown td { font-family: var(--font-mono); font-size: var(--t-xs);
+                        font-variant-numeric: tabular-nums; }
+  .score-breakdown td:first-child { font-family: var(--font-ui); text-align: left; font-size: var(--t-sm); }
+  .score-breakdown th:first-child { text-align: left; }
   .score-breakdown th { color: var(--text-dim); font-weight: 400; font-size: var(--t-xs); }
-  /* A ratio and its two readings are one expression; wrapping mid-division reads as two numbers. */
-  .score-breakdown td.raw { white-space: nowrap; }
+  /* Dim, so `3.33 = 3 / 0.9` reads as working rather than as a value. A ratio and its two readings
+     are also one expression; wrapping mid-division reads as two numbers. */
+  .score-breakdown td.raw { color: var(--text-dim); white-space: nowrap; }
+  .sharecell { display: flex; align-items: center; gap: var(--s1); justify-content: flex-end; }
+  .sharebar { display: block; width: 3rem; height: 6px; border-radius: var(--r-full);
+              background: var(--border-soft); overflow: hidden; }
+  /* Accent, unlike the pickers' coverage bars: accent means "you selected this" in a CONTROL, and
+     this is a DATA MARK, where it encodes magnitude. The picker's bars are neutral because their
+     row is a control (docs/app.md §Theming). */
+  .sharebar i { display: block; height: 100%; background: var(--accent); }
   /* Stripping embedded videos at sanitise time leaves empty paragraphs behind; collapse them. */
   .detail :global(p:empty) { display: none; }
   .detail :global(p) { margin: var(--s2) 0; }

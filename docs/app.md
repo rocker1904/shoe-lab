@@ -576,6 +576,47 @@ rides off with the page. Measured in Chromium at 1200×700 scrolling 800px: with
 the horizontal scrollbar by putting `overflow-x` back — that trades a working
 pinned header for it.
 
+### The expanded row
+
+Three zones on a 12-column grid: **identity** (the image, the feature chips and facts),
+**opinion** (RunRepeat's summary, pros and cons, and the who-should-(not)-buy prose), and
+**our working** (the score breakdown).
+
+| container width | layout |
+|---|---|
+| ≥ 1120px | breakdown pulled up beside the image and facts; summary, then pros/cons beside the prose |
+| 700–1120px | image beside facts; summary, then pros/cons beside the prose; breakdown at the foot |
+| < 700px | one column, breakdown last |
+
+**Container queries, not media queries**, because the panel's width is the **table's**,
+not the viewport's: the sidebar takes 260px and past six columns the table is wider than
+the screen. A viewport query is wrong on both counts, and wrong in exactly the
+half-a-window case. `.a-bd` is **last in the DOM** and pulled up by explicit grid
+placement at the widest tier, which is what makes it fall to the bottom when the space is
+not there, with no `order` juggling.
+
+**The summary and the two columns beneath it are one box**, capped at 800px and 430px when
+stacked. Capping the prose column alone made the summary overshoot it on a wide panel;
+capping nothing pushed the prose back to 95 characters at 1440px and 195 at 1920px. Sizing
+one shared box satisfies both, and the prose measure falls out of the box rather than being
+set separately — which is also what makes them share a right edge at every tier, asserted
+in `cross-browser.spec.ts`.
+
+**The panel is a recessed `--well`, not another raised surface.** An open row belongs to
+the row above it rather than floating over the table, and **both** renderings follow that:
+the phone's expanded row is on `--well` too, or the same question would have two answers on
+two screens.
+
+Empty space beside prose is margin; empty space beside a bordered card is a hole — which is
+why the breakdown sits in the top band with the other short things, or at the foot, and
+never in a rail beside the review. Balancing column heights is the wrong goal.
+
+The image renders at **280px**. Every source image is 720×480, so 280 CSS is well inside the
+sharp limit on a 2× display, where 360 is the ceiling, while leaving the facts beside it
+room. Only the size changed: `aspect-ratio: 3 / 2` and `object-fit: contain` both stay,
+because the ratio is what gives the box its height *before* the image loads and without it
+an already-open row reflows the rows beneath it mid-read.
+
 ### Two renderings, and only one of them mounted
 
 Below 700px the same columns render as `ShoeTableMobile.svelte`: the shoe name
@@ -1126,8 +1167,17 @@ so a mapped value alone cannot say what put them there. Where a term reads a der
 quantity the cell shows the division — `1.33 = 4 / 3` — because the ratio alone does
 not say which reading moved. `readings` in `score.ts` owns those readings, so the
 panel never re-derives them. Five columns need 354px against the 321px a 375px phone
-leaves the panel, so the block is **its own scrollport**: the page must not go sideways
-for it, and the e2e run asserts that at 375px with a row open. The panel is handed the
+leaves the panel, so the block keeps **its own scrollport**, on an inner `.scroll` box
+rather than on the section: the page must not go sideways for it, and the e2e run
+asserts that at 375px with a row open. The scrollport is inner so the section heading
+stays put while the figures scroll — on the section itself the heading scrolled away
+from the figures it names. `Share` renders as a small accent bar beside the percentage,
+borrowing the coverage-bar idiom, so "shock absorption is doing most of the work here"
+reads without comparing three numbers; it is accent rather than neutral because it is a
+**data mark** encoding magnitude, where the pickers' coverage bars sit in a control
+(docs/app.md §Theming). The number beside it is the accessible value and the bar is
+decoration. `Reading` stays dim, so `3.33 = 3 / 0.9` reads as working rather than as a
+value. The panel is handed the
 view's **columns**, and renders one breakdown per score column on screen — labelled with
 that column's own header text, keyed by the column and resolved through `defForKey` and
 `zoneOfKey` — and none at all without one. Keyed by the **column** rather than the zone

@@ -154,3 +154,45 @@ for (const width of [360, 390]) {
       'columns past the sixth are unreachable — the panel is clipping x').toBeGreaterThan(0);
   });
 }
+
+/** The expanded row lays out against the TABLE's width, not the viewport's, so the sweep widens the
+ *  table as well as the window. And the summary must share a right edge with the columns beneath it
+ *  at every tier, which is the whole reason they are one box. */
+const NARROW = 'score,heel-stack,weight';
+// Nine figure columns the e2e fixture actually carries, which is more than the six-column bound —
+// so the TABLE is wider than the panel's screen and the container query is doing work a viewport
+// media query could not. Check the slugs against app/e2e/fixtures/shoes.json before editing.
+const WIDE = 'score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
+  + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel';
+
+test('lays the expanded row out at every container tier without overflowing', async ({ page }) => {
+  for (const { width, cols, pageMayScroll } of [
+    { width: 1440, cols: NARROW, pageMayScroll: false },
+    { width: 1440, cols: WIDE, pageMayScroll: true },
+    { width: 980, cols: NARROW, pageMayScroll: false },
+    { width: 760, cols: NARROW, pageMayScroll: false },
+    { width: 390, cols: NARROW, pageMayScroll: false },
+  ]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`/?cols=${cols}`);
+    // Re-expanded per iteration: crossing 699px swaps which table is mounted, and the open row
+    // belongs to the component that just went away.
+    await page.getByText('cushy').first().click();
+    await expect(page.locator('.detail .a-body')).toBeVisible();
+
+    // Past the six-column bound the page is SUPPOSED to scroll sideways
+    // (docs/app.md §Columns and sorting), so that case asserts the panel's own edges only.
+    if (!pageMayScroll) {
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        `the page overflows at ${width}px`).toBe(true);
+    }
+
+    const edges = await page.evaluate(() => {
+      const r = (s: string) => document.querySelector(s)!.getBoundingClientRect().right;
+      return { body: r('.a-body'), prose: r('.a-prose'), intro: r('.a-body .intro') };
+    });
+    // One box, so the summary cannot overshoot the columns beneath it by more than a pixel.
+    expect(Math.abs(edges.intro - edges.body), `summary overshoots at ${width}px`).toBeLessThanOrEqual(1);
+    expect(Math.abs(edges.prose - edges.body), `prose overshoots at ${width}px`).toBeLessThanOrEqual(1);
+  }
+});

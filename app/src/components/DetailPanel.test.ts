@@ -11,6 +11,28 @@ const DATA: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: 
  *  one baseline rather than repeating it. */
 const VIEW = { data: DATA, columns: [EASY.keys.heel], stability: false };
 
+// `...FLEET[0]` — cushy carries readings for every Easy term; a bare `shoe()` carries none, and the
+// breakdown then renders its not-scored message instead of the table this asserts on.
+const FULL = { ...FLEET[0]!, slug: 'full', name: 'Full Shoe',
+  details: { pros: ['Bouncy'], cons: ['Pricey'], intro: 'Great shoe.',
+    whoShouldBuy: '<p>Everyone</p>', whoShouldNotBuy: null, features: ['Rocker'] } };
+
+it('puts the summary and the two columns beneath it in one box', () => {
+  const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL } });
+  // One shared box is what makes them share a right edge. Capping the prose column alone made the
+  // summary overshoot it; capping nothing pushed the prose to 95 characters.
+  const body = container.querySelector('.a-body');
+  expect(body).not.toBeNull();
+  expect(body!.querySelector('.intro')).not.toBeNull();
+  expect(body!.querySelector('.a-lists')).not.toBeNull();
+  expect(body!.querySelector('.a-prose')).not.toBeNull();
+});
+
+it('gives the breakdown its own scrollport', () => {
+  const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL } });
+  expect(container.querySelector('.score-breakdown .scroll table')).not.toBeNull();
+});
+
 describe('DetailPanel', () => {
   it('renders full details', () => {
     render(DetailPanel, { props: { ...VIEW, shoe: shoe({
