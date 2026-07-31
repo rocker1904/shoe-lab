@@ -263,6 +263,14 @@ Two class sweeps also do not wait: agent 7 (data pipeline) and agent 8 (score
 arithmetic) touch nothing the polish pass moves, so they are pure gain
 whenever there is budget for them, landed or not.
 
+**Opus is the floor for a direction to count as tackled.** Sonnet is
+acceptable for mechanical work — shaking the rig down, running a scripted
+measurement — and not for hunting, because finding a failure mode means
+holding the project's invariants in mind and judging what is anomalous
+against them. A cheap agent reporting "nothing found" is worse than not
+running it: it retires a direction that was never really searched. A Sonnet
+pass may precede an Opus pass on the same journey; it never replaces one.
+
 Agents run as plain `Agent` batches, not as a `Workflow`. Workflow fan-out
 would be tidier and would give deterministic resume, but it is billed heavily
 and was not asked for; batches keep the spend visible and interruptible, which
