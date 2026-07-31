@@ -48,3 +48,18 @@ it('gives a shared link a title and an icon to preview', () => {
   expect(html).toContain('rel="icon"');
   expect(readFileSync(join(appDir, 'public/favicon.svg'), 'utf8')).toContain('<svg');
 });
+
+it('shapes the skeleton like the table that replaces it', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  // Never resolves: the point is what is on screen while the fetch is still outstanding.
+  vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+  const { container } = render(App);
+  vi.advanceTimersByTime(SKELETON_AFTER_MS);
+  await tick();
+  // The point of the skeleton is that the layout does not jump when data arrives, so its shape is
+  // a contract with the table: one panel, a header band, a row per shoe, no thumbnail column.
+  expect(container.querySelector('.skeleton')).not.toBeNull();
+  expect(container.querySelector('.skeleton .head')).not.toBeNull();
+  expect(container.querySelectorAll('.skeleton .row')).toHaveLength(8);
+  expect(container.querySelector('.skeleton .bar.row')).toBeNull();   // the old flat-stack shape
+});

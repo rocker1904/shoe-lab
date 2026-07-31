@@ -1703,10 +1703,21 @@ failure somewhere to surface, as an error message with a Retry button rather
 than a blank page. Importing the JSON as a module would take both away.
 
 **The loading state waits before it appears.** Nothing renders for the first
-`SKELETON_AFTER_MS` (300ms); past that, a skeleton shaped like the chrome and
-the rows that are coming, so the layout does not jump when they arrive. The
-2MB asset is same-origin and most loads finish well inside the delay, and a
-placeholder that flashes for one of those is worse than the text it replaced.
+`SKELETON_AFTER_MS` (300ms); past that, a skeleton shaped like the rows that are
+coming. The 2MB asset is same-origin and most loads finish well inside the delay,
+and a placeholder that flashes for one of those is worse than the text it
+replaced.
+
+**Its shape is a contract with the table, not decoration.** It mirrors the panel
+chassis — `--surface`, hairline, `--r-md`, `--shadow-panel` — a header band, and
+a thumbnail-free row per shoe on the table's own `14rem` name column. A skeleton
+that stops matching **causes the jump it exists to prevent**, so its row height
+is reserved as `min-height: 1lh` in the **figure** face rather than as a number:
+a row is 8px of padding, one line box and a 1px hairline, and the line box is the
+mono cells', whose metrics run a pixel taller than the UI face's at this size.
+Left at a px height the placeholder row stood 29px against the table's 36px.
+`App.test.ts` pins the row count and the structure, so the two cannot drift
+silently. The pulse stays behind a `prefers-reduced-motion` guard.
 
 ### Sharing is copying the address bar
 `Copy link` in the header writes `location.href` to the clipboard, which is the

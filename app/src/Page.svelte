@@ -338,7 +338,10 @@
     </div>
     {#if visibleSorted.length === 0}
       <!-- The table still renders: its headers keep the sort controls reachable. -->
-      <p class="empty">No shoes match these filters.</p>
+      <!-- The hint names a control the reader can actually see: below 800px the sidebar is a CLOSED
+           drawer, so pointing at it names something off screen at exactly the width where an empty
+           result is most likely. `Filters` is the drawer toggle's own label. -->
+      <p class="empty"><strong>No shoes match these filters</strong>Clear a bound to widen the search — each one says how many shoes it is excluding. On a phone they are behind <b>Filters</b>.</p>
     {/if}
   </div>
 </div>
@@ -365,6 +368,7 @@
      sticks, so the first row is the first thing under it. */
   #shoe-table { scroll-margin-top: var(--thead-top); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
+  .empty strong { display: block; color: var(--text); font-size: var(--t-lg); font-weight: 600; margin-bottom: var(--s1); }
   @media (max-width: 800px) {
     /* Below the drawer's 30 and above the page. Never rendered above 800px, because the resize
        effect forces `showFilters` false there (docs/app.md §Stacking order). */
