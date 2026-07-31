@@ -4,10 +4,26 @@ A whole-app visual pass: a real typeface, a surface and elevation language, a
 retuned accent and wash, and a rebuilt phone rendering. **Behaviour is out of
 scope.** Everything the app does — colour-graded cells, histogram range rows,
 roving radiogroups, the sanitised-HTML boundary, URL-as-view, frozen scores,
-leave-one-out exclusion counts — survives unchanged. Three exceptions are
-called out below and each is a deliberate decision, not a side effect: the
-white-numeral wash is illegal and goes, the header stops counting the visible
-fleet, and the phone column minimum drops.
+leave-one-out exclusion counts, the politeness contract — survives unchanged.
+No URL encoding, no score constant and no filter semantics move.
+
+Seven changes below go beyond pure appearance. Each is a deliberate decision
+rather than a side effect, and each is argued where it appears:
+
+1. The white-numeral wash is **illegal** and goes (§One ink, always).
+2. The header stops counting the visible fleet (§The header stops counting).
+3. The direction arrow leaves the table header for the pickers
+   (§The direction arrow leaves the header).
+4. The phone column minimum drops from 57px to 53px
+   (§The column minimum drops to 53px).
+5. Six `SHORT_LABELS` entries are deleted, so the phone shows real names
+   (§Inter Tight is ~10% narrower).
+6. Accent in the sidebar comes to mean "your bound selects this", so an
+   unbounded row draws no accent at all (§The filter sidebar).
+7. The sub-800px drawer gains a scrim (§The drawer gets a scrim).
+
+Two defects are fixed in passing: unrounded float placeholders in the range
+rows, and unbounded prose measure in the expanded row.
 
 Every number here was measured, in Firefox and Chromium, against the live app
 or a rendered rig. Where a figure decided something, the measurement is given
