@@ -46,6 +46,21 @@ describe('AddFilterDialog', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onclose).toHaveBeenCalledTimes(2);
   });
+  it('dismisses from a click outside, through the same path as Escape', async () => {
+    const { onclose, rendered } = setup();
+    const scrim = screen.getByTestId('add-filter-scrim');
+    // A sibling of the dialog rather than an ancestor: it has to paint under it, and it is the
+    // only "outside" a modal has (docs/app.md §Filters).
+    expect(scrim.parentElement).toBe(document.body);
+    expect(scrim.contains(screen.getByRole('dialog'))).toBe(false);
+    await fireEvent.click(scrim);
+    expect(onclose).toHaveBeenCalledOnce();
+    // A click that lands inside the dialog is not an outside click, and must not dismiss it.
+    await fireEvent.click(screen.getByLabelText('Filter metrics'));
+    expect(onclose).toHaveBeenCalledOnce();
+    rendered.unmount();
+    expect(screen.queryByTestId('add-filter-scrim')).toBeNull();
+  });
   it('takes focus on open and hands it back when it goes away', async () => {
     const trigger = document.createElement('button');
     document.body.append(trigger);

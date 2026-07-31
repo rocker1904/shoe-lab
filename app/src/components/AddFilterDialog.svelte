@@ -66,6 +66,13 @@
   }
 </script>
 
+<!-- Moved to `<body>` on its own, not nested in the panel: it has to sit UNDER the dialog and over
+     the drawer, and a child of the dialog could only ever paint above it. Clicking it closes, which
+     is the same affordance Escape gives and the same one the drawer's scrim already offers
+     (docs/app.md §Filters). -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="scrim" data-testid="add-filter-scrim" onclick={onclose} use:toBody></div>
 <div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" onkeydown={onkeydown}
      bind:this={panel} use:toBody>
   <input class="q" type="search" aria-label="Filter metrics" placeholder="Search metrics…"
@@ -124,5 +131,18 @@
   .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--border-soft); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--hist-dim); }
   .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
-  .close { align-self: flex-end; padding: var(--s1) var(--s3); cursor: pointer; }
+  /* The app's secondary-button treatment, as the masthead's actions and the sidebar's pair carry it
+     (docs/app.md §Theming) — a bare UA button was the one unstyled control left in this dialog. */
+  .close { align-self: flex-end; padding: var(--s1) var(--s3); cursor: pointer;
+           border: 1px solid var(--border); background: var(--surface); color: var(--text);
+           border-radius: var(--r-sm); font: inherit; font-size: var(--t-sm); }
+  .close:hover { background: var(--accent-dim); }
+  /* 32: under the dialog's 35 and over the drawer's 30, which is the layer it opens from below
+     800px (docs/app.md §Stacking order). Rendered at every width — unlike the drawer's scrim, this
+     dialog is modal on the desktop too. */
+  .scrim { position: fixed; inset: 0; z-index: 32; background: var(--scrim); }
+  @media (prefers-reduced-motion: no-preference) {
+    .scrim { animation: fade 200ms ease-out; }
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 </style>

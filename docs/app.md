@@ -221,6 +221,15 @@ path that reaches the drawer's key handler, so there is no second dismissal to
 suppress. The month picker still does stop it, because its panel is a real
 descendant of the drawer.
 
+**The dialog carries a scrim of its own, and a click on it dismisses.** The
+scrim is a **sibling** moved to `<body>` beside the dialog rather than a child
+of it — a child could only ever paint above the box it is meant to sit under —
+and its click runs the same `onclose` Escape does, so there is one dismissal
+path and not two. It renders at **every** width, unlike the drawer's, because
+this dialog is modal on the desktop too: it declares `aria-modal` and traps Tab,
+and without a scrim it floated over live content with nothing saying the page
+behind it was inert.
+
 The sidebar's **two whole-surface actions sit as a pair** at its foot — Add
 filter, then Clear filters, in one wrapping row. Add leads because it grows the
 surface and Clear empties it, and a column of two lone buttons reads as two
@@ -1534,6 +1543,7 @@ indentation, not the column:
 | ↳ help popover, month picker panel | 20 | *the sidebar's children only* |
 | drawer scrim, below 800px | 25 | the page |
 | filter drawer, below 800px | 30 | the page |
+| Add-filter dialog's scrim | 32 | the page |
 | Add-filter dialog | 35 | the page |
 | skip link | 40 | the page |
 
@@ -1555,7 +1565,10 @@ removed from there when it closes.
 
 The drawer is the reason the dialog sits at 35 rather than below 30: below
 800px the dialog opens *from* the drawer, and once it is no longer a descendant
-of that drawer it has to outrank it explicitly. Both facts are measured in
+of that drawer it has to outrank it explicitly. Its own scrim takes the gap
+between the two — over the drawer it has to dim, under the dialog it belongs to
+— which is why the dialog and its scrim are siblings in `<body>` rather than
+nested (§Filters). Both facts are measured in
 `smoke.spec.ts`, at 1200px and at 375px, by sampling `elementFromPoint` across
 the open dialog's box — the desktop fix broke the phone once, and each width
 only catches its own failure.
