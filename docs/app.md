@@ -1445,24 +1445,36 @@ are one language, and the words live on the setup strip, where the question is
 asked once; the group keeps `aria-label="Measured at"` so it is still
 named for a screen reader.
 
-The cascade has three tiers, and the rule is whether all three groups fit on
-one line rather than phone-versus-desktop:
+The cascade is driven by what fits on a line rather than by phone-versus-desktop:
 
 | width | layout |
 |---|---|
 | above 880px | one line, actions right-aligned |
-| 560–880px | actions ride up beside the zone group on line 1; pace takes line 2, shrink-wrapped |
-| 560px and below | as above, with pace stretched to fill the line and its pills `flex: 1` |
+| 800–880px | actions ride up beside the zone group on line 1; pace takes line 2, shrink-wrapped |
+| 800px and below | zone and pace share line 1; actions follow, on that line while it holds them |
 
 Three details that were bugs first. The **divider is removed** the moment the
 groups stop sharing a line, or it wraps with the zone group and dangles after
 Forefoot. `flex-basis: 100%` belongs on the **wrapper**, never on the
 segment: on the segment, the bordered pill container stretches the full width
-with its pills clustered at the left. And the narrow tier **tightens the bar's
-own padding, gaps and button padding**, because line one is the zone group plus
-actions and at 360px — the usual Android width, and the binding one — the two
-needed 345px against the 336px the wider padding left them, so the actions
-dropped to a third line and left the void the middle tier exists to prevent.
+with its pills clustered at the left. And the phone tier **tightens the bar's own
+padding, gaps and button padding** rather than dropping a control, because that
+is what pays for the two groups sharing a row: they need 366px at the wider pill
+padding, against the 344px a 360px phone leaves, and 334px at the narrower one.
+The pills stop stretching there for the same reason — filling a line was right
+while the group owned one.
+
+**Below 800px the chrome has a budget**, and it is a number rather than a taste:
+everything above the first shoe is paid on the screen with the least of it. The
+masthead and the bar measured 217px at 390×844 with the setup strip up, which
+with the pinned table header put 39% of the viewport in front of the first
+result. The ceiling is now **170px with the strip up and 210px once the bar has
+been handed the two groups**, asserted at 360px and 390px in `smoke.spec.ts`.
+Three things buy it, and none drops a control: the masthead credit's micro-label
+sets at 9px (§The header names the catalogue, the receipt owns the count), both bars trade their desktop gutter for `--s3` and their
+vertical padding for `--s1`, and the two segmented groups share a row. The credit
+stays **stacked** here — set on one line it is 142px against 75px and only 3px
+shorter, so it takes a third row out of the masthead to save three pixels.
 
 Picking a zone always leaves the view about that zone, in three states: a view
 equal to a story is rebuilt as that story on the new zone; a view that names a
@@ -1756,6 +1768,17 @@ The build date is formatted with locale **and** time zone pinned. `builtAt` is a
 UTC instant, so formatting it locally renders the previous day for every reader
 west of Greenwich — the ISO slice it replaced had no such problem, which makes
 dropping the zone a regression rather than an omission.
+
+Attribution is a **masthead credit**: a `LAB DATA BY` micro-label over
+`RunRepeat ↗` at normal text weight. The label is the one place the type scale is
+overridden — **9px**, below `--t-xs`'s 12px floor — and it is deliberate. The
+scale bottoms out at 12px because that is the floor for anything a reader has to
+*read*; this label is not read, it is what lets the name under it be set in plain
+text with no link colour competing with the wash, and at 12px it competes with
+the catalogue count beside it instead. It is also what keeps the stacked credit
+cheap enough to keep on a phone (§The toolbar). The link itself stays permanent,
+visible and immediately clickable — that is structural, not decorative
+(docs/decisions.md §Be a good citizen toward RunRepeat).
 
 ### Columns are permissive, ranges and sorts are strict
 `cols` accepts any test slug — showing a column the catalogue no longer carries

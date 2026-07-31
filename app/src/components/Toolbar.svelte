@@ -138,23 +138,31 @@
        a third line and left the void this tier exists to eliminate (docs/app.md §Presets). */
     .stability { order: 3; flex-basis: 100%; }
   }
+  /* Below 800px the bar is chrome above the first shoe on the screen with the least room for it, so
+     it pays for its own rows: the vertical padding halves and the row gap with it. The groups keep
+     every control and only the air between them narrows (docs/app.md §Presets). */
   @media (max-width: 800px) {
-    .toolbar { padding: var(--s2) var(--s3); }
+    .toolbar { padding: var(--s1) var(--s3); gap: var(--s1) var(--s3); }
     .filters-toggle { display: inline-block; }
+    /* The two segmented groups share a row here. They ask one question each and are read together,
+       and at 390px they need 133px and 202px against the 366px this padding leaves — so the row that
+       used to hold the zone group alone, with the actions floated off to its right, holds both. */
+    .pace-wrap { order: 0; flex-basis: auto; }
+    .actions { order: 1; }
+    .stability { order: 2; }
   }
-  /* On the wrapper, never the segment: on the segment the bordered pill container stretches the
-     full width with its pills clustered at the left. Last of the three, because every tier below
-     880px is narrower than the one before and the later rule is the one that wins. */
+  /* Last of the three, because every tier below 880px is narrower than the one before and the later
+     rule is the one that wins. 360px is the binding width, not 375: it is the usual Android one
+     (docs/app.md §Presets). */
   @media (max-width: 560px) {
-    /* `border-box`, or the 1px pill border puts the segment 2px past the line it is filling. */
-    .pace-wrap .seg { width: 100%; box-sizing: border-box; }
-    .pace-wrap .s { flex: 1; justify-content: center; }
-    /* Line one is the zone group plus actions, and at 360px — the usual Android width, and the binding one
-       (docs/app.md §Presets) — the two need 345px against the 336px this padding left
-       them, so the actions dropped to a line of their own and left a void beside the zone group. The
-       gaps and the buttons' own padding are what pay for it; the `:global` reaches the column
-       picker's summary, which is the bar's own line budget rather than the picker's. */
-    .toolbar { padding: var(--s2); column-gap: var(--s2); }
+    /* The two groups share a row from 800px down, so the story pills stop stretching: filling a line
+       was right while this group owned one, and beside the zone group it just takes the row. Their
+       own padding is what buys the fit — the pair need 366px at `--s3` a pill against the 344px this
+       padding leaves at 360px, and 334px at `--s2`.
+       The `:global` reaches the column picker's summary, which is the bar's own line budget rather
+       than the picker's. */
+    .s { padding-inline: var(--s2); }
+    .toolbar { padding: var(--s1) var(--s2); column-gap: var(--s2); }
     .actions { gap: var(--s2); }
     .filters-toggle, .actions :global(summary) { padding-inline: var(--s2); }
   }

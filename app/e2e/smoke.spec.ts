@@ -225,7 +225,7 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
 
 // None of this is observable in jsdom: it applies no component CSS, so every group reports the
 // same zero-sized box whatever the viewport is.
-test('degrades the toolbar in three tiers and keeps the table header clear of the chrome', async ({ page }) => {
+test('degrades the toolbar in tiers and keeps the table header clear of the chrome', async ({ page }) => {
   // The dataset is fetched, so the toolbar is not in the DOM at `goto` — and every reading below
   // would come back null, which compares equal to itself and passes every assertion silently. The
   // bar carries the two groups only once the strip has handed them over, so a first arrival has to
@@ -266,24 +266,22 @@ test('degrades the toolbar in three tiers and keeps the table header clear of th
   // (docs/app.md §Table presentation).
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1200);
 
-  await page.setViewportSize({ width: 700, height: 800 });
+  await page.setViewportSize({ width: 840, height: 800 });
   const mid = await boxes();
   expect(mid.actionsY).toBe(mid.zoneY);       // actions ride up beside the zone group
   expect(mid.paceY).toBeGreaterThan(mid.zoneY!);
   expect(mid.sepShown).toBe(false);             // nothing left to separate
   expect(mid.paceW).toBeLessThan(mid.wrapW);    // shrink-wrapped, not stretched
 
-  await page.setViewportSize({ width: 375, height: 800 });
-  const narrow = await boxes();
-  expect(narrow.paceY).toBeGreaterThan(narrow.zoneY!);
-  expect(narrow.paceW).toBe(narrow.wrapW);      // stretched to fill the line
-
-  // 360px is the binding width, not 375: it is the usual Android one, and a third line there is
-  // the same void the middle tier was written to eliminate at 620.
-  await page.setViewportSize({ width: 360, height: 800 });
-  const android = await boxes();
-  expect(android.actionsY).toBe(android.zoneY);
-  expect(android.paceY).toBeGreaterThan(android.zoneY!);
+  // Below 800px the two segmented groups pair up on one row and stay paired to the narrowest phone:
+  // they ask one question each and are read together, and the tighter padding at this tier is what
+  // pays for it. 360px is the binding width, not 375 — it is the usual Android one.
+  for (const width of [700, 390, 375, 360]) {
+    await page.setViewportSize({ width, height: 800 });
+    const phone = await boxes();
+    expect(phone.paceY, `the groups split at ${width}px`).toBe(phone.zoneY);
+    expect(phone.paceW, `the story group stretches at ${width}px`).toBe(phone.wrapW);
+  }
 
   // The pinned header row must clear the chrome at every width, which a constant offset cannot do:
   // the chrome is 44px at 1200 and 103px at 375.
@@ -332,6 +330,32 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
       return [...new Set(hits)];
     });
     expect(covered, 'something paints over the open dialog').toEqual([]);
+  });
+}
+
+/**
+ * A bound rather than an impression: everything above the first shoe on a phone is chrome, and it is
+ * paid on the screen with the least room for it. The strip-up case is the binding one, because that
+ * is a first arrival — masthead plus toolbar measured 217px at 390×844, which with the pinned table
+ * header put 39% of the viewport in front of the first result.
+ *
+ * Both phone widths, and both states: the strip hands the two segmented groups to the bar, so the
+ * bar is TALLER once it has them and the ceiling has to cover that too.
+ */
+for (const width of [360, 390]) {
+  test(`keeps the phone chrome under its ceiling at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    await expect(page.getByTestId('setup-strip')).toBeVisible();
+    const chrome = () => page.locator('.chrome')
+      .evaluate((el) => Math.round(el.getBoundingClientRect().height));
+
+    expect(await chrome(), 'the masthead and bar are too tall on a first arrival')
+      .toBeLessThanOrEqual(170);
+    await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
+    await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+    expect(await chrome(), 'the bar is too tall once the strip hands over')
+      .toBeLessThanOrEqual(210);
   });
 }
 

@@ -74,7 +74,11 @@
   .count { color: var(--text-dim); font-family: var(--font-mono); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
   .credit { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-decoration: none; color: var(--text); }
-  .credit-label { font-size: var(--t-xs); letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-dim); }
+  /* 9px as a literal, deliberately below the scale: `--t-xs` is 12px and the type scale bottoms out
+     there, because 12px is the floor for anything a reader has to READ. This label is not read — it
+     is a micro-label whose whole job is to let the name under it be set in plain text with no link
+     colour competing with the wash, and at 12px it competes with the count beside it instead. */
+  .credit-label { font-size: 9px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-dim); }
   .credit-name { display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-sm); font-weight: 500; }
   .credit:hover .credit-name { color: var(--accent); }
   .icon { display: inline-flex; align-items: center; justify-content: center; }
@@ -84,7 +88,27 @@
   .copied:not(.said) { margin-inline-start: calc(-1 * var(--gap-x)); }
   button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
   button:hover { background: var(--accent-dim); }
+  /* Below 800px every pixel of chrome is paid before the first shoe, on the screen with the least
+     of it — so this tier buys height back three ways and none of them drops a control.
+     `--s5` of side padding is a desktop gutter: at 390px it spent 48px of a 390px line and was what
+     pushed the buttons onto a row of their own. */
   @media (max-width: 800px) {
-    header { --gap-x: var(--s3); flex-wrap: wrap; gap: var(--s2) var(--gap-x); }
+    header { --gap-x: var(--s3); flex-wrap: wrap; gap: var(--s2) var(--gap-x);
+             padding: var(--s2) var(--s3); }
+    /* The credit stays STACKED here, and that is the measurement rather than the obvious answer: set
+       on one line it is 142px against the stacked 75px and only 3px shorter, so it takes 67px out of
+       a 366px line and pushes the theme button onto a third row — 33px, to save 3. The 9px label
+       above is what made the stacked form cheap enough to keep. */
+    /* The spacer exists to push the credit to the far right of a bar that is ONE line. Once the bar
+       wraps it is a growing item on whichever line it lands on, so it opens a hole there and forces
+       the credit onto a row of its own — which is the row this tier is trying not to pay for. */
+    .spacer { flex: none; }
+  }
+  /* 360px is the binding width, not 375 — it is the usual Android one. At `--s3` of side padding the
+     title line alone measures 341px against the 336px available, so the catalogue count wrapped and
+     carried the credit and all three buttons to a third row: 26px of chrome bought by 8px of
+     gutter. */
+  @media (max-width: 560px) {
+    header { --gap-x: var(--s2); padding-inline: var(--s2); }
   }
 </style>
