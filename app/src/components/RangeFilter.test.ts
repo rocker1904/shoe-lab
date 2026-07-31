@@ -110,6 +110,28 @@ it('reads a grip left at its extreme as no bound on that zone', async () => {
   expect(onchange.mock.lastCall![0].max).toBeUndefined();
 });
 
+/**
+ * A grip emits a pointermove per frame, and the snap means most of those frames resolve to the
+ * bound the row already carries. Passing one on rebuilds the whole view object and re-runs
+ * everything derived from it for no change on screen (docs/app.md §What a drag may recompute).
+ */
+it('stays silent while a drag moves inside the value it has already snapped to', async () => {
+  const onchange = vi.fn();
+  const { container } = render(RangeFilter, { props: { ...props, values: PRICES, bound: { max: 150 }, onchange } });
+  const plot = container.querySelector('.plot')!;
+  widen(plot);
+  const grip = handleX(container, 'max');
+
+  await fireEvent(plot, at('pointerdown', grip));
+  for (const dx of [1, -1, 2, -2]) await fireEvent(window, at('pointermove', grip + dx));
+  expect(onchange).not.toHaveBeenCalled();
+
+  // Far enough to land on another stop, and the row speaks again.
+  await fireEvent(window, at('pointermove', 20));
+  expect(onchange).toHaveBeenCalledOnce();
+  expect(onchange.mock.lastCall![0].max).not.toBe(150);
+});
+
 it('grabs neither grip from the middle of an unbounded plot', async () => {
   const onchange = vi.fn();
   const { container } = render(RangeFilter, { props: { ...props, values: PRICES, bound: {}, onchange } });

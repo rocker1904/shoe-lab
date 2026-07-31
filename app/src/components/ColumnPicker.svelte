@@ -48,12 +48,20 @@
     return [...m.entries()];
   });
   const pct = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);
+  /**
+   * A closed `<details>` still renders its children, so the bars below were being recomputed on
+   * every view update — forty-odd full passes over the population, twice each, for a panel nobody
+   * could see. One pass is cheap; sixty times a second during a drag is not
+   * (docs/app.md §What a drag may recompute). The rows themselves stay mounted: they hold the
+   * checked state and cost nothing to keep.
+   */
+  let open = $state(false);
   function toggle(key: string) {
     onchange(columns.includes(key) ? columns.filter((c) => c !== key) : [...columns, key]);
   }
 </script>
 
-<details class="picker">
+<details class="picker" bind:open>
   <!-- The count rides in a badge so the label stops changing width as columns are ticked. -->
   <summary>Columns <span class="count-badge">{columns.length}</span>
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -84,8 +92,11 @@
           <input type="checkbox" checked={columns.includes(o.key)} onchange={() => toggle(o.key)} />
           <span class="name">{o.label}</span>
           <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
-          <span class="bar"><span class="fill" style:width="{pct(o.key)}%"></span></span>
-          <span class="pct">{pct(o.key)}%</span>
+          {#if open}
+            {@const p = pct(o.key)}
+            <span class="bar"><span class="fill" style:width="{p}%"></span></span>
+            <span class="pct">{p}%</span>
+          {/if}
         </label>
       {/each}
     {/each}

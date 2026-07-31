@@ -69,8 +69,16 @@ describe('ColumnPicker metric entries', () => {
     await fireEvent.click(screen.getByRole('checkbox', { name: /Energy return forefoot/ }));
     expect(onchange).toHaveBeenLastCalledWith(['energy-return-forefoot']);
   });
-  it('names each test with its coverage against the population', () => {
-    render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
+  // Opened first, because the figures are resolved for an open panel only: each is a full pass over
+  // the population, and a closed picker recomputing forty of them on every view update is what made
+  // a dragged grip drop frames (docs/app.md §What a drag may recompute).
+  it('names each test with its coverage against the population, once opened', async () => {
+    const { container } = render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
+    expect(screen.getByRole('checkbox', { name: /Heel stack/ })).not.toHaveAccessibleName(/%/);
+    await fireEvent.click(container.querySelector('summary')!);
+    // jsdom queues the `toggle` event as a task rather than firing it inline, and `bind:open` is
+    // what that event feeds.
+    await new Promise((resolve) => setTimeout(resolve));
     // four of the five fixture shoes carry a heel-stack reading
     expect(screen.getByRole('checkbox', { name: /Heel stack/ })).toHaveAccessibleName(/80%/);
   });

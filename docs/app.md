@@ -73,6 +73,38 @@ above worked through — BACKLOG.md item, not an oversight to patch casually.
 `replaceState` (never `pushState`) is what keeps the history stack from
 filling with keystrokes.
 
+### What a drag may recompute
+
+`setView` replaces the **whole** `ViewState` object, so every `$derived` that
+reads the view re-runs — sixty times a second while a grip is held, whether or
+not the field it reads moved. That is the frame budget's one structural hazard,
+and three rules keep it affordable. `recompute-budget.test.ts` is the rig: it
+counts fleet-wide passes per bound change, and the counts it asserts are
+independent of fleet size.
+
+**Read a view field through a `$derived` of its own when fleet-wide work hangs
+off it.** A derived propagates only when *its own value* changes, so
+`const stability = $derived(view.stability)` is what stops a replaced view
+object from rebuilding all three stories' score maps over both zones. Reading
+`view.stability` directly at the point of use puts them back on every frame.
+
+**Nothing invisible pays for itself.** A closed `<details>` still renders its
+children, so `ColumnPicker` resolves its coverage bars only while open, and
+`FilterSidebar` resolves the add-filter options' coverage where the dialog is
+mounted rather than in the derived that feeds it. Each figure is a full pass
+over the population, and there are forty-odd of them.
+
+**A grip that lands on the bound it already holds says nothing.** Snapping to
+values that exist puts most frames of a slow drag back on the same reading, so
+`RangeFilter` compares before calling `onchange` — an identical bound would
+otherwise cost a whole view rebuild for no change on screen.
+
+What remains per update is what genuinely moved: one filter pass, one sort, one
+ranking per rendered column (`percentileMap` defers to `rankMap`, one walk of
+the sorted run rather than one per shoe), the sidebar's own coverage headings,
+and the table's DOM. The DOM is now the larger half, which is a row-count
+problem rather than a reactivity one — BACKLOG.md holds it.
+
 ## Sanitised-HTML boundary
 
 `{@html}` appears in exactly two places, both in `DetailPanel.svelte`:

@@ -81,14 +81,20 @@
   function move(e: MouseEvent) {
     if (!dragging || !axis) return;
     const snapped = snapToValue(valueAt(e.clientX), stops);
+    let next: RangeBound;
     if (dragging === 'min') {
       // Dragging clamps against the other grip; only typing may cross the bounds.
       const v = bound.max !== undefined ? Math.min(snapped, bound.max) : snapped;
-      onchange({ ...bound, min: v <= axis.lo ? undefined : v });
+      next = { ...bound, min: v <= axis.lo ? undefined : v };
     } else {
       const v = bound.min !== undefined ? Math.max(snapped, bound.min) : snapped;
-      onchange({ ...bound, max: v >= axis.hi ? undefined : v });
+      next = { ...bound, max: v >= axis.hi ? undefined : v };
     }
+    // A grip emits a pointermove per frame and the snap lands most of them on the bound already
+    // held, each of which would otherwise replace the whole view object and re-run everything
+    // derived from it for no change on screen (docs/app.md §What a drag may recompute).
+    if (next.min === bound.min && next.max === bound.max) return;
+    onchange(next);
   }
   function release() {
     dragging = null;

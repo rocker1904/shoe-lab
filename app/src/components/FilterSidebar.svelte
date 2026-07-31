@@ -96,12 +96,17 @@
    * the curated one — two controls a user cannot tell apart.
    */
   const ALIASED_BY_A_FIELD = new Set(['price']);
-  const addable: AddFilterOption[] = $derived(entries.flatMap((e) => {
+  /** Coverage is deliberately absent here: it is a full pass over the population per option, and
+   *  this list is rebuilt on every view update while the dialog it feeds is mounted only when the
+   *  runner opens it. The figures are resolved at the call site below, where they are rendered
+   *  (docs/app.md §What a drag may recompute). */
+  const addable = $derived(entries.flatMap((e) => {
     const rows = shown.includes(e) ? rowKeysOf(e) : [];
     return (e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)])
       .filter((k) => !rows.includes(k) && !ALIASED_BY_A_FIELD.has(k))
-      .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId, coverage: pctOf(k) }));
+      .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId }));
   }));
+  const withCoverage = (): AddFilterOption[] => addable.map((o) => ({ ...o, coverage: pctOf(o.key) }));
   let adding = $state(false);
 
   /**
@@ -260,7 +265,7 @@
     <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
   </div>
   {#if adding}
-    <AddFilterDialog options={addable} groups={data.groups}
+    <AddFilterDialog options={withCoverage()} groups={data.groups}
                      onchoose={(k) => { adding = false; addRow(k); }}
                      onclose={() => (adding = false)} />
   {/if}

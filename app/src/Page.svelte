@@ -148,6 +148,14 @@
   }
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
+  /**
+   * Read through a `$derived` of its own, never as `view.stability` where it is used: every update
+   * replaces the whole view object, so a dependency on `view` re-runs whatever reads it — and one
+   * of those readers scores the entire fleet. A derived propagates only when **its own value**
+   * changes, which is what keeps a dragged grip from rebuilding six score maps a frame
+   * (docs/app.md §What a drag may recompute).
+   */
+  const stability = $derived(view.stability);
   const snapshot = $derived($state.snapshot(view) as ViewState);
   const zoneMark = $derived(zoneOf(snapshot));
   /** Somewhere to stand when the view names no zone: the stories each bind one half, so applying
@@ -163,7 +171,7 @@
    */
   const scores = $derived<ScoreColumns>(new Map(
     SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((zone) =>
-      [def.keys[zone], scoreMap(def, data.shoes, zone, view.stability, idx)] as const))));
+      [def.keys[zone], scoreMap(def, data.shoes, zone, stability, idx)] as const))));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
 
   /**

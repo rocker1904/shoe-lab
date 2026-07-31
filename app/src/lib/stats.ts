@@ -9,22 +9,15 @@ import { directionOf } from './direction';
  * this function's (docs/app.md §Theming).
  */
 export function percentileMap(shoes: Shoe[], key: string, idx: TestIndex): Map<string, number> {
-  const entries = shoes
-    .map((s) => ({ slug: s.slug, v: numericValue(s, key, idx) }))
-    .filter((e): e is { slug: string; v: number } => e.v !== undefined);
-  const values = entries.map((e) => e.v).sort((a, b) => a - b);
+  const values = new Map(shoes.flatMap((s) => {
+    const v = numericValue(s, key, idx);
+    return v === undefined ? [] : [[s.slug, v] as const];
+  }));
+  const lower = directionOf(key) === 'lower';
   const out = new Map<string, number>();
-  for (const { slug, v } of entries) {
-    let below = 0;
-    let equal = 0;
-    for (const x of values) {
-      if (x < v) below++;
-      else if (x === v) equal++;
-      else break;
-    }
-    const pct = (below + equal / 2) / values.length;
-    out.set(slug, directionOf(key) === 'lower' ? 1 - pct : pct);
-  }
+  // Ranked by `rankMap` rather than by a scan of its own: one convention for ties and ends, and one
+  // walk of the sorted run instead of one per shoe (docs/app.md §What a drag may recompute).
+  for (const [slug, pct] of rankMap(values)) out.set(slug, lower ? 1 - pct : pct);
   return out;
 }
 

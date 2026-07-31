@@ -18,6 +18,19 @@ describe('stats', () => {
     expect(p.get('cushy')).toBeCloseTo(0.5);
     expect(p.get('racer')).toBeCloseTo(0.5);
   });
+  /**
+   * The two rankings sit in adjacent columns of one table row, tinting the same wash ramp, so they
+   * must resolve ties and ends identically — a second convention would make a score column's tint
+   * mean something different from its neighbour's (docs/app.md §Theming).
+   */
+  it('percentileMap ranks exactly as rankMap does, direction aside', () => {
+    const tied = [...FLEET, shoe({ slug: 'twin', values: { '6': 40 } })];
+    const values = new Map(tied.flatMap((s) => {
+      const v = s.values['6'];
+      return typeof v === 'number' ? [[s.slug, v] as const] : [];
+    }));
+    expect(percentileMap(tied, 'heel-stack', idx)).toEqual(rankMap(values));
+  });
   it('percentileMap single-value fleet gives 0.5', () => {
     const p = percentileMap([FLEET[0]!], 'heel-stack', idx);
     expect(p.get('cushy')).toBeCloseTo(0.5);
