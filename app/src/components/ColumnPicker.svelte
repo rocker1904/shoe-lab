@@ -167,6 +167,13 @@
                  padding: 2px var(--s1); border-radius: var(--r-sm);
                  background: var(--border-soft); color: var(--text-dim); }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); min-width: 20rem; box-shadow: var(--shadow-dialog); }
+  /* The 20rem is CONTENT — no `box-sizing` here — so the panel measures 354px, and anchored
+     `right: 0` under a toolbar that leaves it 352px at 360px it put its left hairline and both left
+     corners off the screen. The 4px a side comes out of the PADDING, and only on the phone: making
+     the panel border-box instead takes it to 320px at EVERY width, which wraps the direction legend
+     onto a second line on a 1440px desktop where nothing was wrong. 346px at 360px, so 6px of air;
+     untouched at 401px and above (docs/app.md §Stacking order). */
+  @media (max-width: 400px) { .panel { padding-inline: var(--s3); } }
   /* Padding as room for the focus ring, and the same treatment as the add-filter dialog's list,
      which owns the reasoning. */
   .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);

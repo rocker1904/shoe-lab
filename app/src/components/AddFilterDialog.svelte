@@ -109,8 +109,15 @@
      the skip link's 40. Moving the node to `<body>` is what makes these numbers comparable at all:
      inside the sticky sidebar they were measured against that sidebar's children
      (docs/app.md §Stacking order). */
+  /* `border-box`, and it is load-bearing rather than tidiness: `92vw` is meant to be the whole
+     dialog, leaving 4% of the screen each side. Measured in content-box the 16px padding and 1px
+     border each side land on top of it, so the box came out 34px WIDER than the viewport fraction
+     asked for — 365px inside a 360px screen, clipping its own border and both left corners off the
+     edge at every phone width (393px at 390px, 379px at 375px). There is no global reset here; the
+     components that size against their container set this themselves. */
   .dialog {
     position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); z-index: 35;
+    box-sizing: border-box;
     display: flex; flex-direction: column; gap: var(--s2); width: min(28rem, 92vw); max-height: 80vh;
     padding: var(--s4); background: var(--surface); color: var(--text);
     border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-dialog);
