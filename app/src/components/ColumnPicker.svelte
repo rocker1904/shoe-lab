@@ -54,7 +54,10 @@
 </script>
 
 <details class="picker">
-  <summary>Columns ({columns.length})</summary>
+  <!-- The count rides in a badge so the label stops changing width as columns are ticked. -->
+  <summary>Columns <span class="count-badge">{columns.length}</span>
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </summary>
   <div class="panel">
     <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
          beside it a lone ↑ says nothing (docs/app.md §Table presentation). -->
@@ -87,7 +90,13 @@
 
 <style>
   .picker { position: relative; }
-  summary { cursor: pointer; padding: var(--s1) var(--s3); border: 1px solid var(--border); border-radius: var(--r-sm); white-space: nowrap; }
+  summary { cursor: pointer; padding: var(--s1) var(--s3); border: 1px solid var(--border);
+            border-radius: var(--r-sm); white-space: nowrap; list-style: none;
+            display: inline-flex; align-items: center; gap: var(--s2); }
+  summary::-webkit-details-marker { display: none; }
+  .count-badge { font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1;
+                 padding: 2px var(--s1); border-radius: var(--r-sm);
+                 background: var(--bg); color: var(--text-dim); }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); min-width: 20rem; box-shadow: var(--shadow-dialog); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }

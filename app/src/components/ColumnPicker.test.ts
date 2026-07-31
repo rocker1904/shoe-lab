@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ColumnPicker from './ColumnPicker.svelte';
 import { indexTests } from '../lib/dataset';
@@ -32,7 +32,10 @@ describe('ColumnPicker', () => {
   it('files ungrouped numeric tests under Other and reflects the selected count', () => {
     render(ColumnPicker, { props: { ...base, columns: ['score', 'weight'], onchange: vi.fn() } });
     expect(screen.getByText('Other')).toBeInTheDocument();
-    expect(screen.getByText(/Columns \(2\)/)).toBeInTheDocument();
+    // The label is fixed-width now and the count rides in a badge beside it, so it is no longer a
+    // direct text node of the summary and `getNodeText` cannot see the pair as one string.
+    const summary = screen.getByText('Columns').closest('summary')!;
+    expect(within(summary).getByText('2')).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Weight/ })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Plate' })).not.toBeChecked();
   });

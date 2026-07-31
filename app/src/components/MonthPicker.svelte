@@ -168,7 +168,7 @@
           aria-expanded={open} aria-haspopup="dialog" aria-controls={open ? PANEL_ID : undefined}
           aria-label="Released after, {label}">
     <span>{label}</span>
-    <span class="caret" aria-hidden="true">▾</span>
+    <span class="caret" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </button>
 
   {#if open}
@@ -212,11 +212,11 @@
   .anchor { position: relative; display: block; }
   .trigger {
     display: flex; align-items: center; justify-content: space-between; gap: var(--s2); width: 100%;
-    padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm);
+    padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-md);
     background: var(--surface); color: var(--text); font: inherit; cursor: pointer; text-align: left;
   }
   .trigger:hover { border-color: var(--accent); }
-  .caret { color: var(--text-dim); font-size: var(--t-xs); }
+  .caret { display: inline-flex; color: var(--text-dim); }
   /* Absolute inside the sidebar, not portalled to `<body>` like the Add-filter dialog: this panel
      is the width of the column it sits in, so it never reaches the table, and the section it hangs from
      sits near the top of the sidebar's scroll content, so it is never clipped
@@ -246,6 +246,9 @@
     background: none; color: var(--text); font: inherit; font-size: var(--t-sm); cursor: pointer;
   }
   .grid button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-dim); }
-  .grid button[aria-selected='true'] { background: var(--accent); color: var(--surface); }
+  /* `--accent-solid` carrying `--on-accent`, because an ink sits on this fill: `--on-accent` on
+     `--accent` is 3.71:1 in dark, and a raw `#fff` here would split the pair across files
+     (docs/app.md §Theming). */
+  .grid button[aria-selected='true'] { background: var(--accent-solid); color: var(--on-accent); }
   .grid button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 </style>

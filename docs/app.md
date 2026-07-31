@@ -201,6 +201,12 @@ that arrived by link holding a non-curated bound is seeded into the list by
 `parseView`, or clearing it would silently remove it. Released after is unset
 from an **Any** chip: a chip that sets a date cannot also clear it.
 
+**Below 800px the drawer carries a scrim**, and clicking it closes — the same
+affordance Escape gives. The drawer already traps focus; the scrim states in the
+interface what the trap enforces, and nothing else in the new elevation language
+floats above content without one. It never renders above 800px, because the
+resize effect forces `showFilters` false there.
+
 The sidebar stays for the filters in use — filtering is a tuning loop, and a
 modal over the table breaks the feedback that makes it work. **Choosing which
 filters those are is a dialog**, because picking among forty-odd metrics is a
@@ -1430,6 +1436,7 @@ indentation, not the column:
 | ↳ column picker panel | 10 | *the chrome's children only* |
 | **sidebar** — sticky, so a context at `z-index: auto` | — | the page, at 0 |
 | ↳ help popover, month picker panel | 20 | *the sidebar's children only* |
+| drawer scrim, below 800px | 25 | the page |
 | filter drawer, below 800px | 30 | the page |
 | Add-filter dialog | 35 | the page |
 | skip link | 40 | the page |

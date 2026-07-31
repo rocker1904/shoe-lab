@@ -307,6 +307,13 @@
 {/if}
 
 <div class="layout" class:show-filters={showFilters}>
+  <!-- The drawer already traps focus; the scrim states in the interface what the trap enforces.
+       Clicking it closes, which is the same affordance Escape gives. -->
+  {#if showFilters}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="scrim" onclick={closeFilters}></div>
+  {/if}
   <!-- The handler is a key trap for the panel below 800px, not a control: giving this box a role
        would announce a landmark that is only a drawer at one width. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -359,6 +366,12 @@
   #shoe-table { scroll-margin-top: var(--thead-top); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   @media (max-width: 800px) {
+    /* Below the drawer's 30 and above the page. Never rendered above 800px, because the resize
+       effect forces `showFilters` false there (docs/app.md §Stacking order). */
+    .scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
+    @media (prefers-reduced-motion: no-preference) {
+      .scrim { animation: fade 200ms ease-out; }
+    }
     .layout { grid-template-columns: minmax(0, 1fr); }
     /* Off-canvas rather than `display: none`: display cannot be animated, so the drawer appeared
        and vanished with no sense of where it came from. `visibility` is what keeps a closed drawer
@@ -378,4 +391,5 @@
       .layout.show-filters .sidebar { transition: transform 200ms ease-out, visibility 0s; }
     }
   }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 </style>

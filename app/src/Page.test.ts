@@ -80,6 +80,12 @@ async function addFilter(name: string) {
   await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: new RegExp(name) }));
 }
 
+it('lays a scrim behind the drawer, so the page reads as inert as well as being it', async () => {
+  const { container } = render(Page, { props: { data } });
+  await fireEvent.click(screen.getByRole('button', { name: 'Filters' }));
+  expect(container.querySelector('.scrim')).not.toBeNull();
+});
+
 describe('Page', () => {
   it('renders count, attribution and table', () => {
     render(Page, { props: { data } });
