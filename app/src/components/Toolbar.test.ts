@@ -105,6 +105,16 @@ describe('Toolbar', () => {
     expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument();
   });
 
+  // The whole-row rule on the preference is written against the two groups — with them gone it left
+  // the actions alone on a row with the bar's left half empty, which is the phone's landing screen.
+  // jsdom has no layout, so the marker is what is asserted here; `smoke.spec.ts` measures the rows.
+  it('marks itself group-less so the preference stops claiming a row of its own', async () => {
+    const { container, rerender } = render(Toolbar, { props: { ...props, showGroups: false } });
+    expect(container.querySelector('.toolbar')).toHaveClass('no-groups');
+    await rerender({ ...props, showGroups: true });
+    expect(container.querySelector('.toolbar')).not.toHaveClass('no-groups');
+  });
+
   it('carries the Filters toggle and its expanded state', async () => {
     const onfilters = vi.fn();
     render(Toolbar, { props: { ...props, onfilters } });

@@ -58,7 +58,7 @@
     + 'uniformly tall and narrow, so there is no stable racer to surface.';
 </script>
 
-<div class="toolbar" data-testid="toolbar">
+<div class="toolbar" class:no-groups={!showGroups} data-testid="toolbar">
   {#if showGroups}
     <div class="zone-wrap"><ZoneToggle {zone} onchange={onzone} /></div>
     <span class="sep" aria-hidden="true"></span>
@@ -109,6 +109,14 @@
      the same track, so a third column would be sized by the note and strand the `?` at its end. */
   .pref { display: flex; align-items: center; gap: var(--s2); }
   .stability label { cursor: pointer; }
+  /* While the strip is up the bar carries no groups, and the whole-row rule below is written against
+     them — "the 389px control does not fit BESIDE the two groups". With the groups gone that reason
+     is gone, and the rule left the actions alone on a row with the left half of the bar empty: 211px
+     of void at 390px, 597px at 800px, on the phone's landing screen. The preference leads and the
+     actions keep the right edge they hold at every other width. Higher specificity than the tier
+     rules on purpose, so it holds at every width rather than needing a copy inside each
+     (docs/app.md §Presets). */
+  .toolbar.no-groups .stability { order: 0; flex-basis: auto; min-width: 0; }
   .stability small { grid-column: 2; font-size: var(--t-xs); color: var(--text-dim); }
   /* `overflow: visible`, not hidden: the focus ring is a box-shadow and a clipped track would
      swallow it (docs/app.md §Theming). */
@@ -122,9 +130,14 @@
      `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
      `tokens.test.ts` fails the build on a raw white in a component's style block. */
   .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
-  /* Above 800px the sidebar is always on screen, so the drawer toggle has nothing to toggle. */
+  /* Above 800px the sidebar is always on screen, so the drawer toggle has nothing to toggle.
+     It is the fifth carrier of the one secondary-button treatment (docs/app.md §Theming) and was
+     the only one missing its size and its hover — a control that opens a drawer, giving no feedback
+     under the pointer, on the tier where it is the only way to reach the filters at all. */
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
-                    background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
+                    background: var(--surface); color: var(--text); border-radius: var(--r-sm);
+                    font-size: var(--t-sm); }
+  .filters-toggle:hover { background: var(--accent-dim); }
   /* 879.98px, not 880px: the tier boundary is "880 and up is one line", and `max-width: 880px`
      matches *at* 880 and splits the toolbar on the width that is supposed to be the wide one. */
   @media (max-width: 879.98px) {
