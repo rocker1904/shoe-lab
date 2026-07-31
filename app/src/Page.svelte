@@ -283,7 +283,8 @@
 </script>
 
 <!-- First in the document, because a skip link that is not the first tab stop skips nothing: it is
-     49 stops from here to the first table row (docs/app.md §Columns and sorting). -->
+     dozens of stops from here to the first table row, and the count moves with the sidebar's rows —
+     docs/app.md §Table presentation owns it. -->
 <SkipLink />
 
 <!-- Header and toolbar pin together, because every control that changes the view has to stay

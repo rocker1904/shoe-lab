@@ -145,8 +145,8 @@
   th { text-align: left; border-bottom: 2px solid var(--border); padding: var(--s2);
        background: var(--surface); }
   /* The offset is the height `Page.svelte` measured off the pinned chrome, with no fallback: the
-     chrome is 44px at desktop widths and 103px on a phone, so any constant here hides this row
-     behind it at every width but one (docs/app.md §Columns and sorting).
+     chrome roughly doubles between a desktop width and a phone, so any constant here hides this row
+     behind it at every width but one. docs/app.md §Columns and sorting owns the measurements.
      The panel's lid rides on this row for the reason `ShoeTableMobile.svelte`'s `th` sets out in
      full, and the two renderings use the one technique. Where they differ is the cheap half: this
      table's `border-spacing` is 0, so the header row is already a continuous band and a plain

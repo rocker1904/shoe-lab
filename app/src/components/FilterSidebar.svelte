@@ -260,8 +260,9 @@
     {#if addable.length}
       <button type="button" class="add" onclick={() => (adding = true)}>Add filter</button>
     {/if}
-    <!-- Named for what it does. The toolbar's Clear returns the whole view to this runner's
-         baseline; this one touches the filters and nothing else (docs/app.md §Presets). -->
+    <!-- Named for what it does, and the qualifier is the point: the toolbar has no Clear — `All` is
+         what returns the whole view to this runner's baseline (docs/app.md §The toolbar) — while
+         this one touches the filters and nothing else. -->
     <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
   </div>
   {#if adding}

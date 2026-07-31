@@ -25,8 +25,8 @@
   /* Held to 4.5:1 against every surface it is set on, not just the white one: the segmented groups'
      track is `--bg`, the column picker's count badge `--border-soft`, and a chosen setup card's
      description sits on `--accent-dim`. A value picked against `--surface` alone clears it at
-     4.85:1 and fails those three; this one is 5.10:1 at the worst of them, asserted in wash.test.ts
-     (docs/app.md §Theming). */
+     4.85:1 and fails those three; this one is 4.97:1 at the worst of them — `--border-soft`, which
+     took the badge over from `--bg` — asserted in wash.test.ts (docs/app.md §Theming). */
   --text-dim: #5f6673;
   --border: #e5e5e3; --border-soft: #eeeeec;
   /* Darker than --border on purpose: a group divider sits on --chrome, where a border-coloured
@@ -39,8 +39,8 @@
      colour; `wash.test.ts` holds it to 4.5:1 (docs/app.md §Theming). */
   --accent-solid: hsl(211 84% 44%);
   /* The one ink allowed on --accent-solid, and a token so no component hard-codes it. Both themes
-     fill with a dark enough accent that this stays white in both — which is a fact worth stating
-     once here rather than nine times in the components. */
+     fill with a dark enough accent that this stays white in both — one fact, stated here rather
+     than once per component that reads it (docs/app.md §Theming names them). */
   --on-accent: #ffffff;
   --good: #15803d; --bad: #b4331f;
   /* Flat mark. 3.62:1 on --surface, 3.32:1 on --bg, 3.12:1 on --border-soft — all three asserted in

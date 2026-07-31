@@ -125,7 +125,7 @@
 <fieldset class="range" aria-label={name}>
   {#if label}<legend class:on={bounded}>{label}{units ? ` (${units})` : ''}</legend>{/if}
   {#if axis && plot}
-    <!-- No `tabindex`: a plot that could take focus would be a 50th tab stop carrying nothing, and
+    <!-- No `tabindex`: a plot that could take focus would be one more tab stop carrying nothing, and
          the grips are revealed from the row so tabbing into either number field shows them
          (docs/app.md §Filters). -->
     <div class="plot" bind:this={plotEl} onpointerdown={grab}>
