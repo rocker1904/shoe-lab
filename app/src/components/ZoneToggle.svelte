@@ -24,7 +24,11 @@
 </span>
 
 <style>
-  .zone { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r-full); overflow: hidden; }
-  button { padding: var(--s1) var(--s3); border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
-  button.on { background: var(--accent-dim); color: var(--text); font-weight: 600; }
+  /* `overflow: visible`, not hidden: the focus ring is a box-shadow (docs/app.md §Theming). */
+  .zone { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
+          border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
+  button { padding: var(--s1) var(--s3); border: none; border-radius: var(--r-sm); background: none;
+           color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
+  /* `--accent-solid` carrying `--on-accent`, like the toolbar's pill (docs/app.md §Theming). */
+  button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
 </style>

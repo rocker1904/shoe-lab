@@ -110,10 +110,18 @@
   .pref { display: flex; align-items: center; gap: var(--s2); }
   .stability label { cursor: pointer; }
   .stability small { grid-column: 2; font-size: var(--t-xs); color: var(--text-dim); }
-  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r-full); overflow: hidden; }
+  /* `overflow: visible`, not hidden: the focus ring is a box-shadow and a clipped track would
+     swallow it (docs/app.md §Theming). */
+  .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
+         border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
   .s { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); border: none;
-       background: none; color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); white-space: nowrap; }
-  .s.on { background: var(--accent-dim); color: var(--text); font-weight: 600; }
+       border-radius: var(--r-sm); background: none; color: var(--text-dim); cursor: pointer;
+       font-size: var(--t-sm); white-space: nowrap; }
+  /* `--accent-solid`, not `--accent`: --on-accent on the accent is 3.71:1 in dark. A filled accent
+     under --on-accent text is the only kind of site that token exists for (docs/app.md §Theming).
+     `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
+     `tokens.test.ts` fails the build on a raw white in a component's style block. */
+  .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
   /* Above 800px the sidebar is always on screen, so the drawer toggle has nothing to toggle. */
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
                     background: var(--surface); color: var(--text); border-radius: var(--r-sm); }

@@ -1,4 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from '../Page.svelte';
 import SetupStrip from './SetupStrip.svelte';
@@ -129,4 +132,24 @@ describe('Page setup strip', () => {
     await fireEvent.click(screen.getByRole('radio', { name: /All/ }));
     expect(screen.queryByTestId('setup-strip')).toBeNull();   // does not return
   });
+});
+
+// `fileURLToPath`, because the jsdom environment replaces the global `URL` with one `readFileSync`
+// rejects (tokens.test.ts and labels.test.ts say the same).
+const here = dirname(fileURLToPath(import.meta.url));
+const src = readFileSync(join(here, 'SetupStrip.svelte'), 'utf8');
+
+it('marks a chosen card without filling it, so hover and selected stay different states', () => {
+  // `.card:hover` and `.card.on` set the same border AND the same tint today, so a hovered card is
+  // indistinguishable from the chosen one. Hover keeps the border; only selected tints.
+  const hover = src.match(/\.card:hover \{[^}]*\}/)![0];
+  expect(hover).toContain('border-color');
+  expect(hover).not.toContain('background');
+  expect(src).toMatch(/\.card\.on \{[^}]*background: var\(--accent-dim\)/);
+  // The 2px border and its padding compensation existed only to stop the card resizing.
+  expect(src).not.toContain('border-width: 2px');
+});
+
+it('leaves the focus ring to the one rule in app.css', () => {
+  expect(src).not.toContain('outline-offset');
 });

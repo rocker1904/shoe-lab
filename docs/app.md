@@ -1176,6 +1176,15 @@ it; it is drawn in `--divider`, which exists because `--border` is invisible
 against `--chrome`. Below 700px each group becomes two columns at full card
 size — six in a row is a desktop layout.
 
+**A chosen card is tinted with a hairline accent border, never filled.** Two
+cards are lit at once here — a zone and a story — and a filled pair would put
+two loud blocks on the one screen the strip exists to own, even though the
+toolbar it hands over to does fill its selected pill. Hover is **border-only**
+for the same reason in reverse: filling on hover made a hovered card
+indistinguishable from the chosen one, so the two states have to differ in what
+they change, not only in how much. The zone cards carry no description, so their
+name centres vertically in a box whose height the story cards set.
+
 A `?` beside each label opens `HelpPopover.svelte`, **one mechanism on every
 device**: a click-triggered popover anchored beside the `?` above 700px and a
 bottom sheet below, with focus return and Escape. A hover tooltip was rejected
@@ -1206,6 +1215,16 @@ visual language — the zone, a divider, then `All | Easy | Tempo | Race` — an
 actions group (`Filters`, `Columns`) pushed right by
 `margin-left: auto`. The strip cannot hold the controls that reset it, because
 it is gone by the time they are needed.
+
+**The selected pill is filled with `--accent-solid` carrying `--on-accent`**, on
+a `--bg` track with a 2px pad. The fill cannot be `--accent`: white on that
+value measures 3.71:1 in dark, so the two themes need a darker solid variant,
+which is the only kind of site `--accent-solid` exists for
+(docs/app.md §Theming). The ink is a **token** rather than a `#fff` written into
+each component, because the fill and its ink are one fact and a literal splits
+it across files — `tokens.test.ts` fails the build on a raw white in a
+component's style block. Each track keeps `overflow: visible`, because the focus
+ring is a `box-shadow` and a clipped track would swallow it.
 
 **The bar draws only its actions while the strip is up** (`showGroups`). The
 strip *hands over* rather than sharing the screen: both surfaces drawing the

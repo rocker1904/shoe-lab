@@ -68,7 +68,8 @@
     grid-template-rows: auto auto; gap: var(--s2) var(--s3); align-items: stretch;
   }
   .label { grid-row: 1; margin: 0; display: flex; align-items: center; gap: var(--s2);
-           font-size: var(--t-sm); font-weight: 600; color: var(--text-dim); }
+           font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+           color: var(--text-dim); }
   .zone-label { grid-column: 1 / 3; }
   .story-label { grid-column: 4 / -1; }
   /* `--divider`, not `--border`: a border-coloured hairline is invisible against `--chrome`. */
@@ -78,16 +79,21 @@
     padding: var(--s3); border: 1px solid var(--border); border-radius: var(--r-md);
     background: var(--surface); color: var(--text); font: inherit; text-align: left;
   }
-  .card:hover { border-color: var(--accent); background: var(--accent-dim); }
-  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  /* Not colour alone: the chosen card is also the only one carrying aria-pressed. */
-  .card.on { border-color: var(--accent); border-width: 2px; padding: calc(var(--s3) - 1px); background: var(--accent-dim); }
+  /* Border only. Filling on hover made a hovered card identical to the chosen one. */
+  .card:hover { border-color: var(--accent); }
+  /* Tinted with a hairline border rather than filled, and not colour alone — the chosen card is
+     also the only one carrying aria-pressed. Two cards are lit at once here, a zone and a story,
+     and a filled pair would put two loud blocks on the one screen the strip owns, even though the
+     toolbar it hands over to does fill its selected pill. `app.css` owns the focus ring. */
+  .card.on { border-color: var(--accent); background: var(--accent-dim); }
+  .card.on .name { color: var(--accent); }
   /* The name line keeps its height whether or not the card carries a description, which is what
      puts every description on the same baseline — bottom-aligning them leaves them ragged, because
      they wrap to different line counts. */
   .name { min-height: 1em; font-size: var(--t-lg); font-weight: 700; }
   .desc { font-size: var(--t-xs); color: var(--text-dim); line-height: 1.35; }
-  .zone { text-align: center; }
+  /* The zone cards carry no description, so their name centres in a box the story cards size. */
+  .zone { text-align: center; justify-content: center; }
   .zone .name { text-align: center; }
   /* Six in a row is a desktop layout; on a phone each group becomes two columns at full card size.
      It costs the first screen, which is affordable exactly because the strip appears once. */
