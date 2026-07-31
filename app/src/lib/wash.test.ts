@@ -38,6 +38,7 @@ const THEMES = [
     washFill: [0x14, 0x7c, 0xeb],      // hsl(211 84% 50%)
     greyFill: [0x82, 0x89, 0x97],      // hsl(220 9% 55%)
     histDim: [0x7f, 0x87, 0x94],       // --hist-dim
+    accent: [0x13, 0x72, 0xd8],        // hsl(211 84% 46%), which --hover-wash is 6% of
     accentSolid: [0x12, 0x6d, 0xce] }, // hsl(211 84% 44%)
   { name: 'dark', surface: [0x1a, 0x1d, 0x21], page: [0x0f, 0x11, 0x13],
     track: [0x22, 0x26, 0x2a], ink: [0xec, 0xee, 0xf1],
@@ -47,10 +48,18 @@ const THEMES = [
     washFill: [0x22, 0x6e, 0xbf],      // hsl(211 70% 44%)
     greyFill: [0x96, 0x9c, 0xa6],      // hsl(220 8% 62%)
     histDim: [0x6b, 0x74, 0x82],
+    accent: [0x38, 0x87, 0xdc],        // hsl(211 70% 54%)
     accentSolid: [0x22, 0x6e, 0xbf] }, // hsl(211 70% 44%)
 ];
 /** `--on-accent`. A token, not a literal, everywhere it is used (Global Constraints). */
 const ON_ACCENT = [0xff, 0xff, 0xff];
+/**
+ * The alpha in `--hover-wash`, which is `color-mix(in oklab, var(--accent) 6%, transparent)` —
+ * i.e. the accent's own colour at this alpha. `ShoeTable.svelte` paints it as a background *image*
+ * over the cell's wash, so a hovered cell is a THIRD layer and the ramp's endpoint is not the last
+ * word on legibility.
+ */
+const HOVER_ALPHA = 0.06;
 
 describe('washAlpha', () => {
   it('paints nothing at or below the floor', () => {
@@ -104,6 +113,44 @@ describe('both ramps are legible at every step', () => {
         for (let i = 0; i <= 200; i++) {
           const p = i / 200;
           const c = contrast(over(fill(theme), alpha(p), theme.surface), theme.ink);
+          if (c < worst) { worst = c; worstAt = p; }
+        }
+        expect(worst, `worst ${worst.toFixed(2)}:1 at p=${worstAt.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+  }
+});
+
+/**
+ * The ramp guard above measures a cell at rest. Pointing at its row adds `--hover-wash` on top of
+ * the wash — `tr.shoe:hover td` sets it as a background IMAGE, which layers over the cell's
+ * background colour rather than replacing it — so the hovered peak is strictly darker than the
+ * endpoint the ramp is tuned against, and it is the app's real worst case.
+ *
+ * It clears the bar with little to spare: the hovered peak measures **4.67:1** in both themes,
+ * against 4.73 light and 4.80 dark at rest. Read back from the painted pixel it agrees to within
+ * one 8-bit step per channel, which is the resolution the gradient layer rasterises at — so the
+ * assertion is against 4.5 rather than against the figure.
+ *
+ * The headroom is in the ALPHA, not the ratio: the light peak tolerates a hover alpha up to 0.194
+ * and the dark up to 0.149, against the 0.06 that ships. That is what this test protects — nothing
+ * else in the suite would fail if `--hover-wash` were tripled.
+ */
+describe('both ramps stay legible under the hover overlay', () => {
+  const RAMPS = [
+    { ramp: 'ranked', fill: (t: typeof THEMES[number]) => t.washFill, alpha: washAlpha },
+    { ramp: 'neutral', fill: (t: typeof THEMES[number]) => t.greyFill, alpha: greyAlpha },
+  ];
+  for (const { ramp, fill, alpha } of RAMPS) {
+    for (const theme of THEMES) {
+      it(`${theme.name}: a hovered ${ramp} cell keeps theme ink at 4.5:1 across its whole range`, () => {
+        let worst = Infinity;
+        let worstAt = 0;
+        for (let i = 0; i <= 200; i++) {
+          const p = i / 200;
+          const washed = over(fill(theme), alpha(p), theme.surface);
+          const hovered = over(theme.accent, HOVER_ALPHA, washed);
+          const c = contrast(hovered, theme.ink);
           if (c < worst) { worst = c; worstAt = p; }
         }
         expect(worst, `worst ${worst.toFixed(2)}:1 at p=${worstAt.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
