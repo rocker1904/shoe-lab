@@ -94,6 +94,53 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
   await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
 });
 
+/**
+ * The skeleton exists to stop the layout jumping when the data lands, so its geometry is a CONTRACT
+ * with the table rather than a look: the same left edge and width — it replaces the second cell of a
+ * two-column layout, not a full-bleed block — the same column count, and a header band the height of
+ * the real one. Only a browser can say: jsdom applies no component CSS and has no layout at all.
+ *
+ * Both shapes are measured in one run, with the dataset held at the route rather than mocked, so the
+ * comparison is between this build's placeholder and this build's table.
+ */
+test('the loading skeleton reserves the geometry the table lands in', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
+
+  await page.goto('/');
+  const skeleton = await page.locator('.skeleton').evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const head = el.querySelector('.head')!.getBoundingClientRect();
+    const row = el.querySelector('.row')!;
+    return { x: Math.round(box.x), w: Math.round(box.width), headH: Math.round(head.height),
+             rowH: Math.round(row.getBoundingClientRect().height),
+             cols: row.querySelectorAll('i').length };
+  });
+
+  release();
+  await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+  const table = await page.locator('.tblwrap').evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    return { x: Math.round(box.x), w: Math.round(box.width),
+             headH: Math.round(el.querySelector('thead')!.getBoundingClientRect().height),
+             rowH: Math.round(el.querySelector('tbody tr.shoe')!.getBoundingClientRect().height),
+             cols: el.querySelectorAll('thead th').length };
+  });
+
+  expect(skeleton.cols, 'the skeleton draws a different number of columns').toBe(table.cols);
+  expect(skeleton.x, 'the skeleton does not reserve the sidebar track').toBe(table.x);
+  expect(skeleton.w, 'the skeleton is not the width of the table').toBe(table.w);
+  // A line box or two of slack, and no more: these are line-box reservations against the real
+  // thing, so rounding is fair and a design difference is not. The band this replaced stood 30px
+  // against 71px, which is 41.
+  expect(Math.abs(skeleton.headH - table.headH),
+    `head band ${skeleton.headH}px against the table's ${table.headH}px`).toBeLessThanOrEqual(2);
+  expect(Math.abs(skeleton.rowH - table.rowH),
+    `row ${skeleton.rowH}px against the table's ${table.rowH}px`).toBeLessThanOrEqual(1);
+});
+
 // The 700px switch is invisible to jsdom: it applies no component CSS and evaluates no media
 // query, so only a real browser can say which of the two tables is on screen.
 test('switches to the stacked list on a phone, and back', async ({ page }) => {
@@ -112,16 +159,24 @@ test('switches to the stacked list on a phone, and back', async ({ page }) => {
   // rows visibly scroll through (docs/app.md §Columns and sorting).
   // `.then(() => null)`: `document.fonts.ready` resolves to a FontFaceSet, which has to cross the
   // wire back to the test.
+  // The header only pins once the table's top has passed under the chrome, and a five-shoe fixture
+  // in an 800px window cannot scroll that far: 141px of travel against the 363px needed, so every
+  // reading was taken with the header still in flow and the check below could only ever pass.
+  // Shortening the window is what gives it something to measure.
+  await page.setViewportSize({ width: 375, height: 400 });
   await page.evaluate(() => document.fonts.ready.then(() => null));
-  await page.evaluate(() => window.scrollBy(0, 400));
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const gap = await page.evaluate(() => {
     const chrome = document.querySelector('.chrome')!.getBoundingClientRect();
     const th = document.querySelector('[data-testid="shoe-table-mobile"] th')!.getBoundingClientRect();
     return Math.round(th.top - chrome.bottom);
   });
-  // `>= 0` rather than `=== 0`, like the desktop check at the foot of this file: a sub-pixel sticky
-  // offset is not a bug, a header behind the chrome is.
+  // Bounded at BOTH ends, or the assertion cannot fail on the bug it was written for: a header
+  // pinned against a stale pre-swap measurement leaves a 6px strip of page that rows scroll
+  // through, which is a POSITIVE gap and passes a `>= 0` check silently. One pixel of slack for a
+  // sub-pixel sticky offset, and no more.
   expect(gap, 'the pinned header is occluded after the font swap').toBeGreaterThanOrEqual(0);
+  expect(gap, 'the pinned header is not flush against the chrome after the font swap').toBeLessThanOrEqual(1);
 
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
   // inside its own box rather than take the page sideways with it (docs/app.md §The story scores).

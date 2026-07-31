@@ -351,7 +351,7 @@
   /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes an automatic minimum of min-content, and
      the table's 14rem name column plus its nowrap headers inflate that past the viewport, so the
      whole document scrolled sideways at desktop widths. */
-  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; }
+  .layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); align-items: start; }
   /* A sticky column taller than the viewport can never scroll to its own bottom, and ten range
      filters easily outgrow it — give the sidebar its own scrollbar. The offset is the measured
      chrome, not the header alone: the toolbar pins too, and is two lines tall below 880px. */

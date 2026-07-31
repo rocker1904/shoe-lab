@@ -46,6 +46,10 @@
      Alpha comes from lib/wash.ts, which is where the contrast rule is enforced. */
   --wash-blue: hsl(211 84% 50%); --wash-grey: hsl(220 9% 55%);
   --hover-wash: color-mix(in oklab, var(--accent) 6%, transparent);
+  /* The sidebar's track, named once: `Page.svelte` lays the page out against it and `App.svelte`'s
+     loading skeleton reserves it, and a skeleton reserving a different width IS the layout jump it
+     exists to prevent (docs/app.md §Decisions). */
+  --sidebar-w: 260px;
   --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.5rem; --s6: 2rem;
   --r-sm: 4px; --r-md: 8px; --r-full: 999px;
   --t-xs: 0.75rem; --t-sm: 0.83rem; --t-md: 0.92rem; --t-lg: 1.05rem; --t-xl: 1.2rem;

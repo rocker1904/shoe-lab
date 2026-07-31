@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { tick } from 'svelte';
 import { afterEach, expect, it, vi } from 'vitest';
 import App, { SKELETON_AFTER_MS } from './App.svelte';
+import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
 
 /** `readFileSync(new URL(...))` does not resolve under jsdom, so the path is built the long way. */
 const appDir = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -62,4 +63,13 @@ it('shapes the skeleton like the table that replaces it', async () => {
   expect(container.querySelector('.skeleton .head')).not.toBeNull();
   expect(container.querySelectorAll('.skeleton .row')).toHaveLength(8);
   expect(container.querySelector('.skeleton .bar.row')).toBeNull();   // the old flat-stack shape
+
+  // The column count is the half of the contract jsdom can hold: it is a DOM fact, not a layout
+  // one. The geometry — left edge, width and header band — is measured against the real table in
+  // `e2e/smoke.spec.ts`, because none of it exists here.
+  const cells = defaultColumns(DEFAULT_ZONE).length + 1;                // + the name column
+  for (const row of container.querySelectorAll('.skeleton .row')) {
+    expect(row.querySelectorAll('i')).toHaveLength(cells);
+  }
+  expect(container.querySelectorAll('.skeleton .head .h-names i')).toHaveLength(cells);
 });

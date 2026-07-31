@@ -443,23 +443,34 @@ instead — in **both** of their row loops, so the shoe fields carry it too and
 price keeps its `↓` — and in the table it is carried by the wash:
 `percentileMap` inverts for a `lower` metric, so the strongest tint sits on the
 best value whichever numeric end that is (docs/app.md §Theming). Each list
-opens with one legend line, because a bare glyph with no units beside it is
-ambiguous; a screen reader is given nothing per row, deliberately, since
-restating it there would make every row twice as long to hear. `size-rating` is
+opens with one legend line — `↑ higher is better · ↓ lower is better · no mark —
+neutral`, separators included, because without them three clauses read as three
+headings — because a bare glyph with no units beside it is ambiguous; a screen
+reader is given nothing per row, deliberately, since restating it there would
+make every row twice as long to hear. Both legends sit **outside** their list's
+scrollport and carry the same margin: inside one, the legend scrolls away with
+the first few rows and every glyph under it stops meaning anything.
+`size-rating` is
 the one units override: it reads `3 = true`, because `/5` would present a
 runs-small / true / runs-large scale as a mediocre mark.
 
 **The table sits in a `--surface` panel** — hairline, `--r-md`, `--shadow-panel`
 — and that wrapper carries **no `overflow`**, deliberately: an `overflow` there
 makes it a scrollport and detaches the sticky `thead`, which is the failure
-`.content` already documents. The cost is that the sticky header paints over the
-wrapper's top corners, the same trade the phone panel makes explicitly
-(docs/app.md §Two renderings, and only one of them mounted).
+`.content` already documents. It is therefore **square-topped, with no top border
+and the lid on the sticky header row** — the same shape and the same technique as
+the phone panel, which owns the explanation
+(docs/app.md §Two renderings, and only one of them mounted). Only the cheap half
+differs: this table's `border-spacing` is 0, so the header row is already a
+continuous band and a plain `border-top` on the `th` reaches the panel's side
+borders, where the phone's 2px spacing forces its lid into a shadow stack.
 
 **The sorted column carries an accent caret** beside its name, and any other
 sortable header reveals a dim one on hover. `aria-sort` on the `th` remains the
 accessible contract; the caret is decoration, which is why it is an SVG carrying
-no text.
+no text. `SortCaret.svelte` owns it and **both** renderings mount it, so one
+header cannot mean the same thing two ways; only its placement differs, and the
+component argues that difference where it makes it.
 
 **Row thumbnails are gone.** At 40×27 with `object-fit: cover` every shoe
 cropped to an indistinguishable grey strip, so they cost a column of width and
@@ -1738,8 +1749,21 @@ is reserved as `min-height: 1lh` in the **figure** face rather than as a number:
 a row is 8px of padding, one line box and a 1px hairline, and the line box is the
 mono cells', whose metrics run a pixel taller than the UI face's at this size.
 Left at a px height the placeholder row stood 29px against the table's 36px.
-`App.test.ts` pins the row count and the structure, so the two cannot drift
-silently. The pulse stays behind a `prefers-reduced-motion` guard.
+
+Three more parts of that contract, each of which was a jump before it was a rule.
+The placeholder **reserves the sidebar track** (`--sidebar-w`, the token
+`Page.svelte` lays out against), because what replaces it is the second cell of a
+two-column layout rather than a full-bleed block — without it the skeleton stood
+at x=16 and the table landed at x=276. Its **cell count is derived** from
+`defaultColumns` plus one for the name column, never written out. And its **head
+band is the table's**, stated in line boxes of the same two faces: two lines of
+the header name, a gap and the mono unit line, which is 71px against a 30px band
+before.
+
+`App.test.ts` pins the row count, the cell count and the structure — the parts
+that are DOM facts — and `smoke.spec.ts` measures the geometry against the real
+table in a browser, because none of it exists in jsdom. The pulse stays behind a
+`prefers-reduced-motion` guard.
 
 ### Sharing is copying the address bar
 `Copy link` in the header writes `location.href` to the clipboard, which is the

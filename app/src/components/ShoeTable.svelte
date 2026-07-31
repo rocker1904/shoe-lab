@@ -146,21 +146,39 @@
        background: var(--surface); }
   /* The offset is the height `Page.svelte` measured off the pinned chrome, with no fallback: the
      chrome is 44px at desktop widths and 103px on a phone, so any constant here hides this row
-     behind it at every width but one (docs/app.md §Columns and sorting). */
-  thead th { position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky); }
+     behind it at every width but one (docs/app.md §Columns and sorting).
+     The panel's lid rides on this row for the reason `ShoeTableMobile.svelte`'s `th` sets out in
+     full, and the two renderings use the one technique. Where they differ is the cheap half: this
+     table's `border-spacing` is 0, so the header row is already a continuous band and a plain
+     `border-top` reaches the panel's side borders — the phone's 2px spacing is the only reason its
+     lid has to ride in a box-shadow stack. */
+  thead th { position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky);
+             border-top: 1px solid var(--border); }
   th button { display: flex; flex-direction: column; gap: 1px; background: none; border: none; color: var(--text);
               font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-align: inherit; }
+  /* Two lines of name are RESERVED whether or not this column's name needs them, so the pinned
+     header's height stops being a function of which columns are ticked: it already stands at two
+     lines for the default set at every desktop width, and a view of short names alone would
+     otherwise shrink it and shift the whole table under the runner. It is also what lets the
+     loading placeholder reserve a band that matches — `smoke.spec.ts` measures the two against each
+     other, and an un-reservable header makes that contract unassertable
+     (docs/app.md §Decisions). Bottom-aligned inside that box, so a one-line name reads as extra
+     air above the header rather than as a hole between the name and the units under it — and every
+     column's name and unit line then land on a common baseline. */
+  .h-name { display: flex; align-items: flex-end; min-height: 2lh; }
   .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1em; }
   th.fig, td.fig { text-align: right; }
   th.fig button { align-items: flex-end; }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
   td.fig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   /* No `overflow` here, deliberately: it would make the wrapper a scrollport and detach the sticky
-     `thead`, which is the failure `.content` already documents. The consequence is that the sticky
-     header paints over the wrapper's top corners — the same trade the phone panel makes explicitly
-     (docs/app.md §Two renderings, and only one of them mounted). */
-  .tblwrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
-             box-shadow: var(--shadow-panel); }
+     `thead`, which is the failure `.content` already documents.
+     Square-topped with no top border, and the lid on the sticky header instead — the same shape and
+     the same reasons as the phone panel, which owns the explanation
+     (`ShoeTableMobile.svelte`, `.panel`). A `border-radius` here with an opaque `thead th` over it
+     was simply a broken corner: the cell painted straight across both arcs. */
+  .tblwrap { background: var(--surface); border: 1px solid var(--border); border-top: none;
+             border-radius: 0 0 var(--r-md) var(--r-md); box-shadow: var(--shadow-panel); }
   /* The surface belongs to the ROW, and the wash travels inward from it (docs/app.md §Theming).
      On the cell it would be replaced by the translucent wash, which `td.num.tinted` sets at higher
      specificity — and the cell would then composite over the page instead of over the surface. */

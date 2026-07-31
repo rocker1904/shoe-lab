@@ -11,7 +11,15 @@
 <script lang="ts">
   import type { ShoesFile } from '../../shared/types.js';
   import { loadShoes } from './lib/data';
+  import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
   import Page from './Page.svelte';
+
+  /** Derived from the view the table will open on, never written out: the placeholder's job is to
+   *  reserve the geometry that replaces it, and a hand-counted number here drifts the first time a
+   *  column joins or leaves the default set. The name column has no entry in `defaultColumns`, so
+   *  it is the `+ 1` (docs/app.md §Decisions). */
+  const skeletonCells = Array.from(
+    { length: defaultColumns(DEFAULT_ZONE).length + 1 }, (_, i) => i);
 
   let data = $state<ShoesFile | null>(null);
   let error = $state<string | null>(null);
@@ -42,10 +50,18 @@
 {:else if slow}
   <!-- Shaped like what is coming — a chrome bar over a stack of rows — rather than a spinner,
        so the layout does not jump when the real thing arrives. -->
-  <div class="skeleton" role="status" aria-label="Loading shoe data">
-    <div class="head"><i></i></div>
+  <!-- The track count rides in a custom property so the grid and the cells are one number: written
+       twice they drift the moment `defaultColumns` gains an entry. -->
+  <div class="skeleton" role="status" aria-label="Loading shoe data"
+       style:--skel-cols={skeletonCells.length - 1}>
+    <div class="head">
+      <div class="h-names">{#each skeletonCells as c (c)}<i></i>{/each}</div>
+      <!-- Empty on purpose: the unit line is there to reserve its line box, and a bar in it would
+           claim a unit for the name column, which never has one. -->
+      <div class="h-units"></div>
+    </div>
     {#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
-      <div class="row"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="row">{#each skeletonCells as c (c)}<i></i>{/each}</div>
     {/each}
   </div>
 {/if}
@@ -62,10 +78,27 @@
   }
   /* The same chassis as the table it stands in for: a panel with a hairline, rows separated by
      --border-soft at --s2 padding, and a name column the width of the table's own. A skeleton that
-     no longer matches causes the jump it exists to prevent. */
-  .skeleton { margin: 0 var(--s4); background: var(--surface); border: 1px solid var(--border);
-              border-radius: var(--r-md); box-shadow: var(--shadow-panel); overflow: hidden; }
-  .skeleton .head { padding: var(--s2); border-bottom: 2px solid var(--border); }
+     no longer matches causes the jump it exists to prevent.
+     The left margin RESERVES the sidebar track, because the table it replaces is the second cell of
+     `Page.svelte`'s two-column layout, not a full-bleed block: without it the placeholder starts at
+     x=16 and the table lands at x=276, which is the jump measured. Below 800px the sidebar is a
+     drawer and the track is gone, so the reservation goes with it. */
+  .skeleton { margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); background: var(--surface);
+              border: 1px solid var(--border); border-radius: var(--r-md);
+              box-shadow: var(--shadow-panel); overflow: hidden; }
+  @media (max-width: 800px) { .skeleton { margin-left: var(--s4); } }
+  /* The band the table's `thead` builds, stated in line boxes of the same two faces rather than as
+     a pixel height, so it follows the type scale: 8px of padding, the header name's TWO lines — at
+     the default column count every name wraps, which is what makes the real band 71px rather than
+     53 — a 1px gap, the mono unit line, 8px of padding and the 2px rule under it. `e2e/smoke.spec.ts`
+     measures this band against the real one rather than trusting the arithmetic. */
+  .skeleton .head { padding: var(--s2); border-bottom: 2px solid var(--border);
+                    display: flex; flex-direction: column; gap: 1px; }
+  .skeleton .head .h-names { display: grid; grid-template-columns: 14rem repeat(var(--skel-cols), minmax(0, 1fr));
+                             gap: var(--s3); align-items: end;
+                             font-family: var(--font-ui); font-size: var(--t-md); font-weight: 600;
+                             min-height: 2lh; }
+  .skeleton .head .h-units { font-family: var(--font-mono); font-size: var(--t-xs); min-height: 1lh; }
   /* `min-height: 1lh` in the FIGURE face, not a px height: a table row is 8px of padding, one line
      box, and a 1px hairline — and the line box is the mono cells', because JetBrains Mono's metrics
      are a pixel taller than Inter Tight's at this size and the tallest cell sets the row. Reserving
@@ -73,7 +106,7 @@
      instead of drifting the moment either moves. Measured without it the skeleton row stood 29px
      against the table's 36px, which is exactly the jump this shape exists to prevent
      (docs/app.md §Decisions). */
-  .skeleton .row { display: grid; grid-template-columns: 14rem repeat(5, 1fr); gap: var(--s3);
+  .skeleton .row { display: grid; grid-template-columns: 14rem repeat(var(--skel-cols), minmax(0, 1fr)); gap: var(--s3);
                    padding: var(--s2); border-bottom: 1px solid var(--border-soft); align-items: center;
                    font-family: var(--font-mono); font-size: var(--t-md); min-height: 1lh; }
   .skeleton .row:last-child { border-bottom: 0; }
