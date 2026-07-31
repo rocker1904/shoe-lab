@@ -3,6 +3,12 @@ import { DERIVED_ZONE_PAIRS } from './lineage';
 export type Direction = 'higher' | 'lower' | 'neutral';
 
 /**
+ * How a direction is drawn where it is still shown — the column picker and the add-filter dialog.
+ * It lives with `DIRECTION` rather than with units, because it is a fact about direction.
+ */
+export const DIRECTION_ARROW: Record<Direction, string> = { higher: '↑', lower: '↓', neutral: '' };
+
+/**
  * Declared per metric, never inferred from a slug or a name: `outsole-durability` is Dremel
  * dent depth in mm, so more is worse despite the name, and `size-rating` is a runs-small /
  * true / runs-large scale where 3 is correct rather than a five-point quality score.

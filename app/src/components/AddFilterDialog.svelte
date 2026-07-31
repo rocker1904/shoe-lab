@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { directionOf, DIRECTION_ARROW } from '../lib/direction';
 
   export interface AddFilterOption { key: string; label: string; groupId: string | null; coverage: number }
 
@@ -69,12 +70,20 @@
      bind:this={panel} use:toBody>
   <input class="q" type="search" aria-label="Filter metrics" placeholder="Search metrics…"
          bind:value={query} bind:this={search} />
+  <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
+       beside it a lone ↑ says nothing (docs/app.md §Table presentation). -->
+  <p class="legend">
+    <span><b>↑</b> higher is better</span>
+    <span><b>↓</b> lower is better</span>
+    <span>no mark — neutral</span>
+  </p>
   <div class="list">
     {#each grouped as [group, offers] (group)}
       <h4>{group}</h4>
       {#each offers as o (o.key)}
         <button type="button" onclick={() => onchoose(o.key)}>
           <span class="name">{o.label}</span>
+          <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
           <!-- A bar, which is what the `select` this replaced could never hold (docs/app.md §Filters). -->
           <span class="bar"><span class="fill" style:width="{o.coverage}%"></span></span>
           <span class="pct">{o.coverage}%</span>
@@ -99,12 +108,18 @@
   .q { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); }
   .list { overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
-  .list button { display: grid; grid-template-columns: 1fr 4rem 2.4rem; align-items: center; gap: var(--s2);
+  .legend { display: flex; gap: var(--s3); margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
+  .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
+  .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
+  .list button { display: grid; grid-template-columns: 1fr auto 4rem 2.4rem; align-items: center; gap: var(--s2);
                  padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
                  background: none; color: var(--text); cursor: pointer; font: inherit; font-size: var(--t-sm); text-align: left; }
   .list button:hover { border-color: var(--accent); background: var(--accent-dim); }
-  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--hist-dim); overflow: hidden; }
-  .fill { display: block; height: 100%; background: var(--accent); }
+  /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
+     mark, --border-soft the groove it sits in. Neutral rather than accent because accent means
+     "you selected this" in a CONTROL, and a dialog row is a control (docs/app.md §Theming). */
+  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--border-soft); overflow: hidden; }
+  .fill { display: block; height: 100%; background: var(--hist-dim); }
   .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
   .close { align-self: flex-end; padding: var(--s1) var(--s3); cursor: pointer; }
 </style>

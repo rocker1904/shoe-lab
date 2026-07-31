@@ -1,8 +1,5 @@
 import type { LabTest } from '../../../shared/types.js';
 import { isCategorical } from './categorical';
-import { directionOf } from './direction';
-
-const ARROW = { higher: '↑', lower: '↓', neutral: '' } as const;
 
 /**
  * Derived from the test type rather than authored, so a new upstream metric arrives with its own
@@ -25,11 +22,16 @@ function unitsOf(key: string, test: LabTest | undefined): string {
   return test.type === 'float' ? test.units : '';
 }
 
-/** The second header line: units, then the direction arrow a neutral metric does not get. */
+/**
+ * The second header line: units alone. The direction arrow used to live here and now sits in the
+ * column picker and the add-filter dialog instead — two arrows in one header (sort and direction)
+ * collided, and the wash already says which end of a column is good, because `percentileMap`
+ * inverts for a `lower` metric (docs/app.md §Table presentation).
+ */
 export function headerUnits(key: string, test: LabTest | undefined): string {
-  // A categorical column has no direction either: there is no better end to point at.
+  // A categorical column has no units to state.
   if (isCategorical(test)) return '';
-  return [unitsOf(key, test), ARROW[directionOf(key)]].filter(Boolean).join(' ');
+  return unitsOf(key, test);
 }
 
 /**

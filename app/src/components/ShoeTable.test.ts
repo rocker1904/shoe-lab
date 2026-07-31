@@ -90,9 +90,9 @@ describe('ShoeTable', () => {
     // Four of the five FLEET shoes carry brand 'Brand', so queryByText would throw on multiples.
     expect(screen.queryAllByText('Brand')).toHaveLength(0);
   });
-  it('carries units and a direction arrow in the header', () => {
+  it('carries units in the header', () => {
     setup({ view: { columns: ['weight'] } });
-    expect(screen.getByText('g ↓')).toBeInTheDocument();
+    expect(screen.getByText('g')).toBeInTheDocument();
   });
   it('expands more than one row at a time', async () => {
     setup();

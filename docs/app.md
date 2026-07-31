@@ -412,13 +412,21 @@ against.
 
 ### Table presentation
 
-Every header is two lines: the metric name, then the units-and-direction line
-`headerUnits` derives in `app/src/lib/units.ts`. Units are **derived, never
-authored** — `float` carries its own, `percent` is `%`, `score` and `rating`
-are `/5`, the `score` field is `/100` and `msrpGbp` is `£` — and the arrow is
-`directionOf`'s, so a neutral metric gets none. `size-rating` is the one
-override: it reads `3 = true`, because `/5` would present a runs-small /
-true / runs-large scale as a mediocre mark.
+Every header is two lines: the metric name, then the units line `headerUnits`
+derives in `app/src/lib/units.ts`. Units are **derived, never authored** —
+`float` carries its own, `percent` is `%`, `score` and `rating` are `/5`, the
+`score` field is `/100` and `msrpGbp` is `£`. There is **no direction arrow
+here**: the sorted column carries a caret, and two arrows in one header
+collided. Direction is shown in the column picker and the add-filter dialog
+instead — in **both** of their row loops, so the shoe fields carry it too and
+price keeps its `↓` — and in the table it is carried by the wash:
+`percentileMap` inverts for a `lower` metric, so the strongest tint sits on the
+best value whichever numeric end that is (docs/app.md §Theming). Each list
+opens with one legend line, because a bare glyph with no units beside it is
+ambiguous; a screen reader is given nothing per row, deliberately, since
+restating it there would make every row twice as long to hear. `size-rating` is
+the one units override: it reads `3 = true`, because `/5` would present a
+runs-small / true / runs-large scale as a mediocre mark.
 
 Figures are right-aligned with `tabular-nums`; `plate` and `releasedAt` hold
 words and dates and are not. Those two are the cells that carry
@@ -627,7 +635,7 @@ They are **choosable as columns but never rangeable**, which is why the picker
 reads them from `categoricalEntries` rather than `metricEntries` — the
 Add-filter dialog reads `metricEntries` too, and a range over a categorical test
 would empty the fleet in one click (docs/app.md §Filters). They also carry no
-units and no direction arrow: there is no better end to point at.
+units and no direction mark in the pickers: there is no better end to point at.
 
 Four readings were already in the dataset and unreachable before this existed —
 the two option tests plus `removable-insole` and `reflective-elements`, which
@@ -1361,7 +1369,7 @@ runs-small/true/runs-large scale on which 3 is correct rather than a mediocre
 score. Stack, drop, softness, stiffness and every width are `neutral` because
 they are fit and feel preferences with no fleet-wide better end
 (docs/shoe-stories.md). Only `lower` inverts the percentile; `neutral` changes
-the ramp's colour and nothing else, and drops the header's direction arrow.
+the ramp's colour and nothing else, and leaves the pickers' direction mark blank.
 An unlisted key reads `neutral`, and `direction.test.ts` fails the build when
 an upstream numeric test arrives unclassified (docs/operations.md
 §Contract-drift runbook).

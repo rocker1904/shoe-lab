@@ -80,3 +80,19 @@ describe('ColumnPicker and the Easy score', () => {
     expect(screen.getByRole('checkbox', { name: /easy forefoot score/i })).not.toBeChecked();
   });
 });
+
+it('states what the direction marks mean, once, above the list', () => {
+  render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
+  expect(screen.getByText(/higher is better/)).toBeInTheDocument();
+  expect(screen.getByText(/lower is better/)).toBeInTheDocument();
+});
+
+it('marks direction on the fixed columns too, where price lives', () => {
+  // `msrpGbp` and `score` are shoe fields rendered by their own loop rather than by `grouped`, and
+  // price is the column whose better end a runner most wants stated (docs/app.md §Table presentation).
+  const { container } = render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
+  const dirs = [...container.querySelectorAll('label')]
+    .filter((l) => /Price/.test(l.textContent ?? ''))
+    .map((l) => l.querySelector('.dir')?.textContent);
+  expect(dirs).toEqual(['↓']);
+});

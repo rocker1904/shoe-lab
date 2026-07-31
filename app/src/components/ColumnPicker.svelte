@@ -3,6 +3,7 @@
   import { categoricalEntries } from '../lib/categorical';
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
+  import { directionOf, DIRECTION_ARROW } from '../lib/direction';
   import { columnLabel } from '../lib/labels';
   import { DERIVED_ZONE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
 
@@ -55,8 +56,19 @@
 <details class="picker">
   <summary>Columns ({columns.length})</summary>
   <div class="panel">
+    <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
+         beside it a lone ↑ says nothing (docs/app.md §Table presentation). -->
+    <p class="legend">
+      <span><b>↑</b> higher is better</span>
+      <span><b>↓</b> lower is better</span>
+      <span>no mark — neutral</span>
+    </p>
     {#each FIXED as [key, label] (key)}
-      <label><input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} /> {label}</label>
+      <label>
+        <input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} />
+        <span class="name">{label}</span>
+        <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(key)]}</span>
+      </label>
     {/each}
     {#each grouped as [group, offers] (group)}
       <h4>{group}</h4>
@@ -64,6 +76,7 @@
         <label>
           <input type="checkbox" checked={columns.includes(o.key)} onchange={() => toggle(o.key)} />
           <span class="name">{o.label}</span>
+          <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
           <span class="bar"><span class="fill" style:width="{pct(o.key)}%"></span></span>
           <span class="pct">{pct(o.key)}%</span>
         </label>
@@ -77,8 +90,19 @@
   summary { cursor: pointer; padding: var(--s1) var(--s3); border: 1px solid var(--border); border-radius: var(--r-sm); white-space: nowrap; }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1); min-width: 20rem; box-shadow: var(--shadow-dialog); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
-  label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr 3rem 2.2rem; align-items: center; gap: var(--s2); }
-  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--hist-dim); overflow: hidden; }
-  .fill { display: block; height: 100%; background: var(--accent); }
+  label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }
+  .legend { display: flex; gap: var(--s3); margin: 0 0 var(--s2); font-size: var(--t-xs); color: var(--text-dim); }
+  .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
+  .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
+  /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
+     mark, --border-soft the groove it sits in. The fill is a flat mark and the track is the surface
+     it sits on, so the pair is held to the same 3:1 as the histogram — 3.12:1 light and 3.22:1
+     dark, asserted in wash.test.ts. The old --hist-dim managed 2.70:1 here, which is why the token
+     was retuned rather than only the track changed. Neutral rather than accent because accent means
+     "you selected this" in a CONTROL, and a picker row is a control. Where a bar encodes MAGNITUDE
+     it is a data mark and keeps the accent — the score breakdown's share bar does
+     (docs/app.md §Theming). */
+  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--border-soft); overflow: hidden; }
+  .fill { display: block; height: 100%; background: var(--hist-dim); }
   .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
 </style>

@@ -38,7 +38,7 @@ describe('ShoeTableMobile', () => {
   it('heads a column with its short label rather than the catalogue name', () => {
     setup({ view: { columns: ['outsole-durability'] } });
     expect(screen.getByRole('columnheader', { name: /Outsole wear/ })).toBeInTheDocument();
-    expect(screen.getByText('mm ↓')).toBeInTheDocument();
+    expect(screen.getByText('mm')).toBeInTheDocument();
   });
 
   it('sorts from a header, and flips an already-descending column', async () => {
