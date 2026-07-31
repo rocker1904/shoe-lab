@@ -82,12 +82,20 @@
     background: var(--surface); color: var(--text-dim); font: inherit; font-size: var(--t-xs); cursor: pointer;
   }
   .q:hover { color: var(--accent); border-color: var(--accent); }
+  /* This panel is mounted inside OTHER people's boxes — the setup strip's group headings today, a
+     filter row in the plan that puts one on every metric (BACKLOG.md) — so its typography is not
+     its own unless it says so. The strip's `h2` is an uppercase micro-label with 0.09em of
+     tracking, and both inherit: unreset, the whole body reached the screen in caps
+     (docs/app.md §Presets). Weight is reset on the paragraph below for the same reason.
+     `font-family` is deliberately NOT restated — every host is already on `--font-ui`, and naming
+     a face here is what `tokens.test.ts` fails the build on. */
   .pop {
     position: absolute; top: calc(100% + var(--s2)); left: calc(0px - var(--shift)); z-index: 20;
     width: min(24rem, calc(100vw - var(--s6))); padding: var(--s4);
     display: flex; flex-direction: column; gap: var(--s3);
     background: var(--surface); color: var(--text); border: 1px solid var(--border);
     border-radius: var(--r-md); box-shadow: var(--shadow-dialog); text-align: left;
+    text-transform: none; letter-spacing: normal;
   }
   .pop p { margin: 0; font-size: var(--t-sm); line-height: 1.5; font-weight: 400; }
   .close { align-self: flex-end; padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);

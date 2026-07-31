@@ -1480,6 +1480,15 @@ bottom sheet below, with focus return and Escape. A hover tooltip was rejected
 — it is the same mechanism as the `title` attribute this pass removes from the
 cards, and it needs a wholly separate touch path.
 
+**It resets the typography it inherits**, because it is mounted inside other
+people's boxes: the labels it hangs off here are uppercase micro-labels with
+0.09em of tracking, and both properties inherit, so an unreset popover set its
+whole body in caps. Weight, casing and tracking are therefore stated on the
+panel; the face is not, because every host is already on `--font-ui` and naming
+one is what `tokens.test.ts` fails the build on. The plan to put a `?` on every
+filter row (BACKLOG.md) mounts it in a third kind of box, so the reset is a
+property of the component rather than a fix for this one host.
+
 **Visibility is ephemeral `$state`**, initialised from "no query string *and* no
 stored view" — a genuine first arrival, which `Page.svelte` already knows at
 init — cleared on the first story click, never serialised and never persisted.
