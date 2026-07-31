@@ -221,6 +221,11 @@ path that reaches the drawer's key handler, so there is no second dismissal to
 suppress. The month picker still does stop it, because its panel is a real
 descendant of the drawer.
 
+The sidebar's **two whole-surface actions sit as a pair** at its foot — Add
+filter, then Clear filters, in one wrapping row. Add leads because it grows the
+surface and Clear empties it, and a column of two lone buttons reads as two
+unrelated afterthoughts rather than as the surface's own controls.
+
 Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
 boolean could only ever hide, and "only the last-generation models" is half
 the value strategy in docs/shoe-stories.md.
@@ -1610,6 +1615,17 @@ a component's style block.
 `--divider` is deliberately **darker than `--border`**: a group divider sits on
 `--chrome`, where a border-coloured hairline measures 1.22:1 and simply is not
 there.
+
+**One treatment for a secondary button** — `--surface` fill, `--border`
+hairline, `--r-sm`, `--t-sm`, and `--accent-dim` on hover — carried by the
+masthead's three actions, the drawer toggle, the sidebar's Add filter and Clear
+filters pair, and the Add-filter dialog's Close. It is repeated per component
+rather than written once as a global `button` rule, because most of this app's
+buttons are **not** this: the segmented pills, the table headers, the range
+rows' clear icon, the setup cards and the two `<details>` summaries each carry
+their own, and a global rule would have to be undone in more places than it
+applied. The cost of that choice is that a button which simply omits it renders
+as a bare UA control among styled ones — which is exactly what it looks like.
 
 **One focus ring, with one exemption.** A 2px surface-coloured ring inside a
 2px accent ring, drawn with `box-shadow` so both rings are painted rather than

@@ -246,20 +246,24 @@
     </section>
   {/each}
 
-  <!-- Choosing among forty-odd metrics is a different task from tuning three, so it gets a dialog
-       with room for grouping, search and coverage bars (docs/app.md §Filters). -->
-  {#if addable.length}
-    <button type="button" class="add" onclick={() => (adding = true)}>Add filter</button>
-  {/if}
+  <!-- One row, because they are the sidebar's two whole-surface actions and a column of two lone
+       buttons reads as two unrelated afterthoughts. Add leads: it grows the surface, and Clear
+       empties it. -->
+  <div class="foot">
+    <!-- Choosing among forty-odd metrics is a different task from tuning three, so it gets a dialog
+         with room for grouping, search and coverage bars (docs/app.md §Filters). -->
+    {#if addable.length}
+      <button type="button" class="add" onclick={() => (adding = true)}>Add filter</button>
+    {/if}
+    <!-- Named for what it does. The toolbar's Clear returns the whole view to this runner's
+         baseline; this one touches the filters and nothing else (docs/app.md §Presets). -->
+    <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
+  </div>
   {#if adding}
     <AddFilterDialog options={addable} groups={data.groups}
                      onchoose={(k) => { adding = false; addRow(k); }}
                      onclose={() => (adding = false)} />
   {/if}
-
-  <!-- Named for what it does. The toolbar's Clear returns the whole view to this runner's
-       baseline; this one touches the filters and nothing else (docs/app.md §Presets). -->
-  <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
 </aside>
 
 <style>
@@ -276,5 +280,14 @@
   .chips { display: flex; gap: var(--s1); margin-top: var(--s1); }
   .chips button { padding: var(--s1) var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface); color: var(--text-dim); cursor: pointer; }
   .metric { display: flex; flex-direction: column; gap: var(--s1); }
-  .reset, .add { align-self: flex-start; padding: var(--s1) var(--s3); cursor: pointer; }
+  /* Wrapping, not shrinking: the drawer is 88vw at 360px and the pair measure their labels, so a
+     no-wrap row would overflow the sidebar's own scrollport rather than take a second line. */
+  .foot { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s1); }
+  /* The app's secondary-button treatment, the same one the masthead's actions and the drawer toggle
+     carry (docs/app.md §Theming). These two were the only buttons in the app still rendering as bare
+     UA controls, which read as unfinished beside the styled ones around them. */
+  .reset, .add { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
+                 background: var(--surface); color: var(--text); border-radius: var(--r-sm);
+                 font: inherit; font-size: var(--t-sm); }
+  .reset:hover, .add:hover { background: var(--accent-dim); }
 </style>
