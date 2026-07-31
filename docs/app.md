@@ -172,6 +172,21 @@ comparing two stories must not have the controls move underneath them. Both halv
 are curated for that reason, and **every part of a zone pair renders always**;
 a single renders when it is curated, active, or listed.
 
+**Accent in a range row means "your bound selects this."** An unbounded row
+draws its whole distribution in `--hist-dim` and shows no accent at all: "in
+range" is trivially true with no bound, so a sidebar with nothing set was a
+solid wall of blue, which was most of what made it noisy. Colour appears only
+once a bound exists, so scanning the sidebar answers "what is constraining this
+shortlist?" in colour as well as in the bold heading it already had.
+
+**The number placeholders are rounded at the view**, like every other figure
+(docs/app.md §Number display): they were `String(extent.min)`, so shock
+absorption offered `24.884597678267` and overflowed its own field. The fields
+are mono and right-aligned, so a typed bound lines up against its placeholder,
+and they step back up to **16px under `@media (hover: none)`** — iOS Safari
+zooms the whole viewport for a focused input smaller than that, with no way out
+but a pinch, and the drawer is exactly where it bites.
+
 **Clearing a value and removing a row are different actions.** Clearing empties
 both bounds in one click and deletes the key outright — leaving `{}` behind
 would mean `isDefaultView` never returned true again and the toolbar could
@@ -1434,7 +1449,9 @@ It is stated as **counts, not a percentage**: `378 / 450 measured` on the
 heading line, and **only below complete coverage**, so most rows on a default
 view fall silent. "84%" of an unstated pool is the complaint; both numbers on
 screen state the denominator instead of assuming it. Filter to last year and it
-reads `120 / 180`, where both numbers visibly moved.
+reads `120 / 180`, where both numbers visibly moved. It is set in `--font-mono`
+with `tabular-nums`, so every figure in the sidebar shares a grid with every
+figure in the table.
 
 **One vocabulary, and the shape decides only how many figures there are.** A
 single metric and a **zone pair** each carry one, on the heading line; a

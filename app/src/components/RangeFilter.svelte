@@ -6,6 +6,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { clampPct, snapToValue, trimmedAxis } from '../lib/axis';
+  import { displayNumber } from '../lib/dataset';
   import type { RangeBound } from '../lib/filters';
   import { histogram } from '../lib/stats';
 
@@ -53,7 +54,9 @@
   const pos = (v: number): number =>
     axis ? x0 + (clampPct(v, axis.lo, axis.hi) * (x1 - x0)) / 100 : 0;
   const barActive = (i: number): boolean => {
-    if (!plot) return false;
+    // Accent means "your bound selects this". With no bound every bar qualified, which made an
+    // unfiltered sidebar a wall of blue and told the reader nothing (docs/app.md §Filters).
+    if (!plot || !bounded) return false;
     const lo = plot.min + ((plot.max - plot.min) * i) / BINS;
     const hi = plot.min + ((plot.max - plot.min) * (i + 1)) / BINS;
     return (bound.min === undefined || hi >= bound.min) && (bound.max === undefined || lo <= bound.max);
@@ -154,16 +157,18 @@
     <!-- Named for the metric, not "min" and "max": ten of these rows sit in the sidebar at once and
          a fieldset's label is not read with the field inside it, so twenty controls announced as
          one of two words (docs/app.md §Filters). -->
-    <input type="number" aria-label="{name ?? ''} minimum" placeholder={extent ? String(extent.min) : 'min'}
+    <input type="number" aria-label="{name ?? ''} minimum" placeholder={extent ? displayNumber(extent.min) : 'min'}
            value={bound.min ?? ''} oninput={(e) => update('min', e.currentTarget.value)} />
     <span>–</span>
-    <input type="number" aria-label="{name ?? ''} maximum" placeholder={extent ? String(extent.max) : 'max'}
+    <input type="number" aria-label="{name ?? ''} maximum" placeholder={extent ? displayNumber(extent.max) : 'max'}
            value={bound.max ?? ''} oninput={(e) => update('max', e.currentTarget.value)} />
     <!-- An icon, with the row's name on the label: ten rows spelling out "Clear" is most of the
          sidebar's width, and two buttons both called "Clear" would be indistinguishable to anyone
          not looking at the screen. -->
     {#if bounded}
-      <button type="button" class="act icon" aria-label="Clear {name}" onclick={() => onchange({})}>✕</button>
+      <button type="button" class="act icon" aria-label="Clear {name}" onclick={() => onchange({})}>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
     {/if}
     {#if onremove}
       <button type="button" class="act" aria-label="Remove {name}" onclick={onremove}>Remove</button>
@@ -196,9 +201,19 @@
   @media (hover: none) { .handle { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .handle { transition: none; } }
   .bounds { display: flex; align-items: center; gap: var(--s1); flex-wrap: wrap; }
-  input { width: 5rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--s1) var(--s2); }
+  input { width: 5rem; background: var(--surface); color: var(--text); border: 1px solid var(--border);
+          border-radius: var(--r-sm); padding: var(--s1) var(--s2);
+          font-family: var(--font-mono); font-size: var(--t-xs); text-align: right;
+          font-variant-numeric: tabular-nums; }
+  /* iOS Safari zooms the whole viewport when a focused input's text is under 16px, and there is no
+     way back out of that zoom except a pinch. These rows live in a drawer at exactly the widths
+     where it fires, so the touch tier pays a bigger field rather than a viewport jump. A literal,
+     not `--t-*`: 16px is the threshold in the engine, not a step on our scale. */
+  @media (hover: none) {
+    input { font-size: 16px; }
+  }
   .act { padding: var(--s1) var(--s2); font-size: var(--t-xs); cursor: pointer; background: none; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-sm); }
   .act:hover { color: var(--text); border-color: var(--accent); }
   .icon { line-height: 1; padding: var(--s1); }
-  .excluded { font-size: var(--t-xs); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .excluded { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); font-variant-numeric: tabular-nums; }
 </style>

@@ -264,7 +264,8 @@
 
 <style>
   aside { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
-  h3 { font-size: var(--t-sm); color: var(--text-dim); margin: 0 0 var(--s1); font-weight: 600; }
+  h3 { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+       color: var(--text-dim); margin: 0 0 var(--s2); }
   .search { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box; }
   .chips { display: flex; gap: var(--s1); margin-top: var(--s1); }
   .chips button { padding: var(--s1) var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface); color: var(--text-dim); cursor: pointer; }

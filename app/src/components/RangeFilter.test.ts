@@ -28,9 +28,23 @@ it('highlights only the histogram bars inside the bound', () => {
   expect(fills.at(-1)).toBe('var(--accent)');
 });
 
-it('highlights every bar when the bound is open', () => {
+it('paints no accent bar while the row carries no bound', () => {
   const { container } = render(RangeFilter, { props: { ...props, bound: {} } });
-  expect(new Set(bins(container))).toEqual(new Set(['var(--accent)']));
+  // "In range" is trivially true with no bound, which made an unfiltered sidebar a wall of blue.
+  expect(new Set(bins(container))).toEqual(new Set(['var(--hist-dim)']));
+});
+
+it('paints accent inside a bound once one exists', () => {
+  const { container } = render(RangeFilter, { props: { ...props, bound: { min: 38 } } });
+  expect(bins(container)).toContain('var(--accent)');
+});
+
+it('rounds the placeholder rather than offering a raw float', () => {
+  const { container } = render(RangeFilter, { props: { ...props,
+    values: [24.884597678267, 100, 153.49194167306], bound: {} } });
+  const inputs = container.querySelectorAll('input[type="number"]');
+  expect(inputs[0]!.getAttribute('placeholder')).toBe('24.88');
+  expect(inputs[1]!.getAttribute('placeholder')).toBe('153.49');
 });
 
 it('renders bounds without a histogram when the data cannot form one', () => {
@@ -113,8 +127,9 @@ it('empties both bounds in one action, and names the clear control after its row
   });
   const clear = getByRole('button', { name: 'Clear Stack — Heel' });
   // An icon, because ten of these rows spelling out "Clear" is most of the sidebar's width; the
-  // accessible name still says which row it belongs to (docs/app.md §Filters).
-  expect(clear.textContent?.trim()).toBe('✕');
+  // accessible name still says which row it belongs to (docs/app.md §Filters). A drawing, not a
+  // glyph — the `aria-label` above is what carries the contract, which is why it can be one.
+  expect(clear.querySelector('svg')).not.toBeNull();
   await fireEvent.click(clear);
   expect(onchange).toHaveBeenCalledExactlyOnceWith({});
 });

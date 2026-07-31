@@ -62,7 +62,8 @@
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
   h4 { font-size: var(--t-sm); color: var(--text-dim); margin: 0; font-weight: 600; }
   h4.on { color: var(--text); font-weight: 700; }
-  .cov { font-size: var(--t-xs); color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cov { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim);
+         font-variant-numeric: tabular-nums; white-space: nowrap; }
   .gens { display: flex; flex-direction: column; gap: var(--s1); }
   button { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s2); width: 100%;
            padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
