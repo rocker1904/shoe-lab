@@ -52,7 +52,7 @@ describe('shortLabel', () => {
   });
 
   // It sits beside our own score now, so "Score" alone no longer says whose it is — and the full
-  // name is 63.5px against a 52px column, which is the same bind `shock-absorption-heel` is in.
+  // name is 56.8px against the 48px bound, which is the same bind `shock-absorption-heel` is in.
   it('shortens the RunRepeat score, whose full name overruns a phone column', () => {
     expect(widestWordPx('RunRepeat')).toBeGreaterThan(MAX_LABEL_PX);
     expect(shortLabel('score', columnLabel('score', undefined))).toBe('RR score');
@@ -112,6 +112,20 @@ describe('shortLabel', () => {
       if (prior !== undefined) expect(partner.get(prior)).toBe(t.slug);
       seen.set(label, t.slug);
     }
+  });
+});
+
+describe('the width table matches the shipped header face', () => {
+  it('is measured for Inter Tight, not system-ui', () => {
+    // The old system-ui table had 'm' at 11.46. Inter Tight is ~10% narrower across the board, so
+    // a table still carrying the old value was never re-measured after the face changed.
+    expect(widestWordPx('m')).toBeLessThan(11);
+  });
+
+  it('costs an unmeasured character at least as much as the widest measured one', () => {
+    // FALLBACK_PX is face-specific too: left at the old face's value it would under-charge a name
+    // full of characters the table has never seen, which is the one case the bound cannot catch.
+    expect(widestWordPx('€')).toBeGreaterThanOrEqual(widestWordPx('m'));
   });
 });
 

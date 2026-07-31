@@ -550,17 +550,37 @@ chosen:
 - The sticky header **paints its own `border-spacing` gaps**, with `--bg` side
   shadows either side of each `th`. A cell background stops at the cell, so the
   band was see-through in 2px slits and scrolled rows showed through them.
-- That leaves **53px of header text** at 360px and 56px at 375px, which is what
-  `app/src/lib/labels.ts` validates every catalogue name against. Names wider
-  than that get a short label; 35 of 53 keep their real name. `Outsole wear` is
-  the one entry that is not a length fix — the test is Dremel dent depth in mm,
-  so "durability" contradicts its own units, and this is a deliberate
-  divergence from RunRepeat's name.
+- That leaves **49px of header text** inside the 53px column at 360px, which is
+  what `app/src/lib/labels.ts` validates every catalogue name against, at a
+  `MAX_LABEL_PX` of 48 — a pixel under, because `CHAR_PX` sums approximate the
+  browser to about ±1px. The table is measured for **Inter Tight 600 at 12px
+  with -0.02em tracking**, by `app/scripts/measure-label-widths.mjs`, and every
+  number in it — `FALLBACK_PX` included — is specific to that face, size, weight
+  and tracking. Regenerate it with that script if any of the four moves.
+- Because the app **ships** its header face, the assertion now means the same
+  thing on every OS; under `system-ui` the widths were only ever true on the
+  machine that measured them. `Δ` is the one exception and stays one: it is
+  outside the latin subset the app ships, so the browser falls back per glyph
+  and that number is still a `system-ui` measurement.
+- **26 `SHORT_LABELS` entries survive**, and the count is a measurement rather
+  than a list: a narrower face brings names back inside the bound, and which
+  ones is whatever the catalogue says when it is re-run. A short label is only
+  deleted when the real name fits in **two** lines — `MAX_LABEL_LINES` stays 3
+  because names with no short label still need somewhere to go, but a deletion
+  may not spend the third line, which is paid by every screen for as long as
+  the column is on it.
+- **Two entries are exempt from that measurement entirely**, because neither was
+  ever a length fix. `outsole-durability` keeps `Outsole wear`: the test is
+  Dremel dent depth in mm, so "durability" contradicts its own units, and the
+  divergence from RunRepeat's name is deliberate. `forefoot-traction-stop` keeps
+  `Forefoot stop`: `forefoot-traction` carries the **same** upstream name and
+  the two are not a superseded pair, so this label is the only thing separating
+  two columns that can be on screen at once.
 - The `score` field reads **RunRepeat Score** everywhere a human sees it — the
   header, the column picker and the filter row — because our own score sits
   beside it and "Score" alone no longer says whose it is. It is one of the
-  entries that then needs a short label as well: `RunRepeat` alone is 63.5px
-  against the 52px bound, so the phone reads `RR score`. The CSV writes raw
+  entries that then needs a short label as well: `RunRepeat` alone is 56.8px
+  against the 48px bound, so the phone reads `RR score`. The CSV writes raw
   column keys and is unaffected.
 - **Up to three lines**, which `labels.ts` validates as well: the width bound
   alone lets a name of short words grow without limit, and the header is
@@ -637,8 +657,9 @@ answers a question nothing on that line asked, while a true `bool` reads as the
 feature alone (`Removable insole`), since naming it is the whole reading. The
 noun comes from `chipLabel`: the catalogue name for most tests, overridden for
 the two whose name already carries a colon, since "Tongue: gusset type" would
-put a second one on the line. Not `SHORT_LABELS` — those are bounded to a 53px
-header, and "Remv. insole" reads as an abbreviation in a sentence.
+put a second one on the line. Not `SHORT_LABELS` — those are bounded to the
+49px of text in a 53px header, and "Remv. insole" reads as an abbreviation in a
+sentence.
 
 **That line keys each entry by its column, never by its text.** A keyed
 `{#each}` over the text itself throws `each_key_duplicate`, which blanks the
