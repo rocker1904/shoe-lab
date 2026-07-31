@@ -5,6 +5,9 @@ import { expect, test } from '@playwright/test';
  * so the control that Chromium renders as a picker is a bare box there, and a Chromium-only suite
  * reported it working. These run in those two engines only; the layout assertions in
  * `smoke.spec.ts` stay on one engine, where a single set of font metrics keeps them meaningful.
+ *
+ * That is this file's remit: the places where a NATIVE control's behaviour is the thing under test.
+ * The column picker's `<details>` is here for the same reason as the month input.
  */
 test('bounds the fleet by release month without a native month input', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
@@ -113,6 +116,43 @@ test('keeps the month grid reachable at the ends of the fleet', async ({ page })
   const reachable = await panel.evaluate((p) =>
     [...p.querySelectorAll('[role="gridcell"]')].some((r) => r.tabIndex === 0 && !r.disabled));
   expect(reachable, 'the month grid has no reachable tab stop').toBe(true);
+});
+
+/**
+ * The column picker is a native `<details>`, which is the other control this file exists for: the
+ * browser owns the toggle, and no engine dismisses one on an outside press or on Escape, so both
+ * are the app's to add (docs/app.md §Filters). Two things here can only be answered by a real
+ * engine — whether `bind:open` hears the `toggle` the summary queues, and whether Escape is already
+ * taken by something native.
+ */
+test('closes the column picker every way out, and hands focus back', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  const summary = page.getByText('Columns', { exact: false }).first();
+  const panel = page.locator('details.picker .panel');
+
+  await summary.click();
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(summary).toBeFocused();
+
+  // Ticking a column is a press *inside*: the panel is a list you work down, and dismissing on the
+  // first checkbox would make choosing a second one a second trip.
+  await summary.click();
+  await page.getByRole('checkbox', { name: /Weight/ }).first().click();
+  await expect(panel).toBeVisible();
+
+  // A press anywhere else dismisses, including on something that takes no focus itself.
+  await page.getByRole('heading', { name: 'Search' }).click();
+  await expect(panel).toBeHidden();
+
+  // And the summary still toggles: its own press is inside the box the listener guards, so it must
+  // not close and immediately reopen.
+  await summary.click();
+  await expect(panel).toBeVisible();
+  await summary.click();
+  await expect(panel).toBeHidden();
 });
 
 test('renders the filter sidebar and the table together', async ({ page }) => {

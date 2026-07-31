@@ -411,6 +411,47 @@ it, found by its `aria-controls`. **A drawer left open across a resize past
 800px closes itself**: above that width it is simply part of the page, and its
 trap would hold the keyboard inside a panel that is no longer modal.
 
+### Every floating panel dismisses the same way
+
+Four surfaces float over the page — the column picker, the help popover, the
+month picker and the add-filter dialog — and all four answer **a press outside**
+and **Escape**. `app/src/lib/dismiss.ts` owns the pointer half for the three
+anchored to a trigger of their own; the dialog's scrim is the same affordance
+drawn rather than a second mechanism. It is a **captured `pointerdown`, not a
+`click`**: `pointerdown` fires before focus moves, so a press on a panel's own
+trigger is still recognised as *inside* and is left to that trigger's toggle,
+where on `click` the order is focusout → close → click → reopen and a trigger
+stops being able to shut what it opened. Capture, because the press must be seen
+whether or not something between the target and the document stops it bubbling.
+The listener is added by an `$effect` gated on `open` and returned as that
+effect's teardown, so it exists only while a panel is on screen and never
+outlives one.
+
+**A press inside is not a dismissal**, at any depth — ticking a column,
+selecting the text of a help popover, stepping the month picker's year — and
+that is the same fact as the trigger case, since every trigger sits inside the
+box its own panel is guarded by.
+
+**Escape is stopped exactly where a second handler would hear it.** The month
+picker stops it because its panel is a real descendant of the drawer; the help
+popover stops it because it is mounted inside other people's boxes, and the plan
+to put one on every filter row (BACKLOG.md) would put it in that drawer. The
+column picker and the add-filter dialog do not, and their reasons are opposite:
+one lives in the pinned chrome and the other renders into `<body>`, so neither
+has an ancestor listening. One press, one dismissal, wherever it is mounted.
+
+The column picker is the one **native control** of the four, and it gets neither
+behaviour free: a `<details>` stays open until its own summary is clicked again
+in every engine, so `open` is bound rather than driven and both dismissals are
+the app's. Two consequences. The binding is fed by the `toggle` event, which the
+browser queues as a **task** — so for one task after the summary is pressed the
+mirror still reads closed while the panel is on screen, and a dismissal that
+assigns only the mirror is not a state change and is dropped in silence; closing
+writes the element as well. And the assertion belongs in
+`cross-browser.spec.ts` rather than the unit suite, because whether a given
+engine queues that `toggle`, and whether it has already taken Escape for
+something of its own, are engine questions.
+
 ## Columns and sorting
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
@@ -432,6 +473,10 @@ columns than the sender saw and the URL would stop describing the view
 (docs/app.md §View and URL ownership). A stored view from before the change
 simply reads as non-default, which is why `VIEW_STORAGE_KEY` was bumped
 alongside it; shared links carry explicit `cols` and are unaffected.
+
+The picker is a `<details>`, and it closes on an outside press and on Escape
+like every other floating panel — neither of which a native disclosure gives
+(docs/app.md §Every floating panel dismisses the same way).
 
 The picker and the sidebar both offer `metricEntries` (`app/src/lib/lineage.ts`)
 rather than the raw catalogue, so a superseded pair is one entry and a

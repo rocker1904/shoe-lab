@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import { dismissOnOutsidePress } from '../lib/dismiss';
   import { MONTHS, monthLabel, startOfMonth } from '../lib/release-date';
 
   let { value, min, max, onchange }: {
@@ -126,20 +127,14 @@
     if (to === null || anchor?.contains(to)) return;
     open = false;
   }
-  /**
-   * `pointerdown`, not `click`: it fires before focus moves, so the trigger's own press is
-   * recognised as inside the anchor and left to `toggle`. On `click` the sequence is focusout →
-   * close → click → reopen, and the trigger stops being able to shut the panel it opened.
-   */
-  function onpointerdown(e: PointerEvent) {
-    if (!anchor?.contains(e.target as Node | null)) open = false;
-  }
   let panel = $state<HTMLElement | null>(null);
   let anchor = $state<HTMLElement | null>(null);
+  /** Guarded on the whole anchor rather than the panel, so the trigger's own press counts as inside
+   *  and is left to `toggle`. `lib/dismiss.ts` owns the rest of the reasoning, and the same effect
+   *  is what the column picker and the help popover run. */
   $effect(() => {
     if (!open) return;
-    document.addEventListener('pointerdown', onpointerdown, true);
-    return () => document.removeEventListener('pointerdown', onpointerdown, true);
+    return dismissOnOutsidePress(() => anchor, () => (open = false));
   });
 
   /**

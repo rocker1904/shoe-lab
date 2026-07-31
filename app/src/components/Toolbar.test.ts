@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Toolbar from './Toolbar.svelte';
 import type { Zone } from '../lib/lineage';
@@ -148,6 +149,30 @@ describe('Toolbar stability preference', () => {
     await fireEvent.keyDown(pop, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(help).toHaveFocus();
+  });
+
+  /**
+   * The popover dismisses on a press outside it, like every other floating surface
+   * (docs/app.md §Filters) — and unlike Escape and its own Close button, it does **not** pull focus
+   * back to the `?`: the reader has just pressed something else, and that is where they are going.
+   */
+  it('dismisses the help on a press outside it, without stealing focus back', async () => {
+    render(Toolbar, { props: { ...props } });
+    const help = screen.getByRole('button', { name: 'About the story scores' });
+    await fireEvent.click(help);
+    expect(screen.getByRole('dialog', { name: 'the story scores' })).toBeInTheDocument();
+
+    // A press inside is not an outside press — including on the trigger, which would otherwise
+    // close the panel here and reopen it on the click that follows.
+    screen.getByRole('dialog').dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    help.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    await tick();
+    expect(screen.queryByRole('dialog')).not.toBeNull();
+
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    await tick();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(help).not.toHaveFocus();
   });
 
   // A button inside the label would be a click on the label, so opening the help would toggle the

@@ -1,11 +1,15 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import { dismissOnOutsidePress } from '../lib/dismiss';
 
   let { label, body }: { label: string; body: string } = $props();
 
   let open = $state(false);
   let trigger = $state<HTMLButtonElement | null>(null);
   let panel = $state<HTMLElement | null>(null);
+  /** The trigger and the panel together: a press on the `?` is not an outside press, or the button
+   *  could never shut the panel it opened. */
+  let anchor = $state<HTMLElement | null>(null);
   /** Pixels to pull the panel left so it stays inside the viewport; see `place` below. */
   let shift = $state(0);
 
@@ -28,11 +32,20 @@
   }
   function onkeydown(e: KeyboardEvent) {
     if (e.key !== 'Escape') return;
-    // The strip sits inside no dialog, but the sidebar drawer below 800px does — do not let one
-    // Escape dismiss both.
+    // Stopped because this popover is mounted inside other people's boxes — the toolbar today, a
+    // filter row in the plan that puts one on every metric (BACKLOG.md) — and one of those is
+    // inside the focus-trapping drawer, which answers Escape itself. One press, one dismissal
+    // (docs/app.md §Filters).
     e.stopPropagation();
     close();
   }
+  /** Dismissal by pointer is a separate path from `close`, and deliberately does NOT pull focus
+   *  back to the `?`: the reader has just pressed something else, and that is where they are
+   *  going. Escape and the Close button are the two that hand focus back. */
+  $effect(() => {
+    if (!open) return;
+    return dismissOnOutsidePress(() => anchor, () => (open = false));
+  });
   /**
    * Edge-aware in the only direction it can overflow: the panel is anchored to the left of a `?`
    * that may itself be two thirds of the way across the strip. Below 700px it is a bottom sheet,
@@ -47,7 +60,7 @@
   }
 </script>
 
-<span class="anchor">
+<span class="anchor" bind:this={anchor}>
   <button type="button" class="q" bind:this={trigger} aria-expanded={open}
           aria-label="About {label}" onclick={toggle}>?</button>
   {#if open}

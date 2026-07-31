@@ -4,6 +4,7 @@
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
+  import { dismissOnOutsidePress } from '../lib/dismiss';
   import { columnLabel } from '../lib/labels';
   import { DERIVED_ZONE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
 
@@ -48,22 +49,65 @@
     return [...m.entries()];
   });
   const pct = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);
-  /**
-   * A closed `<details>` still renders its children, so the bars below were being recomputed on
-   * every view update — forty-odd full passes over the population, twice each, for a panel nobody
-   * could see. One pass is cheap; sixty times a second during a drag is not
-   * (docs/app.md §What a drag may recompute). The rows themselves stay mounted: they hold the
-   * checked state and cost nothing to keep.
-   */
-  let open = $state(false);
   function toggle(key: string) {
     onchange(columns.includes(key) ? columns.filter((c) => c !== key) : [...columns, key]);
   }
+
+  /**
+   * `<details>` is the whole control — the summary is the trigger and the browser owns the toggle —
+   * so `open` is bound rather than driven, and everything below only ever closes it. A native
+   * `<details>` stays open until its summary is clicked again: neither an outside press nor Escape
+   * dismisses one in any engine, measured in all three, so both are ours to add
+   * (docs/app.md §Every floating panel dismisses the same way).
+   *
+   * The binding earns its keep twice. A closed `<details>` still renders its children, so the
+   * coverage bars below were being recomputed on every view update — forty-odd full passes over the
+   * population, twice each, for a panel nobody could see. One pass is cheap; sixty times a second
+   * during a drag is not (docs/app.md §What a drag may recompute). The rows themselves stay
+   * mounted: they hold the checked state and cost nothing to keep.
+   */
+  let open = $state(false);
+  let details = $state<HTMLDetailsElement | null>(null);
+  let summary = $state<HTMLElement | null>(null);
+
+  /**
+   * The element as well as the binding, and that is not belt and braces. `open` mirrors the
+   * `<details>` through the `toggle` event, which the browser queues as a **task** rather than
+   * firing with the summary's activation — so for one task after the panel opens, the mirror still
+   * reads false while the panel is on screen. Assigning only the mirror there is not a state
+   * *change*, so Svelte writes nothing and the dismissal is silently dropped: measured in Chromium
+   * as an Escape immediately after opening doing nothing at all.
+   */
+  function shut() {
+    if (details) details.open = false;
+    open = false;
+  }
+
+  $effect(() => {
+    if (!open) return;
+    // A press on the summary is *inside*, so it is left to the browser's own toggle — which is what
+    // stops the trigger closing and immediately reopening the panel.
+    return dismissOnOutsidePress(() => details, shut);
+  });
+
+  function onkeydown(e: KeyboardEvent) {
+    if (e.key !== 'Escape') return;
+    // Deliberately NOT stopped, unlike the month picker's: that panel is a real descendant of the
+    // filter drawer and one Escape would shut both, where this one lives in the pinned chrome and
+    // has no ancestor listening (docs/app.md §Filters). The add-filter dialog leaves it alone for
+    // the same reason from the other direction — it renders into `<body>`.
+    shut();
+    // Back to the summary, or focus lands on `<body>` and a keyboard user loses the toolbar.
+    summary?.focus();
+  }
 </script>
 
-<details class="picker" bind:open>
+<!-- The key handler is on the whole control rather than the panel: a `<details>` puts focus on its
+     summary when it opens, and that is outside the panel it just revealed. -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<details class="picker" bind:open bind:this={details} onkeydown={onkeydown}>
   <!-- The count rides in a badge so the label stops changing width as columns are ticked. -->
-  <summary>Columns <span class="count-badge">{columns.length}</span>
+  <summary bind:this={summary}>Columns <span class="count-badge">{columns.length}</span>
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </summary>
   <div class="panel">

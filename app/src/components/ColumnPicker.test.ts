@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ColumnPicker from './ColumnPicker.svelte';
 import { indexTests } from '../lib/dataset';
@@ -96,6 +97,118 @@ it('states what the direction marks mean, once, above the list', () => {
   render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
   expect(screen.getByText(/higher is better/)).toBeInTheDocument();
   expect(screen.getByText(/lower is better/)).toBeInTheDocument();
+});
+
+/**
+ * A native `<details>` stays open until its own summary is clicked again — no engine dismisses one
+ * on an outside press or on Escape — so both are ours, and they are the same two every other
+ * floating surface in the app answers
+ * (docs/app.md §Every floating panel dismisses the same way).
+ */
+describe('ColumnPicker dismissal', () => {
+  const press = (target: EventTarget) =>
+    target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+  const pointerListeners = (spy: { mock: { calls: unknown[][] } }) =>
+    spy.mock.calls.filter(([type]) => type === 'pointerdown').length;
+  /**
+   * A macrotask, not `tick()`. The browser queues `toggle` as a task rather than firing it
+   * synchronously with the summary's activation, and `bind:open` is what listens for it — so a
+   * microtask flush lands *between* the element opening and the binding hearing about it, and every
+   * assertion below would read a state one event behind the DOM.
+   */
+  const settle = async () => {
+    await new Promise((r) => setTimeout(r, 0));
+    await tick();
+  };
+
+  async function setup() {
+    const { container, unmount } = render(ColumnPicker, {
+      props: { ...base, columns: ['score'], onchange: vi.fn() },
+    });
+    const details = container.querySelector('details')!;
+    const summary = container.querySelector('summary')!;
+    // jsdom implements the summary's activation behaviour, so this is the real toggle path.
+    await fireEvent.click(summary);
+    await settle();
+    expect(details.open).toBe(true);
+    return { container, details, summary, unmount };
+  }
+
+  it('closes on a press outside the picker', async () => {
+    const { details } = await setup();
+    press(document.body);
+    await settle();
+    expect(details.open).toBe(false);
+  });
+
+  it('stays open for a press inside it, including on a checkbox row', async () => {
+    const { details } = await setup();
+    press(screen.getByRole('checkbox', { name: /Heel stack/ }));
+    press(details.querySelector('.panel')!);
+    await settle();
+    expect(details.open).toBe(true);
+  });
+
+  // The trigger is inside the box the listener guards, so its press is left to the browser's own
+  // toggle: closing it here as well would shut and reopen the panel on one click.
+  it('still toggles from the summary, without closing and reopening', async () => {
+    const { details, summary } = await setup();
+    await fireEvent.click(summary);
+    await settle();
+    expect(details.open).toBe(false);
+    await fireEvent.click(summary);
+    await settle();
+    expect(details.open).toBe(true);
+  });
+
+  it('closes on Escape and hands focus back to the summary', async () => {
+    const { details, summary } = await setup();
+    summary.focus();
+    await fireEvent.keyDown(details, { key: 'Escape' });
+    await settle();
+    expect(details.open).toBe(false);
+    expect(summary).toHaveFocus();
+  });
+
+  /**
+   * The window between the summary's activation and the `toggle` the browser queues after it: the
+   * panel is on screen while the binding still reads closed, so a dismissal that assigns only the
+   * binding is not a state change and is dropped in silence. Nothing here waits for that task, on
+   * purpose — measured in Chromium as an Escape straight after opening doing nothing at all.
+   */
+  it('closes on an Escape pressed before the toggle event lands', async () => {
+    const { container } = render(ColumnPicker, {
+      props: { ...base, columns: ['score'], onchange: vi.fn() },
+    });
+    const details = container.querySelector('details')!;
+    await fireEvent.click(container.querySelector('summary')!);
+    expect(details.open).toBe(true);
+    await fireEvent.keyDown(details, { key: 'Escape' });
+    expect(details.open).toBe(false);
+  });
+
+  // The listener belongs to the open panel, not to the document: it goes on when the panel opens
+  // and comes off when it closes and when the component is destroyed.
+  it('holds a document listener only while it is open', async () => {
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
+    const { summary, unmount } = await setup();
+    expect(pointerListeners(add)).toBe(1);
+    expect(pointerListeners(remove)).toBe(0);
+
+    await fireEvent.click(summary);
+    await settle();
+    expect(pointerListeners(remove)).toBe(1);
+
+    await fireEvent.click(summary);
+    await settle();
+    expect(pointerListeners(add)).toBe(2);
+    unmount();
+    await settle();
+    expect(pointerListeners(remove)).toBe(2);
+    add.mockRestore();
+    remove.mockRestore();
+  });
 });
 
 it('marks direction on the fixed columns too, where price lives', () => {
