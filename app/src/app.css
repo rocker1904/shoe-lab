@@ -21,7 +21,13 @@
      read as surfaces rather than as the page: at #eeeeea the identity strip was 1.04:1 against it
      and only the white value row read as a card (docs/app.md §Theming). */
   --bg: #f5f5f4; --surface: #ffffff; --chrome: #fbfbfa; --well: #faf9f8;
-  --text: #16181b; --text-dim: #6a7280;
+  --text: #16181b;
+  /* Held to 4.5:1 against every surface it is set on, not just the white one, and that set grew
+     this pass: the segmented groups' track and the pickers' count badge are now `--bg`, and a
+     chosen setup card's description sits on `--accent-dim`. #6a7280 cleared `--surface` at 4.85:1
+     and failed both of the new ones (4.44:1 and 4.28:1). 5.10:1 at the worst of them, asserted in
+     wash.test.ts (docs/app.md §Theming). */
+  --text-dim: #5f6673;
   --border: #e5e5e3; --border-soft: #eeeeec;
   /* Darker than --border on purpose: a group divider sits on --chrome, where a border-coloured
      hairline measures 1.22:1 and simply is not there. 1.61:1 (SetupStrip's own comment). */
@@ -124,8 +130,9 @@ body { margin: 0; background: var(--bg); color: var(--text); }
  * `:not(tr)` is the exemption, and it is deliberate rather than an omission. A `box-shadow` ring is
  * drawn OUTSIDE the element; a row spans the full width of the table and abuts the rows above and
  * below it with no gap, so an outside ring paints over both of them, and inside the phone's panel
- * `overflow-y: clip` cuts it off entirely at the first and last row. Rows keep the inset
- * `outline-offset: -2px` ring they have today, in their own components (docs/app.md §Theming).
+ * `overflow-y: clip` cuts it off entirely at the first and last row. Rows draw an INSET ring in
+ * their own components instead — an outline on the desktop, where a shoe is one row, and inset
+ * shadows on the phone, where a shoe is two and the ring has to span both (docs/app.md §Theming).
  */
 :root { --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
 :where(a, button, input, select, textarea, summary, [tabindex]):not(tr):focus-visible {

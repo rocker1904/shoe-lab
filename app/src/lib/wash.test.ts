@@ -32,12 +32,18 @@ function over(fill: number[], alpha: number, surface: number[]): number[] {
 const THEMES = [
   { name: 'light', surface: [0xff, 0xff, 0xff], page: [0xf5, 0xf5, 0xf4],
     track: [0xee, 0xee, 0xec], ink: [0x16, 0x18, 0x1b],
+    chrome: [0xfb, 0xfb, 0xfa], well: [0xfa, 0xf9, 0xf8],
+    accentDim: [0xe8, 0xf2, 0xfd],     // hsl(211 84% 95%)
+    dimInk: [0x5f, 0x66, 0x73],        // --text-dim
     washFill: [0x14, 0x7c, 0xeb],      // hsl(211 84% 50%)
     greyFill: [0x82, 0x89, 0x97],      // hsl(220 9% 55%)
     histDim: [0x7f, 0x87, 0x94],       // --hist-dim
     accentSolid: [0x12, 0x6d, 0xce] }, // hsl(211 84% 44%)
   { name: 'dark', surface: [0x1a, 0x1d, 0x21], page: [0x0f, 0x11, 0x13],
     track: [0x22, 0x26, 0x2a], ink: [0xec, 0xee, 0xf1],
+    chrome: [0x15, 0x18, 0x1b], well: [0x16, 0x19, 0x1d],
+    accentDim: [0x19, 0x37, 0x57],     // hsl(211 55% 22%)
+    dimInk: [0x98, 0xa0, 0xab],
     washFill: [0x22, 0x6e, 0xbf],      // hsl(211 70% 44%)
     greyFill: [0x96, 0x9c, 0xa6],      // hsl(220 8% 62%)
     histDim: [0x6b, 0x74, 0x82],
@@ -123,6 +129,28 @@ describe('flat marks stand off every surface they sit on', () => {
       it(`${name}: --hist-dim clears 3:1 against ${what}`, () => {
         const c = contrast(histDim, bg);
         expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+});
+
+/**
+ * The same shape as the flat-mark guard above, for TEXT: `--text-dim` is small text, so 4.5:1 is
+ * the bar, and it is set on more than one backdrop. `--bg` is the one this pass introduced — the
+ * segmented groups' recessed track and the pickers' count badge sit in it, and an unselected pill's
+ * label measured 4.44:1 there against `--surface`'s 4.85:1. `--accent-dim` is the other, under a
+ * chosen setup card's description, and it is the binding case in both themes.
+ *
+ * Against the surfaces the token is ACTUALLY drawn on, not one representative surface: choosing a
+ * dim ink against white alone is exactly how both of those regressions passed unnoticed.
+ */
+describe('dim text stands off every surface it is set on', () => {
+  for (const t of THEMES) {
+    for (const [what, bg] of [['--surface', t.surface], ['--bg', t.page], ['--chrome', t.chrome],
+                              ['--well', t.well], ['--accent-dim', t.accentDim]] as const) {
+      it(`${t.name}: --text-dim clears 4.5:1 against ${what}`, () => {
+        const c = contrast(t.dimInk, bg);
+        expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
       });
     }
   }

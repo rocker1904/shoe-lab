@@ -237,12 +237,24 @@
   /* --well, not --surface: the same elevation rule the desktop expanded row follows. A panel that
      is raised on the phone and recessed on the desktop is two answers to one question. */
   tr.expand td { background: var(--well); }
-  /* Exempt from app.css's single focus ring, which is `:not(tr)` for these two rows. A box-shadow
-     ring draws OUTSIDE the box: on a full-width row it would paint over the row above and below,
-     and inside this panel `overflow-y: clip` would cut it off completely on the first and last
-     shoe. The inset outline stays within the row. `tr.values` never takes focus itself — it is the
-     same shoe's second row — so it needs no rule, only the same exclusion (docs/app.md §Theming). */
-  tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  /* Exempt from app.css's single focus ring, which is `:not(tr)` for these two rows. That ring is an
+     OUTSIDE box-shadow: on a full-width row it would paint over the row above and below, and inside
+     this panel `overflow-y: clip` would cut it off completely on the first and last shoe. These stay
+     inset (docs/app.md §Theming).
+     The ring encloses the SHOE, which is two rows here — the name and its chips. `aria-expanded`
+     sits on `tr.shoe` and both rows are that one control, so a ring around the first alone stops
+     halfway down the thing it describes. Drawn as three inset edges per row rather than an outline
+     on each, because two outlines draw a line between the rows and read as two rings: the name row
+     takes top, left and right, the chip row takes left, right and bottom, and they meet. */
+  tr.shoe:focus-visible {
+    /* `app.css` clears the UA ring for everything it styles, and that rule excludes `tr` — so a row
+       that stops using `outline` has to say so itself or the browser's own ring draws outside both. */
+    outline: none;
+    box-shadow: inset 0 2px 0 var(--accent), inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent);
+  }
+  tr.shoe:focus-visible + tr.values {
+    box-shadow: inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent), inset 0 -2px 0 var(--accent);
+  }
   /* Inset rather than full-bleed: at this density edge-to-edge cells read as a solid band of
      colour, far louder than the desktop table (docs/app.md §Theming). */
   /* Values stay centred: at this density the wash does most of the parsing work, and centred is

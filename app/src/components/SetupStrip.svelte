@@ -84,9 +84,12 @@
   /* Tinted with a hairline border rather than filled, and not colour alone — the chosen card is
      also the only one carrying aria-pressed. Two cards are lit at once here, a zone and a story,
      and a filled pair would put two loud blocks on the one screen the strip owns, even though the
-     toolbar it hands over to does fill its selected pill. `app.css` owns the focus ring. */
+     toolbar it hands over to does fill its selected pill. `app.css` owns the focus ring.
+     The name keeps `--text` and the border carries "chosen": `--accent` on `--accent-dim` is
+     4.19:1 in light and 3.28:1 in dark, and a 700-weight 16.8px name is not large text. The
+     description keeps `--text-dim`, which is held to 4.5:1 against this tint in wash.test.ts —
+     that is the reason the token was retuned rather than this rule given a colour of its own. */
   .card.on { border-color: var(--accent); background: var(--accent-dim); }
-  .card.on .name { color: var(--accent); }
   /* The name line keeps its height whether or not the card carries a description, which is what
      puts every description on the same baseline — bottom-aligning them leaves them ragged, because
      they wrap to different line counts. */

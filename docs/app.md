@@ -1552,10 +1552,25 @@ rule lives once in `app.css` inside `:where()`, so it carries no specificity.
 The exemption is **table rows**: a `box-shadow` ring draws outside the box, and
 a row spans the full table width and abuts its neighbours with no gap, so an
 outside ring paints over both of them and inside the phone panel
-`overflow-y: clip` cuts it off at the first and last row. Rows keep an inset
-`outline-offset: -2px` ring in their own components, and the global rule
-excludes `tr` explicitly rather than leaving the component rule to win on
-specificity, so the two can never both draw.
+`overflow-y: clip` cuts it off at the first and last row. Rows draw an **inset**
+ring in their own components instead, and the global rule excludes `tr`
+explicitly rather than leaving the component rule to win on specificity, so the
+two can never both draw. The desktop uses an `outline` there, because a shoe is
+one row; the phone uses inset shadows on two rows — three edges each, meeting in
+the middle — because a shoe is its name row *and* its chip row, `aria-expanded`
+sits on the first of them, and a ring round that one alone stops halfway down the
+thing it describes. Two outlines would draw a line between the rows and read as
+two rings.
+
+**`--text-dim` is held to 4.5:1 against every surface it is set on**, not against
+one representative surface: `--surface`, `--bg`, `--chrome`, `--well` and
+`--accent-dim`, all asserted in `wash.test.ts` and pinned from the other side by
+`tokens.test.ts`. That set grew this pass — the segmented groups' recessed track
+and the pickers' count badge are `--bg`, and a chosen setup card's description
+sits on `--accent-dim` — and the old value cleared only white, at 4.44:1 and
+4.28:1 on the two new ones. A chosen setup card's **name** takes no accent
+colour for the same reason: `--accent` on `--accent-dim` is 4.19:1 in light and
+3.28:1 in dark, and the accent border is what says "chosen".
 
 **The surface is painted on the row** — `tr.shoe` in the desktop table,
 `tr.values` on a phone — and never on the numeric cell. The wash is a

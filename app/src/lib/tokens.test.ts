@@ -47,6 +47,14 @@ describe('design tokens', () => {
     expect(css).toContain('--hist-dim: #6b7482');
   });
 
+  it('keeps --text-dim at the value wash.test.ts holds to 4.5:1', () => {
+    // One fact in two files, pinned from both sides like --hist-dim. Light moved off #6a7280
+    // because that value cleared only --surface: on the segmented groups' --bg track it measured
+    // 4.44:1 and under a chosen setup card's description it measured 4.28:1.
+    expect(css).toContain('--text-dim: #5f6673');
+    expect(css).toContain('--text-dim: #98a0ab');
+  });
+
   it('keeps the divider visibly darker than the border it is not', () => {
     // A border-coloured hairline is invisible against --chrome, which is the whole reason this
     // token exists — SetupStrip.svelte says so at its own divider.

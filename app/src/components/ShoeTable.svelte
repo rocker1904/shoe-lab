@@ -192,6 +192,20 @@
      outline stays inside the row instead. `app.css` excludes `tr` from the global rule rather than
      relying on this one to win, so the two cannot both draw (docs/app.md §Theming). */
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  /* And the name cell repaints its own share of it. `td.name` is sticky and opaque and therefore
+     paints ABOVE the row's outline, so without this the ring is missing for the whole width of the
+     name column and reads as three sides with a bite out of them.
+     THREE inset edges, not an `outline`: an outline on the cell draws a fourth side at the name
+     column's right boundary, which lands a 2px accent bar down the middle of the row — rendered at
+     4x and confirmed. The row's own outline supplies that side already, so the cell paints only
+     what it occludes.
+     The bottom edge is 1px of shadow over the cell's own recoloured hairline, not 2px of shadow: an
+     inset shadow stops at the padding box, so a 2px one lands a pixel high and the ring stepped
+     where the sticky column ends. */
+  tr.shoe:focus-visible td.name {
+    border-bottom-color: var(--accent);
+    box-shadow: inset 2px 0 0 var(--accent), inset 0 2px 0 var(--accent), inset 0 -1px 0 var(--accent);
+  }
   /* The cell keeps its own opaque background as well as the row's: it is sticky, and the numeric
      cells scroll underneath it rather than behind the row. */
   td.name { min-width: 14rem; background: var(--surface); }
