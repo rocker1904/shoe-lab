@@ -428,8 +428,35 @@ restating it there would make every row twice as long to hear. `size-rating` is
 the one units override: it reads `3 = true`, because `/5` would present a
 runs-small / true / runs-large scale as a mediocre mark.
 
-Figures are right-aligned with `tabular-nums`; `plate` and `releasedAt` hold
-words and dates and are not. Those two are the cells that carry
+**The table sits in a `--surface` panel** — hairline, `--r-md`, `--shadow-panel`
+— and that wrapper carries **no `overflow`**, deliberately: an `overflow` there
+makes it a scrollport and detaches the sticky `thead`, which is the failure
+`.content` already documents. The cost is that the sticky header paints over the
+wrapper's top corners, the same trade the phone panel makes explicitly
+(docs/app.md §Two renderings, and only one of them mounted).
+
+**The sorted column carries an accent caret** beside its name, and any other
+sortable header reveals a dim one on hover. `aria-sort` on the `th` remains the
+accessible contract; the caret is decoration, which is why it is an SVG carrying
+no text.
+
+**Row thumbnails are gone.** At 40×27 with `object-fit: cover` every shoe
+cropped to an indistinguishable grey strip, so they cost a column of width and
+carried nothing. `imageUrl` stays in the dataset and in the expanded row, where
+it renders at a size worth having.
+
+The `discontinued` chip is a **neutral uppercase micro-label** in `--text-dim`
+with a hairline border. Red is error semantics and this is metadata — and
+dimming or alarming the row would argue against the `discontinued=only` filter,
+which exists because those shoes are worth finding.
+
+A focused row keeps an **inset `outline`** rather than taking §Theming's one
+focus ring: that ring is a `box-shadow`, drawn outside the box, and a row spans
+the whole table and abuts its neighbours with no gap. It is the single
+exemption, and `app.css` states it as `:not(tr)` so the two can never both draw.
+
+Figures are right-aligned in `--font-mono` with `tabular-nums`; `plate` and
+`releasedAt` hold words and dates and are not. Those two are the cells that carry
 `white-space: nowrap`: "Non-carbon plate" wrapped to three lines in an
 auto-sized column and made the row heights ragged. It goes on the **cell**,
 never the header — `nowrap` on a `th` makes each column's minimum its longest

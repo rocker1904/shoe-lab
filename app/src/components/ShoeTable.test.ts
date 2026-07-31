@@ -40,7 +40,22 @@ describe('ShoeTable', () => {
     setup({ view: { sort: { key: 'heel-stack', dir: 'asc' } } });
     const th = screen.getByRole('columnheader', { name: /Heel stack/ });
     expect(th).toHaveAttribute('aria-sort', 'ascending');
-    expect(th.textContent).toContain('▲');
+  });
+
+  it('drops the row thumbnail, which carried nothing at 40px', () => {
+    // A shoe that CARRIES an image, because `shoe()` defaults `imageUrl` to null and the assertion
+    // would otherwise pass against markup that still renders one.
+    const { rendered } = setup({ shoes: [shoe({ slug: 'shot', imageUrl: 'https://x/y.jpg' })] });
+    expect(rendered.container.querySelector('td.name img')).toBeNull();
+  });
+
+  it('hands the cell a resolved alpha rather than a raw percentile', () => {
+    const { rendered } = setup();
+    const tinted = rendered.container.querySelector('td.num.tinted')!;
+    // `getAttribute('style')` rather than `.style.getPropertyValue`: it is the idiom this file
+    // already proves works for a custom property under this jsdom.
+    expect(tinted.getAttribute('style')).toContain('--a:');
+    expect(tinted.getAttribute('style')).not.toContain('--p:');
   });
   it('row click expands the detail panel', async () => {
     setup();
@@ -82,7 +97,7 @@ describe('ShoeTable', () => {
     const cells = [...container.querySelectorAll('tbody tr:first-child td')];
     const heel = cells[2]!; // name, score, heel-stack, plate
     expect(heel.className).toContain('tinted');
-    expect(heel.getAttribute('style')).toContain('--p:');
+    expect(heel.getAttribute('style')).toContain('--a:');
     expect(cells[3]!.className).not.toContain('tinted'); // plate is not numeric
   });
   it('does not print the brand, which every shoe name already starts with', () => {

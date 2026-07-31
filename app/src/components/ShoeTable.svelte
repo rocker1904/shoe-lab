@@ -4,6 +4,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
+  import { greyAlpha, washAlpha } from '../lib/wash';
   import { categoricalValue } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
@@ -76,6 +77,7 @@
   }
 </script>
 
+<div class="tblwrap">
 <table>
   <thead>
     <tr>
@@ -84,9 +86,13 @@
         <th class:fig={isFigure(col, idx.bySlug.get(col))}
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
-            <!-- A non-breaking space before the arrow: the name may now wrap, and an arrow alone
-                 on the second line reads as a bullet rather than as a sort direction. -->
-            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}{#if view.sort.key === col}{view.sort.dir === 'asc' ? ' ▲' : ' ▼'}{/if}</span>
+            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}<span class="caret" class:on={view.sort.key === col}>
+              {#if view.sort.key === col && view.sort.dir === 'asc'}
+                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 6l3-3 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {:else}
+                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {/if}
+            </span></span>
             <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
                  second line would make the header rows different heights. -->
             <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
@@ -110,7 +116,6 @@
         <td class="name">
           <div class="name-row">
             <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
-            {#if s.imageUrl}<img src={s.imageUrl} alt="" loading="lazy" />{/if}
             <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
                  shorten it rather than drop it (docs/app.md §Columns and sorting). -->
             <div><strong>{s.name}</strong>{#if s.discontinued}<span class="disc-tag">discontinued</span>{/if}</div>
@@ -118,7 +123,9 @@
         </td>
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
-          <td class="num" class:fig={isFigure(col, idx.bySlug.get(col))} style:--p={p ?? 0} class:tinted={p !== undefined}
+          <td class="num" class:fig={isFigure(col, idx.bySlug.get(col))}
+              style:--a={p === undefined ? 0 : washOf(col) === 'blue' ? washAlpha(p) : greyAlpha(p)}
+              class:tinted={p !== undefined}
               class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
       </tr>
@@ -128,6 +135,7 @@
     {/each}
   </tbody>
 </table>
+</div>
 
 <style>
   /* Separate rather than collapsed: a collapsed border belongs to the table, not the cell, so it
@@ -145,11 +153,17 @@
   thead th { position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky); }
   th button { display: flex; flex-direction: column; gap: 1px; background: none; border: none; color: var(--text);
               font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-align: inherit; }
-  .h-units { font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1em; }
+  .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1em; }
   th.fig, td.fig { text-align: right; }
   th.fig button { align-items: flex-end; }
-  td.fig { font-variant-numeric: tabular-nums; }
-  td { border-bottom: 1px solid var(--border); padding: var(--s2); }
+  td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
+  td.fig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  /* No `overflow` here, deliberately: it would make the wrapper a scrollport and detach the sticky
+     `thead`, which is the failure `.content` already documents. The consequence is that the sticky
+     header paints over the wrapper's top corners — the same trade the phone panel makes explicitly
+     (docs/app.md §Two renderings, and only one of them mounted). */
+  .tblwrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
+             box-shadow: var(--shadow-panel); }
   /* The surface belongs to the ROW, and the wash travels inward from it (docs/app.md §Theming).
      On the cell it would be replaced by the translucent wash, which `td.num.tinted` sets at higher
      specificity — and the cell would then composite over the page instead of over the surface. */
@@ -157,12 +171,16 @@
   /* A background *image* layers over the cell's background colour, so hovering a tinted cell
      dims it rather than replacing the percentile wash with a flat one. */
   tr.shoe:hover td { background-image: linear-gradient(var(--hover-wash), var(--hover-wash)); }
+  /* The one exemption from app.css's single focus ring, and it must stay. That ring is a
+     `box-shadow`, which draws OUTSIDE the element — on a row that spans the whole table and abuts
+     the rows above and below it with no gap, an outside ring paints over both of them. The inset
+     outline stays inside the row instead. `app.css` excludes `tr` from the global rule rather than
+     relying on this one to win, so the two cannot both draw (docs/app.md §Theming). */
   tr.shoe:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   /* The cell keeps its own opaque background as well as the row's: it is sticky, and the numeric
      cells scroll underneath it rather than behind the row. */
   td.name { min-width: 14rem; background: var(--surface); }
   .name-row { display: flex; gap: var(--s2); align-items: center; }
-  td.name img { width: 40px; height: 27px; object-fit: cover; border-radius: var(--r-sm); }
   /* The plate read "Non-carbon plate", which wrapped to three lines in an auto-sized column and
      made the row heights ragged; the label is now "Non-carbon" and the column asks 39px less, but
      the rule stays because wrapping is what made it ragged, not the length
@@ -172,18 +190,24 @@
   td.num:not(.fig) { white-space: nowrap; }
   /* Expandability was signalled by `cursor: pointer` alone, which a touch reader never sees. */
   .chev { display: inline-block; color: var(--text-dim); }
+  /* The direction of the sort is still announced by `aria-sort` on the th; the caret is decoration. */
+  .caret { display: inline-flex; margin-left: 3px; color: var(--text-dim); opacity: 0; }
+  .caret.on { color: var(--accent); opacity: 1; }
+  th:hover .caret { opacity: 0.55; }
+  th:hover .caret.on { opacity: 1; }
   /* Unconditional, because this component is the desktop rendering: below 700px `Page.svelte`
      mounts `ShoeTableMobile` instead, which has no horizontal scroll to pin against
      (docs/app.md §Columns and sorting). */
   th.name, td.name { position: sticky; left: 0; z-index: 1; }
   thead th.name { z-index: 3; }
-  /* Squared so only leaders read as tinted, which is what a ranking wants; the endpoint is the
-     cap (docs/app.md §Theming). */
-  td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--p) * var(--p) * 100%), transparent); }
-  /* Linear, because a metric with no better end is a scale and must read as a gradient rather
-     than a podium (docs/app.md §Theming). */
-  td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--p) * 100%), transparent); }
-  .disc-tag { margin-left: var(--s1); font-size: var(--t-xs); color: var(--bad); border: 1px solid var(--bad); border-radius: var(--r-full); padding: 0 var(--s1); }
+  /* Alpha is resolved in lib/wash.ts, where the contrast rule is enforced. Blue may be a podium;
+     grey stays linear (docs/app.md §Theming). */
+  td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
+  td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
+  /* Neutral, not red: this is metadata, and red is error semantics. Dimming the row would argue
+     against the `discontinued=only` filter, which exists because those shoes are worth finding. */
+  .disc-tag { margin-left: var(--s2); font-size: var(--t-xs); letter-spacing: 0.06em; text-transform: uppercase;
+              color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0 var(--s1); }
   @media (prefers-reduced-motion: no-preference) {
     .chev { transition: transform 120ms ease-out; }
     .chev.open { transform: rotate(90deg); }
