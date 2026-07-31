@@ -83,14 +83,14 @@ async function addFilter(name: string) {
 describe('Page', () => {
   it('renders count, attribution and table', () => {
     render(Page, { props: { data } });
-    expect(screen.getByText(/5 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 5 of the 5 shoes');
     expect(screen.getByRole('link', { name: /RunRepeat/ })).toBeInTheDocument();
     expect(screen.getAllByRole('row').length).toBeGreaterThan(1);
   });
   it('restores state from the URL', () => {
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
-    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 1 of the 1 shoes');
   });
   it('applying a preset filters the table and updates the URL', async () => {
     render(Page, { props: { data } });
@@ -98,7 +98,7 @@ describe('Page', () => {
     await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
     // Easy's only filter is the plate gate, so its pool is everything but the carbon racer; the
     // ranking is what the story now does (docs/app.md §Presets).
-    expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 4 of the 4 shoes');
     settle();
     expect(location.search).toContain('plate=none%2Cplated-other');
     expect(location.search).toContain('sort=-easy-score-heel');
@@ -116,7 +116,7 @@ describe('Page', () => {
     // "any plate at all" is now chosen directly, as both plated values, rather than named by a token.
     history.replaceState(null, '', '/?plate=carbon,plated-other');
     render(Page, { props: { data } });
-    expect(screen.getByText(/2 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 2 of the 2 shoes');
     const names = screen.getAllByRole('row').slice(1).map((r) => r.textContent);
     expect(names.join(' ')).toMatch(/racer/);
     expect(names.join(' ')).toMatch(/trainer/);
@@ -158,7 +158,7 @@ describe('Page', () => {
     await fireEvent.click(screen.getByRole('button', { name: /show them anyway/i }));
     settle();
     expect(location.search).toContain('missing=1');
-    expect(screen.getByText(/3 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 3 of the 5 shoes');
     expect(screen.getByTestId('receipt')).toHaveTextContent(/no data for the active filters are included/);
   });
   it('exports the visible rows as a CSV download', async () => {
@@ -210,7 +210,7 @@ describe('Page', () => {
   it('explains an empty result instead of showing a bare header row', () => {
     history.replaceState(null, '', '/?q=nothing-matches-this');
     render(Page, { props: { data } });
-    expect(screen.getByText(/0 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 0 of the 0 shoes');
     expect(screen.getByText(/No shoes match/)).toBeInTheDocument();
   });
   it('toggles the mobile filter drawer', async () => {
@@ -465,7 +465,7 @@ describe('Page persistence', () => {
     localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon,plated-other'); // would show 2 shoes
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
-    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 1 of the 1 shoes');
     expect(location.search).toContain('plate=carbon');
   });
   it('restores a stored view on a bare URL and writes it back to the URL', () => {
@@ -473,7 +473,7 @@ describe('Page persistence', () => {
     // copying the link shares the default view instead of what is on screen
     localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon');
     render(Page, { props: { data } });
-    expect(screen.getByText(/1 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 1 of the 1 shoes');
     // No `settle()`, deliberately: the restore is a one-off at init rather than part of a burst,
     // so it flushes rather than waiting out the debounce (docs/app.md §View and URL ownership).
     expect(location.search).toContain('plate=carbon');
@@ -488,7 +488,7 @@ describe('Page persistence', () => {
   it('opens at defaults when the stored value is under another schema version', () => {
     localStorage.setItem(VIEW_STORAGE_KEY.replace(/\d+$/, (n) => String(Number(n) - 1)), 'plate=carbon');
     render(Page, { props: { data } });
-    expect(screen.getByText(/5 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 5 of the 5 shoes');
     expect(location.search).toBe('');
     expect(strip()).toBeInTheDocument();
   });
@@ -519,6 +519,6 @@ describe('Page persistence', () => {
     render(Page, { props: { data } });
     expect(strip()).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
-    expect(screen.getByText(/4 of 5 shoes/)).toBeInTheDocument();
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 4 of the 4 shoes');
   });
 });

@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
 test('bounds the fleet by release month without a native month input', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
-  await expect(page.getByText('5 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
 
   // The control that was a bare text box in these two engines. Chromium does not run this file, so
   // the same claim is made against jsdom in `FilterSidebar.test.ts`.

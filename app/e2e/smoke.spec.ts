@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test';
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('5 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
 
   // a bare first visit opens on the setup strip, so this is a card rather than a toolbar pill
   await expect(page.getByTestId('setup-strip')).toBeVisible();
   await page.getByRole('button', { name: /^Easy/ }).click();
-  await expect(page.getByText('4 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
   await expect(page).toHaveURL(/plate=none%2Cplated-other/);
   // the strip hands over to the toolbar, which is where the mark and the counts live from here
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
@@ -23,7 +23,7 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   expect((await (await download).createReadStream()).readable).toBeTruthy();
 
   await page.goto('/?plate=carbon');
-  await expect(page.getByText('1 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 1 of the 1 shoes');
   await expect(page.getByRole('row').filter({ hasText: 'racer' })).toBeVisible();
 });
 
@@ -45,12 +45,12 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.getByRole('button', { name: /^Easy/ }).click();
-  await expect(page.getByText('4 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
   await expect(strip).toHaveCount(0);
 
   // the only proof persistence works, because it spans a real page load
   await page.goto('/');
-  await expect(page.getByText('4 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
   await expect(strip).toHaveCount(0);                                  // and it never returns
   // and the restored view reaches the URL, so copying the link shares what is on screen
@@ -91,7 +91,7 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
   await expect(page).toHaveURL('/?cols=releasedAt%2Cscore%2CmsrpGbp%2Cforefoot-stack%2Cplate%2Cenergy-return-forefoot%2Ctoebox-width-widest-part%2Cweight');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
-  await expect(page.getByText('5 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
 });
 
 // The 700px switch is invisible to jsdom: it applies no component CSS and evaluates no media
@@ -139,7 +139,7 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
   await page.mouse.move(box!.x, box!.y + box!.height / 2, { steps: 10 });
   await page.mouse.up();
   await expect(max).toHaveValue('140');
-  await expect(page.getByText('3 of 5 shoes')).toBeVisible();
+  await expect(page.getByTestId('receipt')).toContainText('Showing 3 of the 5 shoes');
   await expect(page).toHaveURL(/r\.msrpGbp=%7E140/);
 
   // A typed value past the axis keeps its number and only its drawing is clamped, so its grip ends

@@ -1510,6 +1510,23 @@ The link lives in the expanded panel rather than the collapsed row because the
 row's click target is the expander. Do not remove or defer-load either link
 (docs/decisions.md §Be a good citizen toward RunRepeat).
 
+### The header names the catalogue, the receipt owns the count
+The header states a fact about the **catalogue** — `450 shoes · updated 27 Jul
+2026` — which does not move under filtering. Everything that responds to a
+filter belongs to the receipt, whose wording is unchanged. Two counts a
+centimetre apart with different denominators read as the app contradicting
+itself, even though both were correct: the header answered "how big is this
+dataset?" and the receipt answers "what did your filters do?", and nothing on
+screen said so. `Header.svelte` therefore takes no `visible` prop.
+
+`Header` and `Receipt` are each mounted **once** in `Page.svelte`, outside the
+`{#if phone}` switch, so this is one edit and both renderings change together.
+
+The build date is formatted with locale **and** time zone pinned. `builtAt` is a
+UTC instant, so formatting it locally renders the previous day for every reader
+west of Greenwich — the ISO slice it replaced had no such problem, which makes
+dropping the zone a regression rather than an omission.
+
 ### Columns are permissive, ranges and sorts are strict
 `cols` accepts any test slug — showing a column the catalogue no longer carries
 is harmless, it just prints nothing — while range keys are restricted to numeric

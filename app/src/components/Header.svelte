@@ -1,12 +1,18 @@
 <script lang="ts">
   import type { Theme } from '../lib/theme';
 
-  let { total, visible, builtAt, theme, onexport, ontheme }: {
-    total: number; visible: number; builtAt: string; theme: Theme;
+  let { total, builtAt, theme, onexport, ontheme }: {
+    total: number; builtAt: string; theme: Theme;
     onexport: () => void; ontheme: () => void;
   } = $props();
-  const updated = $derived(builtAt.slice(0, 10));
-  const ICON: Record<Theme, string> = { auto: '◐', light: '☀', dark: '☾' };
+  /**
+   * `2026-07-27` reads like debug output. Locale AND zone are both pinned, so the string does not
+   * vary by visitor: `builtAt` is a UTC instant, and formatting it in local time renders the
+   * previous day for every reader west of Greenwich. The old `builtAt.slice(0, 10)` had no such
+   * problem, so dropping the zone would be a regression rather than an omission.
+   */
+  const updated = $derived(new Intl.DateTimeFormat('en-GB',
+    { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(builtAt)));
 
   let copied = $state(false);
   /**
@@ -31,17 +37,32 @@
 
 <header>
   <h1>Shoe Lab</h1>
-  <span class="count">{visible} of {total} shoes</span>
+  <span class="count">{total} shoes · updated {updated}</span>
   <span class="spacer"></span>
-  <span class="meta">updated {updated} · data from
-    <a href="https://runrepeat.com/catalog/running-shoes" rel="noopener" target="_blank">RunRepeat</a></span>
+  <!-- Attribution is structural, not decorative: a permanent, visible, immediately-clickable link
+       (docs/decisions.md §Be a good citizen toward RunRepeat). The micro-label does the explaining,
+       so the name is set in plain text and no link colour competes with the wash. -->
+  <a class="credit" href="https://runrepeat.com/catalog/running-shoes" rel="noopener" target="_blank">
+    <span class="credit-label">Lab data by</span>
+    <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </a>
   <button type="button" onclick={copyLink}>Copy link</button>
   <!-- Rendered whether or not there is anything to say: a live region created together with its
        text is not reliably announced, so only the text may arrive late. -->
   <span class="copied" class:said={copied} role="status">{copied ? 'Copied' : ''}</span>
   <button type="button" onclick={onexport}>Export CSV</button>
-  <button type="button" onclick={ontheme} aria-label="Toggle theme (currently {theme})"
-          title="Theme: {theme}">{ICON[theme]}</button>
+  <!-- An icon per state, and the `aria-label` is what makes the three-way cycle usable without
+       sight — the drawing is decoration and carries no accessible name of its own. -->
+  <button type="button" class="icon" onclick={ontheme} aria-label="Toggle theme (currently {theme})"
+          title="Theme: {theme}">
+    {#if theme === 'auto'}
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 010 12z" fill="currentColor"/></svg>
+    {:else if theme === 'light'}
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    {:else}
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    {/if}
+  </button>
 </header>
 
 <style>
@@ -50,18 +71,20 @@
      (docs/app.md §Columns and sorting). */
   header { --gap-x: var(--s4); display: flex; align-items: center; gap: var(--gap-x); padding: var(--s2) var(--s5); border-bottom: 1px solid var(--border); background: var(--chrome); }
   h1 { font-size: var(--t-xl); margin: 0; }
-  .count { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .count { color: var(--text-dim); font-family: var(--font-mono); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
-  .meta { font-size: var(--t-sm); color: var(--text-dim); }
+  .credit { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-decoration: none; color: var(--text); }
+  .credit-label { font-size: var(--t-xs); letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-dim); }
+  .credit-name { display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-sm); font-weight: 500; }
+  .credit:hover .credit-name { color: var(--accent); }
+  .icon { display: inline-flex; align-items: center; justify-content: center; }
   .copied { font-size: var(--t-sm); color: var(--good); }
   /* A silent region is still a flex item, so it would carry a gap on each side and space the header
      differently depending on whether a link had ever been copied. */
   .copied:not(.said) { margin-inline-start: calc(-1 * var(--gap-x)); }
-  .meta a { color: var(--accent); }
   button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); }
   button:hover { background: var(--accent-dim); }
   @media (max-width: 800px) {
     header { --gap-x: var(--s3); flex-wrap: wrap; gap: var(--s2) var(--gap-x); }
-    .meta { order: 1; flex-basis: 100%; }
   }
 </style>

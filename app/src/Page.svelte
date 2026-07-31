@@ -276,7 +276,7 @@
      reachable from anywhere in a 25,000px table; the receipt below reports rather than controls,
      so it scrolls (docs/app.md §Columns and sorting). -->
 <div class="chrome" bind:clientHeight={chromeHeight}>
-  <Header total={data.shoes.length} visible={visibleSorted.length} builtAt={data.builtAt} {theme}
+  <Header total={data.shoes.length} builtAt={data.builtAt} {theme}
           onexport={onExport} ontheme={onTheme} />
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
