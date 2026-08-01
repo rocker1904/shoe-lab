@@ -2396,11 +2396,13 @@ case. Do not reintroduce a second ink without redoing that arithmetic.
 
 **The endpoint is not the worst case once a row is hovered.** `--hover-wash` is
 painted as a background *image* over the cell's wash, so a pointed-at peak cell
-is a third layer and lands below the ramp's own endpoint: 4.67:1 in both themes
-against 4.73 light and 4.80 dark at rest. `wash.test.ts` sweeps both ramps
-under that overlay too, because nothing else in the suite would fail if
-`--hover-wash` grew — the light peak tolerates a hover alpha up to 0.194 and the
-dark up to 0.149, against the 0.06 that ships.
+is a third layer and lands below the ramp's own endpoint. `wash.test.ts` sweeps
+both ramps under that overlay too against the same 4.5:1 bar, because nothing
+else in the suite would fail if `--hover-wash` grew, and the margins it records
+are the ones to read: it is the owner of those figures, and it composites in
+sRGB where the app paints `color-mix(in oklab, …)`, which round-trips the dark
+fill a step lighter — so the painted cell is a little *better* than the model,
+never worse. Its ratios are not restated here: one fact, one home.
 
 **`--accent`, `--accent-solid` and `--on-accent` are three tokens with three
 jobs.** `--accent` is the small mark — hairlines, carets, in-range bars, links

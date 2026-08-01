@@ -127,10 +127,12 @@ describe('both ramps are legible at every step', () => {
  * background colour rather than replacing it — so the hovered peak is strictly darker than the
  * endpoint the ramp is tuned against, and it is the app's real worst case.
  *
- * It clears the bar with little to spare: the hovered peak measures **4.67:1** in both themes,
- * against 4.73 light and 4.80 dark at rest. Read back from the painted pixel it agrees to within
- * one 8-bit step per channel, which is the resolution the gradient layer rasterises at — so the
- * assertion is against 4.5 rather than against the figure.
+ * It clears the bar with little to spare: the hovered peak measures **4.67:1** in this model in
+ * both themes, against 4.73 light and 4.80 dark at rest. The model is sRGB (`over()`) while the
+ * app paints `color-mix(in oklab, …)`, and the two disagree by up to one 8-bit step per channel:
+ * the light fill round-trips exactly, the dark fill lands a step lighter, which is worth about
+ * 0.07 of ratio in the safe direction. So these figures are a floor on what is painted, and the
+ * assertion is against 4.5 rather than against them.
  *
  * The headroom is in the ALPHA, not the ratio: the light peak tolerates a hover alpha up to 0.194
  * and the dark up to 0.149, against the 0.06 that ships. That is what this test protects — nothing
