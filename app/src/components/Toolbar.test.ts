@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
-import { tick } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Toolbar from './Toolbar.svelte';
 import type { Zone } from '../lib/lineage';
@@ -144,95 +143,35 @@ describe('Toolbar', () => {
 });
 
 describe('Toolbar stability preference', () => {
-  it('offers a stability preference and reports the change', async () => {
+  // A pill in the same family as the two groups it stands with, rather than a checkbox left among
+  // them. `aria-pressed` is what makes a toggle button say which state it is in.
+  it('is a toggle pill that reports the change', async () => {
     let got: boolean | undefined;
     render(Toolbar, { props: { ...props, stability: false, onstability: (v: boolean) => { got = v; } } });
-    const box = screen.getByRole('checkbox', { name: /stability/i });
-    expect((box as HTMLInputElement).checked).toBe(false);
-    await fireEvent.click(box);
+    const pill = screen.getByRole('button', { name: 'Stability' });
+    expect(pill).toHaveAttribute('aria-pressed', 'false');
+    await fireEvent.click(pill);
     expect(got).toBe(true);
   });
 
-  // The runner meets the score at the one control that changes it, so the explanation lives there —
-  // in the same popover the setup strip uses, not a second mechanism (docs/app.md §The toolbar).
-  it('explains what the score reads, and what it deliberately does not', async () => {
-    render(Toolbar, { props: { ...props } });
-    const help = screen.getByRole('button', { name: 'About the story scores' });
-    help.focus();
-    await fireEvent.click(help);
-    const pop = screen.getByRole('dialog', { name: 'the story scores' });
-    // Which terms each story reads is deliberately absent: `score-defs.ts` owns that and the
-    // breakdown panel shows it, so a copy here would be a second home for one fact — and it would
-    // have to name three stories' terms at once on a control that is on screen for all of them.
-    expect(pop).toHaveTextContent(/expand a row/i);
-    expect(pop).not.toHaveTextContent(/outsole durability/i);
-    // The three things a runner would otherwise have to infer from the table.
-    expect(pop).toHaveTextContent(/price/i);
-    expect(pop).toHaveTextContent(/not scored/i);
-    // That the scale is pinned to a snapshot, not which snapshot: the date would be a second home
-    // for the `data/` commit `score-defs.ts` names, and the two drifted apart once already.
-    expect(pop).toHaveTextContent(/fixed to a dated snapshot/i);
-    expect(pop).toHaveTextContent(/above 100/i);
-
-    await fireEvent.keyDown(pop, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(help).toHaveFocus();
+  it('shows the preference as pressed when it is on', () => {
+    render(Toolbar, { props: { ...props, stability: true } });
+    expect(screen.getByRole('button', { name: 'Stability' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  /**
-   * The popover dismisses on a press outside it, like every other floating surface
-   * (docs/app.md §Filters) — and unlike Escape and its own Close button, it does **not** pull focus
-   * back to the `?`: the reader has just pressed something else, and that is where they are going.
-   */
-  it('dismisses the help on a press outside it, without stealing focus back', async () => {
+  // The caption and the `?` are gone: their words are the About panel's, and a second copy would
+  // drift from it. The bar is 21px shorter for the `?` alone and a whole row for the caption.
+  it('carries no checkbox, no caption and no help popover', () => {
     render(Toolbar, { props: { ...props } });
-    const help = screen.getByRole('button', { name: 'About the story scores' });
-    await fireEvent.click(help);
-    expect(screen.getByRole('dialog', { name: 'the story scores' })).toBeInTheDocument();
-
-    // A press inside is not an outside press — including on the trigger, which would otherwise
-    // close the panel here and reopen it on the click that follows.
-    screen.getByRole('dialog').dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    help.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    await tick();
-    expect(screen.queryByRole('dialog')).not.toBeNull();
-
-    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    await tick();
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(help).not.toHaveFocus();
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(screen.queryByText(/adds midsole width/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^About the/ })).toBeNull();
   });
 
-  // A button inside the label would be a click on the label, so opening the help would toggle the
-  // preference it is there to explain.
-  it('opens the help without touching the preference', async () => {
-    const onstability = vi.fn();
-    render(Toolbar, { props: { ...props, onstability } });
-    await fireEvent.click(screen.getByRole('button', { name: 'About the story scores' }));
-    expect(onstability).not.toHaveBeenCalled();
-    expect(screen.getByRole('checkbox', { name: /stability/i })).not.toBeChecked();
-  });
-
-  it('says what the preference adds, and makes no claim about weight', () => {
-    // The width term is a ratio so that stability does not select heavy shoes, so a weight warning
-    // here would be false (docs/app.md §The story scores).
-    render(Toolbar, { props: { ...props } });
-    expect(screen.getByText(/adds midsole width and heel counter stiffness/i)).toBeInTheDocument();
-    expect(screen.queryByText(/heavier/i)).not.toBeInTheDocument();
-  });
-
-  // Every string here is on screen whichever story is selected, so an Easy-specific one reads as a
-  // caption about a score that is not on the table, attached to a control that does nothing.
-  it('names the stories the preference reaches, and says why Race is not one', async () => {
-    render(Toolbar, { props: { ...props } });
-    const caption = screen.getByText(/adds midsole width and heel counter stiffness/i);
-    // Derived from the definitions that declare a stable variant, so a fourth story needs no edit.
-    expect(caption).toHaveTextContent(/Easy and Tempo/);
-    expect(caption).not.toHaveTextContent(/Race/);
-    const help = screen.getByRole('button', { name: 'About the story scores' });
-    await fireEvent.click(help);
-    const pop = screen.getByRole('dialog', { name: 'the story scores' });
-    expect(pop).toHaveTextContent(/Easy and Tempo/);
-    expect(pop).toHaveTextContent(/race shoes/i);
+  // It stands with the zone and story groups, not with the controls that open panels.
+  it('sits on the setup row with the groups, not among the actions', () => {
+    const { container } = render(Toolbar, { props: { ...props } });
+    expect(container.querySelector('.setup .pill')).not.toBeNull();
+    expect(container.querySelector('.actions .pill')).toBeNull();
   });
 });

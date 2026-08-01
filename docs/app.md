@@ -1533,11 +1533,18 @@ has gone.
 
 ### The toolbar
 
-`Toolbar.svelte` is the permanent surface: two segmented radiogroups in one
-visual language — the zone, a divider, then `All | Easy | Tempo | Race` — and an
-actions group (`Filters`, `Columns`) pushed right by
-`margin-left: auto`. The strip cannot hold the controls that reset it, because
-it is gone by the time they are needed.
+`Toolbar.svelte` is the permanent surface: a setup group of three controls in one
+visual language — the zone, then `All | Easy | Tempo | Race`, then the
+`Stability` pill — and an actions group (`About`, `Filters`, `Columns`) pushed
+right by `margin-left: auto`. The strip cannot hold the controls that reset it,
+because it is gone by the time they are needed.
+
+**There is no group divider.** `main` drew a hairline between the zone and story
+groups above 880px. With the stability pill joining that run, a line between the
+first and second of three reads as arbitrary, and no band below 800px had one —
+so the same row looked different either side of that boundary. It is gone at
+every width. If it should come back it belongs between the story group and the
+pill, which is where the grouping actually breaks.
 
 **The selected pill is filled with `--accent-solid` carrying `--on-accent`**, on
 a `--bg` track with a 2px pad — §Theming owns why that pair is two tokens rather
@@ -1589,16 +1596,20 @@ neither; the zone group takes `zoneOf` and marks nothing on a mixed view. Each
 group is a nullable mark, so either can show nothing selected, and `roving`
 still gives a group with nothing checked one tab stop.
 
-**The score is explained where it is changed.** The stability checkbox is the one
-control that alters the score, so the `?` beside its label opens the same
-`HelpPopover` the setup strip uses rather than a second mechanism. It says that each
-story ranks on measurements chosen for it and the breakdown names them, which stories
-the preference reaches and why race shoes have no stable variant to surface, what every
-score deliberately leaves out — price and release date, so the value call stays the
-runner's — that a shoe missing a measurement is unscored rather than zero, and that the
-scale is fixed to a dated fleet so a future shoe may read above 100. No maths: docs/app.md §The story scores owns that, and a second copy would drift.
-The checkbox's label is explicit rather than wrapping it, because a button inside a
-label is a click on the label: the help would toggle the preference it explains.
+**The stability preference is a pill, not a checkbox.** It answers a third
+question about the same table as the two groups beside it — *what is this table
+for?* — so it is drawn in their family rather than as a checkbox standing among
+segmented groups: one `Stability` button in a track of its own, `aria-pressed`
+saying which state it is in, filled with `--accent-solid` under `--on-accent`
+when on. Its accessible name is exactly `Stability`; the bare noun is neither a
+statement about the runner nor about the search, which is what
+`Stability matters to me` was.
+
+**Its explanation lives in the About panel** (§The About panel), and nowhere
+else. The caption under the checkbox and the `?` beside its label are both gone —
+21px of row for the `?` alone and a whole bar row for the caption — because two
+copies of one explanation drift apart, and the panel is the copy that gets to be
+complete.
 
 `ZoneToggle` carries **no visible lede**. Two segmented groups side by side
 are one language, and the words live on the setup strip, where the question is
@@ -1609,24 +1620,13 @@ The cascade is driven by what fits on a line rather than by phone-versus-desktop
 
 | width | layout |
 |---|---|
-| 880px and above | one line while it holds all three groups; the actions are right-aligned |
-| below 880px | zone and pace share line 1, actions follow on it; stability takes a line of its own |
-| below 610px | the same rows, bought with tighter padding |
+| above 800px | one line: the three setup controls, then the actions right-aligned |
+| below 800px | the same line, with the bar's own gutter and vertical padding halved, and `Filters` on it because the sidebar is a drawer here |
+| below 610px | the same rows again, bought with tighter pill padding |
 
-Both boundaries are written `879.98px` and `609.98px` rather than `880px` and
-`610px`: the tier is "880 and up is one line", and a `max-width: 880px` matches
-*at* 880 and splits the bar on the width that is supposed to be the wide one.
-
-**Whole-row stability is a rule about the groups, so it lifts when they are
-gone.** While the setup strip still holds the two questions the bar draws only
-its actions and the preference (`showGroups`), and the row rule — written
-because the 389px control does not fit *beside* the two groups — then left the
-actions alone on line 1 with the bar's left half empty: 211px of void at 390px
-and 597px at 800px, on the phone's landing screen. The bar carries `no-groups`
-in that state, the preference leads, and the actions keep the trailing edge they
-hold at every other width; from 610px up the two share one row. Forcing them to
-share it below that was measured and rejected — it breaks the label onto two
-lines and the bar comes out *taller* at 360px, which is the binding width.
+`609.98px` rather than `610px`, and `800px` unchanged: the sub-800 tier is the
+sidebar's own boundary and the two must agree, or the drawer toggle shows on a
+width laid out as a desktop.
 
 **Chrome height is monotonic in width.** Narrowing the window may add a row, but
 it must never add one that a narrower width then gives back: a band that stands
@@ -1634,24 +1634,20 @@ taller than both the viewport above it and the viewport below it is height
 nothing on screen asked for. `smoke.spec.ts` walks a ladder from 1440px to 360px
 and asserts the bar's row count never falls as the window narrows — rows rather
 than pixels, because the 800px tier halves the bar's vertical padding by design
-and a pixel-monotone claim would fail on that alone. Two rules follow from it.
-`flex-basis: 100%` belongs to **stability alone**: it is the one item wide enough
-to need a line to itself, and putting it on either segmented group forces a third
-row at a width where both fit on one. And the tighter tier engages at **610px**,
-not at the phone widths its padding was drawn for, because the actions stop
-fitting beside the two groups at 601px at the wider padding — a tier that arrived
-after that break would hand back a row it had just charged for.
+and a pixel-monotone claim would fail on that alone. The tighter tier engages at
+**610px** rather than at the phone widths its padding was drawn for, because the
+actions stop fitting beside the groups at 601px at the wider padding — a tier
+that arrived after that break would hand back a row it had just charged for.
 
-The **divider is removed** the moment the groups stop sharing a line with the
-actions, or it wraps with the zone group and dangles after Forefoot. And
-`flex-basis: 100%` goes on the **wrapper**, never on the segment: on the segment,
-the bordered pill container stretches the full width with its pills clustered at
-the left. The tighter tier **narrows the bar's own padding, gaps and button
-padding** rather than dropping a control, because that is what pays for the two
-groups sharing a row: they need 366px at the wider pill padding, against the
-344px a 360px phone leaves, and 334px at the narrower one. The pills stop
-stretching there for the same reason — beside the zone group the pace group takes
-the row it is given rather than filling one of its own.
+A width that has to span a row belongs on the **wrapper**, never on the segment:
+on the segment, the bordered pill container stretches the full width with its
+pills clustered at the left. The tighter tier **narrows the bar's own padding,
+gaps and button padding** rather than dropping a control, because that is what
+pays for the groups sharing a row: the zone and story pair need 366px at the
+wider pill padding, against the 344px a 360px phone leaves, and 334px at the
+narrower one. The pills stop stretching there for the same reason — beside the
+zone group the pace group takes the row it is given rather than filling one of
+its own.
 
 **Below 800px the chrome has a budget**, and it is a number rather than a taste:
 everything above the first shoe is paid on the screen with the least of it. The

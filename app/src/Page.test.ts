@@ -135,7 +135,7 @@ describe('Page', () => {
     const cells = () => screen.getAllByRole('row').slice(1).map((r) => r.textContent);
     const before = cells();
     expect(before.join(' ')).toMatch(/\d/);   // the column resolves at all
-    await fireEvent.click(screen.getByRole('checkbox', { name: /Stability matters/ }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Stability' }));
     expect(cells()).toEqual(before);
   });
   it('sorting by a column writes the sort to the URL', async () => {

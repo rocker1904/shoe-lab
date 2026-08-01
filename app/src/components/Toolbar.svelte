@@ -3,8 +3,6 @@
   import type { Zone } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
   import { roving } from '../lib/roving';
-  import { SCORE_DEFS } from '../lib/score-defs';
-  import HelpPopover from './HelpPopover.svelte';
   import ZoneToggle from './ZoneToggle.svelte';
 
   let { zone, onzone, selected, onstory, showFilters, onfilters, columns,
@@ -37,59 +35,31 @@
   // `All` leads so the group reads as everything → narrow to a story, and it is the same state a
   // `Clear` button used to produce, named for what you get (docs/app.md §Presets).
   const STORIES = [{ id: 'all', label: 'All' }, ...PRESETS.map((p) => ({ id: p.id, label: p.label }))];
-
-  /** Derived from the definitions that declare a stable variant rather than written out, so a
-   *  fourth story reaches this copy without an edit here. */
-  const STABLE_STORIES = PRESETS
-    .filter((p) => SCORE_DEFS.some((d) => d.id === p.id && d.stable)).map((p) => p.label);
-  const listed = (xs: string[]) =>
-    xs.length < 2 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
-
-  const SCORE_LABEL = 'the story scores';
-  /**
-   * What the scores read and what they deliberately do not — the things a runner would otherwise
-   * have to infer from the table. **Which terms each story reads is deliberately not here**: that
-   * is `score-defs.ts`'s to own and the breakdown panel's to show, and a second copy would drift
-   * from both. No maths either: docs/app.md §The story scores owns that.
-   */
-  const SCORE_HELP = 'Each story ranks on lab measurements chosen for that kind of run — expand a '
-    + 'row to see which, and what each one contributed. Price and release date are deliberately '
-    + 'left out of every score, so the value call stays yours. A shoe missing any measurement a '
-    + 'story reads is not scored at all rather than scored zero, and sorts last. The scale is fixed '
-    + 'to a dated snapshot of the fleet, so scores stay comparable over time and a future '
-    + `shoe can read above 100. Stability reaches ${listed(STABLE_STORIES)} only: race shoes are `
-    + 'uniformly tall and narrow, so there is no stable racer to surface.';
 </script>
 
 <div class="toolbar" class:no-groups={!showGroups} data-testid="toolbar">
-  {#if showGroups}
-    <div class="zone-wrap"><ZoneToggle {zone} onchange={onzone} /></div>
-    <span class="sep" aria-hidden="true"></span>
-    <div class="pace-wrap">
-      <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
-        <!-- No count: a scored story's is the size of its pool rather than of a shortlist
-             (docs/app.md §The toolbar). -->
-        {#each STORIES as s (s.id)}
-          <button type="button" role="radio" class="s" aria-checked={selected === s.id}
-                  class:on={selected === s.id} onclick={() => onstory(s.id)}>{s.label}</button>
-        {/each}
+  <div class="setup">
+    {#if showGroups}
+      <div class="zone-wrap"><ZoneToggle {zone} onchange={onzone} /></div>
+      <div class="pace-wrap">
+        <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
+          <!-- No count: a scored story's is the size of its pool rather than of a shortlist
+               (docs/app.md §The toolbar). -->
+          {#each STORIES as s (s.id)}
+            <button type="button" role="radio" class="s" aria-checked={selected === s.id}
+                    class:on={selected === s.id} onclick={() => onstory(s.id)}>{s.label}</button>
+          {/each}
+        </span>
+      </div>
+      <!-- A property of the runner rather than of the search, so it rides the bar rather than the
+           strip — but it answers a third question about the same table, so it is drawn as one pill
+           in the same family rather than as a checkbox standing among segmented groups. Its words
+           are the About panel's now (docs/app.md §The About panel). -->
+      <span class="seg one">
+        <button type="button" class="s pill" aria-pressed={stability}
+                class:on={stability} onclick={() => onstability(!stability)}>Stability</button>
       </span>
-    </div>
-  {/if}
-  <div class="stability">
-    <input id="stability-pref" type="checkbox" checked={stability}
-           onchange={(e) => onstability(e.currentTarget.checked)} />
-    <!-- The label is explicit rather than wrapping, because the help sits beside it: a button
-         inside a label is a click on the label, so opening the help would toggle the preference it
-         explains. -->
-    <div class="pref">
-      <label for="stability-pref">Stability matters to me</label>
-      <HelpPopover label={SCORE_LABEL} body={SCORE_HELP} />
-    </div>
-    <!-- Says what the switch adds and nothing more: the width term is a ratio precisely so that
-         opting in does not select heavy shoes, so there is no cost to warn about
-         (docs/app.md §The story scores). -->
-    <small>Adds midsole width and heel counter stiffness to the {listed(STABLE_STORIES)} scores.</small>
+    {/if}
   </div>
   <div class="actions">
     <!-- First of the pair that opens a panel, because it is the one a reader might need before they
@@ -104,26 +74,15 @@
 <style>
   .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3);
              padding: var(--s2) var(--s5); background: var(--chrome); border-bottom: 1px solid var(--border); }
-  .sep { width: 1px; align-self: stretch; background: var(--divider); }
   .actions { display: flex; align-items: center; gap: var(--s3); margin-left: auto; }
-  /* A grid so the note sits under the label rather than beside the box: it explains the checkbox
-     rather than standing beside it as a peer, and inline the control measures 538px against the
-     389px it takes stacked. */
-  .stability { display: grid; grid-template-columns: auto 1fr; align-items: center;
-               gap: 0 var(--s2); font-size: var(--t-sm); }
-  /* The `?` rides with the label rather than taking a grid track of its own: the note below spans
-     the same track, so a third column would be sized by the note and strand the `?` at its end. */
-  .pref { display: flex; align-items: center; gap: var(--s2); }
-  .stability label { cursor: pointer; }
-  /* While the strip is up the bar carries no groups, and the whole-row rule below is written against
-     them — "the 389px control does not fit BESIDE the two groups". With the groups gone that reason
-     is gone, and the rule left the actions alone on a row with the left half of the bar empty: 211px
-     of void at 390px, 597px at 800px, on the phone's landing screen. The preference leads and the
-     actions keep the right edge they hold at every other width. Higher specificity than the tier
-     rules on purpose, so it holds at every width rather than needing a copy inside each
-     (docs/app.md §Presets). */
-  .toolbar.no-groups .stability { order: 0; flex-basis: auto; min-width: 0; }
-  .stability small { grid-column: 2; font-size: var(--t-xs); color: var(--text-dim); }
+  /* One control in a track sized for a group: the padding is the group's, so the pill lines up with
+     the pills beside it rather than sitting in a tighter box of its own. */
+  .seg.one { padding: 2px; }
+  /* Transparent until the band ladder gives this box a layout of its own: the wrapper exists so the
+     pill has a group to stand in, and a real flex box here locks all three groups into one
+     unwrappable row that overflows a 390px screen. `display: contents` leaves them wrapping exactly
+     as they do without it. */
+  .setup { display: contents; }
   /* `overflow: visible`, not hidden: the focus ring is a box-shadow and a clipped track would
      swallow it (docs/app.md §Theming). */
   .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
@@ -149,21 +108,6 @@
            background: var(--surface); color: var(--text); border-radius: var(--r-sm);
            font-size: var(--t-sm); white-space: nowrap; }
   .about:hover { background: var(--accent-dim); }
-  /* 879.98px, not 880px: the tier boundary is "880 and up is one line", and `max-width: 880px`
-     matches *at* 880 and splits the toolbar on the width that is supposed to be the wide one. */
-  @media (max-width: 879.98px) {
-    /* The separator has nothing to separate once the groups stop sharing a line, and would
-       otherwise dangle after Forefoot at the end of line one. */
-    .sep { display: none; }
-    .actions { order: 1; }
-    /* Its own line below the two groups, and the ONLY item at any tier that claims a whole one: the
-       389px control does not fit beside them, and left to wrap on its own it puts the actions on a
-       third line and opens the void this tier exists to eliminate. The two groups keep their source
-       order and their shrink-wrapped width all the way down to 360px, so the bar gains no row at
-       this boundary that a narrower tier then gives back — `smoke.spec.ts` walks the ladder and
-       asserts exactly that (docs/app.md §Presets). */
-    .stability { order: 3; flex-basis: 100%; }
-  }
   /* Below 800px the bar is chrome above the first shoe on the screen with the least room for it, so
      it pays for its own rows: the vertical padding halves and the row gap with it. The groups keep
      every control and only the air between them narrows (docs/app.md §Presets). */
@@ -173,7 +117,6 @@
     /* The two segmented groups share a row from 880px down. They ask one question each and are read
        together, and at 390px they need 133px and 202px against the 366px this padding leaves. */
     .actions { order: 1; }
-    .stability { order: 2; }
   }
   /* Last of the three, because every tier below 880px is narrower than the one before and the later
      rule is the one that wins. 609.98px, not 560: at `--s3` a pill the actions stop fitting beside

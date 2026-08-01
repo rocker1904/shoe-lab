@@ -252,11 +252,9 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
     // them on one line, so their tops legitimately differ by a few pixels.
     const y = (s: string) => { const b = q(s)?.getBoundingClientRect();
       return b ? Math.round(b.y + b.height / 2) : null; };
-    const sep = q('[data-testid="toolbar"] .sep');
     return {
       zoneY: y('[data-testid="toolbar"] .zone-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
-      actionsY: y('[data-testid="toolbar"] .actions'), stabY: y('[data-testid="toolbar"] .stability'),
-      sepShown: sep ? getComputedStyle(sep).display !== 'none' : false,
+      actionsY: y('[data-testid="toolbar"] .actions'),
       paceW: q('[data-testid="toolbar"] .pace-wrap .seg')?.getBoundingClientRect().width ?? 0,
       wrapW: q('[data-testid="toolbar"] .pace-wrap')?.getBoundingClientRect().width ?? 0,
     };
@@ -269,7 +267,6 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
   expect(wide.zoneY).not.toBeNull();
   expect(wide.zoneY).toBe(wide.paceY);        // one line, all three groups
   expect(wide.zoneY).toBe(wide.actionsY);
-  expect(wide.sepShown).toBe(true);
   // And nothing scrolls sideways: the content track is capped and the table's headers wrap.
   // `toBeLessThanOrEqual` states that claim; `toBe` additionally asserted "and the scrollport is
   // exactly the viewport", which is a fact about the runner's scrollbars
@@ -280,8 +277,6 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
   const mid = await boxes();
   expect(mid.actionsY).toBe(mid.zoneY);       // all three groups still share line 1
   expect(mid.paceY).toBe(mid.zoneY);
-  expect(mid.stabY).toBeGreaterThan(mid.zoneY!);  // stability is the only item taking a line
-  expect(mid.sepShown).toBe(false);             // nothing left to separate
 
   // The two segmented groups pair up from 880px down and stay paired to the narrowest phone: they
   // ask one question each and are read together, and the tighter padding below 610px is what pays
@@ -326,24 +321,16 @@ test('never opens the bar with the actions alone on a row', async ({ page }) => 
     // A bare arrival, so the strip still holds the two questions and the bar is group-less.
     await expect(page.getByTestId('setup-strip')).toBeVisible();
     const seen = await page.evaluate(() => {
-      const y = (s: string) => {
-        const b = document.querySelector(s)?.getBoundingClientRect();
-        return b ? Math.round(b.y + b.height / 2) : null;
-      };
       const el = document.querySelector('[data-testid="toolbar"]')!;
       const bar = el.getBoundingClientRect();
       const act = document.querySelector('[data-testid="toolbar"] .actions')!.getBoundingClientRect();
-      return { stabY: y('[data-testid="toolbar"] .stability'), actY: y('[data-testid="toolbar"] .actions'),
-               groups: !!document.querySelector('[data-testid="toolbar"] .zone-wrap'),
+      return { groups: !!document.querySelector('[data-testid="toolbar"] .zone-wrap'),
                // against the bar's OWN padding, not a constant: it is `--s5` at the widest tier and
                // `--s2` at the narrowest, so a fixed slack passes one tier and fails another.
                actRightGap: Math.round(bar.right - parseFloat(getComputedStyle(el).paddingRight)
                                        - act.right) };
     });
     expect(seen.groups, `the bar drew its groups beside the strip at ${width}px`).toBe(false);
-    expect(seen.stabY).not.toBeNull();
-    expect(seen.stabY, `the actions lead the bar alone at ${width}px, leaving its left half empty`)
-      .toBeLessThanOrEqual(seen.actY!);
     // and wherever they land they sit flush against the bar's trailing edge, as at every other width
     expect(seen.actRightGap, `the actions left the right edge at ${width}px`).toBeLessThanOrEqual(1);
   }
@@ -686,13 +673,13 @@ test('Easy ranks by its own score', async ({ page }) => {
 test('the runner can opt stability into the score without losing the story', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /^Easy/ }).click();
-  await page.getByRole('checkbox', { name: /Stability matters to me/ }).check();
+  await page.getByRole('button', { name: 'Stability' }).click();
   await expect(page).toHaveURL(/stab=1/);
   // the preference is the runner's, not the search's, so the story stays marked through it
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
   await page.getByRole('radio', { name: /All/ }).click();
   await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: /Stability matters to me/ })).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Stability' })).toHaveAttribute('aria-pressed', 'true');
 });
 
 // Tempo and Race in the browser, for the same reason Easy is here: the score column is resolved in
@@ -727,7 +714,7 @@ test('Race applies no filter at all, and the stability preference does not move 
 
   // Race declares no stable variant, so the preference is inert on it — the Toolbar says so, and
   // this is where that claim meets the rendered table.
-  await page.getByRole('checkbox', { name: /Stability matters to me/ }).check();
+  await page.getByRole('button', { name: 'Stability' }).click();
   await expect(page).toHaveURL(/stab=1/);
   await expect(rows.first()).toContainText('racer');
   await expect(score(0)).toHaveText('76.52');
