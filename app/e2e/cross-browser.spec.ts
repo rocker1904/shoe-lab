@@ -198,6 +198,43 @@ test('paints a focus indicator on a native checkbox', async ({ page }) => {
   expect(parseFloat(at.outlineWidth)).toBeGreaterThan(0);
 });
 
+/**
+ * Whether a browser scrolls the thing it has just focused is not a shared behaviour, which is why
+ * the app does it itself (`lib/focus-scroll.ts`, docs/app.md §Theming). WebKit left **24
+ * consecutive** sidebar stops below the foot of the window with the sidebar still at `scrollTop: 0`,
+ * and Firefox declines to scroll a control that is already partly visible, so the row at the foot of
+ * a list kept focus with its ring below the clip edge. Chromium does both correctly and is exactly
+ * why neither was noticed — so this belongs in the file the other two engines run.
+ *
+ * The window is deliberately short: the sidebar has to overflow for the walk to mean anything.
+ */
+test('keeps every sidebar tab stop on screen and clear of the clip edge', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 500 });
+  await page.goto('/');
+
+  const bad: string[] = [];
+  for (let i = 0; i < 40; i++) {
+    await page.keyboard.press('Tab');
+    const stop = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      const port = el?.closest('.sidebar');
+      // Firefox gives a scrollport a tab stop of its own; the port is not a control in it.
+      if (!el || !port || el === port) return null;
+      const b = el.getBoundingClientRect(), p = port.getBoundingClientRect();
+      return {
+        name: el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim() ?? el.tagName,
+        offscreen: b.bottom <= 0 || b.top >= window.innerHeight,
+        slack: Math.round(Math.min(b.top - p.top, p.bottom - b.bottom)),
+      };
+    });
+    if (!stop) continue;
+    if (stop.offscreen) bad.push(`${stop.name}: focused below the fold`);
+    // 4px is the ring's own outer radius, which is what the port reserves.
+    if (stop.slack < 4) bad.push(`${stop.name}: ${stop.slack}px inside the port, ring clipped`);
+  }
+  expect(bad, 'the sidebar did not follow focus').toEqual([]);
+});
+
 test('renders the filter sidebar and the table together', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');

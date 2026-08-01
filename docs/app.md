@@ -2115,6 +2115,28 @@ added. The three lists give the inline room back with a negative margin of their
 own, and the sidebar's takes it out of `FilterSidebar`'s padding, so nothing
 moved on screen.
 
+**Reserving the room is only half of it: the app scrolls focus into that room
+itself.** A ring is worth what the browser's willingness to scroll the thing
+wearing it makes it worth, and on the same 90-stop walk the three engines do
+three different things. WebKit **never scrolls the sidebar at all** — it is
+sticky with an `overflow-y` of its own, and before the page has been scrolled its
+box runs 130px past the foot of the window, so 24 consecutive stops (16 in the
+phone drawer) were focused with nothing visible anywhere on screen. Firefox
+declines to scroll a control that is already *partly* visible and ignores
+`scroll-padding` when it does scroll, so the row at the foot of a list kept focus
+with 7px of itself, and all of its ring, past the clip edge. Chromium honours
+both, which is why neither was noticed. `lib/focus-scroll.ts` therefore computes
+the scroll rather than asking for one — `scrollIntoView` is the same heuristic
+under another name and reproduces the Firefox half — and reads the room to leave
+back off the port's own `scroll-padding`, so `--ring-room` stays the one home for
+the number. One delegated `focusin` listener, gated on `.scrollport`: nothing
+outside a port is touched, because the table and the chrome are the browser's to
+scroll and a second opinion there is how a page starts fighting its own sticky
+header. There is no animation to reduce — every engine's own focus scroll is
+instant, and a Tab held down through 45 stops would otherwise queue 45
+animations. `cross-browser.spec.ts` walks the sidebar in the two engines that get
+it wrong.
+
 The first exemption is **table rows**: a `box-shadow` ring draws outside the box, and
 a row spans the full table width and abuts its neighbours with no gap, so an
 outside ring paints over both of them and inside the phone panel

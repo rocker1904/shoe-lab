@@ -23,6 +23,7 @@
   import Toolbar from './components/Toolbar.svelte';
   import { TABLE_ANCHOR_ID } from './lib/anchor';
   import { exportCsv } from './lib/csv-export';
+  import { keepFocusInScrollports } from './lib/focus-scroll';
   import { ICON_PATHS } from './components/icons';
   import { indexTests } from './lib/dataset';
   import { debounce } from './lib/debounce';
@@ -123,6 +124,14 @@
    * `matchMedia` on the same string: one boundary, one home (docs/app.md §Where the utilities live).
    */
   $effect(() => { if (!mobile) showFilters = false; });
+
+  /**
+   * The app owns its focus ring, so it owns keeping the thing wearing it on screen: WebKit never
+   * scrolls the sidebar as Tab walks it and Firefox stops short of the room the ring needs, both
+   * measured on the same walk (`lib/focus-scroll.ts`, docs/app.md §Theming). One delegated listener
+   * for every scrollport, added here because this is the component that owns the page.
+   */
+  $effect(() => keepFocusInScrollports());
 
   let drawerEl = $state<HTMLElement>();
   /** Everything inside the drawer that can hold focus, in document order. */
