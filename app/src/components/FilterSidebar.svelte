@@ -298,7 +298,17 @@
      and costs the reading of the units in brackets after it. */
   h3 { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
        color: var(--text-dim); margin: 0 0 var(--s2); }
-  .search { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box; }
+  /* `--t-sm` stated rather than left to the UA: `input[type=search]` is 13.33px in Blink and Gecko
+     and 16px in WebKit, so this box was a fifth of a size bigger in Safari than every other field
+     beside it. The touch tier then pays 16px for the reason `RangeFilter.svelte` states and
+     docs/app.md §Filters owns — and this is the box `openFilters()` hands focus to, so it is the
+     one the rule was written for. */
+  .search { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm);
+            background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box;
+            font-size: var(--t-sm); }
+  @media (hover: none) {
+    .search { font-size: 16px; }
+  }
   .chips { display: flex; gap: var(--s1); margin-top: var(--s1); }
   .chips button { padding: var(--s1) var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface); color: var(--text-dim); cursor: pointer; }
   .metric { display: flex; flex-direction: column; gap: var(--s1); }

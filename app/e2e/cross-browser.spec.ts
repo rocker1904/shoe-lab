@@ -354,3 +354,41 @@ test('lays the expanded row out at every container tier without overflowing', as
     expect(Math.abs(edges.prose - edges.body), `prose overshoots at ${width}px`).toBeLessThanOrEqual(1);
   }
 });
+
+/**
+ * iOS Safari zooms the whole viewport when a focused input's text is under 16px and there is no way
+ * back out but a pinch, so every text input the drawer holds pays 16px on the touch tier — the rule
+ * `RangeFilter.svelte` already stated for its number fields alone (docs/app.md §Filters).
+ *
+ * It runs HERE rather than in `smoke.spec.ts` because the sizes differ by ENGINE: the shoe search
+ * declares no size of its own, and WebKit's UA sheet gives `input[type=search]` 16px where Blink and
+ * Gecko give 13.33px — so a one-engine check reads clean on the one engine the rule exists for.
+ * A touch CONTEXT, not a narrow viewport: the query is about the pointer, and the suite's default
+ * context reports `hover: hover` at every width.
+ */
+test('sets every drawer text input at or above the iOS zoom threshold', async ({ browser, browserName, baseURL }) => {
+  const context = await browser.newContext({
+    baseURL, viewport: { width: 390, height: 844 }, hasTouch: true,
+    // Firefox refuses `isMobile` outright; `hasTouch` alone reaches `hover: none` there.
+    ...(browserName === 'firefox' ? {} : { isMobile: true }),
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  expect(await page.evaluate(() => matchMedia('(hover: none)').matches),
+    'the context is not on the touch tier, so this asserts nothing').toBe(true);
+
+  // Every one of the three, reached the way a runner reaches them: the drawer, the brand list
+  // inside it, and the add-filter dialog it opens.
+  await page.getByRole('button', { name: 'Filters' }).click();
+  await page.locator('details[aria-label="Brand"] summary').click();
+  await page.getByRole('button', { name: 'Add filter' }).click();
+  await expect(page.getByRole('dialog', { name: 'Add filter' })).toBeVisible();
+
+  const small = await page.evaluate(() => [...document.querySelectorAll('input')]
+    .filter((n) => n.type !== 'checkbox' && n.offsetParent !== null)
+    .map((n) => ({ label: n.getAttribute('aria-label') ?? n.type, px: parseFloat(getComputedStyle(n).fontSize) }))
+    .filter((n) => n.px < 16));
+  expect(small, 'a focused input this small zooms iOS Safari with no way back out').toEqual([]);
+
+  await context.close();
+});

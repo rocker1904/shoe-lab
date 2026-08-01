@@ -276,6 +276,24 @@ and they step back up to **16px under `@media (hover: none)`** — iOS Safari
 zooms the whole viewport for a focused input smaller than that, with no way out
 but a pinch, and the drawer is exactly where it bites.
 
+**That rule is the whole drawer's, not the number fields'.** It reached the two
+`RangeFilter` bounds and none of the three search boxes — including the one
+`openFilters()` hands focus to, which is the exact trigger: tapping **Filters**
+programmatically focused a 13.33px field. All four step to 16px on the touch tier
+now, each in its own block, because no specificity lets one rule in `app.css`
+beat four scoped ones. The guard is what stops a fifth forgetting it:
+`cross-browser.spec.ts` › *sets every drawer text input at or above the iOS zoom
+threshold* opens the drawer, the brand list and the Add-filter dialog in a **touch
+context** and enumerates every visible input, so a box added later fails the build
+rather than the phone.
+
+Two of those boxes also needed an explicit size at rest. `input[type=search]`
+declares no `font-size` here and the UA sheets disagree — **16px in WebKit against
+13.33px in Blink and Gecko** — so the shoe search and the Add-filter search set a
+fifth larger in Safari than the fields beside them, and were safe there by
+accident rather than by rule. Both state `--t-sm` now, which is what makes the
+touch step mean the same thing in three engines.
+
 **Clearing a value and removing a row are different actions.** Clearing empties
 both bounds in one click and deletes the key outright — leaving `{}` behind
 would mean `isDefaultView` never returned true again and the toolbar could

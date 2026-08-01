@@ -42,6 +42,11 @@
   summary::-webkit-details-marker { display: none; }
   .q { width: 100%; box-sizing: border-box; margin-top: var(--s1); padding: var(--s1) var(--s2);
        border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font-size: var(--t-sm); }
+  /* The touch tier pays 16px for the reason `RangeFilter.svelte` states and docs/app.md §Filters
+     owns: this box lives inside the drawer, so it is one of the four that has to. */
+  @media (hover: none) {
+    .q { font-size: 16px; }
+  }
   /* `.scrollport` in `app.css` reserves the focus ring's room; the negative inline margin gives it
      back to the section's own padding, so the rows stay flush with the search box above them
      (docs/app.md §Theming). */

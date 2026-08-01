@@ -128,7 +128,15 @@
     padding: var(--s4); background: var(--surface); color: var(--text);
     border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-dialog);
   }
-  .q { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); }
+  /* `--t-sm` stated rather than left to the UA: `input[type=search]` is 13.33px in Blink and Gecko
+     and 16px in WebKit, so an undeclared box is a fifth of a size bigger in Safari than anywhere
+     else. The touch tier then pays 16px for the reason `RangeFilter.svelte` states and
+     docs/app.md §Filters owns — the dialog opens from the drawer, so it is one of the four. */
+  .q { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm);
+       background: var(--surface); color: var(--text); font-size: var(--t-sm); }
+  @media (hover: none) {
+    .q { font-size: 16px; }
+  }
   /* `overflow-y: auto` computes `overflow-x` to `auto` as well, so this is a scrollport on both
      axes and a row flush against its edge has its outside ring cropped: `.scrollport` in `app.css`
      is where the room is reserved, for this list and the three others (docs/app.md §Theming). The
