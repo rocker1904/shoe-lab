@@ -24,7 +24,7 @@
   </summary>
   <!-- Fifty brands in a 14rem scroll box is a list you scroll rather than read. -->
   <input class="q" type="search" aria-label="Search brands" placeholder="Search brands…" bind:value={query} />
-  <ul>
+  <ul class="scrollport">
     {#each shown as [brand, n] (brand)}
       <!-- A brand at zero stays, greyed and still clickable: the list must not reflow under the
            cursor, and a 0 is an answer (docs/app.md §Filters). -->
@@ -42,7 +42,11 @@
   summary::-webkit-details-marker { display: none; }
   .q { width: 100%; box-sizing: border-box; margin-top: var(--s1); padding: var(--s1) var(--s2);
        border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font-size: var(--t-sm); }
-  ul { list-style: none; padding: var(--s1) 0 0; margin: 0; max-height: 14rem; overflow-y: auto; }
+  /* `.scrollport` in `app.css` reserves the focus ring's room; the negative inline margin gives it
+     back to the section's own padding, so the rows stay flush with the search box above them
+     (docs/app.md §Theming). */
+  ul { list-style: none; margin: var(--s1) calc(-1 * var(--ring-room)) 0; max-height: 14rem;
+       overflow-y: auto; }
   li { font-size: var(--t-sm); padding: 0.1rem 0; }
   li.empty { color: var(--text-dim); }
   .none { margin: var(--s2) 0 0; font-size: var(--t-xs); color: var(--text-dim); }

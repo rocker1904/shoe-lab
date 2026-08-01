@@ -87,7 +87,7 @@
     <span><b>↓</b> lower is better</span>
     <span>no mark — neutral</span>
   </p>
-  <div class="list">
+  <div class="list scrollport">
     {#each grouped as [group, offers] (group)}
       <h4>{group}</h4>
       {#each offers as o (o.key)}
@@ -129,14 +129,13 @@
     border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-dialog);
   }
   .q { padding: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); }
-  /* The padding is room for the focus ring, not air: `overflow-y: auto` computes `overflow-x` to
-     `auto` as well, so this is a scrollport on both axes and a row flush against its edge has its
-     4px outside ring cropped (docs/app.md §Theming). The negative inline margin gives the room back
-     to the dialog's own padding, so the rows sit exactly where they did; the block padding is left
-     to stand, where it reads as part of the gap. `scroll-padding` is what keeps the room when Tab
-     scrolls a row into view — without it the browser aligns the row flush and clips it again. */
+  /* `overflow-y: auto` computes `overflow-x` to `auto` as well, so this is a scrollport on both
+     axes and a row flush against its edge has its outside ring cropped: `.scrollport` in `app.css`
+     is where the room is reserved, for this list and the three others (docs/app.md §Theming). The
+     negative inline margin gives that room back to the dialog's own padding, so the rows sit
+     exactly where they did; the block room is left to stand, where it reads as part of the gap. */
   .list { overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
-          margin-inline: calc(-1 * var(--s1)); padding: var(--s1); scroll-padding: var(--s1); }
+          margin-inline: calc(-1 * var(--ring-room)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   /* Separated, and the same rule and the same margin as the column picker's: the three clauses are
      one sentence and read as three headings without them. */

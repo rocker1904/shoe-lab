@@ -707,35 +707,77 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
 });
 
 /**
- * A focus ring drawn as an outside `box-shadow` needs 4px of room outside the element, and both
- * metric lists are scrollports — `overflow-y: auto` computes `overflow-x` to `auto` as well, so a
- * row flush against the port's edge has its ring clipped on the sides and at whichever end it is
- * scrolled to (docs/app.md §Theming). Measured rather than asserted from the CSS, because the slack
- * is the sum of the port's padding and the row's own inset.
+ * A focus ring drawn as an outside `box-shadow` needs 4px of room outside the element, and **every**
+ * scrollport holding a focusable has to reserve it — `overflow-y: auto` computes `overflow-x` to
+ * `auto` as well, so a control flush against the port's edge has its ring clipped on the sides and
+ * at whichever end it is scrolled to (docs/app.md §Theming). There are four, and the reservation is
+ * made once by `.scrollport` in `app.css`; this walks all four, because the way that rule was got
+ * wrong before was a list nobody had counted.
+ *
+ * Measured rather than asserted from the CSS, because the slack is the sum of the port's own
+ * padding and whatever inset its content carries. The second measurement focuses the last control
+ * in any port that actually overflows: that is the case `scroll-padding` buys, and it does not
+ * exist at rest.
  */
-test('leaves both metric lists room for the focus ring they draw', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+test('leaves every scrollport room for the focus ring it draws', async ({ page }) => {
+  // Short enough that the sidebar is forced to scroll, so the `scroll-padding` half is exercised
+  // rather than assumed: the 5-shoe fixture cannot fill a list on its own.
+  await page.setViewportSize({ width: 1440, height: 560 });
   await page.goto('/');
 
-  const slack = async (port: string, row: string) => page.evaluate(([p, r]) => {
-    const list = document.querySelector(p)!.getBoundingClientRect();
-    const el = document.querySelector(r)!.getBoundingClientRect();
-    return { left: Math.round(el.left - list.left), right: Math.round(list.right - el.right),
-             top: Math.round(el.top - list.top) };
-  }, [port, row]);
-
+  // Both `<details>` opened without a press: an outside `pointerdown` is a dismissal, so clicking
+  // one to open it would shut the other and the four could never be measured in one pass.
   await page.getByRole('button', { name: /^Add filter/ }).click();
-  const dialog = await slack('.dialog .list', '.dialog .list button');
-  await page.keyboard.press('Escape');
+  await page.evaluate(() => {
+    for (const d of document.querySelectorAll<HTMLDetailsElement>('details')) d.open = true;
+  });
 
-  await page.locator('details.picker summary').click();
-  const picker = await slack('.picker .list', '.picker .list input');
+  const ports = await page.evaluate(() => {
+    const out = [];
+    for (const el of document.querySelectorAll<HTMLElement>('*')) {
+      const cs = getComputedStyle(el);
+      if (!/auto|scroll/.test(cs.overflowX + ' ' + cs.overflowY)) continue;
+      const rows = [...el.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, summary, [tabindex]')];
+      if (!rows.length) continue;
+      const box = () => el.getBoundingClientRect();
+      // Opening the dialog pressed a button at the foot of the sidebar, which scrolled it: at rest
+      // means unscrolled, and the first row is only the top row from there.
+      el.scrollTop = 0;
+      const first = rows[0]!.getBoundingClientRect();
+      const b = box();
+      const port = {
+        name: el.getAttribute('id') ?? el.getAttribute('aria-label')
+          ?? el.closest('[aria-label]')?.getAttribute('aria-label') ?? el.tagName.toLowerCase(),
+        scrollPadding: cs.scrollPaddingTop,
+        rest: { left: Math.round(first.left - b.left), right: Math.round(b.right - first.right),
+                top: Math.round(first.top - b.top) },
+        scrolled: null as null | { top: number; bottom: number },
+      };
+      if (el.scrollHeight > el.clientHeight) {
+        const last = rows[rows.length - 1]!;
+        last.focus();
+        const a = box();
+        const r = last.getBoundingClientRect();
+        port.scrolled = { top: Math.round(r.top - a.top), bottom: Math.round(a.bottom - r.bottom) };
+      }
+      out.push(port);
+    }
+    return out;
+  });
+
+  // Enumerated rather than listed: the way this rule was got wrong was a scrollport nobody had
+  // counted, so a fifth one that forgets `.scrollport` has to fail here on the day it is added.
+  expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(4);
 
   // 4px is the ring's outer radius; anything less and it is drawn cropped.
-  for (const [name, s] of [['add-filter dialog', dialog], ['column picker', picker]] as const) {
-    expect(s.left, `${name}: ring clipped on the left`).toBeGreaterThanOrEqual(4);
-    expect(s.right, `${name}: ring clipped on the right`).toBeGreaterThanOrEqual(4);
-    expect(s.top, `${name}: ring clipped at the top`).toBeGreaterThanOrEqual(4);
+  for (const p of ports) {
+    expect(p.scrollPadding, `${p.name}: reserves nothing for a control Tab scrolls to`).toBe('4px');
+    expect(p.rest.left, `${p.name}: ring clipped on the left`).toBeGreaterThanOrEqual(4);
+    expect(p.rest.right, `${p.name}: ring clipped on the right`).toBeGreaterThanOrEqual(4);
+    expect(p.rest.top, `${p.name}: ring clipped at the top`).toBeGreaterThanOrEqual(4);
+    if (!p.scrolled) continue;
+    expect(p.scrolled.top, `${p.name}: ring clipped at the top once scrolled`).toBeGreaterThanOrEqual(4);
+    expect(p.scrolled.bottom, `${p.name}: ring clipped at the foot once scrolled`).toBeGreaterThanOrEqual(4);
   }
 });
 

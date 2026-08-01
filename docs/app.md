@@ -2091,17 +2091,31 @@ their own, and a global rule would have to be undone in more places than it
 applied. The cost of that choice is that a button which simply omits it renders
 as a bare UA control among styled ones — which is exactly what it looks like.
 
-**One focus ring, with one exemption.** A 2px surface-coloured ring inside a
+**One focus ring, with two exemptions.** A 2px surface-coloured ring inside a
 2px accent ring, drawn with `box-shadow` so both rings are painted rather than
 transparent — a plain `outline-offset` shows whatever is behind, and on a chip
 carrying the wash's peak alpha the ring would sit accent-on-accent and nearly
 vanish. The rule lives once in `app.css` inside `:where()`, so it carries no
-specificity. Because it is drawn **outside** the element, every scrollport a
-focusable thing sits in has to leave 4px of room for it: both metric lists take
-`padding` plus a matching `scroll-padding` — the padding for a row at rest, the
-`scroll-padding` for one Tab has just scrolled flush against the edge — and
-`smoke.spec.ts` measures the slack rather than reading the CSS back.
-The exemption is **table rows**: a `box-shadow` ring draws outside the box, and
+specificity.
+
+Because it is drawn **outside** the element, **every scrollport a focusable
+thing sits in reserves the room for it, and the reservation is made in one
+place**: `--ring-room` is the ring's own outer spread, the ring reads it so the
+two cannot drift, and `.scrollport` in `app.css` pays it as `padding` plus a
+matching `scroll-padding` — the padding for a control at rest, the
+`scroll-padding` for one Tab has just scrolled flush against the edge. A
+scrollport carries that class; it does not restate the number. There are four —
+the column picker's list, the add-filter dialog's list, the brand list and the
+sidebar — and the rule was originally written per list against a spec that named
+**two**, so the two nobody had counted reserved nothing and clipped the ring on
+every row Tab scrolled to. `smoke.spec.ts` therefore **enumerates** every
+scrolling box that holds a focusable and measures its slack rather than reading
+the CSS back, so a fifth scrollport that forgets the class fails on the day it is
+added. The three lists give the inline room back with a negative margin of their
+own, and the sidebar's takes it out of `FilterSidebar`'s padding, so nothing
+moved on screen.
+
+The first exemption is **table rows**: a `box-shadow` ring draws outside the box, and
 a row spans the full table width and abuts its neighbours with no gap, so an
 outside ring paints over both of them and inside the phone panel
 `overflow-y: clip` cuts it off at the first and last row. Rows draw an **inset**
@@ -2113,6 +2127,22 @@ the middle — because a shoe is its name row *and* its chip row, `aria-expanded
 sits on the first of them, and a ring round that one alone stops halfway down the
 thing it describes. Two outlines would draw a line between the rows and read as
 two rings.
+
+The second is a **native checkbox**, and it is the one control the app's ring
+cannot reach at all. WebKit paints no `box-shadow` on a checkbox's rendered
+control, so the rule's `outline: none` half landed and its `box-shadow` half did
+not: in Safari **every checkbox in the app had no focus indicator whatsoever** —
+four on the top-level walk, thirteen of fourteen in the brand list, and twenty
+consecutively in the column picker, on the one control whose whole job is
+choosing what the table shows. The rule excludes `input[type="checkbox"]`, which
+gives the UA outline back. It is excluded in **every** engine rather than only
+where the shadow fails: Chromium and Firefox did paint the shadow there, and an
+engine-conditional ring would be two rules to keep true instead of one.
+`cross-browser.spec.ts` asserts the outline in the two engines
+`smoke.spec.ts` never runs, because whether a shadow reaches a native control is
+an engine question. The exclusion is written inside `:where()` so it adds no
+specificity — `input[type="checkbox"]` in a bare `:not()` would lift the whole
+rule above the component rules it has to lose to.
 
 **`--text-dim` is held to 4.5:1 against every surface it is set on**, not against
 one representative surface: `--surface`, `--bg`, `--chrome`, `--well`,

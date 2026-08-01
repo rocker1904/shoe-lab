@@ -434,7 +434,7 @@
   <!-- The handler is a key trap for the panel below 800px, not a control: giving this box a role
        would announce a landmark that is only a drawer at one width. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="sidebar" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
+  <div class="sidebar scrollport" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
        style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
     <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>

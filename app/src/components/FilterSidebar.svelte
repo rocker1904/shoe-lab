@@ -285,7 +285,11 @@
 </aside>
 
 <style>
-  aside { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+  /* `--s4` LESS the room the scrollport around this now reserves for the focus ring (`.scrollport`
+     in `app.css`), so the controls keep the 16px inset they have always had while the port owns the
+     outer 4px of it. Written as the arithmetic rather than as 12px, because the two halves are one
+     measurement and a literal here drifts the moment the ring's spread does (docs/app.md §Theming). */
+  aside { padding: calc(var(--s4) - var(--ring-room)); display: flex; flex-direction: column; gap: var(--s3); }
   /* Two heading styles in one column, and both are deliberate. These `h3`s are uppercase micro-
      labels naming a SECTION of the sidebar — Search, Brand, Plate — and they set at the same size
      and tracking as the setup strip's group labels, because they do the same job. The metric rows

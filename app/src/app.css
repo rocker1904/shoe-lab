@@ -128,23 +128,56 @@ body { margin: 0; background: var(--bg); color: var(--text); }
  * (`WASH_PEAK` in lib/wash.ts owns that number). Same trick the phone's sticky header uses on its
  * own border-spacing gaps (docs/app.md §Theming).
  *
- * It is drawn OUTSIDE the element, so every scrollport a focusable thing sits in has to leave 4px
- * of room for it — the two metric lists say so where they pay it.
+ * It is drawn OUTSIDE the element, so every scrollport a focusable thing sits in has to leave room
+ * for it. `--ring-room` is that distance, and the ring's own outer spread reads it, so the number
+ * exists once: the rule below reserves exactly what the ring paints and the two cannot drift.
  *
  * `:where()` keeps specificity at zero, which means it loses to any component rule naming the same
  * element — so the one per-component `outline` rule this replaces, on the setup strip's cards, is
  * DELETED by the task that owns it rather than left to be overridden. The other two are the table
  * rows below, and those are kept on purpose.
  *
- * `:not(tr)` is the exemption, and it is deliberate rather than an omission. A `box-shadow` ring is
- * drawn OUTSIDE the element; a row spans the full width of the table and abuts the rows above and
- * below it with no gap, so an outside ring paints over both of them, and inside the phone's panel
- * `overflow-y: clip` cuts it off entirely at the first and last row. Rows draw an INSET ring in
- * their own components instead — an outline on the desktop, where a shoe is one row, and inset
- * shadows on the phone, where a shoe is two and the ring has to span both (docs/app.md §Theming).
+ * `:not(tr)` is the first exemption, and it is deliberate rather than an omission. A `box-shadow`
+ * ring is drawn OUTSIDE the element; a row spans the full width of the table and abuts the rows
+ * above and below it with no gap, so an outside ring paints over both of them, and inside the
+ * phone's panel `overflow-y: clip` cuts it off entirely at the first and last row. Rows draw an
+ * INSET ring in their own components instead — an outline on the desktop, where a shoe is one row,
+ * and inset shadows on the phone, where a shoe is two and the ring has to span both
+ * (docs/app.md §Theming).
+ *
+ * A NATIVE CHECKBOX is the second, and it is the one place the app's ring cannot reach: WebKit
+ * paints no `box-shadow` on a checkbox's rendered control, so the `outline: none` half of this rule
+ * landed and the `box-shadow` half did not, leaving every checkbox in the app with no focus
+ * indicator at all in Safari — 20 consecutive stops in the column picker. It keeps the UA outline
+ * instead, in EVERY engine rather than only where the shadow fails, because one rule that all three
+ * engines follow is worth more than a ring that matches on two of them (docs/app.md §Theming).
+ * The exclusion is wrapped in `:where()` so it adds no specificity: `input[type='checkbox']` inside
+ * a bare `:not()` would raise this rule above the component rules it must lose to.
  */
-:root { --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
-:where(a, button, input, select, textarea, summary, [tabindex]):not(tr):focus-visible {
+:root { --ring-room: 4px; --focus-ring: 0 0 0 2px var(--surface), 0 0 0 var(--ring-room) var(--accent); }
+:where(a, button, input, select, textarea, summary, [tabindex]):not(tr, :where(input[type='checkbox'])):focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/**
+ * The other half of the same fact: a ring painted outside the element is clipped by any scrollport
+ * that reserves no room for it. `padding` is the room for a control at rest and `scroll-padding` is
+ * the room for one Tab has just scrolled flush against the edge — both are needed and neither
+ * substitutes for the other.
+ *
+ * ONE rule rather than one per list, because the way this was got wrong was arithmetic: the spec
+ * named two lists, the app had four, and the two nobody had counted (the brand list and the
+ * sidebar) reserved nothing. A scrollport carries this class and pays the reservation from here;
+ * `smoke.spec.ts` enumerates every scrolling box holding a focusable and fails on one that does not.
+ *
+ * `border-box`, so a port that states a `max-height` still measures that tall with the room inside
+ * it. Where the 4px must not move the content — the two metric lists and the brand list — the
+ * component gives it back with a negative inline margin of its own, which is a layout decision
+ * about that list rather than part of the reservation.
+ */
+:where(.scrollport) {
+  box-sizing: border-box;
+  padding: var(--ring-room);
+  scroll-padding: var(--ring-room);
 }

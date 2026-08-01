@@ -132,7 +132,7 @@
       <span><b>↓</b> lower is better</span>
       <span>no mark — neutral</span>
     </p>
-    <div class="list">
+    <div class="list scrollport">
     {#each FIXED as [key, label] (key)}
       <label>
         <input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} />
@@ -219,10 +219,10 @@
      (docs/app.md §Stacking order). `min-width: 0` is what lets the left/right pair size the box —
      a min-width is applied last and the 20rem would otherwise win. */
   @media (max-width: 359.98px) { .panel { left: var(--s2); width: auto; min-width: 0; } }
-  /* Padding as room for the focus ring, and the same treatment as the add-filter dialog's list,
-     which owns the reasoning. */
+  /* `.scrollport` in `app.css` pays the ring's room; the negative margin gives that room back to
+     the panel's own padding, so the rows sit exactly where they did (docs/app.md §Theming). */
   .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
-          margin-inline: calc(-1 * var(--s1)); padding: var(--s1); scroll-padding: var(--s1); }
+          margin-inline: calc(-1 * var(--ring-room)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }
   /* Separated, and the same rule and the same margin as the add-filter dialog's: the three clauses

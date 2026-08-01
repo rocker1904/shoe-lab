@@ -157,6 +157,47 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
   await expect(panel).toBeHidden();
 });
 
+/**
+ * The one control the app's own focus ring cannot reach. `app.css` paints the ring with a
+ * `box-shadow`, and WebKit draws no shadow on a native checkbox's rendered control — so the
+ * `outline: none` half of that rule landed and the shadow half did not, leaving every checkbox in
+ * the app with no focus indicator at all in Safari, twenty of them consecutively inside the column
+ * picker. The exemption keeps the UA outline in EVERY engine (docs/app.md §Theming), which is why
+ * this asserts an outline rather than "a shadow, or an outline in WebKit".
+ *
+ * Driven by Tab: `:focus-visible` does not apply to a programmatic focus after a pointer press, and
+ * a ring measured that way reads as missing on a control that has one.
+ */
+test('paints a focus indicator on a native checkbox', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  await page.locator('details.picker summary').focus();
+  await page.keyboard.press('Enter');
+  // Up to three, because Firefox gives a scrollport a tab stop of its own and the list is one
+  // (finding 0029 — UA behaviour, not the app's). The first checkbox is the stop under test.
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press('Tab');
+    if (await page.evaluate(() => document.activeElement?.getAttribute('type') === 'checkbox')) break;
+  }
+
+  const at = await page.evaluate(() => {
+    const el = document.activeElement as HTMLElement;
+    const cs = getComputedStyle(el);
+    return {
+      tag: el.tagName.toLowerCase(), type: el.getAttribute('type'),
+      focusVisible: el.matches(':focus-visible'),
+      outlineStyle: cs.outlineStyle, outlineWidth: cs.outlineWidth,
+    };
+  });
+
+  expect(at.tag, 'Tab did not land on a checkbox — the picker markup has moved').toBe('input');
+  expect(at.type).toBe('checkbox');
+  expect(at.focusVisible, 'the keyboard walk did not produce :focus-visible').toBe(true);
+  expect(at.outlineStyle,
+    'no focus indicator on a checkbox — the UA outline was removed and nothing replaced it').not.toBe('none');
+  expect(parseFloat(at.outlineWidth)).toBeGreaterThan(0);
+});
+
 test('renders the filter sidebar and the table together', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
