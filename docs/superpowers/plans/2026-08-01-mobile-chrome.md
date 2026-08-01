@@ -18,13 +18,14 @@
 - **TDD**: failing test first, watch it fail for the stated reason, minimal implementation, watch it pass, commit.
 - **Commits**: concise single-line subject, no embedded measurements, trailer `Co-Authored-By: <authoring model> <noreply@anthropic.com>`.
 - **No live network in tests, ever.**
-- **Measure, do not reason.** Layout claims are settled by rendering at real widths and reading boxes out of the DOM, never by arguing about CSS. Drive Playwright from the repo root (`node_modules/playwright` is there); check Chromium **and Firefox**.
+- **Measure, do not reason.** Layout claims are settled by rendering at real widths and reading boxes out of the DOM, never by arguing about CSS. Drive Playwright from the repo root (`node_modules/playwright` is there); check Chromium **and Firefox**. The one-off rigs below are throwaway — write them in your session scratchpad, never in the repo, and never in `/tmp`. Each needs `npm -w app run dev` already serving — **read the port off the Vite banner rather than assuming 5173**, which it will not use if something else already holds it. Inside `page.evaluate`, await `document.fonts.ready.then(() => null)` rather than the bare promise: it resolves to a `FontFaceSet`, and the repo's own e2e cases say why in a comment.
 - **Tokens only.** No raw colour literals in a component style block — `tokens.test.ts` fails the build on one. Spacing uses `--s1..--s6`, radii `--r-sm/--r-md/--r-full`, type `--t-xs..--t-xl`.
 - **`--accent-solid`, not `--accent`, wherever `--on-accent` sits on a fill** (docs/app.md §Theming).
 - **Every icon-only control keeps the accessible name its worded form had.** No exceptions, at any width.
 - **The RunRepeat attribution stays a permanent, visible, immediately-clickable link** (docs/decisions.md §Be a good citizen toward RunRepeat). It may move within the chrome; it may never be hidden, deferred, put behind a menu, or reduced to an icon alone.
-- **Tier boundaries take the `.98` convention** so no width matches two tiers: `374.98px`, `429.98px`, `699.98px`. `800px` is the existing sidebar boundary and is reused **unchanged** — exactly 800 stays "mobile", as today.
-- **Gate before every push:** `npm run verify` (check:docs + typecheck + lint + test:coverage), then `npm -w app run e2e:docker`. The host lacks WebKit's system libraries, so `e2e:docker` is the sanctioned path and is the one that must be green.
+- **Tier boundaries take the `.98` convention** so no width matches two tiers: `429.98px`, `699.98px`. `800px` is the existing sidebar boundary and is reused **unchanged** — exactly 800 stays "mobile", as today. The spec's fourth boundary, `374.98px`, is **not** built: Task 7 shows by measurement that the pill padding has to step at `429.98px` instead, and two boundaries doing one job is what that task deletes.
+- **Never write a `min-width` twin of a `max-width` boundary.** The two are meant to be complements and are not: every fractional width between them matches neither, which browser zoom and Firefox's fractional viewport widths both produce. One query, and its complement is the unqueried default.
+- **Gate before every push:** `npm run verify` (check:docs + typecheck + lint + test:coverage), then `npm -w app run e2e:docker`. The host lacks WebKit's system libraries, so `e2e:docker` is the sanctioned path for the whole suite and is the one that must be green (docs/operations.md §The e2e run needs three browsers). **Every guard this plan adds lands in `smoke.spec.ts`, which `playwright.config.ts` runs in Chromium only** — the other two engines run `cross-browser.spec.ts` alone. So "e2e green" never means "checked in three engines", and the Firefox readings this plan asks for come from the hand-driven rigs, not from the suite. A single spec can be run on the host without Docker: `npm -w app run e2e -- --grep "<name>" --project=chromium` (Chromium and Firefox launch natively here; only WebKit does not).
 - **Feature work happens in a worktree** at `~/dev/shoe-lab-<branch>`, `npm install` inside it (do **not** symlink `node_modules` — it breaks the test runner via Vite's `server.fs.allow`). Land by rebase and fast-forward, no merge commits. Do **not** regenerate `data/` on the branch.
 
 ---
@@ -34,20 +35,22 @@
 **Created**
 - `app/src/components/AboutDialog.svelte` — the modal panel and all of its copy. One responsibility: render the explanation and dismiss itself.
 - `app/src/components/AboutDialog.test.ts` — its unit tests.
-- `app/src/components/icons.ts` — the four new inline SVG strings (copy, export, filters, columns) as typed constants, so the same glyph cannot drift between the two hosts that render it.
+- `app/src/components/icons.ts` — the new glyphs' path data (copy, export, filters, columns) as one typed constant, so a glyph cannot drift between the worded template and the icon one. Path data, never whole SVG documents: a whole document would need `{@html}`, and this app has exactly two sanctioned sinks (docs/app.md §Sanitised-HTML boundary).
 
 **Modified**
-- `app/src/components/Header.svelte` — banner below 800px; masthead unchanged above; hosts the worded utilities.
+- `app/src/components/Header.svelte` — banner below 800px; masthead unchanged above; hosts the worded utilities. Loses `theme`, `onexport` and `ontheme` in Task 5.
 - `app/src/components/Toolbar.svelte` — two rows below 700px, one above; stability pill; About button; hosts the icon utilities.
-- `app/src/Page.svelte` — owns `aboutOpen`, renders `AboutDialog`, passes the utilities snippet to both hosts.
+- `app/src/Page.svelte` — owns `aboutOpen`, renders `AboutDialog`, owns the utilities snippet and the `mobile` rune that decides which host mounts it, and owns the clipboard copy that used to live in the header.
 - `app/src/components/SetupStrip.svelte` — `?` popovers out, "New here?" line in.
-- `app/src/components/ColumnPicker.svelte` — the summary becomes an icon plus its badge below 700px.
+- `app/src/components/ColumnPicker.svelte` — the summary becomes an icon plus its badge below 800px.
+- `app/src/components/MonthPicker.svelte` — one z-index comment names the deleted component.
+- `app/src/components/ZoneToggle.svelte` — one media block, so the zone pills tighten with the story pills on the flush band (Task 7). Its buttons' padding is authored here, so no rule in `Toolbar.svelte` can reach it.
 - Tests: `Header.test.ts`, `Toolbar.test.ts`, `SetupStrip.test.ts`, `Page.test.ts`, `app/e2e/smoke.spec.ts`.
 - `docs/app.md` — the owning doc for every behaviour here.
-- `BACKLOG.md` — note that per-metric help would reintroduce `HelpPopover` from git history.
+- `BACKLOG.md` — the per-metric-help item argues from a mechanism this change deletes.
 
 **Deleted**
-- `app/src/components/HelpPopover.svelte` — no consumer survives Task 4.
+- `app/src/components/HelpPopover.svelte` — no consumer survives Task 4. It has no test file of its own; what covered it lives in `Toolbar.test.ts`, `SetupStrip.test.ts` and two `smoke.spec.ts` cases, all of which Tasks 3 and 4 rewrite.
 
 ---
 
@@ -70,6 +73,7 @@ Create `app/src/components/AboutDialog.test.ts`:
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import AboutDialog from './AboutDialog.svelte';
+import { SCORE_DEFS } from '../lib/score-defs';
 
 describe('AboutDialog', () => {
   it('is a modal dialog named for what it explains', () => {
@@ -119,6 +123,15 @@ describe('AboutDialog', () => {
     expect(link).toHaveAttribute('href', 'https://runrepeat.com/catalog/running-shoes');
   });
 
+  // The Stability section names Easy and Tempo by hand, where the caption it replaces derived them
+  // from the definitions that declare a stable variant. Prose is worth the trade — but a fourth
+  // stable story would leave the panel quietly claiming two, so the derivation becomes a guard
+  // instead of an interpolation, failing here with the sentence to edit rather than in a reader's
+  // face (docs/app.md §The story scores).
+  it('names by hand exactly the stories that declare a stable variant', () => {
+    expect(SCORE_DEFS.filter((d) => d.stable).map((d) => d.id)).toEqual(['easy', 'tempo']);
+  });
+
   it('closes on the Close button, on Escape and on an outside press', async () => {
     const onclose = vi.fn();
     render(AboutDialog, { props: { onclose } });
@@ -133,13 +146,16 @@ describe('AboutDialog', () => {
   });
 
   // `aria-modal` tells a screen reader the rest of the page is inert; without a trap, Tab walks
-  // straight out of it and the promise is a lie.
+  // straight out of it and the promise is a lie. The panel holds exactly two stops — the credit
+  // link and Close — so a Tab from either end has to land on the other rather than on `<body>`.
   it('traps Tab inside itself and opens on the Close button', async () => {
     render(AboutDialog, { props: { onclose: vi.fn() } });
     const close = screen.getByRole('button', { name: 'Close' });
     expect(close).toHaveFocus();
     await fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab' });
-    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: /RunRepeat/ }));
+    await fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(close);
   });
 });
 ```
@@ -171,8 +187,9 @@ Create `app/src/components/AboutDialog.svelte`. The dismissal, focus trap, `<bod
 
   onMount(() => {
     const opener = document.activeElement as HTMLElement | null;
-    // Close rather than the first link: it is the control every reader needs and the one a keyboard
-    // user is looking for, and starting there makes the trap's first Tab move forward into the copy.
+    // Close rather than the credit link: this panel is prose with two stops in it, and the one a
+    // reader arrives wanting is the way out. Landing on the link would put a keyboard user one Tab
+    // from leaving the page instead.
     closeBtn?.focus();
     return () => opener?.focus();
   });
@@ -275,11 +292,11 @@ Create `app/src/components/AboutDialog.svelte`. The dismissal, focus trap, `<bod
 - [ ] **Step 4: Run the test and watch it pass**
 
 Run: `npm -w app run test -- AboutDialog`
-Expected: PASS, 8 tests.
+Expected: PASS, 9 tests.
 
-- [ ] **Step 5: Prove the copy fits without scrolling, in a browser**
+- [ ] **Step 5: Write the fit rig — it is run in Task 2**
 
-jsdom has no layout, so this cannot be a unit test. Write `/tmp/about-fit.mjs` and run it from the repo root against `npm -w app run dev`:
+jsdom has no layout, so this cannot be a unit test. It also cannot be run yet: the only way into the panel is the button Task 2 adds. Write `about-fit.mjs` in your scratchpad now, so the bound is recorded with the copy it constrains, and run it at Task 2 Step 5.
 
 ```js
 import { chromium } from './node_modules/playwright/index.mjs';
@@ -289,8 +306,8 @@ const browser = await chromium.launch();
 for (const [width, height] of SIZES) {
   const page = await browser.newPage({ viewport: { width, height } });
   await page.goto('http://localhost:5173/');
-  await page.getByRole('button', { name: 'About' }).click();      // available from Task 2 on
   await page.evaluate(() => document.fonts.ready);
+  await page.getByRole('button', { name: 'About' }).click();      // available from Task 2 on
   const over = await page.evaluate(() => {
     const b = document.querySelector('[role="dialog"] .body');
     return Math.max(0, b.scrollHeight - b.clientHeight);
@@ -305,7 +322,9 @@ Expected once Task 2 has wired the button: `0` at 390×844 and 900×740. A few p
 
 - [ ] **Step 6: Document it**
 
-In `docs/app.md`, add a `## The About panel` section: what it owns (the whole explanation), that it is the `AddFilterDialog` pattern rather than `HelpPopover`'s, its two entry points (Task 2 and Task 4), and the one bound worth keeping — the body does not scroll at 390×844. Do not restate the copy; the component owns it.
+In `docs/app.md`, add a `## The About panel` section: what it owns (the whole explanation), that it is the `AddFilterDialog` pattern rather than `HelpPopover`'s, its two entry points (Task 2 and Task 4), and the one bound worth keeping — the body does not scroll at 390×844. Do not restate the copy; the component owns it. Say one more thing, because it is the deliberate loss in this task: the Stability sentence names Easy and Tempo **by hand** where the caption it replaces derived them, and the guard in `AboutDialog.test.ts` is what stops a fourth stable story making the panel false.
+
+Add one sentence to `docs/app.md` §Stacking order too: this dialog takes the add-filter dialog's own 35 over 32 rather than a layer of its own, because the two can never be open at once. The reason is the modality, not the drawer — above 800px the sidebar is permanent and both openers sit on surfaces that are simply part of the page. Each dialog lays its own scrim at 32 over everything else and traps Tab inside itself, so whichever is up puts the other's opener behind a scrim and out of reach.
 
 - [ ] **Step 7: Commit**
 
@@ -335,8 +354,11 @@ Add to `app/src/components/Toolbar.test.ts` — note `props` needs `onabout: vi.
 ```ts
 it('offers the way in before the controls that open panels', async () => {
   const onabout = vi.fn();
-  render(Toolbar, { props: { ...props, onabout } });
+  const { container } = render(Toolbar, { props: { ...props, onabout } });
   const about = screen.getByRole('button', { name: 'About' });
+  // First of the group, not merely present: it is the one a reader might need before they know
+  // what Filters and Columns are for.
+  expect(container.querySelector('.actions')!.firstElementChild).toBe(about);
   await fireEvent.click(about);
   expect(onabout).toHaveBeenCalled();
 });
@@ -352,9 +374,13 @@ it('offers About while the setup strip still holds the questions', () => {
 Add to `app/src/Page.test.ts` (inside the existing top-level describe that renders `Page`):
 
 ```ts
+// `getBy`, not `findBy`: `Page` renders synchronously here and the suite runs under fake timers,
+// so a `waitFor` would be an unnecessary dance with the clock. Every test in this file does the same.
 it('opens the About panel from the toolbar and hands focus back on close', async () => {
   render(Page, { props: { data } });
-  const about = await screen.findByRole('button', { name: 'About' });
+  const about = screen.getByRole('button', { name: 'About' });
+  // jsdom's synthetic click does not move focus the way a real one does, and the dialog hands
+  // focus back to whatever held it — so the trigger has to actually hold it first.
   about.focus();
   await fireEvent.click(about);
   expect(screen.getByRole('dialog', { name: 'About this table' })).toBeInTheDocument();
@@ -418,12 +444,16 @@ Expected: PASS.
 
 - [ ] **Step 5: Run Task 1 Step 5's fit check for real**
 
-Now the button exists, run `/tmp/about-fit.mjs` against `npm -w app run dev`. Expected `0` at 390×844 and 900×740.
+Now the button exists, run the `about-fit.mjs` rig against `npm -w app run dev`. Expected `0` at 390×844 and 900×740.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Document it**
+
+`docs/app.md` §The toolbar: `About` is the first of the actions group and is on the bar at **every** width, strip up or down — it explains the table rather than acting on it, so the one screen where a reader knows least is the one screen it must not be missing from. Name the entry point; §The About panel owns the panel itself.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add app/src app/src/Page.svelte docs/app.md
+git add app/src docs/app.md
 git commit -m "Put the way in on the bar that is always there"
 ```
 
@@ -433,16 +463,16 @@ git commit -m "Put the way in on the bar that is always there"
 
 **Files:**
 - Modify: `app/src/components/Toolbar.svelte`
-- Modify: `app/src/components/Toolbar.test.ts`, `app/src/Page.test.ts:138`, `app/e2e/smoke.spec.ts:689,695,730`
+- Modify: `app/src/components/Toolbar.test.ts`, `app/src/Page.test.ts:138`, `app/e2e/smoke.spec.ts:255,258,259,272,283,284,336,344,345,689,695,730`
 - Modify: `docs/app.md`
 
 **Interfaces:**
 - Consumes: `AboutDialog`'s Stability section (Task 1) — it is now the only place the caption's sentence lives.
-- Produces: the preference renders as `<button type="button" class="pill" aria-pressed={stability}>Stability</button>`. Its accessible name is exactly `Stability`. The props `stability: boolean` and `onstability: (v: boolean) => void` are unchanged, so `Page.svelte` needs no edit.
+- Produces: the preference renders as `<button type="button" class="s pill" aria-pressed={stability}>Stability</button>`, inside a `.seg.one` track so it reuses the groups' own paint. Its accessible name is exactly `Stability`. The props `stability: boolean` and `onstability: (v: boolean) => void` are unchanged, so `Page.svelte` needs no edit.
 
 - [ ] **Step 1: Write the failing tests**
 
-In `app/src/components/Toolbar.test.ts`, replace the whole `describe('Toolbar stability preference', ...)` block with:
+In `app/src/components/Toolbar.test.ts`, replace the whole `describe('Toolbar stability preference', ...)` block with the four tests below. That block holds the only `tick` caller in the file — **drop `import { tick } from 'svelte';` with it**, or lint fails on an unused import.
 
 ```ts
 describe('Toolbar stability preference', () => {
@@ -489,8 +519,8 @@ Expected: FAIL — `Unable to find role="button" and name "Stability"`.
 
 In `app/src/components/Toolbar.svelte`:
 
-1. Delete `SCORE_LABEL`, `SCORE_HELP`, the `HelpPopover` import, `STABLE_STORIES`, `listed` **only if nothing else uses them** — check first: `STABLE_STORIES`/`listed` also feed the caption, which is going, so both go with it.
-2. Replace the whole `.stability` block with the pill, inside a new `.setup` wrapper that also holds the two groups:
+1. Delete `SCORE_LABEL`, `SCORE_HELP`, the `HelpPopover` import, `STABLE_STORIES`, `listed` **only if nothing else uses them** — check first: `STABLE_STORIES`/`listed` also feed the caption, which is going, so both go with it. `STABLE_STORIES` is the file's only reader of `SCORE_DEFS`, so **that import goes too** — typecheck and lint both fail on it otherwise. `PRESETS` stays: `STORIES` still reads it.
+2. Replace the whole `.stability` block with the pill, inside a new `.setup` wrapper that also holds the two groups. The `.sep` hairline goes **here**, markup and rules together, rather than being left dangling for Task 7: with the pill joining the run, a line between the first and second of three groups reads as arbitrary, and no band below 800px has one (spec §Decisions — the group divider goes).
 
 ```svelte
 <div class="toolbar" class:no-groups={!showGroups} data-testid="toolbar">
@@ -525,12 +555,14 @@ In `app/src/components/Toolbar.svelte`:
   /* One control in a track sized for a group: the padding is the group's, so the pill lines up with
      the pills beside it rather than sitting in a tighter box of its own. */
   .seg.one { padding: 2px; }
+  /* Provisional until Task 7 lays the ladder over it — the wrapper has to exist for the pill to
+     stand in, and Task 7's `.setup` rule supersedes this one. */
   .setup { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
 ```
 
-4. Delete the now-dead `.stability`, `.pref`, `.stability label`, `.stability small`, and `.toolbar.no-groups .stability` rules, and the `@media (max-width: 879.98px) { .stability { … } }` block.
+4. Delete the now-dead rules: `.sep`, `.stability`, `.pref`, `.stability label`, `.stability small`, `.toolbar.no-groups .stability`, the whole `@media (max-width: 879.98px)` block (its two survivors, `.sep { display: none }` and `.actions { order: 1 }`, are about a hairline that is gone and an order Task 7 restates), and `.stability { order: 2 }` inside the 800px block. Svelte warns on an unused selector, so anything missed here shows up as a build warning rather than silently.
 
-- [ ] **Step 4: Update the three other call sites**
+- [ ] **Step 4: Update the other call sites — including two the checkbox's *element* is wired into**
 
 `app/src/Page.test.ts:138`:
 
@@ -538,17 +570,25 @@ In `app/src/components/Toolbar.svelte`:
     await fireEvent.click(screen.getByRole('button', { name: 'Stability' }));
 ```
 
-`app/e2e/smoke.spec.ts` — all three occurrences:
+`app/e2e/smoke.spec.ts` — the three `checkbox` queries at :689, :695 and :730. `.check()` is a checkbox verb and does not exist on a button, so :689 and :730 become:
 
 ```ts
   await page.getByRole('button', { name: 'Stability' }).click();
 ```
 
-and the assertion at line 695 becomes:
+and the assertion at :695 becomes:
 
 ```ts
   await expect(page.getByRole('button', { name: 'Stability' })).toHaveAttribute('aria-pressed', 'true');
 ```
+
+**Three further e2e sites read markup this task deletes** — the `.stability` box and the `.sep` hairline — and they are not rewritten until Task 8, so strip the readings out now rather than leaving the suite red across five tasks:
+
+- `smoke.spec.ts:258` — drop `stabY` from `boxes()`, and with it the assertion at :283 (`expect(mid.stabY).toBeGreaterThan(mid.zoneY!)`). Task 8 Step 4b rewrites what is left of that test.
+- `smoke.spec.ts:255,259` — drop `const sep = q(…)` and `sepShown` from the same `boxes()`, and with them **both** assertions that read it: :272 (`expect(wide.sepShown).toBe(true)`) and :284 (`expect(mid.sepShown).toBe(false)`). :272 is the one that goes red the instant the markup goes — a deleted `.sep` makes `sepShown` false at every width, so the wide case fails on the first run of this task's Step 5. :284 would still pass, and is deleted with it because it asserts nothing once there is no hairline to hide.
+- `smoke.spec.ts:336` — drop `stabY` from `seen`, and with it the two assertions at :344–:346 (`expect(seen.stabY).not.toBeNull()` and the one comparing it with `actY`). The remaining `groups` and `actRightGap` assertions still hold and still say something; Task 8 Step 4 replaces the test wholesale.
+
+Leave the surrounding prose comments alone — Task 8 rewrites both tests and their reasons together.
 
 - [ ] **Step 5: Run and watch them pass**
 
@@ -557,7 +597,7 @@ Expected: PASS across the suite. Then `npm -w app run e2e:docker` — expected g
 
 - [ ] **Step 6: Document it**
 
-In `docs/app.md` §Presets (or §The toolbar, whichever owns the preference today), replace the checkbox-and-caption description with the pill: what it is, why it is a pill (a third answer about the same table, standing with two groups), and that its explanation now lives in the About panel. Delete any sentence that describes the caption or the `?`.
+In `docs/app.md` §The toolbar — which is where the preference is described today, under **The score is explained where it is changed** — replace the checkbox-and-caption paragraph with the pill: what it is, why it is a pill (a third answer about the same table, standing with two groups), and that its explanation now lives in the About panel. Delete every sentence describing the caption, the `?`, or the label-versus-wrapping reasoning, which was about a checkbox. The group divider goes in the same edit: §The toolbar's opening sentence names it.
 
 - [ ] **Step 7: Commit**
 
@@ -573,16 +613,20 @@ git commit -m "Let the preference answer its question the way its neighbours do"
 **Files:**
 - Modify: `app/src/components/SetupStrip.svelte`
 - Delete: `app/src/components/HelpPopover.svelte`
-- Modify: `app/src/components/SetupStrip.test.ts`, `app/src/Page.svelte`
+- Modify: `app/src/components/SetupStrip.test.ts`, `app/src/Page.test.ts`, `app/src/Page.svelte`
+- Modify: `app/e2e/smoke.spec.ts` (two tests drive the popover this deletes: :42–:45 and the whole test at :575)
+- Modify: `app/src/components/MonthPicker.svelte` (a z-index comment names the deleted component)
 - Modify: `docs/app.md`, `BACKLOG.md`
 
 **Interfaces:**
 - Consumes: `AboutDialog` (Task 1), `aboutOpen` in `Page.svelte` (Task 2).
-- Produces: `SetupStrip` gains one prop, `onabout: () => void`. It renders a line spanning the grid, after the cards: `New here? <button class="link">Read about this table ↗</button>`.
+- Produces: `SetupStrip` gains one prop, `onabout: () => void`. It renders a line spanning the grid, after the cards: `New here? <button class="link">Read about this table</button>`.
+
+**Deviation from the spec, deliberately:** the spec writes the invite as `Read about this table ↗`. The arrow goes. `↗` already has one meaning in this chrome — it is the mark on the RunRepeat credit, where it says *this leaves the app* — and this button opens a modal. Reusing it here teaches the reader the arrow means nothing. The accent colour is what carries the affordance.
 
 - [ ] **Step 1: Write the failing test**
 
-In `app/src/components/SetupStrip.test.ts`, replace the test named `explains a group in a popover rather than a tooltip, and hands focus back on Escape` with:
+In `app/src/components/SetupStrip.test.ts`, add `onabout: vi.fn()` to the shared `props` object at the top of the file — the prop is required, so every other `render(SetupStrip, { props: { ...props } })` in the file is a typecheck error without it. Then replace the test named `explains a group in a popover rather than a tooltip, and hands focus back on Escape` with:
 
 ```ts
 // One body of explanation to keep true, offered in words on the screen where a first arrival is
@@ -597,12 +641,12 @@ it('invites the About panel instead of explaining each group itself', async () =
 });
 ```
 
-Add to `app/src/Page.test.ts`:
+Add the second entry point beside the first, in `app/src/Page.test.ts`'s `describe('Page', ...)`, next to the Task 2 case. **Not** `describe('Page setup strip', ...)`: that block renders `Page` but lives in `SetupStrip.test.ts`, not this file, and splitting the two entry points across two files is how one of them stops being checked.
 
 ```ts
 it('opens the About panel from the setup strip too', async () => {
   render(Page, { props: { data } });
-  await fireEvent.click(await screen.findByRole('button', { name: /Read about this table/ }));
+  await fireEvent.click(screen.getByRole('button', { name: /Read about this table/ }));
   expect(screen.getByRole('dialog', { name: 'About this table' })).toBeInTheDocument();
 });
 ```
@@ -617,7 +661,9 @@ Expected: FAIL — `Unable to find role="button" and name /Read about this table
 In `app/src/components/SetupStrip.svelte`: delete the `HelpPopover` import, the `ZONE_HELP` and `STORY_HELP` constants, and the two `<HelpPopover …/>` instances; add `onabout` to the props; add the line after the story cards, inside `.grid`:
 
 ```svelte
-    <p class="invite">New here? <button type="button" class="link" onclick={onabout}>Read about this table ↗</button></p>
+    <!-- No `↗`: that mark means "leaves the app" on the credit in the masthead, and this opens a
+         panel. One glyph, one meaning. -->
+    <p class="invite">New here? <button type="button" class="link" onclick={onabout}>Read about this table</button></p>
 ```
 
 ```css
@@ -636,82 +682,144 @@ Then delete the component and check nothing imports it:
 
 ```bash
 git rm app/src/components/HelpPopover.svelte
-grep -rn "HelpPopover" app/src || echo "no consumers left"
+grep -rn "HelpPopover" app/src app/e2e || echo "no consumers left"
 ```
+
+There is no `HelpPopover.test.ts` — the component never had one. Everything that covered it lives in the two suites this task edits and in the two e2e tests below, which is why the grep spans `app/e2e` as well.
+
+- [ ] **Step 3b: The two e2e tests that drive the popover**
+
+Neither is optional and neither is mentioned by the spec; both go red the moment the `?` stops existing.
+
+1. `smoke.spec.ts:42–:45`, inside `opens on the setup strip and resumes the previous session across a reload`. Four lines open `About Built for` and read the panel. Replace them with the invite, which is the same claim — the strip offers its explanation in one press and hands focus back on Escape — through the mechanism that replaced it:
+
+```ts
+  // one body of explanation, offered in words rather than in a punctuation mark
+  await strip.getByRole('button', { name: /Read about this table/ }).click();
+  await expect(page.getByRole('dialog', { name: 'About this table' })).toContainText('lab tests');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+```
+
+2. `smoke.spec.ts:575`, the whole test `sets the help popover in its own type, whatever it is mounted in`. **Delete it, and say why in the commit**: it guards a component that renders inside other people's boxes and therefore inherits their casing and tracking. The About panel is mounted on `<body>`, so it inherits nothing and there is no host typography to reset — the guard has no failure left to catch. Do not port it to `AboutDialog`; a test that can only pass is worse than no test.
 
 - [ ] **Step 4: Run and watch them pass**
 
-Run: `npm run verify`
-Expected: PASS. `MonthPicker.svelte:218` mentions `HelpPopover` in a comment about z-index — update that comment to name what it is actually comparing against now (the About dialog's 35, or whatever sibling it clears), because a pointer to a deleted component is doc rot.
+Run: `npm run verify`, then `npm -w app run e2e:docker`.
+Expected: both PASS. `MonthPicker.svelte:218` mentions `HelpPopover` in a comment about z-index — update that comment to name what it is actually comparing against now (the About dialog's 35, or whatever sibling it clears), because a pointer to a deleted component is doc rot.
 
 - [ ] **Step 5: Document it**
 
-`docs/app.md`: the strip no longer explains its own groups; the About panel does, and the strip invites it. `BACKLOG.md`: add a line under the per-metric-help item noting that `HelpPopover.svelte` was deleted in this change and would be recovered from git history rather than rewritten.
+`docs/app.md` §The setup strip: delete the `HelpPopover` paragraph and the typography-reset paragraph under it — both describe a component that no longer exists — and say instead that the strip invites the About panel, which owns the explanation.
+
+`BACKLOG.md` item 5 currently argues the per-metric help needs no invention because "the mechanism already exists… already used by the setup strip and the stability checkbox". That sentence is false after this task, so **rewrite it** rather than appending a correction beside it: the mechanism existed, was deleted here with its last consumer, and would be recovered from git history rather than written again. The rest of the item — where the copy lives, what it may claim, how far it reaches — is untouched.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A app/src docs/app.md BACKLOG.md
+git add -A app/src app/e2e docs/app.md BACKLOG.md
 git commit -m "Ask the newcomer in words, and delete the mechanism that whispered"
 ```
 
 ---
 
-### Task 5: The utilities render once and appear in two places
+### Task 5: The utilities are written once and mounted in the host their band owns
 
 **Files:**
 - Create: `app/src/components/icons.ts`
 - Modify: `app/src/Page.svelte`, `app/src/components/Header.svelte`, `app/src/components/Toolbar.svelte`
-- Modify: `app/src/components/Header.test.ts`, `app/src/components/Toolbar.test.ts`, `app/src/Page.test.ts`
+- Modify: `app/src/components/Header.test.ts`, `app/src/Page.test.ts`, `app/e2e/smoke.spec.ts`
 - Modify: `docs/app.md`
 
 **Interfaces:**
 - Consumes: nothing new.
-- Produces: `icons.ts` exports `COPY_ICON`, `EXPORT_ICON`, `FILTERS_ICON`, `COLUMNS_ICON` as `string` constants holding inline SVG markup. `Header` and `Toolbar` each take a `utilities?: Snippet` prop and render it. `Page.svelte` defines the snippet once and passes the same one to both.
+- Produces: `icons.ts` exports one `ICON_PATHS` object of `d` strings (geometry only — see Step 3; the `COPY_ICON`-style whole-SVG constants an earlier draft named are **not** what this builds, because whole SVG documents would need `{@html}`). `Header` and `Toolbar` each take a `utilities?: Snippet` prop and render it with `{@render utilities?.()}`. `Page.svelte` defines the snippet once and hands it to **exactly one** host.
 
-**Why two hosts:** above 800px the utilities are worded in the masthead; below it they are icons on the control row. Two different parents, so one node cannot serve both. The markup is written once and instantiated twice, with CSS hiding the wrong instance — `display: none` keeps the hidden one out of the accessibility tree, so no control ends up with two accessible names.
+**Deviation from the spec, deliberately:** the spec's §Where the utilities live says to instantiate the snippet in **both** hosts and hide the wrong one with `display: none`, on the grounds that `display: none` keeps the hidden copy out of the accessibility tree. That is true of the accessibility tree and beside the point everywhere else, and this plan renders into exactly one host instead. The reasoning is below; it is recorded here as a deviation because the spec otherwise wins (§Spec).
 
-- [ ] **Step 1: Write the failing tests**
+**Why two hosts, and why only one is ever mounted.** Above 800px the utilities are worded in the masthead; below it they are icons on the control row. Two different parents, so one node cannot serve both. The obvious move — render into both and hide one with `display: none` — is the one this app has already rejected once, for the two table renderings: *"only one may be in the DOM at a time: a `display: none` table is still queryable, and two tables' headers would be two answers to 'what are the columns?' for assistive tech and for the suite alike"* (docs/app.md §Two renderings, and only one of them mounted). The same is true of three buttons and a live region. So the band is asked as a **media query in the script**, exactly as `PHONE_QUERY` already is, and the snippet goes to one host:
+
+```svelte
+  /**
+   * Which host draws the utilities, asked in the script rather than as an `@media` rule, because
+   * **only one may be in the DOM at a time** — a `display: none` button is still a tab stop for
+   * anything that does not evaluate CSS, and two nodes answering to `Copy link` are two answers to
+   * "how do I share this?" (docs/app.md §Two renderings, and only one of them mounted).
+   * The query is the sidebar's own `max-width: 800px` inverted rather than a `min-width` twin: two
+   * queries that are meant to be complements drift apart at fractional widths, and this boundary is
+   * shared with the drawer.
+   */
+  const MOBILE_QUERY = '(max-width: 800px)';
+  let mobile = $state(untrack(() => window.matchMedia?.(MOBILE_QUERY).matches ?? false));
+  $effect(() => {
+    const mq = window.matchMedia?.(MOBILE_QUERY);
+    if (!mq) return;
+    const sync = () => (mobile = mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
+```
+
+The existing effect that closes the drawer on a resize watches the same string. **Fold it into the rune** rather than leaving two homes for one boundary — `$effect(() => { if (!mobile) showFilters = false; })` — and delete the `matchMedia('(max-width: 800px)')` block it replaces. Keep its comment: it explains why the width that stops being a drawer is the width that closes it.
+
+- [ ] **Step 1: Write the failing test**
 
 Add to `app/src/Page.test.ts`:
 
 ```ts
-// Two hosts, one visible at a time — but jsdom evaluates no media query, so what is asserted here
-// is the property that matters for assistive tech: exactly one node answers to each name once the
-// hidden host is discounted. `smoke.spec.ts` measures which one is on screen.
-it('gives every utility exactly one accessible name per host', async () => {
-  render(Page, { props: { data } });
-  await screen.findByRole('button', { name: 'Export CSV' });
+/**
+ * The band owns the host, and only one host is mounted. The suite's `matchMedia` stub never
+ * matches, so it always renders the desktop band — a mobile one has to be asked for outright.
+ */
+it('hands the utilities to the bar below 800px, and to nothing else', () => {
+  vi.spyOn(window, 'matchMedia').mockImplementation(((q: string) => ({
+    matches: q.includes('max-width: 800px'), media: q, onchange: null,
+    addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
+    addListener: () => {}, removeListener: () => {},
+  })) as typeof window.matchMedia);
+  const { container } = render(Page, { props: { data } });
+  const toolbar = container.querySelector('[data-testid="toolbar"]')!;
   for (const name of ['Copy link', 'Export CSV']) {
-    const found = screen.getAllByRole('button', { name });
-    expect(found.length).toBeLessThanOrEqual(2);
-    for (const el of found) expect(el).toHaveAccessibleName(name);
+    expect(screen.getAllByRole('button', { name }), `${name} is mounted twice`).toHaveLength(1);
+    expect(within(toolbar).getByRole('button', { name })).toBeInTheDocument();
   }
-  expect(screen.getAllByRole('button', { name: /Toggle theme/ }).length).toBeLessThanOrEqual(2);
+  expect(screen.getAllByRole('button', { name: /^Toggle theme/ })).toHaveLength(1);
+  // One live region, or the confirmation is announced twice or by the hidden copy.
+  expect(screen.getAllByRole('status')).toHaveLength(1);
+});
+
+// A regression guard rather than a red-first test: the masthead already draws them here, and this
+// is what says the rune did not quietly move them to the bar at every width.
+it('leaves the utilities in the masthead above 800px', () => {
+  const { container } = render(Page, { props: { data } });
+  expect(within(container.querySelector('header')!)
+    .getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+  expect(within(container.querySelector('[data-testid="toolbar"]')!)
+    .queryByRole('button', { name: 'Copy link' })).toBeNull();
 });
 ```
 
-That is the only new unit test for this task. Both hosts render a snippet they are handed, which is
-Svelte's behaviour rather than ours; what is worth asserting is the property the two hosts create
-together — one accessible name per control — and that is asserted above in `Page.test.ts` and
-measured per band by the e2e guard in Step 6. Do not add a `Toolbar` test that only checks the host
-element exists; it would assert nothing.
+`vi.restoreAllMocks()` in the file's `afterEach` already puts the stub back, so the spy needs no teardown of its own.
 
 - [ ] **Step 2: Run and watch it fail**
 
 Run: `npm -w app run test -- Page`
-Expected: FAIL — only one host renders the utilities today.
+Expected: FAIL on the first test — the utilities are in the masthead at every width today, so `within(toolbar).getByRole` finds nothing. The second test passes already and is labelled as the guard it is.
 
-- [ ] **Step 3: Create the icons module**
+- [ ] **Step 3: Create the icons module — and the doc section its comment points at**
+
+`check:docs` scans `.ts` as well as `.md`, and the module comment below names `docs/app.md §Where the utilities live`. **Write that section now**, not at Step 7: Step 5's `npm run verify` runs `check:docs` first and fails on a pointer to a heading that does not exist yet. Step 7 then fills it out rather than creating it.
 
 Create `app/src/components/icons.ts`. **Path data only, never whole SVG documents:** `{@html}` has exactly two sanctioned sinks in this app and neither is an icon, and `html-boundary.test.ts` fails the build the moment a third appears (docs/app.md §Sanitised-HTML boundary). The geometry is shared; each `<svg>` element is written in its template.
 
 ```ts
 /**
- * One home per glyph: each of these is drawn in two hosts (docs/app.md §Where the utilities live),
- * and a second copy is how one control ends up looking like two. Geometry only — the `<svg>`
- * wrapper, its size and its `aria-hidden` belong to the template, because the accessible name is
- * the button's and an icon carrying one of its own would announce twice.
+ * One home per glyph: each of these is drawn by a template that has a worded twin beside it
+ * (docs/app.md §Where the utilities live), and a second copy is how one control ends up looking
+ * like two. Geometry only — the `<svg>` wrapper, its size and its `aria-hidden` belong to the
+ * template, because the accessible name is the button's and an icon carrying one of its own would
+ * announce twice.
  */
 export const ICON_PATHS = {
   copy: 'M6.6 9.4a2.9 2.9 0 004.1 0l2-2a2.9 2.9 0 00-4.1-4.1l-.8.8M9.4 6.6a2.9 2.9 0 00-4.1 0l-2 2a2.9 2.9 0 004.1 4.1l.8-.8',
@@ -726,10 +834,11 @@ The theme cycle's three glyphs stay inline where they are today: they are drawn 
 
 - [ ] **Step 4: Move the utilities into a snippet in Page.svelte**
 
-Cut `copyLink`, the `copied` state and the three buttons out of `Header.svelte` into `Page.svelte`, and define one snippet there. It takes `worded` so the two hosts differ in their label rather than in their markup:
+Cut `copyLink`, the `copied` state and the three buttons out of `Header.svelte` into `Page.svelte`, and define one snippet there — adding `import { ICON_PATHS } from './components/icons';` beside the other imports, which is the only new import this step needs. It reads `mobile` directly rather than taking a parameter — there is one instance, so there is nothing to parameterise:
 
 ```svelte
-{#snippet utilities(worded: boolean)}
+{#snippet utilities()}
+  {@const worded = !mobile}
   <span class="utils">
     <button type="button" class:icon={!worded} onclick={copyLink}
             aria-label="Copy link" title={worded ? undefined : 'Copy link'}>
@@ -770,44 +879,84 @@ Cut `copyLink`, the `copied` state and the three buttons out of `Header.svelte` 
 The `title` is set only on the icon form: at the worded band the label is already on screen, and a
 tooltip repeating a visible label is the mechanism the visual-polish pass removed.
 
-Type the prop on both hosts as `utilities?: Snippet<[boolean]>` (`import type { Snippet } from 'svelte'` — `Toolbar.svelte` already imports it for `columns`).
+Type the prop on both hosts as `utilities?: Snippet` (`import type { Snippet } from 'svelte'` — `Toolbar.svelte` already imports it for `columns`; `Header.svelte` does not and needs the import adding). Each host renders `{@render utilities?.()}`, and gets it only at the band it owns:
 
-Pass the same snippet to both hosts, leaving every other prop on each as it is: add `utilities={utilities}` to the existing `<Header … />` and `<Toolbar … >` calls. `Header` renders `{@render utilities?.(true)}`, `Toolbar` renders `{@render utilities?.(false)}`.
-
-Each host hides its instance at the band it does not own:
-
-```css
-/* Header.svelte */
-@media (max-width: 800px) { .utils-host { display: none; } }
-/* Toolbar.svelte */
-@media (min-width: 800.02px) { .utils-host { display: none; } }
+```svelte
+  <Header … utilities={mobile ? undefined : utilities} />
+  <Toolbar … utilities={mobile ? utilities : undefined}>
 ```
 
-`display: none` rather than `visibility` or an off-screen shift, deliberately: it is what takes the hidden instance out of the accessibility tree so no control has two names.
+**Where the host sits in each parent, and why it is not rendered empty.** In `Header.svelte` it is the last child, after `.prov`. In `Toolbar.svelte` it is the last child of `.actions`, after the column picker. In **both** it is wrapped in `{#if utilities}`, and that is load-bearing rather than tidiness: a zero-width flex item is still a flex item and still takes the container's gap, so an empty host left standing at the band it does not own adds `--s3` of trailing air inside a row whose whole job is to be flush right. That is the same trap the old `.spacer { display: none }` rule was written for, and it would fail Task 6's `air ≤ 1` and Task 8's `actRightGap ≤ 1` from the wrong side of the boundary each time.
 
-**Where the host sits in each parent.** In `Header.svelte` it is the last child, after `.prov`. In `Toolbar.svelte` it is the last child of `.actions`, after the column picker, and it carries `margin-left: auto` — that is what splits the control row into "what opens a panel" on the left and "what you do to a table you are happy with" on the right, which is the composition the design was signed off on. Without it the five controls bunch at one end and the row's 90px of slack lands in the wrong place.
+```svelte
+  <div class="actions">
+    <button type="button" class="about" onclick={onabout}>About</button>
+    <button type="button" class="filters-toggle" …>…</button>
+    {@render columns?.()}
+    {#if utilities}<span class="utils-host">{@render utilities()}</span>{/if}
+  </div>
+```
+
+and it carries `margin-left: auto` — that is what splits the control row into "what opens a panel" on the left and "what you do to a table you are happy with" on the right, which is the composition the design was signed off on. Without it the five controls bunch at one end and the row's 90px of slack lands in the wrong place.
 
 ```css
   /* Toolbar.svelte */
   .actions .utils-host { margin-left: auto; }
 ```
 
-- [ ] **Step 5: Run the suite**
+**The CSS moves with the markup, and it cannot be left behind.** Svelte scopes a style block to the markup *authored in that file*, and a snippet written in `Page.svelte` carries `Page`'s scope wherever it is rendered — so `Header.svelte`'s `button`, `.icon`, `.copied` and `.copied:not(.said)` rules stop reaching these three buttons the moment they move, and they ship unpainted. Move all four into `Page.svelte`'s style block, with `.utils` for the group, and rewrite the one that reads a Header-local custom property:
+
+```css
+  /* Page.svelte — the utilities, wherever their band mounts them. */
+  .utils { display: flex; align-items: center; gap: var(--s3); }
+  /* The one secondary-button treatment (docs/app.md §Theming); `--t-sm` stated rather than left to
+     the UA's 13.33px, because matching it by 0.05px of luck is not carrying it. */
+  .utils button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
+                  background: var(--surface); color: var(--text); border-radius: var(--r-sm);
+                  font-size: var(--t-sm); }
+  .utils button:hover { background: var(--accent-dim); }
+  .utils .icon { display: inline-flex; align-items: center; justify-content: center; }
+  .copied { font-size: var(--t-sm); color: var(--good); }
+  /* A silent region is still a flex item, so it would carry a gap on each side and space the row
+     differently depending on whether a link had ever been copied. The group's OWN gap now, not the
+     header's `--gap-x`: that variable is Header-local and does not exist in the bar. */
+  .copied:not(.said) { margin-inline-start: calc(-1 * var(--s3)); }
+```
+
+`Header.svelte` keeps its `.actions` rule only if something still uses it — nothing does once the three buttons leave, so **delete `.actions`, `button`, `button:hover`, `.icon`, `.copied` and `.copied:not(.said)` from it**, along with the comment above `.actions` about the group wrapping mid-line, which describes a wrap that can no longer happen.
+
+**Header loses three props.** `theme`, `onexport` and `ontheme` have no reader left in `Header.svelte`; typecheck and lint both fail on the unused bindings. Remove them from the props type, the destructuring, the `<Header … />` call in `Page.svelte`, and the shared `props` object in `Header.test.ts`. `total` and `builtAt` stay.
+
+Note in passing: `tokens.test.ts` sweeps `src/components/*.svelte` for a raw white on an accent fill, and `Page.svelte` is not in that directory. Nothing moving here fills with the accent, so nothing is lost today — but it is why new accent-filled markup belongs in a component rather than in `Page.svelte`.
+
+- [ ] **Step 5: Move the tests that moved with the code**
+
+`Header.test.ts` is left testing a component that no longer owns what four of its cases assert. Move, do not delete:
+
+- the three clipboard cases (`copies the current view, and says so`, `claims nothing when the clipboard refuses`, `copies nothing where there is no clipboard`) and the `stubClipboard` helper with them, to `Page.test.ts`. Keep every assertion, including the always-rendered empty live region — but **two of the mechanisms they are written on do not survive the move, because `Page.test.ts` runs under `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })` and `Header.test.ts` does not**:
+  - `const settled = () => new Promise((r) => setTimeout(r, 0))` never resolves under a faked `setTimeout`, so both of the failure cases would hang rather than fail. What they are actually waiting for is the rejected or absent `writeText` promise settling, which is a **microtask**: `await Promise.resolve()` is the whole of it. Do not carry `settled` across; do not reach for `advanceTimersByTime`, which would answer a question the clock is not being asked.
+  - `await screen.findByRole('status')` is a `waitFor`, and this file deliberately has none — Task 2's own case says why. `copied` is set synchronously once `writeText` resolves, so `await Promise.resolve()` then `expect(screen.getByRole('status')).toHaveTextContent(/copied/i)` asserts the same thing without a dance with the clock.
+
+  `copyLink`'s own `setTimeout(… , 2000)` is left unadvanced, exactly as `Page.test.ts` already leaves the export case's deferred revoke: none of the three cases is about the confirmation expiring.
+- `keeps one accessible name per theme state while the glyph becomes an icon` — `Page.test.ts:209` already asserts the same property through `names the active theme on the toggle`, so this one is a **duplicate rather than a loss**: delete it and say so in the commit.
+
+`Header.test.ts` keeps the catalogue-count and build-date cases, and gains Task 6's.
 
 Run: `npm run verify`
-Expected: PASS. `Header.test.ts`'s clipboard tests now belong to `Page.test.ts` — move them rather than deleting them, keeping every assertion including the two failure paths (no clipboard, and a rejecting clipboard) and the always-rendered empty live region.
+Expected: PASS.
 
-- [ ] **Step 6: Prove one host is visible per band, in a browser**
+- [ ] **Step 6: Prove one host is mounted per band, in a browser**
 
 Add to `app/e2e/smoke.spec.ts`:
 
 ```ts
 /**
- * The three utilities are written once and instantiated in two hosts, so exactly one instance must
- * be on screen at any width — two would be two tab stops with the same name, and zero would lose
- * the controls. jsdom evaluates no media query, so only a browser can answer it.
+ * The utilities are written once and mounted in the host their band owns, so exactly one instance
+ * must exist at any width — two would be two tab stops with the same name, and zero would lose the
+ * controls. The widths step either side of 800 because that boundary is asked twice, once by the
+ * CSS and once by the rune in `Page.svelte`, and the failure mode is them disagreeing.
  */
-test('shows each utility exactly once at every width', async ({ page }) => {
+test('mounts each utility exactly once at every width', async ({ page }) => {
   for (const width of [360, 390, 430, 560, 700, 799, 800, 801, 900, 1200, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
@@ -815,18 +964,30 @@ test('shows each utility exactly once at every width', async ({ page }) => {
       await expect(page.getByRole('button', { name }), `at ${width}px`).toHaveCount(1);
     }
     await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
+    await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
   }
 });
-```
 
-Playwright's `getByRole` ignores `display: none` subtrees, so this asserts exactly what the a11y tree sees.
+// And the swap survives a resize rather than only a fresh load: the rune is what moves them, so a
+// listener that never fires would pass every case above and still strand the controls in the wrong
+// band for anyone who rotates a phone or drags a window.
+test('moves the utilities between bands on a resize', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('header').getByRole('button', { name: 'Copy link' })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.locator('[data-testid="toolbar"]').getByRole('button', { name: 'Copy link' }))
+    .toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+});
+```
 
 Run: `npm -w app run e2e:docker`
 Expected: green.
 
 - [ ] **Step 7: Document it**
 
-`docs/app.md`: add §Where the utilities live — one snippet, two hosts, `display: none` chosen for the accessibility tree, and the e2e guard's name.
+`docs/app.md`: add §Where the utilities live — one snippet, the host chosen by a rune rather than by `display: none`, **why** (the same reason §Two renderings, and only one of them mounted gives for the two tables), that the rune inverts the sidebar's own `max-width: 800px` rather than declaring a `min-width` twin, and the two e2e guards' names.
 
 - [ ] **Step 8: Commit**
 
@@ -842,11 +1003,12 @@ git commit -m "Write the utilities once and let each band show its own form"
 **Files:**
 - Modify: `app/src/components/Header.svelte`
 - Modify: `app/src/components/Header.test.ts`
+- Modify: `app/e2e/smoke.spec.ts` (the two `keeps the masthead in one left column at Npx` cases at :474 assert the arrangement this task replaces)
 - Modify: `docs/app.md`
 
 **Interfaces:**
 - Consumes: the `utilities` snippet prop from Task 5.
-- Produces: below 800px `<header>` has exactly two children — `<h1>` and `.prov` — where `.prov` stacks `.count` over the credit, right-aligned. Above 800px the masthead is exactly what it is today.
+- Produces: below 800px `<header>` renders three children — `<h1>`, the spacer and `.prov`, which stacks `.count` over the credit, right-aligned. The utilities host is not rendered at this band at all (Task 5), so nothing follows `.prov` to take a gap after it. Above 800px the masthead is exactly what it is today.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -897,32 +1059,52 @@ In `app/src/components/Header.svelte`, wrap the count and credit:
       <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </a>
   </span>
-  <span class="utils-host">{@render utilities?.(true)}</span>
+  <!-- `{#if}`, not `{@render utilities?.()}` on its own: an empty span is still a flex item and
+       still takes the header's gap, which is exactly what would stop the banner being flush. -->
+  {#if utilities}<span class="utils-host">{@render utilities()}</span>{/if}
 </header>
 ```
 
-CSS: `.prov` is a right-aligned column below 800px and dissolves into today's inline arrangement above it.
+CSS: `.prov` **dissolves entirely above 800px** so the desktop masthead keeps the exact arrangement the visual-polish pass settled — wordmark, count, spacer, credit, buttons, in that order — and becomes a right-aligned column below it. `display: contents` makes the wrapper's children header flex items again; `order` puts the count back on the left of the spacer, where wrapping it in `.prov` would otherwise have moved it to the right-hand group. That move would be a change to a band the spec says is untouched.
+
+**Desktop is the default and the banner is the override, not the other way round.** Writing it banner-first would need a `min-width` twin of the sidebar's `max-width: 800px`, and that is the construction Task 5 rejects on this very boundary: `max-width: 800px` and `min-width: 800.02px` leave every fractional width in between matching neither, which browser zoom and Firefox's fractional viewport widths both produce. One query, and its complement is whatever the query does not match:
 
 ```css
-  .prov { display: flex; align-items: center; gap: var(--gap-x); }
-  .credit { display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
-            text-decoration: none; color: var(--text); }
+  /* Above 800px the two facts are header items in their own right, in the order the visual-polish
+     pass settled — the wrapper exists for the banner, and grouping them here would move the
+     catalogue count from beside the wordmark to the far right. `display: contents` is what lets one
+     wrapper serve both bands without a second copy of the count in the markup. */
+  .prov { display: contents; }
+  h1 { order: -2; }
+  .count { order: -1; }
+  /* `.credit`'s existing desktop rule is unchanged: column, flex-end, 1px. */
 
   @media (max-width: 800px) {
     /* The spacer stays — it is what makes the banner flush right, and deleting it is exactly what
        left 59px of air at 390px and 248px at 700px on the old header. */
     header { --gap-x: var(--s3); flex-wrap: nowrap; padding: var(--s1) var(--s2); }
-    .prov { flex-direction: column; align-items: flex-end; gap: 0; }
-    /* One line, not the desktop's stack: the block above it already carries the small print. */
+    /* One block, right-aligned, opposite the wordmark. One line for the credit, not the desktop's
+       stack: the count sitting directly above it already carries the small print. */
+    .prov { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
     .credit { flex-direction: row; align-items: baseline; gap: 5px; }
   }
 ```
 
-Delete the old `@media (max-width: 800px)` block's `flex-wrap: wrap`, `.spacer { display: none }` and `.credit { align-items: flex-start }` rules, and the `@media (max-width: 560px)` block **only if** the count still fits — see Step 4.
+`order` on `.count` and `h1` is harmless below 800px — inside a `.prov` that is a flex column the count is the first child anyway, and `h1` is the header's first item either way — so neither needs restating in the query.
+
+**`display: contents` and the two e2e row counters: leave the counters alone.** Both (`never adds a chrome row that a narrower window hands back`, and Step 4b's rewrite below) already filter on `getBoundingClientRect().height > 0`, which is why today's zero-height `.spacer` is not counted. A `display: contents` `.prov` has no box either, so above 800px it is skipped and the count comes from the children that do have one — `h1` and the utilities host, on one row. That is 1, which is the right answer. Do **not** extend the walk into `.prov`'s children: below 800px `.prov` is a real flex column with two stacked lines, so a counter that descended into it would report 2 rows for the banner and fail both Step 4b's `rows === 1` and the monotonicity guard. The one thing given up is that a desktop `.prov` wrapping internally would no longer show as a row — say so in the doc rather than fixing it here; the banner's own `air` bound is what holds that edge.
+
+Delete the old `@media (max-width: 800px)` block's `flex-wrap: wrap`, `.spacer { display: none }` and `.credit { align-items: flex-start }` rules — **and the two long comments above them**. Both reason about a masthead that carried three buttons at this band ("those 67px of extra line push the theme button onto a third row", "once the bar wraps this block starts its row"); the buttons left in Task 5 and the bar no longer wraps, so the comments now explain the opposite of what the code does. A comment that survives the reason it recorded is the doc rot this repo fails builds over (docs/README.md §Rules, rule 5). Write the new reason instead: the block stacks right-aligned because both lines say where the data came from.
+
+The `@media (max-width: 560px)` block holds three declarations and they do **not** stand or fall together — see Step 4:
+
+- `padding-inline: var(--s2)` is genuinely redundant once the 800px block sets `padding: var(--s1) var(--s2)`. It goes.
+- `--gap-x: var(--s2)` is **not** redundant: the 800px block sets `--gap-x: var(--s3)`, so deleting this widens the banner's two gaps by 8px at exactly the widths with the least room. Keep or drop it on the rig's reading, not on the assumption that it is a no-op.
+- `.count { font-size: var(--t-xs) }` is Step 4's question, and Step 4 answers it with a measurement rather than this line.
 
 - [ ] **Step 4: Measure the banner rather than assuming it**
 
-The old `max-width: 560px` rule dropped `.count` to `--t-xs` because at `--t-sm` the widest month (`Sept`) wrapped the line at 360px. The banner is a different composition, so re-measure rather than keeping or dropping the rule on faith. Write `/tmp/banner-fit.mjs`:
+The old `max-width: 560px` rule dropped `.count` to `--t-xs` because at `--t-sm` the widest month (`Sept`) wrapped the line at 360px. The banner is a different composition, so re-measure rather than keeping or dropping the rule on faith. Write `banner-fit.mjs` in your scratchpad:
 
 ```js
 import { chromium } from './node_modules/playwright/index.mjs';
@@ -947,23 +1129,76 @@ for (const width of [360, 375, 390, 412, 430, 560, 700, 799, 800, 820, 900]) {
 await browser.close();
 ```
 
-Expected: `overflow: 0` at every width, `air` ≤ 1 at every width below 800 (that is what "flush" means), and `height` no greater at 360 than at 430. **Run the same script in Firefox** (`import { firefox }`) — the user's daily browser, and the one Chromium-only checks have misrepresented before.
+Expected: `overflow: 0` at every width, `air` ≤ 1 at every width below 800 (that is what "flush" means), and `height` no greater at 360 than at 430. **Run the same script in Firefox** (`import { firefox }`) — the user's daily browser, the one Chromium-only checks have misrepresented before, and the only place Firefox is checked at all, since `smoke.spec.ts` is a Chromium-only project.
 
-Bind whatever the widest month costs: temporarily set `builtAt` to a September date in the dev data or override the rendered text in the page, and re-run at 360px. If it wraps, keep the `--t-xs` step and say so in the comment; if it does not, delete the rule and say why in the commit.
+Bind whatever the widest month costs. **Do not edit `data/` to do it** — this branch must not touch the dataset, and a regenerated `data/` is what makes the rebase unresolvable (CLAUDE.md §Conventions). Overwrite the rendered string in the page instead, exactly as the existing e2e case at `smoke.spec.ts:490` already does:
+
+```js
+await page.evaluate(() => {
+  document.querySelector('header .count').textContent = '450 shoes · updated 27 Sept 2026';
+});
+```
+
+`en-GB` renders September as `Sept`, which is the widest string the formatter can emit. If the line wraps at 360px, keep the `--t-xs` step and say so in the comment; if it does not, delete the rule and say why in the commit.
+
+**A prior reading, to be confirmed rather than trusted:** the banner was reconstructed over `main` in a browser — actions removed, count and credit wrapped in a right-aligned `.prov`, credit on one row, `padding: var(--s1) var(--s2)`, count set to `450 shoes · updated 27 Sept 2026`. At 360px the count measured **252px wide and 36px tall at `--t-sm` — two lines** — against **224px and 16px at `--t-xs`**. The one-line credit measured 143px, which fits at every width. So the expected answer is that **the `--t-xs` step stays** and only the `padding-inline` half of the 560px block goes. Re-run it against the real components before writing the comment: a reconstruction is not the thing.
+
+- [ ] **Step 4b: Rewrite the masthead test at smoke.spec.ts:474**
+
+Both `keeps the masthead in one left column at ${width}px` cases assert the composition this task replaces: that `.credit-label` and `.credit-name` share a left edge with `h1`, and that the header takes two rows. The banner right-aligns the provenance and takes one row, so both assertions are now false by design — and the property they were protecting (the widest month does not cost a row) is still worth holding. Rewrite in place, keeping the 360/390 loop and the `Sept` override:
+
+```ts
+/**
+ * The banner is ONE row at every phone width, and the provenance block holds the trailing edge:
+ * `main` left 59px of air at 390px and 248px at 700px by deleting the spacer at this band, which is
+ * the raggedness the rebuild exists to remove. The count line is checked at the WIDEST month the
+ * formatter can emit — `en-GB` renders September as `Sept`, 8px wider than the July it was first
+ * measured against, and once cost 26px of chrome at 360px by wrapping.
+ *
+ * jsdom lays nothing out, so only a browser can answer either half.
+ */
+for (const width of [360, 390]) {
+  test(`keeps the banner one flush row at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    await page.evaluate(() => document.fonts.ready.then(() => null));
+
+    const seen = await page.evaluate(() => {
+      const header = document.querySelector('header')!;
+      header.querySelector('.count')!.textContent = '450 shoes · updated 27 Sept 2026';
+      const box = header.getBoundingClientRect();
+      const kids = [...header.children]
+        .filter((e) => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0);
+      const ys = kids.map((e) => { const r = e.getBoundingClientRect(); return r.y + r.height / 2; })
+        .sort((a, b) => a - b);
+      const right = Math.max(...kids.map((e) => e.getBoundingClientRect().right));
+      return {
+        rows: ys.reduce((n, y, i) => (i === 0 || y - ys[i - 1] > 4 ? n + 1 : n), 0),
+        air: Math.round(box.right - parseFloat(getComputedStyle(header).paddingRight) - right),
+        titleLeft: Math.round(header.querySelector('h1')!.getBoundingClientRect().left),
+        padLeft: Math.round(box.left + parseFloat(getComputedStyle(header).paddingLeft)),
+      };
+    });
+    expect(seen.rows, 'the widest month wraps the banner onto a second row').toBe(1);
+    expect(seen.air, 'the provenance block left the right edge').toBeLessThanOrEqual(1);
+    expect(seen.titleLeft, 'the wordmark left the left edge').toBe(seen.padLeft);
+  });
+}
+```
 
 - [ ] **Step 5: Run the suite**
 
-Run: `npm run verify`
-Expected: PASS.
+Run: `npm run verify`, then `npm -w app run e2e:docker`.
+Expected: both PASS.
 
 - [ ] **Step 6: Document it**
 
-`docs/app.md`: the header is one row at every width; below 800px the provenance block stacks and the banner is flush; the spacer is load-bearing and must not be deleted again. Record the measured trailing air as the bound (`≤1px`), not as a screenshot claim.
+`docs/app.md` §The header names the catalogue, the receipt owns the count: the header is one row at every width; below 800px the provenance block stacks and the banner is flush; the spacer is load-bearing and must not be deleted again. Record the measured trailing air as the bound (`≤1px`), not as a screenshot claim, and name the e2e guard that holds it.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add app/src docs/app.md
+git add app/src app/e2e docs/app.md
 git commit -m "Stand the provenance opposite the name and hold the right edge"
 ```
 
@@ -972,7 +1207,7 @@ git commit -m "Stand the provenance opposite the name and hold the right edge"
 ### Task 7: The band ladder
 
 **Files:**
-- Modify: `app/src/components/Toolbar.svelte`, `app/src/components/ColumnPicker.svelte`
+- Modify: `app/src/components/Toolbar.svelte`, `app/src/components/ColumnPicker.svelte`, `app/src/components/ZoneToggle.svelte`
 - Modify: `app/e2e/smoke.spec.ts`
 - Modify: `docs/app.md`
 
@@ -980,15 +1215,27 @@ git commit -m "Stand the provenance opposite the name and hold the right edge"
 - Consumes: `.setup` and `.actions` from Task 3, the icon paths from Task 5.
 - Produces: the toolbar's DOM order is `.setup` then `.actions` at every width; CSS alone moves them. No new props.
 
-**The ladder, exactly:**
+**The ladder, exactly:** there is no spacer element on this bar — `.actions { margin-left: auto }` is what holds the trailing edge, and "— gap —" below is that auto margin rather than markup.
 
 | query | composition |
 |---|---|
-| (none — above 800px) | one row: `.setup` (zone · story · Stability) — spacer — `.actions` (About, Columns). No Filters: the sidebar is permanent. |
-| `max-width: 800px` | one row: `.setup` — spacer — `.actions` (About, Filters icon, Columns icon, utilities icons) |
+| (none — above 800px) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No Filters: the sidebar is permanent. |
+| `max-width: 800px` | one row: `.setup` — gap — `.actions` (About, Filters icon, Columns icon, utilities icons). Pill inline padding `--s3` → `--s2` |
 | `max-width: 699.98px` | two rows: `.actions` first (order: -1), then `.setup`. `.setup` is `space-between`, capped at `414px` and centred |
-| `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges |
-| `max-width: 374.98px` | `.s` inline padding `var(--s2)` → `var(--s1)` |
+| `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges. **Every** pill's inline padding `--s2` → `--s1`, the zone group's included |
+
+**Why `429.98px` carries the padding step, and why `374.98px` is gone.** The spec's band-3 figures came from a rig carrying the app's tokens but not its components, and its pills are narrower than the real ones by enough to move every boundary. Measured over `main` in Chromium, with a `Stability` pill built from the story group's own track:
+
+| pill inline padding | zone | story | Stability | band 3 | at 360 | 375 | 390 | 412 | 430 |
+|---|---|---|---|---|---|---|---|---|---|
+| spec's rig, 6px then 4px | — | — | — | 353 / 323 | −9 | | | | |
+| the spec's ladder, 375–800 (`.s` = `--s2`, zone untouched) | 133 | 193 | 74 | **400** | −56 | −41 | −26 | −4 | +14 |
+| the spec's ladder, ≤374.98 (`.s` = `--s1`, zone untouched) | 133 | 161 | 66 | **360** | −16 | −1 | +14 | +36 | +54 |
+| **chosen: every pill at `--s1`** | 101 | 161 | 66 | **328** | +16 | +31 | +46 | +68 | +86 |
+
+Slack is against the content box the bar's `--s2` padding leaves (`width − 16`); negative is overflow. Two things fall out of it. The spec's ladder **overflows band 3 at 360, 375 and 390px** — the whole band the rebuild exists to make flush — and its own `overflow ≤ 0` assertion in Step 1 is what would report it. And **`ZoneToggle.svelte` owns its buttons' `padding: var(--s1) var(--s3)` in its own scoped style block**, so the Toolbar's `.s` rule cannot reach it and never has; the spec's figures assume it steps with the story pills, and it does not.
+
+So the step moves to the boundary that already exists for the flush band, applies to the zone group as well, and the `374.98px` tier is deleted rather than retuned — one width where band 3 changes shape instead of two, and `.98` on the only one left. The figures above are Chromium; **re-measure in Firefox at Step 6 before the boundary is called settled**, and treat the 430px cap the same way: at 430 the row measures 400px inside a 414px cap, which is 7px of gap either side rather than the 36px the spec's table promised.
 
 - [ ] **Step 1: Write the failing browser tests**
 
@@ -1022,6 +1269,10 @@ test('lays the chrome out in bands', async ({ page }) => {
       leftInset: Math.round(kids[0].left - (box.left + padL)),
       rightInset: Math.round((box.right - padR) - kids[kids.length - 1].right),
       overflow: tb.scrollWidth - tb.clientWidth,
+      // The story group must take the row it is given rather than filling one of its own — carried
+      // over from the tier test Task 8 retires, which is where this claim lived.
+      paceW: tb.querySelector('.pace-wrap .seg')!.getBoundingClientRect().width,
+      wrapW: tb.querySelector('.pace-wrap')!.getBoundingClientRect().width,
     };
   });
 
@@ -1056,6 +1307,13 @@ test('lays the chrome out in bands', async ({ page }) => {
     expect(Math.abs(b.leftInset - b.rightInset), `not centred at ${width}px`).toBeLessThanOrEqual(2);
     expect(b.leftInset, `the capped row grew at ${width}px`).toBeGreaterThanOrEqual(0);
   }
+
+  // And at every width: the story group is shrink-wrapped, never stretched to fill its wrapper.
+  for (const width of [1200, 900, 760, 660, 560, 430, 390, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(b.paceW, `the story group stretches at ${width}px`).toBe(b.wrapW);
+  }
 });
 ```
 
@@ -1066,7 +1324,7 @@ Expected: FAIL at the 660px case — today the bar does not split into `.setup` 
 
 - [ ] **Step 3: Implement the ladder**
 
-Replace `Toolbar.svelte`'s three media blocks with:
+These are the **layout** rules only. `.seg`, `.s`, `.s.on`, the `.filters-toggle` paint (its padding, border, background, hover and `--t-sm`) and the count-badge rules are untouched — do not read this block as a replacement for the whole `<style>`. What it replaces is `.toolbar`, `.setup`, `.actions`, `.filters-toggle`'s `display` declaration alone — its paint rule stays where it is, and this is one rule split, not two rules left standing — and the **two** media blocks Task 3 left behind (`max-width: 800px` and `max-width: 609.98px`; the `879.98px` one went with the hairline):
 
 ```css
   .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3);
@@ -1085,7 +1343,11 @@ Replace `Toolbar.svelte`'s three media blocks with:
      must agree, or the drawer toggle shows on a width laid out as a desktop. */
   @media (max-width: 800px) {
     .toolbar { padding: var(--s1) var(--s2); gap: var(--s1) var(--s2); }
-    .filters-toggle { display: inline-flex; }
+    .filters-toggle { display: inline-flex; padding-inline: var(--s2); }
+    /* The pills' own padding is what buys the fit, and it steps HERE rather than at the row split:
+       at the base `--s3` the three groups measure 456px against the 684px a 700px screen leaves,
+       and the merged line has to hold the actions beside them. */
+    .s { padding-inline: var(--s2); }
   }
 
   /* Below 700 the one line stops fitting: 613px of content against the 684px a 700px screen leaves
@@ -1100,21 +1362,36 @@ Replace `Toolbar.svelte`'s three media blocks with:
   /* At 430px and below the cap is wider than the row, so it stops meaning anything and the row goes
      flush to both padding edges — which is the property the rebuild exists to restore. 414px is the
      row's own content width at 430px: above that it holds this spacing rather than growing gaps
-     that reach 171px by 700px. */
+     that reach 171px by 700px.
+     The pills tighten again on the same boundary rather than on one of their own: 360px is the
+     binding width, not 375 — it is the usual Android one — and at `--s2` the three groups measure
+     400px against the 344px this padding leaves there. At `--s1`, ALL of them, they measure 328px.
+     The zone group is the reason "all of them" is written out: its padding lives in
+     `ZoneToggle.svelte`, a scoped style block this rule cannot reach, and stepping only the pills
+     this file owns leaves the row 16px over at 360px. */
   @media (max-width: 429.98px) {
     .setup { max-width: none; margin-inline: 0; }
-  }
-
-  /* 360px is the binding width, not 375 — it is the usual Android one. At `--s2` a pill the three
-     groups need 353px against the 344px this padding leaves; at `--s1` they need 323px. */
-  @media (max-width: 374.98px) {
     .s { padding-inline: var(--s1); }
   }
 ```
 
-Delete `.sep` and its markup: with the pill joining the run, a hairline between the first and second of three groups reads as arbitrary, and no band below 800px has one (spec §Decisions — the group divider goes).
+And the matching half in `ZoneToggle.svelte`, which is the only edit that component takes:
 
-- [ ] **Step 4: Give Filters and Columns their icon forms below 700px**
+```css
+  /* The bar's flush band tightens every pill on its setup row, and this group's buttons are two of
+     them — but their padding is authored here, so `Toolbar.svelte`'s rule has never reached them.
+     One boundary, stated twice because scoping gives it no choice; docs/app.md §The chrome bands
+     owns the number. */
+  @media (max-width: 429.98px) {
+    button { padding-inline: var(--s1); }
+  }
+```
+
+`.sep` is already gone — Task 3 took its markup and its rules together. Confirm rather than repeat: `grep -n "sep" app/src/components/Toolbar.svelte` should find nothing.
+
+- [ ] **Step 4: Give Filters and Columns their icon forms below 800px**
+
+**800, not 700** — one boundary governs every "words become icons" swap on this bar, so nothing on it is half-worded: the utilities go to icons at 800 (Task 5), and Filters and Columns go with them. The cost is deliberate and worth naming in the commit: a 760px laptop window gets glyph-only Filters and Columns even though the merged line has slack for the words.
 
 In `Toolbar.svelte`, render both the word and the glyph and let CSS choose, so the accessible name never changes with the viewport:
 
@@ -1130,11 +1407,13 @@ In `Toolbar.svelte`, render both the word and the glyph and let CSS choose, so t
 
 ```css
   .glyph { display: none; }
-  @media (max-width: 699.98px) {
+  @media (max-width: 800px) {
     .word { display: none; }
     .glyph { display: inline-flex; }
   }
 ```
+
+Default-hidden glyph, revealed by the query — the pair is exhaustive at any width including fractional ones, which a `min-width`/`max-width` twin would not be.
 
 In `ColumnPicker.svelte`, the summary does the same — **and keeps its count badge**, which is the only thing that survives the word. The glyph is a real `<svg>` sibling, not a `::before`: a pseudo-element cannot carry path data without `{@html}` or a background image, and neither is allowed here.
 
@@ -1156,27 +1435,32 @@ In `ColumnPicker.svelte`, the summary does the same — **and keeps its count ba
   /* The badge is what survives the word: the count is the only thing on this control that changes,
      and it is why the label was given a badge rather than a growing string in the first place. */
   .glyph { display: none; }
-  @media (max-width: 699.98px) {
+  @media (max-width: 800px) {
     .word, .chev { display: none; }
     .glyph { display: inline-flex; }
     summary { padding-inline: var(--s2); }
   }
 ```
 
-`aria-label` on the summary rather than a visually-hidden span: the accessible name must not change with the viewport, and the count belongs in it because the badge is the only remaining indication of what the control holds.
+This rule replaces what the toolbar used to reach into with `.actions :global(summary) { padding-inline: var(--s2) }` — the picker owns its own tightening now, so delete that `:global` when Task 7 Step 3 replaces the media blocks rather than leaving both.
+
+`aria-label` on the summary rather than a visually-hidden span: the accessible name must not change with the viewport, and the count belongs in it because the badge is the only remaining indication of what the control holds. Two consequences to carry, both verified against the code as it stands:
+
+- The name changes **at every width**, not only below 700px — desktop goes from `Columns 6` to `Columns, 6 shown`. `ColumnPicker.test.ts:38` reaches the control through `getByText('Columns').closest('summary')`, which still resolves against the `.word` span, and `smoke.spec.ts:614` uses `details.picker summary`. Nothing else names it, so nothing else needs changing — but re-run that grep rather than trusting this line.
+- **`<summary>` has no implicit ARIA role**, so Playwright's `getByRole('button', …)` will never match it. (Checked in the installed `playwright-core`: `DETAILS` maps to `group`, `SUMMARY` appears nowhere in the role table.) Browsers do expose the `aria-label` to assistive tech, so the label is doing its job — but any e2e assertion about this control has to go through `page.locator('details.picker summary')` and read `aria-label`, never `getByRole`. Task 9 Step 3 depends on this.
 
 - [ ] **Step 5: Run and watch it pass**
 
 Run: `npm -w app run e2e -- --grep "lays the chrome out in bands" --project=chromium`
-Expected: PASS. Then the full `npm -w app run e2e:docker` — all three engines.
+Expected: PASS. Then the full `npm -w app run e2e:docker`.
 
 - [ ] **Step 6: Verify no band overflows, in both engines**
 
-Write `/tmp/band-fit.mjs` walking 360→1440 in 10px steps, asserting for `header`, `.setup` and `.actions` that `scrollWidth - clientWidth <= 0` and that no element's right edge passes its parent's padding box. Run it in **chromium and firefox**. Any overflow is a bug in this task, not a tolerance.
+Write `band-fit.mjs` in your scratchpad, walking 360→1440 in 10px steps, asserting for `header`, `.setup` and `.actions` that `scrollWidth - clientWidth <= 0` and that no element's right edge passes its parent's padding box. **This is where the `429.98px` step is confirmed rather than assumed** — the widths that decided it were read in Chromium off a reconstruction, and Firefox sets text at its own metrics. Run it in **chromium and firefox** — this rig is the only Firefox coverage the chrome gets, since `smoke.spec.ts` is a Chromium-only project. Any overflow is a bug in this task, not a tolerance.
 
 - [ ] **Step 7: Document it**
 
-`docs/app.md`: add §The chrome bands — the table of queries above, why `800` is shared with the sidebar, why 700 rather than 629, why the cap is 414 and what it preserves, and that the divider is gone. State the numbers as bounds that can be re-measured.
+`docs/app.md`: add §The chrome bands — the table of queries above, why `800` is shared with the sidebar, why 700 rather than 629, why the cap is 414 and what it preserves, and that the divider is gone. State the numbers as bounds that can be re-measured. Two more sentences, because both are things the next reader will otherwise undo: the pill padding steps at `429.98px` rather than the spec's `374.98px`, with the measured widths that moved it; and the step is written **twice**, in `Toolbar.svelte` and in `ZoneToggle.svelte`, because Svelte's scoping leaves no way to state it once.
 
 - [ ] **Step 8: Commit**
 
@@ -1222,7 +1506,7 @@ Expected: FAIL — the pill renders regardless of `showGroups`.
 
 The pill is already inside the `{#if showGroups}` block from Task 3, so this passes as soon as Task 3 is in. **If it already passes, do not delete the test** — it is the guard for a rule that would otherwise be re-broken by whoever next moves the pill. Say so in the commit message rather than inventing work.
 
-Then delete the `.toolbar.no-groups` class and its rule if nothing reads it any more: with `.setup` empty, the actions already hold the right edge and the rule it existed for is gone. `grep -rn "no-groups" app/` before deleting, and remove the assertion in `Toolbar.test.ts` that names it.
+Then delete the `.toolbar.no-groups` class and its rule if nothing reads it any more: with `.setup` empty, the actions already hold the right edge and the rule it existed for is gone. `grep -rn "no-groups" app/` before deleting — the only reader left is `Toolbar.test.ts`'s `marks itself group-less so the preference stops claiming a row of its own`, and that is the **whole test**, not one assertion inside it. Delete the test with the class: it asserted a marker for a rule that no longer exists, and the property it stood in for — the landing bar is one row with the actions flush right — is measured in the browser by Step 4's rewrite.
 
 - [ ] **Step 4: Rewrite the e2e test at smoke.spec.ts:322**
 
@@ -1264,7 +1548,7 @@ test('opens with the actions flush to the bar trailing edge', async ({ page }) =
 
 - [ ] **Step 4b: Rewrite the tier test at smoke.spec.ts:238**
 
-`degrades the toolbar in tiers and keeps the table header clear of the chrome` is written against `.sep`, `.stability` and the 880/610 boundaries, none of which survive. Keep its second half verbatim — the pinned-header-clears-the-chrome loop at 1200/700/375 is still exactly right and is the `--thead-top` guard. Delete the first half and let Task 7's `lays the chrome out in bands` own the tier claims. Keep the `paceW === wrapW` assertion (the story group must not stretch) by folding it into the bands test.
+`degrades the toolbar in tiers and keeps the table header clear of the chrome` is written against `.sep`, `.stability` and the 880/610 boundaries, none of which survive (Task 3 already took the `.stability` readings out of it). Keep its second half verbatim — the pinned-header-clears-the-chrome loop at 1200/700/375 is still exactly right and is the `--thead-top` guard — and rename the test for what is left of it. Delete the first half, `boxes()` with it, and let Task 7's `lays the chrome out in bands` own the tier claims; the `paceW === wrapW` assertion is already carried there, so nothing is lost in the move.
 
 - [ ] **Step 5: Run everything**
 
@@ -1333,12 +1617,15 @@ test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
 
 The ceilings carry headroom over the rig's figures (118px below 700, 83px at 700–800, 92px at 900). **Re-measure the real components first and set each ceiling ~10px above what they actually spend** — a ceiling that is already tight fails on the next font tweak and teaches everyone to raise it.
 
+This test **replaces** the pair at `smoke.spec.ts:445`, `keeps the phone chrome under its ceiling at ${width}px`. Those hold 170px strip-up and 210px strip-down at 360 and 390 — bounds written against `main`'s 198px, which the rebuild is meant to beat by 80px. Leaving them beside a 130px ceiling would mean two guards on one property with the looser one silently doing nothing. Delete them, and carry the one thing they hold that the new test does not: the **strip-up** reading, which is the binding case because it is a first arrival. Add it to the new test as its own pass over 360 and 390 before the `All` card is clicked, with its own ceiling re-measured the same way.
+
 - [ ] **Step 3: Add the accessible-name sweep**
 
 ```ts
 /**
- * Five controls lose their words below 700px. Each keeps the name its worded form had, at every
- * width — an icon that ships without one is unusable and untestable at the same time.
+ * Four controls lose their words at 800px — Copy link, Export CSV, Filters and Columns (the theme
+ * cycle is a glyph at every width and never had a word to lose). Each keeps the name its worded
+ * form had, at every width: an icon that ships without one is unusable and untestable at once.
  */
 test('never ships an icon without its name', async ({ page }) => {
   for (const width of [360, 430, 690, 760, 900]) {
@@ -1349,7 +1636,10 @@ test('never ships an icon without its name', async ({ page }) => {
     }
     await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
     if (width <= 800) await expect(page.getByRole('button', { name: 'Filters' })).toHaveCount(1);
-    await expect(page.getByRole('button', { name: /^Columns/ })).toHaveCount(1);
+    // NOT `getByRole`: `<summary>` has no implicit ARIA role, so a role query never matches it
+    // however it is labelled (Task 7 Step 4). The label is still what a screen reader announces.
+    await expect(page.locator('details.picker summary'), `Columns at ${width}px`)
+      .toHaveAttribute('aria-label', /^Columns, \d+ shown$/);
   }
 });
 ```
@@ -1377,7 +1667,7 @@ test('opens the About panel from the bar and from the strip', async ({ page }) =
 - [ ] **Step 5: Run the whole gate**
 
 Run: `npm run verify && npm -w app run e2e:docker`
-Expected: both green, all three engines.
+Expected: both green.
 
 - [ ] **Step 6: Screenshot both themes at the four bands, in both engines**
 
@@ -1399,14 +1689,17 @@ git commit -m "Hold the bands to bounds a font tweak cannot quietly undo"
 ## Landing the branch
 
 - [ ] `npm run verify` — green
-- [ ] `npm -w app run e2e:docker` — green, all three engines
+- [ ] `npm -w app run e2e:docker` — green (the chrome guards are Chromium; Firefox is covered by the rigs in Tasks 6, 7 and 9)
 - [ ] Rebase onto `main` and fast-forward — no merge commits (docs/decisions.md §Linear history, no merge commits)
 - [ ] Remove the worktree, delete the branch
 - [ ] `data/` is **not** regenerated on this branch — this is a code-only change
 
 ## Self-review notes for the implementer
 
-Two places where this plan tells you to check before you write, rather than telling you what you will find. Both are real:
+Five places where this plan tells you to check before you write, rather than telling you what you will find. All five are real:
 
-1. **Task 5, Step 1** — whether the installed `@testing-library/svelte` can construct a snippet prop. If it cannot, assert the two-host behaviour through `Page.test.ts` and the e2e guard only, and delete the placeholder. Do not ship a test that asserts nothing.
-2. **Task 8, Step 3** — the pill may already be absent on the landing screen when you get there, because Task 3 put it inside `{#if showGroups}`. Keep the test anyway; it guards a rule with a reason that is not visible from the markup.
+1. **Task 6, Step 3** — that the desktop header still counts as **one** row with `.prov` at `display: contents`. The expected answer is yes, and the reasoning is written out there: both counters already skip boxless children, which is why today's zero-height `.spacer` is not counted either. Run the monotonicity guard at 900px and confirm 1 before moving on. If it reports something else, fix the layout, not the counter — a counter that descends into `.prov` reports 2 for the banner and fails Step 4b.
+2. **Task 6, Step 4** — whether the banner still needs the `--t-xs` step on `.count`. A reconstruction over `main` says yes (252px and two lines at `--t-sm` against 224px and one at `--t-xs`, at 360px with the widest month), and a reconstruction is not the components. Confirm it, in both engines, and let the reading decide the `--gap-x` half of that block too.
+3. **Task 7, Steps 3 and 6** — the pill-padding boundary. It is set at `429.98px` on measured widths rather than the spec's `374.98px`, and the measurement was Chromium-only and taken off a probe pill rather than the shipped one. Band 3 has 16px in hand at 360px on those numbers, which is not much; Step 6's Firefox run is what makes it a bound rather than a guess. If Firefox comes out over, the answer is a wider tightening or shorter labels — raise it, do not quietly widen the query.
+4. **Task 7, Step 4** — whether the merged line at 700–800px still reads well with Filters and Columns as glyphs. The boundary was chosen for consistency rather than for fit, so there is slack there by construction; if the row looks under-filled at 760px, that is a finding worth raising rather than silently retuning.
+5. **Task 8, Step 3** — the pill may already be absent on the landing screen when you get there, because Task 3 put it inside `{#if showGroups}`. Keep the test anyway; it guards a rule with a reason that is not visible from the markup.
