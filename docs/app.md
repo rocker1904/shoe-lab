@@ -1530,9 +1530,11 @@ has gone.
 
 `Toolbar.svelte` is the permanent surface: a setup group of three controls in one
 visual language — the zone, then `All | Easy | Tempo | Race`, then the
-`Stability` pill — and an actions group (`About`, `Filters`, `Columns`) pushed
-right by `margin-left: auto`. The strip cannot hold the controls that reset it,
-because it is gone by the time they are needed.
+`Stability` pill — and an actions group pushed right by `margin-left: auto`:
+`About`, `Filters` (below 800px only, where the sidebar is a drawer), `Columns`,
+and below 800px the three utilities as well (§Where the utilities live). The
+strip cannot hold the controls that reset it, because it is gone by the time they
+are needed.
 
 **There is no group divider.** `main` drew a hairline between the zone and story
 groups above 880px. With the stability pill joining that run, a line between the
@@ -1636,16 +1638,16 @@ shrink-wrapped rather than stretched, at every width.
 
 **Below 800px the chrome has a budget**, and it is a number rather than a taste:
 everything above the first shoe is paid on the screen with the least of it. The
-masthead and the bar measured 217px at 390×844 with the setup strip up, which
-with the pinned table header put 39% of the viewport in front of the first
-result. The ceiling is now **170px with the strip up and 210px once the bar has
-been handed the two groups**, asserted at 360px and 390px in `smoke.spec.ts`.
-Three things buy it, and none drops a control: the masthead credit's micro-label
-sets at 9px (§The header names the catalogue, the receipt owns the count), both bars trade their desktop gutter for `--s3` and their
-vertical padding for `--s1`, and the two segmented groups share a row. The credit
-stays **stacked** here — set on one line it is 142px wide against 75px and only
-12px shorter, so at 390px it pushes the theme button onto a third row and takes
-the masthead from 77px to 106px: 29px spent to save 12.
+masthead and the bar measured 217px at 390×844 with the setup strip up, and 198px
+at 360px with the story pills up — which with the pinned table header put 39% of
+the viewport in front of the first result. The rebuild spends **109px at 360px
+with all three setup controls on the bar, and 80px on a first arrival**. The
+ceilings are set roughly 10px above that and asserted in `smoke.spec.ts`; they
+are bounds rather than pins, so a font tweak does not fail the build but a
+regression does. Nothing was dropped to buy it: the explanation moved into one
+panel (§The About panel), the utilities and two of the actions became icons on
+one boundary (§Where the utilities live), and the bands were laid out rather than
+left to wrap (§The chrome bands).
 
 Picking a zone always leaves the view about that zone, in three states: a view
 equal to a story is rebuilt as that story on the new zone; a view that names a
@@ -1962,14 +1964,16 @@ and a literal splits it across the four components that read it —
 `DiscontinuedFilter.svelte`. `tokens.test.ts` fails the build on a raw white in
 a component's style block.
 
-`--divider` is deliberately **darker than `--border`**: a group divider sits on
+`--divider` is deliberately **darker than `--border`**: a divider sits on
 `--chrome`, where a border-coloured hairline measures 1.22:1 and simply is not
-there.
+there. Its remaining carriers are the setup strip's group divider and the About
+panel's list bullets — the toolbar's own hairline is gone (§The toolbar).
 
 **One treatment for a secondary button** — `--surface` fill, `--border`
 hairline, `--r-sm`, `--t-sm`, and `--accent-dim` on hover — carried by the
-masthead's three actions, the drawer toggle, the sidebar's Add filter and Clear
-filters pair, and the Add-filter dialog's Close. It is repeated per component
+three utilities wherever their band mounts them (§Where the utilities live), the
+`About` button, the drawer toggle, the sidebar's Add filter and Clear filters
+pair, and the Add-filter dialog's and the About panel's Close. It is repeated per component
 rather than written once as a global `button` rule, because most of this app's
 buttons are **not** this: the segmented pills, the table headers, the range
 rows' clear icon, the setup cards and the two `<details>` summaries each carry

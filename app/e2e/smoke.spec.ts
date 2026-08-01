@@ -346,11 +346,20 @@ test('never adds a chrome row that a narrower window hands back', async ({ page 
     return lines('header') + lines('[data-testid="toolbar"]');
   });
 
+  // The utilities move host through a rune, a frame behind the viewport — the reasoning is
+  // docs/app.md §Where the utilities live. Unsettled, the masthead is briefly counted with the
+  // bar's own controls still in it.
+  const settled = (width: number) => expect(
+    page.locator(width <= 800 ? '[data-testid="toolbar"]' : 'header')
+      .getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+
   let widest = 0;
   let rows = 0;
-  for (const width of [1440, 1200, 1000, 940, 900, 881, 880, 879, 860, 840, 820, 801, 800, 790,
-                       780, 760, 700, 640, 611, 610, 600, 561, 560, 480, 430, 390, 375, 360]) {
+  for (const width of [1440, 1200, 1000, 940, 900, 860, 820, 801, 800, 790, 760, 720, 701, 700, 699,
+                       680, 640, 600, 560, 500, 460, 431, 430, 429, 412, 400, 390, 380, 375, 370,
+                       365, 360]) {
     await page.setViewportSize({ width, height: 800 });
+    await settled(width);
     const next = await chromeRows();
     expect(next, `the chrome takes ${rows} rows at ${widest}px and only ${next} at ${width}px, so `
       + `${widest}px is paying for a row nothing on screen needs`).toBeGreaterThanOrEqual(rows);
@@ -394,30 +403,92 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
 }
 
 /**
- * A bound rather than an impression: everything above the first shoe on a phone is chrome, and it is
- * paid on the screen with the least room for it. The strip-up case is the binding one, because that
- * is a first arrival — masthead plus toolbar measured 217px at 390×844, which with the pinned table
- * header put 39% of the viewport in front of the first result.
+ * Every row of chrome is paid before the first shoe. `main` spent 198px at 360px with the pills up;
+ * the rebuild spends 109px, and the ceiling is what stops the saving being given back one padding
+ * step at a time. A bound rather than a pin, so a font tweak does not fail the build but a
+ * regression does — each is set roughly 10px above what the components actually measure, and above
+ * the HIGHER of the two engines: Firefox runs about 5px taller than Chromium here, and this project
+ * is Chromium-only (docs/app.md §The chrome bands).
  *
- * Both phone widths, and both states: the strip hands the two segmented groups to the bar, so the
- * bar is TALLER once it has them and the ceiling has to cover that too.
+ * Both states, because the bar is taller once the strip has handed it the three setup controls —
+ * and the strip-up pass is the binding one, because that is a first arrival.
  */
-for (const width of [360, 390]) {
-  test(`keeps the phone chrome under its ceiling at ${width}px`, async ({ page }) => {
+test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
+  const chrome = () => page.evaluate(() =>
+    Math.round(document.querySelector('.chrome')!.getBoundingClientRect().height));
+  /**
+   * A resize moves the utilities between hosts through a rune rather than a media rule
+   * (docs/app.md §Where the utilities live), and the rune lands a frame after the viewport changes.
+   * Measured before it does, the masthead still carries three worded buttons at a phone width and
+   * wraps: 162px of chrome at 360px, against the 109px the band actually spends. `expect` polls, so
+   * this waits for the swap rather than sleeping through it.
+   */
+  const settled = (width: number) => expect(
+    page.locator(width <= 800 ? '[data-testid="toolbar"]' : 'header')
+      .getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+
+  for (const [width, ceiling] of [[360, 95], [390, 95]] as const) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
     await expect(page.getByTestId('setup-strip')).toBeVisible();
-    const chrome = () => page.locator('.chrome')
-      .evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    await settled(width);
+    await page.evaluate(() => document.fonts.ready.then(() => null));
+    const h = await chrome();
+    expect(h, `the chrome is ${h}px at ${width}px on a first arrival`).toBeLessThanOrEqual(ceiling);
+  }
 
-    expect(await chrome(), 'the masthead and bar are too tall on a first arrival')
-      .toBeLessThanOrEqual(170);
-    await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
-    await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
-    expect(await chrome(), 'the bar is too tall once the strip hands over')
-      .toBeLessThanOrEqual(210);
-  });
-}
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
+  await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready.then(() => null));
+  for (const [width, ceiling] of [[360, 125], [390, 125], [430, 125], [700, 128], [900, 105]] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await settled(width);
+    const h = await chrome();
+    expect(h, `the chrome is ${h}px at ${width}px`).toBeLessThanOrEqual(ceiling);
+  }
+});
+
+/**
+ * Four controls lose their words at 800px — Copy link, Export CSV, Filters and Columns (the theme
+ * cycle is a glyph at every width and never had a word to lose). Each keeps the name its worded
+ * form had, at every width: an icon that ships without one is unusable and untestable at once.
+ */
+test('never ships an icon without its name', async ({ page }) => {
+  for (const width of [360, 430, 690, 760, 900]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    for (const name of ['Copy link', 'Export CSV', 'About']) {
+      // `exact`, or `About` also matches the strip's `Read about this table`.
+      await expect(page.getByRole('button', { name, exact: true }), `${name} at ${width}px`)
+        .toHaveCount(1);
+    }
+    await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
+    if (width <= 800) await expect(page.getByRole('button', { name: 'Filters' })).toHaveCount(1);
+    // NOT `getByRole`: `<summary>` has no implicit ARIA role, so a role query never matches it
+    // however it is labelled (docs/app.md §Where the utilities live). The label is still what a
+    // screen reader announces.
+    await expect(page.locator('details.picker summary'), `Columns at ${width}px`)
+      .toHaveAttribute('aria-label', /^Columns, \d+ shown$/);
+  }
+});
+
+test('opens the About panel from the bar and from the strip', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /Read about this table/ }).click();
+  await expect(page.getByRole('dialog', { name: 'About this table' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'About this table' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'About', exact: true }).click();
+  const dlg = page.getByRole('dialog', { name: 'About this table' });
+  await expect(dlg).toBeVisible();
+  // The body is read whole rather than scrolled through: on the phone most people carry, it fits.
+  const over = await dlg.locator('.body').evaluate((b) => b.scrollHeight - b.clientHeight);
+  expect(over, 'the About copy no longer fits a 390x844 phone').toBeLessThanOrEqual(0);
+});
 
 /**
  * The banner is ONE row at every phone width, and the provenance block holds the trailing edge:
