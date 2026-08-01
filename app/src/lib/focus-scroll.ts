@@ -65,14 +65,30 @@ export function keepFocusInScrollports(root: Document = document): () => void {
     // the browser's to scroll, and a second opinion there is how a page starts fighting its own
     // sticky header.
     if (!ports.length) return;
-    for (const port of ports) {
-      const room = parseFloat(getComputedStyle(port).scrollPaddingTop) || 0;
-      const box = port.getBoundingClientRect();
-      const delta = scrollDelta({ top: box.top, height: box.height }, el.getBoundingClientRect(), room);
-      if (delta !== 0) port.scrollTop += delta;
-    }
+    const fit = () => {
+      for (const port of ports) {
+        const room = parseFloat(getComputedStyle(port).scrollPaddingTop) || 0;
+        const box = port.getBoundingClientRect();
+        const delta = scrollDelta({ top: box.top, height: box.height }, el.getBoundingClientRect(), room);
+        if (delta !== 0) port.scrollTop += delta;
+      }
+    };
+    fit();
+    /*
+     * And again next frame, because **Firefox's own focus scroll can land after this handler
+     * returns**. Instrumented on a walk that failed intermittently: the fit left "Energy return —
+     * Heel maximum" at 282..308 inside a 90..500 port at `scrollTop: 724`, and by the time anything
+     * read it back the port was at 527 with the control at 479..505 — five pixels past the clip
+     * edge. Nothing moved after that, so it is one late scroll rather than a fight. Guarded on the
+     * control still holding focus, so a fast Tab is never scrolled back to where the runner was.
+     */
+    requestAnimationFrame(() => { if (root.activeElement === el) fit(); });
     const b = el.getBoundingClientRect();
-    if (b.top < 0 || b.bottom > (root.defaultView?.innerHeight ?? 0)) el.scrollIntoView({ block: 'nearest' });
+    if (b.top >= 0 && b.bottom <= (root.defaultView?.innerHeight ?? 0)) return;
+    el.scrollIntoView({ block: 'nearest' });
+    // Once more, because that call is the browser's heuristic and it walks the same ports on its way
+    // out to the window. Idempotent, so it costs a layout read when it changes nothing.
+    fit();
   };
   root.addEventListener('focusin', onfocus, true);
   return () => root.removeEventListener('focusin', onfocus, true);
