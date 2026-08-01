@@ -144,10 +144,17 @@
    * one is ticked — and clicking one of those still returns shoes, because brands are OR'd. A facet
    * must not filter itself. The key set is seeded from the whole fleet so a brand matching nothing
    * still has a row to show its zero (docs/app.md §Filters).
+   *
+   * And from the SELECTION as well as the fleet, which is the case a link makes: `parseView` keeps
+   * `brands` verbatim on purpose, so a link naming a brand the catalogue has since dropped applied
+   * a filter that had no control anywhere on screen — "1 selected", nothing ticked, and only
+   * `Clear filters` to escape it, which discards every other filter the link carried. A `Set`
+   * rather than a concat: a selected brand the catalogue does hold must not get a second row.
    */
   const brandPool = $derived(applyFilters(data.shoes, { ...view.filters, brands: undefined }, idx).considered);
   const brandCounts = $derived(new Map(
-    [...new Set(data.shoes.map((s) => s.brand).filter((b): b is string => !!b))]
+    [...new Set([...data.shoes.map((s) => s.brand).filter((b): b is string => !!b),
+      ...(view.filters.brands ?? [])])]
       .map((b) => [b, brandPool.filter((s) => s.brand === b).length] as const)));
 
   function patch(mutate: (v: ViewState) => void) {

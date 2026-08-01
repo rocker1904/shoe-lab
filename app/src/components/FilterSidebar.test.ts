@@ -92,6 +92,30 @@ describe('FilterSidebar', () => {
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByLabelText(/^Brand \(4\)/)).toBeInTheDocument();
   });
+  /**
+   * `parseView` keeps `brands` verbatim on purpose — dropping a name the catalogue no longer holds
+   * would silently change what a shared link shows. The cost is that the selection has to be
+   * *visible*: `?brands=Nonesuch` used to read "1 selected" with none of the listed brands ticked
+   * and the word nowhere in the document, so the only recovery was Clear filters, which discards
+   * every other filter the link carried (docs/app.md §Filters).
+   */
+  it('gives a selected brand the catalogue does not hold a row of its own', () => {
+    const view = defaultView();
+    view.filters.brands = ['Nonesuch'];
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: { data, view, onchange, population: [] } });
+    const row = screen.getByLabelText(/^Nonesuch \(0\)/);
+    expect(row).toBeChecked();
+    return fireEvent.click(row).then(() => {
+      expect(onchange.mock.lastCall![0].filters.brands).toBeUndefined();
+    });
+  });
+  it('never lists a selected brand twice when the catalogue does hold it', () => {
+    const view = defaultView();
+    view.filters.brands = ['Brand'];
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    expect(screen.getAllByLabelText(/^Brand \(/)).toHaveLength(1);
+  });
   it('released-after chips set a UTC cut-off, truncated to the month the data can honour', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));

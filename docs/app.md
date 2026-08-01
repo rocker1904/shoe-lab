@@ -154,7 +154,8 @@ if the length ever becomes annoying in practice (BACKLOG.md).
 cannot vouch for, always falling back to the default rather than throwing:
 range and sort keys must name a numeric test or a numeric shoe field, a
 malformed bound voids that whole range (dropping one side would silently widen
-it), `after` and `disc` are pattern-checked, `plate` keeps only allowlisted members and is
+it), `after` and `disc` are pattern-checked, a `q` of nothing but whitespace is
+the empty query (§Filters), `plate` keeps only allowlisted members and is
 deduped into declared order, an all-separator `brands`, `plate` or `rows` stays
 absent instead of becoming an empty array, `rows` keeps only rangeable
 non-curated keys, and `cols` is deduped and filtered against the column
@@ -162,6 +163,14 @@ allowlist. A `gen.` choice survives only when its key names
 the current generation of a resolved pair and its value names that pair's
 retired generation. Bound serialisation accepts everything `String(number)`
 emits, exponent form included, so round-trips are lossless.
+
+**`brands` is the deliberate exception, and it is not an oversight.** The names
+are kept verbatim rather than filtered against the current catalogue, because
+`data/` is regenerated on a schedule and dropping a name here would change what
+a shared link shows without saying so — the recipient would see a wider fleet
+than the sender sent and nothing would report the difference. The cost is paid
+in the sidebar instead, where a selected brand the fleet does not hold gets a
+row of its own so it can be seen and unticked (§Filters).
 
 The two generations of a pair are mutually exclusive, and `parseView` is where
 that is enforced for URLs — the one place both can arrive together. When a
@@ -308,7 +317,21 @@ handed would read `(0)` beside every unticked brand the moment one is ticked,
 and clicking one of those still returns shoes, because brands are OR'd. The key
 set is seeded from the whole fleet, so a brand matching nothing keeps its row:
 it stays in the list, greyed, showing `(0)` and clickable — the list does not
-reflow under the cursor, and a 0 is an answer. A search box narrows the
+reflow under the cursor, and a 0 is an answer.
+
+**It is seeded from the selection too**, which is the case a shared link makes.
+`parseView` keeps `brands` verbatim on purpose (§URL encoding), so a link naming
+a brand the catalogue has since dropped — or spelling one differently, the
+catalogue says `HOKA` — applied a filter with no control anywhere on screen:
+`?brands=Nonesuch` read **1 selected** with none of the 34 listed brands ticked
+and the word nowhere in the document, on a phone as much as on the desktop. The
+only recovery was `Clear filters`, which discards every other filter the link
+carried. A selected brand the fleet does not hold now gets a row like any other
+zero — greyed, `(0)`, ticked, clickable to untick — so the summary count never
+exceeds the number of controls that can act on it. Seeded through a `Set`, so a
+selected brand the catalogue *does* hold gets one row rather than two.
+
+A search box narrows the
 fifty-odd brands in a 14rem scroll box. Its `<summary>` **suppresses the UA
 marker and draws an SVG chevron**, exactly as the column picker's does: those two
 are the only `<details>` in the app, and one of them showing the browser's
