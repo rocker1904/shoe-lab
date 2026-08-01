@@ -479,41 +479,39 @@ for (const width of [360, 390]) {
 }
 
 /**
- * The masthead's left column, as a number rather than an impression: below 800px the title, the
- * credit's micro-label and the name under it are three stacked text runs and they share one left
- * edge (docs/app.md §The header names the catalogue, the receipt owns the count). Two separate
- * rules put them there — the credit aligns its own lines left, and the spacer is gone rather than
- * zero-width — and either one regressing shows up here as an 8px or 12px step.
+ * The banner is ONE row at every phone width, and the provenance block holds the trailing edge:
+ * `main` left 59px of air at 390px and 248px at 700px by deleting the spacer at this band, which is
+ * the raggedness the rebuild exists to remove. The count line is checked at the WIDEST month the
+ * formatter can emit — `en-GB` renders September as `Sept`, 8px wider than the July it was first
+ * measured against, and once cost 26px of chrome at 360px by wrapping.
  *
- * The count line is checked against the WIDEST month the formatter can emit, not the fixture's:
- * `en-GB` renders September as `Sept`, which is 8px wider than the July it was first measured
- * against and once cost 26px of chrome at 360px by wrapping. jsdom lays nothing out, so only a
- * browser can answer either half.
+ * jsdom lays nothing out, so only a browser can answer either half.
  */
 for (const width of [360, 390]) {
-  test(`keeps the masthead in one left column at ${width}px`, async ({ page }) => {
+  test(`keeps the banner one flush row at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready.then(() => null));
 
-    const lefts = await page.evaluate(() => {
-      const l = (sel: string) => Math.round(document.querySelector(sel)!.getBoundingClientRect().left);
-      return { title: l('header h1'), label: l('header .credit-label'), name: l('header .credit-name') };
-    });
-    expect(lefts.label, 'the credit label is not flush with the title').toBe(lefts.title);
-    expect(lefts.name, 'the credit name is not flush with the title').toBe(lefts.title);
-
-    // Rows, counted the way the monotonicity guard counts them, with the count line at its widest.
-    const rows = await page.evaluate(() => {
+    const seen = await page.evaluate(() => {
       const header = document.querySelector('header')!;
       header.querySelector('.count')!.textContent = '450 shoes · updated 27 Sept 2026';
-      const ys = [...header.children]
-        .filter((e) => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0)
-        .map((e) => { const r = e.getBoundingClientRect(); return r.y + r.height / 2; })
+      const box = header.getBoundingClientRect();
+      const kids = [...header.children]
+        .filter((e) => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0);
+      const ys = kids.map((e) => { const r = e.getBoundingClientRect(); return r.y + r.height / 2; })
         .sort((a, b) => a - b);
-      return ys.reduce((n, y, i) => (i === 0 || y - ys[i - 1] > 4 ? n + 1 : n), 0);
+      const right = Math.max(...kids.map((e) => e.getBoundingClientRect().right));
+      return {
+        rows: ys.reduce((n, y, i) => (i === 0 || y - ys[i - 1] > 4 ? n + 1 : n), 0),
+        air: Math.round(box.right - parseFloat(getComputedStyle(header).paddingRight) - right),
+        titleLeft: Math.round(header.querySelector('h1')!.getBoundingClientRect().left),
+        padLeft: Math.round(box.left + parseFloat(getComputedStyle(header).paddingLeft)),
+      };
     });
-    expect(rows, 'the widest month wraps the masthead onto a third row').toBe(2);
+    expect(seen.rows, 'the widest month wraps the banner onto a second row').toBe(1);
+    expect(seen.air, 'the provenance block left the right edge').toBeLessThanOrEqual(1);
+    expect(seen.titleLeft, 'the wordmark left the left edge').toBe(seen.padLeft);
   });
 }
 

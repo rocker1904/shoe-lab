@@ -20,4 +20,23 @@ describe('Header', () => {
     expect(screen.getByText(/27 Jul 2026/)).toBeInTheDocument();
     expect(screen.queryByText(/2026-07-27/)).toBeNull();
   });
+
+  // The count and the credit are both facts about where the data came from, so they stack into one
+  // block opposite the wordmark rather than the credit sitting inline among buttons, where it read as
+  // a caption for whichever button followed it.
+  it('stacks the catalogue fact and the credit into one provenance block', () => {
+    const { container } = render(Header, { props });
+    const prov = container.querySelector('.prov');
+    expect(prov).not.toBeNull();
+    expect(prov!.querySelector('.count')).not.toBeNull();
+    expect(prov!.querySelector('.credit')).not.toBeNull();
+  });
+
+  // Structural, not decorative (docs/decisions.md §Be a good citizen toward RunRepeat).
+  it('keeps the attribution a visible, immediately-clickable link', () => {
+    render(Header, { props });
+    const link = screen.getByRole('link', { name: /RunRepeat/ });
+    expect(link).toHaveAttribute('href', 'https://runrepeat.com/catalog/running-shoes');
+    expect(link).toBeVisible();
+  });
 });

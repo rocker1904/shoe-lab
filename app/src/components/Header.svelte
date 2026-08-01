@@ -20,15 +20,19 @@
 
 <header>
   <h1>Shoe Lab</h1>
-  <span class="count">{total} shoes · updated {updated}</span>
   <span class="spacer"></span>
   <!-- Attribution is structural, not decorative: a permanent, visible, immediately-clickable link
-       (docs/decisions.md §Be a good citizen toward RunRepeat). The micro-label does the explaining,
-       so the name is set in plain text and no link colour competes with the wash. -->
-  <a class="credit" href="https://runrepeat.com/catalog/running-shoes" rel="noopener" target="_blank">
-    <span class="credit-label">Lab data by</span>
-    <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-  </a>
+       (docs/decisions.md §Be a good citizen toward RunRepeat). It stacks under the catalogue fact
+       because both say where the data came from — beside a button it read as that button's caption.
+       The micro-label does the explaining, so the name is set in plain text and no link colour
+       competes with the wash. -->
+  <span class="prov">
+    <span class="count">{total} shoes · updated {updated}</span>
+    <a class="credit" href="https://runrepeat.com/catalog/running-shoes" rel="noopener" target="_blank">
+      <span class="credit-label">Lab data by</span>
+      <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </span>
   <!-- `{#if}`, not `{@render utilities?.()}` on its own: an empty span is still a flex item and
        still takes the header's gap, which is exactly what would stop the banner being flush. -->
   {#if utilities}<span class="utils-host">{@render utilities()}</span>{/if}
@@ -42,6 +46,13 @@
   h1 { font-size: var(--t-xl); margin: 0; }
   .count { color: var(--text-dim); font-family: var(--font-mono); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
+  /* Above 800px the two facts are header items in their own right, in the order the visual-polish
+     pass settled — the wrapper exists for the banner, and grouping them here would move the
+     catalogue count from beside the wordmark to the far right. `display: contents` is what lets one
+     wrapper serve both bands without a second copy of the count in the markup. */
+  .prov { display: contents; }
+  h1 { order: -2; }
+  .count { order: -1; }
   .credit { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-decoration: none; color: var(--text); }
   /* 9px as a literal, deliberately below the scale: `--t-xs` is 12px and the type scale bottoms out
      there, because 12px is the floor for anything a reader has to READ. This label is not read — it
@@ -50,42 +61,33 @@
   .credit-label { font-size: 9px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-dim); }
   .credit-name { display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-sm); font-weight: 500; }
   .credit:hover .credit-name { color: var(--accent); }
-  /* Below 800px every pixel of chrome is paid before the first shoe, on the screen with the least
-     of it — so this tier buys height back three ways and none of them drops a control.
-     `--s5` of side padding is a desktop gutter: at 390px it spent 48px of a 390px line and was what
-     pushed the buttons onto a row of their own. */
+  /* Below 800px the masthead becomes a BANNER: the wordmark at the left margin, and opposite it one
+     right-aligned block saying where the data came from. Desktop is the default and this is the
+     override, never the other way round — writing it banner-first would need a `min-width` twin of
+     the sidebar's `max-width: 800px`, and every fractional width between the two would match
+     neither (docs/app.md §Where the utilities live). One query, and its complement is whatever the
+     query does not match.
+     `--s5` of side padding is a desktop gutter: at 390px it spent 48px of a 390px line. */
   @media (max-width: 800px) {
-    header { --gap-x: var(--s3); flex-wrap: wrap; gap: var(--s2) var(--gap-x);
-             padding: var(--s2) var(--s3); }
-    /* The credit stays STACKED here, and that is the measurement rather than the obvious answer: on
-       one line it is 142px wide against the stacked 75px, and only 12px shorter — a 16px line box
-       against 28px of stack. At 390px those 67px of extra line push the theme button onto a third
-       row and the masthead goes from 77px to 106px, so the 12px saving costs 29. The 9px micro-label
-       above the name is what keeps the stacked form that cheap.
-       Stacked and LEFTMOST: once the bar wraps this block starts its row, so its two lines share a
-       left edge with each other and with the title above them. Aligning them right — which is what
-       the desktop wants, where it is the last item on a single line — set `LAB DATA BY` 12px in
-       from `RunRepeat` and made the masthead three different left edges. */
-    .credit { align-items: flex-start; }
-    /* The spacer exists to push the credit to the far right of a bar that is ONE line, so once the
-       bar wraps it has nothing left to push and is DELETED rather than neutralised. A zero-width
-       flex item is still a flex item: it takes a gap and it wraps, and at 360px it did not fit
-       after the count, landed at the head of row two, and indented the credit 8px past the title's
-       left edge — the one width at which the masthead's left column was ragged. */
-    .spacer { display: none; }
+    /* The spacer STAYS — it is what makes the banner flush right, and deleting it here is exactly
+       what left 59px of air at 390px and 248px at 700px on the old header. `nowrap` because there
+       are only two items to place and the block beside the wordmark is meant to hold the trailing
+       edge rather than fall under it. */
+    header { --gap-x: var(--s3); flex-wrap: nowrap; padding: var(--s1) var(--s2); }
+    /* One block, right-aligned, opposite the wordmark. One line for the credit, not the desktop's
+       stack: the count sitting directly above it already carries the small print. */
+    .prov { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+    .credit { flex-direction: row; align-items: baseline; gap: 5px; }
   }
-  /* 360px is the binding width, not 375 — it is the usual Android one. At `--s3` of side padding the
-     title line alone measures 341px against the 336px available, so the catalogue count wrapped and
-     carried the credit and all three buttons to a third row: 26px of chrome bought by 8px of
-     gutter. */
+  /* 360px is the binding width, not 375 — it is the usual Android one. The tier's `--gap-x` step
+     went with the masthead: the banner's spacer is `flex: 1` and absorbs the difference, so forcing
+     `--s3` here changes the height, the trailing air and the overflow by nothing in either engine.
+     The count step is the whole of what is left, and it is re-measured on the banner rather than
+     carried over: `en-GB` sets September as `Sept`, the widest string the formatter can emit, and
+     at 360px that line takes THREE lines at `--t-sm` in Chromium — 54px, and 7px of overflow with
+     it — and two in Firefox, against one 16px line at `--t-xs` in both. The banner is 41px tall
+     with the step and 100px without it. */
   @media (max-width: 560px) {
-    header { --gap-x: var(--s2); padding-inline: var(--s2); }
-    /* Down one step, to the scale's 12px floor, and it is the month that decides it. `en-GB` sets
-       September as `Sept`, so the widest string the formatter can emit is 8px wider than the July
-       one this tier was measured against: 256px against the 255px left beside the title at 360px.
-       It wrapped, took the credit and all three buttons with it, and cost 26px of chrome — one
-       month in twelve, on the narrowest phone only. At `--t-xs` the widest month measures 231px, so
-       the line has 24px in hand rather than -1. */
     .count { font-size: var(--t-xs); }
   }
 </style>

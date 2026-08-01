@@ -2124,29 +2124,47 @@ cheap enough to keep on a phone (§The toolbar). The link itself stays permanent
 visible and immediately clickable — that is structural, not decorative
 (docs/decisions.md §Be a good citizen toward RunRepeat).
 
-**Below 800px the masthead has one left edge**, and three rules hold it there.
-The credit's own two lines align **left** rather than right once the bar wraps,
-because it is then the leftmost thing on its row — right-aligned it set
-`LAB DATA BY` 12px in from `RunRepeat`, and the block read as two edges. The
-`.spacer` is **deleted** at that tier rather than neutralised: it exists to push
-the credit to the end of a bar that is one line, and a zero-width flex item
-still takes a gap and still wraps — at 360px it landed at the head of row two
-and indented the credit 8px past the title, so `display: none` is the only form
-of "off" that works. And the three actions are **one box**, so they wrap as a
-group: as loose items the bar broke mid-group between 560px and 800px, leaving
-Copy link at the end of the masthead and the other two starting the row below.
-The group never wraps inside itself — 232px against the 269px beside the credit
-at 360px — which matters because `smoke.spec.ts` counts chrome rows from the
-header's direct children.
+**Below 800px the masthead becomes a banner: the wordmark at the left margin, and
+opposite it one right-aligned provenance block** — the catalogue count over the
+credit, the credit on one line. The two are stacked because both say where the
+data came from; inline among buttons the credit read as a caption for whichever
+button followed it. The header is **one row at every width**, measured in both
+engines, and its trailing air is **≤1px below 800px** — that is what "flush"
+means here, and `keeps the banner one flush row at ${width}px` in
+`smoke.spec.ts` is what holds it at 360px and 390px with the count line at its
+widest.
+
+**The `.spacer` is load-bearing and must not be deleted again.** `main` removed
+it at this tier, on the reasoning that a spacer has nothing to push once the bar
+wraps — and that left every item packed against the left margin: 59px of trailing
+air at 390px and **248px at 700px**, where the header spent a whole second row on
+three buttons while most of row one sat empty. The banner does not wrap, so the
+spacer is exactly what holds the right edge.
+
+**Desktop is the default and the banner is the override**, never the other way
+round. Writing it banner-first would need a `min-width` twin of the sidebar's
+`max-width: 800px`, and every fractional width between the two would match
+neither — which browser zoom and Firefox's fractional viewport widths both
+produce (§Where the utilities live). One query, and its complement is whatever
+the query does not match. The `.prov` wrapper therefore **dissolves to
+`display: contents` above 800px**, with `order` putting the count back beside the
+wordmark, so the desktop masthead keeps the exact arrangement the visual-polish
+pass settled and one wrapper serves both bands without a second copy of the count
+in the markup. Both e2e row counters skip boxless children, so a
+`display: contents` `.prov` is not counted and the desktop header still reads as
+one row — the one thing given up is that a desktop `.prov` wrapping *internally*
+would no longer show as a row, which the banner's own `air` bound is what holds.
 
 **The count steps down to `--t-xs` at 560px and below, and the month is what
-decides it.** `en-GB` renders September as `Sept`, so the widest string the formatter
-can emit is 8px wider than the July one this tier was first measured against:
-256px against the 255px left beside the title at 360px. It wrapped, took the
-credit and all three buttons with it, and cost 26px of chrome — one month in
-twelve, on the narrowest phone only. At `--t-xs` the widest month measures 231px
-and the line has 24px in hand. Re-measure this bound against the **widest**
-month, not the current build's, if the string ever grows again.
+decides it.** `en-GB` renders September as `Sept`, the widest string the
+formatter can emit. Re-measured on the banner rather than carried over from the
+masthead: at 360px that line takes **three** lines at `--t-sm` in Chromium — 54px
+tall, and 7px of overflow with it — and two in Firefox, against one 16px line at
+`--t-xs` in both. The banner is 41px tall with the step and 100px without it. The
+tier's old `--gap-x` step went with the masthead: the banner's spacer is `flex: 1`
+and absorbs the difference, so forcing the wider gap changes height, trailing air
+and overflow by nothing in either engine. Re-measure against the **widest** month,
+not the current build's, if the string ever grows again.
 
 ### Columns are permissive, ranges and sorts are strict
 `cols` accepts any test slug — showing a column the catalogue no longer carries
