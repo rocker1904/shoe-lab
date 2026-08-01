@@ -117,6 +117,17 @@ of them — the rig never caught itself.** That is the strongest argument for th
    table at 600px, a 317px overflow that does not exist.
 7. **Do not pipe a probe through `tail` and wait** — `tail` blocks until exit, so it looks hung.
    Redirect to a file and read it.
+8. **In WebKit a pointer press disables Tab until focus is moved off what it pressed.** WebKit
+   anchors sequential focus navigation to the *node the pointer last pressed*, not to
+   `activeElement`. Press a child that cannot take focus — the word inside the column picker's
+   `<summary>`, say — and every later Tab and Shift+Tab resolves back to that child's focusable
+   ancestor and moves focus nowhere, firing **no focus event at all**. A probe that clicks a control
+   open and then walks it by keyboard therefore measures the app answering an exit that never
+   happened, in the one engine that behaves differently. Re-focusing does not clear it, because the
+   ancestor is already `activeElement` and `focus()` is a no-op; `blur()` then `focus()` does.
+   Chromium and Firefox navigate away in every one of those cases. Reproduced on a five-line page
+   with no app code in it, and it is what made `cross-browser.spec.ts` › *closes the column picker
+   every way out* fail in WebKit alone.
 
 ## Briefing a hunting agent
 

@@ -175,7 +175,21 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
    * The keyboard's ways out, both of which used to strand it — this panel is `position: absolute`
    * over the table, and it survived an exit in either direction with Escape inert from then on
    * (docs/app.md §Every floating panel dismisses the same way).
+   *
+   * The blur hands the keyboard block a clean start, and it is the *test's* contamination rather
+   * than anything the app does. WebKit anchors sequential focus navigation to the node the pointer
+   * last pressed, not to `activeElement`: the presses above land on an element child of the summary
+   * (it holds a word, two SVGs and a count badge), that child cannot take focus, and so every
+   * later Tab and Shift+Tab resolves back to the summary and moves focus nowhere — no `focusout`
+   * fires at all, which leaves the app nothing to answer. `press()` cannot clear it, because the
+   * summary is already `activeElement` and its `focus()` is then a no-op; a `blur()` first does.
+   * Measured on a five-line page carrying no app code: Chromium and Firefox navigate away from a
+   * clicked summary in every case, WebKit only when the press landed on the summary's own text or
+   * its padding rather than on a child element. Same class as the Firefox scrollport tab stop this
+   * file already drives around (0029) — a UA behaviour the spec steps over, not a claim about the app.
    */
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+
   await summary.press('Enter');
   await expect(panel).toBeVisible();
   await page.keyboard.press('Shift+Tab');
