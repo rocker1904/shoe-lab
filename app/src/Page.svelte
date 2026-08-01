@@ -23,6 +23,7 @@
   import SkipLink from './components/SkipLink.svelte';
   import Toolbar from './components/Toolbar.svelte';
   import { TABLE_ANCHOR_ID } from './lib/anchor';
+  import { COPIED, EXPORTED, viewAnnouncement } from './lib/announce';
   import { exportCsv } from './lib/csv-export';
   import { keepFocusInScrollports } from './lib/focus-scroll';
   import { ICON_PATHS } from './components/icons';
@@ -330,6 +331,8 @@
   });
 
   function setView(v: ViewState) {
+    // Read before the assignment, so the diff is against the view the control was pressed on.
+    void announce(viewAnnouncement(snapshot, v, idx));
     view = v;
     writeView(serializeView(v));
   }
@@ -378,6 +381,27 @@
     next.filters.showMissing = next.filters.showMissing ? undefined : true;
     setView(next);
   }
+  /**
+   * The one live region for what a control DID, and the whole announcement policy's mechanism
+   * (docs/app.md §What a control says it did). Singular deliberately: two rapid actions read as the
+   * later one rather than racing, which is the behaviour a runner wants and the only one a screen
+   * reader can be relied on to give.
+   *
+   * The clear-and-reflush is for the two actions that can be repeated with the same outcome —
+   * Export CSV and Copy link. Assigning identical text is not a DOM change, so nothing is spoken
+   * the second time; emptying the region and letting that render first is what makes a repeat
+   * audible.
+   */
+  let said = $state('');
+  async function announce(text: string | null) {
+    if (!text) return;
+    if (said === text) {
+      said = '';
+      await tick();
+    }
+    said = text;
+  }
+
   function onExport() {
     const blob = new Blob([exportCsv(visibleSorted, view.columns, idx, scores)], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -388,6 +412,9 @@
     // Revoking in the same tick can cancel the download before the browser has taken its own
     // reference to the blob; yielding once is enough.
     setTimeout(() => URL.revokeObjectURL(url), 0);
+    // Nothing about the view changed and nothing on screen moved: a file was written. This is the
+    // action the sweep found standing beside `Copy link`, one with a status node and one without.
+    void announce(EXPORTED);
   }
   // Reads back what main.ts already put on the DOM at boot (docs/app.md §Theming).
   let theme = $state<Theme>(currentTheme());
@@ -399,8 +426,10 @@
   /**
    * The URL *is* the view (docs/app.md §View and URL ownership), so copying the address bar is the
    * whole share feature — a stated project goal that had no affordance at all. The confirmation is
-   * its own live region rather than a relabelled button: swapping the label would change the
-   * control's accessible name to something you cannot then press.
+   * a separate node rather than a relabelled button: swapping the label would change the control's
+   * accessible name to something you cannot then press. It is now VISIBLE feedback only — the
+   * announcement goes through the one status region every other action uses, so that `Export CSV`
+   * beside it is not the silent half of a pair (docs/app.md §What a control says it did).
    */
   async function copyLink() {
     // Absent outside a secure context, and it can reject on a denied permission. Neither is worth
@@ -409,6 +438,7 @@
     try {
       await navigator.clipboard.writeText(location.href);
       copied = true;
+      void announce(COPIED);
       setTimeout(() => (copied = false), 2000);
     } catch {
       copied = false;
@@ -430,9 +460,11 @@
         </svg>
       {/if}
     </button>
-    <!-- Rendered whether or not there is anything to say: a live region created together with its
-         text is not reliably announced, so only the text may arrive late. -->
-    <span class="copied" class:said={copied} role="status">{copied ? 'Copied' : ''}</span>
+    <!-- No `role` of its own any more: this is the visible half, and the announcement is the
+         announcer's (docs/app.md §What a control says it did). It stays rendered whether or not
+         there is anything to say, because it collapses its own flex gap while silent and the
+         header must be spaced the same before and after a copy. -->
+    <span class="copied" class:said={copied}>{copied ? 'Copied' : ''}</span>
     <button type="button" class:icon={!worded} onclick={onExport}
             aria-label="Export CSV" title={worded ? undefined : 'Export CSV'}>
       {#if worded}Export CSV{:else}
@@ -461,6 +493,13 @@
      dozens of stops from here to the first table row, and the count moves with the sidebar's rows —
      docs/app.md §Table presentation owns it. -->
 <SkipLink />
+
+<!-- ALWAYS rendered and only ever re-texted: a live region created together with its text is not
+     reliably announced, which is the rule the Copy-link confirmation was already written to
+     (docs/app.md §What a control says it did). One region for the whole app, so two rapid actions
+     read as the later one. Off screen rather than hidden: `display: none` and `visibility: hidden`
+     both take a live region out of the accessibility tree entirely. -->
+<span class="announcer" role="status" data-testid="announcer">{said}</span>
 
 <!-- Header and toolbar pin together, because every control that changes the view has to stay
      reachable from anywhere in a 25,000px table; the receipt below reports rather than controls,
@@ -576,6 +615,11 @@
                   font-size: var(--t-sm); }
   .utils button:hover { background: var(--accent-dim); }
   .utils .icon { display: inline-flex; align-items: center; justify-content: center; }
+  /* Clipped to nothing rather than hidden: a `display: none` region is not in the accessibility
+     tree, so nothing in it is ever spoken. `position: fixed` keeps a stray character out of the
+     document's own scroll extent, which `.chrome` is measured against. */
+  .announcer { position: fixed; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+               overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .copied { font-size: var(--t-sm); color: var(--good); }
   /* A silent region is still a flex item, so it would carry a gap on each side and space the row
      differently depending on whether a link had ever been copied. The group's OWN variable, not the

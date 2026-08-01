@@ -734,3 +734,56 @@ describe('Page states an ordering no header can carry', () => {
     expect(localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
   });
 });
+
+/**
+ * The announcement policy, at the seam where the controls meet it. `lib/announce.test.ts` owns
+ * which control says what; this owns that there is exactly ONE region, that it is in the DOM
+ * before it has anything to say, and that the two actions which change no view state reach it.
+ * docs/app.md §What a control says it did
+ */
+describe('Page announces what a control did', () => {
+  const region = () => screen.getByTestId('announcer');
+
+  it('renders one status region, empty, before anything has happened', () => {
+    render(Page, { props: { data } });
+    expect(region()).toHaveTextContent('');
+    // A live region created together with its text is not reliably announced, so it may never be
+    // conditional — and a second one would let two actions be spoken in either order.
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+  });
+  it('says what Export CSV did, where the button beside it used to be the only one heard', async () => {
+    restoreUrls = stubObjectUrls({ createObjectURL: () => 'blob:x', revokeObjectURL: () => {} });
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+    expect(region()).toHaveTextContent('CSV exported');
+  });
+  it('routes the Copy link confirmation through the same region', async () => {
+    const clip = stubClipboard();
+    restoreClipboard = clip.restore;
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    await tick();
+    expect(region()).toHaveTextContent('Copied');
+    // The visible confirmation stays where it is; it is simply no longer a region of its own.
+    expect(screen.getByText('Copied', { selector: '.copied' })).toBeInTheDocument();
+  });
+  it('says what a header press did', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('columnheader', { name: /Weight/ }).querySelector('button')!);
+    expect(region()).toHaveTextContent('Sorted by Weight, highest first');
+  });
+  it('says what the zone did, which the receipt cannot', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
+    await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
+    expect(region()).toHaveTextContent('Measured at the forefoot');
+  });
+  // The two exemptions a wiring test can see: both controls carry the state on themselves.
+  it('leaves a column tick and an expanded row to their own semantics', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getAllByRole('row')[1]!);
+    expect(region()).toHaveTextContent('');
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Price' }));
+    expect(region()).toHaveTextContent('');
+  });
+});

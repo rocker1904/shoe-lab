@@ -2807,17 +2807,77 @@ the geometry against the real table in a browser, at both a first arrival and a
 returning visitor, because none of it exists in jsdom. The pulse stays behind a
 `prefers-reduced-motion` guard.
 
+### What a control says it did
+
+The app had exactly two live regions — the receipt, whose text is a row
+**count**, and a `role="status"` holding `Copied` — so a control announced itself
+only if it happened to change how many shoes were showing. Driven cold and
+diffed one at a time, **six of fourteen controls announced and eight said
+nothing**: zone, stability, the column picker, a sort header, expanding a row,
+`Export CSV`, adding a filter and removing one. Two of those are loud. Switching
+zone renames every score column and moves every number in it with the receipt's
+text byte-identical; and `Export CSV` sits beside `Copy link` in the same
+snippet, one with a status node and one without.
+
+**One region, not eight patches.** A single `role="status"` in `Page.svelte`,
+always rendered and only ever re-texted — a live region created together with its
+text is not reliably announced, which is the rule the Copy-link confirmation was
+already written to. It is clipped rather than hidden, because `display: none`
+takes a region out of the accessibility tree and nothing in it is ever spoken.
+Singular is a decision: two rapid actions read as the later one rather than
+racing. `Copy link`'s confirmation now goes through it too and `.copied` is
+visible feedback with no role of its own, so `Export CSV` beside it is no longer
+the silent half of a pair.
+
+**What it says is derived from the view the control produced**, in
+`app/src/lib/announce.ts`, rather than passed down from each call site: the
+controls live in four components and half reach `setView` through an `onchange`
+that carries no notion of what was pressed. One diff is also what makes the
+exemptions checkable — a rule the module does not implement is a control that
+says nothing, and `announce.test.ts` is that list. The two actions that change no
+view state at all, `Export CSV` and `Copy link`, announce from their own
+handlers.
+
+**Two rules decide whether a control announces.** It says what the action *did*,
+not what the control now *is* — so it never repeats what native semantics already
+speak on the control the runner is standing on. And it never states a row count:
+that is the receipt's, and every filter is therefore exempt by construction
+(§The header names the catalogue, the receipt owns the count).
+
+| control | native semantics say | verdict |
+|---|---|---|
+| zone | `radio "Forefoot" [checked]` — the choice | **announces** `Measured at the forefoot: columns and scores updated`. The radio is named `Forefoot`; the columns it renames are `Forefoot stack mm` and `Energy return forefoot %`, and every value in them moves. Different facts |
+| stability | `button "Stability" [pressed]` — the preference | **announces** `Stability on: story scores updated`. The button's state is not the score definition changing under every number |
+| sort header | `button "Weight g"`; the `aria-sort` lands on the `th`, the button's **parent** | **announces** `Sorted by Weight, lowest first`. An ancestor's attribute changing is not reliably re-spoken, and 450 rows reordering is not the button's state |
+| add filter | dialog closes, focus returns to `Add filter` | **announces** `Filter added: Stiffness`. The row lands two thousand pixels down a drawer that is closed at 360px |
+| remove filter | the control is **destroyed by its own press** | **announces** `Filter removed: Stiffness` |
+| Export CSV | `button "Export CSV"` — nothing in the DOM changes | **announces** `CSV exported`. The case that has no other signal at all |
+| Copy link | `button "Copy link"` | **announces** `Copied`, through the one region rather than a second one |
+| column picker | `checkbox "Drop" [checked]` inside the `Columns` group | **exempt.** The checkbox *is* the column: its own state on the control the runner is standing on already says "Drop is a column". `Column added: Drop` beside `Drop, checked` is the double-speak these rules exist to prevent |
+| expand a row | `row [expanded]` on the focused row itself | **exempt**, for the same reason and more plainly |
+| story, `All`, search, brand, plate, date, a bound, `Clear filters` | — | **exempt.** Every one moves the row count, and the receipt is the row count's home |
+
+**Precedence, not sequence:** one action produces one sentence, so the most
+specific true thing wins. A story rewrites the sort **and** the columns together,
+which is why the sort rule requires the columns to have held still — otherwise a
+story click would claim `Sorted by Easy heel score` on top of the receipt it
+already moved. A zone click on a story view rebuilds everything and still names
+the zone, because that is the one thing a runner needs told. A generation switch
+swaps one row key for another rather than adding one, and `Clear filters` can
+take several rows and every bound with them; both are left to the receipt.
+
 ### Sharing is copying the address bar
 `Copy link` in the header writes `location.href` to the clipboard, which is the
 whole feature: the URL already *is* the view (§View and URL ownership). The
-confirmation is a separate `role="status"` region rather than a relabelled
-button — swapping the label would change the control's accessible name to
-something that cannot then be pressed — and both an absent clipboard (outside a
-secure context) and a rejected write leave it unsaid, because neither may claim
-a success that did not happen. The region is **always rendered and only its
-text arrives late** — a live region created together with its text is not
-reliably announced — and it collapses its own flex gap while it is silent, so
-the header is spaced the same whether or not a link has ever been copied.
+confirmation is a separate node rather than a relabelled button — swapping the
+label would change the control's accessible name to something that cannot then be
+pressed — and both an absent clipboard (outside a secure context) and a rejected
+write leave it unsaid, because neither may claim a success that did not happen.
+It is the **visible** half only: the announcement goes through the app's one
+status region, like every other action's (§What a control says it did). The node
+is still always rendered, because it collapses its own flex gap while it is
+silent, so the header is spaced the same whether or not a link has ever been
+copied.
 The page carries a `<title>` and an SVG favicon
 so a shared link previews as something; Open Graph tags need an image and a
 decision, and are their own BACKLOG.md item.
