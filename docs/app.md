@@ -187,8 +187,18 @@ then the measurements a runner narrows on most, then the rest curated, then
 anything added by hand. Price leads because it is the bound almost every search
 has.
 
-**The search box matches a case-insensitive substring.** A query with no
-non-whitespace character in it is **the empty query**, and it is settled at both
+**The search box matches a case-insensitive substring of the name *or* the
+brand.** The brand half is not redundant: 442 of 450 names already begin with
+their brand (§Table presentation), and the handful that shorten it — Topo, Hylo,
+On — were exactly where the box and the brand facet one control below it
+disagreed. `On` returned 29 shoes in the facet and 124 in the box, because "on"
+sits inside Cushion, Wilson and Carbon; `Topo Athletic` returned 7 and 0. Two
+controls a row apart cannot answer the same brand name with different fleets
+with nothing on screen saying why. The substring stays a substring — `Nike
+Pegasus` still matches by name, and no tokenising is implied.
+
+A query with no non-whitespace character in it is **the empty query**, and it is
+settled at both
 doors into the view rather than at the point of use: the input keeps a value
 whose `.trim()` is empty out of the view entirely, and `parseView` drops a `q`
 of the same shape. Both are needed, because a stored view replays through

@@ -34,7 +34,12 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
   const active = Object.entries(f.ranges).filter(([, b]) => b.min !== undefined || b.max !== undefined);
   outer: for (const s of shoes) {
     if (f.discontinued && s.discontinued !== (f.discontinued === 'only')) continue;
-    if (search && !s.name.toLowerCase().includes(search)) continue;
+    // Name OR brand. The brand half is not redundant with the name: 442 of 450 names already begin
+    // with their brand, and it is the eight that shorten it — Topo, Hylo, On — where a box reading
+    // `name` alone disagreed with the facet one control below it, by 4x on `On`
+    // (docs/app.md §Filters).
+    if (search && !s.name.toLowerCase().includes(search)
+      && !(s.brand ?? '').toLowerCase().includes(search)) continue;
     if (f.brands?.length && !f.brands.includes(s.brand ?? '')) continue;
     if (f.plate?.length && !f.plate.includes(s.plate)) continue;
     if (f.releasedAfter) {

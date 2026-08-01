@@ -90,6 +90,23 @@ describe('applyFilters edge cases', () => {
     expect(slugs(applyFilters([nike, FLEET[0]!], { ranges: {}, search: 'vapor' }, idx))).toEqual(['nike-vaporfly-3']);
     expect(slugs(applyFilters([nike], { ranges: {}, search: '' }, idx))).toEqual(['nike-vaporfly-3']); // blank search is inert
   });
+  /**
+   * The box and the brand facet sit one control apart and used to answer the same string with
+   * different fleets, because the box read `name` and the facet reads `brand`. Most names begin
+   * with their brand, which is why it looked right; the handful that shorten it — Topo, Hylo, On —
+   * are exactly where the two parted company (docs/app.md §Filters).
+   */
+  it('search matches the brand as well as the name, without the brand being in the name', () => {
+    const on = shoe({ slug: 'cloud-x', name: 'Cloud X 4', brand: 'On' });
+    expect(on.name.toLowerCase()).not.toContain('on');   // or this would pass on the name alone
+    expect(slugs(applyFilters([on, FLEET[0]!], { ranges: {}, search: 'On' }, idx))).toEqual(['cloud-x']);
+    expect(slugs(applyFilters([on], { ranges: {}, search: 'topo' }, idx))).toEqual([]);
+  });
+  it('search survives a shoe carrying no brand at all', () => {
+    const anon = shoe({ slug: 'anon', name: 'Anon Runner', brand: null });
+    expect(slugs(applyFilters([anon], { ranges: {}, search: 'runner' }, idx))).toEqual(['anon']);
+    expect(slugs(applyFilters([anon], { ranges: {}, search: 'nike' }, idx))).toEqual([]);
+  });
   it('ranging a non-numeric test hides the whole fleet', () => {
     const r = applyFilters(FLEET, { ranges: { 'tongue-gusset-type': { min: 0 } } }, idx);
     expect(r.visible).toEqual([]);
