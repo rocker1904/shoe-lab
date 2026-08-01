@@ -1,8 +1,9 @@
 <script lang="ts" module>
   /**
-   * Long enough that a drag or a typed word is one write, short enough that a runner who copies
-   * the address bar straight after a click gets what is on screen
-   * (docs/app.md §View and URL ownership).
+   * Long enough that a drag or a typed word is one write. It is deliberately NOT also the guarantee
+   * that a copied link matches the screen — that was claimed here and measured false at 52ms:
+   * `Copy link` flushes the pending write before reading the address bar, so this number answers
+   * for the burst alone (docs/app.md §Sharing is copying the address bar).
    */
   export const VIEW_WRITE_MS = 200;
 </script>
@@ -505,6 +506,11 @@
     // Absent outside a secure context, and it can reject on a denied permission. Neither is worth
     // an error state — but neither may claim success either, so both leave the region unsaid.
     if (!navigator.clipboard) return;
+    // The address bar is up to 200ms behind the screen while a write is pending, so a runner who
+    // changes a filter and reaches straight for this button copied the PREVIOUS view — measured at
+    // 52ms, with the region saying `Copied` over it. Landed here rather than by shortening the
+    // interval: the interval is the drag's, and this is the one press that has to be current.
+    writeView.flush();
     try {
       await navigator.clipboard.writeText(location.href);
       copied = true;

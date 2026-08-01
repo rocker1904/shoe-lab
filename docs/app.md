@@ -23,6 +23,12 @@ problem on every keystroke. It is still **one** write path, now asynchronous,
 and it flushes on `pagehide` so a page being torn down never loses the pending
 write.
 
+**Three callers flush it, and each is a moment the address bar has to be
+current**: `pagehide`, the one-off restore at init, and `Copy link` before it
+reads `location.href` (§Sharing is copying the address bar). The interval is the
+drag's and is not also a promise about copying — that promise was made here once
+and measured false at 52ms.
+
 `ViewState` carries **no zone**. Which half of each zone pair a view is about is
 read back out of it by `zoneOf` (§The zone is a preset too), so the baseline is a
 constant: `defaultView()` takes no argument and `DEFAULT_ZONE` is the one place
@@ -2914,8 +2920,14 @@ swaps one row key for another rather than adding one, and `Clear filters` can
 take several rows and every bound with them; both are left to the receipt.
 
 ### Sharing is copying the address bar
-`Copy link` in the header writes `location.href` to the clipboard, which is the
-whole feature: the URL already *is* the view (§View and URL ownership). The
+`Copy link` in the header **flushes the pending view write and then** writes
+`location.href` to the clipboard, which is the whole feature: the URL already *is*
+the view (§View and URL ownership). The flush is the feature working at all rather
+than a refinement — the write path is debounced at 200ms, so a runner who changes a
+filter and reaches straight for the button copied the *previous* view while the new
+one was on screen, measured at 52ms with the status region saying `Copied` over it.
+It sits in this handler rather than in a shorter interval: the interval exists for
+the drag, and this is the one press that has to be current. The
 confirmation is a separate node rather than a relabelled button — swapping the
 label would change the control's accessible name to something that cannot then be
 pressed — and both an absent clipboard (outside a secure context) and a rejected

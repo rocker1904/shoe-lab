@@ -252,6 +252,27 @@ describe('Page', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/copied/i);
   });
 
+  /**
+   * The write path is debounced at 200ms, and a runner who changes a filter and reaches straight
+   * for `Copy link` is inside that window: measured cold in Firefox, a copy 52ms after a story
+   * click put the *previous* address on the clipboard while the new table was on screen, with the
+   * status region saying `Copied`. The flush belongs in the copy path rather than in a shortened
+   * debounce — the interval exists for the drag (docs/app.md §View and URL ownership).
+   */
+  it('copies the view that is on screen, not the one the debounce has yet to write', async () => {
+    const clip = stubClipboard();
+    restoreClipboard = clip.restore;
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    // No `settle()`: this is the race, so the pending write is deliberately still pending.
+    expect(location.search).toBe('');
+    await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+    // The flush is what makes these two the same string: without it the clipboard holds the bare
+    // address the URL still carried a line above.
+    expect(location.search).toContain('plate=carbon');
+    expect(clip.writeText).toHaveBeenCalledWith(location.href);
+  });
+
   it('claims nothing when the clipboard refuses', async () => {
     const clip = stubClipboard(vi.fn(async () => { throw new Error('denied'); }));
     restoreClipboard = clip.restore;
