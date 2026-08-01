@@ -1839,6 +1839,37 @@ There is no spacer element on this bar: `.actions { margin-left: auto }` is what
 holds the trailing edge above 800px, and the "gap" in the table above is that
 auto margin rather than markup.
 
+**The band is pinned to the viewport on both axes**, and for a long time only one
+of them was. `position: sticky` pins the axis its inset names; the other one
+travels with the document — and the document is what scrolls sideways past six
+columns, `.content` being forbidden an `overflow-x` (§Columns and sorting). The
+band's box is the viewport's width, so scrolled right it **ended before the page
+did**: at a 1100px window over a 1177px document `.chrome` sat at `x: -77` and
+`elementFromPoint` returned `td.num` at six places inside the masthead and the
+toolbar. Shoe values painted where the identity band is, above the pinned table
+header, on any width where the table can scroll right — phone included.
+
+**Widening the band to the document was measured and rejected.** It is the obvious
+move and it takes the actions with it: at 1100px the utilities would sit at
+document `x = 1177`, 77px off the right of the screen at rest, and at 900px the
+whole group would be. `opens with the actions flush to the bar trailing edge` is
+the assertion that says they stay reachable, so the band is `position: fixed`
+instead — the controls hold the screen's edge at every scroll position, and the
+band covers the full viewport width because that is now what its box *is*.
+Making `#app` `width: max-content` was measured too and is worse than either: it
+resizes the table it was supposed to leave alone, from 1146px to 1276px at 1440px
+and to **17,895,672px** on a phone.
+
+A fixed box leaves no height behind it, so `.chrome-space` carries the same
+`clientHeight` the band is measured by — one measurement, so the room and the band
+cannot disagree. The band starts as `sticky` and swaps to `fixed` only once that
+height is known (`.pinned`), so there is never a frame laid out with a pinned band
+over a spacer of nothing; measured over the first forty frames in both engines,
+`.content`'s top never moves. `holds the chrome over its own band with the
+document scrolled right` asserts it at 1000, 700 and 390px — nine columns, scrolled
+fully right, every probe across the band inside `.chrome` and the table's header
+still clear of it.
+
 **`800px` is shared with the sidebar** and is written `800px` rather than
 `799.98px`, so exactly 800 is "mobile" as it always has been. The two must agree
 or the drawer toggle shows on a width laid out as a desktop. `429.98px` takes the

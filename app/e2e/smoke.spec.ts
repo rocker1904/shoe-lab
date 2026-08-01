@@ -358,6 +358,53 @@ test('opens with the actions flush to the bar trailing edge', async ({ page }) =
 });
 
 /**
+ * The chrome is pinned to the viewport on BOTH axes, and only one of them was ever asserted. The
+ * document is what scrolls sideways past six columns (docs/app.md §Table presentation), so a band
+ * that travelled with it ended before the page did: at 1100px on the real fleet the chrome sat at
+ * `x: -77` and `elementFromPoint` returned `td.num` at six places inside the masthead and the
+ * toolbar — shoe values painted above the pinned table header (docs/app.md §The chrome bands).
+ *
+ * Two claims, because fixing the first by detaching the header would be no fix: nothing but chrome
+ * paints in the band at any scroll position, AND the table's header still pins under it.
+ */
+for (const width of [1000, 700, 390]) {
+  test(`holds the chrome over its own band with the document scrolled right at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    // Nine figure columns the fixture carries: more than the six-column bound, so the page is MEANT
+    // to scroll sideways here and there is a band beyond the viewport to measure at all.
+    await page.goto('/?cols=score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
+      + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel');
+    await page.evaluate(() => document.fonts.ready);
+    const maxScrollLeft = await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(maxScrollLeft, `nothing scrolls sideways at ${width}px, so this asserts nothing`)
+      .toBeGreaterThan(0);
+
+    await page.evaluate(() => window.scrollTo(document.documentElement.scrollWidth, 900));
+    const seen = await page.evaluate(() => {
+      const chrome = document.querySelector('.chrome')!;
+      const box = chrome.getBoundingClientRect();
+      const painted: string[] = [];
+      // Across the band and down it, including the last visible pixel column: the failure lived in
+      // the right-hand strip the chrome no longer reached.
+      for (const x of [Math.round(innerWidth * 0.55), Math.round(innerWidth * 0.8), innerWidth - 2]) {
+        for (const y of [2, Math.round(box.height / 2), Math.round(box.height) - 2]) {
+          const el = document.elementFromPoint(x, y);
+          if (!el || !chrome.contains(el)) painted.push(`${x},${y}=${el?.tagName ?? 'null'}`);
+        }
+      }
+      const th = document.querySelector('thead th')!.getBoundingClientRect();
+      return { painted, headGap: Math.round(th.top - box.bottom) };
+    });
+    expect(seen.painted, 'something that is not the chrome paints in the chrome band').toEqual([]);
+    // `>= 0`, not `== 0`: the fixture is five shoes, so the table is not tall enough to have
+    // scrolled under the band at every one of these widths — what must hold is that the band never
+    // covers the header, whether or not it has reached it.
+    expect(seen.headGap, 'the table header is behind the chrome').toBeGreaterThanOrEqual(0);
+  });
+}
+
+/**
  * The chrome below 800px is three bands — identity, what acts on the table, what the table is —
  * and above it two. Each assertion here is a property rather than a pixel count, so a retune of any
  * boundary keeps them meaningful (docs/app.md §The chrome bands).

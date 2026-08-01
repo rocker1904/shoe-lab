@@ -408,7 +408,7 @@
 <!-- Header and toolbar pin together, because every control that changes the view has to stay
      reachable from anywhere in a 25,000px table; the receipt below reports rather than controls,
      so it scrolls (docs/app.md §Columns and sorting). -->
-<div class="chrome" bind:clientHeight={chromeHeight}>
+<div class="chrome" class:pinned={chromeHeight > 0} bind:clientHeight={chromeHeight}>
   <Header total={data.shoes.length} builtAt={data.builtAt}
           utilities={mobile ? undefined : utilities} />
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
@@ -426,6 +426,11 @@
     {/snippet}
   </Toolbar>
 </div>
+<!-- The height a pinned box no longer occupies. It is the SAME measurement `--thead-top` is, so the
+     band and the room it leaves can never disagree; and `.pinned` waits for that measurement, so
+     there is never a frame with a fixed chrome over a spacer of nothing
+     (docs/app.md §The chrome bands). -->
+<div class="chrome-space" style:height="{chromeHeight}px"></div>
 
 <!-- Outside `.chrome`, never inside it: the panel mounts itself to `<body>` anyway, and a sticky
      ancestor would make its z-index meaningless (docs/app.md §Stacking order). -->
@@ -484,7 +489,20 @@
 </div>
 
 <style>
+  /* Pinned to the VIEWPORT, on both axes. Sticky pins only the axis its scrollport scrolls in the
+     direction of its inset, so the band travelled sideways with the document — and the document is
+     what scrolls sideways past six columns, `.content` being forbidden an `overflow-x` below. Its
+     box is the viewport's width, so scrolled right it ENDED before the page did and shoe rows
+     painted in the masthead: `.chrome` at `x: -77` inside a 1177px document
+     (docs/app.md §The chrome bands).
+     Widening it to the document instead was measured and rejected: it takes the actions with it,
+     and `opens with the actions flush to the bar trailing edge` is the assertion that says they
+     must stay reachable. `fixed` keeps them exactly where they are at every scroll position.
+     The starting state is `sticky` rather than `fixed` and the swap waits on `--chrome-h` being
+     measured, so the first frame is laid out with the band still in flow rather than over a spacer
+     that is not yet its height. */
   .chrome { position: sticky; top: 0; z-index: 5; }
+  .chrome.pinned { position: fixed; top: 0; left: 0; right: 0; }
   /* The utilities, wherever their band mounts them. Authored here because a snippet carries the
      scope of the file it is written in, so rules left behind in `Header.svelte` would stop reaching
      these three buttons the moment they moved (docs/app.md §Where the utilities live). */
