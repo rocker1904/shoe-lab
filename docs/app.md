@@ -1091,53 +1091,97 @@ pinned header for it.
 
 ### The expanded row
 
-Three zones on a 12-column grid: **identity** (the image, the feature chips and facts),
-**opinion** (RunRepeat's summary, pros and cons, and the who-should-(not)-buy prose), and
-**our working** (the score breakdown).
+Three zones: **identity** (the image, the feature chips and facts), **opinion** (RunRepeat's
+summary, pros and cons, and the who-should-(not)-buy prose), and **our working** (the score
+breakdown). All three live inside **one capped box**, and there is **one boundary** left.
 
 | container width | layout |
 |---|---|
-| ≥ 1120px | breakdown pulled up beside the image and facts; pros/cons beside the prose |
-| 700–1120px | image beside facts; pros/cons beside the prose; breakdown at the foot |
+| ≥ 700px | image beside facts; pros/cons beside the prose; breakdown at the foot |
 | < 700px | one column, breakdown last |
 
-| container width | layout | tracks (image · facts · breakdown) |
-|---|---|---|
-| ≥ 1120px, with a breakdown | all three in one band | 4 · 3 · 5 |
-| 700–1120px | image beside facts, breakdown at the foot | 4 · 8 · 12 |
+**The cap: `--panel-cap`, 800px, and nothing in the row is wider than the summary.** The
+summary is the first prose a runner reads and it sets the row's measure, so the row is
+that wide and no wider — every zone sits in `.grid`, and `.grid` is capped. `box-sizing`
+is `content-box` here (this repo borders-boxes `.scrollport` alone), so the cap is the
+content measure exactly and the panel's padding is an inset around it, with no arithmetic
+between the two. Above the cap the container stops varying with the window entirely: at
+1000px of window and at 1920px the content box is 800px and every measurement in the panel
+is identical.
 
-**The widest tier needs a breakdown to exist.** It places the image, the facts
-and the breakdown by explicit grid area, so with no score column on screen —
-which is the default `All` view, and therefore the desktop landing state —
-columns 7–12 held nothing while the image and facts were squeezed into six of
-twelve. An empty area is not white space, it is a hole. The block is dropped
-from the DOM when `breakdowns` is empty and the grid carries `has-bd` only when
-it is not, so the tier below takes over.
+**It hangs LEFT, under the shoe name.** There is no `margin-inline: auto` and that absence
+is the decision: a runner reads the row's numbers and then clicks its name, so the panel's
+content belongs under the name rather than centred in a panel whose name column is at the
+left. All the slack falls to the right, inside the recessed well — 118px at 1000px of
+window, 298px at 1440px, 778px at 1920px, measured on the real fleet.
+
+**The summary is a documented lede exemption from the 45–75 character measure.** Everything
+else in the panel sits in that band — the prose 69, the pros and cons 47 — and the summary
+renders **5 lines at a median of 126 characters** (Chromium max 127, Firefox 126) at every
+width from 1000px up, because it is the box's full width by design. It is a lede: five lines
+of scene-setting read once before the runner drops into the columns, not the body copy they
+read for two minutes. The exemption is why the number is stated here rather than fixed.
+
+**The summary and the two columns beneath it are one box**, capped at `--panel-cap` and 430px
+when stacked. Capping the prose column alone made the summary overshoot it on a wide panel;
+capping nothing pushed the prose back to 95 characters at 1440px and 195 at 1920px. Sizing one
+shared box satisfies both, and the prose measure falls out of the box rather than being set
+separately. At the cap that box **is** the container, so the summary is co-extensive with the
+row and the prose columns share its edges — asserted in `cross-browser.spec.ts`.
 
 Inside that opinion column **pros and cons stack, one under the other**, at every tier.
 `.a-lists` sits in the 20rem track, so splitting it in two left each list about 18
 characters a line — narrower than the phone shows them, on the widest screen there is.
 
+**The breakdown is the one centred element, at its natural width.** `justify-self: center`
+sizes a grid item to fit-content, which is the whole declaration. Its table used to stretch
+to whatever track it was in and open a gulf between the Term column and the Reading beside
+it — **12px now, against 47–125px before** across the widths sampled, and at 1440px the old
+widest tier squeezed it the other way, to 418px against a 449px natural width, wrapping the
+term names. Centred inside the **capped box**, never inside the panel: the panel is as wide
+as the table and centring there would put the card under whichever column happened to be in
+the middle. With several score columns on screen every card is the same width (475px in
+Chromium, 481px in Firefox, six of them measured) so they align down the page.
+
+`max-width: 100%` beside it is not belt and braces. `.scroll` is a scrollport whose
+min-content size is its table's rather than zero, so on a phone fit-content resolves *above*
+the width available and the card overflowed the panel by 47px, taking the page sideways with
+it. The clamp hands the width back to the scrollport, which is the block that exists to
+handle it.
+
+**The photo has a column of its own, 280px wide, so it is 280px at every width.** Stating the
+size once beats deriving it: the image used to take a share of a twelve-track grid and its
+rendered size was an arithmetic result that had to be checked against 280 at every width, and
+was not always 280 — 223px at 750px of container, 263px the moment the sidebar took its
+column at 1180px of window. Below 700px of container the panel is one column and the photo is
+that column's width capped at 280, which reaches 280 as well. `cross-browser.spec.ts` walks
+820px to 1600px straight through the sidebar boundary and asserts 280 at every rung.
+
+`min(its box, 280px)` is still what the `max-width` computes, and it is what holds the photo
+on the stacked tier. Every source image is 720×480, so 280 CSS is well inside the sharp limit
+on a 2× display, where 360 is the ceiling, while leaving the facts beside it room — 496px at
+the cap, 364px at the narrowest container that has two columns. `aspect-ratio: 3 / 2` and
+`object-fit: contain` both stay, because the ratio is what gives the box its height *before*
+the image loads and without it an already-open row reflows the rows beneath it mid-read.
+
+**The breakdown block is absent, not empty, when no score column is on screen** — the default
+`All` view, and therefore the desktop landing state. Nothing in the panel is placed by
+explicit grid area any more, so a missing breakdown costs the grid a row rather than leaving
+an area with nothing in it, and no marker class has to be kept in step with the CSS.
+
 **Container queries, not media queries**, because the panel's width is the **table's**,
 not the viewport's: the sidebar takes `--sidebar-w` and past six columns the table is wider
 than the screen. A viewport query is wrong on both counts, and wrong in exactly the
 half-a-window case — and there is **no viewport query in this component at all**, which is
-the only form in which that rule is checkable. `.a-bd` is **last in the DOM** and pulled up
-by explicit grid placement at the widest tier, which is what makes it fall to the bottom
-when the space is not there, with no `order` juggling.
+the only form in which that rule is checkable. `.a-bd` is **last in the DOM** and stays there:
+with no explicit placement anywhere it falls to the foot by document order, with no `order`
+juggling.
 
 **The panel's padding sits on an inner box, and that placement is load-bearing.**
 `container-type: inline-size` resolves against the declaring element's *content* box, so
-padding on the container narrows what every query below measures: at 16px each side a
-1440px viewport gave a 1098px container and the 1120px tier could not fire at any window
-size. The container is the panel; the padding is inside it.
-
-**The summary and the two columns beneath it are one box**, capped at 800px and 430px when
-stacked. Capping the prose column alone made the summary overshoot it on a wide panel;
-capping nothing pushed the prose back to 95 characters at 1440px and 195 at 1920px. Sizing
-one shared box satisfies both, and the prose measure falls out of the box rather than being
-set separately — which is also what makes them share a right edge at every tier, asserted
-in `cross-browser.spec.ts`.
+padding on the container would make every query below measure the panel's width minus an
+inset rather than the panel. The container is the panel; the padding is inside it, on the
+capped box.
 
 **The panel is a recessed `--well`, not another raised surface.** An open row belongs to
 the row above it rather than floating over the table, and **both** renderings follow that:
@@ -1145,32 +1189,9 @@ the phone's expanded row is on `--well` too, or the same question would have two
 two screens.
 
 Empty space beside prose is margin; empty space beside a bordered card is a hole — which is
-why the breakdown sits in the top band with the other short things, or at the foot, and
-never in a rail beside the review. Balancing column heights is the wrong goal.
-
-The image renders at **`min(its box, 280px)`**, and 280 is the cap rather than a
-promise the layout keeps at every width. Every source image is 720×480, so 280 CSS is well inside
-the sharp limit on a 2× display, where 360 is the ceiling, while leaving the facts beside it
-room. Only the size changed: `aspect-ratio: 3 / 2` and `object-fit: contain` both stay,
-because the ratio is what gives the box its height *before* the image loads and without it
-an already-open row reflows the rows beneath it mid-read.
-
-**Its box is four of twelve tracks from 700px of container upward — at every tier, breakdown or
-not.** The widest tier gave it three, which meant a track was taken *away* as the container grew:
-widening the window past 1120px of container shrank the photo from its full 280px to **257px**, on
-the desktop landing view of any runner with a score column on screen. That is the one thing a tier
-change may not do, and the fifth column came out of the breakdown, which is a table of short figures
-and the only block in the band with any to spare — its own table still sits 26px inside it at
-1130px of container. The facts keep their three.
-
-The measured ladder, identical in both engines: 4/12 of the container, so **210px at 700px of
-container, 243px at 809, 270px at 890**, and the cap binds from **920px of container** on. Below
-700px the panel is one column and the photo is the panel's whole width capped at 280 — so a window
-widening across that boundary does make the photo smaller, and that is a change of *layout* rather
-than a track being taken away. Left standing: reaching 280 in the side-by-side tier at 700px of
-container would want five of twelve tracks at every width in it, and the facts pay for that
-permanently to fix one boundary. `cross-browser.spec.ts` walks 1100px to 1600px and asserts the
-photo never shrinks and does reach 280.
+why the breakdown sits at the foot with the full width of the capped box to be centred in,
+and never in a rail beside the review. Its margins are symmetric and nothing stands beside
+it, which is what makes them read as centring. Balancing column heights is the wrong goal.
 
 ### Two renderings, and only one of them mounted
 

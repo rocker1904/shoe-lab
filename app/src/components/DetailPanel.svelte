@@ -51,12 +51,7 @@
 </script>
 
 <div class="detail">
-  <!-- `has-bd` gates the widest tier's explicit placement. In the default `All` view no score column
-       is on screen, so there is no breakdown to stand beside the image — and a grid area with
-       nothing in it is not empty space, it is a hole: the panel's right half went blank while the
-       image and facts were held to 6 of 12 columns. Without one, the tier below is the right
-       layout and this class is what lets it through (docs/app.md §The story scores). -->
-  <div class="grid" class:has-bd={breakdowns.length > 0}>
+  <div class="grid">
     <div class="a-img">
       {#if shoe.details && shoe.imageUrl}<img src={shoe.imageUrl} alt={shoe.name} loading="lazy" />{/if}
     </div>
@@ -121,7 +116,9 @@
     </div>
     <!-- One per score column on screen, and the block itself is absent without one: the panel
          explains what the table is showing rather than a zone of its own
-         (docs/app.md §The story scores). -->
+         (docs/app.md §The story scores). Absent is the whole mechanism now — nothing is placed by
+         explicit grid area any more, so the default `All` view simply has one row fewer instead of
+         leaving an area with nothing in it, which is a hole rather than white space. -->
     {#if breakdowns.length}
     <div class="a-bd">
       {#each breakdowns as b (b.key)}
@@ -168,48 +165,60 @@
      than floating over the table, which is the elevation rule the phone rendering follows too. */
   /* The padding is on the INNER box, and that placement is load-bearing: `container-type:
      inline-size` resolves against this element's CONTENT box, so padding here makes the container
-     narrower than the panel it is supposed to be measuring. With 16px each side a 1440px viewport
-     gave a 1098px container and the 1120px tier below could never fire at any window size — the
-     table would have to be wider than the screen to reach it. */
+     narrower than the panel it is supposed to be measuring — the tier boundaries below would then
+     be about the panel's width minus an inset rather than about the panel. */
   .detail { background: var(--well); border-top: 1px solid var(--border);
-            container-type: inline-size; }
-  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s4) var(--s5);
-          align-items: start; padding: var(--s5) var(--s4); }
-  .a-img, .a-facts, .a-body, .a-bd { grid-column: span 12; }
+            container-type: inline-size;
+            /* One number for the whole row: the summary's measure IS the row's width
+               (docs/app.md §The expanded row). */
+            --panel-cap: 800px; }
+  /* THE CAP. Every zone lives inside this one box, so nothing in the row is wider than the summary
+     a runner reads first. `box-sizing` is `content-box` here (this repo borders-boxes `.scrollport`
+     alone), so the cap is the CONTENT measure exactly and the padding is the panel's inset around
+     it — no arithmetic between the two.
+     THE LEFT ANCHOR is the absence of `margin-inline: auto`, and it is deliberate: a runner reads
+     the row's numbers and then clicks its name, so the panel's content belongs under the name and
+     not centred in a panel the name is at the left of. Above the cap every pixel of slack falls to
+     the right, inside the recessed well. */
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s5);
+          align-items: start; padding: var(--s5) var(--s4); max-width: var(--panel-cap); }
+  .a-img, .a-facts, .a-body, .a-bd { grid-column: 1 / -1; }
   /* The summary and the two columns beneath it are ONE box, so they share a right edge at every
-     width, and the prose measure falls out of the box rather than being set separately. */
+     width, and the prose measure falls out of the box rather than being set separately. At the cap
+     that box IS the container, which is what makes the summary co-extensive with the row. */
   .a-body { max-width: 430px; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s6); }
   .a-body .intro { grid-column: 1 / -1; }
+  /* THE CENTRED BREAKDOWN, and the one centred thing in the row. `justify-self: center` sizes a grid
+     item to fit-content, which is the whole declaration: the table used to stretch to its track and
+     open a 121px gulf between the Term column and the Reading beside it, so constraining it to its
+     natural width is what closes that gap. Centred within the CAPPED box, never within the panel.
+     `max-width` is not belt and braces: `.scroll` is a scrollport whose min-content is its table's,
+     not zero, so on a phone fit-content resolves ABOVE the available width and the card overflowed
+     the panel by 47px with the page going sideways for it. The clamp hands the width back to the
+     scrollport, which is the block that is supposed to handle it. */
+  .a-bd { justify-self: center; max-width: 100%; }
 
+  /* The one boundary left. Above it the image takes a COLUMN OF ITS OWN at its own stated size,
+     rather than a share of twelve tracks that had to be arithmetic-checked against 280px at every
+     width; below it the panel is one column and the photo is the column's width capped at 280.
+     Either way the photo is 280px, so widening the window never costs it a pixel.
+     There used to be a third tier at 1120px of container, pulling the breakdown up beside the image
+     and the facts. The cap killed it: the container tops out at 800px, so no window could reach
+     1120 and the rules could only ever be dead. Deleted rather than maintained. */
   @container (min-width: 700px) {
-    .a-img { grid-column: span 4; }
-    .a-facts { grid-column: span 8; }
-    .a-body { max-width: 800px; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
-  }
-  /* `a-bd` is LAST in the DOM and pulled up by explicit placement here, which is what makes it fall
-     to the bottom when the space is not there, with no `order` juggling.
-     Gated on `has-bd`, because this placement only makes sense when something occupies columns 7-12:
-     the default `All` view carries no score column, and the ungated rule left the panel's right half
-     blank while squeezing the image and facts into half the grid. With no breakdown the tier above
-     is the correct layout, and the image and facts take the width instead. */
-  /* The image keeps its FOUR tracks across this boundary. It had three, so the widest tier gave it
-     less room than the tier below and widening the window past 1120px of container shrank the photo
-     from its full 280px to 257px — a track taken away as the container grew, which is the one thing
-     a tier change may not do (docs/app.md §The expanded row). The column comes out of the
-     breakdown, which is a five-column table of short figures and the only block here with any to
-     spare; the facts keep their three. */
-  @container (min-width: 1120px) {
-    .has-bd .a-img   { grid-area: 1 / 1 / 2 / 5; }
-    .has-bd .a-facts { grid-area: 1 / 5 / 2 / 8; }
-    .has-bd .a-bd    { grid-area: 1 / 8 / 2 / 13; }
-    .has-bd .a-body  { grid-area: 2 / 1 / 3 / 13; }
+    .grid { grid-template-columns: 280px minmax(0, 1fr); }
+    .a-img { grid-column: 1; }
+    .a-facts { grid-column: 2; }
+    .a-body { max-width: var(--panel-cap); grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
   }
   /* aspect-ratio, so the box is the right height BEFORE the image loads and the panel does not
      shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. Neither
      is decoration — dropping the ratio reintroduces a reflow inside an already-open row, which is
      the one place a jump is most obvious. 280px, not larger: every source image is 720×480, so 280
      CSS is well inside the sharp limit on a 2× display (360 is the ceiling) while leaving the facts
-     beside it room. */
+     beside it room. The `max-width` still earns its place with a column of the same size beside it:
+     it is what holds the photo to 280 on the STACKED tier, where the column is the panel's whole
+     width. */
   img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 3 / 2; object-fit: contain;
         display: block; border-radius: var(--r-md); background: var(--surface); }
   /* Dim ink alone marks this as the reviewer's voice. The self-hosted Inter Tight ships an upright

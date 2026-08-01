@@ -33,22 +33,21 @@ it('gives the breakdown its own scrollport', () => {
   expect(container.querySelector('.score-breakdown .scroll table')).not.toBeNull();
 });
 
-// The default `All` view carries no score column, so the widest tier had a grid area with nothing
-// in it: the panel's right half went blank while the image and facts were held to 6 of 12 columns.
-// An absent block AND an absent marker are what let the tier below take over.
+// The default `All` view carries no score column, and a grid area with nothing in it is not white
+// space, it is a hole. Being ABSENT is the whole mechanism now: no zone is placed by explicit grid
+// area any more, so a missing breakdown costs the grid a row rather than leaving one blank. There
+// is no marker class left to keep in step with the CSS — the block's own absence is the layout.
 it('drops the breakdown block entirely when no score column is on screen', () => {
   const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL, columns: ['price'] } });
   expect(container.querySelector('.a-bd')).toBeNull();
-  expect(container.querySelector('.grid')).not.toHaveClass('has-bd');
   // and the rest of the panel is still there to take the width
   expect(container.querySelector('.a-img')).not.toBeNull();
   expect(container.querySelector('.a-facts')).not.toBeNull();
 });
 
-it('marks the grid so the widest tier only places a breakdown that exists', () => {
+it('gives the breakdown a grid child of its own once a score is on screen', () => {
   const { container } = render(DetailPanel, { props: { ...VIEW, shoe: FULL } });
-  expect(container.querySelector('.a-bd')).not.toBeNull();
-  expect(container.querySelector('.grid')).toHaveClass('has-bd');
+  expect(container.querySelector('.grid > .a-bd')).not.toBeNull();
 });
 
 describe('DetailPanel', () => {

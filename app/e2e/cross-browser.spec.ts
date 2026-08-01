@@ -356,8 +356,10 @@ for (const width of [360, 390]) {
 
 /** The expanded row lays out against the TABLE's width, not the viewport's, so the sweep widens the
  *  table as well as the window. And the summary must share a right edge with the columns beneath it
- *  at every tier, which is the whole reason they are one box. */
-const NARROW = 'score,heel-stack,weight';
+ *  at every tier, which is the whole reason they are one box.
+ *  A STORY score rather than RunRepeat's own `score`, which carries no breakdown: the panel breaks
+ *  down each story column on screen, so this is what puts a breakdown in the row to place. */
+const NARROW = 'easy-score-heel,heel-stack,weight';
 // Nine figure columns the e2e fixture actually carries, which is more than the six-column bound —
 // so the TABLE is wider than the panel's screen and the container query is doing work a viewport
 // media query could not. Check the slugs against app/e2e/fixtures/shoes.json before editing.
@@ -367,54 +369,68 @@ const WIDE = 'score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,
 /**
  * Widening the window may not make the photo smaller. The widest tier used to give `.a-img` THREE
  * of twelve tracks where the tier below gives it four, so crossing 1120px of container took the
- * image from its full 280px down to 257px — a track removed as the container grew
- * (docs/app.md §The expanded row). A breakdown has to be on screen for that tier to fire at all,
- * which is what the score column here buys.
+ * image from its full 280px down to 257px — a track removed as the container grew. The twelve
+ * tracks are gone now: the photo has a **column of its own, 280px wide**, so the size is stated
+ * once instead of being an arithmetic result of the container
+ * (docs/app.md §The expanded row). A breakdown on screen is what the score column here buys, and
+ * it is kept because a breakdown is what used to make the widest tier fire at all.
  */
 test('never shrinks the shoe photo as the window widens', async ({ page }) => {
-  // The ladder starts inside the side-by-side tier. Below 700px of container the panel is one
-  // column and the photo is the panel's full width capped at 280, so crossing that boundary is a
-  // change of layout rather than a step in this one — docs/app.md §The expanded row says so and
-  // says why it is left standing.
-  //
-  // TWO ladders, for that same reason and at the sidebar's boundary: at 1180px the sidebar becomes
-  // a permanent 260px column and every container inside the content track narrows by that much at
-  // once (docs/app.md §Filters). Measured, the photo steps 280px → 270px across it — the one place
-  // where widening the window costs the panel room, and the price of a table the sidebar can be
-  // read beside. A single ladder through it measures the sidebar arriving rather than this panel's
-  // own tiers, so each regime is walked on its own and the widest of each must still reach 280.
-  const walk = async (widths: number[]) => {
-    const seen: { width: number; img: number }[] = [];
-    for (const width of widths) {
-      await page.setViewportSize({ width, height: 900 });
-      await page.goto('/?cols=easy-score-heel,heel-stack,weight');
-      await page.getByText('cushy').first().click();
-      await expect(page.locator('.detail .a-bd')).toBeVisible();
-      // The fixture carries no `imageUrl`, so the BOX is what can be measured here — and the photo
-      // is exactly `min(box, 280)`, which is the `max-width` on the `img`. The rendered image was
-      // measured against the real fleet in both engines and agrees with this at every tier.
-      seen.push({ width, img: await page.locator('.detail .a-img').first()
-        .evaluate((el) => Math.min(280, Math.round(el.getBoundingClientRect().width))) });
-    }
-    for (let i = 1; i < seen.length; i++) {
-      expect(seen[i]!.img, `the photo shrank from ${seen[i - 1]!.img}px at ${seen[i - 1]!.width}px `
-        + `to ${seen[i]!.img}px at ${seen[i]!.width}px`).toBeGreaterThanOrEqual(seen[i - 1]!.img);
-    }
-    // And the widest of each reaches the size the doc states, rather than stopping short of it.
-    expect(seen.at(-1)!.img, 'the photo never reaches its stated 280px').toBe(280);
-  };
-
-  await walk([820, 900, 1000, 1100, 1179]);
-  await walk([1180, 1250, 1300, 1440, 1600]);
+  // ONE ladder, straight through the sidebar's 1180px boundary. It used to be two: the sidebar
+  // taking its permanent 260px column narrowed every container inside the content track at once
+  // and the photo stepped 280px → 270px across it, so a single ladder measured the sidebar
+  // arriving rather than this panel's own tiers. Capping the content at the summary's width killed
+  // that step — the container stops varying with the window well below 1180px — so the regimes
+  // no longer need walking apart (docs/app.md §The expanded row).
+  const widths = [820, 900, 1000, 1100, 1179, 1180, 1250, 1300, 1440, 1600];
+  const seen: { width: number; img: number }[] = [];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/?cols=easy-score-heel,heel-stack,weight');
+    await page.getByText('cushy').first().click();
+    await expect(page.locator('.detail .a-bd')).toBeVisible();
+    // The fixture carries no `imageUrl`, so the BOX is what can be measured here — and the photo
+    // is exactly `min(box, 280)`, which is the `max-width` on the `img`. The rendered image was
+    // measured against the real fleet in both engines and agrees with this at every tier.
+    seen.push({ width, img: await page.locator('.detail .a-img').first()
+      .evaluate((el) => Math.min(280, Math.round(el.getBoundingClientRect().width))) });
+  }
+  for (let i = 1; i < seen.length; i++) {
+    expect(seen[i]!.img, `the photo shrank from ${seen[i - 1]!.img}px at ${seen[i - 1]!.width}px `
+      + `to ${seen[i]!.img}px at ${seen[i]!.width}px`).toBeGreaterThanOrEqual(seen[i - 1]!.img);
+  }
+  // Not just non-decreasing: a column of its own means the photo is its stated size at EVERY width
+  // above the stacked tier, which is a stronger claim than the ladder alone and the one the doc
+  // makes. `toEqual` over the whole array, so a failure names the widths that fell short.
+  expect(seen.map((s) => s.img), 'the photo is not its stated 280px at every width')
+    .toEqual(widths.map(() => 280));
 });
 
-test('lays the expanded row out at every container tier without overflowing', async ({ page }) => {
-  for (const { width, cols, pageMayScroll } of [
-    { width: 1440, cols: NARROW, pageMayScroll: false },
-    { width: 1440, cols: WIDE, pageMayScroll: true },
-    { width: 980, cols: NARROW, pageMayScroll: false },
-    { width: 760, cols: NARROW, pageMayScroll: false },
-    { width: 390, cols: NARROW, pageMayScroll: false },
+/**
+ * Nothing in the expanded row is wider than the summary, and the whole of it hangs off the left
+ * edge under the shoe name (docs/app.md §The expanded row). Three claims in one walk, because they
+ * are one decision: the CAP (every zone inside one box no wider than the summary's measure), the
+ * LEFT ANCHOR (the box starts where the panel starts, and all the slack falls right into the well)
+ * and the CENTRED BREAKDOWN (the one element constrained to its natural width and centred — inside
+ * that box, never inside the panel).
+ *
+ * It replaces a shared-right-edge assertion between the summary and the prose columns. That edge
+ * still exists and is still asserted, but it is now the capped box's own edge rather than a
+ * coincidence between two rules: the summary is co-extensive with the container at every tier.
+ */
+test('caps the expanded row at the summary, anchored left, with the breakdown centred', async ({ page }) => {
+  const CAP = 800;
+  for (const { width, cols, pageMayScroll, atCap } of [
+    { width: 1440, cols: NARROW, pageMayScroll: false, atCap: true },
+    // `WIDE` plus a story score, because `WIDE` carries RunRepeat's own `score` and no story
+    // column, so it renders no breakdown at all — and this is the case the cap most has to hold:
+    // the table is wider than the window, which is exactly what a viewport query cannot see.
+    { width: 1440, cols: `${WIDE},easy-score-heel`, pageMayScroll: true, atCap: true },
+    { width: 980, cols: NARROW, pageMayScroll: false, atCap: true },
+    // Below the cap the container is the panel's own width, so these two say the cap changed
+    // nothing about the tiers underneath it — 390px in particular is the phone rendering.
+    { width: 760, cols: NARROW, pageMayScroll: false, atCap: false },
+    { width: 390, cols: NARROW, pageMayScroll: false, atCap: false },
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`/?cols=${cols}`);
@@ -430,13 +446,52 @@ test('lays the expanded row out at every container tier without overflowing', as
         `the page overflows at ${width}px`).toBe(true);
     }
 
-    const edges = await page.evaluate(() => {
-      const r = (s: string) => document.querySelector(s)!.getBoundingClientRect().right;
-      return { body: r('.a-body'), prose: r('.a-prose'), intro: r('.a-body .intro') };
+    const g = await page.evaluate(() => {
+      const r = (s: string) => document.querySelector(s)?.getBoundingClientRect() ?? null;
+      const grid = document.querySelector('.grid')!;
+      const cs = getComputedStyle(grid);
+      const gb = grid.getBoundingClientRect();
+      // The capped box is the grid's CONTENT box: the padding is the panel's inset around it, not
+      // part of the measure the cap is about.
+      const content = { left: gb.left + parseFloat(cs.paddingLeft),
+                        right: gb.right - parseFloat(cs.paddingRight) };
+      return { content, grid: { left: gb.left, right: gb.right }, detail: r('.detail')!,
+               body: r('.a-body')!, intro: r('.a-body .intro')!, prose: r('.a-prose')!,
+               bd: r('.a-bd') };
     });
-    // One box, so the summary cannot overshoot the columns beneath it by more than a pixel.
-    expect(Math.abs(edges.intro - edges.body), `summary overshoots at ${width}px`).toBeLessThanOrEqual(1);
-    expect(Math.abs(edges.prose - edges.body), `prose overshoots at ${width}px`).toBeLessThanOrEqual(1);
+    const contentW = g.content.right - g.content.left;
+
+    // 1. The cap. Every zone lives in this one box, so no part of the row is wider than the summary.
+    expect(contentW, `the expanded row is wider than the summary at ${width}px`)
+      .toBeLessThanOrEqual(CAP + 1);
+
+    // 2. The left anchor. The box starts where the panel's content starts — under the shoe name a
+    //    runner just clicked — and every pixel of slack falls to the RIGHT, inside the well.
+    expect(Math.abs(g.grid.left - g.detail.left), `the row is not anchored left at ${width}px`)
+      .toBeLessThanOrEqual(1);
+    expect(g.detail.right - g.grid.right, `slack fell to the left at ${width}px`)
+      .toBeGreaterThanOrEqual(-1);
+
+    // 3. The summary is co-extensive with the capped box, and the prose columns share its edges.
+    for (const [name, box] of [['summary', g.body], ['prose', g.prose]] as const) {
+      expect(Math.abs(box.right - g.content.right), `${name} does not reach the cap at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    }
+    expect(Math.abs(g.body.left - g.content.left), `the summary box is not the container at ${width}px`)
+      .toBeLessThanOrEqual(1);
+    expect(Math.abs(g.intro.right - g.body.right), `summary overshoots at ${width}px`).toBeLessThanOrEqual(1);
+
+    // 4. The breakdown is centred in that box — symmetric at every tier, including the stacked one
+    //    where it fills the width and both slacks are zero.
+    const bd = g.bd!;
+    expect(bd, `no breakdown to place at ${width}px`).not.toBeNull();
+    expect(Math.abs((bd.left - g.content.left) - (g.content.right - bd.right)),
+      `the breakdown is not centred at ${width}px`).toBeLessThanOrEqual(1);
+    // And it is centred at its NATURAL width rather than stretched to the box: a stretched card
+    // would also be symmetric, so the strict inequality is what says it shrank to fit its table.
+    if (atCap) {
+      expect(bd.width, `the breakdown stretched to the cap at ${width}px`).toBeLessThan(contentW - 1);
+    }
   }
 });
 
