@@ -1667,6 +1667,41 @@ than translated**, and everything with no zone is untouched — the reasoning is
 §The zone is a preset too. A no-op click on the marked zone returns
 early, so it cannot rebuild the view.
 
+## The About panel
+
+`AboutDialog.svelte` owns **the whole explanation**: what "Measured at" picks,
+what the three scores read and deliberately do not, and what the stability
+preference adds. One body of copy to keep true, in one place, rather than a
+sentence beside each control that has to agree with the other two. The component
+owns the words; this section does not restate them.
+
+It is the **`AddFilterDialog` pattern, not `HelpPopover`'s** — appended to
+`<body>`, scrim, centred, `min(28rem, 92vw)` wide, `max-height: 80vh`, the body
+scrolling inside a frame that keeps the title and `Close` still, dismissed by
+`Close`, Escape or an outside press, Tab trapped and focus returned to the
+opener. A popover is sized for two sentences anchored to the control it explains;
+this is four sections read whole, from two different openers, at every width.
+Taking the dialog's pattern means the focus trap, the scrim, the stacking order
+and the `<body>` mount are already solved and already tested (§Stacking order).
+
+**Two entry points**, and both open the same panel: the `About` button, which is
+first in the toolbar's actions group at every width (§The toolbar), and the
+`New here?` line under the setup strip's cards (§The setup strip). `Page.svelte`
+holds `aboutOpen` and renders the panel outside `.chrome`.
+
+**One bound worth keeping:** the body does not scroll at 390×844 — most phones —
+nor at 900×740. If the copy grows past that, cut copy rather than raising
+`max-height`; 80vh is the add-filter dialog's own and is shared deliberately.
+`smoke.spec.ts` measures it at 390×844.
+
+**The Stability section names Easy and Tempo by hand**, where the toolbar caption
+it replaces derived them from the definitions that declare a stable variant
+(§The story scores). Prose is worth the loss of that derivation — but a fourth
+stable story would leave the panel quietly claiming two, so the derivation
+survives as a guard rather than as an interpolation: `AboutDialog.test.ts`
+asserts that exactly `easy` and `tempo` declare one, and fails with the sentence
+to edit rather than in a reader's face.
+
 ## Stacking order
 
 **Not one scale — a tree.** A z-index only ever means something next to its
@@ -1684,8 +1719,8 @@ indentation, not the column:
 | ↳ help popover, month picker panel | 20 | *the sidebar's children only* |
 | drawer scrim, below 800px | 25 | the page |
 | filter drawer, below 800px | 30 | the page |
-| Add-filter dialog's scrim | 32 | the page |
-| Add-filter dialog | 35 | the page |
+| Add-filter dialog's scrim, About panel's scrim | 32 | the page |
+| Add-filter dialog, About panel | 35 | the page |
 | skip link | 40 | the page |
 
 So the column picker's 10 does **not** outrank the chrome's 5 — it is inside
@@ -1713,6 +1748,13 @@ nested (§Filters). Both facts are measured in
 `smoke.spec.ts`, at 1200px and at 375px, by sampling `elementFromPoint` across
 the open dialog's box — the desktop fix broke the phone once, and each width
 only catches its own failure.
+
+**The About panel takes the Add-filter dialog's own 35 over 32 rather than a
+layer of its own**, because the two can never be open at once. The reason is the
+modality, not the drawer: above 800px the sidebar is permanent and both openers
+sit on surfaces that are simply part of the page. Each dialog lays its own scrim
+at 32 over everything else and traps Tab inside itself, so whichever is up puts
+the other's opener behind a scrim and out of reach (§The About panel).
 
 **Two floating boxes size against the viewport, and neither may exceed it.**
 There is no global `box-sizing` reset — the components that size against their
