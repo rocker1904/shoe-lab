@@ -995,6 +995,22 @@ chosen:
   missing depth without spending any of the density, and it matches the desktop
   chassis. Elevation follows what is **pinned**: page, then this panel, then the
   sticky header on top of it.
+- **The panel takes the table's own width arithmetic**, so it is the table's
+  container at every column count. It used to be sized by the viewport, which is
+  the six-column table's width and nothing else's: at seven columns the table
+  painted **52px** out through the panel's right edge and at ten **217px**, so the
+  card's right hairline and its bottom-right radius were drawn across live rows,
+  and scrolled right the box visibly ended in the middle of the data. Reachable
+  and contained are different claims and only the first had been measured. The
+  fix touches neither the overflow pair below nor the 53px column: `--table-w` —
+  `53px` a column plus the border-spacing either side of each — is declared once
+  on `.bleed`, the table takes it as its `min-width` and the panel takes it plus
+  its own two side borders under `box-sizing: border-box`. Measured at 320, 360
+  and 390px in both engines at 6, 7 and 10 columns: the table inside the panel at
+  every one, the narrowest column exactly 53px, the header still pinned flush to
+  the chrome, and `maxScrollLeft` still non-zero past six columns.
+  `cross-browser.spec.ts` asserts the containment and the 53px floor beside the
+  reachability it already asserted.
 - **53px minimum column**, so six columns need 332px and fit any phone from
   360px up. The self-hosted Inter Tight is what makes 53px enough — `system-ui`
   needs 57px — and the 24px that buys is what pays for the panel's inset. The

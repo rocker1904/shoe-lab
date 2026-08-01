@@ -310,6 +310,33 @@ for (const width of [360, 390]) {
     });
     expect(maxScrollLeft,
       'columns past the sixth are unreachable — the panel is clipping x').toBeGreaterThan(0);
+
+    // Reachable is not the same as CONTAINED, and only the first half was ever measured: the panel
+    // was the width of the six-column table, so at seven columns the table painted 52px out through
+    // its right edge and at ten 217px — the card's hairline and its bottom-right radius drawn across
+    // live rows. The panel takes the same arithmetic the table's own `min-width` does, so it is the
+    // table's container at every column count without touching the overflow pair above.
+    // Nine figure columns the fixture carries; the slugs are `WIDE`'s, checked against
+    // app/e2e/fixtures/shoes.json.
+    const FIGURES = ['score', 'msrpGbp', 'heel-stack', 'forefoot-stack', 'weight',
+      'energy-return-heel', 'energy-return-forefoot', 'toebox-width-widest-part',
+      'shock-absorption-heel'];
+    for (const cols of [7, 9]) {
+      await page.goto(`/?cols=${FIGURES.slice(0, cols).join(',')}`);
+      await expect(mobile.getByRole('columnheader')).toHaveCount(cols);
+      const boxes = await page.evaluate(() => {
+        const panel = document.querySelector('.bleed > div')!.getBoundingClientRect();
+        const table = document.querySelector('[data-testid="shoe-table-mobile"]')!.getBoundingClientRect();
+        const heads = [...document.querySelectorAll('[data-testid="shoe-table-mobile"] thead th')];
+        return { spill: Math.round(table.right - panel.right),
+                 narrowest: Math.min(...heads.map((th) => th.getBoundingClientRect().width)) };
+      });
+      expect(boxes.spill, `the table paints ${boxes.spill}px outside its own panel at ${cols} columns`)
+        .toBeLessThanOrEqual(0);
+      // And the panel did not buy that by narrowing the column the labels were validated against.
+      expect(boxes.narrowest, `columns fell to ${boxes.narrowest}px at ${cols} columns`)
+        .toBeGreaterThanOrEqual(53);
+    }
   });
 }
 

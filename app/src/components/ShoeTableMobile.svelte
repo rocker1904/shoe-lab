@@ -137,9 +137,9 @@
      chrome and for the same reason: the labels wrap, so it is a function of the width and of the
      face that has loaded, and a constant is right at one width only. It is what a row's
      `scroll-margin-top` adds to `--thead-top` (docs/app.md §Table presentation). -->
-<div class="bleed" style:--head-h="{headHeight}px">
+<div class="bleed" style:--head-h="{headHeight}px" style:--cols={span}>
   <div class="panel">
-    <table data-testid="shoe-table-mobile" style:--cols={span}>
+    <table data-testid="shoe-table-mobile">
     <thead bind:clientHeight={headHeight}>
       <tr>
         {#each cols as col (col)}
@@ -190,7 +190,12 @@
 </div>
 
 <style>
-  .bleed { margin-inline: calc(-1 * var(--s4) + var(--s3)); }
+  /* The six-column bound, as arithmetic rather than as a number in two places: 53px a column plus
+     the border-spacing either side of each. The table takes it as its `min-width` and the panel
+     takes it plus its own two side borders, which is what makes the card the table's container at
+     EVERY column count (docs/app.md §Two renderings, and only one of them mounted). */
+  .bleed { --table-w: calc(var(--cols) * 53px + (var(--cols) + 1) * 2px);
+           margin-inline: calc(-1 * var(--s4) + var(--s3)); }
   /* What "scrolled to" means for a shoe here: below the pinned chrome AND below this list's own
      sticky header, which paints over the rows sliding beneath it. Both are measured — `--thead-top`
      by `Page.svelte`, `--head-h` above — because either alone leaves the shoe's name row behind the
@@ -208,7 +213,7 @@
      makes this a scroll container and the header lands 19px out of place, the same failure mode
      `.content` has with `overflow-x`. Plain `overflow: clip` makes every column past the sixth
      unreachable, which `cross-browser.spec.ts` now asserts. */
-  .panel { background: var(--surface);
+  .panel { background: var(--surface); box-sizing: border-box; min-width: calc(var(--table-w) + 2px);
            border: 1px solid var(--border); border-top: none;
            border-radius: 0 0 var(--r-md) var(--r-md);
            box-shadow: var(--shadow-panel); overflow-x: visible; overflow-y: clip; }
@@ -219,7 +224,7 @@
      (docs/app.md §Columns and sorting). */
   table {
     table-layout: fixed; border-collapse: separate; border-spacing: 2px 0; width: 100%;
-    min-width: calc(var(--cols) * 53px + (var(--cols) + 1) * 2px);
+    min-width: var(--table-w);
     font-size: var(--t-md);
   }
   /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 53px column, which is
