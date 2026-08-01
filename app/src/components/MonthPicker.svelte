@@ -215,7 +215,8 @@
   /* Absolute inside the sidebar, not portalled to `<body>` like the Add-filter dialog: this panel
      is the width of the column it sits in, so it never reaches the table, and the section it hangs from
      sits near the top of the sidebar's scroll content, so it is never clipped
-     (docs/app.md §Stacking order). 20 matches HelpPopover — both only have to clear their siblings. */
+     (docs/app.md §Stacking order). 20 only has to clear this panel's own siblings inside the
+     sidebar, which is why it does not have to reach the modals' 32 and 35. */
   /* `width: 100%` with `border-box`, not a fixed width: the sidebar is a scroll container, so
      `overflow-x` computes to `auto` alongside its `overflow-y`, and a panel wider than the column
      is clipped rather than allowed to overhang. A 15rem panel lost its fourth column and half the

@@ -38,9 +38,9 @@ test('opens on the setup strip and resumes the previous session across a reload'
   expect(new Set(widths).size).toBe(1);
   await expect(strip.locator('.divider')).toBeVisible();
 
-  // the help is a click-triggered popover on every device, never a hover tooltip
-  await strip.getByRole('button', { name: /About Built for/ }).click();
-  await expect(page.getByRole('dialog', { name: 'Built for' })).toContainText('you can change anything');
+  // one body of explanation, offered in words rather than in a punctuation mark
+  await strip.getByRole('button', { name: /Read about this table/ }).click();
+  await expect(page.getByRole('dialog', { name: 'About this table' })).toContainText('lab tests');
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
@@ -550,30 +550,6 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toBeFocused();
   await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
   await expect(heel).toHaveAttribute('tabindex', '-1');
-});
-
-/**
- * The help popover is mounted inside other people's boxes — the setup strip's uppercase group
- * headings today, a filter row in the plan that puts one on every metric (BACKLOG.md) — so the
- * typography it inherits is not its own to assume. The strip's `h2` sets `text-transform:
- * uppercase` and 0.09em of tracking, and a popover that inherits them renders its whole body in
- * caps (docs/app.md §Presets). jsdom applies no component CSS, so only a browser can answer it.
- */
-test('sets the help popover in its own type, whatever it is mounted in', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'About Built for' }).click();
-
-  const body = page.locator('.pop p');
-  await expect(body).toBeVisible();
-  const type = await body.evaluate((el) => {
-    const cs = getComputedStyle(el);
-    return { transform: cs.textTransform, tracking: cs.letterSpacing, rendered: (el as HTMLElement).innerText };
-  });
-  expect(type.transform, 'the popover inherits its host\'s casing').toBe('none');
-  expect(type.tracking, 'the popover inherits its host\'s tracking').toBe('normal');
-  // And the belt to that braces: the sentence reaches the screen as it was written.
-  expect(type.rendered.startsWith('Easy, Tempo and Race')).toBe(true);
 });
 
 /**

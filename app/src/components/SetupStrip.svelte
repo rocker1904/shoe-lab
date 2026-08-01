@@ -1,13 +1,14 @@
 <script lang="ts">
   import type { Zone } from '../lib/lineage';
-  import HelpPopover from './HelpPopover.svelte';
 
-  let { zone, selected, onzone, onstory }: {
+  let { zone, selected, onzone, onstory, onabout }: {
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
     zone: Zone | null;
     /** Derived in `Page.svelte`, never stored (docs/app.md §Presets). */
     selected: string | null;
     onzone: (s: Zone) => void; onstory: (id: string) => void;
+    /** Opens the one panel that explains the table (docs/app.md §The About panel). */
+    onabout: () => void;
   } = $props();
 
   const ZONES: { v: Zone; label: string }[] = [{ v: 'heel', label: 'Heel' }, { v: 'forefoot', label: 'Forefoot' }];
@@ -27,20 +28,11 @@
   // a self-diagnosis the tool cannot check (docs/app.md §The zone is a preset too).
   const ZONE_LABEL = 'Measured at';
   const STORY_LABEL = 'Built for';
-  // Verbatim from the design, and two things it deliberately does not do: it never says "session",
-  // which is our word rather than a runner's, and it does not contrast these against the labels
-  // the data ships with — the reader has no idea those exist, so denying it plants the question.
-  const ZONE_HELP = 'Stack, energy return, shock absorption and midsole width are each measured '
-    + 'twice — once at the heel, once at the forefoot. Pick the end you want the table and filters '
-    + 'to use. Usually that is the end you land on, but either is fine.';
-  const STORY_HELP = 'Easy, Tempo and Race each rank the shoes on measurements chosen for that '
-    + 'kind of run, and set the columns to match. All clears them again, and you can change '
-    + 'anything at any point.';
 </script>
 
 <section class="strip" aria-label="Set up your table" data-testid="setup-strip">
   <div class="grid">
-    <h2 class="label zone-label">{ZONE_LABEL} <HelpPopover label={ZONE_LABEL} body={ZONE_HELP} /></h2>
+    <h2 class="label zone-label">{ZONE_LABEL}</h2>
     {#each ZONES as s (s.v)}
       <button type="button" class="card zone" aria-pressed={zone === s.v} class:on={zone === s.v}
               onclick={() => onzone(s.v)}>
@@ -48,7 +40,7 @@
       </button>
     {/each}
     <span class="divider" aria-hidden="true"></span>
-    <h2 class="label story-label">{STORY_LABEL} <HelpPopover label={STORY_LABEL} body={STORY_HELP} /></h2>
+    <h2 class="label story-label">{STORY_LABEL}</h2>
     {#each STORIES as s (s.id)}
       <button type="button" class="card story" aria-pressed={selected === s.id} class:on={selected === s.id}
               onclick={() => onstory(s.id)}>
@@ -56,6 +48,9 @@
         <span class="desc">{s.desc}</span>
       </button>
     {/each}
+    <!-- No `↗`: that mark means "leaves the app" on the credit in the masthead, and this opens a
+         panel. One glyph, one meaning. -->
+    <p class="invite">New here? <button type="button" class="link" onclick={onabout}>Read about this table</button></p>
   </div>
 </section>
 
@@ -99,6 +94,11 @@
      alignment is inherited by the name rather than restated on it: `.zone` and `.card` are the same
      specificity and this rule is the later one, so it wins outright. */
   .zone { text-align: center; justify-content: center; }
+  /* Spans the grid rather than sitting in a card track: it is an offer about the whole strip. */
+  .invite { grid-column: 1 / -1; margin: var(--s1) 0 0; font-size: var(--t-xs); color: var(--text-dim); }
+  .link { padding: 0; border: 0; background: none; font: inherit; font-weight: 500; color: var(--accent);
+          cursor: pointer; }
+  .link:hover { text-decoration: underline; }
   /* Six in a row is a desktop layout; on a phone each group becomes two columns at full card size.
      It costs the first screen, which is affordable exactly because the strip appears once. */
   @media (max-width: 699px) {

@@ -227,6 +227,11 @@ describe('Page', () => {
     expect(screen.queryByRole('dialog', { name: 'About this table' })).toBeNull();
     expect(about).toHaveFocus();
   });
+  it('opens the About panel from the setup strip too', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /Read about this table/ }));
+    expect(screen.getByRole('dialog', { name: 'About this table' })).toBeInTheDocument();
+  });
   it('explains an empty result instead of showing a bare header row', () => {
     history.replaceState(null, '', '/?q=nothing-matches-this');
     render(Page, { props: { data } });

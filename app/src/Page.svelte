@@ -322,7 +322,8 @@
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
 {#if stripOpen}
   <div transition:slide={{ duration: collapseMs }}>
-    <SetupStrip zone={zoneMark} {selected} onzone={onZone} onstory={onStory} />
+    <SetupStrip zone={zoneMark} {selected} onzone={onZone} onstory={onStory}
+                onabout={() => (aboutOpen = true)} />
   </div>
 {/if}
 

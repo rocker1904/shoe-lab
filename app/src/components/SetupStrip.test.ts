@@ -13,7 +13,7 @@ import type { Zone } from '../lib/lineage';
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 const props = {
   zone: 'heel' as Zone | null, selected: null as string | null,
-  onzone: vi.fn(), onstory: vi.fn(),
+  onzone: vi.fn(), onstory: vi.fn(), onabout: vi.fn(),
 };
 
 describe('SetupStrip', () => {
@@ -75,18 +75,15 @@ describe('SetupStrip', () => {
     }
   });
 
-  it('explains a group in a popover rather than a tooltip, and hands focus back on Escape', async () => {
-    render(SetupStrip, { props: { ...props } });
-    const help = screen.getByRole('button', { name: /About Measured at/ });
-    help.focus();
-    await fireEvent.click(help);
-    const pop = screen.getByRole('dialog', { name: 'Measured at' });
-    expect(pop).toHaveTextContent(/measured twice/);
-    expect(pop).toHaveTextContent(/either is fine/);
-
-    await fireEvent.keyDown(pop, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(help).toHaveFocus();
+  // One body of explanation to keep true, offered in words on the screen where a first arrival is
+  // standing rather than in a punctuation mark.
+  it('invites the About panel instead of explaining each group itself', async () => {
+    const onabout = vi.fn();
+    render(SetupStrip, { props: { ...props, onabout } });
+    expect(screen.queryByRole('button', { name: /^About Measured at/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^About Built for/ })).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: /Read about this table/ }));
+    expect(onabout).toHaveBeenCalled();
   });
 
   it('carries no title attribute — a tooltip is the mechanism this replaces', () => {

@@ -1499,20 +1499,15 @@ indistinguishable from the chosen one, so the two states have to differ in what
 they change, not only in how much. The zone cards carry no description, so their
 name centres vertically in a box whose height the story cards set.
 
-A `?` beside each label opens `HelpPopover.svelte`, **one mechanism on every
-device**: a click-triggered popover anchored beside the `?` above 700px and a
-bottom sheet below, with focus return and Escape. A hover tooltip was rejected
-— it is the same mechanism as the `title` attribute this pass removes from the
-cards, and it needs a wholly separate touch path.
-
-**It resets the typography it inherits**, because it is mounted inside other
-people's boxes: the labels it hangs off here are uppercase micro-labels with
-0.09em of tracking, and both properties inherit, so an unreset popover set its
-whole body in caps. Weight, casing and tracking are therefore stated on the
-panel; the face is not, because every host is already on `--font-ui` and naming
-one is what `tokens.test.ts` fails the build on. The plan to put a `?` on every
-filter row (BACKLOG.md) mounts it in a third kind of box, so the reset is a
-property of the component rather than a fix for this one host.
+**The strip explains nothing itself; it invites the panel that does.** One line
+under the cards, spanning the grid — *New here? **Read about this table*** —
+opens the About panel (§The About panel), which owns every word of explanation
+the chrome offers. The two `?` popovers that used to hang off the group labels
+are gone, and `HelpPopover.svelte` with them: one body of explanation to keep
+true, offered in words on the screen where a first arrival is standing rather
+than in a punctuation mark. The invite carries **no `↗`** — that mark means
+*this leaves the app* on the masthead credit, and this opens a modal. One glyph,
+one meaning; the accent colour is what carries the affordance.
 
 **Visibility is ephemeral `$state`**, initialised from "no query string *and* no
 stored view" — a genuine first arrival, which `Page.svelte` already knows at
