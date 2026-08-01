@@ -310,6 +310,117 @@ test('opens with the actions flush to the bar trailing edge', async ({ page }) =
 });
 
 /**
+ * The chrome below 800px is three bands — identity, what acts on the table, what the table is —
+ * and above it two. Each assertion here is a property rather than a pixel count, so a retune of any
+ * boundary keeps them meaningful (docs/app.md §The chrome bands).
+ */
+test('lays the chrome out in bands', async ({ page }) => {
+  const settle = async () => {
+    const card = page.getByTestId('setup-strip').getByRole('button', { name: /^All/ });
+    // `exact`, because the strip's `Read about this table` is a substring match otherwise.
+    await expect(page.getByRole('button', { name: 'About', exact: true })).toBeVisible();
+    if (await card.count()) await card.click();
+    await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+    await page.evaluate(() => document.fonts.ready.then(() => null));
+  };
+  const bands = () => page.evaluate(() => {
+    const tb = document.querySelector('[data-testid="toolbar"]')!;
+    const cs = getComputedStyle(tb);
+    const padL = parseFloat(cs.paddingLeft), padR = parseFloat(cs.paddingRight);
+    const box = tb.getBoundingClientRect();
+    const setup = tb.querySelector('.setup')!.getBoundingClientRect();
+    const actions = tb.querySelector('.actions')!.getBoundingClientRect();
+    const kids = [...tb.querySelector('.setup')!.children].map((k) => k.getBoundingClientRect());
+    return {
+      sameRow: Math.abs((setup.y + setup.height / 2) - (actions.y + actions.height / 2)) < 4,
+      setupBelow: setup.y > actions.y,
+      leftInset: Math.round(kids[0]!.left - (box.left + padL)),
+      rightInset: Math.round((box.right - padR) - kids[kids.length - 1]!.right),
+      overflow: tb.scrollWidth - tb.clientWidth,
+      // The story group must take the row it is given rather than filling one of its own — carried
+      // over from the tier test Task 8 retires, which is where this claim lived.
+      paceW: tb.querySelector('.pace-wrap .seg')!.getBoundingClientRect().width,
+      wrapW: tb.querySelector('.pace-wrap')!.getBoundingClientRect().width,
+    };
+  });
+
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.goto('/');
+  await settle();
+  expect((await bands()).sameRow, 'the bar split above 800px').toBe(true);
+
+  await page.setViewportSize({ width: 801, height: 900 });
+  expect((await bands()).sameRow, 'the bar split just above the sidebar boundary').toBe(true);
+
+  // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
+  // what the table is, so the row carrying every word is the one nearest the table. One boundary,
+  // shared with the sidebar — the merged line the design wanted from 700 up does not fit the shipped
+  // controls until 777px, which is not a band (docs/app.md §The chrome bands).
+  for (const width of [800, 760, 660]) {
+    await page.setViewportSize({ width, height: 900 });
+    const split = await bands();
+    expect(split.sameRow, `the bands merged at ${width}px`).toBe(false);
+    expect(split.setupBelow, `the setup row leads at ${width}px`).toBe(true);
+  }
+
+  // 430 and below: flush to both padding edges — the property the whole rebuild exists to restore.
+  for (const width of [430, 390, 375, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(b.overflow, `the setup row overflows at ${width}px`).toBeLessThanOrEqual(0);
+    expect(b.leftInset, `not flush left at ${width}px`).toBeLessThanOrEqual(1);
+    expect(b.rightInset, `not flush right at ${width}px`).toBeLessThanOrEqual(1);
+  }
+
+  // Above 430 it stops widening and centres, so the two insets stay equal and stop growing apart.
+  for (const width of [500, 560, 629, 690, 760, 799]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(Math.abs(b.leftInset - b.rightInset), `not centred at ${width}px`).toBeLessThanOrEqual(2);
+    expect(b.leftInset, `the capped row grew at ${width}px`).toBeGreaterThanOrEqual(0);
+  }
+
+  // And at every width: the story group is shrink-wrapped, never stretched to fill its wrapper.
+  for (const width of [1200, 900, 760, 660, 560, 430, 390, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(b.paceW, `the story group stretches at ${width}px`).toBe(b.wrapW);
+  }
+});
+
+/**
+ * The utilities are written once and mounted in the host their band owns, so exactly one instance
+ * must exist at any width — two would be two tab stops with the same name, and zero would lose the
+ * controls. The widths step either side of 800 because that boundary is asked twice, once by the
+ * CSS and once by the rune in `Page.svelte`, and the failure mode is them disagreeing
+ * (docs/app.md §Where the utilities live).
+ */
+test('mounts each utility exactly once at every width', async ({ page }) => {
+  for (const width of [360, 390, 430, 560, 700, 799, 800, 801, 900, 1200, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    for (const name of ['Copy link', 'Export CSV']) {
+      await expect(page.getByRole('button', { name }), `at ${width}px`).toHaveCount(1);
+    }
+    await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
+    await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
+  }
+});
+
+// And the swap survives a resize rather than only a fresh load: the rune is what moves them, so a
+// listener that never fires would pass every case above and still strand the controls in the wrong
+// band for anyone who rotates a phone or drags a window.
+test('moves the utilities between bands on a resize', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('header').getByRole('button', { name: 'Copy link' })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.locator('[data-testid="toolbar"]').getByRole('button', { name: 'Copy link' }))
+    .toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+});
+
+/**
  * Every row of chrome is paid before the first shoe, so narrowing the window may ADD a row — the
  * content genuinely stops fitting — but must never add one that a narrower window then hands back.
  * A band standing taller than the viewports on both sides of it is height nothing on screen asked
@@ -318,8 +429,8 @@ test('opens with the actions flush to the bar trailing edge', async ({ page }) =
  *
  * Counted in ROWS, not pixels. The 800px tier halves the bar's vertical padding by design and the
  * chrome legitimately gets shorter there, so a pixel-monotone claim would fail on the design rather
- * than on a bug. The ladder steps either side of all three declared boundaries — 880, 800 and 610 —
- * because that is where a rule can move a row.
+ * than on a bug. The ladder steps either side of both declared boundaries — 800 and 429.98 — and
+ * around 700, because that is where a rule can move a row (docs/app.md §The chrome bands).
  *
  * jsdom evaluates no media query and lays nothing out, so only a browser can answer it.
  */
@@ -403,12 +514,13 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
 }
 
 /**
- * Every row of chrome is paid before the first shoe. `main` spent 198px at 360px with the pills up;
- * the rebuild spends 109px, and the ceiling is what stops the saving being given back one padding
- * step at a time. A bound rather than a pin, so a font tweak does not fail the build but a
+ * Every row of chrome is paid before the first shoe, and the ceiling is what stops the saving the
+ * rebuild bought being given back one padding step at a time — docs/app.md §The chrome bands owns
+ * what it spends. A bound rather than a pin, so a font tweak does not fail the build but a
  * regression does — each is set roughly 10px above what the components actually measure, and above
- * the HIGHER of the two engines: Firefox runs about 5px taller than Chromium here, and this project
- * is Chromium-only (docs/app.md §The chrome bands).
+ * the HIGHER of the two engines: Firefox runs about 5px taller than Chromium here, and this SUITE
+ * is Chromium-only (docs/operations.md §The e2e run needs three browsers). The numbers themselves
+ * are docs/app.md §The chrome bands'.
  *
  * Both states, because the bar is taller once the strip has handed it the three setup controls —
  * and the strip-up pass is the binding one, because that is a first arrival.
@@ -730,7 +842,7 @@ test('Race applies no filter at all, and the stability preference does not move 
   await expect(score(0)).toHaveText('76.52');
   await expect(score(1)).toHaveText('70.49');
 
-  // Race declares no stable variant, so the preference is inert on it — the Toolbar says so, and
+  // Race declares no stable variant, so the preference is inert on it — the About panel says so, and
   // this is where that claim meets the rendered table.
   await page.getByRole('button', { name: 'Stability' }).click();
   await expect(page).toHaveURL(/stab=1/);

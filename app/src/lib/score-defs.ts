@@ -71,7 +71,7 @@ export const TEMPO: ScoreDef = {
 /** No `stable` variant, and that is the decision rather than an omission: race shoes are uniformly
  *  tall and narrow, so the category has no stable member to surface — at every usable weight the
  *  preference barely disturbs the top of the list and promotes daily trainers below
- *  (docs/shoe-stories.md §Race). The Toolbar says so rather than leaving a dead control. */
+ *  (docs/shoe-stories.md §Race). The About panel says so rather than leaving a dead control. */
 export const RACE: ScoreDef = {
   id: 'race',
   keys: { heel: derivedZoneKey('Race score', 'heel'), forefoot: derivedZoneKey('Race score', 'forefoot') },

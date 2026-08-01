@@ -42,8 +42,11 @@
 </script>
 
 <div class="toolbar" data-testid="toolbar">
-  <div class="setup">
-    {#if showGroups}
+  <!-- `{#if}` OUTSIDE the wrapper, not inside it: below 800px `.setup` is a full-width flex line, so
+       an empty one on the landing screen is a second row charging the bar's row gap for nothing.
+       Same rule as the utilities host below. -->
+  {#if showGroups}
+    <div class="setup">
       <div class="zone-wrap"><ZoneToggle {zone} onchange={onzone} /></div>
       <div class="pace-wrap">
         <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
@@ -63,8 +66,8 @@
         <button type="button" class="s pill" aria-pressed={stability}
                 class:on={stability} onclick={() => onstability(!stability)}>Stability</button>
       </span>
-    {/if}
-  </div>
+    </div>
+  {/if}
   <div class="actions">
     <!-- First of the pair that opens a panel, because it is the one a reader might need before they
          know what Columns is for. -->
@@ -95,9 +98,6 @@
      you are happy with" on the right. Without it the five controls bunch at one end and the row's
      slack lands in the wrong place. */
   .actions .utils-host { margin-left: auto; }
-  /* One control in a track sized for a group: the padding is the group's, so the pill lines up with
-     the pills beside it rather than sitting in a tighter box of its own. */
-  .seg.one { padding: 2px; }
   /* `overflow: visible`, not hidden: the focus ring is a box-shadow and a clipped track would
      swallow it (docs/app.md §Theming). */
   .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
@@ -128,14 +128,9 @@
      drawer here. 800 rather than 799.98 deliberately — it is the sidebar's own boundary and the two
      must agree, or the drawer toggle shows on a width laid out as a desktop.
      ONE boundary, not two: the design asked for a merged line from 700 to 800 and the shipped
-     components do not fit one. Measured with the icon forms in place, the setup row needs 411px and
-     the actions 330px — the actions carry a worded About, two glyphs and the three utilities — so
-     the merged line's own minimum is a 765px viewport in Chromium and 777px in Firefox. A band 23px
-     wide is not a band, and between 700 and 777 the bar wrapped anyway with the two in the WRONG
-     order: `flex-wrap` puts the actions after the setup, where the design puts them above it.
-     So the bands separate for the whole sub-800 range and the ACTIONS lead — what acts on the table
-     above what the table is, so the row carrying every word sits nearest the table
-     (docs/app.md §The chrome bands). */
+     components do not fit one, so the bands separate for the whole sub-800 range. The ACTIONS lead
+     — what acts on the table above what the table is, so the row carrying every word sits nearest
+     the table. docs/app.md §The chrome bands owns the widths that moved the boundary. */
   @media (max-width: 800px) {
     .toolbar { padding: var(--s1) var(--s2); gap: var(--s1) var(--s2); }
     .filters-toggle { display: inline-flex; align-items: center; padding-inline: var(--s2); }
@@ -143,15 +138,15 @@
        at any width including the fractional ones zoom and Firefox both produce. */
     .word { display: none; }
     .glyph { display: inline-flex; }
-    /* The pills' own padding is what buys the fit: at the base `--s3` the setup row measures 451px
-       against the 414px cap below, so it would overflow its own band before any viewport did. */
+    /* The pills' own padding is what buys the fit: at the base `--s3` the setup row is wider than
+       the cap below, so it would overflow its own band before any viewport did. */
     .s { padding-inline: var(--s2); }
     .actions { order: -1; flex-basis: 100%; }
     /* `--s1` rather than the base `--s2`, and it is a FIT rule rather than a spacing one: under
        `space-between` the gap is only a floor, so the visible gaps are whatever the row has spare
-       and this changes nothing above the binding widths. It changes everything at them — Firefox
-       sets the three groups 9px wider than Chromium does, and at `--s2` its row came out 6px over
-       the cap at 430px and 4px over the screen at 360px. Chromium alone would not have shown it. */
+       and this changes nothing above the binding widths. It changes everything at them, because
+       Firefox sets these groups wider than Chromium does and a Chromium-only check would have
+       shipped the overflow (docs/app.md §The chrome bands). */
     .setup { flex-basis: 100%; justify-content: space-between; gap: var(--s1);
              max-width: 414px; margin-inline: auto; }
   }
@@ -160,12 +155,11 @@
      flush to both padding edges — which is the property the rebuild exists to restore. 414px is the
      row's own content width at 430px: above that it holds this spacing rather than growing gaps
      that reach 171px by 700px.
-     The pills tighten again on the same boundary rather than on one of their own: 360px is the
-     binding width, not 375 — it is the usual Android one — and at `--s2` the three groups measure
-     400px against the 344px this padding leaves there. At `--s1`, ALL of them, they measure 328px.
-     The zone group is the reason "all of them" is written out: its padding lives in
-     `ZoneToggle.svelte`, a scoped style block this rule cannot reach, and stepping only the pills
-     this file owns leaves the row 16px over at 360px. */
+     The pills tighten again on the same boundary rather than on one of their own — 360px is the
+     binding width, not 375, because it is the usual Android one. ALL of them: the zone group's
+     padding lives in `ZoneToggle.svelte`, a scoped style block this rule cannot reach, so the step
+     is stated there too and stepping only the pills this file owns leaves the row over at 360px.
+     docs/app.md §The chrome bands owns the measurements. */
   @media (max-width: 429.98px) {
     .setup { max-width: none; margin-inline: 0; }
     .s { padding-inline: var(--s1); }

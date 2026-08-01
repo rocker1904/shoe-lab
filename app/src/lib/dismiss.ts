@@ -1,13 +1,13 @@
 /**
- * Outside-press dismissal for a floating panel, shared by all four of them — the column picker,
- * the help popover, the month picker and the add-filter dialog's scrim stands in for it
- * (docs/app.md §Filters). Three choices here are not obvious, and each was got wrong first:
+ * Outside-press dismissal for a floating panel, shared by the two anchored to a trigger of their
+ * own — the column picker and the month picker. Each dialog's scrim is the same affordance drawn
+ * rather than a second mechanism (docs/app.md §Every floating panel dismisses the same way). Three choices here are not obvious, and each was got wrong first:
  *
  * **`pointerdown`, not `click`.** It fires before focus moves, so a press on the panel's own
  * trigger is still recognised as inside and is left to the trigger's toggle. On `click` the order
  * is focusout → close → click → reopen, and a trigger stops being able to shut the panel it
  * opened. It is also what makes a drag that starts inside and ends outside — selecting the text of
- * a help popover, say — leave the panel alone.
+ * a dialog's prose, say — leave the panel alone.
  *
  * **Capture phase.** The listener has to see the press whether or not something between the target
  * and `document` stops it bubbling; the month picker's grid and the drawer both handle pointer

@@ -131,7 +131,7 @@
   let anchor = $state<HTMLElement | null>(null);
   /** Guarded on the whole anchor rather than the panel, so the trigger's own press counts as inside
    *  and is left to `toggle`. `lib/dismiss.ts` owns the rest of the reasoning, and the same effect
-   *  is what the column picker and the help popover run. */
+   *  is what the column picker runs too. */
   $effect(() => {
     if (!open) return;
     return dismissOnOutsidePress(() => anchor, () => (open = false));

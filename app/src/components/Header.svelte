@@ -81,12 +81,11 @@
   }
   /* 360px is the binding width, not 375 — it is the usual Android one. The tier's `--gap-x` step
      went with the masthead: the banner's spacer is `flex: 1` and absorbs the difference, so forcing
-     `--s3` here changes the height, the trailing air and the overflow by nothing in either engine.
-     The count step is the whole of what is left, and it is re-measured on the banner rather than
-     carried over: `en-GB` sets September as `Sept`, the widest string the formatter can emit, and
-     at 360px that line takes THREE lines at `--t-sm` in Chromium — 54px, and 7px of overflow with
-     it — and two in Firefox, against one 16px line at `--t-xs` in both. The banner is 41px tall
-     with the step and 100px without it. */
+     the wider gap changes height, trailing air and overflow by nothing in either engine. The count
+     step is the whole of what is left, and it was re-measured on the banner rather than carried
+     over — at `--t-sm` the widest month the formatter can emit wraps here in both engines, and the
+     banner stands more than twice as tall. §The header names the catalogue, the receipt owns the
+     count in docs/app.md owns the figures. */
   @media (max-width: 560px) {
     .count { font-size: var(--t-xs); }
   }

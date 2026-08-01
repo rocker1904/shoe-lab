@@ -309,7 +309,7 @@ resolving to the Race score descending over the whole fleet.
   climb. The cause is structural rather than a tuning failure — **race shoes are uniformly
   tall and narrow, so the category has no stable variant to surface.** There is no Race
   equivalent of the Hurricane or the Tempus. The control is therefore inert while Race is
-  selected, and the toolbar **says so**: an unexplained dead control is worse than either
+  selected, and the About panel **says so**: an unexplained dead control is worse than either
   applying it or removing it.
 
 A consequence worth stating: Easy's and Tempo's eligibility invariant — the same shoes

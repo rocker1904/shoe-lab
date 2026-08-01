@@ -422,10 +422,10 @@ trap would hold the keyboard inside a panel that is no longer modal.
 
 ### Every floating panel dismisses the same way
 
-Four surfaces float over the page — the column picker, the help popover, the
-month picker and the add-filter dialog — and all four answer **a press outside**
-and **Escape**. `app/src/lib/dismiss.ts` owns the pointer half for the three
-anchored to a trigger of their own; the dialog's scrim is the same affordance
+Four surfaces float over the page — the column picker, the month picker, the
+add-filter dialog and the About panel — and all four answer **a press outside**
+and **Escape**. `app/src/lib/dismiss.ts` owns the pointer half for the two
+anchored to a trigger of their own; each dialog's scrim is the same affordance
 drawn rather than a second mechanism. It is a **captured `pointerdown`, not a
 `click`**: `pointerdown` fires before focus moves, so a press on a panel's own
 trigger is still recognised as *inside* and is left to that trigger's toggle,
@@ -437,17 +437,16 @@ effect's teardown, so it exists only while a panel is on screen and never
 outlives one.
 
 **A press inside is not a dismissal**, at any depth — ticking a column,
-selecting the text of a help popover, stepping the month picker's year — and
+stepping the month picker's year, selecting the About panel's prose — and
 that is the same fact as the trigger case, since every trigger sits inside the
 box its own panel is guarded by.
 
 **Escape is stopped exactly where a second handler would hear it.** The month
-picker stops it because its panel is a real descendant of the drawer; the help
-popover stops it because it is mounted inside other people's boxes, and the plan
-to put one on every filter row (BACKLOG.md) would put it in that drawer. The
-column picker and the add-filter dialog do not, and their reasons are opposite:
-one lives in the pinned chrome and the other renders into `<body>`, so neither
-has an ancestor listening. One press, one dismissal, wherever it is mounted.
+picker stops it, and is now the only one that does, because its panel is a real
+descendant of the focus-trapping drawer. The other three do not, and their
+reasons are not the same: the column picker lives in the pinned chrome, and both
+dialogs render into `<body>` (§Stacking order), so none of the three has an
+ancestor listening. One press, one dismissal, wherever it is mounted.
 
 The column picker is the one **native control** of the four, and it gets neither
 behaviour free: a `<details>` stays open until its own summary is clicked again
@@ -705,13 +704,13 @@ and the toolbar in one `.chrome` box, pins that box at `top: 0`, and binds its
 `clientHeight`; the same number gives the sidebar its `top` and its
 `max-height`. There is no fallback value, because there is no width at which a
 constant is right: measured with the real fleet, once the strip has handed over,
-the chrome is 96px at 1200px (a one-line masthead over a one-row bar), 154px at
-700px (both have wrapped to two), and 198px at 375px, where the bar takes a
-third row. A hard-coded `3.2rem` is 51px, so it pinned the header row about
-103px behind the chrome at 700px and 147px at 375px — the row was not merely
-partly invisible, it was off the screen. This is the one home for these
-figures; `ShoeTable.svelte` and `smoke.spec.ts` point here rather than
-restating them.
+the chrome is 91px at 1200px (a one-row banner over a one-row bar), 111px at
+700px and 109px at 375px, where the bar takes its second row (§The chrome
+bands). A hard-coded `3.2rem` is 51px, so it pinned the header row about 60px
+behind the chrome at 700px — the row was not merely partly invisible, it was off
+the screen, and before the chrome rebuild it was 147px off at 375px. This is the
+one home for these figures; `ShoeTable.svelte` and `smoke.spec.ts` point here
+rather than restating them.
 
 It varies with **time** as well as width, now that the app self-hosts its faces:
 the face swaps in after first paint, the chrome reflows by about 6px, and a
@@ -1332,8 +1331,9 @@ story reaches the header, the wash, the URL allowlist and the picker with no edi
 
 **The stability preference reaches Easy and Tempo only.** A definition carries a
 `stable` variant exactly when it applies, so the flag is inert inside `scoreOf` for Race
-rather than branched on by any caller — and the toolbar's caption and help derive which
-stories they name from the definitions rather than spelling them out. Why Race is
+rather than branched on by any caller. The About panel names Easy and Tempo **by hand**
+where the toolbar caption it replaced derived them, and `AboutDialog.test.ts` carries the
+derivation as a guard instead (§The About panel). Why Race is
 excluded, measured rather than assumed, is docs/shoe-stories.md §Race. **One named
 preference is a deliberate decision rather than an unfinished generalisation**: a general
 metric picker for the score is rejected, not deferred (BACKLOG.md).
@@ -1642,7 +1642,9 @@ masthead and the bar measured 217px at 390×844 with the setup strip up, and 198
 at 360px with the story pills up — which with the pinned table header put 39% of
 the viewport in front of the first result. The rebuild spends **109px at 360px
 with all three setup controls on the bar, and 80px on a first arrival**. The
-ceilings are set roughly 10px above that and asserted in `smoke.spec.ts`; they
+ceilings are set roughly 10px above the **taller engine** — Firefox runs about
+5px above Chromium here, and the suite that asserts them runs Chromium only —
+and are asserted in `smoke.spec.ts`; they
 are bounds rather than pins, so a font tweak does not fail the build but a
 regression does. Nothing was dropped to buy it: the explanation moved into one
 panel (§The About panel), the utilities and two of the actions became icons on
@@ -1675,8 +1677,9 @@ auto margin rather than markup.
 **`800px` is shared with the sidebar** and is written `800px` rather than
 `799.98px`, so exactly 800 is "mobile" as it always has been. The two must agree
 or the drawer toggle shows on a width laid out as a desktop. `429.98px` takes the
-repo's `.98` convention so no width matches two tiers at once (§Presets has the
-reason).
+repo's `.98` convention so no width matches two tiers at once: a `max-width: 430px`
+matches *at* 430 and would put the flush band's rules on the width that is meant to open
+the capped one.
 
 **The design asked for a merged line from 700px to 800px, and the shipped
 controls do not fit one.** Measured with the icon forms in place, the setup row
@@ -1693,9 +1696,10 @@ are separate for the whole sub-800 range. The cost is one row of chrome between
 what the table is, so the row carrying every word and all the colour is the one
 nearest the table.
 
-**The cap is 414px** — the setup row's own content width at a 430px viewport — so
-above 430 the row holds the spacing it has there rather than growing gaps that
-reach 171px by 700px, and centres the surplus. Below 430 the cap is wider than
+**The cap is 414px** — the setup row's own width at a 430px viewport, which is that
+screen less the bar's padding — so above 430 the row holds the spacing it has
+there rather than growing gaps that reach 171px by 700px, and centres the
+surplus. Below 430 the cap is wider than
 the row, so it stops meaning anything and the row goes flush to both padding
 edges, which is the property the whole rebuild exists to restore. `space-around`
 was measured and rejected: it never touches the padding edge again at any width.
@@ -1709,11 +1713,13 @@ overflowed at 360, 375 and 390. At `--s1` for **every** pill they measure 328px.
 So the step moved to the boundary that already existed for that band and one
 width changes shape instead of two.
 
-**It is written twice, and Svelte's scoping leaves no way to state it once.**
-`ZoneToggle.svelte` owns its own buttons' padding in its own scoped style block,
-so `Toolbar.svelte`'s `.s` rule has never reached them — which is why "every
-pill" is spelled out: stepping only the pills the toolbar owns leaves the row
-16px over at 360px.
+**Both steps are written twice, and Svelte's scoping leaves no way to state them
+once.** `ZoneToggle.svelte` owns its own buttons' padding in its own scoped style
+block, so `Toolbar.svelte`'s `.s` rule has never reached them — which is why
+"every pill" is spelled out. Stepping only the pills the toolbar owns leaves the
+row 16px over at 360px, and leaves the zone group a step behind its neighbours
+between 430px and 800px: one group padded differently from the two it stands
+with, in a row whose whole point is that the three read as one family.
 
 **The setup row's `gap` is `--s1` below 800px, and that is a fit rule rather than
 a spacing one.** Under `space-between` the gap is only a floor, so the visible
@@ -1848,7 +1854,7 @@ indentation, not the column:
 | **pinned chrome** — header and toolbar | 5 | the page |
 | ↳ column picker panel | 10 | *the chrome's children only* |
 | **sidebar** — sticky, so a context at `z-index: auto` | — | the page, at 0 |
-| ↳ help popover, month picker panel | 20 | *the sidebar's children only* |
+| ↳ month picker panel | 20 | *the sidebar's children only* |
 | drawer scrim, below 800px | 25 | the page |
 | filter drawer, below 800px | 30 | the page |
 | Add-filter dialog's scrim, About panel's scrim | 32 | the page |
@@ -1858,9 +1864,7 @@ indentation, not the column:
 So the column picker's 10 does **not** outrank the chrome's 5 — it is inside
 it, and rides wherever the chrome goes. The month picker's 20 does not outrank
 the drawer's 30 for the same reason. Only the unindented rows can be compared
-with one another. The help popover is in the chrome and the setup strip rather
-than the sidebar, but it shares the sidebar picker's number and its constraint:
-both only ever have to clear their own siblings.
+with one another.
 
 **A modal has to be a child of `<body>`, or its number is not on this scale at
 all.** `position: sticky` creates a stacking context whatever its z-index, so
@@ -2182,8 +2186,10 @@ overridden — **9px**, below `--t-xs`'s 12px floor — and it is deliberate. Th
 scale bottoms out at 12px because that is the floor for anything a reader has to
 *read*; this label is not read, it is what lets the name under it be set in plain
 text with no link colour competing with the wash, and at 12px it competes with
-the catalogue count beside it instead. It is also what keeps the stacked credit
-cheap enough to keep on a phone (§The toolbar). The link itself stays permanent,
+the catalogue count beside it instead. It is also what keeps the desktop's
+stacked label-over-name form cheap; below 800px the credit sets on **one line**
+inside the provenance block, because the count directly above it already carries
+the small print (§The header names the catalogue, the receipt owns the count). The link itself stays permanent,
 visible and immediately clickable — that is structural, not decorative
 (docs/decisions.md §Be a good citizen toward RunRepeat).
 

@@ -314,10 +314,18 @@ describe('Page', () => {
     expect(screen.queryByRole('dialog', { name: 'About this table' })).toBeNull();
     expect(about).toHaveFocus();
   });
-  it('opens the About panel from the setup strip too', async () => {
+  // Both openers, not just the bar's: the panel hands focus back to whatever held it, and an opener
+  // that is unmounted by the time it closes — the strip collapses on the first story click — is the
+  // one that would strand focus on `<body>`.
+  it('opens the About panel from the setup strip too, and hands focus back', async () => {
     render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /Read about this table/ }));
+    const invite = screen.getByRole('button', { name: /Read about this table/ });
+    invite.focus();
+    await fireEvent.click(invite);
     expect(screen.getByRole('dialog', { name: 'About this table' })).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog', { name: 'About this table' })).toBeNull();
+    expect(invite).toHaveFocus();
   });
   it('explains an empty result instead of showing a bare header row', () => {
     history.replaceState(null, '', '/?q=nothing-matches-this');

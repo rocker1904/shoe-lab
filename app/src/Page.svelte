@@ -449,7 +449,11 @@
   /* The utilities, wherever their band mounts them. Authored here because a snippet carries the
      scope of the file it is written in, so rules left behind in `Header.svelte` would stop reaching
      these three buttons the moment they moved (docs/app.md §Where the utilities live). */
-  .utils { display: flex; align-items: center; gap: var(--s3); }
+  /* `--s4` here is the masthead's own `--gap-x`, restated rather than inherited: the group has to
+     space identically to the three loose buttons it replaced, or the desktop masthead the spec
+     leaves untouched moves by 4px. It steps to the bar's gutter at the band the bar owns. */
+  .utils { --util-gap: var(--s4); display: flex; align-items: center; gap: var(--util-gap); }
+  @media (max-width: 800px) { .utils { --util-gap: var(--s3); } }
   /* The one secondary-button treatment (docs/app.md §Theming); `--t-sm` stated rather than left to
      the UA's 13.33px, because matching it by 0.05px of luck is not carrying it. */
   .utils button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
@@ -459,9 +463,10 @@
   .utils .icon { display: inline-flex; align-items: center; justify-content: center; }
   .copied { font-size: var(--t-sm); color: var(--good); }
   /* A silent region is still a flex item, so it would carry a gap on each side and space the row
-     differently depending on whether a link had ever been copied. The group's OWN gap now, not the
-     header's `--gap-x`: that variable is Header-local and does not exist in the bar. */
-  .copied:not(.said) { margin-inline-start: calc(-1 * var(--s3)); }
+     differently depending on whether a link had ever been copied. The group's OWN variable, not the
+     header's `--gap-x`: that one is Header-local and does not exist in the bar, and this has to
+     track whatever the gap above resolves to at the current band. */
+  .copied:not(.said) { margin-inline-start: calc(-1 * var(--util-gap)); }
   /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes an automatic minimum of min-content, and
      the table's 14rem name column plus its headers' own longest words inflate that past the
      viewport, so the whole document scrolled sideways at desktop widths. */

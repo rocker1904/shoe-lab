@@ -323,7 +323,7 @@ describe('the Race score against the real fleet', () => {
   });
 
   it('ignores the stability preference entirely', () => {
-    // Race declares no stable variant, so the control is inert here — and the Toolbar says so.
+    // Race declares no stable variant, so the control is inert here — and the About panel says so.
     for (const zone of ZONES) {
       const off = scoreMap(RACE, REAL.shoes, zone, false, realIdx);
       const on = scoreMap(RACE, REAL.shoes, zone, true, realIdx);

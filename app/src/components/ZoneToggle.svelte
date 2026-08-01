@@ -31,10 +31,14 @@
            color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
   /* `--accent-solid` carrying `--on-accent`, like the toolbar's pill (docs/app.md §Theming). */
   button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
-  /* The bar's flush band tightens every pill on its setup row, and this group's buttons are two of
-     them — but their padding is authored here, so `Toolbar.svelte`'s rule has never reached them.
-     One boundary, stated twice because scoping gives it no choice; docs/app.md §The chrome bands
-     owns the number. */
+  /* The bar steps every pill on its setup row at both of its boundaries, and this group's buttons
+     are two of them — but their padding is authored here, so `Toolbar.svelte`'s `.s` rule has never
+     reached them. Stated twice because Svelte's scoping gives it no choice; the numbers and the
+     reasons are docs/app.md §The chrome bands', and a zone pill left a step behind its neighbours
+     is one group padded differently from the two it stands with. */
+  @media (max-width: 800px) {
+    button { padding-inline: var(--s2); }
+  }
   @media (max-width: 429.98px) {
     button { padding-inline: var(--s1); }
   }
