@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
-import { applyFilters, EMPTY_FILTERS, type FilterState } from './filters';
+import { applyFilters, EMPTY_FILTERS, narrowingNames, type FilterState } from './filters';
 import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
@@ -204,5 +204,32 @@ describe('applyFilters showMissing', () => {
   it('still excludes shoes that have a reading and fail the bound', () => {
     const r = applyFilters(FLEET, { ranges: { 'heel-stack': { min: 999 } }, showMissing: true }, idx);
     expect(r.visible.every((s) => typeof s.values['6'] !== 'number')).toBe(true);
+  });
+});
+
+/**
+ * The empty state names what is on screen to act on. Ordered as the sidebar orders its controls
+ * (docs/app.md §Filters), so the sentence reads down the column the reader is being sent to.
+ */
+describe('narrowingNames', () => {
+  it('names nothing when nothing is set', () => {
+    expect(narrowingNames(EMPTY_FILTERS)).toEqual([]);
+  });
+  it.each([
+    [{ search: 'x' }, 'the search'],
+    [{ releasedAfter: '2099-01-01' }, 'the release-date bound'],
+    [{ plate: ['carbon'] }, 'the plate selection'],
+    [{ brands: ['Nonesuch'] }, 'the brand selection'],
+    [{ discontinued: 'only' }, 'the discontinued filter'],
+    [{ ranges: { weight: { min: 9000 } } }, 'the bounds'],
+  ] as [Partial<FilterState>, string][])('names %j', (part, named) => {
+    expect(narrowingNames({ ...EMPTY_FILTERS, ...part })).toEqual([named]);
+  });
+  it('ignores a range key that holds no bound, and showMissing, which widens', () => {
+    expect(narrowingNames({ ranges: { weight: {} }, showMissing: true })).toEqual([]);
+  });
+  it('names every class that is set, in sidebar order', () => {
+    expect(narrowingNames({ ranges: { weight: { max: 1 } }, brands: ['Nike'], search: 'x' }))
+      .toEqual(['the search', 'the brand selection', 'the bounds']);
   });
 });

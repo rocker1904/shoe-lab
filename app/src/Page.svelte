@@ -26,7 +26,7 @@
   import { ICON_PATHS } from './components/icons';
   import { indexTests } from './lib/dataset';
   import { debounce } from './lib/debounce';
-  import { applyFilters, EMPTY_FILTERS } from './lib/filters';
+  import { applyFilters, EMPTY_FILTERS, narrowingNames } from './lib/filters';
   import type { Zone } from './lib/lineage';
   import { readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
@@ -167,6 +167,18 @@
   }
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
+  /**
+   * What the empty state names. Derived from the live filters, because one unconditional sentence
+   * written for a range bound was being printed for every cause — a link emptied by a brand, a
+   * search or a date advised clearing a bound directly under a receipt reading "0 outside your
+   * bounds", on a screen with no bound set at all (docs/app.md §Coverage).
+   */
+  const narrowing = $derived(narrowingNames(view.filters));
+  /** "a, b or c", and `a filter` when nothing is named — a fleet can be empty of its own accord. */
+  const orList = (names: string[]): string =>
+    names.length === 0 ? 'a filter'
+      : names.length === 1 ? names[0]!
+        : `${names.slice(0, -1).join(', ')} or ${names.at(-1)}`;
   /**
    * Read through a `$derived` of its own, never as `view.stability` where it is used: every update
    * replaces the whole view object, so a dependency on `view` re-runs whatever reads it — and one
@@ -439,7 +451,9 @@
       <!-- The hint names a control the reader can actually see: below 800px the sidebar is a CLOSED
            drawer, so pointing at it names something off screen at exactly the width where an empty
            result is most likely. `Filters` is the drawer toggle's own label. -->
-      <p class="empty"><strong>No shoes match these filters</strong>Clear a bound to widen the search — each one says how many shoes it is excluding. On a phone they are behind <b>Filters</b>.</p>
+      <p class="empty"><strong>No shoes match these filters</strong>Clear {orList(narrowing)} to see
+        shoes{#if narrowing.includes('the bounds')} — each bound says how many shoes it is
+        excluding{/if}. On a phone they are behind <b>Filters</b>.</p>
     {/if}
   </div>
 </div>

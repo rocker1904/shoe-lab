@@ -333,6 +333,34 @@ describe('Page', () => {
     expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 0 of the 0 shoes');
     expect(screen.getByText(/No shoes match/)).toBeInTheDocument();
   });
+  /**
+   * The guidance used to be one unconditional sentence written for a range bound and rendered for
+   * every cause, so a link emptied by a brand or a search advised clearing a bound one line under a
+   * receipt reading "0 outside your bounds", on a screen with no bound set at all.
+   */
+  it.each([
+    ['q=nothing-matches-this', 'the search'],
+    ['brands=Nonesuch', 'the brand selection'],
+    ['after=2099-01', 'the release-date bound'],
+    ['r.weight=9000~', 'the bounds'],
+  ])('names what is actually narrowing an empty result (%s)', (qs, named) => {
+    history.replaceState(null, '', `/?${qs}`);
+    render(Page, { props: { data } });
+    const advice = screen.getByText(/No shoes match/).closest('p')!.textContent!;
+    expect(advice).toContain(named);
+    // the clause that was being printed with nothing on screen to act on
+    if (named === 'the bounds') expect(advice).toContain('bound says');
+    else expect(advice).not.toContain('bound says');
+  });
+  it('names every class that is narrowing, not only the first', () => {
+    history.replaceState(null, '', '/?q=nothing-matches-this&brands=Nonesuch&disc=only');
+    render(Page, { props: { data } });
+    const advice = screen.getByText(/No shoes match/).closest('p')!.textContent!;
+    expect(advice).toContain('the search');
+    expect(advice).toContain('the brand selection');
+    expect(advice).toContain('discontinued');
+    expect(advice).not.toContain('the plate selection');
+  });
   it('toggles the mobile filter drawer', async () => {
     render(Page, { props: { data } });
     const toggle = screen.getByRole('button', { name: 'Filters' });

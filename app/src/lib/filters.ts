@@ -24,6 +24,30 @@ export interface FilterResult {
   undatedHidden: number;
 }
 
+/** A range key with neither side set is a row on screen, not a constraint (docs/app.md §Filters). */
+export const hasBound = (f: FilterState): boolean =>
+  Object.values(f.ranges).some((b) => b.min !== undefined || b.max !== undefined);
+
+/**
+ * The filter classes narrowing the fleet right now, named as the empty state names them and
+ * ordered as the sidebar orders its controls, so the sentence reads down the column it is sending
+ * the reader to (docs/app.md §Filters).
+ *
+ * Derived rather than assumed, because the empty state was one sentence written for a range bound
+ * and rendered for every cause: a link emptied by a brand advised clearing a bound one line under
+ * a receipt reporting none. `showMissing` is absent on purpose — it widens.
+ */
+export function narrowingNames(f: FilterState): string[] {
+  const names: string[] = [];
+  if (f.search) names.push('the search');
+  if (f.releasedAfter) names.push('the release-date bound');
+  if (f.plate?.length) names.push('the plate selection');
+  if (f.brands?.length) names.push('the brand selection');
+  if (f.discontinued) names.push('the discontinued filter');
+  if (hasBound(f)) names.push('the bounds');
+  return names;
+}
+
 export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): FilterResult {
   const visible: Shoe[] = [];
   const considered: Shoe[] = [];

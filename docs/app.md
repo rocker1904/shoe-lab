@@ -217,6 +217,21 @@ empty table whose only stated cause was two invisible characters. What is kept
 is **untrimmed**: the space between two words is part of the query, and trimming
 as it is typed deletes it under the cursor.
 
+**The empty state names what is actually narrowing.** `narrowingNames` in
+`lib/filters.ts` reads the live filter state and returns the classes that are
+set — the search, the release-date bound, the plate selection, the brand
+selection, the discontinued filter, the bounds — in the order the sidebar draws
+them, so the sentence reads down the column it is sending the reader to. The
+paragraph is `Clear <a, b or c> to see shoes`, with `a filter` when nothing is
+named, plus the clause *each bound says how many shoes it is excluding* only
+when a bound is one of them.
+
+It used to be one unconditional sentence written for a range bound: a link
+emptied by a brand, a search or a date advised clearing a bound directly under a
+receipt reading "0 outside your bounds", on a screen with no number field
+holding a value. Two statements a line apart, only one of which could be acted
+on. `showMissing` is deliberately not in the list — it widens.
+
 **The curated list is not the set of terms the story scores read**, and it is
 not meant to become one: a filter row narrows a search, a term ranks one. Heel
 counter stiffness is a term with no row, because nobody searches in five-point
