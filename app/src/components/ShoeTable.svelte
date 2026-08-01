@@ -5,7 +5,7 @@
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
   import { greyAlpha, washAlpha } from '../lib/wash';
-  import { categoricalValue } from '../lib/categorical';
+  import { categoricalValue, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
@@ -51,7 +51,7 @@
     if (col === 'releasedAt') return displayReleaseDate(s.releasedAt, s.releaseDateSource);
     const cat = categoricalValue(s, col, idx);
     if (cat !== undefined) return cat;
-    if (col === 'plate') return s.plate === 'none' ? '—' : s.plate === 'carbon' ? 'Carbon' : 'Non-carbon';
+    if (col === 'plate') return PLATE_LABELS[s.plate];
     const resolved = scores.get(col);
     if (resolved) {
       const sc = resolved.get(s.slug);

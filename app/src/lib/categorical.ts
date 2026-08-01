@@ -1,5 +1,18 @@
-import type { LabTest, Shoe } from '../../../shared/types.js';
+import type { LabTest, Plate, Shoe } from '../../../shared/types.js';
 import type { TestIndex } from './dataset';
+
+/**
+ * The three words a human ever sees for the plate field, in one place because they were in three
+ * and drifted: the filter said `None`, the desktop cell said `—`, and 344 of 450 rows therefore
+ * claimed no reading for one the scraper derives on purpose (docs/scraping.md §Data quirks). The
+ * em dash is this app's glyph for an *absent* reading, and spending it here made it mean two
+ * things one click apart — plate ascending put its em dashes first because `none` is a value,
+ * width ascending puts its last because those are absences. The phone's name line still drops
+ * `none`, which is a different rule about prose (docs/app.md §Categorical columns).
+ */
+export const PLATE_LABELS: Record<Plate, string> = {
+  none: 'None', 'plated-other': 'Non-carbon', carbon: 'Carbon',
+};
 
 /**
  * Readings that name a choice rather than measure a quantity. They are excluded from ranges and

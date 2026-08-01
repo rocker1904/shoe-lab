@@ -123,13 +123,25 @@ describe('ShoeTable', () => {
     expect(cells[1]!.className).toContain('blue'); // score — higher is better
     expect(cells[2]!.className).toContain('grey'); // heel stack — a preference, not a quality
   });
-  it('maps each plate value in the plate column', () => {
+  // `none` is a reading the scraper derives deliberately and 344 of 450 shoes carry it, so the cell
+  // names it the way the filter beside it does. The em dash is this app's glyph for *no* reading,
+  // and a column that spent it on a value made one glyph mean two things in one table: plate
+  // ascending sent its em dashes to the top as a value, width ascending sent its to the bottom as
+  // an absence (docs/app.md §Categorical columns).
+  it('maps each plate value in the plate column, none included', () => {
     setup();
-    // index 3 of [name, score, heel-stack, plate] — scoped to the row so the em dash cannot be matched elsewhere
+    // index 3 of [name, score, heel-stack, plate]
     const plateCell = (name: string) => screen.getByText(name).closest('tr')!.querySelectorAll('td')[3]!;
     expect(plateCell('racer').textContent).toBe('Carbon');
     expect(plateCell('trainer').textContent).toBe('Non-carbon');
-    expect(plateCell('cushy').textContent).toBe('—');
+    expect(plateCell('cushy').textContent).toBe('None');
+  });
+  it('never spends the no-reading em dash on the plate column', () => {
+    const { container } = setup().rendered;
+    const plates = [...container.querySelectorAll('tbody tr')]
+      .map((r) => r.querySelectorAll('td')[3]?.textContent);
+    expect(plates.length).toBeGreaterThan(0);
+    expect(plates).not.toContain('—');
   });
   // The catalogue's own `plate` test would otherwise answer for the column and render "Yes".
   it('keeps the derived plate label for a shoe carrying the catalogue plate reading', () => {

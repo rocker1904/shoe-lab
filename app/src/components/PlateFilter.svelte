@@ -1,11 +1,9 @@
 <script lang="ts">
   import type { Plate } from '../../../shared/types.js';
+  import { PLATE_LABELS } from '../lib/categorical';
   import { PLATES } from '../lib/urlstate';
 
   let { value, onchange }: { value: Plate[] | undefined; onchange: (v: Plate[] | undefined) => void } = $props();
-
-  /** `plated-other` is never shown to a human under its dataset name (docs/app.md §Columns and sorting). */
-  const LABELS: Record<Plate, string> = { none: 'None', 'plated-other': 'Non-carbon', carbon: 'Carbon' };
 
   function toggle(p: Plate) {
     const held = new Set(value ?? []);
@@ -20,7 +18,7 @@
 
 <div class="plates" role="group" aria-label="Plate">
   {#each PLATES as p (p)}
-    <label><input type="checkbox" checked={value?.includes(p) ?? false} onchange={() => toggle(p)} /> {LABELS[p]}</label>
+    <label><input type="checkbox" checked={value?.includes(p) ?? false} onchange={() => toggle(p)} /> {PLATE_LABELS[p]}</label>
   {/each}
 </div>
 

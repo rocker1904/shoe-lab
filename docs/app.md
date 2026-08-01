@@ -967,6 +967,16 @@ plate first" like every other column. `plated-other` reads **Non-carbon**
 everywhere a human sees it — the desktop cell, the mobile name line and the
 filter box; §Table presentation owns what the shorter string buys.
 
+**All three words have one home**, `PLATE_LABELS` in `lib/categorical.ts`. They
+were spelled in three files and drifted: the filter said `None` while the
+desktop cell printed an em dash for the same value, on 344 of 450 rows. `none`
+is a reading the scraper derives deliberately (docs/scraping.md §Data quirks),
+so the cell names it — the em dash is reserved for an absent reading, and
+spending it on a value made one glyph mean two things one click apart (plate
+ascending sent its em dashes to the top as a value, width ascending sends its to
+the bottom as absences). The phone's name line still drops `none`, which is a
+rule about prose rather than about the vocabulary (§Categorical columns).
+
 ## Categorical columns
 
 `option` and `bool` readings name a choice rather than measure a quantity.
@@ -993,9 +1003,11 @@ numeric (§Columns and sorting).
 **`plate` is the shoe field's, not the catalogue's.** The catalogue also has a
 `bool` test slugged `plate`, read on two shoes of 450, and one column cannot
 have two sources. `isCategorical` excludes the slug, so the derived field —
-which reads the whole page and says Carbon / Non-carbon — answers for the
+which reads the whole page and says None / Non-carbon / Carbon — answers for the
 cell, the picker offers the column once, and the test's own reading is simply
-never shown. Any future field/test slug collision belongs in the same set.
+never shown. Any future field/test slug collision belongs in the same set. The
+field's three labels live in `PLATE_LABELS` here, next to the vocabulary rule
+they have to obey (§Columns and sorting).
 
 **The phone's name line is prose, and says only what a shoe has.** A cell sits
 under a header that asks the question, so it prints `None`, `No`, or an em dash
