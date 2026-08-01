@@ -104,16 +104,6 @@ describe('Toolbar', () => {
     expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument();
   });
 
-  // The whole-row rule on the preference is written against the two groups — with them gone it left
-  // the actions alone on a row with the bar's left half empty, which is the phone's landing screen.
-  // jsdom has no layout, so the marker is what is asserted here; `smoke.spec.ts` measures the rows.
-  it('marks itself group-less so the preference stops claiming a row of its own', async () => {
-    const { container, rerender } = render(Toolbar, { props: { ...props, showGroups: false } });
-    expect(container.querySelector('.toolbar')).toHaveClass('no-groups');
-    await rerender({ ...props, showGroups: true });
-    expect(container.querySelector('.toolbar')).not.toHaveClass('no-groups');
-  });
-
   it('offers the way in before the controls that open panels', async () => {
     const onabout = vi.fn();
     const { container } = render(Toolbar, { props: { ...props, onabout } });
@@ -166,6 +156,15 @@ describe('Toolbar stability preference', () => {
     expect(screen.queryByRole('checkbox')).toBeNull();
     expect(screen.queryByText(/adds midsole width/i)).toBeNull();
     expect(screen.queryByRole('button', { name: /^About the/ })).toBeNull();
+  });
+
+  // With All selected there is no score column on screen, and the preference only ever changes a
+  // score — so while the strip is up it is being offered at the one moment it provably cannot do
+  // anything. The bar gains all three groups in one move when the strip hands over.
+  it('offers no stability pill while the setup strip still holds the questions', () => {
+    render(Toolbar, { props: { ...props, showGroups: false } });
+    expect(screen.queryByRole('button', { name: 'Stability' })).toBeNull();
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
   });
 
   // It stands with the zone and story groups, not with the controls that open panels.

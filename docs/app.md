@@ -1565,6 +1565,22 @@ strip *hands over* rather than sharing the screen: both surfaces drawing the
 same two groups put the four stories on screen twice on a first arrival, which
 is the one screen the strip exists to own.
 
+**The stability pill is absent there too, and that is not a layout compromise.**
+With `All` selected there is no score column on screen, and the preference only
+ever changes a score — so on the landing screen it is being offered at the one
+moment it provably cannot do anything. The bar gains all three setup controls in
+one move when the strip hands over. The cost is one extra press for a runner who
+lands knowing they want it, on the first visit only. **Do not restore it there
+for consistency**: consistency is not the property being protected, and the
+reason is invisible from the markup, which is why `Toolbar.test.ts` guards it by
+name.
+
+The bar carries no marker class for that state. `.setup` is simply empty, the
+actions hold the trailing edge as they do at every other width, and
+`opens with the actions flush to the bar trailing edge` measures that in a
+browser across the whole width ladder rather than asserting a class name in
+jsdom.
+
 **The stories carry no counts**, on the bar or on the strip. A scored story's
 count is the size of its **pool** rather than of a shortlist — every non-carbon
 shoe passes Easy, scored or not — so the number promised a filtering that no

@@ -41,7 +41,7 @@
   const STORIES = [{ id: 'all', label: 'All' }, ...PRESETS.map((p) => ({ id: p.id, label: p.label }))];
 </script>
 
-<div class="toolbar" class:no-groups={!showGroups} data-testid="toolbar">
+<div class="toolbar" data-testid="toolbar">
   <div class="setup">
     {#if showGroups}
       <div class="zone-wrap"><ZoneToggle {zone} onchange={onzone} /></div>
@@ -113,10 +113,9 @@
   /* Unchanged from today and deliberately NOT inside a media block: above 800px the sidebar is
      permanent, so the drawer toggle has nothing to toggle and is hidden by default rather than by a
      query. It is the fifth carrier of the one secondary-button treatment (docs/app.md §Theming). */
-  .filters-toggle { display: none; }
-  .filters-toggle { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
-                    background: var(--surface); color: var(--text); border-radius: var(--r-sm);
-                    font-size: var(--t-sm); }
+  .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer;
+                    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+                    border-radius: var(--r-sm); font-size: var(--t-sm); }
   .filters-toggle:hover { background: var(--accent-dim); }
   /* The sixth carrier of the one secondary-button treatment (docs/app.md §Theming). */
   .about { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);

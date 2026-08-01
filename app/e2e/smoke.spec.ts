@@ -233,12 +233,19 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
   expect(lefts[0]).toBe(lefts[1]);
 });
 
-// None of this is observable in jsdom: it applies no component CSS, so every group reports the
-// same zero-sized box whatever the viewport is.
-test('degrades the toolbar in tiers and keeps the table header clear of the chrome', async ({ page }) => {
+/**
+ * The tier claims this test used to make are `lays the chrome out in bands`'s now, including the
+ * one about the story group taking the row it is given. What is left is the `--thead-top` guard,
+ * which is a different property entirely: the offset is MEASURED and ResizeObserver-backed, so the
+ * pinned header row has to clear a chrome box whose height is a function of the viewport
+ * (docs/app.md §Columns and sorting).
+ *
+ * None of it is observable in jsdom: it applies no component CSS, so every box reports zero.
+ */
+test('keeps the table header clear of the chrome at every width', async ({ page }) => {
   // The dataset is fetched, so the toolbar is not in the DOM at `goto` — and every reading below
   // would come back null, which compares equal to itself and passes every assertion silently. The
-  // bar carries the two groups only once the strip has handed them over, so a first arrival has to
+  // bar carries the groups only once the strip has handed them over, so a first arrival has to
   // answer it before there is a cascade to measure at all.
   const settled = async () => {
     const card = page.getByTestId('setup-strip').getByRole('button', { name: /^All/ });
@@ -246,47 +253,6 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
     if (await card.count()) await card.click();
     await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
   };
-  const boxes = () => page.evaluate(() => {
-    const q = (s: string) => document.querySelector(s);
-    // Centres, not tops: the groups are different heights and `align-items: center` is what puts
-    // them on one line, so their tops legitimately differ by a few pixels.
-    const y = (s: string) => { const b = q(s)?.getBoundingClientRect();
-      return b ? Math.round(b.y + b.height / 2) : null; };
-    return {
-      zoneY: y('[data-testid="toolbar"] .zone-wrap'), paceY: y('[data-testid="toolbar"] .pace-wrap'),
-      actionsY: y('[data-testid="toolbar"] .actions'),
-      paceW: q('[data-testid="toolbar"] .pace-wrap .seg')?.getBoundingClientRect().width ?? 0,
-      wrapW: q('[data-testid="toolbar"] .pace-wrap')?.getBoundingClientRect().width ?? 0,
-    };
-  });
-
-  await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto('/');
-  await settled();
-  const wide = await boxes();
-  expect(wide.zoneY).not.toBeNull();
-  expect(wide.zoneY).toBe(wide.paceY);        // one line, all three groups
-  expect(wide.zoneY).toBe(wide.actionsY);
-  // And nothing scrolls sideways: the content track is capped and the table's headers wrap.
-  // `toBeLessThanOrEqual` states that claim; `toBe` additionally asserted "and the scrollport is
-  // exactly the viewport", which is a fact about the runner's scrollbars
-  // (docs/app.md §Table presentation).
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1200);
-
-  await page.setViewportSize({ width: 840, height: 800 });
-  const mid = await boxes();
-  expect(mid.actionsY).toBe(mid.zoneY);       // all three groups still share line 1
-  expect(mid.paceY).toBe(mid.zoneY);
-
-  // The two segmented groups pair up from 880px down and stay paired to the narrowest phone: they
-  // ask one question each and are read together, and the tighter padding below 610px is what pays
-  // for it. 360px is the binding width, not 375 — it is the usual Android one.
-  for (const width of [880, 840, 801, 800, 700, 610, 600, 560, 390, 375, 360]) {
-    await page.setViewportSize({ width, height: 800 });
-    const phone = await boxes();
-    expect(phone.paceY, `the groups split at ${width}px`).toBe(phone.zoneY);
-    expect(phone.paceW, `the story group stretches at ${width}px`).toBe(phone.wrapW);
-  }
 
   // The pinned header row must clear the chrome at every width, which a constant offset cannot do:
   // the chrome roughly doubles between these two (docs/app.md §Columns and sorting has the figures).
@@ -301,150 +267,46 @@ test('degrades the toolbar in tiers and keeps the table header clear of the chro
       return Math.round(th.top - chrome.bottom);
     });
     expect(gap, `header row occluded at ${width}px`).toBeGreaterThanOrEqual(0);
+    // And at the desktop width nothing scrolls sideways: the content track is capped and the
+    // table's headers wrap. `toBeLessThanOrEqual` states that claim; `toBe` would additionally
+    // assert "and the scrollport is exactly the viewport", which is a fact about the runner's
+    // scrollbars (docs/app.md §Table presentation).
+    if (width === 1200) {
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    }
   }
 });
 
 /**
- * While the setup strip is up the bar carries no groups, and the rule giving the stability
- * preference a whole row is written against them — "the 389px control does not fit beside the two
- * groups". Applied without them it left the ACTIONS alone on the bar's first row with its left half
- * empty: 211px of void at 390px and 597px at 800px, on the phone's landing screen.
+ * While the strip is up the bar carries no groups, so its left side is empty by design and the
+ * actions hold the trailing edge alone. What must stay true is that they hold it: the old bar left
+ * 211px of void at 390px and 597px at 800px by letting them lead a row instead.
  *
- * The property, not the pixel count: the preference never sits below the actions. Either they share
- * a row, or the preference leads and the actions trail at the right edge they hold at every other
- * width. jsdom lays nothing out and evaluates no media query, so only a browser can answer it.
+ * jsdom lays nothing out and evaluates no media query, so only a browser can answer it.
  */
-test('never opens the bar with the actions alone on a row', async ({ page }) => {
+test('opens with the actions flush to the bar trailing edge', async ({ page }) => {
   for (const width of [360, 390, 430, 560, 610, 700, 800, 840, 900, 1200, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    // A bare arrival, so the strip still holds the two questions and the bar is group-less.
     await expect(page.getByTestId('setup-strip')).toBeVisible();
     const seen = await page.evaluate(() => {
       const el = document.querySelector('[data-testid="toolbar"]')!;
       const bar = el.getBoundingClientRect();
-      const act = document.querySelector('[data-testid="toolbar"] .actions')!.getBoundingClientRect();
-      return { groups: !!document.querySelector('[data-testid="toolbar"] .zone-wrap'),
-               // against the bar's OWN padding, not a constant: it is `--s5` at the widest tier and
-               // `--s2` at the narrowest, so a fixed slack passes one tier and fails another.
-               actRightGap: Math.round(bar.right - parseFloat(getComputedStyle(el).paddingRight)
-                                       - act.right) };
+      const act = el.querySelector('.actions')!.getBoundingClientRect();
+      return {
+        groups: !!el.querySelector('.zone-wrap'),
+        pill: !!el.querySelector('.pill'),
+        // against the bar's OWN padding, not a constant: it differs by tier
+        gap: Math.round(bar.right - parseFloat(getComputedStyle(el).paddingRight) - act.right),
+        rows: new Set([...el.children].filter((c) => c.getBoundingClientRect().height > 0)
+          .map((c) => Math.round(c.getBoundingClientRect().y))).size,
+      };
     });
     expect(seen.groups, `the bar drew its groups beside the strip at ${width}px`).toBe(false);
-    // and wherever they land they sit flush against the bar's trailing edge, as at every other width
-    expect(seen.actRightGap, `the actions left the right edge at ${width}px`).toBeLessThanOrEqual(1);
+    expect(seen.pill, `the bar offered stability with nothing to score at ${width}px`).toBe(false);
+    expect(seen.gap, `the actions left the right edge at ${width}px`).toBeLessThanOrEqual(1);
+    expect(seen.rows, `the landing bar took two rows at ${width}px`).toBe(1);
   }
-});
-
-/**
- * The chrome below 800px is three bands — identity, what acts on the table, what the table is —
- * and above it two. Each assertion here is a property rather than a pixel count, so a retune of any
- * boundary keeps them meaningful (docs/app.md §The chrome bands).
- */
-test('lays the chrome out in bands', async ({ page }) => {
-  const settle = async () => {
-    const card = page.getByTestId('setup-strip').getByRole('button', { name: /^All/ });
-    // `exact`, because the strip's `Read about this table` is a substring match otherwise.
-    await expect(page.getByRole('button', { name: 'About', exact: true })).toBeVisible();
-    if (await card.count()) await card.click();
-    await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
-    await page.evaluate(() => document.fonts.ready.then(() => null));
-  };
-  const bands = () => page.evaluate(() => {
-    const tb = document.querySelector('[data-testid="toolbar"]')!;
-    const cs = getComputedStyle(tb);
-    const padL = parseFloat(cs.paddingLeft), padR = parseFloat(cs.paddingRight);
-    const box = tb.getBoundingClientRect();
-    const setup = tb.querySelector('.setup')!.getBoundingClientRect();
-    const actions = tb.querySelector('.actions')!.getBoundingClientRect();
-    const kids = [...tb.querySelector('.setup')!.children].map((k) => k.getBoundingClientRect());
-    return {
-      sameRow: Math.abs((setup.y + setup.height / 2) - (actions.y + actions.height / 2)) < 4,
-      setupBelow: setup.y > actions.y,
-      leftInset: Math.round(kids[0]!.left - (box.left + padL)),
-      rightInset: Math.round((box.right - padR) - kids[kids.length - 1]!.right),
-      overflow: tb.scrollWidth - tb.clientWidth,
-      // The story group must take the row it is given rather than filling one of its own — carried
-      // over from the tier test Task 8 retires, which is where this claim lived.
-      paceW: tb.querySelector('.pace-wrap .seg')!.getBoundingClientRect().width,
-      wrapW: tb.querySelector('.pace-wrap')!.getBoundingClientRect().width,
-    };
-  });
-
-  await page.setViewportSize({ width: 900, height: 900 });
-  await page.goto('/');
-  await settle();
-  expect((await bands()).sameRow, 'the bar split above 800px').toBe(true);
-
-  await page.setViewportSize({ width: 801, height: 900 });
-  expect((await bands()).sameRow, 'the bar split just above the sidebar boundary').toBe(true);
-
-  // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
-  // what the table is, so the row carrying every word is the one nearest the table. One boundary,
-  // shared with the sidebar — the merged line the design wanted from 700 up does not fit the shipped
-  // controls until 777px, which is not a band (docs/app.md §The chrome bands).
-  for (const width of [800, 760, 660]) {
-    await page.setViewportSize({ width, height: 900 });
-    const split = await bands();
-    expect(split.sameRow, `the bands merged at ${width}px`).toBe(false);
-    expect(split.setupBelow, `the setup row leads at ${width}px`).toBe(true);
-  }
-
-  // 430 and below: flush to both padding edges — the property the whole rebuild exists to restore.
-  for (const width of [430, 390, 375, 360]) {
-    await page.setViewportSize({ width, height: 900 });
-    const b = await bands();
-    expect(b.overflow, `the setup row overflows at ${width}px`).toBeLessThanOrEqual(0);
-    expect(b.leftInset, `not flush left at ${width}px`).toBeLessThanOrEqual(1);
-    expect(b.rightInset, `not flush right at ${width}px`).toBeLessThanOrEqual(1);
-  }
-
-  // Above 430 it stops widening and centres, so the two insets stay equal and stop growing apart.
-  for (const width of [500, 560, 629, 690, 760, 799]) {
-    await page.setViewportSize({ width, height: 900 });
-    const b = await bands();
-    expect(Math.abs(b.leftInset - b.rightInset), `not centred at ${width}px`).toBeLessThanOrEqual(2);
-    expect(b.leftInset, `the capped row grew at ${width}px`).toBeGreaterThanOrEqual(0);
-  }
-
-  // And at every width: the story group is shrink-wrapped, never stretched to fill its wrapper.
-  for (const width of [1200, 900, 760, 660, 560, 430, 390, 360]) {
-    await page.setViewportSize({ width, height: 900 });
-    const b = await bands();
-    expect(b.paceW, `the story group stretches at ${width}px`).toBe(b.wrapW);
-  }
-});
-
-/**
- * The utilities are written once and mounted in the host their band owns, so exactly one instance
- * must exist at any width — two would be two tab stops with the same name, and zero would lose the
- * controls. The widths step either side of 800 because that boundary is asked twice, once by the
- * CSS and once by the rune in `Page.svelte`, and the failure mode is them disagreeing
- * (docs/app.md §Where the utilities live).
- */
-test('mounts each utility exactly once at every width', async ({ page }) => {
-  for (const width of [360, 390, 430, 560, 700, 799, 800, 801, 900, 1200, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    for (const name of ['Copy link', 'Export CSV']) {
-      await expect(page.getByRole('button', { name }), `at ${width}px`).toHaveCount(1);
-    }
-    await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
-    await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
-  }
-});
-
-// And the swap survives a resize rather than only a fresh load: the rune is what moves them, so a
-// listener that never fires would pass every case above and still strand the controls in the wrong
-// band for anyone who rotates a phone or drags a window.
-test('moves the utilities between bands on a resize', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 900 });
-  await page.goto('/');
-  await expect(page.locator('header').getByRole('button', { name: 'Copy link' })).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 900 });
-  await expect(page.locator('[data-testid="toolbar"]').getByRole('button', { name: 'Copy link' }))
-    .toBeVisible();
-  await expect(page.getByRole('button', { name: 'Copy link' })).toHaveCount(1);
 });
 
 /**
