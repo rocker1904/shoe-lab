@@ -6,6 +6,7 @@ import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { indexTests } from './lib/dataset';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { defaultColumns, parseView } from './lib/urlstate';
+import { DISPLAY_DEFAULTS, washAlpha } from './lib/wash';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
@@ -225,7 +226,7 @@ describe('Page', () => {
       expect(screen.getAllByRole('button', { name }), `${name} is mounted twice`).toHaveLength(1);
       expect(within(toolbar).getByRole('button', { name })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole('button', { name: /^Toggle theme/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Display' })).toHaveLength(1);
     // One live region, or the confirmation is announced twice or by the hidden copy.
     expect(screen.getAllByRole('status')).toHaveLength(1);
   });
@@ -369,9 +370,18 @@ describe('Page', () => {
       .queryByRole('button', { name: 'Copy link' })).toBeNull();
   });
 
+  /**
+   * The theme cycle is a control inside the Display panel now rather than a utility of its own:
+   * one `Display` button replaced it in that slot (docs/app.md §Where the utilities live). What it
+   * does is unchanged, which is what these two check.
+   */
+  async function openTheme() {
+    await fireEvent.click(screen.getByRole('button', { name: 'Display' }));
+    return screen.getByRole('button', { name: /^Theme, currently/ });
+  }
   it('cycles the theme and remembers the choice', async () => {
     render(Page, { props: { data } });
-    const toggle = screen.getByRole('button', { name: /theme/i });
+    const toggle = await openTheme();
     await fireEvent.click(toggle);
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(localStorage.getItem('theme')).toBe('light');
@@ -381,13 +391,69 @@ describe('Page', () => {
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem('theme')).toBe('auto');
   });
-  it('names the active theme on the toggle', async () => {
+  it('names the active theme on the control', async () => {
     render(Page, { props: { data } });
-    const toggle = screen.getByRole('button', { name: /theme/i });
-    expect(toggle).toHaveAccessibleName(/currently auto/);
+    const toggle = await openTheme();
+    expect(toggle).toHaveAccessibleName(/currently Auto/);
     await fireEvent.click(toggle);
-    expect(toggle).toHaveAccessibleName(/currently light/);
+    expect(screen.getByRole('button', { name: /^Theme, currently/ }))
+      .toHaveAccessibleName(/currently Light/);
   });
+  /**
+   * The wave's load-bearing claim, checked where it is actually painted: a runner who never opens
+   * the menu gets the alphas the app shipped before there was a menu, and nothing is written to the
+   * document to make that true (docs/app.md §The display preferences).
+   */
+  describe('the display preferences', () => {
+    const alphas = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('td.num.tinted.blue')]
+      .map((td) => td.style.getPropertyValue('--a'));
+
+    it('paints the shipped ramp and writes nothing until the menu is touched', () => {
+      const { container } = render(Page, { props: { data } });
+      const before = alphas(container).map(Number);
+      expect(before.length).toBeGreaterThan(0);
+      // The top of a ranked column is p = 1, so the frozen peak is what it paints — to the bit.
+      // `wash.test.ts` holds the other 400 steps of the same curve.
+      // The five-shoe fixture ranks at p = 0.875, 0.625, 0.375 and 0.125, the last of which is
+      // under the floor and bare. Compared against `washAlpha` — the frozen closed form, which the
+      // preference engine never touches — so this is the painted table measured against the ramp
+      // that shipped, through the real render path.
+      expect(new Set(before)).toEqual(new Set([0.875, 0.625, 0.375, 0.125].map(washAlpha)));
+      expect(document.getElementById('wash-prefs')).toBeNull();
+      expect(document.documentElement.dataset['wash']).toBeUndefined();
+      expect(localStorage.getItem('display')).toBeNull();
+    });
+
+    it('repaints the table live as a grip moves, and stores the choice off the URL', async () => {
+      const { container } = render(Page, { props: { data } });
+      const before = alphas(container).map(Number);
+      await fireEvent.click(screen.getByRole('button', { name: 'Display' }));
+      await fireEvent.input(screen.getByLabelText('Strength'), { target: { value: '0.3' } });
+
+      const after = alphas(container).map(Number);
+      expect(after).not.toEqual(before);
+      // Every painted cell moved by the same ratio: the strength scales the ramp, it does not
+      // reshape it.
+      for (let i = 0; i < before.length; i++) {
+        if (before[i] === 0) continue;
+        expect(after[i]! / before[i]!).toBeCloseTo(0.3 / 0.94, 6);
+      }
+      // Storage holds preferences; the URL holds the view, and neither borrows the other's job.
+      vi.advanceTimersByTime(500);
+      expect(JSON.parse(localStorage.getItem('display')!).strength).toBe(0.3);
+      expect(location.search).not.toContain('strength');
+      expect(location.href).not.toMatch(/0\.3/);
+    });
+
+    it('applies a stored preference at first paint', () => {
+      localStorage.setItem('display', JSON.stringify({ v: 1, ...DISPLAY_DEFAULTS, betterHue: 145 }));
+      const { container } = render(Page, { props: { data } });
+      // The colour is an override on the document; the alphas are untouched by a hue change.
+      expect(document.getElementById('wash-prefs')?.textContent).toContain('--wash-blue');
+      expect(alphas(container).some((a) => Number(a) > 0)).toBe(true);
+    });
+  });
+
   // `getBy`, not `findBy`: `Page` renders synchronously here and the suite runs under fake timers,
   // so a `waitFor` would be an unnecessary dance with the clock. Every test in this file does the same.
   it('opens the About panel from the toolbar and hands focus back on close', async () => {

@@ -79,15 +79,19 @@ export interface DisplayPrefs {
 }
 
 /**
- * The hue and chroma are `--wash-blue`'s own in the LIGHT theme, rounded to the sliders' steps
- * (255.29° / 0.1884 → 255 / 0.188). Rounded rather than exact because `<input type="range">` snaps
- * its thumb to the step and would otherwise show a value the preference does not hold — and because
- * nothing is painted from these two at the default state anyway: `resolveWash` reports `tokenFill`
- * there and `app.css`'s own tokens reach the screen untouched
- * (docs/app.md §The display preferences).
+ * The hue and chroma are `--wash-blue`'s own in the LIGHT theme, rounded to the sliders' steps:
+ * the painted token `#147ceb` is OKLCh 255.305° / 0.1889, so 255° and 0.189. Rounded rather than
+ * exact because `<input type="range">` snaps its thumb to the step and would otherwise show a value
+ * the preference does not hold — and because nothing is painted from these two at the default state
+ * anyway: `resolveWash` reports `tokenFill` there and `app.css`'s own tokens reach the screen
+ * untouched (docs/app.md §The display preferences).
+ *
+ * They are still held to the token by `wash.test.ts`, because `usesTokenFill` keys off them:
+ * moving these without moving `--wash-blue` with them would leave the panel reading one colour
+ * while the default state paints another (BACKLOG 16).
  */
 export const DISPLAY_DEFAULTS: DisplayPrefs = {
-  betterHue: 255, betterChroma: 0.188,
+  betterHue: 255, betterChroma: 0.189,
   baseOn: false, baseHue: 25, baseChroma: 0.12,
   strength: WASH_PEAK, curve: WASH_CURVE, floor: WASH_FLOOR,
 };
@@ -255,10 +259,12 @@ function solveCap(t: WashTheme, better: Lab, base: Lab, shape: Omit<WashPaint, '
  *
  * This is the mockup's monotone-lightness check, measured rather than assumed — and measuring it
  * is what showed the rule its real shape. Under the guard both tints sit at the SAME pinned `L`, so
- * a base-on ramp is iso-lightness by construction and magnitude is carried by hue alone at every
- * setting, not occasionally: a red→green ramp is one colour-blind runner away from carrying no
- * ordering at all. A monotonicity test would have reported "fine" forever, because a flat line
- * never reverses. The span is the fact worth having, and the panel states it whenever it is small.
+ * what little lightness a base-on ramp carries comes only from the two tints' CHROMA differing:
+ * OKLab `L` is not luminance, and a more chromatic colour composites lighter. Two equally vivid
+ * tints therefore leave hue carrying the ordering alone — a red→green ramp is then one colour-blind
+ * runner away from carrying nothing. A monotonicity test would have reported "fine" forever,
+ * because a flat line never reverses. The span is the fact worth having
+ * (docs/app.md §The display preferences).
  */
 function lightnessSpan(t: WashTheme, better: Lab, base: Lab, w: WashPaint): number {
   let lo = Infinity, hi = -Infinity;

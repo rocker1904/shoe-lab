@@ -2257,9 +2257,17 @@ for the header, the setup row and the actions row alike.
 
 ## Where the utilities live
 
-Copy link, Export CSV and the theme cycle are **worded in the masthead above
-800px and icons on the toolbar's control row below it** — two different parents,
-so one node cannot serve both.
+Copy link, Export CSV and Display are **worded in the masthead above 800px and
+icons on the toolbar's control row below it** — two different parents, so one
+node cannot serve both.
+
+**`Display` replaced the theme cycle in that slot rather than joining it.** Once
+the wash became tunable (§The display preferences) the alternative was a fourth
+utility beside three, on a bar whose contents already need 346px at 320px; the
+theme is a display preference like the rest, so it moved **inside** the panel as
+a control and the bar kept three. Measured, the swap costs the row **1px** at
+320px and nothing at all from 360px up — the worded control is the same width as
+the two beside it and the glyph is the same 15px box the theme icon was.
 
 The markup is written **once**, as a snippet in `Page.svelte`, and handed to
 **exactly one host**: `Header` and `Toolbar` each take a `utilities?: Snippet`
@@ -2318,6 +2326,17 @@ and **`<summary>` has no implicit ARIA role**, so `getByRole('button', …)` nev
 matches it however it is labelled. Browsers do expose the label to assistive
 tech, so it is doing its job — but any assertion about this control has to go
 through `details.picker summary` and read the attribute.
+
+**The Display control is a `<button>` with a conditional panel, where the column
+picker is a `<details>`.** Two reasons, and the second decided it: `<summary>`
+has no implicit ARIA role, so no role query ever matches it however it is
+labelled (below) — and this control stands among `Copy link` and `Export CSV`,
+which are buttons a runner and a test both find the same way. A closed
+`<details>` also still renders its children, and eleven controls and two
+swatches may not pay for themselves while invisible (§What a drag may
+recompute). It joins every floating-panel contract regardless: outside press,
+Escape, focus-leave, the stacking tree and an on-screen geometry assertion at
+every width (§Every floating panel dismisses the same way, §Stacking order).
 
 The glyph geometry lives in `app/src/components/icons.ts` as path data, never as
 whole SVG documents: a whole document would need `{@html}`, and this app has
@@ -2380,6 +2399,7 @@ indentation, not the column:
 | pinned `thead` (its name cell, 3) | 2 | the page |
 | **pinned chrome** — header and toolbar | 5 | the page |
 | ↳ column picker panel | 10 | *the chrome's children only* |
+| ↳ Display panel | 10 | *the chrome's children only* |
 | **sidebar** — sticky, so a context at `z-index: auto` | — | the page, at 0 |
 | ↳ month picker panel | 20 | *the sidebar's children only* |
 | drawer scrim, below 1180px | 25 | the page |
@@ -2429,6 +2449,15 @@ container set it themselves — so a width meant as a total has to say so:
   asked: 365px inside a 360px screen, clipping its own border and both left
   corners off the edge at every phone width. It carries
   `box-sizing: border-box`, and now sits 14px clear of each edge at 360px.
+- the **Display panel** is `width: min(20rem, calc(100vw - var(--s5)))` and
+  `box-sizing: border-box`, so it is sized against the **viewport** and can
+  never be wider than the screen it hangs in: 320px of panel from 344px up, and
+  296px at a 320px window. Its body is the scrollport rather than the panel
+  itself, which is not arrangement — `:where(.scrollport)` carries zero
+  specificity by design, so any padding the component set on the same element
+  would silently delete the ring's reservation (§Theming). The head stays still
+  above it, which also keeps `Reset` reachable from a ramp dragged somewhere
+  unreadable.
 - the **column picker panel** is `min-width: 20rem` of *content*, so 354px in
   total against the 352px the bar leaves it at 360px — its left hairline fell
   off the screen. The 4px a side comes out of the **padding** below 400px, never
@@ -2439,9 +2468,9 @@ container set it themselves — so a width meant as a total has to say so:
   to let them size it) and the legend does take a second line. One width, traded
   for the checkboxes being on screen.
 
-**The panel is anchored to the chrome below 800px, not to its own trigger.** The
-`right: 0` says "the end of the row", which was true while the picker was the
-last control on the bar. It is not true below 800px: the actions band takes the
+**Both anchored panels hang off the chrome below 800px, not off their own
+trigger.** The `right: 0` says "the end of the row", which was true while the
+picker was the last control on the bar. It is not true below 800px: the actions band takes the
 whole width and the utilities are pushed past the picker, so the summary sits
 mid-bar and the panel opened at **x = −166** with all 52 checkboxes off the left
 edge — at every width the drawer exists at, not only the narrow ones. `.picker`
@@ -2450,11 +2479,27 @@ drops `position: relative` there, which hands the panel to `.chrome`, and the
 media block sits **after** the base `.panel` rule: a media query carries no
 extra specificity, so a `right: 0` declared below it would win.
 
+The Display panel takes the same fix for a different reading of the same fact:
+its trigger *is* the last control on the row, but the row itself does not fit
+below about 344px — the bar's contents need 346px at 320px, which is where they
+already needed 338px before this control existed — so at 320px the trigger sits
+19px past the right edge and a panel anchored to it goes with it. Handed to
+`.chrome` the panel measures 16px from the left edge and 8px from the right
+there. `top: 100%` is then the foot of the chrome band rather than the foot of
+the trigger, which is where a panel opened from a two-row bar wants to be
+anyway. **The trigger's own 19px is not fixed by this and is not new**: every
+utility has been past the right edge at 320px since the chrome rebuild, and 360
+is the width the phone bounds are stated at.
+
 That defect shipped through a green suite, because every assertion the suite
 made about the picker was a DOM one and an off-screen box is still `visible`.
 The geometry is measured in `smoke.spec.ts` now — the open panel's box against
 the viewport, plus a hit test on the first checkbox, at 320, 360, 390, 700, 800,
-801 and 1200px — with the legend's one-line bound asserted from 360px up.
+801 and 1200px — with the legend's one-line bound asserted from 360px up. The
+Display panel has its own walk of the same shape, and measures its **height**
+too: it is the only floating box in the app that opens below the chrome on a
+short phone, so a body outgrowing its `max-height` would put `Reset` past the
+foot of the screen with nothing to scroll.
 
 ## Theming
 
@@ -2738,12 +2783,17 @@ range on a red→green ramp. Two consequences follow and both are stated in the
 panel. The floor means nothing there — every cell is painted — so its slider is
 disabled rather than hidden, because a control that vanishes reads as a bug.
 And because both tints sit at the **same** pinned lightness, a base-on ramp is
-iso-lightness by construction: magnitude is carried by hue alone, at every
-setting rather than occasionally, which is exactly what a red→green ramp does to
-a runner who cannot separate the two. `resolveWash` measures the ramp's
-lightness span rather than testing it for monotonicity — a flat line never
-reverses, so a monotonicity check would have reported "fine" forever — and the
-panel says so whenever the span is under one 8-bit step.
+very nearly iso-lightness: what little travel is left comes from the two tints'
+**vividness** differing, since OKLab `L` is not luminance and a more chromatic
+colour composites lighter. Two equally vivid tints therefore leave hue carrying
+the magnitude alone — which is exactly what a red→green ramp does to a runner
+who cannot separate the two. So `resolveWash` **measures** the painted ramp's
+lightness span rather than testing it for monotonicity: a flat line never
+reverses, so a monotonicity check would have reported "fine" forever. Measured,
+a red→green pair at one vividness spans 0.0055 and the default pair 0.0034,
+against 0.289 with the base off; the panel states it below one 8-bit step
+(0.01), and stays quiet where a vividness difference has kept the ordering
+readable without colour.
 
 **The neutral grey ramp takes no preference at all.** A metric with no better
 end has nothing about it to tune, and `greyAlpha` is untouched by every control
@@ -2763,13 +2813,16 @@ defaults, but one bad number costs that number rather than the four beside it.
 for byte — asserted from both ends in `wash.test.ts` (the alpha of all 401 steps
 against the frozen closed form) and `display.test.ts` (the empty stylesheet).
 This is why the defaults are the light theme's blue **rounded to the sliders'
-steps** — 255° / 0.188 against the token's 255.29 / 0.1884 — and why that
-rounding costs nothing: those two numbers are a starting point for a tweak, never
-a colour that is painted. The cost that is real: the two themes' blues are not
-one OKLCh colour (the dark token is 0.146 chroma), and one hue/vividness pair
-serves both, so the first nudge of either moves the dark theme's fill to the
-light theme's vividness. One pair for both themes is what makes the panel
-legible; the jump is at the first tick and never again.
+steps** — 255° / 0.189 against the painted token's 255.305 / 0.1889 — and why
+that rounding costs nothing: those two numbers are a starting point for a tweak,
+never a colour that is painted. They are still pinned to the token, because
+`usesTokenFill` keys off them: moving them without moving `--wash-blue` would
+leave the panel reading one colour while the default state painted another. The
+cost that is real: the two themes' blues are not one OKLCh colour (the dark
+token is 253.6° / 0.146 against the light's 255.3° / 0.189), and one
+hue/vividness pair serves both, so the first nudge of either moves the dark
+theme's fill to the light theme's vividness. One pair for both themes is what
+makes the panel legible; the jump is at the first tick and never again.
 
 **The override stylesheet mirrors `app.css`'s own four blocks**, and has to: the
 dark values sit under both `prefers-color-scheme` and `[data-theme]` so the theme

@@ -25,6 +25,10 @@ vi.mock('./lib/stats', async (orig) => {
   const actual = await orig<typeof import('./lib/stats')>();
   return { ...actual, percentileMap: vi.fn(actual.percentileMap) };
 });
+vi.mock('./lib/wash', async (orig) => {
+  const actual = await orig<typeof import('./lib/wash')>();
+  return { ...actual, resolveWash: vi.fn(actual.resolveWash) };
+});
 vi.mock('./lib/filters', async (orig) => {
   const actual = await orig<typeof import('./lib/filters')>();
   return { ...actual, applyFilters: vi.fn(actual.applyFilters) };
@@ -34,6 +38,7 @@ const { coverageOf } = await import('./lib/coverage');
 const { scoreMap } = await import('./lib/score');
 const { percentileMap } = await import('./lib/stats');
 const { applyFilters } = await import('./lib/filters');
+const { resolveWash } = await import('./lib/wash');
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
@@ -79,4 +84,37 @@ it('ranks each rendered column once per bound change', async () => {
   render(Page, { props: { data } });
   await changeOneBound();
   expect(vi.mocked(percentileMap).mock.calls.length).toBeLessThanOrEqual(8);
+});
+
+/**
+ * The wash solver is thousands of contrast evaluations, and the menu's whole promise is a live
+ * preview — so a dragged grip repaints the table sixty times a second. It may do that only because
+ * the solver runs **once per change** and the cell reads four resolved numbers
+ * (docs/app.md §The display preferences). Both halves are asserted: nothing fleet-wide is
+ * recomputed, and the solver is not called per cell or per row.
+ */
+it('runs the wash solver once per preference change and ranks nothing again', async () => {
+  render(Page, { props: { data } });
+  await fireEvent.click(screen.getByRole('button', { name: 'Display' }));
+  for (const spy of [coverageOf, scoreMap, percentileMap, applyFilters, resolveWash]) vi.mocked(spy).mockClear();
+
+  await fireEvent.input(screen.getByLabelText('Strength'), { target: { value: '0.5' } });
+  await tick();
+
+  // The rows on screen have not changed, only their colour: none of the fleet-wide passes is a
+  // legitimate reader of a preference.
+  expect(scoreMap).not.toHaveBeenCalled();
+  expect(percentileMap).not.toHaveBeenCalled();
+  expect(applyFilters).not.toHaveBeenCalled();
+  expect(coverageOf).not.toHaveBeenCalled();
+  // One, and independent of how many cells are painted — this fixture paints sixteen.
+  expect(vi.mocked(resolveWash).mock.calls.length).toBe(1);
+});
+
+/** And a filter drag does not resolve the wash either: the two states are held apart on purpose. */
+it('resolves no wash when a range bound moves', async () => {
+  render(Page, { props: { data } });
+  vi.mocked(resolveWash).mockClear();
+  await changeOneBound();
+  expect(resolveWash).not.toHaveBeenCalled();
 });

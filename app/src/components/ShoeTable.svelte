@@ -3,7 +3,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
-  import { greyAlpha, washAlpha } from '../lib/wash';
+  import { DEFAULT_PAINT, greyAlpha, rankedAlpha, rankedMix, type WashPaint } from '../lib/wash';
   import { categoricalValue, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
@@ -16,7 +16,7 @@
   import DiscontinuedTag from './DiscontinuedTag.svelte';
   import SortCaret from './SortCaret.svelte';
 
-  let { shoes, data, view, scores, stability, open, ontoggle, onchange }: {
+  let { shoes, data, view, scores, stability, open, ontoggle, onchange, paint = DEFAULT_PAINT }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
     /** Resolved in `Page.svelte` and keyed by column: a score is the one kind of column whose value
      *  depends on the view rather than on the shoe alone, so it arrives ready rather than through
@@ -32,6 +32,11 @@
     open: ReadonlySet<string>;
     ontoggle: (slug: string) => void;
     onchange: (v: ViewState) => void;
+    /** Resolved once per preference change in `Page.svelte` — the cell does arithmetic and nothing
+     *  else with it, so a dragged grip costs what it always did
+     *  (docs/app.md §The display preferences). Defaulted, because most of this component's tests
+     *  are about the table rather than about the ramp. */
+    paint?: WashPaint;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
@@ -165,10 +170,12 @@
         </td>
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
+          {@const blue = washOf(col) === 'blue'}
           <td class="num" class:fig={isFigure(col, idx.bySlug.get(col))}
-              style:--a={p === undefined ? 0 : washOf(col) === 'blue' ? washAlpha(p) : greyAlpha(p)}
+              style:--a={p === undefined ? 0 : blue ? rankedAlpha(p, paint) : greyAlpha(p)}
+              style:--w={p !== undefined && blue && paint.dual ? rankedMix(p, paint) : undefined}
               class:tinted={p !== undefined}
-              class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
+              class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
       </tr>
       {#if open.has(s.slug)}
@@ -296,6 +303,15 @@
      grey stays linear (docs/app.md §Theming). */
   td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
   td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
+  /* Base colour on: alpha is flat, so the COLOUR carries the magnitude and the cell mixes
+     base → better by `--w` before it is composited. A SECOND rule rather than a parameterised
+     first one — the single-colour declaration has to stay untouched for a runner who never opened
+     the menu to get exactly what they always got (docs/app.md §The display preferences). */
+  :global(:root[data-wash='dual']) td.num.tinted.blue {
+    background-color: color-mix(in oklab,
+      color-mix(in oklab, var(--wash-blue) calc(var(--w) * 100%), var(--wash-base))
+      calc(var(--a) * 100%), transparent);
+  }
   @media (prefers-reduced-motion: no-preference) {
     .chev { transition: transform 120ms ease-out; }
     tr.expand td { animation: reveal 140ms ease-out; }

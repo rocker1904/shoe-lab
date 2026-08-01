@@ -618,3 +618,41 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
   expect(bar.sameRow, 'the toolbar wrapped at 801px once Filters joined the row').toBe(true);
   expect(bar.free, 'the one-row toolbar has run out of width at 801px').toBeGreaterThanOrEqual(0);
 });
+
+/**
+ * The two-colour cell rule is the app's only NESTED `color-mix`, and nesting is exactly the kind of
+ * thing one engine implements and another drops on the floor — a dropped inner mix resolves the
+ * whole declaration to nothing, so the base-on ramp would paint bare cells with no error anywhere
+ * (docs/app.md §The display preferences).
+ *
+ * Measured as painted colour, not as CSS text: `getComputedStyle` on `background-color` is the
+ * engine's own answer, and a declaration it could not parse reads `rgba(0, 0, 0, 0)`. Two cells at
+ * different percentiles, because with the base on the ALPHA is flat and colour is the only thing
+ * left carrying the ordering — one cell would pass while the ramp said nothing.
+ */
+test('paints the two-colour ramp this engine has to nest a color-mix for', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Display' }).click();
+  await page.getByLabel('Tint every ranked cell').check();
+
+  const cells = await page.evaluate(() => {
+    const painted = [...document.querySelectorAll<HTMLElement>('td.num.tinted.blue')]
+      .map((el) => ({ w: Number(el.style.getPropertyValue('--w')),
+                      a: Number(el.style.getPropertyValue('--a')),
+                      bg: getComputedStyle(el).backgroundColor }))
+      .sort((x, y) => y.w - x.w);
+    return { dual: document.documentElement.dataset['wash'], best: painted[0]!, worst: painted.at(-1)! };
+  });
+
+  expect(cells.dual, 'the document never asked for the two-colour rule').toBe('dual');
+  // Flat alpha, as the model says: every ranked cell is tinted at one strength.
+  expect(cells.best.a).toBe(cells.worst.a);
+  for (const c of [cells.best, cells.worst]) {
+    expect(c.bg, 'the nested color-mix resolved to nothing in this engine')
+      .not.toMatch(/rgba?\(0, 0, 0, 0\)|transparent/);
+  }
+  // …and the two ends are different colours, which is the whole ordering with the base on.
+  expect(cells.best.bg, 'best and worst paint the same colour, so nothing ranks')
+    .not.toBe(cells.worst.bg);
+});

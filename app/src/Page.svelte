@@ -41,6 +41,9 @@
   import { projectZone, zoneOf } from './lib/zone';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
+  import DisplayMenu from './components/DisplayMenu.svelte';
+  import { installWash, readDisplay, writeDisplay } from './lib/display';
+  import { resolveWash, type DisplayPrefs } from './lib/wash';
   import { DEFAULT_ZONE, defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, type ViewState } from './lib/urlstate';
 
   let { data }: { data: ShoesFile } = $props();
@@ -499,6 +502,25 @@
     theme = cycleTheme();
   }
 
+  /**
+   * The wash preference, held BESIDE the view and never in it: it is a property of the reader
+   * rather than of the search, so it never reaches the URL and never unmarks a story
+   * (docs/app.md §The display preferences). Read back from storage, which `main.ts` has already
+   * applied to the document.
+   */
+  let display = $state<DisplayPrefs>(readDisplay());
+  // Once per change and never per frame — the whole solver hangs off this being a `$derived` of the
+  // preference alone, so a filter drag re-resolves nothing (docs/app.md §What a drag may recompute).
+  const wash = $derived(resolveWash(display));
+  $effect(() => installWash(wash));
+  /**
+   * Debounced for the same reason the address is: a dragged grip emits about sixty preference
+   * changes a second, and `localStorage` is synchronous. Trailing only, so what lands is where the
+   * grip was let go (docs/app.md §View and URL ownership owns the shape).
+   */
+  const saveDisplay = debounce(writeDisplay, VIEW_WRITE_MS);
+  onDestroy(() => saveDisplay.flush());
+
   let copied = $state(false);
   /**
    * The URL *is* the view (docs/app.md §View and URL ownership), so copying the address bar is the
@@ -556,18 +578,10 @@
         </svg>
       {/if}
     </button>
-    <!-- An icon per state at both bands, and the `aria-label` is what makes the three-way cycle
-         usable without sight — the drawing carries no accessible name of its own. -->
-    <button type="button" class="icon" onclick={onTheme}
-            aria-label="Toggle theme (currently {theme})" title="Theme: {theme}">
-      {#if theme === 'auto'}
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 010 12z" fill="currentColor"/></svg>
-      {:else if theme === 'light'}
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      {:else}
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-      {/if}
-    </button>
+    <!-- The theme cycle moved INSIDE this panel when the wash became tunable: one Display control
+         rather than a fourth utility beside three (docs/app.md §Where the utilities live). -->
+    <DisplayMenu prefs={display} resolved={wash} {theme} ontheme={onTheme} worded={worded}
+                 onchange={(p) => { display = p; saveDisplay(p); }} />
   </span>
 {/snippet}
 
@@ -650,10 +664,10 @@
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}
         <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
-                         stability={view.stability} onchange={setView} />
+                         paint={wash.paint} stability={view.stability} onchange={setView} />
       {:else}
         <ShoeTable shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
-                   stability={view.stability} onchange={setView} />
+                   paint={wash.paint} stability={view.stability} onchange={setView} />
       {/if}
     </div>
     {#if visibleSorted.length === 0}

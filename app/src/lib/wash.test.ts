@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mixLab, oklabToRgb, rgb255, rgbToOklab } from './oklab';
+import { labToLch, mixLab, oklabToRgb, rgb255, rgbToOklab } from './oklab';
 import {
   DEFAULT_PAINT, DISPLAY_DEFAULTS, greyAlpha, rankedAlpha, rankedMix, resolveWash, washAlpha,
   WASH_FLOOR, WASH_PEAK, WASH_THEMES, type DisplayPrefs, type ThemeName, type WashPaint,
@@ -263,6 +263,20 @@ describe('the shipped ramp at the default preferences', () => {
     expect(r.paint).toEqual(DEFAULT_PAINT);
     expect(r.peak).toBe(WASH_PEAK);
     expect(r.capped).toBe(false);
+  });
+
+  /**
+   * The trap the point-3 retune walks into (BACKLOG 16): `usesTokenFill` keys off these two
+   * numbers, so moving them without moving `--wash-blue` with them leaves the panel reading one
+   * colour while the default state paints another. Held to the sliders' own steps — 1° and 0.001 —
+   * because that is the finest the defaults can be stated in.
+   */
+  it('states the default colour as the light token, to the step the slider can hold', () => {
+    const token = labToLch(rgbToOklab(WASH_THEMES.light.blue.map((v) => v / 255) as [number, number, number]));
+    expect(Math.abs(token.h - DISPLAY_DEFAULTS.betterHue), `token hue ${token.h.toFixed(2)}°`)
+      .toBeLessThanOrEqual(0.5);
+    expect(Math.abs(token.C - DISPLAY_DEFAULTS.betterChroma), `token chroma ${token.C.toFixed(4)}`)
+      .toBeLessThanOrEqual(0.0005);
   });
 
   it('reproduces the alpha of every step of the shipped curve exactly', () => {

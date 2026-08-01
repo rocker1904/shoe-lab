@@ -635,7 +635,8 @@ test('mounts each utility exactly once at every width', async ({ page }) => {
     for (const name of ['Copy link', 'Export CSV']) {
       await expect(page.getByRole('button', { name }), `at ${width}px`).toHaveCount(1);
     }
-    await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
+    // The theme cycle is inside this control now, not beside it (docs/app.md §Where the utilities live).
+    await expect(page.getByRole('button', { name: 'Display' }), `at ${width}px`).toHaveCount(1);
     await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
   }
 });
@@ -894,7 +895,8 @@ test('never ships an icon without its name', async ({ page }) => {
       await expect(page.getByRole('button', { name, exact: true }), `${name} at ${width}px`)
         .toHaveCount(1);
     }
-    await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
+    // The theme cycle is inside this control now, not beside it (docs/app.md §Where the utilities live).
+    await expect(page.getByRole('button', { name: 'Display' }), `at ${width}px`).toHaveCount(1);
     // Filters answers the SIDEBAR boundary, not this one: it exists all the way to 1180px, worded
     // between 801 and 1179 and a glyph below (docs/app.md §The chrome bands).
     if (width < 1180) {
@@ -1052,6 +1054,10 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
   await page.getByRole('button', { name: /^Add filter/ }).click();
   await page.evaluate(() => {
     for (const d of document.querySelectorAll<HTMLDetailsElement>('details')) d.open = true;
+    // `el.click()` and not a real press: a synthetic click fires no `pointerdown`, so the Display
+    // panel opens without dismissing the two `<details>` — and it reaches a trigger the open
+    // dialog's scrim would otherwise intercept. Five ports have to be measurable in ONE pass.
+    document.querySelector<HTMLElement>('[data-testid="display-trigger"]')!.click();
   });
 
   const ports = await page.evaluate(() => {
@@ -1089,7 +1095,7 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
 
   // Enumerated rather than listed: the way this rule was got wrong was a scrollport nobody had
   // counted, so a fifth one that forgets `.scrollport` has to fail here on the day it is added.
-  expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(4);
+  expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(5);
 
   // 4px is the ring's outer radius; anything less and it is drawn cropped.
   for (const p of ports) {
@@ -1135,6 +1141,69 @@ test('opens the column picker fully on screen at every width', async ({ page }) 
     // (docs/app.md §Stacking order); everywhere above it the direction legend holds one line.
     if (width >= 360) expect(seen.legendLines, `the direction legend wrapped at ${width}px`).toBe(1);
   }
+});
+
+/**
+ * The same measurement the column picker earned the hard way, for the panel that replaced the theme
+ * button: an anchored box is only as reachable as the trigger it hangs off, and every DOM assertion
+ * this suite makes passes while the whole thing sits at a negative x (docs/app.md §Stacking order).
+ * Both bands, because the utilities change host across 800px and the panel's anchor goes with them.
+ *
+ * The height is measured too, which the picker's is not: this panel is the only floating box in the
+ * app that opens BELOW the chrome on a short phone, so a body that outgrew its `max-height` would
+ * put `Reset` past the bottom of the screen with no way to scroll to it.
+ */
+test('opens the Display panel fully on screen at every width', async ({ page }) => {
+  for (const width of [320, 360, 390, 700, 800, 801, 1000, 1440]) {
+    await page.setViewportSize({ width, height: 700 });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Display' }).click();
+    const seen = await page.evaluate(() => {
+      const panel = document.querySelector('.display .panel')!;
+      const b = panel.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
+      const first = panel.querySelector('input')!.getBoundingClientRect();
+      return {
+        left: Math.round(b.left), right: Math.round(vw - b.right),
+        top: Math.round(b.top), bottom: Math.round(vh - b.bottom),
+        hit: panel.contains(document.elementFromPoint(first.x + first.width / 2, first.y + first.height / 2)),
+      };
+    });
+    expect(seen.left, `the Display panel hangs off the left edge at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(seen.right, `the Display panel hangs off the right edge at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(seen.top, `the Display panel opens above the viewport at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(seen.bottom, `the Display panel runs off the foot at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(seen.hit, `the first control is not reachable at ${width}px`).toBe(true);
+  }
+});
+
+/**
+ * The live preview is the whole reason this panel is anchored and scrimless rather than modal
+ * (docs/app.md §The display preferences), so what is measured is the TABLE repainting while the
+ * panel is up — not the panel's own state.
+ */
+test('repaints the table under an open Display panel', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/');
+  const cell = () => page.locator('td.num.tinted.blue').first();
+  const read = async () => cell().evaluate((el) => ({
+    a: (el as HTMLElement).style.getPropertyValue('--a'),
+    bg: getComputedStyle(el).backgroundColor,
+  }));
+
+  await page.getByRole('button', { name: 'Display' }).click();
+  const rest = await read();
+  // The table is still on screen: no scrim, nothing covering the cell being previewed.
+  await expect(cell()).toBeVisible();
+
+  await page.getByLabel('Strength').fill('0.3');
+  const weaker = await read();
+  expect(Number(weaker.a), 'the strength grip did not reach the table').toBeLessThan(Number(rest.a));
+  expect(weaker.bg).not.toBe(rest.bg);
+
+  await page.getByRole('button', { name: 'Reset' }).click();
+  expect(await read(), 'Reset did not put the ramp back').toEqual(rest);
 });
 
 test('traps focus in the filter drawer and hands it back on Escape', async ({ page }) => {

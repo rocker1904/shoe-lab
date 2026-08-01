@@ -102,18 +102,15 @@ export function washCss(r: ResolvedWash): string {
 const STYLE_ID = 'wash-prefs';
 
 /**
- * Push a preference state at the document. Called at boot from `main.ts` — before the dataset
- * fetch, like the theme, so a saved ramp never repaints under the runner — and once per change
- * from `Page.svelte`.
+ * Push a resolved wash at the document: the override rule, and the flag that selects which cell
+ * rule paints.
  *
- * `data-wash="dual"` is what selects the two-colour cell rule in the tables. An attribute rather
- * than a third custom property because it switches a *rule*, not a value: the single-colour rule
- * has to stay literally untouched at the default state for the byte-identical claim above to mean
- * anything, and a `var()` fallback that resolves to the same colour does not give that — it round
- * trips the token through OKLab first.
+ * `data-wash="dual"` is an attribute rather than a third custom property because it switches a
+ * *rule*, not a value: the single-colour rule has to stay literally untouched at the default state
+ * for the byte-identical claim above to mean anything, and a `var()` fallback resolving to the same
+ * colour does not give that — it round-trips the token through OKLab first.
  */
-export function applyDisplay(prefs: DisplayPrefs): ResolvedWash {
-  const resolved = resolveWash(prefs);
+export function installWash(resolved: ResolvedWash): void {
   const root = document.documentElement;
   if (resolved.paint.dual) root.dataset['wash'] = 'dual';
   else delete root.dataset['wash'];
@@ -122,7 +119,7 @@ export function applyDisplay(prefs: DisplayPrefs): ResolvedWash {
   let style = document.getElementById(STYLE_ID);
   if (!css) {
     style?.remove();
-    return resolved;
+    return;
   }
   if (!style) {
     style = document.createElement('style');
@@ -130,5 +127,16 @@ export function applyDisplay(prefs: DisplayPrefs): ResolvedWash {
     document.head.append(style);
   }
   style.textContent = css;
+}
+
+/**
+ * Resolve and install in one call. `main.ts`'s form, run at boot before the dataset fetch exactly
+ * as the theme is, so a saved ramp is never repainted under the runner. `Page.svelte` keeps the
+ * two halves apart instead: it derives the resolution and installs it from an effect, so a
+ * resolution is never computed twice for one change.
+ */
+export function applyDisplay(prefs: DisplayPrefs): ResolvedWash {
+  const resolved = resolveWash(prefs);
+  installWash(resolved);
   return resolved;
 }
