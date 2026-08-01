@@ -1442,8 +1442,8 @@ release dates, derived from the loaded shoes: this is an affordance rather than
 a score constant, so docs/decisions.md §Frozen scores and live thresholds does
 not apply, and the brand list beside it is derived the same way. Months with no
 shoes *inside* that span stay enabled — for an "after" bound an empty month is
-still a meaningful cut, and 8 shoes span 2015–2020, so disabling by coverage
-would grey out most of the list and read as broken.
+still a meaningful cut, and a handful of shoes span 2015–2020, so disabling by
+coverage would grey out most of the list and read as broken.
 
 The panel is `position: absolute` in the sidebar rather than portalled to
 `<body>` like the Add-filter dialog (§Stacking order): it is the width of the
@@ -2471,8 +2471,8 @@ the number. One delegated `focusin` listener, gated on `.scrollport`: nothing
 outside a port is touched, because the table and the chrome are the browser's to
 scroll and a second opinion there is how a page starts fighting its own sticky
 header. There is no animation to reduce — every engine's own focus scroll is
-instant, and a Tab held down through 45 stops would otherwise queue 45
-animations. `cross-browser.spec.ts` walks the sidebar in the two engines that get
+instant, and a Tab held down through the sidebar would otherwise queue an
+animation per stop. `cross-browser.spec.ts` walks the sidebar in the two engines that get
 it wrong.
 
 The first exemption is **table rows**: a `box-shadow` ring draws outside the box, and
