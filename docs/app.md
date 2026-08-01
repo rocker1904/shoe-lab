@@ -494,8 +494,8 @@ trap would hold the keyboard inside a panel that is no longer modal.
 ### Every floating panel dismisses the same way
 
 Four surfaces float over the page — the column picker, the month picker, the
-add-filter dialog and the About panel — and all four answer **a press outside**
-and **Escape**. `app/src/lib/dismiss.ts` owns the pointer half for the two
+add-filter dialog and the About panel — and all four answer **a press outside**,
+**Escape**, and **focus leaving them**. `app/src/lib/dismiss.ts` owns the pointer half for the two
 anchored to a trigger of their own; each dialog's scrim is the same affordance
 drawn rather than a second mechanism. It is a **captured `pointerdown`, not a
 `click`**: `pointerdown` fires before focus moves, so a press on a panel's own
@@ -511,6 +511,28 @@ outlives one.
 stepping the month picker's year, selecting the About panel's prose — and
 that is the same fact as the trigger case, since every trigger sits inside the
 box its own panel is guarded by.
+
+**Focus leaving a panel is the keyboard's outside press**, and it was the way
+out that none of these had. Escape only ever arrives while focus is *inside*,
+because each panel's handler is bound to the panel, so a runner who Tabbed out
+left the panel hanging over the controls they tabbed to next **with Escape inert
+from that point on**. The month picker survived a backwards exit — its own
+trigger is a landing pad *outside* the panel, so the next Shift+Tab fired a
+focusout the panel never saw — and the column picker, which has no focus guard of
+its own and hangs `position: absolute` over the table, survived an exit in either
+direction. `dismissOnFocusLeave` is the mirror of the press listener: captured on
+`document` for the same reason, guarded on the whole anchor so that stepping back
+onto the trigger is not leaving, and it closes only when a move **starts** inside
+and **ends** outside.
+
+**A null `relatedTarget` is not a departure.** Focus going nowhere identifiable
+is what a press on unfocusable chrome produces — and also what the month picker's
+year stepper produces when it disables itself under the pointer at the ends of
+the fleet (§Released after is month-granular). Treating null as a departure would
+shut that panel on the runner mid-step; treating it as staying costs nothing,
+because the pointer case is already answered by the press listener. The two
+`<body>`-mounted dialogs need none of this: they trap Tab, so focus cannot leave
+them in the first place.
 
 **Escape is stopped exactly where a second handler would hear it.** The month
 picker stops it, and is now the only one that does, because its panel is a real
@@ -1198,7 +1220,10 @@ without emitting. And the year is **clamped in the step handler**, not only by
 the buttons' `disabled`: a guard living in markup is one a stray click walks
 past, and disabling a focused stepper drops focus to `<body>`, which arrives at
 `focusout` as a null `relatedTarget` — closing on that would make the last year
-unreachable, so a null is explicitly not treated as leaving.
+unreachable, so a null is explicitly not treated as leaving. That rule now lives
+in `dismissOnFocusLeave`, which every anchored panel shares
+(§Every floating panel dismisses the same way), and this is the case that put it
+there.
 
 Firefox and WebKit run this filter in CI for exactly this reason
 (docs/operations.md §The e2e run needs three browsers).

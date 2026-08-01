@@ -69,6 +69,21 @@ test('closes the month picker every way out, and hands focus back', async ({ pag
   await expect(panel).toBeVisible();
   await page.getByRole('heading', { name: 'Search' }).click();
   await expect(panel).toHaveCount(0);
+
+  /*
+   * And the keyboard's own way out, which is the way that used to strand it. Tabbing back through
+   * the trigger — a landing pad *outside* the panel — left the grid open over the sidebar with
+   * Escape inert from then on, because the key goes to whatever holds focus and the handler is on
+   * the panel (docs/app.md §Every floating panel dismisses the same way).
+   */
+  await trigger.press('Enter');
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Shift+Tab');          // grid cell -> Previous year
+  await page.keyboard.press('Shift+Tab');          // -> the trigger, still inside the anchor
+  await expect(trigger).toBeFocused();
+  await expect(panel, 'stepping back onto the trigger is not leaving').toBeVisible();
+  await page.keyboard.press('Shift+Tab');          // -> out of the anchor altogether
+  await expect(panel).toHaveCount(0);
 });
 
 /**
@@ -155,6 +170,22 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
   await expect(panel).toBeVisible();
   await summary.click();
   await expect(panel).toBeHidden();
+
+  /*
+   * The keyboard's ways out, both of which used to strand it — this panel is `position: absolute`
+   * over the table, and it survived an exit in either direction with Escape inert from then on
+   * (docs/app.md §Every floating panel dismisses the same way).
+   */
+  await summary.press('Enter');
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Shift+Tab');
+  await expect(panel, 'the picker survived a backwards keyboard exit').toBeHidden();
+
+  await summary.press('Enter');
+  await expect(panel).toBeVisible();
+  await panel.locator('input[type=checkbox]').last().focus();
+  await page.keyboard.press('Tab');
+  await expect(panel, 'the picker survived a forwards keyboard exit').toBeHidden();
 });
 
 /**
@@ -211,6 +242,10 @@ test('paints a focus indicator on a native checkbox', async ({ page }) => {
 test('keeps every sidebar tab stop on screen and clear of the clip edge', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 500 });
   await page.goto('/');
+  // The face swaps in after first paint and the chrome reflows by ~6px, which moves the sidebar's
+  // own top and max-height (docs/app.md §Columns and sorting). Measuring across that reflow reads
+  // one stop against the layout of the one before it.
+  await page.evaluate(() => document.fonts.ready);
 
   const bad: string[] = [];
   for (let i = 0; i < 40; i++) {
@@ -225,12 +260,15 @@ test('keeps every sidebar tab stop on screen and clear of the clip edge', async 
         name: el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim() ?? el.tagName,
         offscreen: b.bottom <= 0 || b.top >= window.innerHeight,
         slack: Math.round(Math.min(b.top - p.top, p.bottom - b.bottom)),
+        // Carried into the failure message: which of the two — the port's own scroll or the page's
+        // — came up short is not recoverable from a slack figure alone.
+        where: `el ${Math.round(b.top)}..${Math.round(b.bottom)} in port ${Math.round(p.top)}..${Math.round(p.bottom)} at scrollTop ${Math.round(port.scrollTop)}`,
       };
     });
     if (!stop) continue;
     if (stop.offscreen) bad.push(`${stop.name}: focused below the fold`);
     // 4px is the ring's own outer radius, which is what the port reserves.
-    if (stop.slack < 4) bad.push(`${stop.name}: ${stop.slack}px inside the port, ring clipped`);
+    if (stop.slack < 4) bad.push(`${stop.name}: ${stop.slack}px inside the port, ring clipped (${stop.where})`);
   }
   expect(bad, 'the sidebar did not follow focus').toEqual([]);
 });

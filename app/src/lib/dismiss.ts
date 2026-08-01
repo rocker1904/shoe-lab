@@ -33,3 +33,44 @@ export function dismissOnOutsidePress(
   document.addEventListener('pointerdown', onpress, true);
   return () => document.removeEventListener('pointerdown', onpress, true);
 }
+
+/**
+ * The keyboard's half of the same policy: a panel whose focus leaves it, in **either** direction,
+ * is dismissed — the keyboard equivalent of the outside press above
+ * (docs/app.md §Every floating panel dismisses the same way).
+ *
+ * Without it a runner Tabbing out left the panel hanging over the controls they tabbed to next, and
+ * **Escape was inert from that point on**, because the key event is delivered to whatever now holds
+ * focus and each panel's Escape handler is bound to the panel. The month picker survived a
+ * backwards exit and the column picker survived one in either direction.
+ *
+ * Three choices, and the last one is the subtle one:
+ *
+ * **On `document`, in capture, like the press listener.** The panel's root is a `bind:this` that
+ * can be replaced when the panel re-renders, and a listener bound to the node would go with it.
+ *
+ * **Both ends are checked.** The move has to *start* inside — focus travelling between two things
+ * outside is not this panel's business — and it has to *end* outside. `within` is the whole anchor
+ * rather than the panel, so Tabbing back to the trigger is not leaving: it is how the runner shuts
+ * the panel they just opened.
+ *
+ * **A null `relatedTarget` does NOT close.** Focus going nowhere identifiable is what a click on
+ * unfocusable chrome produces, and also what a stepper that disables itself under the pointer
+ * produces (docs/app.md §Released after is month-granular) — the month picker steps its year that
+ * way and would shut itself at the ends of the fleet. The pointer case is already answered by the
+ * press listener, so treating null as "not a departure" costs nothing and saves that.
+ */
+export function dismissOnFocusLeave(
+  within: () => Node | null | undefined,
+  dismiss: () => void,
+): () => void {
+  const onleave = (e: FocusEvent) => {
+    const box = within();
+    if (!box?.contains(e.target as Node | null)) return;
+    const to = e.relatedTarget as Node | null;
+    if (to === null || box.contains(to)) return;
+    dismiss();
+  };
+  document.addEventListener('focusout', onleave, true);
+  return () => document.removeEventListener('focusout', onleave, true);
+}

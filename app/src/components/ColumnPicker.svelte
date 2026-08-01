@@ -4,7 +4,7 @@
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
-  import { dismissOnOutsidePress } from '../lib/dismiss';
+  import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { ICON_PATHS } from './icons';
   import { columnLabel } from '../lib/labels';
   import { DERIVED_ZONE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
@@ -86,9 +86,11 @@
 
   $effect(() => {
     if (!open) return;
-    // A press on the summary is *inside*, so it is left to the browser's own toggle — which is what
-    // stops the trigger closing and immediately reopening the panel.
-    return dismissOnOutsidePress(() => details, shut);
+    // Guarded on the whole `<details>`, so the summary is INSIDE for both dismissals: its press is
+    // left to the browser's own toggle rather than closing and immediately reopening the panel, and
+    // Escape's hand-back of focus to it is not a departure. `lib/dismiss.ts` owns the rest.
+    const stops = [dismissOnOutsidePress(() => details, shut), dismissOnFocusLeave(() => details, shut)];
+    return () => stops.forEach((s) => s());
   });
 
   function onkeydown(e: KeyboardEvent) {

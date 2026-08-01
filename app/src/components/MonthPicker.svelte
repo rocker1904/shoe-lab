@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { dismissOnOutsidePress } from '../lib/dismiss';
+  import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { MONTHS, monthLabel, startOfMonth } from '../lib/release-date';
 
   let { value, min, max, onchange }: {
@@ -115,26 +115,20 @@
     if (!panel?.contains(active) || active?.disabled) focusGrid();
   }
 
-  /**
-   * Tab out of the panel and it closes. Pointer dismissal is a separate listener below, because a
-   * click on something unfocusable — a heading, the sidebar's own padding — moves focus to nothing
-   * and arrives here as a null `relatedTarget`, which is indistinguishable from a stepper disabling
-   * itself under the pointer. Guarded on the whole anchor rather than the panel so that Tabbing
-   * back to the trigger does not count as leaving.
-   */
-  function onfocusout(e: FocusEvent) {
-    const to = e.relatedTarget as Node | null;
-    if (to === null || anchor?.contains(to)) return;
-    open = false;
-  }
   let panel = $state<HTMLElement | null>(null);
   let anchor = $state<HTMLElement | null>(null);
-  /** Guarded on the whole anchor rather than the panel, so the trigger's own press counts as inside
-   *  and is left to `toggle`. `lib/dismiss.ts` owns the rest of the reasoning, and the same effect
-   *  is what the column picker runs too. */
+  /**
+   * Both dismissals, guarded on the whole anchor rather than the panel: the trigger's own press
+   * counts as inside and is left to `toggle`, and Tabbing back onto the trigger is not leaving.
+   * `lib/dismiss.ts` owns the reasoning for both, including why a null `relatedTarget` must not
+   * close this one — that is the stepper at the ends of the fleet disabling itself under the
+   * pointer. The column picker runs the same pair.
+   */
   $effect(() => {
     if (!open) return;
-    return dismissOnOutsidePress(() => anchor, () => (open = false));
+    const shut = () => (open = false);
+    const stops = [dismissOnOutsidePress(() => anchor, shut), dismissOnFocusLeave(() => anchor, shut)];
+    return () => stops.forEach((s) => s());
   });
 
   /**
@@ -170,7 +164,7 @@
     <!-- `tabindex="-1"` because Escape is answered here, and a key event only reaches this node
          while focus is inside it. -->
     <div class="panel" id={PANEL_ID} role="dialog" tabindex="-1" aria-label="Choose a release month"
-         bind:this={panel} onkeydown={onkeydown} onfocusout={onfocusout}>
+         bind:this={panel} onkeydown={onkeydown}>
       <div class="head">
         <button type="button" aria-label="Previous year" disabled={year <= minYear}
                 onclick={() => void step(-1)}>‹</button>
