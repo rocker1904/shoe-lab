@@ -95,7 +95,7 @@
   }
   function onkeydown(e: KeyboardEvent) {
     if (e.key !== 'Escape') return;
-    // Below 800px the sidebar is itself a drawer with its own Escape handler, and this panel is a
+    // Below 1180px the sidebar is itself a drawer with its own Escape handler, and this panel is a
     // real descendant of it — so without this, one Escape would shut the picker and the drawer
     // around it (docs/app.md §Filters).
     e.stopPropagation();

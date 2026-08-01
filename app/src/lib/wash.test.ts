@@ -24,7 +24,7 @@ function over(fill: number[], alpha: number, surface: number[]): number[] {
  * `tokens.test.ts` pins the same literals from the other side (docs/app.md §Theming).
  *
  * `page` is `--bg` and `track` is `--border-soft`, because a flat mark is only legible against the
- * surface it is ACTUALLY on: above 800px the sidebar declares no background, so the histogram bars
+ * surface it is ACTUALLY on: above 1180px the sidebar declares no background, so the histogram bars
  * sit on the page rather than on `--surface`, and the pickers' coverage fill sits in a
  * `--border-soft` groove. Asserting against `--surface` alone measures the case that only happens
  * inside the drawer.
@@ -167,7 +167,7 @@ describe('both ramps stay legible under the hover overlay', () => {
  * be lightened into invisibility by a token retune with nothing failing.
  *
  * Against every surface the mark actually sits on, not just one. `--surface` is only the
- * histogram's backdrop below 800px, inside the drawer; above it the sidebar has no background of
+ * histogram's backdrop below 1180px, inside the drawer; above it the sidebar has no background of
  * its own and the bars sit on `--bg`, which is the lighter of the two in light mode and therefore
  * the binding case. The pickers' coverage fill sits in a `--border-soft` track, which is lighter
  * again.

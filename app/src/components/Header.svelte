@@ -72,9 +72,10 @@
   /* Below 800px the masthead becomes a BANNER: the wordmark at the left margin, and opposite it one
      right-aligned block saying where the data came from. Desktop is the default and this is the
      override, never the other way round — writing it banner-first would need a `min-width` twin of
-     the sidebar's `max-width: 800px`, and every fractional width between the two would match
-     neither (docs/app.md §Where the utilities live). One query, and its complement is whatever the
-     query does not match.
+     this `max-width`, and every fractional width between the two would match neither
+     (docs/app.md §Where the utilities live). One query, and its complement is whatever the query
+     does not match. This is the CHROME-DENSITY boundary, which the masthead shares with the bar and
+     the pickers; the sidebar's own sits at 1180px (docs/app.md §The chrome bands).
      `--s5` of side padding is a desktop gutter: at 390px it spent 48px of a 390px line. */
   @media (max-width: 800px) {
     /* The spacer STAYS — it is what makes the banner flush right, and deleting it here is exactly
