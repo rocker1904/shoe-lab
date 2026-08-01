@@ -219,3 +219,29 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
   }
   return v;
 }
+
+/**
+ * The open detail panels — what the runner is *reading*, which is not part of what they searched.
+ * Deliberately not a `ViewState` field: the toolbar marks are `sameValue` comparisons of whole
+ * views, so an open row in there would unmark the story the moment one was tapped
+ * (docs/app.md §View and URL ownership).
+ */
+export function serializeOpen(open: string[]): string {
+  if (!open.length) return '';
+  const p = new URLSearchParams();
+  p.set('open', open.join(','));
+  return p.toString();
+}
+
+/**
+ * The catalogue is passed in because this function's signature is free to take it — `parseView` is
+ * locked to a `TestIndex` by its call sites and could never vouch for a shoe slug. So a slug that
+ * has left the fleet is dropped rather than carried inert, which is the contract the rest of the
+ * encoding already keeps (docs/app.md §URL encoding).
+ */
+export function parseOpen(qs: string, slugs: ReadonlySet<string>): string[] {
+  const raw = new URLSearchParams(qs).get('open');
+  if (!raw) return [];
+  // The same all-separator rule `brands`, `plate` and `rows` follow: ",," is absent, not empty.
+  return [...new Set(raw.split(',').filter(Boolean))].filter((slug) => slugs.has(slug));
+}

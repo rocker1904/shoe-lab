@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
-import { defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './urlstate';
+import { defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, type ViewState } from './urlstate';
 import type { FilterState } from './filters';
-import { TESTS, labTest } from './test-fixtures';
+import { FLEET, TESTS, labTest } from './test-fixtures';
 
 const ZONES: Zone[] = ['heel', 'forefoot'];
 
@@ -460,5 +460,42 @@ describe('released-after is month-granular', () => {
     const v = parseView('after=2024-03-15', idx);
     expect(serializeView(v)).toContain('after=2024-03');
     expect(parseView(serializeView(v), idx).filters.releasedAfter).toBe('2024-03-01');
+  });
+});
+
+/**
+ * The open detail panels ride in the same address as the view but through their own pair, so this
+ * block owns both halves of that: the pair round-trips and validates, and neither encoding writes
+ * or reads the other's token (docs/app.md §URL encoding).
+ */
+describe('open rows', () => {
+  const SLUGS = new Set(FLEET.map((s) => s.slug));
+
+  it('serialises nothing when no row is open', () => {
+    expect(serializeOpen([])).toBe('');
+  });
+  it('round-trips an open set, in the order it was opened', () => {
+    expect(parseOpen(serializeOpen(['racer', 'cushy']), SLUGS)).toEqual(['racer', 'cushy']);
+  });
+  it('drops a slug the catalogue no longer has', () => {
+    expect(parseOpen('open=cushy,gone-shoe', SLUGS)).toEqual(['cushy']);
+  });
+  it('an all-separator value stays empty rather than becoming a member', () => {
+    expect(parseOpen('open=,,', SLUGS)).toEqual([]);
+  });
+  it('dedupes a repeated slug', () => {
+    expect(parseOpen('open=cushy,cushy', SLUGS)).toEqual(['cushy']);
+  });
+  it('reads nothing out of an address that carries no open token', () => {
+    expect(parseOpen('q=nimbus', SLUGS)).toEqual([]);
+  });
+  // The two encodings compose into one address, so neither may write the other's token.
+  it('serializeView never emits an open key', () => {
+    const v = defaultView();
+    v.filters.brands = ['Brand'];
+    expect(serializeView(v)).not.toContain('open');
+  });
+  it('parseView ignores an open token', () => {
+    expect(sameValue(parseView('open=cushy', idx), defaultView())).toBe(true);
   });
 });
