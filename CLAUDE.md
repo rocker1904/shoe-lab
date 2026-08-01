@@ -100,9 +100,9 @@ each was learned by getting it wrong first.
   `.superpowers/audit.mjs` is one such rig, and its assertion belongs in the
   suite so upstream drift fails the build rather than clipping on a phone.
 - **Check the real data before designing over it.** Distributions are not what
-  they look like: price is effectively categorical (47 distinct values, five
-  holding half the fleet), several metrics are 99% distinct, and coverage is
-  era-shaped rather than sparse. Compute the shape before choosing an
+  they look like: price is effectively categorical where most metrics are nearly
+  all-distinct (docs/app.md §Filters), and coverage is era-shaped rather than
+  sparse (docs/app.md §Coverage). Compute the shape before choosing an
   interaction for it.
 - **Explore fully before writing anything up.** Keep offering alternatives until
   the human says they are done, not until an option looks good enough. Do not

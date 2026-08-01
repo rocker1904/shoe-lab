@@ -30,7 +30,7 @@ filter working when it was a bare text box in both
 
 On CI the two extra engines cost 23–54s to install across the runs measured so
 far — the spread is the runner's apt cache, not the payload — and about a second
-of test time, since the four cross-browser tests run alongside the smoke suite
+of test time, since `cross-browser.spec.ts` runs alongside the smoke suite
 rather than after it.
 
 **WebKit does not launch on a distribution Playwright supports only through
@@ -80,9 +80,12 @@ they are never left undated. The manual details refresh always runs it.
 
 ## Where failures are contained
 
-`continue-on-error` sits in exactly two places, both protecting an expensive
-completed crawl from a cheap failed step. Neither weakens the validation
-gates, which still abort their own run before writing anything.
+`continue-on-error` is used in the refresh chain only where an expensive
+completed crawl must survive a cheap failed step, and never weakens the
+validation gates, which still abort their own run before writing anything.
+`grep -rn continue-on-error .github/workflows` is the exhaustive list; what it
+finds outside the refresh chain is the drift reporter
+(§Drift is reported, never enforced).
 
 - **`refresh-metrics.yml`, `scrape:details`** — that CLI exits 1 if *any*
   single slug fails, and metrics are the primary product of the Monday job.

@@ -431,8 +431,8 @@ category, so RunRepeat's hiking footwear rides in with the running shoes — 14 
 that is present and not `running-shoes`. Absence keeps the shoe: no details
 record, a tombstone, or a null `categorySlug` all stay, because "not crawled yet"
 is not "not a running shoe". Do not swap the discriminator for absence from
-`release-years.json` — 53 shoes are missing from that file, mostly discontinued,
-and dropping them would take genuine racing shoes with them.
+`release-years.json` — dozens of catalogued shoes are missing from that file,
+mostly discontinued, and dropping them would take genuine racing shoes with them.
 
 ### Tombstones are records, not gaps
 A 404 during the details crawl writes `{ gone: true, scrapedAt }` rather than
