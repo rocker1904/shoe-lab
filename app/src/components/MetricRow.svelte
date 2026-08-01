@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Coverage } from '../lib/coverage';
+  import { directionOf, DIRECTION_ARROW } from '../lib/direction';
   import type { ResolvedMetric } from '../lib/lineage';
   import { roving } from '../lib/roving';
 
@@ -30,6 +31,21 @@
     metric.kind === 'single' ? measured(metric.key)
     : metric.kind === 'colocated' ? measured(metric.parts[0]!.key)
     : null);
+  /**
+   * The metric's own direction, marked where the bound is typed. The sidebar was the one surface
+   * carrying none, while the phone header renames `Outsole durability` to `Outsole wear` to say
+   * exactly this — two surfaces of one app disagreeing about which end is better
+   * (docs/app.md §Table presentation).
+   *
+   * One key answers for the whole row: both halves of a declared zone pair are the same test run
+   * and share a direction, and a superseded pair is one measurement remethoded. The chosen
+   * generation rather than the current one, so a view switched to the retired half is still read
+   * from the key it is showing.
+   */
+  const dirKey = $derived(
+    metric.kind === 'single' ? metric.key
+    : metric.kind === 'colocated' ? metric.parts[0]!.key
+    : chosen);
   /** The heading follows any row of the metric that is filtering, whichever half or generation. */
   const active = $derived(
     metric.kind === 'single' ? bounded(metric.key)
@@ -39,7 +55,12 @@
 
 <div class="metric">
   <div class="head">
-    <h4 class:on={active}>{metric.label}{metric.kind === 'single' && metric.units ? ` (${metric.units})` : ''}</h4>
+    <!-- The glyph sits INSIDE the heading, glued to the name it qualifies rather than pushed to the
+         far end of a `space-between` row where the coverage figure is. `aria-hidden`, like both
+         pickers' — the legend above states the meaning once, and restating it per row would make
+         every row twice as long to hear (docs/app.md §Table presentation). -->
+    <h4 class:on={active}>{metric.label}{metric.kind === 'single' && metric.units ? ` (${metric.units})` : ''}<span
+      class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(dirKey)]}</span></h4>
     {#if headCoverage}<span class="cov">{headCoverage}</span>{/if}
   </div>
 
@@ -62,6 +83,11 @@
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
   h4 { font-size: var(--t-sm); color: var(--text-dim); margin: 0; font-weight: 600; }
   h4.on { color: var(--text); font-weight: 700; }
+  /* The same mono glyph the two pickers draw, at the same size and dimmed the same way — a
+     direction mark that read differently on three surfaces would be three marks. Empty for a
+     neutral metric, so the margin goes with it rather than leaving a gap after the name. */
+  .dir:not(:empty) { margin-left: var(--s1); font-family: var(--font-mono); font-weight: 400;
+                     color: var(--text-dim); }
   .cov { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim);
          font-variant-numeric: tabular-nums; white-space: nowrap; }
   .gens { display: flex; flex-direction: column; gap: var(--s1); }

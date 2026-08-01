@@ -668,19 +668,34 @@ reserves the same band and `smoke.spec.ts` measures the two against each other
 `float` carries its own, `percent` is `%`, `score` and `rating` are `/5`, the
 `score` field is `/100` and `msrpGbp` is `£`. There is **no direction arrow
 here**: the sorted column carries a caret, and two arrows in one header
-collided. Direction is shown in the column picker and the add-filter dialog
-instead — in **both** of their row loops, so the shoe fields carry it too and
-price keeps its `↓` — and in the table it is carried by the wash:
-`percentileMap` inverts for a `lower` metric, so the strongest tint sits on the
-best value whichever numeric end that is (docs/app.md §Theming). Each list
-opens with one legend line — `↑ higher is better · ↓ lower is better · no mark —
+collided. Direction is shown in **three** places instead — the column picker,
+the add-filter dialog and the sidebar's metric rows — and in the table it is
+carried by the wash: `percentileMap` inverts for a `lower` metric, so the
+strongest tint sits on the best value whichever numeric end that is
+(docs/app.md §Theming). The two pickers mark **both** of their row loops, so the
+shoe fields carry it too and price keeps its `↓`; the sidebar marks the metric
+row's heading, glued to the name rather than pushed to the far end of a
+`space-between` row, and one key answers for the whole row because both halves
+of a declared zone pair are one test run and a superseded pair is one
+measurement remethoded. **The sidebar was the surface that carried none**, which
+is the same defect as the plate cell wearing a different number: `Outsole
+durability` is Dremel dent depth in mm, so the phone header renames it `Outsole
+wear` to say lower is better while the row a runner types the bound on said
+nothing at all (§Two renderings, and only one of them mounted). Each list opens
+with one legend line — `↑ higher is better · ↓ lower is better · no mark —
 neutral`, separators included, because without them three clauses read as three
 headings — because a bare glyph with no units beside it is ambiguous; a screen
 reader is given nothing per row, deliberately, since restating it there would
-make every row twice as long to hear. Both legends sit **outside** their list's
-scrollport and carry the same margin: inside one, the legend scrolls away with
-the first few rows and every glyph under it stops meaning anything.
-`size-rating` is
+make every row twice as long to hear. The words are `DirectionLegend.svelte`'s,
+one home for three renders. The two pickers' legends sit **outside** their
+list's scrollport and carry the same margin: inside one, the legend scrolls away
+with the first few rows and every glyph under it stops meaning anything. **The
+sidebar's cannot** — the sidebar *is* the scrollport — so it stands at the head
+of the run of rows it explains, below the five sections that carry no mark and
+would otherwise read as claims about Search and Brand. What makes that
+survivable is the one thing these rows have that a picker's do not: each states
+its own units beside the glyph, which is the ambiguity the legend was written
+for. `size-rating` is
 the one units override: it reads `3 = true`, because `/5` would present a
 runs-small / true / runs-large scale as a mediocre mark.
 

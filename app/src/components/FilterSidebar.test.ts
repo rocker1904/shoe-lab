@@ -461,10 +461,12 @@ describe('FilterSidebar metric entries', () => {
  * them would assert that a constant equals itself. Every fixed section carries a heading so its
  * position is asserted too, and the group names carry heading *and* zone so no two collide.
  */
+/** The direction glyph rides in the heading text, so this list is also the pin on which sidebar
+ *  rows claim a better end and which stay neutral — `Outsole durability (mm)↓` is 0001's row. */
 const HEADINGS = [
   'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
-  'Price (£)', 'Stack', 'Energy return', 'Weight (g)',
-  'Shock absorption', 'Outsole durability (mm)', 'Midsole width', 'Width / Fit',
+  'Price (£)↓', 'Stack', 'Energy return↑', 'Weight (g)↓',
+  'Shock absorption↑', 'Outsole durability (mm)↓', 'Midsole width', 'Width / Fit',
 ];
 const GROUPS = [
   'Plate', 'Brand',
@@ -513,5 +515,27 @@ describe('FilterSidebar order', () => {
     const bound = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     const bold = [...bound.container.querySelectorAll('legend.on')].map((n) => n.textContent?.trim());
     expect(bold).toEqual(['Heel']);
+  });
+});
+
+// The direction marks the metric rows now carry mean nothing without the one line that reads them,
+// and this is the surface a runner types a bound on (docs/app.md §Table presentation).
+describe('FilterSidebar direction legend', () => {
+  it('carries exactly one direction legend, in the same words the two pickers use', () => {
+    const { container } = render(FilterSidebar, { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+    const legends = [...container.querySelectorAll('.legend')];
+    expect(legends).toHaveLength(1);
+    expect(legends[0]!.textContent?.replace(/\s+/g, ' ')).toContain('higher is better');
+    expect(legends[0]!.textContent?.replace(/\s+/g, ' ')).toContain('lower is better');
+    expect(legends[0]!.textContent?.replace(/\s+/g, ' ')).toContain('neutral');
+  });
+  // It explains the glyphs below it, so it may not open the sidebar above the controls that carry none.
+  it('stands at the head of the metric rows, not above the search box', () => {
+    const { container } = render(FilterSidebar, { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+    const legend = container.querySelector('.legend')!;
+    const firstMetric = container.querySelector('section.metric')!;
+    expect(legend.compareDocumentPosition(firstMetric) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const search = container.querySelector('.search')!;
+    expect(search.compareDocumentPosition(legend) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

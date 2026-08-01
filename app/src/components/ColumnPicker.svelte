@@ -3,6 +3,7 @@
   import { categoricalEntries } from '../lib/categorical';
   import { coverageOf } from '../lib/coverage';
   import type { TestIndex } from '../lib/dataset';
+  import DirectionLegend from './DirectionLegend.svelte';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
   import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { ICON_PATHS } from './icons';
@@ -124,16 +125,10 @@
     <svg class="chev" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </summary>
   <div class="panel">
-    <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
-         beside it a lone ↑ says nothing (docs/app.md §Table presentation).
-         OUTSIDE the scrollport, which is what `.list` below is for: inside it the legend scrolled
-         away with the first few rows and every glyph under it stopped meaning anything. The
-         add-filter dialog already had this shape; now the two lists have one. -->
-    <p class="legend">
-      <span><b>↑</b> higher is better</span>
-      <span><b>↓</b> lower is better</span>
-      <span>no mark — neutral</span>
-    </p>
+    <!-- OUTSIDE the scrollport, which is what `.list` below is for: inside it the legend scrolled
+         away with the first few rows and every glyph under it stopped meaning anything.
+         `DirectionLegend.svelte` owns the words (docs/app.md §Table presentation). -->
+    <DirectionLegend />
     <div class="list scrollport">
     {#each FIXED as [key, label] (key)}
       <label>
@@ -227,11 +222,6 @@
           margin-inline: calc(-1 * var(--ring-room)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }
-  /* Separated, and the same rule and the same margin as the add-filter dialog's: the three clauses
-     are one sentence and read as three headings without them. */
-  .legend { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
-  .legend span + span::before { content: '·'; margin-right: var(--s2); }
-  .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
   .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
   /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
      mark, --border-soft the groove it sits in. The fill is a flat mark and the track is the surface

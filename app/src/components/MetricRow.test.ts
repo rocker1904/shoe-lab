@@ -24,6 +24,9 @@ const colocated = metricEntries([
   labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return heel', chartLabel: 'Energy return', secondaryTestIds: [66] }),
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', primaryTestId: 65 }),
 ])[0]!;
+// Dremel dent depth in mm, so lower is the more durable shoe — the metric the sidebar was silent
+// about while the phone header renames it `Outsole wear` for exactly that reason.
+const lower = metricEntries([labTest({ id: 4, slug: 'outsole-durability', name: 'Outsole durability', units: 'mm' })])[0]!;
 
 function setup(metric: typeof single, over: {
   chosen?: string; coverage?: (k: string) => Coverage; bounded?: (k: string) => boolean;
@@ -100,6 +103,36 @@ describe('MetricRow pair', () => {
     });
     expect(screen.getByText('51 / 100 measured')).toBeInTheDocument();
     expect(screen.getByText('83 / 100 measured')).toBeInTheDocument();
+  });
+});
+
+// The sidebar is where a runner types a bound, and it was the one surface carrying no direction at
+// all — while the phone header renamed `Outsole durability` to `Outsole wear` to say the same thing
+// (docs/app.md §Table presentation).
+describe('MetricRow direction', () => {
+  it('marks a lower-is-better metric with the pickers own glyph', () => {
+    setup(lower);
+    expect(screen.getByRole('heading', { name: /Outsole durability/ }).textContent).toContain('↓');
+  });
+  it('marks a higher-is-better metric', () => {
+    setup(colocated, { chosen: 'energy-return-heel' });
+    expect(screen.getByRole('heading').textContent).toContain('↑');
+  });
+  it('leaves a neutral metric unmarked, so a new upstream test is never mis-marked', () => {
+    setup(single);
+    expect(screen.getByRole('heading').textContent).not.toMatch(/[↑↓]/);
+  });
+  // The legend carries the meaning once; restating it per row would make every row twice as long
+  // to hear, which is the call the two pickers already made (docs/app.md §Table presentation).
+  it('keeps the glyph out of the accessible name', () => {
+    setup(lower);
+    expect(screen.getByRole('heading', { name: /Outsole durability/ })).toHaveAccessibleName('Outsole durability (mm)');
+  });
+  // Both halves of a declared pair are read in one test run and share a direction, so the mark
+  // belongs to the metric rather than to whichever half is chosen.
+  it('takes a pair mark from the chosen generation', () => {
+    setup(pair, { chosen: 'midsole-softness-22' });
+    expect(screen.getByRole('heading').textContent).not.toMatch(/[↑↓]/);
   });
 });
 

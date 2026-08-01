@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import DirectionLegend from './DirectionLegend.svelte';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
 
   export interface AddFilterOption { key: string; label: string; groupId: string | null; coverage: number }
@@ -80,13 +81,9 @@
      bind:this={panel} use:toBody>
   <input class="q" type="search" aria-label="Filter metrics" placeholder="Search metrics…"
          bind:value={query} bind:this={search} />
-  <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
-       beside it a lone ↑ says nothing (docs/app.md §Table presentation). -->
-  <p class="legend">
-    <span><b>↑</b> higher is better</span>
-    <span><b>↓</b> lower is better</span>
-    <span>no mark — neutral</span>
-  </p>
+  <!-- Above the scrollport below, so it cannot scroll away from the glyphs it explains.
+       `DirectionLegend.svelte` owns the words (docs/app.md §Table presentation). -->
+  <DirectionLegend />
   <div class="list scrollport">
     {#each grouped as [group, offers] (group)}
       <h4>{group}</h4>
@@ -147,9 +144,6 @@
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   /* Separated, and the same rule and the same margin as the column picker's: the three clauses are
      one sentence and read as three headings without them. */
-  .legend { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
-  .legend span + span::before { content: '·'; margin-right: var(--s2); }
-  .legend b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
   .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
   .list button { display: grid; grid-template-columns: 1fr auto 4rem 2.4rem; align-items: center; gap: var(--s2);
                  padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);

@@ -9,6 +9,7 @@
   import type { ViewState } from '../lib/urlstate';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
+  import DirectionLegend from './DirectionLegend.svelte';
   import DiscontinuedFilter from './DiscontinuedFilter.svelte';
   import MetricRow from './MetricRow.svelte';
   import MonthPicker from './MonthPicker.svelte';
@@ -248,6 +249,14 @@
     <h3>Discontinued</h3>
     <DiscontinuedFilter value={view.filters.discontinued} onchange={(d) => patch((v) => { v.filters.discontinued = d; })} />
   </section>
+
+  <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the five
+       sections above carry no direction mark, so a legend over them would read as a claim about
+       Search and Brand. It is the one legend of the three that cannot sit outside its scrollport —
+       the sidebar IS the scrollport — so it scrolls with the rows rather than above them; what
+       makes that survivable here is that these rows state their own units where the pickers' do
+       not (docs/app.md §Table presentation). -->
+  <DirectionLegend />
 
   {#each shown as e (keysOf(e)[0])}
     <section class="metric">
