@@ -200,8 +200,13 @@
 <aside>
   <section>
     <h3>Search</h3>
+    <!-- `.trim()` decides, but the untrimmed value is what is stored: a query with no non-whitespace
+         character selects nothing, so it is the empty query and must not reach the URL or storage
+         (docs/app.md §Filters) — while trimming what is *kept* would delete the space between two
+         words the moment it was typed. -->
     <input class="search" type="search" placeholder="Search shoes…" aria-label="Search"
-           value={view.filters.search ?? ''} oninput={(e) => patch((v) => { v.filters.search = e.currentTarget.value || undefined; })} />
+           value={view.filters.search ?? ''}
+           oninput={(e) => patch((v) => { v.filters.search = e.currentTarget.value.trim() ? e.currentTarget.value : undefined; })} />
   </section>
 
   <section>

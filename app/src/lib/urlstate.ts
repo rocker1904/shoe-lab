@@ -161,7 +161,11 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       // an all-separator value (",,,") must stay absent, not become an empty array that no longer equals the default
       const brands = raw.split(',').filter(Boolean);
       if (brands.length) v.filters.brands = brands;
-    } else if (key === 'q' && raw) {
+    } else if (key === 'q' && raw.trim()) {
+      // The same rule the input applies, at the other door: a stored view replays through here when
+      // there is no query string, so a persisted `q=++` would otherwise open every later visit on
+      // an empty table with two invisible characters as its only cause. Kept untrimmed, because the
+      // space between two words is part of the query (docs/app.md §Filters).
       v.filters.search = raw;
     } else if (key === 'disc' && (raw === 'hide' || raw === 'only')) {
       v.filters.discontinued = raw;

@@ -144,6 +144,24 @@ describe('FilterSidebar text and toggle controls', () => {
   });
 
   /**
+   * A stray space is truthy, is a substring of no shoe name, and reaches the URL and storage
+   * through the one write path — so it empties the whole fleet and the next visit opens on that
+   * empty table with two invisible characters as its only stated cause. Whitespace *around* a real
+   * query is kept verbatim, because trimming as it is typed deletes the space between two words.
+   */
+  it.each(['  ', '\t', ' \n '])('treats a query of only whitespace (%j) as no query', async (value) => {
+    const onchange = setup();
+    await fireEvent.input(screen.getByLabelText('Search'), { target: { value } });
+    expect(onchange.mock.lastCall![0].filters.search).toBeUndefined();
+    expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
+  });
+  it('keeps a space inside a query, so two words can be typed', async () => {
+    const onchange = setup();
+    await fireEvent.input(screen.getByLabelText('Search'), { target: { value: 'road ' } });
+    expect(onchange.mock.lastCall![0].filters.search).toBe('road ');
+  });
+
+  /**
    * Not `input type="month"`: Firefox and WebKit implement none of it and reflect the type back as
    * `text`, so the control was a bare box in both and free text reached `startOfMonth`, which
    * turned "July 2024" into the bound "July 20-01" (docs/app.md §Released after is month-granular).

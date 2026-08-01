@@ -187,6 +187,17 @@ then the measurements a runner narrows on most, then the rest curated, then
 anything added by hand. Price leads because it is the bound almost every search
 has.
 
+**The search box matches a case-insensitive substring.** A query with no
+non-whitespace character in it is **the empty query**, and it is settled at both
+doors into the view rather than at the point of use: the input keeps a value
+whose `.trim()` is empty out of the view entirely, and `parseView` drops a `q`
+of the same shape. Both are needed, because a stored view replays through
+`parseView` — a stray space in the box used to reach the URL and storage through
+the one write path (§View and URL ownership) and open every later visit on an
+empty table whose only stated cause was two invisible characters. What is kept
+is **untrimmed**: the space between two words is part of the query, and trimming
+as it is typed deletes it under the cursor.
+
 **The curated list is not the set of terms the story scores read**, and it is
 not meant to become one: a filter row narrows a search, a term ranks one. Heel
 counter stiffness is a term with no row, because nobody searches in five-point

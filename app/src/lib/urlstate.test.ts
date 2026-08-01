@@ -61,6 +61,18 @@ describe('urlstate', () => {
     const v = parseView('r.nonsense=1~2&bogus=1&r.heel-stack=abc~def&plate=titanium&sort=-nope', idx);
     expect(v).toEqual(defaultView());
   });
+  /**
+   * The other door into the same defect: a stored view replays through `parseView` when there is
+   * no query string, so a persisted `q=++` would empty the fleet on arrival with nothing on screen
+   * naming the cause. A query with no non-whitespace character selects nothing and is therefore
+   * not a query (docs/app.md §Filters).
+   */
+  it.each(['q=+', 'q=++', 'q=%09', 'q=%20%0A%20'])('drops a whitespace-only %s', (qs) => {
+    expect(parseView(qs, idx)).toEqual(defaultView());
+  });
+  it('keeps the whitespace around a real query, so a two-word link round-trips', () => {
+    expect(parseView('q=road+', idx).filters.search).toBe('road ');
+  });
   it('sort minus prefix means desc', () => {
     expect(parseView('sort=-weight', idx).sort).toEqual({ key: 'weight', dir: 'desc' });
     expect(parseView('sort=name', idx).sort).toEqual({ key: 'name', dir: 'asc' });
