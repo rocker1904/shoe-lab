@@ -1906,7 +1906,28 @@ container set it themselves — so a width meant as a total has to say so:
   total against the 352px the bar leaves it at 360px — its left hairline fell
   off the screen. The 4px a side comes out of the **padding** below 400px, never
   out of the 20rem: at 20rem the direction legend holds one line, and border-box
-  sizing shrinks it to 320px and wraps it, which the design forbids.
+  sizing shrinks it to 320px and wraps it, which the design forbids. **Below
+  360px the 20rem cannot fit at all** — 346px of panel wants 354px of screen —
+  so there the panel spans the bar (`left`/`right` both at `--s2`, `min-width: 0`
+  to let them size it) and the legend does take a second line. One width, traded
+  for the checkboxes being on screen.
+
+**The panel is anchored to the chrome below 800px, not to its own trigger.** The
+`right: 0` says "the end of the row", which was true while the picker was the
+last control on the bar. It is not true below 800px: the actions band takes the
+whole width and the utilities are pushed past the picker, so the summary sits
+mid-bar and the panel opened at **x = −166** with all 52 checkboxes off the left
+edge — at every width the drawer exists at, not only the narrow ones. `.picker`
+drops `position: relative` there, which hands the panel to `.chrome`, and the
+`--s2` inset restores the air the toolbar's own padding used to supply. The
+media block sits **after** the base `.panel` rule: a media query carries no
+extra specificity, so a `right: 0` declared below it would win.
+
+That defect shipped through a green suite, because every assertion the suite
+made about the picker was a DOM one and an off-screen box is still `visible`.
+The geometry is measured in `smoke.spec.ts` now — the open panel's box against
+the viewport, plus a hit test on the first checkbox, at 320, 360, 390, 700, 800,
+801 and 1200px — with the legend's one-line bound asserted from 360px up.
 
 ## Theming
 

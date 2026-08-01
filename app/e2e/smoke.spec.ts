@@ -739,6 +739,40 @@ test('leaves both metric lists room for the focus ring they draw', async ({ page
   }
 });
 
+/**
+ * The panel is anchored, and an anchored box is only ever as reachable as the trigger it hangs off.
+ * Every DOM assertion this suite already makes passed while all 52 checkboxes sat at a negative x —
+ * `toBeVisible` is a CSS question, not a geometry one — so this measures the painted box against
+ * the viewport instead. Both bands, because the anchor differs across 800px
+ * (docs/app.md §Stacking order).
+ */
+test('opens the column picker fully on screen at every width', async ({ page }) => {
+  for (const width of [320, 360, 390, 700, 800, 801, 1200]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/');
+    await page.locator('details.picker summary').click();
+    const seen = await page.evaluate(() => {
+      const panel = document.querySelector('details.picker .panel')!;
+      const box = panel.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      const first = panel.querySelector('input[type=checkbox]')!.getBoundingClientRect();
+      const legend = panel.querySelector('.legend')!;
+      const line = legend.querySelector('span')!.getBoundingClientRect().height;
+      return {
+        left: Math.round(box.left), right: Math.round(vw - box.right),
+        hit: panel.contains(document.elementFromPoint(first.x + first.width / 2, first.y + first.height / 2)),
+        legendLines: Math.round(legend.getBoundingClientRect().height / line),
+      };
+    });
+    expect(seen.left, `the picker panel hangs off the left edge at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(seen.right, `the picker panel hangs off the right edge at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(seen.hit, `the first checkbox is not reachable at ${width}px`).toBe(true);
+    // 320px is the one width where the 20rem cannot fit and the panel clamps to the screen instead
+    // (docs/app.md §Stacking order); everywhere above it the direction legend holds one line.
+    if (width >= 360) expect(seen.legendLines, `the direction legend wrapped at ${width}px`).toBe(1);
+  }
+});
+
 test('traps focus in the filter drawer and hands it back on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto('/');

@@ -195,6 +195,30 @@
      onto a second line on a 1440px desktop where nothing was wrong. 346px at 360px, so 6px of air;
      untouched at 401px and above (docs/app.md §Stacking order). */
   @media (max-width: 400px) { .panel { padding-inline: var(--s3); } }
+  /* The trigger stops being the anchor below 800px, because there it is no longer at the end of a
+     row: the actions band takes the whole width and the utilities are pushed past it, so the
+     summary sits MID-BAR and a panel hung off its right edge starts 166px off the left of the
+     screen — every checkbox off screen at every width the drawer exists at, which is how a control
+     that passes `toBeVisible` shipped unusable. Dropping the containing block hands the panel to
+     `.chrome`, which spans the bar, and `--s2` restores the trailing inset the toolbar's own
+     padding used to supply: the geometry the panel had when the trigger was the last thing on the
+     row. AFTER the base rule rather than inside the block above, because a media query carries no
+     extra specificity and `right: 0` below it would win (docs/app.md §Stacking order). */
+  @media (max-width: 800px) {
+    .picker { position: static; }
+    /* `width` as well as the anchor, and it is the same 20rem of content the base rule asks for:
+       shrink-to-fit is measured against the CONTAINING BLOCK, so handing the panel to a bar-wide
+       one let it take its max-content 405px at 700px and go flush to the left edge at 360px. Stated
+       explicitly, the panel keeps the size the design sets and only its anchor moves. */
+    .panel { right: var(--s2); width: 20rem; }
+  }
+  /* Where the 20rem simply cannot fit: 346px of panel needs 354px of screen, so below that the
+     panel spans the bar instead and the direction legend takes a second line. That is the one band
+     the design trades the legend away in, and it is traded for the checkboxes being on screen at
+     all. 360px rather than 354 because 360 is the width the legend's one-line bound is stated at
+     (docs/app.md §Stacking order). `min-width: 0` is what lets the left/right pair size the box —
+     a min-width is applied last and the 20rem would otherwise win. */
+  @media (max-width: 359.98px) { .panel { left: var(--s2); width: auto; min-width: 0; } }
   /* Padding as room for the focus ring, and the same treatment as the add-filter dialog's list,
      which owns the reasoning. */
   .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
