@@ -96,9 +96,11 @@ each was learned by getting it wrong first.
   screen.
 - **State bounds as testable numbers.** "Six metric names must fit at 375px" is
   a bound; "the header should be readable" is not. Where a design implies a
-  constraint, write the number down and build a rig that checks it —
-  `.superpowers/audit.mjs` is one such rig, and its assertion belongs in the
-  suite so upstream drift fails the build rather than clipping on a phone.
+  constraint, write the number down and build a rig that checks it, then put the
+  assertion in the suite: `app/scripts/measure-label-widths.mjs` measures the
+  header face and `app/src/lib/labels.test.ts` holds every catalogue label to
+  `MAX_LABEL_PX`, so upstream drift fails the build rather than clipping on a
+  phone.
 - **Check the real data before designing over it.** Distributions are not what
   they look like: price is effectively categorical where most metrics are nearly
   all-distinct (docs/app.md §Filters), and coverage is era-shaped rather than
