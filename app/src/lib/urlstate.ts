@@ -52,6 +52,17 @@ const SORT_FIELDS = new Set(['name', 'brand', 'releasedAt', 'score', 'msrpGbp', 
 const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...SCORE_KEYS]);
 /** Accepts everything `String(number)` can emit, including exponent form, so serialise/parse round-trips. */
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+/**
+ * What a catalogue test slug looks like. `cols` is permissive about whether the slug still exists
+ * — a column the catalogue has dropped prints nothing, where filtering it out silently rebuilt a
+ * two-column link as the default eight — but not about the shape, because a header renders an
+ * unknown key verbatim. Lowercase hyphen-joined alphanumerics, and no longer than a slug could
+ * plausibly be: the longest the catalogue has ever carried is 38 characters
+ * (`difference-in-midsole-softness-in-cold`).
+ * docs/app.md §Columns are permissive, ranges and sorts are strict
+ */
+const TEST_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_SLUG_LEN = 64;
 
 export function defaultView(): ViewState {
   return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_ZONE), generations: {}, rows: [], stability: false };
@@ -178,7 +189,11 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       const k = raw.replace(/^-/, '');
       if (validSortKey(k)) v.sort = { key: k, dir };
     } else if (key === 'cols' && raw) {
-      const cols = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c));
+      // `SORT_FIELDS` minus `COLUMN_FIELDS` is exactly `name` and `brand` — sortable, but rendered
+      // by the table itself, so there is no cell for either to become. Derived rather than listed,
+      // so a further sort-only field cannot arrive as a column by omission.
+      const cols = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c)
+        || (!SORT_FIELDS.has(c) && c.length <= MAX_SLUG_LEN && TEST_SLUG_RE.test(c)));
       if (cols.length) v.columns = cols;
     } else if (key === 'rows' && raw) {
       // A curated key is on screen anyway and offers no remove, so listing one would be a row that

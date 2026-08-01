@@ -188,13 +188,13 @@ describe('urlstate hostile input', () => {
   it('ignores the retired nodisc key', () => {
     expect(parseView('nodisc=1', idx)).toEqual(defaultView());
   });
-  it('filters, dedupes and falls back on column lists', () => {
+  it('dedupes and falls back on column lists', () => {
     // non-numeric tests are legitimate columns even though they are not rangeable
-    expect(parseView('cols=score,score,bogus,tongue-gusset-type,plate', idx).columns)
+    expect(parseView('cols=score,score,tongue-gusset-type,plate', idx).columns)
       .toEqual(['score', 'tongue-gusset-type', 'plate']);
-    const fallback = parseView('cols=bogus,alsobogus', idx).columns;
+    const fallback = parseView('cols=name,brand', idx).columns;
     fallback.push('leaked'); // the fallback must be a fresh array, so mutating it cannot corrupt the next default
-    expect(parseView('cols=bogus,alsobogus', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
+    expect(parseView('cols=name,brand', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
       'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
     expect(serializeView(parseView(`cols=${defaultColumns('heel').join(',')}`, indexTests([...TESTS,
       labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', units: 'mm' })]))))
@@ -202,6 +202,38 @@ describe('urlstate hostile input', () => {
   });
   it('rejects name and brand as columns — they are sort fields, and the table renders them itself', () => {
     expect(parseView('cols=name,brand,score', idx).columns).toEqual(['score']);
+  });
+  /**
+   * The decided contract: `cols` is permissive about the *type* of test and about whether the slug
+   * still exists, because a column the catalogue has dropped costs one blank cell where a bad range
+   * hides the whole fleet (§Columns are permissive, ranges and sorts are strict). Filtering against
+   * the live catalogue was the opposite — it silently rebuilt a two-column link as the default
+   * eight, which is the one outcome the link's sender did not ask for.
+   */
+  it('keeps a slug the catalogue no longer holds, rather than rebuilding the default table', () => {
+    expect(parseView('cols=releasedAt,score,gone-metric-slug', idx).columns)
+      .toEqual(['releasedAt', 'score', 'gone-metric-slug']);
+    expect(parseView('cols=gone-one,gone-two', idx).columns).toEqual(['gone-one', 'gone-two']);
+    expect(parseView('cols=gone,gone,score', idx).columns).toEqual(['gone', 'score']);
+  });
+  /**
+   * Permissive about the slug, not about the shape. A header renders an unknown key verbatim, so
+   * what survives has to look like a catalogue slug and be no longer than one could be — the
+   * longest the catalogue has ever carried is 38 characters, and the bound is 64.
+   */
+  it.each([
+    'cols=<script>alert(1)</script>',
+    'cols=UPPER,Mixed-Case',
+    'cols=-leading,trailing-,dou--ble',
+    'cols=has space,has.dot,has_underscore',
+    'cols=../../etc/passwd',
+    `cols=${'x'.repeat(65)}`,
+  ])('drops a col that could never be a slug: %s', (qs) => {
+    expect(parseView(qs, idx)).toEqual(defaultView());
+  });
+  it('keeps a slug right on the length bound and drops the one past it', () => {
+    expect(parseView(`cols=${'x'.repeat(64)}`, idx).columns).toEqual(['x'.repeat(64)]);
+    expect(parseView(`cols=${'x'.repeat(65)},score`, idx).columns).toEqual(['score']);
   });
   it('omits ranges that are empty or not finite', () => {
     const v = defaultView();

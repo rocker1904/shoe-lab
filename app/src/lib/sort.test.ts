@@ -98,3 +98,20 @@ describe('the synthetic Easy score', () => {
     }
   });
 });
+
+/**
+ * A column the catalogue no longer holds still gets a header, and that header still offers a sort
+ * that `parseView` will not carry
+ * (docs/app.md §Columns are permissive, ranges and sorts are strict).
+ * It costs nothing because every value is missing, so the tie-break — RunRepeat score,
+ * descending — decides the whole order, which is exactly the order `DEFAULT_SORT` produces when
+ * the link drops the key. The rows a shared link reopens on are the rows that were shared.
+ */
+describe('sorting by a column with no readings at all', () => {
+  it('lands on the same order the default sort produces, either direction', () => {
+    const byDefault = slugs(sortShoes(FLEET, { key: 'score', dir: 'desc' }, idx));
+    for (const dir of ['asc', 'desc'] as const) {
+      expect(slugs(sortShoes(FLEET, { key: 'gone-metric-slug', dir }, idx))).toEqual(byDefault);
+    }
+  });
+});

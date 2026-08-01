@@ -149,6 +149,24 @@ describe('ShoeTable', () => {
     expect(screen.getByText('plated').closest('tr')!.querySelectorAll('td')[3]!.textContent)
       .toBe('Non-carbon');
   });
+  /**
+   * A regression guard rather than a red-first test: the lookups were already tolerant, and this is
+   * what makes `parseView` keeping an unknown slug safe to rely on. A link is allowed to name a
+   * column the catalogue has since dropped, and the table has to render it rather than throw
+   * (docs/app.md §Columns are permissive, ranges and sorts are strict). Every
+   * lookup the header and the cell make has to tolerate a key with no test behind it: the label
+   * falls back to the slug, the units line is empty, the direction and the wash read neutral, and
+   * every cell prints the no-reading em dash.
+   */
+  it('renders a column the catalogue no longer holds without crashing', () => {
+    const { container } = setup({ view: { columns: ['score', 'gone-metric-slug'] } }).rendered;
+    const head = screen.getByRole('columnheader', { name: /gone-metric-slug/ });
+    expect(head.querySelector('.h-units')!.textContent).toBe('');
+    const cells = [...container.querySelectorAll('tbody tr')].map((r) => r.querySelectorAll('td')[2]!.textContent);
+    expect(new Set(cells)).toEqual(new Set(['—']));
+    // neutral, because `directionOf` has no entry for it — never blue, which would claim a better end
+    expect(container.querySelector('tbody td:nth-child(3)')!.className).toContain('grey');
+  });
   it('missing values render as em dash', () => {
     setup();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);

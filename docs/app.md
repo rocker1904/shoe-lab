@@ -158,8 +158,10 @@ it), `after` and `disc` are pattern-checked, a `q` of nothing but whitespace is
 the empty query (§Filters), `plate` keeps only allowlisted members and is
 deduped into declared order, an all-separator `brands`, `plate` or `rows` stays
 absent instead of becoming an empty array, `rows` keeps only rangeable
-non-curated keys, and `cols` is deduped and filtered against the column
-allowlist. A `gen.` choice survives only when its key names
+non-curated keys, and `cols` is deduped and kept unless it is a sort-only field
+or could never be a slug — the one permissive key, and
+§Columns are permissive, ranges and sorts are strict owns why.
+A `gen.` choice survives only when its key names
 the current generation of a resolved pair and its value names that pair's
 retired generation. Bound serialisation accepts everything `String(number)`
 emits, exponent form included, so round-trips are lossless.
@@ -533,7 +535,9 @@ something of its own, are engine questions.
 
 `cols` accepts the four shoe fields that have cells (`releasedAt`, `score`,
 `msrpGbp`, `plate`), the six synthetic score keys — two per story
-(docs/app.md §The story scores) — and any test slug; `name` and
+(docs/app.md §The story scores) — and any test slug, including one the catalogue
+no longer holds, which renders as a header of that slug over a column of em
+dashes (§Columns are permissive, ranges and sorts are strict); `name` and
 `brand` are rendered by the table itself and have no cell, so they are sortable
 but never columns.
 
@@ -2346,6 +2350,29 @@ fields, and the categorical columns, which sort by their label
 cell, a bad range hides the entire fleet. Do not unify the allowlists — but
 every sort a header offers has to be one the parser accepts, or `Copy link`
 hands out a URL that reopens on a different view than the one that was shared.
+
+**The code follows this, and for a while it did not.** `parseView` used to
+filter `cols` against the live catalogue, so an unknown slug got no column at
+all: `?cols=releasedAt,score,gone-metric-slug` rendered three headers instead of
+four, and `?cols=gone-one,gone-two` fell through the `if (cols.length)` guard and
+rendered the **default eight** — the exact opposite of the link's two-column
+request, with nothing on screen saying so. Permissive means permissive about
+whether the slug still exists, not only about the type of test behind it.
+
+Permissive about the slug is not permissive about the **shape**: an unknown key
+is rendered verbatim as a header, so what survives has to look like a slug —
+lowercase hyphen-joined alphanumerics, at most 64 characters against the longest
+the catalogue has ever carried (38). `name` and `brand` are still refused, being
+sort fields the table renders itself, and that pair is derived as
+`SORT_FIELDS` minus `COLUMN_FIELDS` rather than listed again.
+
+Two consequences, both accepted. An unknown column's header still offers a sort
+the parser will not carry — but every value in it is missing, so the tie-break
+decides the whole order and that tie-break is RunRepeat score descending, which
+is `DEFAULT_SORT`: the rows a recipient opens on are the rows that were shared,
+and only the `aria-sort` mark differs. And the column picker does not offer the
+column, so it cannot be unticked there; `All` and any story rebuild the column
+set and clear it.
 
 ### The dataset is a fetched asset, not a bundled import
 `sync-data` copies `data/shoes.json` into `public/` and the app fetches it at
