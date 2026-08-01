@@ -355,6 +355,52 @@ test('keeps an expanded row below the chrome that opening it scrolls under', asy
 });
 
 /**
+ * The same failure on the phone, where the occluding band is not the same two boxes: `--thead-top`
+ * plus the stacked list's own sticky header measured 148px at 390x844, and the panel is 1600px in a
+ * 844px window — so `block: 'nearest'` aligned its top with the top of the document scrollport and
+ * parked 150px of it, image and all, behind the chrome, with `tr.shoe` — the row carrying the
+ * shoe's NAME — above the viewport. Nothing on the resulting screen said which shoe was open.
+ *
+ * The sideways half is the same call: `tr.expand > td` carries `colspan`, so at ten columns
+ * `scrollIntoView` also dragged the page 94px left and cut the first lines off the review prose.
+ * Tapped rather than pressed, at three scroll depths, because the old behaviour was right at none.
+ */
+test('opens a shoe on the phone below the chrome, and without moving the page sideways', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // Past the six-column bound on purpose: that is where the page can scroll sideways at all.
+  await page.goto('/?cols=score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
+    + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel');
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
+
+  for (const depth of [0, 400, 2000]) {
+    const measured = await page.evaluate(async (y) => {
+      for (const open of document.querySelectorAll<HTMLElement>('tr.shoe[aria-expanded=true]')) open.click();
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 60));
+      const row = document.querySelectorAll<HTMLElement>('tr.shoe')[1]!;
+      row.click();
+      await new Promise((r) => setTimeout(r, 600));
+      const head = document.querySelector('[data-testid="shoe-table-mobile"] thead th')!;
+      const panel = row.nextElementSibling!.nextElementSibling!;
+      return { rowTop: Math.round(row.getBoundingClientRect().top),
+               headBottom: Math.round(head.getBoundingClientRect().bottom),
+               expanded: row.getAttribute('aria-expanded'),
+               scrollX: Math.round(window.scrollX),
+               panelTop: Math.round(panel.getBoundingClientRect().top) };
+    }, depth);
+
+    expect(measured.expanded, `the shoe did not open at scroll ${depth}`).toBe('true');
+    // The shoe's own name row is what says which shoe this is, so it is what must stay on screen —
+    // below the chrome AND below the list's pinned header, which paints over the rows under it.
+    expect(measured.rowTop, `the shoe's name row is behind the chrome at scroll ${depth}`)
+      .toBeGreaterThanOrEqual(measured.headBottom - 1);
+    expect(measured.panelTop, `the panel is off screen at scroll ${depth}`).toBeLessThan(844);
+    expect(measured.scrollX, `opening a shoe dragged the page sideways at scroll ${depth}`).toBe(0);
+  }
+});
+
+/**
  * While the strip is up the bar carries no groups, so its left side is empty by design and the
  * actions hold the trailing edge alone. What must stay true is that they hold it: the old bar left
  * 211px of void at 390px and 597px at 800px by letting them lead a row instead.

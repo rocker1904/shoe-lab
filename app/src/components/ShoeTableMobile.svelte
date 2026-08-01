@@ -93,13 +93,36 @@
     if (expanded.delete(slug)) return;
     expanded.add(slug);
     // The panel opens below the shoe, so a shoe near the fold opens off screen. Awaited so the
-    // panel exists to be scrolled to. jsdom implements no layout and defines neither
-    // `scrollIntoView` nor `matchMedia`, hence the optional calls.
+    // panel exists to be measured. jsdom lays nothing out and defines neither `matchMedia` nor a
+    // real `scrollTo`, hence the guards and the optional call.
     await tick();
+    const panel = row?.nextElementSibling?.nextElementSibling;
+    if (!row || !panel) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    row?.nextElementSibling?.nextElementSibling?.scrollIntoView?.(
-      { behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+    const behavior = reduced ? 'auto' : 'smooth';
+    /*
+     * The scroll is COMPUTED rather than asked for, which is the call `lib/focus-scroll.ts` already
+     * makes and which has a second reason here: `scrollIntoView` has no axis restriction and every
+     * row in this table carries `colspan`, so past six columns opening a shoe also dragged the page
+     * 94px sideways and cut the first 77px off every line of the review prose. A `scrollTo` carrying
+     * only a `top` leaves the horizontal position where the runner put it.
+     *
+     * WHICH box is scrolled to is the desktop's rule (docs/app.md §Table presentation), with the
+     * phone's own two heights: a panel that fits is moved the least that brings it on screen, and
+     * one taller than the window cannot be scrolled to without putting the shoe's own NAME row off
+     * the top — which was the failure, 150px of panel behind the chrome and the pinned list header
+     * with nothing on screen saying which shoe had been opened. The room to leave is read back off
+     * the row's own `scroll-margin-top`, so the two measured heights stay stated once, in CSS.
+     */
+    const panelBox = panel.getBoundingClientRect();
+    const room = parseFloat(getComputedStyle(row).scrollMarginTop) || 0;
+    const top = panelBox.height <= window.innerHeight - room
+      ? window.scrollY + Math.max(0, panelBox.bottom - window.innerHeight)
+      : window.scrollY + row.getBoundingClientRect().top - room;
+    window.scrollTo?.({ top, behavior });
   }
+  /** The pinned header's measured height; see the markup below for why it cannot be a constant. */
+  let headHeight = $state(0);
   function onRowKey(e: KeyboardEvent, slug: string) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -110,10 +133,14 @@
 <!-- Bled most of the way out of `.content`'s inline padding: six 53px columns need 332px, which a
      360px phone can pay for only if the page's own padding is nearly given back — and what is left
      buys the panel its inset (docs/app.md §Columns and sorting). -->
-<div class="bleed">
+<!-- `--head-h` is the pinned header's own height, measured the way `Page.svelte` measures the
+     chrome and for the same reason: the labels wrap, so it is a function of the width and of the
+     face that has loaded, and a constant is right at one width only. It is what a row's
+     `scroll-margin-top` adds to `--thead-top` (docs/app.md §Table presentation). -->
+<div class="bleed" style:--head-h="{headHeight}px">
   <div class="panel">
     <table data-testid="shoe-table-mobile" style:--cols={span}>
-    <thead>
+    <thead bind:clientHeight={headHeight}>
       <tr>
         {#each cols as col (col)}
           <th aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
@@ -164,6 +191,11 @@
 
 <style>
   .bleed { margin-inline: calc(-1 * var(--s4) + var(--s3)); }
+  /* What "scrolled to" means for a shoe here: below the pinned chrome AND below this list's own
+     sticky header, which paints over the rows sliding beneath it. Both are measured — `--thead-top`
+     by `Page.svelte`, `--head-h` above — because either alone leaves the shoe's name row behind the
+     other (docs/app.md §Table presentation). `toggle()` reads this back rather than restating it. */
+  tr.shoe, tr.expand { scroll-margin-top: calc(var(--thead-top, 0px) + var(--head-h, 0px)); }
   /* One panel for the table, not one card per shoe. Three planes, and the rule is that elevation
      follows what is PINNED: page, then this panel, then the sticky header on top of it
      (docs/app.md §Theming).

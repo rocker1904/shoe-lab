@@ -809,6 +809,26 @@ The row lands flush under both and the panel takes the screen below it.
 the panel, measures the row's top against the pinned header's bottom, and hit
 tests the row's own corner.
 
+**The phone follows the same rule with its own two heights, and computes the
+scroll rather than asking for one.** Both are needed there too and neither is the
+desktop's number: `--thead-top` is 76–78px at 390px and the stacked list's own
+sticky header another 72, so `block: 'nearest'` parked **150px** of a 1600px panel
+behind them — image and all — with `tr.shoe`, the row carrying the shoe's *name*,
+above the viewport. Nothing on the resulting screen said which shoe had been
+opened. `ShoeTableMobile` binds its `thead`'s height as `--head-h` for the same
+reason the desktop does, and both renderings state the room once, in CSS, as a
+`scroll-margin-top` on the row.
+
+The scroll itself is a `window.scrollTo` carrying **only a `top`**, reading that
+room back off the row. `scrollIntoView` has no axis restriction and every row in
+the stacked list carries `colspan`, so past six columns opening a shoe also
+dragged the page **94px sideways** and cut the first 77px off every line of the
+review prose. This is the second place the app computes a scroll rather than
+requesting one; `lib/focus-scroll.ts` is the first, and the reasoning is the same
+(§Theming). `smoke.spec.ts` opens a shoe at three scroll depths at 390px with nine
+columns and asserts the name row clear of both bands, the panel on screen, and
+`scrollX` still 0.
+
 An expandable row carries `aria-controls` as
 well as `aria-expanded`, in both renderings, **while it is open**: the panel is
 a *sibling* row rather than a child of the control, so nothing else says what
