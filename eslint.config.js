@@ -3,7 +3,10 @@ import svelteParser from 'svelte-eslint-parser';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**'] },
+  // `.hunt/` is a bug hunt's scratch — probe scripts an agent wrote to prove one finding and then
+  // abandoned, which are not code anyone maintains. The tracked instrument lives in `hunt/` and IS
+  // linted. Without this, a hunt turns `npm run verify` red by doing its job (docs/hunting.md §The rig).
+  { ignores: ['**/dist/**', '**/coverage/**', '.hunt/**'] },
   ...tseslint.configs.recommended,
   { rules: { '@typescript-eslint/no-explicit-any': 'off' } },
   ...svelte.configs['flat/recommended'],
