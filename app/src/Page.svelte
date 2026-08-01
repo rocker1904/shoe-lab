@@ -294,11 +294,21 @@
     if (next === zoneMark) return;
     setView(storyMark ? applyPreset(storyMark, next, view.stability) : projectZone(snapshot, next));
   }
-  function onStory(id: string) {
+  async function onStory(id: string) {
     // The strip's own question, answered — the only thing the cards hold that the bar does not is
     // the descriptions, which are a first-encounter need.
+    const handingOver = stripOpen;
     stripOpen = false;
     setView(id === 'all' ? allView(snapshot, zoneMark) : applyPreset(id, workingZone, view.stability));
+    // The card that was just pressed is about to be unmounted with the strip around it, and nothing
+    // else catches the focus it holds: `activeElement` became `<body>`, so no ring was drawn
+    // anywhere and the pill that replaced the card was up to ten Shift+Tabs BEHIND the runner —
+    // the bar precedes the strip in the DOM (docs/app.md §Presets). Handing focus to the pill for
+    // the same story keeps the ring on screen and leaves one arrow key between minds.
+    // Only on the hand-over: called from the bar's own group, `lib/roving.ts` already owns focus.
+    if (!handingOver) return;
+    await tick();
+    document.querySelector<HTMLElement>(`[data-story="${CSS.escape(id)}"]`)?.focus();
   }
   /** A preference, so it does not clear the story or the `All` mark: `applyPreset` and `allView`
    *  both carry it through, which is what keeps the mark derived rather than lost

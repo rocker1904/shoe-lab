@@ -477,6 +477,36 @@ describe('Page story selection', () => {
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
   });
 
+  /**
+   * The strip unmounts on the first story click and nothing caught the focus the removed card was
+   * holding: `document.activeElement` became `<body>`, no ring was drawn anywhere on the page, and
+   * the control that replaced the card — the toolbar's pill for the same story — was 4 to 10
+   * Shift+Tabs *behind* the runner, because in the DOM the bar sits above where the strip was
+   * (docs/app.md §Presets).
+   */
+  it('hands focus to the toolbar pill the strip is replaced by', async () => {
+    render(Page, { props: { data } });
+    const card = screen.getByRole('button', { name: /^Easy/ });
+    card.focus();
+    await fireEvent.click(card);
+    await tick();
+
+    const pill = screen.getByRole('radio', { name: 'Easy' });
+    expect(document.activeElement, 'focus fell to the document body').toBe(pill);
+    expect(pill).toBeChecked();
+  });
+
+  /** A zone card does not unmount the strip, so the card pressed is still the control that answers
+   *  the question: moving focus off it would be the same defect from the other side. */
+  it('leaves focus on the zone card, which the strip does not replace', async () => {
+    render(Page, { props: { data } });
+    const card = screen.getByRole('button', { name: /^Forefoot/ });
+    card.focus();
+    await fireEvent.click(card);
+    await tick();
+    expect(document.activeElement).toBe(card);
+  });
+
   it('marks neither zone when the view mixes them, and All when nothing is filtered', () => {
     history.replaceState(null, '', '/?cols=score,heel-stack,forefoot-stack');
     render(Page, { props: { data } });

@@ -1605,6 +1605,19 @@ under a `prefers-reduced-motion` guard. The strip's `All` card stays marked
 through a zone click, because the click leaves the view equal to that zone's
 plain table, which is what `allView` produces.
 
+**The hand-over moves focus as well as the question.** A story click unmounts
+the card the keyboard is standing on, and nothing else caught it: `activeElement`
+became `<body>`, so no focus ring was drawn anywhere on the page and a screen
+reader was left on the document rather than on the thing it had just operated.
+Forward made it worse — the bar precedes the strip in the DOM, so Tab walked on
+into the sidebar and the replacement pill was **4 to 10 Shift+Tabs behind**,
+depending on the engine. `onStory` therefore focuses the toolbar pill for the
+same story, found by `data-story` rather than by the checked mark, because a
+view matching no story marks nothing and focus would fall to `<body>` again. It
+runs only on the hand-over: called from the bar's own group, `lib/roving.ts`
+already owns focus. A **zone** click leaves the strip up, so the card that was
+pressed is still the control that answers the question and focus stays on it.
+
 **The strip never returns**, and nothing is lost by that: the only thing the
 cards hold that the bar does not is the descriptions, which are a
 first-encounter need. It is also why the strip needs no card of its own for

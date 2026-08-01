@@ -52,8 +52,11 @@
         <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
           <!-- No count: a scored story's is the size of its pool rather than of a shortlist
                (docs/app.md §The toolbar). -->
+          <!-- `data-story` is how the strip's hand-over finds the pill that replaces the card it
+               just unmounted (docs/app.md §Presets). By id rather than by the checked mark, because
+               a view that matches no story marks nothing and focus would fall to `<body>` again. -->
           {#each STORIES as s (s.id)}
-            <button type="button" role="radio" class="s" aria-checked={selected === s.id}
+            <button type="button" role="radio" class="s" data-story={s.id} aria-checked={selected === s.id}
                     class:on={selected === s.id} onclick={() => onstory(s.id)}>{s.label}</button>
           {/each}
         </span>
