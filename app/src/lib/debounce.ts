@@ -3,6 +3,10 @@ export interface Debounced<A extends unknown[]> {
   /** Land the pending call now. `pagehide` is the caller that needs it: a page being torn down
    *  cannot wait out a timer (docs/app.md §View and URL ownership). */
   flush(): void;
+  /** Drop the pending call unwritten. `popstate` is the caller: the pending write belongs to the
+   *  entry just left, which can no longer be reached, so landing it would put one view's address on
+   *  another entry (docs/app.md §View and URL ownership). */
+  cancel(): void;
 }
 
 /**
@@ -28,5 +32,10 @@ export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: numb
     timer = setTimeout(fire, ms);
   };
   out.flush = fire;
+  out.cancel = (): void => {
+    if (timer !== undefined) clearTimeout(timer);
+    timer = undefined;
+    pending = undefined;
+  };
   return out;
 }

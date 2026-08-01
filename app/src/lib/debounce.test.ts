@@ -56,4 +56,35 @@ describe('debounce', () => {
     write.flush();
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('cancels the pending call, for popstate', () => {
+    vi.useFakeTimers();
+    const spy = vi.fn();
+    const write = debounce(spy, 200);
+    write('a');
+    write.cancel();
+    vi.advanceTimersByTime(200);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('does not resurface a cancelled call on the next flush', () => {
+    vi.useFakeTimers();
+    const spy = vi.fn();
+    const write = debounce(spy, 200);
+    write('a');
+    write.cancel();
+    write.flush();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('takes a fresh call after a cancel', () => {
+    vi.useFakeTimers();
+    const spy = vi.fn();
+    const write = debounce(spy, 200);
+    write('a');
+    write.cancel();
+    write('b');
+    vi.advanceTimersByTime(200);
+    expect(spy).toHaveBeenCalledExactlyOnceWith('b');
+  });
 });
