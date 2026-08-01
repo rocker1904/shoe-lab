@@ -34,6 +34,25 @@ describe('AddFilterDialog', () => {
     expect(screen.queryByRole('button', { name: /Stack/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Cushioning' })).not.toBeInTheDocument();
   });
+  /**
+   * The same sentence the brand list one control away already renders, in the same form and the
+   * same place. A zero match here collapsed the dialog to its legend and its Close button, which
+   * reads as a control that has stopped responding — and it is the *commonest* way in, because the
+   * dialog offers only the metrics not already in the sidebar, so a query like "stack" matches
+   * nothing (docs/app.md §Filters).
+   */
+  it('says so rather than showing an empty box when the search matches nothing', async () => {
+    setup();
+    await fireEvent.input(screen.getByLabelText('Filter metrics'), { target: { value: 'zzzz' } });
+    expect(screen.getByText(/No metrics match/)).toHaveTextContent('zzzz');
+  });
+  it('takes the message away again once something matches', async () => {
+    setup();
+    const box = screen.getByLabelText('Filter metrics');
+    await fireEvent.input(box, { target: { value: 'zzzz' } });
+    await fireEvent.input(box, { target: { value: 'stiff' } });
+    expect(screen.queryByText(/No metrics match/)).toBeNull();
+  });
   it('reports the metric that was chosen', async () => {
     const { onchoose } = setup();
     await fireEvent.click(screen.getByRole('button', { name: /Stiffness/ }));

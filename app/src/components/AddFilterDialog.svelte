@@ -101,6 +101,12 @@
       {/each}
     {/each}
   </div>
+  <!-- The same sentence, the same place and the same tone as `BrandFilter`'s, which is one control
+       away in the sidebar this dialog opens from: an empty list here collapsed the dialog to its
+       legend and its Close button, which reads as a control that has stopped responding. Not a live
+       region, for the same reason that one is not — the announcement policy is one question for the
+       whole app rather than a decision this box makes for itself (docs/app.md §Filters). -->
+  {#if grouped.length === 0}<p class="none">No metrics match “{query}”.</p>{/if}
   <button type="button" class="close" onclick={onclose}>Close</button>
 </div>
 
@@ -148,6 +154,9 @@
   .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--border-soft); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--hist-dim); }
   .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+  /* `margin: 0`, where `BrandFilter`'s carries one: the dialog is a flex column with its own gap,
+     so a top margin here would double the space the sentence sits in. */
+  .none { margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
   /* The app's secondary-button treatment, as the masthead's actions and the sidebar's pair carry it
      (docs/app.md §Theming) — a bare UA button was the one unstyled control left in this dialog. */
   .close { align-self: flex-end; padding: var(--s1) var(--s3); cursor: pointer;

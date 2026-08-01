@@ -217,6 +217,16 @@ empty table whose only stated cause was two invisible characters. What is kept
 is **untrimmed**: the space between two words is part of the query, and trimming
 as it is typed deletes it under the cursor.
 
+**Every search surface answers a zero match in words**, in the same form and the
+same place: `No brands match “…”.` in the brand list, `No metrics match “…”.` in
+the Add-filter dialog, and the empty state below the table. A list that simply
+renders nothing reads as a control that has stopped responding — and in the
+dialog that was the *commonest* result, because it offers only the metrics not
+already in the sidebar, so `stack`, `width` and `cushion` all match nothing while
+being metrics the app plainly holds. None of the three is a live region; what
+announces what is one question for the whole app rather than a decision each box
+makes for itself.
+
 **The empty state names what is actually narrowing.** `narrowingNames` in
 `lib/filters.ts` reads the live filter state and returns the classes that are
 set — the search, the release-date bound, the plate selection, the brand
