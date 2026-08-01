@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
+import { SvelteSet } from 'svelte/reactivity';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,13 +14,17 @@ import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';
 // short one rather than the catalogue name.
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns; tests?: LabTest[] } = {}) {
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns; tests?: LabTest[]; open?: string[] } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['releasedAt', 'score', 'heel-stack', 'plate'];
+  // The set lives in Page.svelte now, so this helper plays the parent. A `SvelteSet` mutated in
+  // place is what the component actually receives, so no re-render plumbing is needed here either.
+  const open = new SvelteSet<string>(over.open ?? []);
   const rendered = render(ShoeTableMobile, {
     props: { shoes: over.shoes ?? FLEET, data: over.tests ? { ...data, tests: over.tests } : data,
-      view, onchange, scores: over.scores ?? new Map(), stability: false } });
+      view, onchange, scores: over.scores ?? new Map(), stability: false, open,
+      ontoggle: (slug: string) => { if (!open.delete(slug)) open.add(slug); } } });
   return Object.assign(onchange, { rendered });
 }
 
@@ -48,6 +53,13 @@ describe('ShoeTableMobile', () => {
     const onchange = setup({ view: { sort: { key: 'heel-stack', dir: 'desc' } } });
     await fireEvent.click(screen.getByRole('columnheader', { name: /Heel stack/ }).querySelector('button')!);
     expect(onchange.mock.lastCall![0].sort).toEqual({ key: 'heel-stack', dir: 'asc' });
+  });
+
+  // The set is the parent's now, so a card opened before the component remounts is still open after
+  // — which is what makes crossing 700px stop dropping every panel.
+  it('renders a panel for a card the parent already has open', () => {
+    setup({ open: ['cushy'] });
+    expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
   });
 
   it('expands a card into the detail panel, and more than one at a time', async () => {

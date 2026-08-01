@@ -9,6 +9,7 @@
 
 <script lang="ts">
   import { onDestroy, tick, untrack } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import { slide } from 'svelte/transition';
   import type { ShoesFile } from '../../shared/types.js';
   import AboutDialog from './components/AboutDialog.svelte';
@@ -58,6 +59,19 @@
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
+  /**
+   * What the runner is reading, held beside the view rather than inside it: every toolbar mark is a
+   * `sameValue` comparison of whole `ViewState`s, so an open panel in there would unmark the story
+   * the moment a row was tapped (docs/app.md §View and URL ownership).
+   *
+   * Mutated, never replaced — both tables hold this exact set, and a new object would leave them
+   * reading the old one.
+   */
+  const open = new SvelteSet<string>();
+
+  function toggleOpen(slug: string) {
+    if (!open.delete(slug)) open.add(slug);
+  }
   /** The one explanation the chrome offers, opened from the bar and from the setup strip
    *  (docs/app.md §The About panel). */
   let aboutOpen = $state(false);
@@ -567,10 +581,10 @@
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}
-        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores}
+        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
                          stability={view.stability} onchange={setView} />
       {:else}
-        <ShoeTable shoes={visibleSorted} {data} {view} {scores}
+        <ShoeTable shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
                    stability={view.stability} onchange={setView} />
       {/if}
     </div>

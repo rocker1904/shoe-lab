@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
+import { SvelteSet } from 'svelte/reactivity';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
 import { type ScoreColumns } from '../lib/score';
@@ -9,12 +10,16 @@ import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns } = {}) {
+function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns; open?: string[] } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
+  // The set lives in Page.svelte now, so this helper plays the parent. A `SvelteSet` mutated in
+  // place is what the component actually receives, so no re-render plumbing is needed here either.
+  const open = new SvelteSet<string>(over.open ?? []);
   const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
-    scores: over.scores ?? new Map(), stability: false } });
+    scores: over.scores ?? new Map(), stability: false, open,
+    ontoggle: (slug: string) => { if (!open.delete(slug)) open.add(slug); } } });
   return Object.assign(onchange, { rendered });
 }
 
@@ -56,6 +61,12 @@ describe('ShoeTable', () => {
     // already proves works for a custom property under this jsdom.
     expect(tinted.getAttribute('style')).toContain('--a:');
     expect(tinted.getAttribute('style')).not.toContain('--p:');
+  });
+  // The set is the parent's now, so a row opened before the component remounts is still open after
+  // — which is what makes crossing 700px stop dropping every panel.
+  it('renders a panel for a row the parent already has open', () => {
+    setup({ open: ['cushy'] });
+    expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
   });
   it('row click expands the detail panel', async () => {
     setup();
@@ -192,7 +203,8 @@ describe('ShoeTable and the Easy score', () => {
       props: { shoes: FLEET, data, view,
                scores: new Map([[EASY.keys.heel, new Map([['cushy', 87.412]])],
                                 [EASY.keys.forefoot, new Map([['cushy', 71.238]])]]),
-               stability: false, onchange: () => {} },
+               stability: false, onchange: () => {},
+               open: new SvelteSet<string>(), ontoggle: () => {} },
     });
     const cells = [...container.querySelectorAll('tbody tr td')].map((c) => c.textContent?.trim());
     expect(cells).toContain('87.41'); // two decimals, like every other figure

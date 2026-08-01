@@ -1086,6 +1086,14 @@ suite cannot see the difference at all — `test-setup.ts` stubs `matchMedia`
 non-matching, and the phone rendering is checked directly in
 `ShoeTableMobile.test.ts` and at real widths by Playwright.
 
+**Because only one is mounted, neither may own the open-row set.** A set held in the
+component is dropped whole the moment the viewport crosses 700px, so a phone rotated
+mid-read closed every panel. `Page.svelte` owns it and passes it to whichever table is
+up, mutated in place rather than replaced — both renderings hold the same object. Each
+table keeps the `tick()`-then-scroll it does on open, because what a newly opened row
+has to clear is a property of the rendering and the two answer it differently
+(§Table presentation).
+
 The geometry is the contract, and these numbers are measured rather than
 chosen:
 

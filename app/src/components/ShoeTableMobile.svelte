@@ -1,6 +1,5 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { SvelteSet } from 'svelte/reactivity';
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
@@ -17,7 +16,7 @@
   import DiscontinuedTag from './DiscontinuedTag.svelte';
   import SortCaret from './SortCaret.svelte';
 
-  let { shoes, data, view, scores, stability, onchange }: {
+  let { shoes, data, view, scores, stability, open, ontoggle, onchange }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
     /** Resolved in `Page.svelte` and keyed by column: a score is the one kind of column whose value
      *  depends on the view rather than on the shoe alone, so it arrives ready rather than through
@@ -26,11 +25,16 @@
     /** The preference `scores` were computed with, passed through to the panel so its breakdown
      *  cannot disagree with the value rendered beside it. */
     stability: boolean;
+    /** A set, not a single slug: comparing two shoes means having both panels open at once. Owned
+     *  by `Page.svelte`, because only one of the two tables is ever mounted and a set owned here
+     *  would be dropped whole every time the viewport crossed 700px
+     *  (docs/app.md §Two renderings, and only one of them mounted). */
+    open: ReadonlySet<string>;
+    ontoggle: (slug: string) => void;
     onchange: (v: ViewState) => void;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  const expanded = new SvelteSet<string>();
 
   /** The value row is only ever numeric: it is what keeps every chip the same box under a header
    *  that labels it (docs/app.md §Columns and sorting). */
@@ -93,8 +97,9 @@
     return out;
   }
   async function toggle(slug: string, row: HTMLElement | null) {
-    if (expanded.delete(slug)) return;
-    expanded.add(slug);
+    const opening = !open.has(slug);
+    ontoggle(slug);
+    if (!opening) return;
     // The panel opens below the shoe, so a shoe near the fold opens off screen. Awaited so the
     // panel exists to be measured. jsdom lays nothing out and defines neither `matchMedia` nor a
     // real `scrollTo`, hence the guards and the optional call.
@@ -163,11 +168,11 @@
              that says what, and the panel is a sibling row rather than a child of the control.
              Emitted only while it is open: the panel exists only then, and an IDREF naming a node
              that is not in the document is an unresolvable reference rather than a promise of one. -->
-        <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)}
-            aria-controls={expanded.has(s.slug) ? `detail-${s.slug}` : undefined}
+        <tr class="shoe" tabindex="0" aria-expanded={open.has(s.slug)}
+            aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
             onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
           <td class="ident" colspan={span}>
-            <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
+            <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
             <strong>{s.name}</strong>
             {#each metaOf(s) as m (m.key)}<span class="meta">{m.text}</span>{/each}
             {#if s.discontinued}<DiscontinuedTag />{/if}
@@ -183,7 +188,7 @@
             </td>
           {/each}
         </tr>
-        {#if expanded.has(s.slug)}
+        {#if open.has(s.slug)}
           <tr class="expand" id="detail-{s.slug}"><td colspan={span}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
         {/if}
       {/each}

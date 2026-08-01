@@ -1,6 +1,5 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { SvelteSet } from 'svelte/reactivity';
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
@@ -17,7 +16,7 @@
   import DiscontinuedTag from './DiscontinuedTag.svelte';
   import SortCaret from './SortCaret.svelte';
 
-  let { shoes, data, view, scores, stability, onchange }: {
+  let { shoes, data, view, scores, stability, open, ontoggle, onchange }: {
     shoes: Shoe[]; data: ShoesFile; view: ViewState;
     /** Resolved in `Page.svelte` and keyed by column: a score is the one kind of column whose value
      *  depends on the view rather than on the shoe alone, so it arrives ready rather than through
@@ -26,12 +25,16 @@
     /** The preference `scores` were computed with, passed through to the panel so its breakdown
      *  cannot disagree with the value rendered beside it. */
     stability: boolean;
+    /** A set, not a single slug: comparing two shoes means having both panels open at once. Owned
+     *  by `Page.svelte`, because only one of the two tables is ever mounted and a set owned here
+     *  would be dropped whole every time the viewport crossed 700px
+     *  (docs/app.md §Two renderings, and only one of them mounted). */
+    open: ReadonlySet<string>;
+    ontoggle: (slug: string) => void;
     onchange: (v: ViewState) => void;
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  // A set, not a single slug: comparing two shoes means having both panels open at once.
-  const expanded = new SvelteSet<string>();
 
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
   // mean something different from its neighbours' in the same row.
@@ -64,8 +67,9 @@
     return v === null || v === undefined ? '—' : displayNumber(v);
   }
   async function toggle(slug: string, row: HTMLElement | null) {
-    if (expanded.delete(slug)) return;
-    expanded.add(slug);
+    const opening = !open.has(slug);
+    ontoggle(slug);
+    if (!opening) return;
     // The panel opens *below* the row, so a row near the fold opens off screen. Awaited so the
     // panel exists to be measured and scrolled to. jsdom implements no layout and defines neither
     // `scrollIntoView` nor `matchMedia`, hence the optional calls.
@@ -145,15 +149,15 @@
            says what, and the panel is a sibling row rather than a child of the control. Emitted only
            while it is open: the panel exists only then, and an IDREF naming a node that is not in
            the document is an unresolvable reference rather than a promise of one. -->
-      <tr class="shoe" tabindex="0" aria-expanded={expanded.has(s.slug)}
-          aria-controls={expanded.has(s.slug) ? `detail-${s.slug}` : undefined}
+      <tr class="shoe" tabindex="0" aria-expanded={open.has(s.slug)}
+          aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
           onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
         <!-- The flex lives on a wrapper, not on the cell: `display: flex` on a `td` takes it out of
              the table-cell box, so it stops stretching to the row and leaves a half-height block the
              numeric cells scroll through under the sticky column. -->
         <td class="name">
           <div class="name-row">
-            <span class="chev" class:open={expanded.has(s.slug)} aria-hidden="true">›</span>
+            <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
             <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
                  shorten it rather than drop it (docs/app.md §Columns and sorting). -->
             <div><strong>{s.name}</strong>{#if s.discontinued}<DiscontinuedTag />{/if}</div>
@@ -167,7 +171,7 @@
               class:blue={washOf(col) === 'blue'} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
       </tr>
-      {#if expanded.has(s.slug)}
+      {#if open.has(s.slug)}
         <tr class="expand" id="detail-{s.slug}"><td colspan={1 + view.columns.length}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
       {/if}
     {/each}
