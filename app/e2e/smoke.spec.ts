@@ -220,7 +220,10 @@ test('switches to the stacked list on a phone, and back', async ({ page }) => {
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
   // inside its own box rather than take the page sideways with it (docs/app.md §The story scores).
   // Easy first: the panel breaks down the score columns the view holds, and the plain table has none.
-  await page.getByRole('button', { name: /^Easy/ }).click();
+  // The BAR's pill, not the strip's card: scrolling to the foot of the page above took the strip
+  // off the top of the screen, and that is a hand-over (docs/app.md §The setup strip), so the
+  // control answering to Easy by then is a `radio` in the toolbar's own group.
+  await page.getByRole('radio', { name: /^Easy/ }).click();
   await page.getByText('cushy').first().click();
   await expect(page.locator('.score-breakdown table')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -399,6 +402,54 @@ test('opens a shoe on the phone below the chrome, and without moving the page si
     expect(measured.scrollX, `opening a shoe dragged the page sideways at scroll ${depth}`).toBe(0);
   }
 });
+
+/**
+ * The strip is `position: static` and the bar draws no groups while it is up, so scrolling the
+ * table used to leave a first-time runner with **no zone or story control on screen at any width** —
+ * the only radiogroup in the viewport at 1440, 1280 and 1024 was the sidebar's Discontinued.
+ * Scrolling out is now a hand-over like clicking a story is, and it may not move the page under the
+ * runner while it happens (docs/app.md §The setup strip).
+ */
+for (const width of [1440, 390]) {
+  test(`hands the groups to the bar when the strip scrolls out at ${width}px`, async ({ page }) => {
+    // Short on purpose: the fixture is five shoes, so the page cannot scroll past the strip at all
+    // until one shoe is open — which is the state a runner browsing the catalogue is in anyway.
+    await page.setViewportSize({ width, height: 400 });
+    await page.goto('/');
+    await expect(page.getByTestId('setup-strip')).toBeVisible();
+    // The precondition the finding turns on: while the strip is up the bar holds neither group.
+    await expect(page.getByRole('radiogroup', { name: 'Built for' })).toHaveCount(0);
+
+    await page.locator('tr.shoe').first().click();
+    await expect(page.locator('.detail').first()).toBeVisible();
+    // Opening a shoe scrolls, smoothly: measuring into the tail of that animation would read its
+    // remaining pixels as drift from the hand-over.
+    await page.waitForTimeout(700);
+    await expect(page.getByTestId('setup-strip')).toBeVisible();
+
+    const moved = await page.evaluate(async () => {
+      const strip = document.querySelector('[data-testid="setup-strip"]')!;
+      window.scrollTo(0, window.scrollY + strip.getBoundingClientRect().bottom + 40);
+      const cleared = strip.getBoundingClientRect().bottom < 0;
+      const row = document.querySelectorAll<HTMLElement>('tr.shoe')[1]!;
+      const before = row.getBoundingClientRect().top;
+      await new Promise((r) => setTimeout(r, 500));
+      return { cleared, moved: Math.round(row.getBoundingClientRect().top - before) };
+    });
+    expect(moved.cleared, 'the page could not be scrolled past the strip, so this asserts nothing')
+      .toBe(true);
+
+    await expect(page.getByTestId('setup-strip')).toHaveCount(0);
+    // Both questions are answerable again without leaving the shoes, and both are ON SCREEN — the
+    // bar is pinned, so being in the DOM is not the claim being made.
+    for (const name of ['Measured at', 'Built for']) {
+      const group = page.getByRole('radiogroup', { name });
+      await expect(group).toBeInViewport();
+    }
+    expect(Math.abs(moved.moved),
+      `the table moved ${moved.moved}px under the runner during the hand-over`).toBeLessThanOrEqual(1);
+  });
+}
 
 /**
  * While the strip is up the bar carries no groups, so its left side is empty by design and the

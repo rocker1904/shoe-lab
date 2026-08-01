@@ -29,6 +29,23 @@ window.ResizeObserver ??= class {
 } as unknown as typeof ResizeObserver;
 
 /**
+ * The same stand-in for the same reason: jsdom implements no `IntersectionObserver`, and
+ * `Page.svelte` hands the setup strip's groups to the toolbar when the strip scrolls out of view
+ * through one (docs/app.md §The setup strip). A no-op observer never reports a crossing, which is
+ * the only honest answer where nothing has a position and nothing scrolls; the hand-over itself is
+ * measured at real widths in `smoke.spec.ts`.
+ */
+window.IntersectionObserver ??= class {
+  readonly root = null;
+  readonly rootMargin = '';
+  readonly thresholds: readonly number[] = [];
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+  takeRecords(): IntersectionObserverEntry[] { return []; }
+} as unknown as typeof IntersectionObserver;
+
+/**
  * jsdom implements no `window.matchMedia`, and `Page.svelte` picks which of the two tables to
  * mount from one (docs/app.md §Columns and sorting). Non-matching, so the suite always sees the
  * desktop rendering: the phone one is exercised directly in `ShoeTableMobile.test.ts` and at real

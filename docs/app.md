@@ -1705,6 +1705,34 @@ runs only on the hand-over: called from the bar's own group, `lib/roving.ts`
 already owns focus. A **zone** click leaves the strip up, so the card that was
 pressed is still the control that answers the question and focus stays on it.
 
+**Scrolling past the strip hands over too.** The strip is `position: static`, so
+it leaves with the page while the bar that *is* pinned deliberately draws neither
+group — which left a first-time runner who scrolled the table to see what was in
+the catalogue with **no zone or story control on screen at all**: at 1440, 1280
+and 1024px the only radiogroup in the viewport was the sidebar's Discontinued. So
+an `IntersectionObserver` hands over the moment the strip's lower edge passes the
+top of the screen. It is the same one-surface-at-a-time rule the section already
+states, reached by scrolling rather than by clicking.
+
+**Permanent, not reversible, and that was settled by measurement.** A
+visibility-driven swap would oscillate: gaining the groups makes the bar **33px
+taller at 390px**, the pinned band reserves that height, and the strip is pushed
+back into view by more than the margin that hid it — hide, grow, reappear, shrink,
+at frame rate. The permanent form has no such loop, and it is what this section
+already says happens anyway.
+
+**The hand-over may not move the page under the runner.** Everything below moves
+twice — up by the strip's height, down by the row the bar gains — so the
+compensation is measured off the table anchor's own position on screen rather than
+computed from either, and applied again on the next frame, because the engines run
+their own scroll anchoring over content removed above the viewport and it can land
+after the handler returns. Measured on the real fleet in both engines at six
+widths: **0px of drift in Firefox and at most 0.4px in Chromium**. The collapse
+itself carries no transition on this path — the strip is off the top of the screen,
+so an animated one is 200ms of table sliding under someone reading it.
+`smoke.spec.ts` scrolls past the strip at 1440 and 390px and asserts both groups
+in the viewport afterwards and the table within a pixel of where it was.
+
 **The strip never returns**, and nothing is lost by that: the only thing the
 cards hold that the bar does not is the descriptions, which are a
 first-encounter need. It is also why the strip needs no card of its own for

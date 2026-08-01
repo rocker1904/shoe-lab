@@ -65,10 +65,54 @@
    * property it protects, that a bare link opens expanded and a filtered link collapsed, is this.
    */
   let stripOpen = $state(initial.bare);
+  let stripEl = $state<HTMLElement>();
   /** A JS transition cannot be wrapped in an `@media` block, so the query is asked here instead.
    *  jsdom implements no `matchMedia` beyond the suite's stub, hence the optional call. */
   const collapseMs = untrack(() =>
     (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false) ? 0 : 200);
+  /** Set for the scroll hand-over only: the strip is off the top of the screen by then, so a
+   *  200ms collapse is 200ms of the table sliding under a runner who is reading it. */
+  let collapseAtOnce = $state(false);
+  /**
+   * The strip is `position: static`, so scrolling the table takes it off the screen and leaves the
+   * runner with **no zone or story control anywhere** — the bar deliberately draws neither while the
+   * strip is up (docs/app.md §The setup strip). So the strip hands over when it leaves the viewport,
+   * exactly as it does when a story is picked: the same one-surface-at-a-time rule, reached by
+   * scrolling instead of by clicking.
+   *
+   * Permanent, and driven by the strip having gone rather than by whether it is showing. The
+   * reversible form oscillates on measurement rather than in theory: gaining the groups makes the
+   * bar 33px taller at 390px, the pinned band reserves that height, and the strip is pushed back
+   * into view by more than the margin that hid it.
+   */
+  $effect(() => {
+    if (!stripOpen || !stripEl) return;
+    const io = new IntersectionObserver(([entry]) => {
+      // Upward only. The strip sits above the table, so this is the only way it can leave — but a
+      // zero-height box during the collapse itself reports the same `isIntersecting: false`.
+      if (!entry || entry.isIntersecting || entry.boundingClientRect.bottom > 0) return;
+      handOverOnScroll();
+    });
+    io.observe(stripEl);
+    return () => io.disconnect();
+  });
+  async function handOverOnScroll() {
+    // Everything below the strip moves twice — up by the strip's own height, down by the row the
+    // bar gains — so the compensation is measured off what the runner is actually looking at rather
+    // than computed from either. Without it the table jumps a third of a phone screen mid-read.
+    const anchor = document.getElementById(TABLE_ANCHOR_ID);
+    const where = () => anchor?.getBoundingClientRect().top ?? 0;
+    const before = where();
+    collapseAtOnce = true;
+    stripOpen = false;
+    await tick();
+    const settle = () => { const drift = where() - before; if (drift) window.scrollBy?.(0, drift); };
+    settle();
+    // A second pass on the next frame, for the same reason `lib/focus-scroll.ts` needs one: the
+    // engines run their own scroll anchoring over content removed above the viewport, and it can
+    // land after this handler returns. Measured without it, the phone kept 2px of drift.
+    requestAnimationFrame(settle);
+  }
   /**
    * Measured, never assumed: the header wraps to two lines below 800px and the toolbar to two
    * below 880px, so the pinned `thead` and the sticky sidebar both sit under a box whose height
@@ -444,7 +488,7 @@
 <!-- Outside .layout so it precedes the sidebar in the tab order: the strip is the default path
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->
 {#if stripOpen}
-  <div transition:slide={{ duration: collapseMs }}>
+  <div bind:this={stripEl} transition:slide={{ duration: collapseAtOnce ? 0 : collapseMs }}>
     <SetupStrip zone={zoneMark} {selected} onzone={onZone} onstory={onStory}
                 onabout={() => (aboutOpen = true)} />
   </div>
