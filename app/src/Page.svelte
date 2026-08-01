@@ -174,6 +174,13 @@
    * bounds", on a screen with no bound set at all (docs/app.md §Coverage).
    */
   const narrowing = $derived(narrowingNames(view.filters));
+  /**
+   * The bound clause, as one string rather than an `{#if}` in the markup: Svelte trims the
+   * whitespace at a block's edges, so the leading space was eaten and the sentence rendered
+   * "shoes— each bound". The separator is part of the clause, so it lives with it.
+   */
+  const boundNote = $derived(narrowing.includes('the bounds')
+    ? ' — each bound says how many shoes it is excluding' : '');
   /** "a, b or c", and `a filter` when nothing is named — a fleet can be empty of its own accord. */
   const orList = (names: string[]): string =>
     names.length === 0 ? 'a filter'
@@ -452,8 +459,7 @@
            drawer, so pointing at it names something off screen at exactly the width where an empty
            result is most likely. `Filters` is the drawer toggle's own label. -->
       <p class="empty"><strong>No shoes match these filters</strong>Clear {orList(narrowing)} to see
-        shoes{#if narrowing.includes('the bounds')} — each bound says how many shoes it is
-        excluding{/if}. On a phone they are behind <b>Filters</b>.</p>
+        shoes{boundNote}. On a phone they are behind <b>Filters</b>.</p>
     {/if}
   </div>
 </div>

@@ -349,7 +349,8 @@ describe('Page', () => {
     const advice = screen.getByText(/No shoes match/).closest('p')!.textContent!;
     expect(advice).toContain(named);
     // the clause that was being printed with nothing on screen to act on
-    if (named === 'the bounds') expect(advice).toContain('bound says');
+    // the separator rides with the clause: an `{#if}` in the markup had its leading space trimmed
+    if (named === 'the bounds') expect(advice).toContain('shoes — each bound says');
     else expect(advice).not.toContain('bound says');
   });
   it('names every class that is narrowing, not only the first', () => {
