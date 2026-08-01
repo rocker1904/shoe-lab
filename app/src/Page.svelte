@@ -11,6 +11,7 @@
   import { onDestroy, tick, untrack } from 'svelte';
   import { slide } from 'svelte/transition';
   import type { ShoesFile } from '../../shared/types.js';
+  import AboutDialog from './components/AboutDialog.svelte';
   import ColumnPicker from './components/ColumnPicker.svelte';
   import FilterSidebar from './components/FilterSidebar.svelte';
   import Header from './components/Header.svelte';
@@ -49,6 +50,9 @@
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
+  /** The one explanation the chrome offers, opened from the bar and from the setup strip
+   *  (docs/app.md §The About panel). */
+  let aboutOpen = $state(false);
   /**
    * Ephemeral, never serialised and never persisted: the strip asks both questions on a genuine
    * first arrival — no query string and no stored view — and hands over to the toolbar for good
@@ -298,6 +302,7 @@
   <Toolbar zone={zoneMark} onzone={onZone} {selected}
            onstory={onStory} {showFilters} showGroups={!stripOpen}
            stability={view.stability} onstability={setStability}
+           onabout={() => (aboutOpen = true)}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
@@ -306,6 +311,12 @@
     {/snippet}
   </Toolbar>
 </div>
+
+<!-- Outside `.chrome`, never inside it: the panel mounts itself to `<body>` anyway, and a sticky
+     ancestor would make its z-index meaningless (docs/app.md §Stacking order). -->
+{#if aboutOpen}
+  <AboutDialog onclose={() => (aboutOpen = false)} />
+{/if}
 
 <!-- Outside .layout so it precedes the sidebar in the tab order: the strip is the default path
      into the tool, and inside .content a keyboard user reaches it only after every filter control. -->

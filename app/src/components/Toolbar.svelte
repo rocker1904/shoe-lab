@@ -8,7 +8,7 @@
   import ZoneToggle from './ZoneToggle.svelte';
 
   let { zone, onzone, selected, onstory, showFilters, onfilters, columns,
-        stability, onstability, showGroups = true }: {
+        stability, onstability, onabout, showGroups = true }: {
     /** Derived in `Page.svelte`, never stored: null while the view names both halves or neither
      *  (docs/app.md §Presets). */
     zone: Zone | null; onzone: (s: Zone) => void;
@@ -25,6 +25,9 @@
      *  rather than on the strip, which collapses for good on the first story click
      *  (docs/app.md §Presets). */
     stability: boolean; onstability: (v: boolean) => void;
+    /** Opens the panel that explains the table (docs/app.md §The About panel). `Page.svelte` owns
+     *  the panel; the bar owns the way in. */
+    onabout: () => void;
     /** False while the setup strip is still asking both questions in words: the strip hands over to
      *  the bar rather than sharing the screen with it, or the four stories are on screen twice
      *  (docs/app.md §Presets). The actions stay either way — they are the bar's own. */
@@ -89,6 +92,9 @@
     <small>Adds midsole width and heel counter stiffness to the {listed(STABLE_STORIES)} scores.</small>
   </div>
   <div class="actions">
+    <!-- First of the pair that opens a panel, because it is the one a reader might need before they
+         know what Columns is for. -->
+    <button type="button" class="about" onclick={onabout}>About</button>
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
             onclick={onfilters}>Filters</button>
     {@render columns?.()}
@@ -138,6 +144,11 @@
                     background: var(--surface); color: var(--text); border-radius: var(--r-sm);
                     font-size: var(--t-sm); }
   .filters-toggle:hover { background: var(--accent-dim); }
+  /* The sixth carrier of the one secondary-button treatment (docs/app.md §Theming). */
+  .about { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
+           background: var(--surface); color: var(--text); border-radius: var(--r-sm);
+           font-size: var(--t-sm); white-space: nowrap; }
+  .about:hover { background: var(--accent-dim); }
   /* 879.98px, not 880px: the tier boundary is "880 and up is one line", and `max-width: 880px`
      matches *at* 880 and splits the toolbar on the width that is supposed to be the wide one. */
   @media (max-width: 879.98px) {

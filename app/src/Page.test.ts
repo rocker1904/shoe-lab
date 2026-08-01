@@ -213,6 +213,20 @@ describe('Page', () => {
     await fireEvent.click(toggle);
     expect(toggle).toHaveAccessibleName(/currently light/);
   });
+  // `getBy`, not `findBy`: `Page` renders synchronously here and the suite runs under fake timers,
+  // so a `waitFor` would be an unnecessary dance with the clock. Every test in this file does the same.
+  it('opens the About panel from the toolbar and hands focus back on close', async () => {
+    render(Page, { props: { data } });
+    const about = screen.getByRole('button', { name: 'About' });
+    // jsdom's synthetic click does not move focus the way a real one does, and the dialog hands
+    // focus back to whatever held it — so the trigger has to actually hold it first.
+    about.focus();
+    await fireEvent.click(about);
+    expect(screen.getByRole('dialog', { name: 'About this table' })).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog', { name: 'About this table' })).toBeNull();
+    expect(about).toHaveFocus();
+  });
   it('explains an empty result instead of showing a bare header row', () => {
     history.replaceState(null, '', '/?q=nothing-matches-this');
     render(Page, { props: { data } });

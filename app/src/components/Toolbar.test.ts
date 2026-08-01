@@ -7,7 +7,7 @@ import type { Zone } from '../lib/lineage';
 const props = {
   zone: 'heel' as Zone | null, onzone: vi.fn(), selected: 'all' as string | null,
   onstory: vi.fn(), showFilters: false, onfilters: vi.fn(),
-  stability: false, onstability: vi.fn(),
+  stability: false, onstability: vi.fn(), onabout: vi.fn(),
 };
 
 describe('Toolbar', () => {
@@ -113,6 +113,24 @@ describe('Toolbar', () => {
     expect(container.querySelector('.toolbar')).toHaveClass('no-groups');
     await rerender({ ...props, showGroups: true });
     expect(container.querySelector('.toolbar')).not.toHaveClass('no-groups');
+  });
+
+  it('offers the way in before the controls that open panels', async () => {
+    const onabout = vi.fn();
+    const { container } = render(Toolbar, { props: { ...props, onabout } });
+    const about = screen.getByRole('button', { name: 'About' });
+    // First of the group, not merely present: it is the one a reader might need before they know
+    // what Filters and Columns are for.
+    expect(container.querySelector('.actions')!.firstElementChild).toBe(about);
+    await fireEvent.click(about);
+    expect(onabout).toHaveBeenCalled();
+  });
+
+  // It explains the table rather than acting on it, so it is present on the landing screen too —
+  // which is the one screen where a reader does not yet know what any of this is.
+  it('offers About while the setup strip still holds the questions', () => {
+    render(Toolbar, { props: { ...props, showGroups: false } });
+    expect(screen.getByRole('button', { name: 'About' })).toBeInTheDocument();
   });
 
   it('carries the Filters toggle and its expanded state', async () => {

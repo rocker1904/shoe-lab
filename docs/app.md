@@ -1544,6 +1544,13 @@ a `--bg` track with a 2px pad — §Theming owns why that pair is two tokens rat
 than `--accent` and a literal white. Each track keeps `overflow: visible`,
 because the focus ring is a `box-shadow` and a clipped track would swallow it.
 
+**`About` is the first of the actions group, at every width and in both states.**
+It explains the table rather than acting on it, so it stays on the bar whether
+the setup strip is up or down: the one screen where a reader knows least is the
+one screen it must not be missing from. It leads Filters and Columns because it
+is the control a reader might need *before* they know what those two are for.
+§The About panel owns the panel itself.
+
 **`Filters` and `Columns` are the same control twice**, so they are sized and
 filled alike: the picker is a `<details>` whose `summary` inherits the document's
 16px and paints nothing unless told to, which puts a 16px unfilled label beside a
