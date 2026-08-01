@@ -192,10 +192,16 @@
      the default `All` view carries no score column, and the ungated rule left the panel's right half
      blank while squeezing the image and facts into half the grid. With no breakdown the tier above
      is the correct layout, and the image and facts take the width instead. */
+  /* The image keeps its FOUR tracks across this boundary. It had three, so the widest tier gave it
+     less room than the tier below and widening the window past 1120px of container shrank the photo
+     from its full 280px to 257px — a track taken away as the container grew, which is the one thing
+     a tier change may not do (docs/app.md §The expanded row). The column comes out of the
+     breakdown, which is a five-column table of short figures and the only block here with any to
+     spare; the facts keep their three. */
   @container (min-width: 1120px) {
-    .has-bd .a-img   { grid-area: 1 / 1 / 2 / 4; }
-    .has-bd .a-facts { grid-area: 1 / 4 / 2 / 7; }
-    .has-bd .a-bd    { grid-area: 1 / 7 / 2 / 13; }
+    .has-bd .a-img   { grid-area: 1 / 1 / 2 / 5; }
+    .has-bd .a-facts { grid-area: 1 / 5 / 2 / 8; }
+    .has-bd .a-bd    { grid-area: 1 / 8 / 2 / 13; }
     .has-bd .a-body  { grid-area: 2 / 1 / 3 / 13; }
   }
   /* aspect-ratio, so the box is the right height BEFORE the image loads and the panel does not

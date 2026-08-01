@@ -911,13 +911,18 @@ Three zones on a 12-column grid: **identity** (the image, the feature chips and 
 | 700–1120px | image beside facts; pros/cons beside the prose; breakdown at the foot |
 | < 700px | one column, breakdown last |
 
+| container width | layout | tracks (image · facts · breakdown) |
+|---|---|---|
+| ≥ 1120px, with a breakdown | all three in one band | 4 · 3 · 5 |
+| 700–1120px | image beside facts, breakdown at the foot | 4 · 8 · 12 |
+
 **The widest tier needs a breakdown to exist.** It places the image, the facts
 and the breakdown by explicit grid area, so with no score column on screen —
 which is the default `All` view, and therefore the desktop landing state —
 columns 7–12 held nothing while the image and facts were squeezed into six of
 twelve. An empty area is not white space, it is a hole. The block is dropped
 from the DOM when `breakdowns` is empty and the grid carries `has-bd` only when
-it is not, so the tier below takes over and the image reaches its full 280px.
+it is not, so the tier below takes over.
 
 Inside that opinion column **pros and cons stack, one under the other**, at every tier.
 `.a-lists` sits in the 20rem track, so splitting it in two left each list about 18
@@ -953,11 +958,29 @@ Empty space beside prose is margin; empty space beside a bordered card is a hole
 why the breakdown sits in the top band with the other short things, or at the foot, and
 never in a rail beside the review. Balancing column heights is the wrong goal.
 
-The image renders at **280px**. Every source image is 720×480, so 280 CSS is well inside the
-sharp limit on a 2× display, where 360 is the ceiling, while leaving the facts beside it
+The image renders at **`min(its box, 280px)`**, and 280 is the cap rather than a
+promise the layout keeps at every width. Every source image is 720×480, so 280 CSS is well inside
+the sharp limit on a 2× display, where 360 is the ceiling, while leaving the facts beside it
 room. Only the size changed: `aspect-ratio: 3 / 2` and `object-fit: contain` both stay,
 because the ratio is what gives the box its height *before* the image loads and without it
 an already-open row reflows the rows beneath it mid-read.
+
+**Its box is four of twelve tracks from 700px of container upward — at every tier, breakdown or
+not.** The widest tier gave it three, which meant a track was taken *away* as the container grew:
+widening the window past 1120px of container shrank the photo from its full 280px to **257px**, on
+the desktop landing view of any runner with a score column on screen. That is the one thing a tier
+change may not do, and the fifth column came out of the breakdown, which is a table of short figures
+and the only block in the band with any to spare — its own table still sits 26px inside it at
+1130px of container. The facts keep their three.
+
+The measured ladder, identical in both engines: 4/12 of the container, so **210px at 700px of
+container, 243px at 809, 270px at 890**, and the cap binds from **920px of container** on. Below
+700px the panel is one column and the photo is the panel's whole width capped at 280 — so a window
+widening across that boundary does make the photo smaller, and that is a change of *layout* rather
+than a track being taken away. Left standing: reaching 280 in the side-by-side tier at 700px of
+container would want five of twelve tracks at every width in it, and the facts pay for that
+permanently to fix one boundary. `cross-browser.spec.ts` walks 1100px to 1600px and asserts the
+photo never shrinks and does reach 280.
 
 ### Two renderings, and only one of them mounted
 

@@ -350,6 +350,38 @@ const NARROW = 'score,heel-stack,weight';
 const WIDE = 'score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
   + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel';
 
+/**
+ * Widening the window may not make the photo smaller. The widest tier used to give `.a-img` THREE
+ * of twelve tracks where the tier below gives it four, so crossing 1120px of container took the
+ * image from its full 280px down to 257px — a track removed as the container grew
+ * (docs/app.md §The expanded row). A breakdown has to be on screen for that tier to fire at all,
+ * which is what the score column here buys.
+ */
+test('never shrinks the shoe photo as the window widens', async ({ page }) => {
+  // The ladder starts inside the side-by-side tier. Below 700px of container the panel is one
+  // column and the photo is the panel's full width capped at 280, so crossing that boundary is a
+  // change of layout rather than a step in this one — docs/app.md §The expanded row says so and
+  // says why it is left standing.
+  const seen: { width: number; img: number }[] = [];
+  for (const width of [1100, 1200, 1300, 1440, 1600]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/?cols=easy-score-heel,heel-stack,weight');
+    await page.getByText('cushy').first().click();
+    await expect(page.locator('.detail .a-bd')).toBeVisible();
+    // The fixture carries no `imageUrl`, so the BOX is what can be measured here — and the photo is
+    // exactly `min(box, 280)`, which is the `max-width` on the `img`. The rendered image was
+    // measured against the real fleet in both engines and agrees with this at every tier.
+    seen.push({ width, img: await page.locator('.detail .a-img').first()
+      .evaluate((el) => Math.min(280, Math.round(el.getBoundingClientRect().width))) });
+  }
+  for (let i = 1; i < seen.length; i++) {
+    expect(seen[i]!.img, `the photo shrank from ${seen[i - 1]!.img}px at ${seen[i - 1]!.width}px `
+      + `to ${seen[i]!.img}px at ${seen[i]!.width}px`).toBeGreaterThanOrEqual(seen[i - 1]!.img);
+  }
+  // And the widest tier reaches the size the doc states, rather than stopping short of it.
+  expect(seen.at(-1)!.img, 'the photo never reaches its stated 280px').toBe(280);
+});
+
 test('lays the expanded row out at every container tier without overflowing', async ({ page }) => {
   for (const { width, cols, pageMayScroll } of [
     { width: 1440, cols: NARROW, pageMayScroll: false },
