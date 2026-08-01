@@ -15,6 +15,11 @@ const SCORE_LABELS = new Map<string, string>(DERIVED_ZONE_PAIRS.flatMap((p) =>
  * a say (docs/app.md §Columns and sorting).
  */
 export function columnLabel(key: string, test: LabTest | undefined): string {
+  // Neither is ever a column — the table renders both itself — but `name`'s header is a real sort
+  // control and the ordering line names either of them, so each string keeps one home like the
+  // fields below it (docs/app.md §Columns and sorting).
+  if (key === 'name') return 'Shoe';
+  if (key === 'brand') return 'Brand';
   if (key === 'releasedAt') return 'Released';
   // Named for whose it is: our own score sits beside it now (docs/app.md §Table presentation).
   if (key === 'score') return 'RunRepeat Score';

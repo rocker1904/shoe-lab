@@ -200,3 +200,44 @@ describe('ShoeTable and the Easy score', () => {
     expect(cells).toContain('—');
   });
 });
+
+/**
+ * `SORT_FIELDS` accepts `name` and `brand`, so a link could reorder 450 rows alphabetically while
+ * the Shoe header was a plain `<th>` — no button, no caret, and the table's ONLY `aria-sort` gone
+ * with the score column that no longer held it (docs/app.md §Columns and sorting).
+ */
+describe('ShoeTable sorts by shoe name', () => {
+  it('offers the Shoe header as a sort control like every other header', () => {
+    setup();
+    const th = screen.getByRole('columnheader', { name: /Shoe/ });
+    expect(th.querySelector('button')).not.toBeNull();
+  });
+  it('marks a name-sorted table on the header that owns the key', () => {
+    const { rendered } = setup({ view: { sort: { key: 'name', dir: 'asc' } } });
+    const th = screen.getByRole('columnheader', { name: /Shoe/ });
+    expect(th).toHaveAttribute('aria-sort', 'ascending');
+    expect(th.querySelector('.caret.on')).not.toBeNull();
+    // And no other header claims the sort at the same time.
+    expect(rendered.container.querySelectorAll('thead th[aria-sort]')).toHaveLength(1);
+  });
+  it('marks the descending half too', () => {
+    setup({ view: { sort: { key: 'name', dir: 'desc' } } });
+    expect(screen.getByRole('columnheader', { name: /Shoe/ })).toHaveAttribute('aria-sort', 'descending');
+  });
+  // A to Z is what "sort by shoe" means; every figure column still opens descending, because there
+  // the interesting end is the big number (docs/app.md §Columns and sorting).
+  it('opens A to Z and reverses on a second press', async () => {
+    const onchange = setup();
+    await fireEvent.click(screen.getByRole('columnheader', { name: /Shoe/ }).querySelector('button')!);
+    expect(onchange.mock.lastCall![0].sort).toEqual({ key: 'name', dir: 'asc' });
+
+    const back = setup({ view: { sort: { key: 'name', dir: 'asc' } } });
+    await fireEvent.click(screen.getAllByRole('columnheader', { name: /Shoe/ }).at(-1)!.querySelector('button')!);
+    expect(back.mock.lastCall![0].sort).toEqual({ key: 'name', dir: 'desc' });
+  });
+  it('leaves the column set alone, the Shoe header never being a column', async () => {
+    const onchange = setup();
+    await fireEvent.click(screen.getByRole('columnheader', { name: /Shoe/ }).querySelector('button')!);
+    expect(onchange.mock.lastCall![0].columns).toEqual(['score', 'heel-stack', 'plate']);
+  });
+});

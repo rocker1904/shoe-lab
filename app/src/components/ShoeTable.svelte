@@ -9,6 +9,7 @@
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
+  import { nextSort } from '../lib/sort';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
@@ -44,7 +45,7 @@
 
   function setSort(key: string) {
     const next = structuredClone($state.snapshot(view)) as ViewState;
-    next.sort = view.sort.key === key && view.sort.dir === 'desc' ? { key, dir: 'asc' } : { key, dir: 'desc' };
+    next.sort = nextSort(view.sort, key);
     onchange(next);
   }
   function cellText(s: Shoe, col: string): string {
@@ -110,7 +111,20 @@
 <table>
   <thead bind:clientHeight={headHeight}>
     <tr>
-      <th class="name">Shoe</th>
+      <!-- A real sort control, not a label. `name` is a sort key the parser accepts, so a link
+           carrying it reordered 450 rows with no `aria-sort` anywhere in the table and nothing that
+           could reverse it — the untrue-claim species rather than a nicety
+           (docs/app.md §Columns and sorting). Same button, same caret, same contract as every
+           figure header; the units line stays empty, because the reserve is what keeps every
+           header's name on one baseline. -->
+      <th class="name"
+          aria-sort={view.sort.key === 'name' ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
+        <button type="button" onclick={() => setSort('name')}>
+          <span class="h-name">{columnLabel('name', undefined)}<SortCaret
+            dir={view.sort.key === 'name' ? view.sort.dir : null} /></span>
+          <span class="h-units"></span>
+        </button>
+      </th>
       {#each view.columns as col (col)}
         <th class:fig={isFigure(col, idx.bySlug.get(col))}
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>

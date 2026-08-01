@@ -581,6 +581,35 @@ dashes (§Columns are permissive, ranges and sorts are strict); `name` and
 `brand` are rendered by the table itself and have no cell, so they are sortable
 but never columns.
 
+**Sortable but never a column is not the same as sortable with no control.** The
+desktop's `Shoe` header is a real sort button — the same button, the same
+`SortCaret`, the same `aria-sort` on the `th` as every figure header — because
+`name` is a sort key the parser accepts and for a while nothing on screen or in
+the accessibility tree could say so: `?sort=name` reordered 450 rows
+alphabetically, the table carried **zero** `aria-sort` attributes (the score
+header having lost the one it holds on every other view), and there was no
+control anywhere that could reverse it. That is the untrue-claim species rather
+than an accessibility nicety, and §Columns are permissive, ranges and sorts are
+strict already states the invariant from the other side. `brand` is the half
+that stays link-only: it has no header on either rendering, and giving the one
+name column two sorts would need a second control in the row a runner reads
+shoes off.
+
+**A first press sorts descending, except on `name` and `brand`, which open A to
+Z.** On a figure the interesting end is the big number; on the shoe's own name
+it is the alphabet, and a first press landing on `Xero Shoes Speed Force II`
+answers a question nobody asked. `nextSort` in `app/src/lib/sort.ts` is the one
+home for both halves of that rule and both renderings call it, so a header press
+cannot come to mean two things. The pair is **declared** rather than inferred
+from the value's type: a categorical column sorts alphabetically too, but it
+sits in the value grid where every neighbour opens descending, so it keeps the
+grid's rule.
+
+The **phone offers no name header at all** — its header row is the figure
+columns and only those, which is what keeps every chip the same box
+(§Two renderings, and only one of them mounted) — so a name sort is set there by
+a link or by the desktop's control.
+
 **The default view holds six numeric columns**, plus `releasedAt` and `plate`,
 which carry words and dates rather than figures. Six is the bound: it is the
 widest numeric set that fits the narrowest common phone without horizontal

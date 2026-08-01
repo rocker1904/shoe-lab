@@ -9,6 +9,7 @@
   import { displayReleaseDate } from '../lib/release-date';
   import { chipLabel, columnLabel, shortLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
+  import { nextSort } from '../lib/sort';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/urlstate';
@@ -48,7 +49,9 @@
 
   function setSort(key: string) {
     const next = structuredClone($state.snapshot(view)) as ViewState;
-    next.sort = view.sort.key === key && view.sort.dir === 'desc' ? { key, dir: 'asc' } : { key, dir: 'desc' };
+    // `lib/sort.ts` owns which way a first press goes, so the two renderings cannot disagree about
+    // what pressing a header means (docs/app.md §Columns and sorting).
+    next.sort = nextSort(view.sort, key);
     onchange(next);
   }
   function cellText(s: Shoe, col: string): string {

@@ -8,6 +8,26 @@ export interface SortState { key: string; dir: 'asc' | 'desc' }
 /** Ordinal so plate sorts like every other column (docs/app.md §Columns and sorting). */
 const PLATE_RANK: Record<Plate, number> = { none: 0, 'plated-other': 1, carbon: 2 };
 
+/**
+ * Which way a header's FIRST press sorts. Descending everywhere, because on a figure the
+ * interesting end is the big number — except the two identity keys the table renders itself, where
+ * "sort by shoe" plainly means A to Z and a first press landing on `Xero Shoes Speed Force II` is
+ * a control answering a question nobody asked. Declared as that pair rather than inferred from the
+ * value's type: a categorical column also sorts alphabetically, but it sits in the value grid where
+ * every neighbour opens descending, so it keeps the grid's rule
+ * (docs/app.md §Columns and sorting).
+ */
+const ASCENDING_FIRST = new Set(['name', 'brand']);
+/**
+ * What a press on `key` produces, given the sort the table is already showing. Both renderings call
+ * this rather than spelling the flip twice, so a press cannot come to mean two things.
+ */
+export function nextSort(current: SortState, key: string): SortState {
+  const first: SortState['dir'] = ASCENDING_FIRST.has(key) ? 'asc' : 'desc';
+  const flipped = first === 'desc' ? 'asc' : 'desc';
+  return { key, dir: current.key === key && current.dir === first ? flipped : first };
+}
+
 function keyValue(
   s: Shoe, key: string, idx: TestIndex, scores?: ScoreColumns,
 ): number | string | undefined {
