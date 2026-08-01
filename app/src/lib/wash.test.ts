@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { greyAlpha, washAlpha, WASH_FLOOR, WASH_PEAK } from './wash';
+import { mixLab, oklabToRgb, rgb255, rgbToOklab } from './oklab';
+import {
+  DEFAULT_PAINT, DISPLAY_DEFAULTS, greyAlpha, rankedAlpha, rankedMix, resolveWash, washAlpha,
+  WASH_FLOOR, WASH_PEAK, WASH_THEMES, type DisplayPrefs, type ThemeName, type WashPaint,
+} from './wash';
 
 /** sRGB relative luminance, per WCAG. */
 function luminance([r, g, b]: number[]): number {
@@ -217,4 +221,218 @@ describe('--on-accent on a filled accent', () => {
       expect(c, `${c.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
     });
   }
+});
+
+/**
+ * The engine's own table is the one home for the four values it computes with, so the assertion
+ * material above must agree with it or the guard and the paint are measuring different colours.
+ * Pinned here rather than in `tokens.test.ts` because that file reads `app.css` and this one holds
+ * the resolved bytes: three homes for one fact is what this closes (docs/app.md §Theming).
+ */
+describe('the engine reads the same tokens this file asserts against', () => {
+  for (const t of THEMES) {
+    it(`${t.name}: surface, ink, accent and wash fill agree`, () => {
+      const e = WASH_THEMES[t.name as ThemeName];
+      expect([...e.surface]).toEqual(t.surface);
+      expect([...e.ink]).toEqual(t.ink);
+      expect([...e.accent]).toEqual(t.accent);
+      expect([...e.blue]).toEqual(t.washFill);
+    });
+  }
+});
+
+/**
+ * **The default state paints what it always painted.** A runner who never opens the Display menu
+ * must get the ramp that shipped before the menu existed, to the bit — the alphas from the frozen
+ * closed form above, and `app.css`'s own `--wash-blue` rather than a reconstruction of it
+ * (docs/app.md §The display preferences).
+ *
+ * `washAlpha` is written out separately in `wash.ts` precisely so this comparison is between two
+ * implementations rather than a function and itself.
+ */
+describe('the shipped ramp at the default preferences', () => {
+  const r = resolveWash(DISPLAY_DEFAULTS);
+
+  it('leaves the stylesheet alone entirely', () => {
+    expect(r.tokenFill).toBe(true);
+    expect(r.better.light).toBe('#147ceb');
+    expect(r.better.dark).toBe('#226ebf');
+  });
+
+  it('resolves to the three frozen constants and paints at the frozen peak', () => {
+    expect(r.paint).toEqual(DEFAULT_PAINT);
+    expect(r.peak).toBe(WASH_PEAK);
+    expect(r.capped).toBe(false);
+  });
+
+  it('reproduces the alpha of every step of the shipped curve exactly', () => {
+    for (let i = 0; i <= 400; i++) {
+      const p = i / 400;
+      expect(rankedAlpha(p, r.paint), `p=${p}`).toBe(washAlpha(p));
+    }
+  });
+
+  it('carries lightness, so the ramp reads without hue at all', () => {
+    expect(r.hueOnly).toBe(false);
+    expect(r.lightnessSpan).toBeGreaterThan(0.2);
+  });
+});
+
+/**
+ * The composite the STYLESHEET performs, rebuilt from the resolved values alone — hex fills, the
+ * paint, nothing reaching into the engine's internals. Two implementations of the same claim is
+ * the whole value of the sweep below: a solver checked against its own cell function proves
+ * nothing about what a cell paints.
+ */
+function paintedCell(theme: typeof THEMES[number], r: ReturnType<typeof resolveWash>, p: number): number[] {
+  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const name = theme.name as ThemeName;
+  const better = hex(r.better[name]);
+  if (!r.paint.dual) return over(better, rankedAlpha(p, r.paint), theme.surface);
+  // `color-mix(in oklab, --wash-blue W%, --wash-base)`, which is what the dual cell rule writes.
+  const lab = mixLab(rgbToOklab(hex(r.base[name]).map((v) => v / 255) as [number, number, number]),
+                     rgbToOklab(better.map((v) => v / 255) as [number, number, number]),
+                     rankedMix(p, r.paint));
+  return over(rgb255(oklabToRgb(lab)), r.paint.peak, theme.surface);
+}
+
+/**
+ * **The solver's property**, and the reason the menu can ship at all: over a grid of preference
+ * states no runner would choose but every one of which the sliders can reach, the ramp the app
+ * actually paints holds the theme's own ink at 4.5:1 — swept whole, hovered, in both themes.
+ *
+ * Swept rather than sampled at the endpoint, because with the base on the ramp is not monotone in
+ * alpha at all: every cell carries the same one, and the colour is what moves. Hovered, because a
+ * pointed-at cell is a third layer and the app's real worst case (§Theming). Both themes at ONE
+ * strength, because that is what ships: the painted peak is the lower of the two caps, so a runner
+ * whose OS flips to dark at sunset does not need a repaint to stay legible.
+ *
+ * The grid is what makes this a guard rather than an example. Where the old suite asserted the
+ * shipped constants, a preference layer means the constants are a starting point and the property
+ * is the contract.
+ */
+describe('every preference state the sliders can reach stays legible', () => {
+  const HUES = [0, 55, 110, 165, 220, 275, 330];
+  const CHROMAS = [0.02, 0.188, 0.37];
+  const STRENGTHS = [0.4, 1];
+  const CURVES = [1, 1.8, 4];
+
+  const states: DisplayPrefs[] = [];
+  for (const betterHue of HUES) {
+    for (const betterChroma of CHROMAS) {
+      for (const strength of STRENGTHS) {
+        for (const curve of CURVES) {
+          for (const baseOn of [false, true]) {
+            states.push({ ...DISPLAY_DEFAULTS, betterHue, betterChroma, strength, curve, baseOn,
+              // The base sits opposite the better colour, which is the arrangement that stresses
+              // the mix hardest: a base near the better hue barely moves along the ramp.
+              baseHue: (betterHue + 180) % 360, baseChroma: betterChroma, floor: baseOn ? 0 : 0.15 });
+          }
+        }
+      }
+    }
+  }
+
+  it(`holds 4.5:1 across ${states.length} states, both themes, hovered`, () => {
+    let worst = Infinity;
+    let worstAt = '';
+    for (const prefs of states) {
+      const r = resolveWash(prefs);
+      // Never more than asked for, and never more than the guard allows.
+      expect(r.peak).toBeLessThanOrEqual(prefs.strength);
+      expect(r.peak).toBeLessThanOrEqual(r.cap + 1e-9);
+      for (const theme of THEMES) {
+        for (let i = 0; i <= 120; i++) {
+          const p = i / 120;
+          const hovered = over(theme.accent, HOVER_ALPHA, paintedCell(theme, r, p));
+          const c = contrast(hovered, theme.ink);
+          if (c < worst) {
+            worst = c;
+            worstAt = `${theme.name} p=${p.toFixed(2)} hue=${prefs.betterHue} C=${prefs.betterChroma} `
+              + `s=${prefs.strength} curve=${prefs.curve} base=${prefs.baseOn} peak=${r.peak.toFixed(3)}`;
+          }
+        }
+      }
+    }
+    expect(worst, `worst ${worst.toFixed(3)}:1 at ${worstAt}`).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
+ * The cap is the thing the panel talks about, so its shape is worth pinning: it binds where the ink
+ * is under pressure and does not where it is not, and the theme it names is the one that bound.
+ */
+describe('the cap and the theme that binds it', () => {
+  const at = (over: Partial<DisplayPrefs>) => resolveWash({ ...DISPLAY_DEFAULTS, ...over });
+
+  it('leaves the default blue uncapped at the shipped strength', () => {
+    const r = at({});
+    expect(r.cap).toBeGreaterThan(WASH_PEAK);
+    expect(r.capped).toBe(false);
+  });
+
+  it('binds on the light theme for a red and on the dark for a green', () => {
+    // WCAG luminance is 71% green, so at ONE pinned OKLab lightness a red is far darker in the
+    // sense the contrast rule measures than a green is. A dark fill on white pulls the cell toward
+    // the light theme's near-black ink; a bright one on near-black pulls it toward the dark theme's
+    // near-white ink. The two themes therefore bind on opposite halves of the wheel — measured:
+    // red 29° caps light at 0.74 and leaves dark uncapped, green 145° caps dark at 0.92 and leaves
+    // light uncapped. One cap could not have covered both.
+    expect(at({ betterHue: 29, betterChroma: 0.37, strength: 1 }).binding).toBe('light');
+    expect(at({ betterHue: 145, betterChroma: 0.37, strength: 1 }).binding).toBe('dark');
+  });
+
+  it('reports itself capped only when the runner asked past the cap', () => {
+    const r = at({ betterHue: 29, betterChroma: 0.37, strength: 1 });
+    expect(r.capped).toBe(true);
+    expect(r.peak).toBe(r.cap);
+    expect(at({ betterHue: 29, betterChroma: 0.37, strength: 0.2 }).capped).toBe(false);
+  });
+});
+
+/**
+ * The base-on warning. Both tints sit at the SAME pinned lightness — that is the guard — so a
+ * two-colour ramp separates its ends by hue and by nothing else, at every setting rather than
+ * occasionally. The panel says so; this is what makes the saying true
+ * (docs/app.md §The display preferences).
+ */
+describe('the base-on ramp carries no lightness', () => {
+  it('warns for a red → green ramp, and not for the single-colour one', () => {
+    const rg = resolveWash({ ...DISPLAY_DEFAULTS, baseOn: true, baseHue: 29, baseChroma: 0.16,
+                             betterHue: 145, betterChroma: 0.16, curve: 1.4 });
+    expect(rg.hueOnly).toBe(true);
+    expect(rg.lightnessSpan).toBeLessThan(0.01);
+    expect(resolveWash(DISPLAY_DEFAULTS).hueOnly).toBe(false);
+  });
+
+  it('tints the worst cell as strongly as the best, so alpha says nothing', () => {
+    const r = resolveWash({ ...DISPLAY_DEFAULTS, baseOn: true });
+    expect(rankedAlpha(0, r.paint)).toBe(r.peak);
+    expect(rankedAlpha(1, r.paint)).toBe(r.peak);
+    // …and the colour is what moves instead.
+    expect(rankedMix(0, r.paint)).toBe(0);
+    expect(rankedMix(1, r.paint)).toBe(1);
+  });
+});
+
+/** The knobs do what their labels say, which no contrast sweep can catch. */
+describe('the ramp shape follows its preferences', () => {
+  const paint = (o: Partial<WashPaint>): WashPaint => ({ ...DEFAULT_PAINT, ...o });
+
+  it('starts painting exactly where the floor says', () => {
+    expect(rankedAlpha(0.3, paint({ floor: 0.3 }))).toBe(0);
+    expect(rankedAlpha(0.31, paint({ floor: 0.3 }))).toBeGreaterThanOrEqual(0);
+    expect(rankedAlpha(0.2, paint({ floor: 0 }))).toBeGreaterThan(0);
+  });
+
+  it('makes a higher emphasis more of a podium', () => {
+    const mid = 0.6;
+    expect(rankedAlpha(mid, paint({ curve: 4 }))).toBeLessThan(rankedAlpha(mid, paint({ curve: 1 })));
+    // …and leaves the top of the ramp where it is, whatever the exponent.
+    expect(rankedAlpha(1, paint({ curve: 4 }))).toBeCloseTo(rankedAlpha(1, paint({ curve: 1 })), 12);
+  });
+
+  it('still paints nothing where a tint would be invisible', () => {
+    expect(rankedAlpha(0.16, paint({ peak: 0.02 }))).toBe(0);
+  });
 });

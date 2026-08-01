@@ -2,6 +2,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { hslToRgb, rgb255 } from './oklab';
+import { WASH_THEMES } from './wash';
 
 // Resolved through `fileURLToPath` rather than `new URL(...)` because the jsdom environment
 // replaces the global `URL` with one `readFileSync` rejects (lineage.test.ts says the same).
@@ -72,6 +74,39 @@ describe('design tokens', () => {
 
   it('drops --tint-strength, because the endpoint is the cap', () => {
     expect(css).not.toContain('--tint-strength');
+  });
+
+  /**
+   * The wash engine solves for contrast at runtime and needs four of these values as numbers, so
+   * `wash.ts` freezes them rather than reading the cascade (docs/app.md §The display preferences).
+   * Freezing is only safe with a guard, and this is it: the stylesheet is parsed and compared, so a
+   * retune of any of the four fails here rather than silently handing the solver a surface the app
+   * no longer paints on.
+   */
+  it("keeps the engine's frozen theme table equal to the stylesheet it reads", () => {
+    const block = (selector: string): Record<string, string> => {
+      const start = css.indexOf(selector);
+      expect(start, `${selector} is gone from app.css`).toBeGreaterThan(-1);
+      const body = css.slice(start, css.indexOf('\n}', start));
+      const out: Record<string, string> = {};
+      for (const m of body.matchAll(/(--[\w-]+):\s*([^;]+);/g)) out[m[1]!] = m[2]!.trim();
+      return out;
+    };
+    const bytes = (value: string): number[] => {
+      if (value.startsWith('#')) return [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16));
+      const m = /^hsl\(([\d.]+) ([\d.]+)% ([\d.]+)%\)$/.exec(value);
+      expect(m, `cannot read ${value}`).not.toBeNull();
+      return rgb255(hslToRgb(+m![1]!, +m![2]! / 100, +m![3]! / 100));
+    };
+
+    for (const [name, selector] of [['light', ':root {'], ['dark', ":root[data-theme='dark'] {"]] as const) {
+      const b = block(selector);
+      const t = WASH_THEMES[name];
+      expect(bytes(b['--surface']!), `${name} --surface`).toEqual([...t.surface]);
+      expect(bytes(b['--text']!), `${name} --text`).toEqual([...t.ink]);
+      expect(bytes(b['--accent']!), `${name} --accent`).toEqual([...t.accent]);
+      expect(bytes(b['--wash-blue']!), `${name} --wash-blue`).toEqual([...t.blue]);
+    }
   });
 
   it('defines the full spacing, radius and type scales', () => {

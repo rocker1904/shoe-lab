@@ -2673,6 +2673,129 @@ cover both:
   monotonic ramps the worst case is `p = 1` in both. Retune `--wash-grey`,
   `--wash-blue` and `WASH_PEAK` against that.
 
+## The display preferences
+
+The ranked ramp above is **tunable**, from one `Display` menu, and every constant
+it names is that menu's default rather than its law. Six things move — the better
+colour's hue and vividness, a base colour with the same pair, strength, emphasis
+and the floor — and one thing does not, which is the whole design: **lightness**.
+`lib/wash.ts` owns the engine, `lib/display.ts` the preference and its
+stylesheet, `lib/oklab.ts` the colour space both work in.
+
+**Lightness is pinned per theme, because a lightness slider is a contrast
+slider.** WCAG contrast is a ratio of relative luminances, and OKLab's `L` is
+very nearly a monotone function of luminance; hue and chroma at a fixed `L` move
+it far less. So the engine pins each tint's `L` to that theme's own
+`--wash-blue`, in OKLCh, and hands the runner the two axes that cannot spend the
+contrast budget on their own. `toGamutLab` reduces **chroma** where sRGB cannot
+hold the request and never touches `L`, for the same reason: clipping the linear
+channels — the obvious alternative — moves luminance by however much it clipped.
+There is no free-rein mode, and the reference mockup's one is the argument for
+that rather than against it: unpinning the sliders drove the worst ramp step
+under 2:1 in three drags.
+
+**A pinned lightness is not a guarantee on its own, so a solver caps the
+strength.** Per theme, `resolveWash` bisects for the largest strength that keeps
+that theme's own ink at 4.5:1 across the **whole** painted ramp — swept, not
+sampled at the endpoint, because a base-on ramp carries one flat alpha and its
+worst step is not its last — and with `--hover-wash` composited on top, since a
+pointed-at cell is the app's real worst case (§Theming). The app paints
+`min(strength, cap)`.
+
+**One painted strength, and it is the lower of the two caps.** The two themes
+bind on opposite halves of the wheel: WCAG luminance is 71% green, so at one
+pinned `L` a red is far darker than a green in the sense the rule measures, and
+a dark fill on white threatens the light theme's near-black ink while a bright
+one on near-black threatens the dark theme's near-white. A red at 0.37 chroma
+caps light at 0.74 and leaves dark uncapped; a green at the same chroma caps
+dark at 0.92 and leaves light uncapped. Painting each theme its own cap would
+mean a runner on `auto` gets a different ramp at sunset with no repaint of their
+own — so the binding cap is painted in both, and the panel names the theme that
+bound it. That is the only thing the cap note ever says.
+
+**The solver runs on a preference change and nothing else.** It is a few
+thousand contrast evaluations; a cell is a `Math.pow`. `resolveWash` returns a
+`WashPaint` — four numbers — and the table reads only that, so the per-cell cost
+is exactly what it was before the menu existed and `recompute-budget.test.ts`
+holds it there (§What a drag may recompute). The preference is its own state
+beside `ViewState`, so a filter drag re-resolves nothing at all.
+
+**Colours are quantised before they are solved for.** What reaches the browser
+is a `#rrggbb`, so that is what `color-mix` interpolates between and what the
+screen composites — and rounding two endpoints then mixing is not the colour you
+get from mixing then rounding. Solving on the unrounded tint over-reported a
+base-on ramp by up to 0.03 of ratio, which is a guard passing on a colour nobody
+paints.
+
+**Base off is a podium; base on is a scale, and the difference is semantic.**
+With the base off — the default — alpha carries the magnitude and only leaders
+read as tinted, which is what a ranking wants and what the app has always done.
+With it on, **every** ranked cell is tinted at one flat strength and the
+**colour** carries the magnitude, interpolating base → better along the emphasis
+curve. That is a real departure from leaders-only tinting and it is the point of
+the control: a runner who cares only about the top of the table can put the whole
+range on a red→green ramp. Two consequences follow and both are stated in the
+panel. The floor means nothing there — every cell is painted — so its slider is
+disabled rather than hidden, because a control that vanishes reads as a bug.
+And because both tints sit at the **same** pinned lightness, a base-on ramp is
+iso-lightness by construction: magnitude is carried by hue alone, at every
+setting rather than occasionally, which is exactly what a red→green ramp does to
+a runner who cannot separate the two. `resolveWash` measures the ramp's
+lightness span rather than testing it for monotonicity — a flat line never
+reverses, so a monotonicity check would have reported "fine" forever — and the
+panel says so whenever the span is under one 8-bit step.
+
+**The neutral grey ramp takes no preference at all.** A metric with no better
+end has nothing about it to tune, and `greyAlpha` is untouched by every control
+here.
+
+**The preference is stored locally and never in the URL.** The URL is the view —
+what is being asked of the fleet — and a shared link has to show the recipient
+the same table (§View and URL ownership). A colour ramp is a property of the
+reader's eyes and screen, so a link carrying one would repaint someone else's
+table for them. Its own key beside the theme's, a versioned shape, and every
+field clamped independently on read: an unrecognised version reads as the
+defaults, but one bad number costs that number rather than the four beside it.
+
+**At the default state nothing is written at all.** `resolveWash` reports
+`tokenFill` there and no override stylesheet exists, so `app.css`'s own
+`--wash-blue` reaches the cells exactly as it always has, in both themes, byte
+for byte — asserted from both ends in `wash.test.ts` (the alpha of all 401 steps
+against the frozen closed form) and `display.test.ts` (the empty stylesheet).
+This is why the defaults are the light theme's blue **rounded to the sliders'
+steps** — 255° / 0.188 against the token's 255.29 / 0.1884 — and why that
+rounding costs nothing: those two numbers are a starting point for a tweak, never
+a colour that is painted. The cost that is real: the two themes' blues are not
+one OKLCh colour (the dark token is 0.146 chroma), and one hue/vividness pair
+serves both, so the first nudge of either moves the dark theme's fill to the
+light theme's vividness. One pair for both themes is what makes the panel
+legible; the jump is at the first tick and never again.
+
+**The override stylesheet mirrors `app.css`'s own four blocks**, and has to: the
+dark values sit under both `prefers-color-scheme` and `[data-theme]` so the theme
+control wins in either direction, and a single `:root` rule would paint the light
+tint on a runner whose OS is dark. Base-on switches a **rule** rather than a
+value — `data-wash="dual"` on the root selects the two-colour cell rule in both
+tables — because the single-colour rule has to stay literally untouched at the
+default state for the byte-identical claim to mean anything, and a `var()`
+fallback resolving to the same colour does not give that: it round-trips the
+token through OKLab first.
+
+**`wash.test.ts` asserts the property, not the constants.** It sweeps a grid of
+252 preference states — hues, chromas, strengths, emphases, base on and off —
+rebuilds the composite the stylesheet performs from the **resolved** values
+alone, and holds the theme's ink to 4.5:1 hovered in both themes. A solver
+checked against its own cell function proves nothing about what a cell paints.
+The shipped-constant assertions stay beside it: they are now the default case of
+the same rule.
+
+**Nothing here announces.** Every control in the app says what it did (§What a
+control says it did) and these are the exemption: a slider drag is sixty changes
+a second, a native `<input type="range">` already speaks its own value, and the
+one fact worth hearing — that the guard is holding the strength down — is stated
+in the panel as text rather than fired into the status region on every frame of a
+drag.
+
 ## Coverage
 
 A metric's coverage is the share of shoes carrying a reading among the shoes
