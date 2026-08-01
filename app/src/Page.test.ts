@@ -787,3 +787,117 @@ describe('Page announces what a control did', () => {
     expect(region()).toHaveTextContent('');
   });
 });
+
+/**
+ * A history entry records which rows are open and nothing else. Back is a navigation gesture rather
+ * than an undo, so a filter never spends an entry and `popstate` takes only the open set from the
+ * one it lands on.
+ * docs/app.md §View and URL ownership
+ */
+describe('history is row-based', () => {
+  /** The row strip is the click target in both renderings; jsdom always mounts the desktop one. */
+  const rowFor = (name: string) => screen.getByText(name).closest('tr')!;
+
+  it('opens a row with a history entry rather than a replacement', async () => {
+    const push = vi.spyOn(history, 'pushState');
+    render(Page, { props: { data } });
+    await fireEvent.click(rowFor('cushy'));
+    expect(push).toHaveBeenCalledOnce();
+    expect(location.search).toContain('open=cushy');
+  });
+
+  it('closing a row is its own entry, never a history.back()', async () => {
+    const push = vi.spyOn(history, 'pushState');
+    render(Page, { props: { data } });
+    await fireEvent.click(rowFor('cushy'));
+    await fireEvent.click(rowFor('cushy'));
+    expect(push).toHaveBeenCalledTimes(2);
+    expect(location.search).not.toContain('open=');
+  });
+
+  // The bound that keeps the debounce safe: a dragged handle fires about sixty view updates a
+  // second, and none of them may reach the history stack.
+  it('a filter change never pushes', async () => {
+    const push = vi.spyOn(history, 'pushState');
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /^Race/ }));
+    settle();
+    expect(push).not.toHaveBeenCalled();
+    expect(location.search).not.toBe('');
+  });
+
+  // Without the flush, the pending replace lands on the NEW entry 200ms later and closes in the URL
+  // a row that is open on screen.
+  it('flushes the pending view write before pushing', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /^Race/ }));
+    await fireEvent.click(rowFor('cushy'));
+    settle();
+    expect(location.search).toContain('open=cushy');
+    expect(location.search).toContain('sort=');
+  });
+
+  it('Back closes the row and keeps a filter changed while it was open', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(rowFor('cushy'));
+    await fireEvent.click(screen.getByRole('button', { name: /^Race/ }));
+    settle();
+    expect(location.search).toContain('open=cushy');
+    // jsdom's own history traversal is asynchronous and this suite runs on a fake clock, so the
+    // entry Back lands on is put in place directly and the event a browser would fire is dispatched.
+    history.replaceState(null, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await tick();
+    expect(location.search).not.toContain('open=');
+    expect(location.search).toContain('sort=');
+    expect(screen.queryByText(/Full review on RunRepeat/)).not.toBeInTheDocument();
+  });
+
+  // Cancelled, not flushed. A flush would land the pre-Back address on the entry Back arrived at
+  // before the reconciling write overwrote it — invisible in the final URL, so the call count is
+  // what distinguishes the two.
+  it('Back cancels the pending write rather than landing it', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(rowFor('cushy'));
+    await fireEvent.click(screen.getByRole('button', { name: /^Race/ }));
+    const replace = vi.spyOn(history, 'replaceState');
+    history.replaceState(null, '', '/');
+    replace.mockClear();
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await tick();
+    settle();
+    expect(replace).toHaveBeenCalledOnce();
+  });
+
+  it('storage keeps the view and not the reading', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /^Race/ }));
+    await fireEvent.click(rowFor('cushy'));
+    settle();
+    expect(localStorage.getItem(VIEW_STORAGE_KEY)).toContain('sort=');
+    expect(localStorage.getItem(VIEW_STORAGE_KEY)).not.toContain('open');
+  });
+
+  it('a link carrying open rows arrives with them open', () => {
+    history.replaceState(null, '', '/?open=cushy');
+    render(Page, { props: { data } });
+    expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
+  });
+
+  it('a link naming a shoe that has left the fleet opens nothing', () => {
+    history.replaceState(null, '', '/?open=gone-shoe');
+    render(Page, { props: { data } });
+    expect(screen.queryByText(/Full review on RunRepeat/)).not.toBeInTheDocument();
+  });
+
+  // The whole reason the open set sits outside `ViewState`.
+  it('an open row does not unmark the story', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
+    settle();
+    expect(screen.getByRole('radio', { name: /Easy/, checked: true })).toBeInTheDocument();
+    // `cushy` rather than `racer`: Easy gates carbon out, so the carbon shoe is not on screen.
+    await fireEvent.click(rowFor('cushy'));
+    expect(screen.getByRole('radio', { name: /Easy/, checked: true })).toBeInTheDocument();
+  });
+});

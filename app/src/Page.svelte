@@ -40,7 +40,7 @@
   import { projectZone, zoneOf } from './lib/zone';
   import { sortShoes } from './lib/sort';
   import { currentTheme, cycleTheme, type Theme } from './lib/theme';
-  import { DEFAULT_ZONE, defaultColumns, defaultView, parseView, sameValue, serializeView, type ViewState } from './lib/urlstate';
+  import { DEFAULT_ZONE, defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, type ViewState } from './lib/urlstate';
 
   let { data }: { data: ShoesFile } = $props();
 
@@ -54,8 +54,11 @@
     // `isFirstArrival()` rather than `!qs && stored === null` spelled again: the loading placeholder
     // reserves the strip's height off the same predicate, and two spellings would let the reserve
     // and the strip disagree (docs/app.md §Decisions).
+    // Read from the query string only, never from storage: a stored view never carries open rows,
+    // so a returning visitor does not find last week's panel hanging open mid-table.
+    const openRows = parseOpen(qs, new Set(data.shoes.map((s) => s.slug)));
     return { view: parseView(qs || stored || '', indexTests(data.tests)), restored: stored !== null,
-             bare: isFirstArrival() };
+             bare: isFirstArrival(), open: openRows };
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
@@ -66,12 +69,13 @@
    *
    * Mutated, never replaced — both tables hold this exact set, and a new object would leave them
    * reading the old one.
+   *
+   * Seeded from the link, and a link-borne row deliberately does not scroll: where it sits depends
+   * on the sort and the filters, and a runner arriving at a table they have not read should not be
+   * dropped into the middle of it past the receipt and the toolbar. Back is held to the same rule
+   * (docs/app.md §View and URL ownership).
    */
-  const open = new SvelteSet<string>();
-
-  function toggleOpen(slug: string) {
-    if (!open.delete(slug)) open.add(slug);
-  }
+  const open = new SvelteSet<string>(initial.open);
   /** The one explanation the chrome offers, opened from the bar and from the setup strip
    *  (docs/app.md §The About panel). */
   let aboutOpen = $state(false);
@@ -325,22 +329,32 @@
     : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, zoneMark, view.stability)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
 
+  /** The address bar carries the view and the reading; storage carries only the view. Composing
+   *  them here is what keeps `serializeView` free of the `open` token, and so keeps `persist.ts`
+   *  storing its exact output (docs/app.md §View and URL ownership). */
+  const addressOf = (v: ViewState, rows: string[]) =>
+    [serializeView(v), serializeOpen(rows)].filter(Boolean).join('&');
+  const writeAddress = (address: string) =>
+    history.replaceState(null, '', address ? `?${address}` : location.pathname);
+
   /**
    * Still the one write path, now asynchronous. A drag fires about sixty view updates a second, so
    * writing on each would make a two-second gesture 120 `replaceState` calls — past Safari's
    * throttle inside a single drag — plus 120 synchronous storage writes. The state assignment in
    * `setView` stays immediate, so the table filters live (docs/app.md §View and URL ownership).
    */
-  const writeView = debounce((qs: string) => {
-    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
-    writeStoredView(qs);
+  const writeView = debounce((address: string, stored: string) => {
+    writeAddress(address);
+    writeStoredView(stored);
   }, VIEW_WRITE_MS);
   // A page being torn down cannot wait out a timer, and `pagehide` is the last event a bfcache
   // navigation reliably delivers.
   const flushView = () => writeView.flush();
   window.addEventListener('pagehide', flushView);
+  window.addEventListener('popstate', onPopState);
   onDestroy(() => {
     window.removeEventListener('pagehide', flushView);
+    window.removeEventListener('popstate', onPopState);
     flushView();
   });
 
@@ -348,7 +362,49 @@
     // Read before the assignment, so the diff is against the view the control was pressed on.
     void announce(viewAnnouncement(snapshot, v, idx));
     view = v;
-    writeView(serializeView(v));
+    writeView(addressOf(v, [...open]), serializeView(v));
+  }
+
+  /**
+   * The only thing in the app that pushes. Back is a navigation gesture rather than an undo, and the
+   * one place this tool has to navigate to is a shoe — so an entry records which rows are open, and
+   * a filter never spends one (docs/app.md §View and URL ownership).
+   *
+   * The pending view write is flushed first: it belongs to the entry being left, and left pending it
+   * would land on the new one 200ms later and close in the URL a row that is open on screen.
+   *
+   * Closing is a push too. `history.back()` would assume the row being closed owns the top entry,
+   * which two open rows disprove.
+   */
+  function toggleOpen(slug: string) {
+    writeView.flush();
+    if (!open.delete(slug)) open.add(slug);
+    const address = addressOf(snapshot, [...open]);
+    history.pushState(null, '', address ? `?${address}` : location.pathname);
+  }
+
+  /**
+   * A history entry records which rows are open; every other dimension is always the live view. So
+   * Back takes only the open set from the entry it lands on and leaves the view alone — adopting the
+   * popped address wholesale would discard any filter changed while the row was open — then
+   * reconciles the address bar to the merge.
+   *
+   * The pending write is CANCELLED rather than flushed: it belongs to the entry just left, which can
+   * no longer be reached. Nothing is lost — `setView` assigns the state immediately, so the live
+   * view already holds the change and the write below carries it (docs/app.md §View and URL ownership).
+   *
+   * It says nothing and it scrolls nowhere. The row carries `aria-expanded` itself, which is why
+   * opening one is exempt from the announcement policy in the first place
+   * (docs/app.md §What a control says it did), and yanking the page to a row the runner has just
+   * navigated away from is the same harm a link-borne open row avoids.
+   */
+  function onPopState() {
+    writeView.cancel();
+    const rows = parseOpen(location.search.replace(/^\?/, ''), new Set(data.shoes.map((s) => s.slug)));
+    for (const slug of [...open]) if (!rows.includes(slug)) open.delete(slug);
+    for (const slug of rows) open.add(slug);
+    writeAddress(addressOf(snapshot, [...open]));
+    writeStoredView(serializeView(snapshot));
   }
   // A view restored from storage has to reach the URL, or a returning visitor sees a filtered
   // table behind a bare URL and copying the link shares the default view instead. Routed through

@@ -67,11 +67,40 @@ not derived from the build, because `main` deploys continuously and a
 build-derived version would discard state on every push. Storage access is
 wrapped in both directions (docs/app.md §Theming).
 
-`popstate` is deliberately unhandled: Back does not restore the previous view.
-Wiring it up means re-entering the view from outside `setView` and needs the
-above worked through — BACKLOG.md item, not an oversight to patch casually.
-`replaceState` (never `pushState`) is what keeps the history stack from
-filling with keystrokes.
+**Back closes the shoe you opened, and nothing else pushes.** Back is a navigation
+gesture rather than an undo, and this tool has one screen plus N shoe panels: filters,
+sort, columns and the story buttons are the one place being tuned, so they keep the
+`replaceState`-only path. A change to the open-row set is the only thing that calls
+`pushState`, and it flushes the pending view write first — left pending, that write
+lands on the new entry 200ms later and closes in the URL a row that is open on screen.
+Closing a row is a push too: `history.back()` would assume the row being closed owns the
+top entry, which two open rows disprove.
+
+**A history entry records which rows are open; every other dimension is always the live
+view.** `popstate` therefore takes only the open set from the entry it lands on, keeps
+the view as it stands, and `replaceState`s the merge. Adopting the popped address
+wholesale would discard any filter changed while the row was open. The pending write is
+`cancel`led rather than flushed — it belongs to the entry just left, which can no longer
+be reached — and nothing is lost, because the state assignment was immediate and the
+reconciling write carries it.
+
+**A row opened by a link or reopened by Forward does not scroll, and Back announces
+nothing.** Where a row sits depends on the sort and the filters, so a runner arriving at
+a table they have not read must not be dropped into the middle of it, and a Back press is
+the one gesture whose whole point is to leave the place you were — yanking the page to a
+row would undo it. The silence is the same call `expanding a row` already makes: the row
+carries `aria-expanded` itself, so the fact is spoken by the element rather than by the
+status region (§What a control says it did), and announcing it only when history moved it
+would make one fact audible or silent depending on how it was reached.
+
+The open set is held **beside** `ViewState`, not in it. Every toolbar mark is a
+`sameValue` comparison of whole views (§Presets), so an `open` field would unmark the
+story the moment a row was tapped. Keeping it out makes that unreachable rather than
+handled, and leaves `applyPreset`, `allView` and `projectZone` with nothing to carry.
+It is also why storage still holds **the exact output of `serializeView`**: that
+function never emits the token, so a returning visitor gets their view back without last
+week's panel hanging open, and `VIEW_STORAGE_KEY` stays at `v4` because the stored format
+did not change.
 
 ### What a drag may recompute
 
@@ -131,8 +160,8 @@ boundary, and needs the decision above.
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
 `plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
-`stab=1`, `rows` (comma-joined), `sort` (`-` prefix means descending),
-`cols` (comma-joined), and
+`stab=1`, `rows` (comma-joined), `open` (comma-joined shoe slugs),
+`sort` (`-` prefix means descending), `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
 default and never appears.
@@ -142,6 +171,16 @@ default and never appears.
 preference alongside their filters. That is accepted rather than overlooked: the
 preference changes what the score means, so a link that dropped it would show
 the recipient a different ranking under the same URL.
+
+`open` names the shoes whose detail panels are showing, and is the one token that is not
+view state: it is what the runner is reading rather than what they searched, and it is
+the only thing a history entry records (§View and URL ownership). It is parsed by its own
+`parseOpen` rather than by `parseView`, which is what lets it be checked against the
+fleet — `parseView` only ever receives a `TestIndex` and could never vouch for a shoe
+slug. A slug that has left the fleet is dropped, and an all-separator value stays absent,
+the same rule `brands`, `plate` and `rows` follow. The two encodings compose into one
+address and neither writes the other's token, so `serializeView` stays exactly what
+storage holds.
 
 **There is no zone token.** The zone rides in `cols`, which is the only thing
 that records it (§The zone is a preset too), so a plain forefoot table is a verbose
