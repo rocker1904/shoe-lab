@@ -337,6 +337,85 @@ test('never opens the bar with the actions alone on a row', async ({ page }) => 
 });
 
 /**
+ * The chrome below 800px is three bands — identity, what acts on the table, what the table is —
+ * and above it two. Each assertion here is a property rather than a pixel count, so a retune of any
+ * boundary keeps them meaningful (docs/app.md §The chrome bands).
+ */
+test('lays the chrome out in bands', async ({ page }) => {
+  const settle = async () => {
+    const card = page.getByTestId('setup-strip').getByRole('button', { name: /^All/ });
+    // `exact`, because the strip's `Read about this table` is a substring match otherwise.
+    await expect(page.getByRole('button', { name: 'About', exact: true })).toBeVisible();
+    if (await card.count()) await card.click();
+    await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+    await page.evaluate(() => document.fonts.ready.then(() => null));
+  };
+  const bands = () => page.evaluate(() => {
+    const tb = document.querySelector('[data-testid="toolbar"]')!;
+    const cs = getComputedStyle(tb);
+    const padL = parseFloat(cs.paddingLeft), padR = parseFloat(cs.paddingRight);
+    const box = tb.getBoundingClientRect();
+    const setup = tb.querySelector('.setup')!.getBoundingClientRect();
+    const actions = tb.querySelector('.actions')!.getBoundingClientRect();
+    const kids = [...tb.querySelector('.setup')!.children].map((k) => k.getBoundingClientRect());
+    return {
+      sameRow: Math.abs((setup.y + setup.height / 2) - (actions.y + actions.height / 2)) < 4,
+      setupBelow: setup.y > actions.y,
+      leftInset: Math.round(kids[0]!.left - (box.left + padL)),
+      rightInset: Math.round((box.right - padR) - kids[kids.length - 1]!.right),
+      overflow: tb.scrollWidth - tb.clientWidth,
+      // The story group must take the row it is given rather than filling one of its own — carried
+      // over from the tier test Task 8 retires, which is where this claim lived.
+      paceW: tb.querySelector('.pace-wrap .seg')!.getBoundingClientRect().width,
+      wrapW: tb.querySelector('.pace-wrap')!.getBoundingClientRect().width,
+    };
+  });
+
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.goto('/');
+  await settle();
+  expect((await bands()).sameRow, 'the bar split above 800px').toBe(true);
+
+  await page.setViewportSize({ width: 801, height: 900 });
+  expect((await bands()).sameRow, 'the bar split just above the sidebar boundary').toBe(true);
+
+  // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
+  // what the table is, so the row carrying every word is the one nearest the table. One boundary,
+  // shared with the sidebar — the merged line the design wanted from 700 up does not fit the shipped
+  // controls until 777px, which is not a band (docs/app.md §The chrome bands).
+  for (const width of [800, 760, 660]) {
+    await page.setViewportSize({ width, height: 900 });
+    const split = await bands();
+    expect(split.sameRow, `the bands merged at ${width}px`).toBe(false);
+    expect(split.setupBelow, `the setup row leads at ${width}px`).toBe(true);
+  }
+
+  // 430 and below: flush to both padding edges — the property the whole rebuild exists to restore.
+  for (const width of [430, 390, 375, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(b.overflow, `the setup row overflows at ${width}px`).toBeLessThanOrEqual(0);
+    expect(b.leftInset, `not flush left at ${width}px`).toBeLessThanOrEqual(1);
+    expect(b.rightInset, `not flush right at ${width}px`).toBeLessThanOrEqual(1);
+  }
+
+  // Above 430 it stops widening and centres, so the two insets stay equal and stop growing apart.
+  for (const width of [500, 560, 629, 690, 760, 799]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(Math.abs(b.leftInset - b.rightInset), `not centred at ${width}px`).toBeLessThanOrEqual(2);
+    expect(b.leftInset, `the capped row grew at ${width}px`).toBeGreaterThanOrEqual(0);
+  }
+
+  // And at every width: the story group is shrink-wrapped, never stretched to fill its wrapper.
+  for (const width of [1200, 900, 760, 660, 560, 430, 390, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    const b = await bands();
+    expect(b.paceW, `the story group stretches at ${width}px`).toBe(b.wrapW);
+  }
+});
+
+/**
  * The utilities are written once and mounted in the host their band owns, so exactly one instance
  * must exist at any width — two would be two tab stops with the same name, and zero would lose the
  * controls. The widths step either side of 800 because that boundary is asked twice, once by the

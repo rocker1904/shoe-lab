@@ -31,4 +31,11 @@
            color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
   /* `--accent-solid` carrying `--on-accent`, like the toolbar's pill (docs/app.md §Theming). */
   button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
+  /* The bar's flush band tightens every pill on its setup row, and this group's buttons are two of
+     them — but their padding is authored here, so `Toolbar.svelte`'s rule has never reached them.
+     One boundary, stated twice because scoping gives it no choice; docs/app.md §The chrome bands
+     owns the number. */
+  @media (max-width: 429.98px) {
+    button { padding-inline: var(--s1); }
+  }
 </style>

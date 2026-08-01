@@ -1611,38 +1611,12 @@ are one language, and the words live on the setup strip, where the question is
 asked once; the group keeps `aria-label="Measured at"` so it is still
 named for a screen reader.
 
-The cascade is driven by what fits on a line rather than by phone-versus-desktop:
-
-| width | layout |
-|---|---|
-| above 800px | one line: the three setup controls, then the actions right-aligned |
-| below 800px | the same line, with the bar's own gutter and vertical padding halved, and `Filters` on it because the sidebar is a drawer here |
-| below 610px | the same rows again, bought with tighter pill padding |
-
-`609.98px` rather than `610px`, and `800px` unchanged: the sub-800 tier is the
-sidebar's own boundary and the two must agree, or the drawer toggle shows on a
-width laid out as a desktop.
-
-**Chrome height is monotonic in width.** Narrowing the window may add a row, but
-it must never add one that a narrower width then gives back: a band that stands
-taller than both the viewport above it and the viewport below it is height
-nothing on screen asked for. `smoke.spec.ts` walks a ladder from 1440px to 360px
-and asserts the bar's row count never falls as the window narrows — rows rather
-than pixels, because the 800px tier halves the bar's vertical padding by design
-and a pixel-monotone claim would fail on that alone. The tighter tier engages at
-**610px** rather than at the phone widths its padding was drawn for, because the
-actions stop fitting beside the groups at 601px at the wider padding — a tier
-that arrived after that break would hand back a row it had just charged for.
+The cascade is §The chrome bands, below.
 
 A width that has to span a row belongs on the **wrapper**, never on the segment:
 on the segment, the bordered pill container stretches the full width with its
-pills clustered at the left. The tighter tier **narrows the bar's own padding,
-gaps and button padding** rather than dropping a control, because that is what
-pays for the groups sharing a row: the zone and story pair need 366px at the
-wider pill padding, against the 344px a 360px phone leaves, and 334px at the
-narrower one. The pills stop stretching there for the same reason — beside the
-zone group the pace group takes the row it is given rather than filling one of
-its own.
+pills clustered at the left. `smoke.spec.ts` asserts the story group is
+shrink-wrapped rather than stretched, at every width.
 
 **Below 800px the chrome has a budget**, and it is a number rather than a taste:
 everything above the first shoe is paid on the screen with the least of it. The
@@ -1664,6 +1638,75 @@ measurement columns. In all three, the other half's bounds are **dropped rather
 than translated**, and everything with no zone is untouched — the reasoning is
 §The zone is a preset too. A no-op click on the marked zone returns
 early, so it cannot rebuild the view.
+
+## The chrome bands
+
+Below 800px the chrome is **three bands** — identity, what acts on the table,
+what the table is — and above it **two**.
+
+| query | composition |
+|---|---|
+| (none — above 800px) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No `Filters`: the sidebar is permanent |
+| `max-width: 800px` | two rows: `.actions` first (`order: -1`), then `.setup`, which is `space-between`, capped at 414px and centred. `Filters` appears, and every word on the actions row but `About` becomes a glyph. Pill inline padding `--s3` → `--s2` |
+| `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges. **Every** pill's inline padding `--s2` → `--s1`, the zone group's included |
+
+There is no spacer element on this bar: `.actions { margin-left: auto }` is what
+holds the trailing edge above 800px, and the "gap" in the table above is that
+auto margin rather than markup.
+
+**`800px` is shared with the sidebar** and is written `800px` rather than
+`799.98px`, so exactly 800 is "mobile" as it always has been. The two must agree
+or the drawer toggle shows on a width laid out as a desktop. `429.98px` takes the
+repo's `.98` convention so no width matches two tiers at once (§Presets has the
+reason).
+
+**The design asked for a merged line from 700px to 800px, and the shipped
+controls do not fit one.** Measured with the icon forms in place, the setup row
+needs 411px and the actions 330px — the actions carry a worded `About`, two
+glyphs and the three utilities — so the merged line's own minimum is a 765px
+viewport in Chromium and 777px in Firefox. A band 23px wide is not a band, and
+between 700 and 777 the bar wrapped anyway with the two rows in the **wrong
+order**: `flex-wrap` puts the actions after the setup, where the design puts them
+above it. So the split moved to the boundary that already exists, and the bands
+are separate for the whole sub-800 range. The cost is one row of chrome between
+700px and 800px that the design hoped to save.
+
+**The actions lead and the setup follows.** What acts on the table sits above
+what the table is, so the row carrying every word and all the colour is the one
+nearest the table.
+
+**The cap is 414px** — the setup row's own content width at a 430px viewport — so
+above 430 the row holds the spacing it has there rather than growing gaps that
+reach 171px by 700px, and centres the surplus. Below 430 the cap is wider than
+the row, so it stops meaning anything and the row goes flush to both padding
+edges, which is the property the whole rebuild exists to restore. `space-around`
+was measured and rejected: it never touches the padding edge again at any width.
+
+**The pill padding steps at `429.98px`, not at the `374.98px` the design named.**
+That figure came from a rig carrying the app's tokens but not its components, and
+its pills are narrower than the real ones by enough to move the boundary: on the
+design's ladder the three groups measure 400px at 360px against the 344px
+available, so the flush band — the one the rebuild exists to make flush —
+overflowed at 360, 375 and 390. At `--s1` for **every** pill they measure 328px.
+So the step moved to the boundary that already existed for that band and one
+width changes shape instead of two.
+
+**It is written twice, and Svelte's scoping leaves no way to state it once.**
+`ZoneToggle.svelte` owns its own buttons' padding in its own scoped style block,
+so `Toolbar.svelte`'s `.s` rule has never reached them — which is why "every
+pill" is spelled out: stepping only the pills the toolbar owns leaves the row
+16px over at 360px.
+
+**The setup row's `gap` is `--s1` below 800px, and that is a fit rule rather than
+a spacing one.** Under `space-between` the gap is only a floor, so the visible
+gaps are whatever the row has spare and the value changes nothing above the
+binding widths. It changes everything at them: **Firefox sets the three groups
+9px wider than Chromium does**, and at `--s2` its row came out 6px over the cap
+at 430px and 4px over the screen at 360px. A Chromium-only check would have
+shipped that. Both engines are now clean walking 360px to 1440px in 10px steps,
+for the header, the setup row and the actions row alike.
+
+**The group divider is gone** at every width (§The toolbar).
 
 ## Where the utilities live
 
