@@ -173,10 +173,10 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       const brands = raw.split(',').filter(Boolean);
       if (brands.length) v.filters.brands = brands;
     } else if (key === 'q' && raw.trim()) {
-      // The same rule the input applies, at the other door: a stored view replays through here when
-      // there is no query string, so a persisted `q=++` would otherwise open every later visit on
-      // an empty table with two invisible characters as its only cause. Kept untrimmed, because the
-      // space between two words is part of the query (docs/app.md §Filters).
+      // The same rule the input applies, at the other door: a link replays through here, so a
+      // shared `q=++` would otherwise open its recipient on an empty table with two invisible
+      // characters as its only cause. Kept untrimmed, because the space between two words is part
+      // of the query (docs/app.md §Filters).
       v.filters.search = raw;
     } else if (key === 'disc' && (raw === 'hide' || raw === 'only')) {
       v.filters.discontinued = raw;

@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { tick } from 'svelte';
 import { afterEach, expect, it, vi } from 'vitest';
 import App, { SKELETON_AFTER_MS } from './App.svelte';
-import { VIEW_STORAGE_KEY } from './lib/persist';
 import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
 
 /** `readFileSync(new URL(...))` does not resolve under jsdom, so the path is built the long way. */
@@ -14,7 +13,7 @@ const appDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  localStorage.clear();
+  history.replaceState(null, '', '/');
 });
 
 it('renders the error state with a retry button when loading fails', async () => {
@@ -82,10 +81,10 @@ it('shapes the skeleton like the table that replaces it', async () => {
  * against the real page in `e2e/smoke.spec.ts`.
  */
 it.each([
-  ['a first arrival', null, 1],
-  ['a returning visitor', 'plate=carbon', 0],
-] as const)('reserves the strip for %s', async (_who, stored, strips) => {
-  if (stored) localStorage.setItem(VIEW_STORAGE_KEY, stored);
+  ['a bare arrival', '/', 1],
+  ['a link that carries filters', '/?plate=carbon', 0],
+] as const)('reserves the strip for %s', async (_who, path, strips) => {
+  history.replaceState(null, '', path);
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
   const { container } = render(App);

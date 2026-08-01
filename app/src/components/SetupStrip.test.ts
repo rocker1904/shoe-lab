@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Page from '../Page.svelte';
 import SetupStrip from './SetupStrip.svelte';
-import { VIEW_STORAGE_KEY } from '../lib/persist';
 import { FLEET, TESTS } from '../lib/test-fixtures';
 import type { ShoesFile } from '../../../shared/types.js';
 import type { Zone } from '../lib/lineage';
@@ -98,7 +97,7 @@ describe('Page setup strip', () => {
     localStorage.clear();
   });
 
-  it('shows on a bare first arrival', () => {
+  it('shows on a bare arrival', () => {
     render(Page, { props: { data } });
     expect(screen.getByTestId('setup-strip')).toBeInTheDocument();
   });
@@ -109,10 +108,12 @@ describe('Page setup strip', () => {
     expect(screen.queryByTestId('setup-strip')).toBeNull();
   });
 
-  it('stays hidden when a stored view is restored', () => {
-    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon');
+  // Every bare arrival is a fresh start, so a filtered session last week says nothing about this
+  // one: the address bar is the only thing that can collapse the strip.
+  it('shows on a bare arrival even after a previous filtered session', () => {
+    localStorage.setItem('shoe-lab.view.v4', 'plate=carbon');
     render(Page, { props: { data } });
-    expect(screen.queryByTestId('setup-strip')).toBeNull();
+    expect(screen.getByTestId('setup-strip')).toBeInTheDocument();
   });
 
   it('survives a zone change, which is the other half of the same question', async () => {

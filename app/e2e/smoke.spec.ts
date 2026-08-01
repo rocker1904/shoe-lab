@@ -27,7 +27,7 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await expect(page.getByRole('row').filter({ hasText: 'racer' })).toBeVisible();
 });
 
-test('opens on the setup strip and resumes the previous session across a reload', async ({ page }) => {
+test('opens on the setup strip, and the address is the only thing that keeps a view', async ({ page }) => {
   await page.goto('/');
   const strip = page.getByTestId('setup-strip');
   await expect(strip).toBeVisible();
@@ -47,14 +47,21 @@ test('opens on the setup strip and resumes the previous session across a reload'
   await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
   await expect(strip).toHaveCount(0);
+  await expect(page).toHaveURL(/plate=none%2Cplated-other/);
 
-  // the only proof persistence works, because it spans a real page load
-  await page.goto('/');
+  // A bookmark of that address is the persistence mechanism, and only a real page load proves it.
+  const bookmark = page.url();
+  await page.goto(bookmark);
   await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
-  await expect(strip).toHaveCount(0);                                  // and it never returns
-  // and the restored view reaches the URL, so copying the link shares what is on screen
-  await expect(page).toHaveURL(/plate=none%2Cplated-other/);
+  await expect(strip).toHaveCount(0);
+
+  // and the bare address is a fresh start for the same visitor: the default table, and the strip
+  // asking its two questions again, with nothing in storage able to say otherwise
+  await page.goto('/');
+  await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
+  await expect(strip).toBeVisible();
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 });
 
 test('picks a zone, keeps the strip open through it, and returns to that zone\'s table via All', async ({ page }) => {
@@ -111,15 +118,15 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
  * inside each band under both, which is what makes them a check on the reserve rather than on the
  * fixture's wording.
  */
-// The strip is the biggest term above the table and only a FIRST ARRIVAL draws it, so both loads
-// are measured: a query string is what makes the second one not a first arrival, which is exactly
-// the predicate `isFirstArrival()` answers for the placeholder and for the strip alike.
+// The strip is the biggest term above the table and only a BARE ARRIVAL draws it, so both loads
+// are measured: a query string is what makes the second one not bare, which is exactly the
+// predicate `isBareArrival()` answers for the placeholder and for the strip alike.
 for (const { width, path, strip } of [
   { width: 1440, path: '/', strip: true },
   { width: 1200, path: '/', strip: true },
   { width: 1440, path: '/?plate=carbon', strip: false },
 ]) {
-  const who = strip ? 'a first arrival' : 'a returning visitor';
+  const who = strip ? 'a bare arrival' : 'a link that carries filters';
   test(`the loading skeleton reserves the geometry the table lands in at ${width}px, ${who}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     let release = () => {};

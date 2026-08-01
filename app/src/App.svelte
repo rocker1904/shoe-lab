@@ -14,7 +14,7 @@
   import SetupStrip from './components/SetupStrip.svelte';
   import Toolbar from './components/Toolbar.svelte';
   import { loadShoes } from './lib/data';
-  import { isFirstArrival } from './lib/persist';
+  import { isBareArrival } from './lib/arrival';
   import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
   import Page from './Page.svelte';
 
@@ -27,7 +27,7 @@
 
   /** Whether THIS load will draw the setup strip — the same predicate `Page.svelte` opens it on,
    *  so the room reserved and the room used are one answer (docs/app.md §Decisions). */
-  const strip = isFirstArrival();
+  const strip = isBareArrival();
   /** The reserve is laid out and invisible, so nothing it renders can be pressed and nothing it
    *  holds means anything. Handlers exist because the components require them. */
   const inert = () => {};

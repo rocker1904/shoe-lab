@@ -26,6 +26,7 @@
   import Toolbar from './components/Toolbar.svelte';
   import { TABLE_ANCHOR_ID } from './lib/anchor';
   import { COPIED, EXPORTED, viewAnnouncement } from './lib/announce';
+  import { isBareArrival } from './lib/arrival';
   import { exportCsv } from './lib/csv-export';
   import { keepFocusInScrollports } from './lib/focus-scroll';
   import { ICON_PATHS } from './components/icons';
@@ -34,7 +35,6 @@
   import { applyFilters, EMPTY_FILTERS, narrowingNames } from './lib/filters';
   import type { Zone } from './lib/lineage';
   import { orderingNote } from './lib/ordering';
-  import { isFirstArrival, readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
   import { scoreMap, type ScoreColumns } from './lib/score';
   import { SCORE_DEFS } from './lib/score-defs';
@@ -46,20 +46,16 @@
   let { data }: { data: ShoesFile } = $props();
 
   const idx = $derived(indexTests(data.tests));
-  // Parsed once; from here the view is the source of truth and the URL is write-only
-  // (docs/app.md §View and URL ownership). A shared link always beats a previous session, so the
-  // query string wins outright and storage is only consulted when there is none.
+  // Parsed once, out of the URL and nothing else; from here the view is the source of truth and the
+  // URL is write-only (docs/app.md §View and URL ownership). A bare address is a fresh start, so
+  // there is no previous session for a link to have to beat.
   const initial = untrack(() => {
     const qs = location.search.replace(/^\?/, '');
-    const stored = qs ? null : readStoredView();
-    // `isFirstArrival()` rather than `!qs && stored === null` spelled again: the loading placeholder
-    // reserves the strip's height off the same predicate, and two spellings would let the reserve
-    // and the strip disagree (docs/app.md §Decisions).
-    // Read from the query string only, never from storage: a stored view never carries open rows,
-    // so a returning visitor does not find last week's panel hanging open mid-table.
+    // `isBareArrival()` rather than `qs === ''` spelled again: the loading placeholder reserves the
+    // strip's height off the same predicate, and two spellings would let the reserve and the strip
+    // disagree (docs/app.md §Decisions).
     const openRows = parseOpen(qs, new Set(data.shoes.map((s) => s.slug)));
-    return { view: parseView(qs || stored || '', indexTests(data.tests)), restored: stored !== null,
-             bare: isFirstArrival(), open: openRows };
+    return { view: parseView(qs, indexTests(data.tests)), bare: isBareArrival(), open: openRows };
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
@@ -81,10 +77,11 @@
    *  (docs/app.md §The About panel). */
   let aboutOpen = $state(false);
   /**
-   * Ephemeral, never serialised and never persisted: the strip asks both questions on a genuine
-   * first arrival — no query string and no stored view — and hands over to the toolbar for good
-   * once a story is picked. A *stored* dismissal flag is what docs/app.md §Presets rules out; the
-   * property it protects, that a bare link opens expanded and a filtered link collapsed, is this.
+   * Ephemeral, never serialised and never persisted: the strip asks both questions on every bare
+   * arrival — no query string, so nothing was carried in — and hands over to the toolbar for good
+   * once a story is picked. A *stored* dismissal flag is what docs/app.md §The setup strip rules
+   * out; the property it protects — a bare link opens expanded, a filtered link collapsed — is the
+   * address bar's now, and this is how it is read.
    */
   let stripOpen = $state(initial.bare);
   let stripEl = $state<HTMLElement>();
@@ -330,9 +327,9 @@
     : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, zoneMark, view.stability)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
 
-  /** The address bar carries the view and the reading; storage carries only the view. Composing
-   *  them here is what keeps `serializeView` free of the `open` token, and so keeps `persist.ts`
-   *  storing its exact output (docs/app.md §View and URL ownership). */
+  /** The address bar carries the view and the reading, composed here rather than in
+   *  `serializeView`, which is what keeps the `open` token out of every other view comparison
+   *  (docs/app.md §View and URL ownership). */
   const addressOf = (v: ViewState, rows: string[]) =>
     [serializeView(v), serializeOpen(rows)].filter(Boolean).join('&');
   const writeAddress = (address: string) =>
@@ -341,13 +338,10 @@
   /**
    * Still the one write path, now asynchronous. A drag fires about sixty view updates a second, so
    * writing on each would make a two-second gesture 120 `replaceState` calls — past Safari's
-   * throttle inside a single drag — plus 120 synchronous storage writes. The state assignment in
-   * `setView` stays immediate, so the table filters live (docs/app.md §View and URL ownership).
+   * throttle inside a single drag. The state assignment in `setView` stays immediate, so the table
+   * filters live (docs/app.md §View and URL ownership).
    */
-  const writeView = debounce((address: string, stored: string) => {
-    writeAddress(address);
-    writeStoredView(stored);
-  }, VIEW_WRITE_MS);
+  const writeView = debounce(writeAddress, VIEW_WRITE_MS);
   // A page being torn down cannot wait out a timer, and `pagehide` is the last event a bfcache
   // navigation reliably delivers.
   const flushView = () => writeView.flush();
@@ -363,7 +357,7 @@
     // Read before the assignment, so the diff is against the view the control was pressed on.
     void announce(viewAnnouncement(snapshot, v, idx));
     view = v;
-    writeView(addressOf(v, [...open]), serializeView(v));
+    writeView(addressOf(v, [...open]));
   }
 
   /**
@@ -405,13 +399,7 @@
     for (const slug of [...open]) if (!rows.includes(slug)) open.delete(slug);
     for (const slug of rows) open.add(slug);
     writeAddress(addressOf(snapshot, [...open]));
-    writeStoredView(serializeView(snapshot));
   }
-  // A view restored from storage has to reach the URL, or a returning visitor sees a filtered
-  // table behind a bare URL and copying the link shares the default view instead. Routed through
-  // the one existing write path rather than adding a second URL write site, then flushed: this is
-  // a one-off at init, not part of a burst, and a bare URL for 200ms is a link worth copying.
-  if (initial.restored) { setView(initial.view); flushView(); }
 
   /**
    * A zone click makes the view about that zone (docs/app.md §Presets). A view that is a story is

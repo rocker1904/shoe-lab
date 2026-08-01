@@ -1,16 +1,18 @@
-import { fireEvent, render, screen, within } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page, { VIEW_WRITE_MS } from './Page.svelte';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { indexTests } from './lib/dataset';
-import { VIEW_STORAGE_KEY } from './lib/persist';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { defaultColumns, parseView } from './lib/urlstate';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 const idx = indexTests(TESTS);
+/** The key view state lived under until the URL became its only home. Nothing in the app writes it
+ *  any more, so it is planted by hand: these tests are about a browser still carrying one. */
+const DEAD_VIEW_KEY = 'shoe-lab.view.v4';
 // An extra numeric test that is not in the sidebar's curated list, so the "Add filter…" select renders.
 const EXTRA: LabTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' });
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, EXTRA] };
@@ -660,36 +662,43 @@ describe('Page zone toggle', () => {
   });
 });
 
-describe('Page persistence', () => {
-  it('lets a shared link beat a previous session', () => {
-    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon,plated-other'); // would show 2 shoes
+/**
+ * The URL is the only home for view state, and a bookmark is how a runner keeps one. Nothing here
+ * reads or writes storage, so a bare address is a fresh start whatever a previous session left in
+ * the browser (docs/app.md §View and URL ownership).
+ */
+describe('Page keeps the view in the URL alone', () => {
+  it('lets a shared link beat anything a previous session left behind', () => {
+    localStorage.setItem(DEAD_VIEW_KEY, 'plate=carbon,plated-other'); // would show 2 shoes
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
     expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 1 of the 1 shoes');
     expect(location.search).toContain('plate=carbon');
   });
-  it('restores a stored view on a bare URL and writes it back to the URL', () => {
-    // without the write-back a returning visitor sees a filtered table behind a bare URL, and
-    // copying the link shares the default view instead of what is on screen
-    localStorage.setItem(VIEW_STORAGE_KEY, 'plate=carbon');
-    render(Page, { props: { data } });
-    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 1 of the 1 shoes');
-    // No `settle()`, deliberately: the restore is a one-off at init rather than part of a burst,
-    // so it flushes rather than waiting out the debounce (docs/app.md §View and URL ownership).
-    expect(location.search).toContain('plate=carbon');
-    expect(strip()).not.toBeInTheDocument();
-  });
-  it('stores the view on every change', async () => {
-    render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
-    settle();
-    expect(localStorage.getItem(VIEW_STORAGE_KEY)).toContain('plate=carbon');
-  });
-  it('opens at defaults when the stored value is under another schema version', () => {
-    localStorage.setItem(VIEW_STORAGE_KEY.replace(/\d+$/, (n) => String(Number(n) - 1)), 'plate=carbon');
+  it('opens a bare arrival on the defaults, ignoring a view left in storage', () => {
+    localStorage.setItem(DEAD_VIEW_KEY, 'plate=carbon');
     render(Page, { props: { data } });
     expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 5 of the 5 shoes');
     expect(location.search).toBe('');
+    expect(strip()).toBeInTheDocument();
+  });
+  it('writes no view to storage when the view changes', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    settle();
+    expect(location.search).toContain('plate=carbon');
+    expect(Object.keys(localStorage)).toHaveLength(0);
+  });
+  it('gives a filtered visitor the default table on their next bare arrival', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
+    settle();
+    expect(location.search).toContain('plate=carbon');
+    // The second visit, with nothing but the address bar between the two.
+    cleanup();
+    history.replaceState(null, '', '/');
+    render(Page, { props: { data } });
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 5 of the 5 shoes');
     expect(strip()).toBeInTheDocument();
   });
   it('does not write the URL once per keystroke', async () => {
@@ -712,14 +721,6 @@ describe('Page persistence', () => {
     window.dispatchEvent(new Event('pagehide'));
     expect(spy).toHaveBeenCalledOnce();
     expect(location.search).toContain('plate=carbon');
-  });
-  it('opens normally when storage is blocked in both directions', async () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
-    render(Page, { props: { data } });
-    expect(strip()).toBeInTheDocument();
-    await fireEvent.click(screen.getByRole('button', { name: /^Easy/ }));
-    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 4 of the 4 shoes');
   });
 });
 
@@ -750,9 +751,8 @@ describe('Page states an ordering no header can carry', () => {
     render(Page, { props: { data } });
     settle();
     // A visit that only READS a query string writes nothing, so the assertion is that the address
-    // bar is unchanged and storage was never touched — the line added neither.
+    // bar is unchanged — the line added nothing to it.
     expect(location.search).toBe('?sort=-brand');
-    expect(localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
   });
 });
 
@@ -888,15 +888,6 @@ describe('history is row-based', () => {
     await tick();
     settle();
     expect(replace).toHaveBeenCalledOnce();
-  });
-
-  it('storage keeps the view and not the reading', async () => {
-    render(Page, { props: { data } });
-    await fireEvent.click(screen.getByRole('button', { name: /^Race/ }));
-    await fireEvent.click(rowFor('cushy'));
-    settle();
-    expect(localStorage.getItem(VIEW_STORAGE_KEY)).toContain('sort=');
-    expect(localStorage.getItem(VIEW_STORAGE_KEY)).not.toContain('open');
   });
 
   it('a link carrying open rows arrives with them open', () => {

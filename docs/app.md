@@ -8,26 +8,40 @@ components. Dataset shape and field semantics are docs/scraping.md.
 
 ## View and URL ownership
 
+**The URL is the only home for view state.** Storage holds *preferences* — the
+theme, and whatever else is a property of the runner rather than of the search —
+and it holds no view. A runner who wants to keep a table state **bookmarks the
+address**, which is the mechanism this app already had and already tested by
+sharing links.
+
+The reason is link fidelity. A stored view answered a bare link: the sender
+copied the empty address of the default view, and the recipient's own last
+session filled it in, so the same URL showed two people two fleets and rewrote
+the recipient's address bar into a link they could forward believing it was the
+one they were sent. The cost accepted in exchange is that a bare link now means
+**the default view for every recipient**, including the sender on their next
+visit — and that is the property a link has to have.
+
 `Page.svelte` holds the whole view — filters, sort, columns — as one local
 `$state` object. The URL is **write-only**: `parseView` runs exactly once, at
-init, inside `untrack`; every change goes through `setView`, which sets the
-state, `history.replaceState`s the serialised form, and stores it.
+init, inside `untrack`, over the query string and nothing else; every change goes
+through `setView`, which sets the state and `history.replaceState`s the
+serialised form.
 
 The state assignment is immediate — the table filters live, which is the whole
-point of filtering — but the URL and storage write is **trailing-debounced at
-200ms** (`lib/debounce.ts`), because a dragged histogram handle emits about
-sixty view updates a second: a two-second gesture would otherwise make 120
-`replaceState` calls, past Safari's ~100-per-30-seconds throttle inside a single
-drag, plus 120 synchronous storage writes. The search box had the same latent
-problem on every keystroke. It is still **one** write path, now asynchronous,
-and it flushes on `pagehide` so a page being torn down never loses the pending
-write.
+point of filtering — but the URL write is **trailing-debounced at 200ms**
+(`lib/debounce.ts`), because a dragged histogram handle emits about sixty view
+updates a second: a two-second gesture would otherwise make 120 `replaceState`
+calls, past Safari's ~100-per-30-seconds throttle inside a single drag. The
+search box had the same latent problem on every keystroke. It is still **one**
+write path, now asynchronous, and it flushes on `pagehide` so a page being torn
+down never loses the pending write.
 
-**Three callers flush it, and each is a moment the address bar has to be
-current**: `pagehide`, the one-off restore at init, and `Copy link` before it
-reads `location.href` (§Sharing is copying the address bar). The interval is the
-drag's and is not also a promise about copying — that promise was made here once
-and measured false at 52ms.
+**Two callers flush it, and each is a moment the address bar has to be
+current**: `pagehide`, and `Copy link` before it reads `location.href`
+(§Sharing is copying the address bar). The interval is the drag's and is not also
+a promise about copying — that promise was made here once and measured false at
+52ms.
 
 `ViewState` carries **no zone**. Which half of each zone pair a view is about is
 read back out of it by `zoneOf` (§The zone is a preset too), so the baseline is a
@@ -37,16 +51,18 @@ stops a second call site defaulting by accident. `parseView` has nothing to
 resolve before it builds that baseline — the columns a link carries are the
 zone it carries.
 
-Init takes the first of: a query string in the URL, a stored view, the
-defaults. A shared link must always beat a previous session, so the query
-string wins outright and storage is only read when there is none. A view
-restored from storage is passed straight back through `setView` once, which is
-what puts it in the URL — otherwise a returning visitor would see a filtered
-table behind a bare URL and copying the link would share the default view.
-That reuses the single write path rather than adding a second write site, and
-**that one write flushes immediately** rather than waiting out the debounce: it
-is a one-off at init, not part of a burst, and the 200ms in between is exactly
-the window in which a returning visitor copies the address bar.
+Init takes a query string or the defaults, and nothing else can speak. **A bare
+address — no query string — is a fresh start**, whoever is arriving and whatever
+they did last week; `isBareArrival()` in `lib/arrival.ts` is that predicate, and
+the setup strip and the loading placeholder both read it so the room reserved and
+the room used are one answer (§The setup strip, §Decisions).
+
+**Stability rides in `ViewState` and therefore in the URL alone.** It resets on a
+bare arrival like every other field, and any bookmark or shared link of a
+stability-on view already carries `stab=1` (§URL encoding), so links stay
+faithful. Persisting it was considered and declined: it changes what a score
+means, and a preference that silently re-ranked a link's table would be the
+same defect this section just removed, wearing a different name.
 
 The view is never re-derived from the URL. Not a shortcut — a correctness
 requirement: state that does not serialise would be silently dropped on the
@@ -61,17 +77,12 @@ keeps own properties whose value is `undefined`, so every cleared field leaves
 its key behind and a key count would never let a derived control re-open. Every
 derived mark in the app is one such comparison (docs/app.md §Presets).
 
-`persist.ts` stores the view between visits as **the exact output of
-`serializeView`** and nothing else — no bespoke JSON shape. Restoring runs the
-string back through `parseView`, so it inherits the hostile-input handling that
-already exists and is already adversarially tested: a test slug that has since
-left the catalogue is dropped by machinery that exists today, and no second
-parser can drift from the first. The storage key carries a hand-maintained
-schema version, bumped when the URL encoding changes; a value under any other
-key is never read, and there are **no migrations, ever**. It is deliberately
-not derived from the build, because `main` deploys continuously and a
-build-derived version would discard state on every push. Storage access is
-wrapped in both directions (docs/app.md §Theming).
+The one thing left of the old arrangement is **a single `removeItem` at boot**,
+in `main.ts`: every browser that ever ran an older build is carrying a view under
+a key nothing reads any more, and leaving dead data in a runner's storage is not
+a thing to do on purpose. It names the one key that build wrote — enumerating
+older ones would outlive the sessions carrying them — and it is the only storage
+call outside the theme's (§Theming).
 
 **Back closes the shoe you opened, and nothing else pushes.** Back is a navigation
 gesture rather than an undo, and this tool has one screen plus N shoe panels: filters,
@@ -103,10 +114,10 @@ The open set is held **beside** `ViewState`, not in it. Every toolbar mark is a
 `sameValue` comparison of whole views (§Presets), so an `open` field would unmark the
 story the moment a row was tapped. Keeping it out makes that unreachable rather than
 handled, and leaves `applyPreset`, `allView` and `projectZone` with nothing to carry.
-It is also why storage still holds **the exact output of `serializeView`**: that
-function never emits the token, so a returning visitor gets their view back without last
-week's panel hanging open, and `VIEW_STORAGE_KEY` stays at `v4` because the stored format
-did not change.
+It is also why `serializeView` never emits the token: the address bar is composed from
+`serializeView` and `serializeOpen` together, so every other comparison of a whole view —
+the toolbar's marks, `isDefaultView` — is spared a field that is about reading rather
+than searching.
 
 ### What a drag may recompute
 
@@ -185,8 +196,8 @@ the only thing a history entry records (§View and URL ownership). It is parsed 
 fleet — `parseView` only ever receives a `TestIndex` and could never vouch for a shoe
 slug. A slug that has left the fleet is dropped, and an all-separator value stays absent,
 the same rule `brands`, `plate` and `rows` follow. The two encodings compose into one
-address and neither writes the other's token, so `serializeView` stays exactly what
-storage holds.
+address and neither writes the other's token, so `serializeView` stays free of the
+reading (§View and URL ownership).
 
 **There is no zone token.** The zone rides in `cols`, which is the only thing
 that records it (§The zone is a preset too), so a plain forefoot table is a verbose
@@ -257,10 +268,10 @@ A query with no non-whitespace character in it is **the empty query**, and it is
 settled at both
 doors into the view rather than at the point of use: the input keeps a value
 whose `.trim()` is empty out of the view entirely, and `parseView` drops a `q`
-of the same shape. Both are needed, because a stored view replays through
-`parseView` — a stray space in the box used to reach the URL and storage through
-the one write path (§View and URL ownership) and open every later visit on an
-empty table whose only stated cause was two invisible characters. What is kept
+of the same shape. Both are needed, because a link replays through `parseView` — a
+stray space in the box used to reach the URL through the one write path
+(§View and URL ownership), and the recipient of that link opened on an empty table
+whose only stated cause was two invisible characters. What is kept
 is **untrimmed**: the space between two words is part of the query, and trimming
 as it is typed deletes it under the cursor.
 
@@ -669,9 +680,9 @@ This is a product change rather than a phone workaround, because **columns
 never vary by viewport**: `cols` serialises into the URL, so a
 viewport-dependent default would mean a link shared from a phone carried fewer
 columns than the sender saw and the URL would stop describing the view
-(docs/app.md §View and URL ownership). A stored view from before the change
-simply reads as non-default, which is why `VIEW_STORAGE_KEY` was bumped
-alongside it; shared links carry explicit `cols` and are unaffected.
+(docs/app.md §View and URL ownership). Shared links carry explicit `cols` and are
+unaffected: a link written before the change still names the seven columns its
+sender saw.
 
 The picker is a `<details>`, and it closes on an outside press and on Escape
 like every other floating panel — neither of which a native disclosure gives
@@ -751,7 +762,7 @@ and it takes the rendering as an argument rather than reading a media query, so
 the two renderings answer through one function.
 
 Three things it is not. It is **not state**: nothing about it reaches
-`ViewState`, `serializeView` or storage, so a recipient forwards the link they
+`ViewState` or `serializeView`, so a recipient forwards the link they
 were sent, byte for byte. It is **not the receipt's**: the receipt reports what
 the filters did and moves when a bound does, and ordering is neither
 (§The header names the catalogue, the receipt owns the count) — hence its own
@@ -1858,12 +1869,13 @@ than in a punctuation mark. The invite carries **no `↗`** — that mark means
 *this leaves the app* on the masthead credit, and this opens a modal. One glyph,
 one meaning; the accent colour is what carries the affordance.
 
-**Visibility is ephemeral `$state`**, initialised from "no query string *and* no
-stored view" — a genuine first arrival, which `Page.svelte` already knows at
-init — cleared on the first story click, never serialised and never persisted.
-That is not the stored dismissal flag this section rules out, and the property
-it protects is preserved exactly: a bare link opens expanded, a filtered link
-opens collapsed. A zone click leaves the strip up, because the zone is the
+**Visibility is ephemeral `$state`**, initialised from "no query string" — a bare
+arrival, which `Page.svelte` already knows at init — cleared on the first story
+click, never serialised and never persisted. So the strip is offered on **every**
+bare arrival rather than once per browser: view state lives in the URL alone
+(§View and URL ownership), and a dismissal flag in storage is what this section
+rules out. The property that flag would have protected is preserved exactly by the
+address instead: a bare link opens expanded, a filtered link opens collapsed. A zone click leaves the strip up, because the zone is the
 strip's other question; a story click collapses it with a height transition
 under a `prefers-reduced-motion` guard. The strip's `All` card stays marked
 through a zone click, because the click leaves the view equal to that zone's
@@ -2819,7 +2831,7 @@ the receipt all mount above it at once when the data lands.
 **The room above the table is reserved by the real bands, laid out and made
 invisible.** No constant could state it — the chrome steps four times between
 1440px and 320px, the strip five, and both move again when the face swaps in — so
-`App.svelte` renders `Header`, `Toolbar` and (on a first arrival) `SetupStrip`
+`App.svelte` renders `Header`, `Toolbar` and (on a bare arrival) `SetupStrip`
 inside `.reserve`, which is `visibility: hidden` and `inert`. That keeps the
 layout while taking every box out of the accessibility tree, out of hit-testing
 and out of the tab order, and it is the one form of the height that cannot drift
@@ -2827,7 +2839,7 @@ from the one the page will use. Nothing is drawn and nothing is offered: a visib
 band of controls that did nothing when pressed would be a worse defect than the
 jump.
 
-**Whether the strip is reserved is `isFirstArrival()`**, in `lib/persist.ts` —
+**Whether the strip is reserved is `isBareArrival()`**, in `lib/arrival.ts` —
 the same predicate `Page.svelte` opens the strip on, written once, because a
 placeholder reserving a strip the page then did not draw is the jump in the other
 direction. `Header` therefore takes `total` and `builtAt` as **optional**: the
@@ -2857,8 +2869,8 @@ the table are the same object.
 
 `App.test.ts` pins the row count, the cell count, the structure and which bands
 the reserve holds — the parts that are DOM facts — and `smoke.spec.ts` measures
-the geometry against the real table in a browser, at both a first arrival and a
-returning visitor, because none of it exists in jsdom. The pulse stays behind a
+the geometry against the real table in a browser, on both a bare arrival and a link
+that carries filters, because none of it exists in jsdom. The pulse stays behind a
 `prefers-reduced-motion` guard.
 
 ### What a control says it did
