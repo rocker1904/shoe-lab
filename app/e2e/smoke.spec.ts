@@ -1147,3 +1147,38 @@ test('Race applies no filter at all, and the stability preference does not move 
   await expect(score(0)).toHaveText('76.52');
   await expect(score(1)).toHaveText('70.49');
 });
+
+/**
+ * Both headline claims of row-based history, at a real width: jsdom's history traversal is
+ * asynchronous under the unit suite's fake clock, so this is where a real Back press is asserted.
+ * docs/app.md §View and URL ownership
+ */
+test('Back closes the open shoe instead of leaving the site', async ({ page }) => {
+  await page.goto('/?plate=carbon');
+  await page.getByText('racer').first().click();
+  await expect(page.getByRole('link', { name: /Full review on RunRepeat/ })).toBeVisible();
+  await expect(page).toHaveURL(/open=racer/);
+
+  await page.goBack();
+  await expect(page.getByRole('link', { name: /Full review on RunRepeat/ })).toHaveCount(0);
+  // The filter that was in the address before the row was opened is still there, and so is the app.
+  await expect(page).toHaveURL(/plate=carbon/);
+  await expect(page).not.toHaveURL(/open=/);
+  await expect(page.getByTestId('receipt')).toBeVisible();
+});
+
+test('Back takes only the open set, keeping a filter changed while the row was open', async ({ page }) => {
+  await page.goto('/?plate=carbon');
+  await page.getByText('racer').first().click();
+  await expect(page).toHaveURL(/open=racer/);
+  // Changed on the entry the row opened, so a Back that adopted the popped address wholesale
+  // would discard it (docs/app.md §View and URL ownership).
+  await page.getByRole('columnheader', { name: /Weight/ }).getByRole('button').click();
+  await expect(page).toHaveURL(/sort=-weight/);
+
+  await page.goBack();
+  await expect(page.getByRole('link', { name: /Full review on RunRepeat/ })).toHaveCount(0);
+  await expect(page).toHaveURL(/plate=carbon/);
+  await expect(page).toHaveURL(/sort=-weight/);
+  await expect(page).not.toHaveURL(/open=/);
+});

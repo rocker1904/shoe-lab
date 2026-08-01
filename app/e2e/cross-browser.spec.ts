@@ -495,3 +495,16 @@ test('states the order on a phone whenever no header can carry the caret', async
   await page.goto('/');
   await expect(note).toHaveCount(0);
 });
+
+test('keeps an open panel across the 700px rendering swap', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  await page.getByText('cushy').first().click();
+  await expect(page.getByRole('link', { name: /Full review on RunRepeat/ })).toBeVisible();
+
+  // The two tables are separate components and only one is ever mounted, so this crossing used to
+  // drop every open panel (docs/app.md §Two renderings, and only one of them mounted).
+  await page.setViewportSize({ width: 390, height: 800 });
+  await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Full review on RunRepeat/ })).toBeVisible();
+});
