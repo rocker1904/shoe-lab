@@ -503,10 +503,14 @@ test('opens with the actions flush to the bar trailing edge', async ({ page }) =
 for (const width of [1000, 700, 390]) {
   test(`holds the chrome over its own band with the document scrolled right at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
-    // Nine figure columns the fixture carries: more than the six-column bound, so the page is MEANT
-    // to scroll sideways here and there is a band beyond the viewport to measure at all.
+    // Eleven figure columns the fixture carries: far past the six-column bound, so the page is MEANT
+    // to scroll sideways here and there is a band beyond the viewport to measure at all. Nine used
+    // to do it and no longer does — 1000px is inside the drawer's band now, so the content track is
+    // the 260px the sidebar used to hold wider than it was (docs/app.md §Filters), and the
+    // `maxScrollLeft` guard below caught a case that had quietly stopped asserting anything.
     await page.goto('/?cols=score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
-      + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel');
+      + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel,'
+      + 'shock-absorption-forefoot,outsole-durability');
     await page.evaluate(() => document.fonts.ready);
     const maxScrollLeft = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -578,12 +582,13 @@ test('lays the chrome out in bands', async ({ page }) => {
   expect((await bands()).sameRow, 'the bar split above 800px').toBe(true);
 
   await page.setViewportSize({ width: 801, height: 900 });
-  expect((await bands()).sameRow, 'the bar split just above the sidebar boundary').toBe(true);
+  expect((await bands()).sameRow, 'the bar split one pixel above the chrome boundary').toBe(true);
 
   // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
-  // what the table is, so the row carrying every word is the one nearest the table. One boundary,
-  // shared with the sidebar — the merged line the design wanted from 700 up does not fit the shipped
-  // controls until 777px, which is not a band (docs/app.md §The chrome bands).
+  // what the table is, so the row carrying every word is the one nearest the table. This boundary is
+  // the CHROME's own and no longer the sidebar's, which sits at 1180 — the merged line the design
+  // wanted from 700 up does not fit the shipped controls until 777px, which is not a band
+  // (docs/app.md §The chrome bands).
   for (const width of [800, 760, 660]) {
     await page.setViewportSize({ width, height: 900 });
     const split = await bands();
@@ -633,6 +638,89 @@ test('mounts each utility exactly once at every width', async ({ page }) => {
     await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
     await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
   }
+});
+
+/**
+ * The sidebar's own boundary, which is NOT the chrome's. A permanent 260px column is only worth
+ * having where the table can be seen beside it, and the default six columns plus that track do not
+ * both fit until 1180px — so one pixel of window at 801px used to add 259px of horizontal overflow,
+ * pushing the table the sidebar exists to tune off the right of the screen
+ * (docs/app.md §Filters).
+ *
+ * Measured as the table's own left edge rather than as overflow, because the e2e fixture is five
+ * shoes with one-word names and its document fits at every width here — the overflow half of the
+ * claim needs the real fleet and lives in `hunt/fit-boundary.mjs`. The displacement does not: a
+ * reserved track moves the table whatever is in it.
+ */
+test('keeps the sidebar a drawer until the table can be seen beside it', async ({ page }) => {
+  const layout = async () => {
+    // The layout is the LOADED page's: until the data lands `App.svelte` is drawing the placeholder,
+    // which reserves the same track from its own rule and has no `.layout` at all.
+    await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+    return page.evaluate(() => {
+      const tracks = getComputedStyle(document.querySelector('.layout')!).gridTemplateColumns;
+      return {
+        tracks: tracks.split(/\s+/).length,
+        sidebar: getComputedStyle(document.querySelector('.sidebar')!).position,
+        contentX: Math.round(document.querySelector('.content')!.getBoundingClientRect().left),
+      };
+    });
+  };
+
+  for (const width of [700, 760, 800, 801, 900, 1000, 1100, 1179]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const seen = await layout();
+    expect(seen.tracks, `the sidebar holds a track at ${width}px, where it does not fit`).toBe(1);
+    expect(seen.sidebar, `the sidebar is not a drawer at ${width}px`).toBe('fixed');
+    // The gutter, not a 260px indent: at --s4 the content starts flush with every other band.
+    expect(seen.contentX, `the table is pushed right at ${width}px`).toBeLessThanOrEqual(16);
+    // `exact`, or the sidebar's own `Clear filters` matches the same substring.
+    await expect(page.getByRole('button', { name: 'Filters', exact: true }),
+      `no way into the filters at ${width}px`).toBeVisible();
+  }
+
+  // And at the boundary it is a column again, because there it is one a runner can use.
+  for (const width of [1180, 1200, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const seen = await layout();
+    expect(seen.tracks, `the sidebar takes no track at ${width}px`).toBe(2);
+    expect(seen.sidebar, `the sidebar is still a drawer at ${width}px`).toBe('sticky');
+    expect(seen.contentX, `the sidebar reserves nothing at ${width}px`).toBeGreaterThan(200);
+    await expect(page.getByRole('button', { name: 'Filters', exact: true }),
+      `a drawer toggle with nothing to toggle at ${width}px`).toBeHidden();
+  }
+});
+
+/**
+ * The placeholder reserves the sidebar track, so it has to switch on the SAME boundary the loaded
+ * page lays out on — reserve a column the page then does not draw and the table slides 260px left
+ * as the data lands, which is the exact jump the reserve exists to prevent
+ * (docs/app.md §Decisions on the skeleton). The loop above measures the reserve in full at 1440 and
+ * 1200; this is the one width on the other side of the boundary, and it is only about the track.
+ */
+test('reserves no sidebar track at a width where the loaded page has none', async ({ page }) => {
+  await page.setViewportSize({ width: 1000, height: 900 });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
+
+  await page.goto('/');
+  const placeholder = await page.locator('.skeleton').evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    return { x: Math.round(box.x), w: Math.round(box.width) };
+  });
+
+  release();
+  await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+  const table = await page.locator('.tblwrap').evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    return { x: Math.round(box.x), w: Math.round(box.width) };
+  });
+
+  expect(placeholder.x, 'the placeholder reserves a sidebar track the page never draws').toBe(table.x);
+  expect(placeholder.w, 'the placeholder is not the width of the table').toBe(table.w);
 });
 
 // And the swap survives a resize rather than only a fresh load: the rune is what moves them, so a
@@ -719,7 +807,9 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
     // Scrolled on purpose: unpinned, the chrome and the table header sit above the dialog's box and
     // no amount of wrong stacking would be visible.
     await page.evaluate(() => window.scrollTo(0, 1500));
-    if (width < 800) await page.getByRole('button', { name: 'Filters' }).click();
+    // The sidebar's boundary, not the chrome's: below 1180 the filters are behind the drawer, so
+    // Add filter has to be reached through it (docs/app.md §Filters).
+    if (width < 1180) await page.getByRole('button', { name: 'Filters' }).click();
     await page.getByRole('button', { name: 'Add filter' }).click();
     await expect(page.getByRole('dialog', { name: 'Add filter' })).toBeVisible();
 
@@ -805,7 +895,11 @@ test('never ships an icon without its name', async ({ page }) => {
         .toHaveCount(1);
     }
     await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
-    if (width <= 800) await expect(page.getByRole('button', { name: 'Filters' })).toHaveCount(1);
+    // Filters answers the SIDEBAR boundary, not this one: it exists all the way to 1180px, worded
+    // between 801 and 1179 and a glyph below (docs/app.md §The chrome bands).
+    if (width < 1180) {
+      await expect(page.getByRole('button', { name: 'Filters', exact: true })).toHaveCount(1);
+    }
     // NOT `getByRole`: `<summary>` has no implicit ARIA role, so a role query never matches it
     // however it is labelled (docs/app.md §Where the utilities live). The label is still what a
     // screen reader announces.

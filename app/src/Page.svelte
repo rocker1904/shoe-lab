@@ -169,27 +169,45 @@
    * **only one may be in the DOM at a time** — a `display: none` button is still a tab stop for
    * anything that does not evaluate CSS, and two nodes answering to `Copy link` are two answers to
    * "how do I share this?" (docs/app.md §Two renderings, and only one of them mounted).
-   * The query is the sidebar's own `max-width: 800px` inverted rather than a `min-width` twin: two
-   * queries that are meant to be complements drift apart at fractional widths, and this boundary is
-   * shared with the drawer.
+   * This is the CHROME-DENSITY boundary — how much room the bar has for words — and it is not the
+   * sidebar's, which sits far wider (docs/app.md §The chrome bands owns why the two differ).
    */
-  const MOBILE_QUERY = '(max-width: 800px)';
-  let mobile = $state(untrack(() => window.matchMedia?.(MOBILE_QUERY).matches ?? false));
+  const CHROME_QUERY = '(max-width: 800px)';
+  let mobile = $state(untrack(() => window.matchMedia?.(CHROME_QUERY).matches ?? false));
   $effect(() => {
-    const mq = window.matchMedia?.(MOBILE_QUERY);
+    const mq = window.matchMedia?.(CHROME_QUERY);
     if (!mq) return;
     const sync = () => (mobile = mq.matches);
     sync();
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   });
+
   /**
-   * The sidebar is a drawer only below 800px; above it, it is simply part of the page. One left
-   * open across a resize would carry its focus trap into a layout where nothing is modal, so the
-   * width at which it stops being a drawer is the width that closes it. The same rune, not a second
-   * `matchMedia` on the same string: one boundary, one home (docs/app.md §Where the utilities live).
+   * The SIDEBAR-FIT boundary: the sidebar is a drawer everywhere the table cannot be seen beside
+   * it. 1180 is the first width at which the default six columns and the 260px track both fit —
+   * the real fleet's document needs 1177px, identically in all three engines — so below it a
+   * permanent sidebar buys a column of filters by pushing the table it is meant to tune off the
+   * screen (docs/app.md §Filters). Written `1179.98` on the repo's `.98` convention, so 1180 is the
+   * first PERMANENT width rather than the last drawer one.
    */
-  $effect(() => { if (!mobile) showFilters = false; });
+  const DRAWER_QUERY = '(max-width: 1179.98px)';
+  let drawer = $state(untrack(() => window.matchMedia?.(DRAWER_QUERY).matches ?? false));
+  $effect(() => {
+    const mq = window.matchMedia?.(DRAWER_QUERY);
+    if (!mq) return;
+    const sync = () => (drawer = mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
+  /**
+   * One left open across a resize would carry its focus trap into a layout where nothing is modal,
+   * so the width at which it stops being a drawer is the width that closes it. The same rune the
+   * CSS boundary is written from, not a third `matchMedia`: this boundary has one home, and the
+   * chrome's is a different one (docs/app.md §The chrome bands).
+   */
+  $effect(() => { if (!drawer) showFilters = false; });
 
   /**
    * The app owns its focus ring, so it owns keeping the thing wearing it on screen: WebKit never
@@ -615,8 +633,8 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="scrim" onclick={closeFilters}></div>
   {/if}
-  <!-- The handler is a key trap for the panel below 800px, not a control: giving this box a role
-       would announce a landmark that is only a drawer at one width. -->
+  <!-- The handler is a key trap for the panel wherever it is a drawer, not a control: giving this
+       box a role would announce a landmark that is only a drawer below 1180px. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="sidebar scrollport" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
        style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
@@ -640,11 +658,14 @@
     </div>
     {#if visibleSorted.length === 0}
       <!-- The table still renders: its headers keep the sort controls reachable. -->
-      <!-- The hint names a control the reader can actually see: below 800px the sidebar is a CLOSED
-           drawer, so pointing at it names something off screen at exactly the width where an empty
-           result is most likely. `Filters` is the drawer toggle's own label. -->
+      <!-- The hint names a control the reader can actually see, and only where they cannot see the
+           rows it is about: below 1180px the sidebar is a CLOSED drawer, so pointing at it names
+           something off screen. Said at a width where the sidebar is standing open beside this
+           paragraph it would send the reader hunting for a button that is not there. It reads the
+           rune rather than a `@media` rule for the same reason the hosts do — a media rule cannot
+           change a sentence. `Filters` is the drawer toggle's own label. -->
       <p class="empty"><strong>No shoes match these filters</strong>Clear {orList(narrowing)} to see
-        shoes{boundNote}. On a phone they are behind <b>Filters</b>.</p>
+        shoes{boundNote}.{#if drawer} They are behind <b>Filters</b>.{/if}</p>
     {/if}
   </div>
 </div>
@@ -711,9 +732,16 @@
   #shoe-table { scroll-margin-top: var(--thead-top); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   .empty strong { display: block; color: var(--text); font-size: var(--t-lg); font-weight: 600; margin-bottom: var(--s1); }
-  @media (max-width: 800px) {
-    /* Below the drawer's 30 and above the page. Never rendered above 800px, because the resize
-       effect forces `showFilters` false there (docs/app.md §Stacking order). */
+  /* The SIDEBAR-FIT boundary, not the chrome's: `.utils` above answers 800px and this answers
+     1179.98, because how much room the bar has for words and whether the table can be seen beside a
+     260px track are two different questions with two different answers. Every rule that makes the
+     sidebar a drawer is in this one block, so the layout, the panel and its scrim cannot disagree
+     about which it is. `1179.98` on the repo's `.98` convention: 1180 is the first width at which
+     the default table and the track both fit, and it is the first PERMANENT width
+     (docs/app.md §Filters). */
+  @media (max-width: 1179.98px) {
+    /* Below the drawer's 30 and above the page. Never rendered where the sidebar is permanent,
+       because the resize effect forces `showFilters` false there (docs/app.md §Stacking order). */
     .scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
     @media (prefers-reduced-motion: no-preference) {
       .scrim { animation: fade 200ms ease-out; }

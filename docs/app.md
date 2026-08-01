@@ -367,11 +367,43 @@ that arrived by link holding a non-curated bound is seeded into the list by
 `parseView`, or clearing it would silently remove it. Released after is unset
 from an **Any** chip: a chip that sets a date cannot also clear it.
 
-**Below 800px the drawer carries a scrim**, and clicking it closes — the same
+**The sidebar is a drawer below 1180px, and a permanent column at 1180px and
+up.** That number is the width at which the default table and the 260px track
+both fit: the shipped fleet's document needs **1177px**, identically in
+Chromium, Firefox and WebKit, so 1180 is the first clean width with the whole
+page on screen. 1179 is the last drawer width and 1180 the first permanent one,
+which is why the query is written `max-width: 1179.98px` on the repo's `.98`
+convention (§The chrome bands).
+
+**It used to be 800px, and one pixel of window cost 259px of overflow.** At
+800px the sidebar was a drawer and the document overran a default view by 117px;
+at 801px it claimed its column and the document overran by **376px** — the grid
+going from `800px` to `260px 541px` while the table's own width did not move.
+Widening the window from there made it *worse*, not better: still 297px over at
+880px, 177px at 1000px, and not clean until 1177px. The tuning-loop argument
+below is the whole case for a permanent sidebar, and it only holds where the
+table is on screen beside it; between 801 and 1176 the runner was paying a
+column of filters for a table pushed off the right edge. The two halves of that
+claim are guarded separately, because the fixture cannot see one of them:
+`keeps the sidebar a drawer until the table can be seen beside it` measures the
+displacement in the suite, and `hunt/fit-boundary.mjs` measures the overflow
+against the real fleet, which is the only place it exists (§Table presentation).
+
+**The chrome's 800px did not move with it**, and the two are now separate
+boundaries with separate homes (§The chrome bands). Between them — 801px to
+1179px — the bar is one row and `Filters` sits on it **carrying its word**.
+
+**Below 1180px the drawer carries a scrim**, and clicking it closes — the same
 affordance Escape gives. The drawer already traps focus; the scrim states in the
 interface what the trap enforces, and nothing else in the new elevation language
-floats above content without one. It never renders above 800px, because the
-resize effect forces `showFilters` false there.
+floats above content without one. It never renders where the sidebar is
+permanent, because the resize effect forces `showFilters` false there.
+
+**The empty state's hint follows the same rune.** `They are behind Filters.` is
+appended only where the sidebar is a closed drawer; standing open beside the
+paragraph, that sentence sends the reader hunting for a button that is not on
+screen. It used to read `On a phone they are behind Filters` unconditionally,
+which was true while the drawer stopped at 800px and is not at 1000px.
 
 The sidebar stays for the filters in use — filtering is a tuning loop, and a
 modal over the table breaks the feedback that makes it work. **Choosing which
@@ -557,15 +589,20 @@ tab stop is whatever is checked, tracked through a `MutationObserver` on
 carries it too; a group with nothing checked still admits focus at its first
 radio.
 
-**Below 800px the sidebar is a drawer, and a drawer traps focus.** It slides
+**Below 1180px the sidebar is a drawer, and a drawer traps focus.** It slides
 on a transform rather than toggling `display`, which cannot be animated;
 `visibility` is what keeps a closed drawer out of the tab order, switched
 immediately on the way in — the panel is handed focus the moment it opens, and
 a hidden element cannot take it — and 200ms late on the way out, so the slide
 is seen first. Escape closes it and returns focus to the control that opened
 it, found by its `aria-controls`. **A drawer left open across a resize past
-800px closes itself**: above that width it is simply part of the page, and its
-trap would hold the keyboard inside a panel that is no longer modal.
+1180px closes itself**: above that width it is simply part of the page, and its
+trap would hold the keyboard inside a panel that is no longer modal. A resize
+that only crosses 800px must NOT close it — that is the chrome's boundary, and
+the drawer is still a drawer on the other side of it (§Filters).
+`keeps the drawer open above the chrome boundary, where the sidebar is still a
+drawer` is the assertion; before the two boundaries were separated, dragging a
+window from a phone width to a laptop one dismissed the open drawer at 800px.
 
 ### Every floating panel dismisses the same way
 
@@ -904,11 +941,19 @@ Letting the cell wrap instead is measured and rejected: it takes the column to
 68px, but the plated rows then stand 71px against every other row's 36px, which
 is the raggedness `nowrap` exists to prevent.
 
-**Sideways scroll still exists below 1177px**, which is where the document first
-fits. At 1100px it overruns by 77px. That band runs down to the 800px
-breakpoint, where the sidebar becomes a drawer and the content track takes the
-full width; below 700px the mobile rendering takes over and there is no
+**Sideways scroll now exists only between 700px and 916px.** The default view's
+document is **917px** wide once the sidebar is a drawer and the content track
+takes the full window — 217px over at 700px, 17px at 900px, clean from 917px up.
+Above that it fits at every width, the sidebar's arrival at 1180px included,
+because 1180 is chosen as the width where the 260px track and this same table
+both fit (§Filters). Below 700px the mobile rendering takes over and there is no
 horizontal scroll at all.
+
+That band used to run from 800px to 1176px as well, at up to 376px over: the
+sidebar took its column at 801px whether or not the table had room left beside
+it. The figures in this section were measured in that layout and several are
+about it — `1177px` below is the old document, the sidebar's track included, and
+it is the measurement 1180 is derived from.
 
 The e2e assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`.
 Equality tested more than the claim: a document *narrower* than the viewport
@@ -1933,7 +1978,7 @@ has gone.
 `Toolbar.svelte` is the permanent surface: a setup group of three controls in one
 visual language — the zone, then `All | Easy | Tempo | Race`, then the
 `Stability` pill — and an actions group pushed right by `margin-left: auto`:
-`About`, `Filters` (below 800px only, where the sidebar is a drawer), `Columns`,
+`About`, `Filters` (below 1180px only, where the sidebar is a drawer), `Columns`,
 and below 800px the three utilities as well (§Where the utilities live). The
 strip cannot hold the controls that reset it, because it is gone by the time they
 are needed.
@@ -2068,8 +2113,9 @@ what the table is — and above it **two**.
 
 | query | composition |
 |---|---|
-| (none — above 800px) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No `Filters`: the sidebar is permanent |
-| `max-width: 800px` | two rows: `.actions` first (`order: -1`), then `.setup`, which is `space-between`, capped at 414px and centred. `Filters` appears, and every word on the actions row but `About` becomes a glyph. Pill inline padding `--s3` → `--s2` |
+| (none — 1180px and up) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No `Filters`: the sidebar is permanent, so the toggle has nothing to toggle |
+| `max-width: 1179.98px` | `Filters` joins `.actions`, because the sidebar is a drawer here (§Filters). Still one row, and the word is still a word |
+| `max-width: 800px` | two rows: `.actions` first (`order: -1`), then `.setup`, which is `space-between`, capped at 414px and centred. Every word on the actions row but `About` becomes a glyph, `Filters` included. Pill inline padding `--s3` → `--s2` |
 | `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges. **Every** pill's inline padding `--s2` → `--s1`, the zone group's included |
 
 There is no spacer element on this bar: `.actions { margin-left: auto }` is what
@@ -2107,12 +2153,35 @@ document scrolled right` asserts it at 1000, 700 and 390px — nine columns, scr
 fully right, every probe across the band inside `.chrome` and the table's header
 still clear of it.
 
-**`800px` is shared with the sidebar** and is written `800px` rather than
-`799.98px`, so exactly 800 is "mobile" as it always has been. The two must agree
-or the drawer toggle shows on a width laid out as a desktop. `429.98px` takes the
-repo's `.98` convention so no width matches two tiers at once: a `max-width: 430px`
-matches *at* 430 and would put the flush band's rules on the width that is meant to open
-the capped one.
+**There are two named boundaries in this app, and they are not the same
+number.** Each has one home, and the two answer different questions:
+
+| boundary | number | question it answers | asked by |
+|---|---|---|---|
+| **chrome density** | `800px` | how much room has this bar for words? | `CHROME_QUERY` in `Page.svelte`, and `@media (max-width: 800px)` in the bar, the masthead and the pickers |
+| **sidebar fit** | `1180px` | can the table be seen beside a 260px track? | `DRAWER_QUERY` in `Page.svelte`, and `@media (max-width: 1179.98px)` in `Page.svelte`'s layout and `App.svelte`'s reserve |
+
+They were one number until the sidebar's own was measured (§Filters), and
+collapsing them again is the mistake to guard against: the chrome's is a
+question about *type and gaps*, which stop fitting at 800px, and the sidebar's
+is a question about *the table's min-content*, which is 917px on its own and
+1177px with the track. Nothing about the first predicts the second.
+
+Between them the bar is one row carrying an extra control it never used to
+carry — `Filters`, **with its word**, because words-become-icons is the chrome's
+boundary and did not move. Measured at 801px with a two-digit column badge, the
+row's remaining slack is 22px in Chromium, 34px in WebKit and **9px in
+Firefox**; `keeps the one-row toolbar to one row at the narrowest width that has
+one` is in `cross-browser.spec.ts` rather than the smoke suite for exactly that
+reason — the binding engine is not the one the layout suite runs.
+
+**`800px` is written `800px` rather than `799.98px`**, so exactly 800 is
+"mobile" as it always has been. `429.98px` and `1179.98px` take the repo's `.98`
+convention so no width matches two tiers at once, and so the number that gets
+named is the first width of the *upper* tier: a `max-width: 430px` matches *at*
+430 and would put the flush band's rules on the width meant to open the capped
+one, and a `max-width: 1180px` would leave the sidebar a drawer on the first
+width at which it fits.
 
 **The design asked for a merged line from 700px to 800px, and the shipped
 controls do not fit one.** Measured with the icon forms in place, the setup row
@@ -2183,13 +2252,17 @@ it has something to say, for the same reason — a live region created together
 with its text is not reliably announced.
 
 **The band is asked in the script, not as an `@media` rule**, exactly as
-`PHONE_QUERY` already is, because a media rule cannot unmount anything. The query
-is the sidebar's own `max-width: 800px` **inverted rather than duplicated**: a
-`min-width` twin of a `max-width` boundary is not its complement — every
-fractional width between them matches neither, which browser zoom and Firefox's
-fractional viewport widths both produce — so there is one query and its
-complement is whatever it does not match. The effect that closes the filter
-drawer on a resize watches the same rune, so the boundary has one home.
+`PHONE_QUERY` already is, because a media rule cannot unmount anything. It is
+`CHROME_QUERY`, the chrome-density boundary, and it is **not** the sidebar's —
+the drawer has its own rune on `DRAWER_QUERY` at 1179.98px, and a 1000px window
+draws the utilities worded in the masthead with a drawer still behind it
+(§The chrome bands). Each is `max-width` and **inverted rather than
+duplicated**: a `min-width` twin of a `max-width` boundary is not its
+complement — every fractional width between them matches neither, which browser
+zoom and Firefox's fractional viewport widths both produce — so there is one
+query per boundary and its complement is whatever it does not match.
+`leaves the utilities in the masthead at a width where the sidebar is still a
+drawer` is what holds the two apart.
 
 **The host is wrapped in `{#if utilities}` in both parents**, and that is
 load-bearing rather than tidiness: a zero-width flex item is still a flex item
@@ -2288,8 +2361,8 @@ indentation, not the column:
 | ↳ column picker panel | 10 | *the chrome's children only* |
 | **sidebar** — sticky, so a context at `z-index: auto` | — | the page, at 0 |
 | ↳ month picker panel | 20 | *the sidebar's children only* |
-| drawer scrim, below 800px | 25 | the page |
-| filter drawer, below 800px | 30 | the page |
+| drawer scrim, below 1180px | 25 | the page |
+| filter drawer, below 1180px | 30 | the page |
 | Add-filter dialog's scrim, About panel's scrim | 32 | the page |
 | Add-filter dialog, About panel | 35 | the page |
 | skip link | 40 | the page |
@@ -2309,7 +2382,7 @@ that sits at 0 still loses. The dialog moves itself to `<body>` on mount and is
 removed from there when it closes.
 
 The drawer is the reason the dialog sits at 35 rather than below 30: below
-800px the dialog opens *from* the drawer, and once it is no longer a descendant
+1180px the dialog opens *from* the drawer, and once it is no longer a descendant
 of that drawer it has to outrank it explicitly. Its own scrim takes the gap
 between the two — over the drawer it has to dim, under the dialog it belongs to
 — which is why the dialog and its scrim are siblings in `<body>` rather than
@@ -2320,7 +2393,7 @@ only catches its own failure.
 
 **The About panel takes the Add-filter dialog's own 35 over 32 rather than a
 layer of its own**, because the two can never be open at once. The reason is the
-modality, not the drawer: above 800px the sidebar is permanent and both openers
+modality, not the drawer: above 1180px the sidebar is permanent and both openers
 sit on surfaces that are simply part of the page. Each dialog lays its own scrim
 at 32 over everything else and traps Tab inside itself, so whichever is up puts
 the other's opener behind a scrim and out of reach (§The About panel).
@@ -2566,7 +2639,7 @@ cover both:
 - **Flat mark** — the inactive histogram bars and the pickers' coverage bars are
   a single fill, drawn or not. They clear **3:1 against every surface they are
   actually drawn on**, which is three: `--surface` inside the drawer below
-  800px, `--bg` above it, where the sidebar declares no background of its own,
+  1180px, `--bg` above it, where the sidebar declares no background of its own,
   and `--border-soft`, the track the pickers' coverage fill sits in. "Every
   surface" is the load-bearing part — a value chosen against `--surface` alone
   clears the bar in the one case that only happens inside the drawer.
@@ -2803,8 +2876,14 @@ Three more parts of that contract. The placeholder **reserves the sidebar track*
 (`--sidebar-w`, the token `Page.svelte` lays out against), because what replaces
 it is the second cell of a two-column layout rather than a full-bleed block:
 without the reservation the placeholder starts at x=16 and the table lands at
-x=276. Its **cell count is derived** from `defaultColumns` plus one for the name
-column, never written out. And its **head band is the table's**, stated in line
+x=276. It reserves it **on the sidebar's own boundary**, 1180px, not the
+chrome's — the reserve exists to hold the geometry the loaded page will have, so
+a track reserved at a width where the page then draws none is the 260px jump
+this shape was built to prevent, only in the other direction (§Filters).
+`reserves no sidebar track at a width where the loaded page has none` measures
+that at 1000px, on the far side of the boundary from the two widths the full
+reserve is measured at. Its **cell count is derived** from `defaultColumns` plus
+one for the name column, never written out. And its **head band is the table's**, stated in line
 boxes of the same two faces: the header name's lines, a gap and the mono unit
 line.
 

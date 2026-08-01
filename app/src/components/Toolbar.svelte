@@ -113,30 +113,39 @@
      `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
      `tokens.test.ts` fails the build on a raw white in a component's style block. */
   .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
-  /* Unchanged from today and deliberately NOT inside a media block: above 800px the sidebar is
-     permanent, so the drawer toggle has nothing to toggle and is hidden by default rather than by a
-     query. It is the fifth carrier of the one secondary-button treatment (docs/app.md §Theming). */
+  /* Hidden by default rather than by a query: at 1180px and up the sidebar is permanent, so the
+     drawer toggle has nothing to toggle. It is the fifth carrier of the one secondary-button
+     treatment (docs/app.md §Theming). */
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer;
                     border: 1px solid var(--border); background: var(--surface); color: var(--text);
                     border-radius: var(--r-sm); font-size: var(--t-sm); }
   .filters-toggle:hover { background: var(--accent-dim); }
+  /* The SIDEBAR-FIT boundary, and the only rule on this bar that answers it: the trigger exists
+     wherever the sidebar is a drawer, which reaches 379px further than the width at which this bar
+     stops being a phone's. Its own block rather than the 800px one below, or the button would be
+     missing across the whole band where it is the only way to the filters
+     (docs/app.md §The chrome bands). */
+  @media (max-width: 1179.98px) {
+    .filters-toggle { display: inline-flex; align-items: center; }
+  }
   /* The sixth carrier of the one secondary-button treatment (docs/app.md §Theming). */
   .about { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
            background: var(--surface); color: var(--text); border-radius: var(--r-sm);
            font-size: var(--t-sm); white-space: nowrap; }
   .about:hover { background: var(--accent-dim); }
   .glyph { display: none; }
-  /* Below 800px every pixel of chrome is paid before the first shoe, on the screen with the least
-     of it: the gutter and the vertical padding halve, and Filters appears because the sidebar is a
-     drawer here. 800 rather than 799.98 deliberately — it is the sidebar's own boundary and the two
-     must agree, or the drawer toggle shows on a width laid out as a desktop.
-     ONE boundary, not two: the design asked for a merged line from 700 to 800 and the shipped
+  /* The CHROME-DENSITY boundary. Below 800px every pixel of chrome is paid before the first shoe,
+     on the screen with the least of it: the gutter and the vertical padding halve, and every word
+     but `About` becomes a glyph. It is a question about how much room this bar has for words, which
+     is why it stays at 800 while the drawer's own boundary sits at 1180 — between the two, Filters
+     is on the bar carrying its word.
+     ONE band split, not two: the design asked for a merged line from 700 to 800 and the shipped
      components do not fit one, so the bands separate for the whole sub-800 range. The ACTIONS lead
      — what acts on the table above what the table is, so the row carrying every word sits nearest
      the table. docs/app.md §The chrome bands owns the widths that moved the boundary. */
   @media (max-width: 800px) {
     .toolbar { padding: var(--s1) var(--s2); gap: var(--s1) var(--s2); }
-    .filters-toggle { display: inline-flex; align-items: center; padding-inline: var(--s2); }
+    .filters-toggle { padding-inline: var(--s2); }
     /* Default-hidden glyph revealed by the query, never a `min-width` twin: the pair is exhaustive
        at any width including the fractional ones zoom and Firefox both produce. */
     .word { display: none; }

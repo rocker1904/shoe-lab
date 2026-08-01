@@ -231,6 +231,71 @@ describe('Page', () => {
   });
 
   /**
+   * Two boundaries with two different jobs, so a band has to be able to answer them separately —
+   * and a resize has to reach the runes, which the flat stub above cannot do. Each `matchMedia`
+   * call gets a live `matches` getter over the current width and keeps its listener, so `at()`
+   * moves the window and tells everyone who asked (docs/app.md §The chrome bands).
+   */
+  function stubViewport(width: number) {
+    let now = width;
+    const listeners: (() => void)[] = [];
+    const limit = (q: string) => Number(/max-width:\s*([\d.]+)px/.exec(q)?.[1] ?? NaN);
+    vi.spyOn(window, 'matchMedia').mockImplementation(((q: string) => ({
+      get matches() { return now <= limit(q); },
+      media: q, onchange: null,
+      addEventListener: (_: string, fn: EventListener) => { listeners.push(() => fn(new Event('change'))); },
+      removeEventListener: () => {}, dispatchEvent: () => false,
+      addListener: () => {}, removeListener: () => {},
+    })) as unknown as typeof window.matchMedia);
+    return async (next: number) => { now = next; for (const fn of [...listeners]) fn(); await tick(); };
+  }
+
+  /**
+   * The sidebar is a drawer wherever the table cannot be seen beside it, which reaches far past the
+   * width where the chrome stops being a phone's. A window dragged from a phone to a laptop used to
+   * close the drawer at 800px and leave the runner facing a permanent sidebar with the table
+   * pushed off the right of the screen (docs/app.md §Filters).
+   */
+  it('keeps the drawer open above the chrome boundary, where the sidebar is still a drawer', async () => {
+    const at = stubViewport(390);
+    render(Page, { props: { data } });
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+    await fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await at(1000);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('closes the drawer at the width where the sidebar becomes permanent', async () => {
+    const at = stubViewport(390);
+    render(Page, { props: { data } });
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+    await fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await at(1400);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  /**
+   * The scope control on the wave that widened the drawer: the utilities answer the chrome
+   * boundary, not the sidebar's, so a 1000px window draws them worded in the masthead while the
+   * drawer behind it is still a drawer (docs/app.md §Where the utilities live).
+   */
+  it('leaves the utilities in the masthead at a width where the sidebar is still a drawer', async () => {
+    const at = stubViewport(390);
+    const { container } = render(Page, { props: { data } });
+    const toolbar = container.querySelector<HTMLElement>('[data-testid="toolbar"]')!;
+    expect(within(toolbar).getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+
+    await at(1000);
+    expect(within(container.querySelector('header')!)
+      .getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+    expect(within(toolbar).queryByRole('button', { name: 'Copy link' })).toBeNull();
+  });
+
+  /**
    * The clipboard cases moved here with `copyLink` itself. Two of the mechanisms they were written
    * on did not survive the move, because this file runs under
    * `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })` and `Header.test.ts` did not:
@@ -422,7 +487,7 @@ describe('Page', () => {
     expect(toggle).toHaveFocus();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
-  // Under 800px the sidebar is itself the drawer, so one Escape must not dismiss both.
+  // Under 1180px the sidebar is itself the drawer, so one Escape must not dismiss both.
   it('closes the Add-filter dialog on Escape and leaves the drawer open', async () => {
     render(Page, { props: { data: dataPlus } });
     const drawer = screen.getByRole('button', { name: 'Filters' });

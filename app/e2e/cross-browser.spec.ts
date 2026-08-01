@@ -376,24 +376,36 @@ test('never shrinks the shoe photo as the window widens', async ({ page }) => {
   // column and the photo is the panel's full width capped at 280, so crossing that boundary is a
   // change of layout rather than a step in this one — docs/app.md §The expanded row says so and
   // says why it is left standing.
-  const seen: { width: number; img: number }[] = [];
-  for (const width of [1100, 1200, 1300, 1440, 1600]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/?cols=easy-score-heel,heel-stack,weight');
-    await page.getByText('cushy').first().click();
-    await expect(page.locator('.detail .a-bd')).toBeVisible();
-    // The fixture carries no `imageUrl`, so the BOX is what can be measured here — and the photo is
-    // exactly `min(box, 280)`, which is the `max-width` on the `img`. The rendered image was
-    // measured against the real fleet in both engines and agrees with this at every tier.
-    seen.push({ width, img: await page.locator('.detail .a-img').first()
-      .evaluate((el) => Math.min(280, Math.round(el.getBoundingClientRect().width))) });
-  }
-  for (let i = 1; i < seen.length; i++) {
-    expect(seen[i]!.img, `the photo shrank from ${seen[i - 1]!.img}px at ${seen[i - 1]!.width}px `
-      + `to ${seen[i]!.img}px at ${seen[i]!.width}px`).toBeGreaterThanOrEqual(seen[i - 1]!.img);
-  }
-  // And the widest tier reaches the size the doc states, rather than stopping short of it.
-  expect(seen.at(-1)!.img, 'the photo never reaches its stated 280px').toBe(280);
+  //
+  // TWO ladders, for that same reason and at the sidebar's boundary: at 1180px the sidebar becomes
+  // a permanent 260px column and every container inside the content track narrows by that much at
+  // once (docs/app.md §Filters). Measured, the photo steps 280px → 270px across it — the one place
+  // where widening the window costs the panel room, and the price of a table the sidebar can be
+  // read beside. A single ladder through it measures the sidebar arriving rather than this panel's
+  // own tiers, so each regime is walked on its own and the widest of each must still reach 280.
+  const walk = async (widths: number[]) => {
+    const seen: { width: number; img: number }[] = [];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/?cols=easy-score-heel,heel-stack,weight');
+      await page.getByText('cushy').first().click();
+      await expect(page.locator('.detail .a-bd')).toBeVisible();
+      // The fixture carries no `imageUrl`, so the BOX is what can be measured here — and the photo
+      // is exactly `min(box, 280)`, which is the `max-width` on the `img`. The rendered image was
+      // measured against the real fleet in both engines and agrees with this at every tier.
+      seen.push({ width, img: await page.locator('.detail .a-img').first()
+        .evaluate((el) => Math.min(280, Math.round(el.getBoundingClientRect().width))) });
+    }
+    for (let i = 1; i < seen.length; i++) {
+      expect(seen[i]!.img, `the photo shrank from ${seen[i - 1]!.img}px at ${seen[i - 1]!.width}px `
+        + `to ${seen[i]!.img}px at ${seen[i]!.width}px`).toBeGreaterThanOrEqual(seen[i - 1]!.img);
+    }
+    // And the widest of each reaches the size the doc states, rather than stopping short of it.
+    expect(seen.at(-1)!.img, 'the photo never reaches its stated 280px').toBe(280);
+  };
+
+  await walk([820, 900, 1000, 1100, 1179]);
+  await walk([1180, 1250, 1300, 1440, 1600]);
 });
 
 test('lays the expanded row out at every container tier without overflowing', async ({ page }) => {
@@ -507,4 +519,47 @@ test('keeps an open panel across the 700px rendering swap', async ({ page }) => 
   await page.setViewportSize({ width: 390, height: 800 });
   await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
   await expect(page.getByRole('link', { name: /Full review on RunRepeat/ })).toBeVisible();
+});
+
+/**
+ * The drawer's band now reaches 1179px, where the bar is ONE row and `Filters` still carries its
+ * word — so that row gained a control it never had to fit. 801px with a dozen columns ticked is
+ * the row at its longest against the least width it ever has.
+ *
+ * It runs HERE rather than in `smoke.spec.ts` because the slack differs by ENGINE and the binding
+ * one is not the suite's default: measured, 22px in Chromium, 34px in WebKit and **9px in
+ * Firefox**, which is the same nine pixels of group width the bands below already turn on
+ * (docs/app.md §The chrome bands). A Chromium-only check would read 22px clear on the width where
+ * Firefox has nine, which is exactly how the sub-800 bands shipped an overflow once already.
+ */
+test('keeps the one-row toolbar to one row at the narrowest width that has one', async ({ page }) => {
+  await page.setViewportSize({ width: 801, height: 900 });
+  // A two-digit `Columns, N shown` badge, which is the widest that control ever gets, and a story
+  // applied, so the bar is carrying the setup groups the strip hands it.
+  await page.goto('/?story=easy&cols=score,msrpGbp,heel-stack,forefoot-stack,weight,'
+    + 'energy-return-heel,energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel,'
+    + 'shock-absorption-forefoot,outsole-durability,midsole-width-in-the-heel');
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
+  await expect(page.locator('details.picker summary')).toHaveAttribute('aria-label', /\d\d shown/);
+
+  const bar = await page.evaluate(() => {
+    const tb = document.querySelector('[data-testid="toolbar"]')!;
+    const cs = getComputedStyle(tb);
+    const setup = tb.querySelector('.setup')!.getBoundingClientRect();
+    const actions = tb.querySelector('.actions')!.getBoundingClientRect();
+    return {
+      // Centres, not tops: the two groups are different heights and `align-items: center` offsets
+      // their top edges by a pixel or two on a row that has not wrapped at all.
+      sameRow: Math.abs((setup.y + setup.height / 2) - (actions.y + actions.height / 2)) < 4,
+      free: Math.round(tb.getBoundingClientRect().width - parseFloat(cs.paddingLeft)
+        - parseFloat(cs.paddingRight) - setup.width - actions.width - parseFloat(cs.columnGap)),
+      worded: getComputedStyle(tb.querySelector('.filters-toggle .word')!).display !== 'none',
+    };
+  });
+  // The word is what makes this tight at all, so a glyph here would pass the bound while retiring
+  // the claim (docs/app.md §Where the utilities live).
+  expect(bar.worded, 'Filters lost its word above the chrome boundary').toBe(true);
+  expect(bar.sameRow, 'the toolbar wrapped at 801px once Filters joined the row').toBe(true);
+  expect(bar.free, 'the one-row toolbar has run out of width at 801px').toBeGreaterThanOrEqual(0);
 });
