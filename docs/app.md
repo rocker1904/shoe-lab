@@ -766,8 +766,32 @@ takes it out of the table-cell box, so it stops stretching to the row and
 leaves a gap the numeric cells show through under the sticky column.
 
 Any number of rows expand at once — comparing two shoes means having both
-panels open — and the panel scrolls itself into view, under a
-`prefers-reduced-motion` guard. An expandable row carries `aria-controls` as
+panels open — and opening one scrolls, under a `prefers-reduced-motion` guard.
+
+**What is scrolled to depends on whether the panel fits.** A panel that fits in
+the window is scrolled with `block: 'nearest'`, which moves the least and leaves
+the row where the runner left it. A panel **taller than the window** cannot be
+scrolled to at all without harm: aligning its top with the top of the scrollport
+puts the row above it, and the row is the element that still holds focus and
+carries `aria-expanded`. Measured at six places, six of six landed entirely above
+the chrome's lower edge with focus still on them, and `elementFromPoint` at the
+row's own corner returned the header — pressing Enter on a shoe made that shoe
+disappear, a WCAG 2.4.11 focus-obscured failure. So the **row** is the target in
+that case, with `block: 'start'` and a `scroll-margin-top` of
+`--thead-top` **plus** `--head-h`. The first is the chrome's measured height, the
+same token the pinned header row and the skip link's anchor read
+(§Columns and sorting); the second is the pinned header's own measured height,
+bound the same way and for the same reason — the headers wrap, so it is a
+function of the width and of the face that has loaded. Both are needed: the
+header pins *under* the chrome and paints over the rows sliding beneath it, so a
+row aligned to `--thead-top` alone lands behind it, which is what
+`elementFromPoint` at the row's corner said when only the chrome was counted.
+The row lands flush under both and the panel takes the screen below it.
+`smoke.spec.ts` opens rows by keyboard at three depths in a window shorter than
+the panel, measures the row's top against the pinned header's bottom, and hit
+tests the row's own corner.
+
+An expandable row carries `aria-controls` as
 well as `aria-expanded`, in both renderings, **while it is open**: the panel is
 a *sibling* row rather than a child of the control, so nothing else says what
 the row expands, and it exists only while the row does — an IDREF naming a node

@@ -278,6 +278,54 @@ test('keeps the table header clear of the chrome at every width', async ({ page 
 });
 
 /**
+ * Opening a row scrolls, and the row is what still holds focus and carries `aria-expanded` — so the
+ * scroll has to leave it visible. It did the opposite: `scrollIntoView` on the panel put the panel's
+ * top at the top of the scrollport and the row, being *above* the panel, entirely behind the pinned
+ * chrome. Measured at six places, six of six landed fully above the chrome's lower edge with focus
+ * still on them, which is a WCAG 2.4.11 focus-obscured failure (docs/app.md §Table presentation).
+ *
+ * Driven by the keyboard, because that is the case with a focus to obscure, and at several scroll
+ * depths, because the old behaviour was right at exactly one of them.
+ */
+test('keeps an expanded row below the chrome that opening it scrolls under', async ({ page }) => {
+  // Short enough that the fixture's own detail panel is taller than the window, which is the case
+  // the finding measured: a panel that FITS is scrolled into view harmlessly.
+  await page.setViewportSize({ width: 1200, height: 400 });
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
+
+  for (const nth of [0, 2, 4]) {
+    const measured = await page.evaluate(async (n) => {
+      for (const open of document.querySelectorAll<HTMLElement>('tr.shoe[aria-expanded=true]')) open.click();
+      await new Promise((r) => setTimeout(r, 60));
+      const row = document.querySelectorAll<HTMLElement>('tr.shoe')[n]!;
+      row.scrollIntoView({ block: 'center' });
+      await new Promise((r) => setTimeout(r, 60));
+      row.focus();
+      row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await new Promise((r) => setTimeout(r, 500));
+      const b = row.getBoundingClientRect();
+      // The pinned table header sits UNDER the chrome and over the rows, so the band a row has to
+      // clear is both of them: measuring against the chrome alone passed on a row the `thead` was
+      // painting over (docs/app.md §Stacking order).
+      const head = document.querySelector('thead th')!.getBoundingClientRect();
+      const panel = row.nextElementSibling!.getBoundingClientRect();
+      return { rowTop: Math.round(b.top), headBottom: Math.round(head.bottom),
+               expanded: row.getAttribute('aria-expanded'), focused: document.activeElement === row,
+               atRowCorner: document.elementFromPoint(b.left + 4, b.top + 4)?.tagName ?? null,
+               panelTop: Math.round(panel.top) };
+    }, nth);
+
+    expect(measured.expanded, `row ${nth} did not open`).toBe('true');
+    expect(measured.focused, `focus left row ${nth}`).toBe(true);
+    expect(measured.rowTop, `the row that still holds focus is behind the pinned chrome, row ${nth}`)
+      .toBeGreaterThanOrEqual(measured.headBottom - 1);
+    expect(measured.atRowCorner, `something is painted over row ${nth}'s own corner`).toBe('TD');
+    expect(measured.panelTop, `the panel row ${nth} opened is off screen`).toBeLessThan(400);
+  }
+});
+
+/**
  * While the strip is up the bar carries no groups, so its left side is empty by design and the
  * actions hold the trailing edge alone. What must stay true is that they hold it: the old bar left
  * 211px of void at 390px and 597px at 800px by letting them lead a row instead.

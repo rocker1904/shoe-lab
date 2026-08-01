@@ -66,12 +66,35 @@
     if (expanded.delete(slug)) return;
     expanded.add(slug);
     // The panel opens *below* the row, so a row near the fold opens off screen. Awaited so the
-    // panel exists to be scrolled to. jsdom implements no layout and defines neither
+    // panel exists to be measured and scrolled to. jsdom implements no layout and defines neither
     // `scrollIntoView` nor `matchMedia`, hence the optional calls.
     await tick();
+    const panel = row?.nextElementSibling;
+    if (!row || !panel) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    row?.nextElementSibling?.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+    const behavior = reduced ? 'auto' : 'smooth';
+    /*
+     * The ROW is the scroll target once the panel is taller than the window, not the panel. Aligning
+     * a too-tall panel's top with the top of the scrollport puts the row — which still holds focus
+     * and carries `aria-expanded` — entirely BEHIND the pinned chrome: measured at six places, six
+     * of six landed above the chrome's lower edge with focus still on them, and `elementFromPoint`
+     * at the row's own corner returned the header. Pressing Enter on a shoe made that shoe
+     * disappear, which is a WCAG 2.4.11 failure (docs/app.md §Table presentation).
+     *
+     * `scroll-margin-top` on the row is the measured chrome PLUS the measured header row, so
+     * `start` lands the row flush under both rather than under the viewport's top edge — aligning
+     * it to the chrome alone left it behind the pinned header, which paints over the rows sliding
+     * under it. A panel that DOES fit is still scrolled by `nearest`, which moves the least and
+     * leaves the row where the runner left it.
+     */
+    if ((panel.getBoundingClientRect?.().bottom ?? 0) <= window.innerHeight) {
+      panel.scrollIntoView?.({ behavior, block: 'nearest' });
+      return;
+    }
+    row.scrollIntoView?.({ behavior, block: 'start' });
   }
+  /** The pinned header's measured height; see the markup below for why it cannot be a constant. */
+  let headHeight = $state(0);
   function onRowKey(e: KeyboardEvent, slug: string) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -79,9 +102,13 @@
   }
 </script>
 
-<div class="tblwrap">
+<!-- `--head-h` is the pinned header's own height, measured the way `Page.svelte` measures the
+     chrome and for the same reason: the headers wrap, so it is a function of the width and of the
+     face that has loaded, and a constant is right at one width only. It is what a row's
+     `scroll-margin-top` adds to `--thead-top` (docs/app.md §Table presentation). -->
+<div class="tblwrap" style:--head-h="{headHeight}px">
 <table>
-  <thead>
+  <thead bind:clientHeight={headHeight}>
     <tr>
       <th class="name">Shoe</th>
       {#each view.columns as col (col)}
@@ -197,6 +224,14 @@
      On the cell it would be replaced by the translucent wash, which `td.num.tinted` sets at higher
      specificity — and the cell would then composite over the page instead of over the surface. */
   tr.shoe { cursor: pointer; background: var(--surface); }
+  /* What "scrolled to" means for a row: below the pinned chrome, not under it. `--thead-top` is the
+     chrome's measured height and the one home for it (docs/app.md §Columns and sorting) — the same
+     token the pinned header row and the skip link's anchor already read. On the panel as well as the
+     row, so any scroll that ever targets it clears the chrome too.
+     The header row is part of that band: it pins UNDER the chrome and paints over the rows sliding
+     beneath it, so a row aligned to `--thead-top` alone lands behind it — measured, and it is what
+     `elementFromPoint` at the row's own corner returned. */
+  tr.shoe, tr.expand { scroll-margin-top: calc(var(--thead-top) + var(--head-h, 0px)); }
   /* A background *image* layers over the cell's background colour, so hovering a tinted cell
      dims it rather than replacing the percentile wash with a flat one. */
   tr.shoe:hover td { background-image: linear-gradient(var(--hover-wash), var(--hover-wash)); }
