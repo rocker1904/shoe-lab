@@ -465,3 +465,33 @@ test('sets every drawer text input at or above the iOS zoom threshold', async ({
 
   await context.close();
 });
+
+/**
+ * The phone half of the ordering line. jsdom evaluates no media query, so which of the two tables
+ * mounts is invisible to the suite — and the whole point of this line is that the phone renders a
+ * header only for the figure columns, so four sort keys the app itself produces have nothing to
+ * be marked on (docs/app.md §The ordering is stated when no header can carry it).
+ */
+test('states the order on a phone whenever no header can carry the caret', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  const note = page.getByTestId('ordering-note');
+  const marked = page.locator('[data-testid="shoe-table-mobile"] thead th[aria-sort]');
+
+  for (const [sort, said] of [
+    ['-releasedAt', 'Sorted by release date, newest first'],
+    ['name', 'Sorted by shoe name, A to Z'],
+    ['-plate', 'Sorted by plate, most plate first'],
+  ] as const) {
+    await page.goto(`/?sort=${encodeURIComponent(sort)}`);
+    await expect(marked, `${sort} has no header to mark, which is why the line exists`).toHaveCount(0);
+    await expect(note).toHaveText(said);
+  }
+
+  // The control: a figure column carries the caret itself, so the line would be saying it twice.
+  await page.goto('/?sort=-score');
+  await expect(marked).toHaveCount(1);
+  await expect(note).toHaveCount(0);
+
+  await page.goto('/');
+  await expect(note).toHaveCount(0);
+});

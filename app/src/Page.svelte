@@ -15,6 +15,7 @@
   import ColumnPicker from './components/ColumnPicker.svelte';
   import FilterSidebar from './components/FilterSidebar.svelte';
   import Header from './components/Header.svelte';
+  import OrderingNote from './components/OrderingNote.svelte';
   import Receipt from './components/Receipt.svelte';
   import SetupStrip from './components/SetupStrip.svelte';
   import ShoeTable from './components/ShoeTable.svelte';
@@ -29,6 +30,7 @@
   import { debounce } from './lib/debounce';
   import { applyFilters, EMPTY_FILTERS, narrowingNames } from './lib/filters';
   import type { Zone } from './lib/lineage';
+  import { orderingNote } from './lib/ordering';
   import { isFirstArrival, readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
   import { scoreMap, type ScoreColumns } from './lib/score';
@@ -267,6 +269,14 @@
     SCORE_DEFS.flatMap((def) => (['heel', 'forefoot'] as const).map((zone) =>
       [def.keys[zone], scoreMap(def, data.shoes, zone, stability, idx)] as const))));
   const visibleSorted = $derived(sortShoes(filtered.visible, view.sort, idx, scores));
+  /**
+   * The ordering, in words, exactly when no rendered header can carry the caret — a link sorted by
+   * date, name, brand or plate opened a phone with the fleet reordered and nothing on screen or in
+   * the accessibility tree saying so. Derived from the view and the rendering, and serialised
+   * nowhere: it is display, not state, so a shared link is byte-identical with and without it.
+   * docs/app.md §The ordering is stated when no header can carry it
+   */
+  const ordering = $derived(orderingNote(snapshot, phone, idx));
 
   /**
    * What `All` produces — and, because the mark is `sameValue(v, allView(v, zone))`, also what
@@ -514,6 +524,7 @@
              outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
              undatedHidden={filtered.undatedHidden}
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
+    {#if ordering}<OrderingNote phrase={ordering} />{/if}
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}

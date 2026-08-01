@@ -593,7 +593,8 @@ than an accessibility nicety, and §Columns are permissive, ranges and sorts are
 strict already states the invariant from the other side. `brand` is the half
 that stays link-only: it has no header on either rendering, and giving the one
 name column two sorts would need a second control in the row a runner reads
-shoes off.
+shoes off. What states a brand-sorted link instead is
+§The ordering is stated when no header can carry it.
 
 **A first press sorts descending, except on `name` and `brand`, which open A to
 Z.** On a figure the interesting end is the big number; on the shoe's own name
@@ -608,7 +609,8 @@ grid's rule.
 The **phone offers no name header at all** — its header row is the figure
 columns and only those, which is what keeps every chip the same box
 (§Two renderings, and only one of them mounted) — so a name sort is set there by
-a link or by the desktop's control.
+a link or by the desktop's control, and stated by
+§The ordering is stated when no header can carry it.
 
 **The default view holds six numeric columns**, plus `releasedAt` and `plate`,
 which carry words and dates rather than figures. Six is the bound: it is the
@@ -681,6 +683,47 @@ story gives up is toebox width, because fit is the runner's own last filter and 
 score speaks to it, and stack, because the score reads shock absorption rather than
 the millimetres behind it, so a shown stack invites a hand ranking the story argues
 against.
+
+### The ordering is stated when no header can carry it
+
+A sort key that is not a rendered column has no header to be marked on, so the
+table reorders with **no `aria-sort` anywhere and no lit caret** — and the app
+produces exactly such keys. On a phone that is four of them: `releasedAt`,
+`plate`, `name` and `brand`, because `ShoeTableMobile` renders a header only for
+the figure columns and `releasedAt` and `plate` become metadata after the name
+(§Two renderings, and only one of them mounted). On the desktop it is `brand`,
+plus any figure whose column has been unticked while its sort stands. Opened
+from a link, that is a fleet reordered with nothing on screen or in the
+accessibility tree saying so — and `?sort=-releasedAt` is among the most likely
+links anyone sends, `releasedAt` being in `defaultColumns`.
+
+So one line under the receipt says it: **`Sorted by release date, newest
+first`**, present exactly when the sort is non-default **and** no rendered header
+carries the key. `orderingNote` in `app/src/lib/ordering.ts` is that predicate,
+and it takes the rendering as an argument rather than reading a media query, so
+the two renderings answer through one function.
+
+Three things it is not. It is **not state**: nothing about it reaches
+`ViewState`, `serializeView` or storage, so a recipient forwards the link they
+were sent, byte for byte. It is **not the receipt's**: the receipt reports what
+the filters did and moves when a bound does, and ordering is neither
+(§The header names the catalogue, the receipt owns the count) — hence its own
+element under it, in the receipt's size and colour so the two read as one band of
+small print rather than as a warning. And it is **not a live region**: a sort a
+runner presses is announced where every other action is, and a sort that arrived
+in a link changed nothing while they were reading.
+
+**It is silent on the default sort even when the score column is unticked.** A
+link to the default order carries no `sort` at all, so there is nothing a
+recipient can be surprised by; the line exists for the orders a URL can impose.
+
+The words are `sortPhrase`'s, one home shared with the announcement a header
+press makes. Common nouns where the app has one — `release date`, `price`,
+`shoe name`, `plate` — because "Sorted by Released" is a column heading talking;
+everything else falls through to `columnLabel`, so a metric is called the same
+thing here as in its header. The order half is worded for what is being ordered
+rather than for the comparator: `newest first`, `A to Z`, `most plate first`,
+`highest first`.
 
 ### Table presentation
 

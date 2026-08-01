@@ -701,3 +701,36 @@ describe('Page persistence', () => {
     expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 4 of the 4 shoes');
   });
 });
+
+/**
+ * The desktop half of 0014. jsdom's `matchMedia` stub never matches, so the phone half is measured
+ * at real widths by the rig and asserted in `cross-browser.spec.ts` — `lib/ordering.test.ts` holds
+ * the decision itself for both renderings.
+ * docs/app.md §The ordering is stated when no header can carry it
+ */
+describe('Page states an ordering no header can carry', () => {
+  it('says nothing on the default sort', () => {
+    render(Page, { props: { data } });
+    expect(screen.queryByTestId('ordering-note')).toBeNull();
+  });
+  it('says nothing when the sorted column has a header', () => {
+    history.replaceState(null, '', '/?sort=-msrpGbp');
+    render(Page, { props: { data } });
+    expect(screen.queryByTestId('ordering-note')).toBeNull();
+  });
+  it('states a brand-sorted link, which has a header on neither rendering', () => {
+    history.replaceState(null, '', '/?sort=-brand');
+    render(Page, { props: { data } });
+    expect(screen.getByTestId('ordering-note')).toHaveTextContent('Sorted by brand, Z to A');
+  });
+  // Derived display, never state: the link a recipient forwards must be the link they were sent.
+  it('serialises nothing for it', () => {
+    history.replaceState(null, '', '/?sort=-brand');
+    render(Page, { props: { data } });
+    settle();
+    // A visit that only READS a query string writes nothing, so the assertion is that the address
+    // bar is unchanged and storage was never touched — the line added neither.
+    expect(location.search).toBe('?sort=-brand');
+    expect(localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
+  });
+});
