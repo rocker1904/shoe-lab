@@ -71,6 +71,18 @@ Serving the **real 450-shoe dataset** is the point: `app/scripts/prepare-e2e.mjs
 it for a 5-shoe fixture, which is why the 1200px overflow kept CI red for ~30 commits before anyone
 traced it.
 
+### Re-running a finding against a branch
+
+`start({ root: '/home/sam/dev/shoe-lab-<branch>' })` serves another checkout — its own `data/` and
+`node_modules`, nothing written outside it — so "does this branch fix finding N" is measured rather
+than read off a diff.
+
+**Run the same probe against `main` first.** Checking the `mobile-chrome` branch, four of eight
+probes returned identical results on both checkouts because the *probe* was failing, not because
+the branch changed nothing. Without the baseline every one of those would have been reported as
+"the branch does not address this", which is a false all-clear rather than a null result. A probe
+that cannot reproduce a finding on the checkout it was found on says nothing about any other.
+
 ### WebKit needs Docker
 
 It cannot launch on Arch — it wants `libicu74`, `libxml2`, `libflite1`, the same wall

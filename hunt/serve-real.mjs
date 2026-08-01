@@ -7,9 +7,7 @@ import { readFileSync, copyFileSync, statSync, readdirSync, existsSync } from 'n
 import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const DIST = join(ROOT, 'app/dist');
-const DATA = join(ROOT, 'data/shoes.json');
+const HERE = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
@@ -28,7 +26,7 @@ function newestMtime(path, skip = new Set()) {
 }
 
 /** Rebuild only when a source is newer than the build, so the second agent never pays for the first agent's build. */
-function buildIfStale() {
+function buildIfStale(ROOT, DIST, DATA) {
   const built = newestMtime(join(DIST, 'index.html'));
   const sources = Math.max(
     // sync-data and sync-fonts both write into the source tree during the build, so counting their
@@ -45,8 +43,15 @@ function buildIfStale() {
   return true;
 }
 
-export async function start({ port = 4180, build = true } = {}) {
-  if (build) buildIfStale();
+/**
+ * `root` serves a different checkout — a worktree carrying a branch under review, so a finding can
+ * be re-run against the change rather than reasoned about. Its own data/ and node_modules are used,
+ * and nothing is written outside it.
+ */
+export async function start({ port = 4180, build = true, root = HERE } = {}) {
+  const DIST = join(root, 'app/dist');
+  const DATA = join(root, 'data/shoes.json');
+  if (build) buildIfStale(root, DIST, DATA);
   // Unconditional, even on a reused build: an `npm -w app run e2e` at any point leaves the 5-shoe
   // fixture sitting in dist/, and a rig that silently served it would report a clean bill of health
   // on exactly the data that cannot show the bugs.
