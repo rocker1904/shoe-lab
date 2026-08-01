@@ -5,6 +5,7 @@
   import type { TestIndex } from '../lib/dataset';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
   import { dismissOnOutsidePress } from '../lib/dismiss';
+  import { ICON_PATHS } from './icons';
   import { columnLabel } from '../lib/labels';
   import { DERIVED_ZONE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
 
@@ -106,9 +107,19 @@
      summary when it opens, and that is outside the panel it just revealed. -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <details class="picker" bind:open bind:this={details} onkeydown={onkeydown}>
-  <!-- The count rides in a badge so the label stops changing width as columns are ticked. -->
-  <summary bind:this={summary}>Columns <span class="count-badge">{columns.length}</span>
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <!-- The count rides in a badge so the label stops changing width as columns are ticked.
+       `aria-label` rather than a visually-hidden span: the word is swapped for a glyph below 800px
+       and the accessible name must not change with the viewport, so the count belongs in it — the
+       badge is the only remaining indication of what the control holds
+       (docs/app.md §Where the utilities live). -->
+  <summary bind:this={summary} aria-label="Columns, {columns.length} shown">
+    <span class="word">Columns</span>
+    <svg class="glyph" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d={ICON_PATHS.columnsBox} stroke="currentColor" stroke-width="1.3" />
+      <path d={ICON_PATHS.columnsBars} stroke="currentColor" stroke-width="1.3" />
+    </svg>
+    <span class="count-badge">{columns.length}</span>
+    <svg class="chev" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </summary>
   <div class="panel">
     <!-- One legend, then a bare glyph per row: the arrow left the table header, and with no units
@@ -166,6 +177,16 @@
   .count-badge { font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1;
                  padding: 2px var(--s1); border-radius: var(--r-sm);
                  background: var(--border-soft); color: var(--text-dim); }
+  /* The badge is what survives the word: the count is the only thing on this control that changes,
+     and it is why the label was given a badge rather than a growing string in the first place. The
+     picker owns its own tightening below 800px rather than the toolbar reaching in with a
+     `:global` (docs/app.md §Where the utilities live). */
+  .glyph { display: none; }
+  @media (max-width: 800px) {
+    .word, .chev { display: none; }
+    .glyph { display: inline-flex; }
+    summary { padding-inline: var(--s2); }
+  }
   .panel { position: absolute; right: 0; z-index: 10; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); min-width: 20rem; box-shadow: var(--shadow-dialog); }
   /* The 20rem is CONTENT — no `box-sizing` here — so the panel measures 354px, and anchored
      `right: 0` under a toolbar that leaves it 352px at 360px it put its left hairline and both left

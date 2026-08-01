@@ -128,7 +128,9 @@ test('keeps the month grid reachable at the ends of the fleet', async ({ page })
 test('closes the column picker every way out, and hands focus back', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
-  const summary = page.getByText('Columns', { exact: false }).first();
+  // The element, not its text: the word is one of two children the summary swaps at 800px, so a
+  // text locator resolves to that span rather than to the control that takes focus.
+  const summary = page.locator('details.picker summary');
   const panel = page.locator('details.picker .panel');
 
   await summary.click();

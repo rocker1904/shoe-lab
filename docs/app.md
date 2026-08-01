@@ -1665,6 +1665,79 @@ than translated**, and everything with no zone is untouched — the reasoning is
 §The zone is a preset too. A no-op click on the marked zone returns
 early, so it cannot rebuild the view.
 
+## Where the utilities live
+
+Copy link, Export CSV and the theme cycle are **worded in the masthead above
+800px and icons on the toolbar's control row below it** — two different parents,
+so one node cannot serve both.
+
+The markup is written **once**, as a snippet in `Page.svelte`, and handed to
+**exactly one host**: `Header` and `Toolbar` each take a `utilities?: Snippet`
+prop, and the band decides which of the two gets it. Rendering into both and
+hiding one with `display: none` is the move this app has already rejected once,
+for the two table renderings (§Two renderings, and only one of them mounted): a
+`display: none` button is still a tab stop for anything that does not evaluate
+CSS, and two nodes answering to `Copy link` are two answers to "how do I share
+this?". The copy confirmation is one always-rendered `role="status"`, empty until
+it has something to say, for the same reason — a live region created together
+with its text is not reliably announced.
+
+**The band is asked in the script, not as an `@media` rule**, exactly as
+`PHONE_QUERY` already is, because a media rule cannot unmount anything. The query
+is the sidebar's own `max-width: 800px` **inverted rather than duplicated**: a
+`min-width` twin of a `max-width` boundary is not its complement — every
+fractional width between them matches neither, which browser zoom and Firefox's
+fractional viewport widths both produce — so there is one query and its
+complement is whatever it does not match. The effect that closes the filter
+drawer on a resize watches the same rune, so the boundary has one home.
+
+**The host is wrapped in `{#if utilities}` in both parents**, and that is
+load-bearing rather than tidiness: a zero-width flex item is still a flex item
+and still takes the container's gap, so an empty host left standing at the band
+it does not own adds trailing air inside a row whose whole job is to be flush
+right. That is the same trap the old `.spacer { display: none }` rule was written
+for.
+
+**The CSS moves with the markup.** Svelte scopes a style block to the markup
+authored in that file, and a snippet written in `Page.svelte` carries `Page`'s
+scope wherever it is rendered — so the header's own `button`, `.icon` and
+`.copied` rules stop reaching these three the moment they move, and they would
+ship unpainted. They live in `Page.svelte`'s style block now. `Header` loses
+`theme`, `onexport` and `ontheme` with them.
+
+**`Filters` and `Columns` lose their words on the same boundary**, so nothing on
+this bar is half-worded: one boundary governs every words-become-icons swap. The
+cost is deliberate — a 760px laptop window gets glyph-only Filters and Columns
+even though the merged line has slack for the words. Both render **both forms**
+and let CSS choose, so the accessible name never changes with the viewport, and
+the glyph is default-hidden and *revealed* by the query rather than paired with a
+`min-width` twin: the pair is then exhaustive at any width, including the
+fractional ones zoom and Firefox both produce. The column picker's count badge is
+what survives its word — the count is the only thing on that control that
+changes, and it is why the label was given a badge rather than a growing string —
+so the summary carries `aria-label="Columns, N shown"`, and the picker owns its
+own tightening rather than the toolbar reaching in with a `:global`.
+
+Two consequences of that label, both worth carrying: the name changes at **every**
+width, so the desktop control reads `Columns, 6 shown` rather than `Columns 6`;
+and **`<summary>` has no implicit ARIA role**, so `getByRole('button', …)` never
+matches it however it is labelled. Browsers do expose the label to assistive
+tech, so it is doing its job — but any assertion about this control has to go
+through `details.picker summary` and read the attribute.
+
+The glyph geometry lives in `app/src/components/icons.ts` as path data, never as
+whole SVG documents: a whole document would need `{@html}`, and this app has
+exactly two sanctioned sinks (§Sanitised-HTML boundary). The `<svg>` wrapper, its
+size and its `aria-hidden` belong to each template, because the accessible name
+is the button's and an icon carrying one of its own would announce twice.
+
+Two e2e guards hold it: `mounts each utility exactly once at every width` steps
+either side of 800 because that boundary is asked twice, once by the CSS and once
+by the rune, and the failure mode is the two disagreeing; and
+`moves the utilities between bands on a resize`, because a listener that never
+fires would pass the first guard at every width and still strand the controls in
+the wrong band for anyone who rotates a phone or drags a window.
+
 ## The About panel
 
 `AboutDialog.svelte` owns **the whole explanation**: what "Measured at" picks,

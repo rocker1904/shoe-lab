@@ -40,6 +40,17 @@ function stubObjectUrls(stubs: Partial<typeof URL>): () => void {
 
 let restoreUrls: (() => void) | null = null;
 
+/** jsdom implements no clipboard at all, so it has to be planted rather than spied on. */
+function stubClipboard(writeText = vi.fn(async () => {})) {
+  const saved = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+  return { writeText, restore: () => {
+    if (saved) Object.defineProperty(navigator, 'clipboard', saved);
+    else delete (navigator as { clipboard?: unknown }).clipboard;
+  } };
+}
+let restoreClipboard: (() => void) | null = null;
+
 /**
  * The URL and storage write is trailing-debounced, so every assertion about `location.search` or
  * `localStorage` here is 200ms late (docs/app.md §View and URL ownership). Only the two timer
@@ -60,6 +71,8 @@ beforeEach(() => {
 afterEach(() => {
   restoreUrls?.();
   restoreUrls = null;
+  restoreClipboard?.();
+  restoreClipboard = null;
   delete (Element.prototype as Partial<Element>).scrollIntoView;
   vi.restoreAllMocks();
   // `restoreAllMocks` does not reset timers, and the export case's deferred revoke stalls forever
@@ -194,6 +207,80 @@ describe('Page', () => {
     expect(text).toContain('racer');
     expect(text).not.toContain('cushy'); // filtered out, so not exported
   });
+  /**
+   * The band owns the host, and only one host is mounted. The suite's `matchMedia` stub never
+   * matches, so it always renders the desktop band — a mobile one has to be asked for outright.
+   */
+  it('hands the utilities to the bar below 800px, and to nothing else', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation(((q: string) => ({
+      matches: q.includes('max-width: 800px'), media: q, onchange: null,
+      addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
+      addListener: () => {}, removeListener: () => {},
+    })) as typeof window.matchMedia);
+    const { container } = render(Page, { props: { data } });
+    const toolbar = container.querySelector<HTMLElement>('[data-testid="toolbar"]')!;
+    for (const name of ['Copy link', 'Export CSV']) {
+      expect(screen.getAllByRole('button', { name }), `${name} is mounted twice`).toHaveLength(1);
+      expect(within(toolbar).getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(screen.getAllByRole('button', { name: /^Toggle theme/ })).toHaveLength(1);
+    // One live region, or the confirmation is announced twice or by the hidden copy.
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+  });
+
+  /**
+   * The clipboard cases moved here with `copyLink` itself. Two of the mechanisms they were written
+   * on did not survive the move, because this file runs under
+   * `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })` and `Header.test.ts` did not:
+   * a `setTimeout(0)` settle never resolves under a faked clock, and what is actually being waited
+   * for is the `writeText` promise settling, which is a microtask. `copyLink`'s own 2000ms
+   * confirmation timer is left unadvanced — none of the three cases is about it expiring.
+   */
+  // Shareable URLs are a stated goal of the project with no affordance at all until now.
+  it('copies the current view, and says so', async () => {
+    const clip = stubClipboard();
+    restoreClipboard = clip.restore;
+    render(Page, { props: { data } });
+    // The region is on the page before there is anything to say: a live region created together
+    // with its text is not reliably announced, so only the text may arrive late.
+    expect(screen.getByRole('status').textContent).toBe('');
+    await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+    expect(clip.writeText).toHaveBeenCalledWith(location.href);
+    await Promise.resolve();
+    // The confirmation is its own live region, so the button keeps one accessible name and the
+    // outcome is announced rather than swapped in under it.
+    expect(screen.getByRole('status')).toHaveTextContent(/copied/i);
+  });
+
+  it('claims nothing when the clipboard refuses', async () => {
+    const clip = stubClipboard(vi.fn(async () => { throw new Error('denied'); }));
+    restoreClipboard = clip.restore;
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+    await Promise.resolve();
+    expect(screen.getByRole('status').textContent).toBe('');
+  });
+
+  it('copies nothing where there is no clipboard, rather than throwing', async () => {
+    const saved = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    restoreClipboard = () => { if (saved) Object.defineProperty(navigator, 'clipboard', saved); };
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: /copy link/i }));
+    await Promise.resolve();
+    expect(screen.getByRole('status').textContent).toBe('');
+  });
+
+  // A regression guard rather than a red-first test: the masthead already draws them here, and this
+  // is what says the rune did not quietly move them to the bar at every width.
+  it('leaves the utilities in the masthead above 800px', () => {
+    const { container } = render(Page, { props: { data } });
+    expect(within(container.querySelector('header')!)
+      .getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+    expect(within(container.querySelector<HTMLElement>('[data-testid="toolbar"]')!)
+      .queryByRole('button', { name: 'Copy link' })).toBeNull();
+  });
+
   it('cycles the theme and remembers the choice', async () => {
     render(Page, { props: { data } });
     const toggle = screen.getByRole('button', { name: /theme/i });

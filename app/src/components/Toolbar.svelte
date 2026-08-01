@@ -3,9 +3,10 @@
   import type { Zone } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
   import { roving } from '../lib/roving';
+  import { ICON_PATHS } from './icons';
   import ZoneToggle from './ZoneToggle.svelte';
 
-  let { zone, onzone, selected, onstory, showFilters, onfilters, columns,
+  let { zone, onzone, selected, onstory, showFilters, onfilters, columns, utilities,
         stability, onstability, onabout, showGroups = true }: {
     /** Derived in `Page.svelte`, never stored: null while the view names both halves or neither
      *  (docs/app.md §Presets). */
@@ -19,6 +20,9 @@
     /** The column picker, passed through rather than imported: it needs the whole dataset, which
      *  the toolbar has no other reason to know about. */
     columns?: Snippet;
+    /** Written once in `Page.svelte` and handed to exactly one host: this one below 800px, the
+     *  masthead above it (docs/app.md §Where the utilities live). */
+    utilities?: Snippet;
     /** A property of the runner rather than of the search, so it lives on the bar, which persists,
      *  rather than on the strip, which collapses for good on the first story click
      *  (docs/app.md §Presets). */
@@ -65,16 +69,32 @@
     <!-- First of the pair that opens a panel, because it is the one a reader might need before they
          know what Columns is for. -->
     <button type="button" class="about" onclick={onabout}>About</button>
+    <!-- Both forms are rendered and CSS chooses, so the accessible name never changes with the
+         viewport (docs/app.md §Where the utilities live). -->
     <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
-            onclick={onfilters}>Filters</button>
+            onclick={onfilters} aria-label="Filters">
+      <span class="word">Filters</span>
+      <svg class="glyph" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d={ICON_PATHS.filters} stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+      </svg>
+    </button>
     {@render columns?.()}
+    <!-- `{#if}`, not a bare render: an empty span is still a flex item and still takes the row's
+         gap, which is exactly what would stop the utilities being flush right. -->
+    {#if utilities}<span class="utils-host">{@render utilities()}</span>{/if}
   </div>
 </div>
 
 <style>
   .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3);
              padding: var(--s2) var(--s5); background: var(--chrome); border-bottom: 1px solid var(--border); }
-  .actions { display: flex; align-items: center; gap: var(--s3); margin-left: auto; }
+  /* `flex-wrap` until Filters and Columns get their icon forms: six worded controls do not fit a
+     360px row, and an unwrappable group takes the page sideways with it. */
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin-left: auto; }
+  /* What splits the control row into "what opens a panel" on the left and "what you do to a table
+     you are happy with" on the right. Without it the five controls bunch at one end and the row's
+     slack lands in the wrong place. */
+  .actions .utils-host { margin-left: auto; }
   /* One control in a track sized for a group: the padding is the group's, so the pill lines up with
      the pills beside it rather than sitting in a tighter box of its own. */
   .seg.one { padding: 2px; }
@@ -111,9 +131,14 @@
   /* Below 800px the bar is chrome above the first shoe on the screen with the least room for it, so
      it pays for its own rows: the vertical padding halves and the row gap with it. The groups keep
      every control and only the air between them narrows (docs/app.md §Presets). */
+  .glyph { display: none; }
   @media (max-width: 800px) {
     .toolbar { padding: var(--s1) var(--s3); gap: var(--s1) var(--s3); }
-    .filters-toggle { display: inline-block; }
+    .filters-toggle { display: inline-flex; align-items: center; padding-inline: var(--s2); }
+    /* Default-hidden glyph revealed by the query, never a `min-width` twin: the pair is exhaustive
+       at any width including the fractional ones zoom and Firefox both produce. */
+    .word { display: none; }
+    .glyph { display: inline-flex; }
     /* The two segmented groups share a row from 880px down. They ask one question each and are read
        together, and at 390px they need 133px and 202px against the 366px this padding leaves. */
     .actions { order: 1; }

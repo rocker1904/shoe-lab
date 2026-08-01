@@ -337,6 +337,38 @@ test('never opens the bar with the actions alone on a row', async ({ page }) => 
 });
 
 /**
+ * The utilities are written once and mounted in the host their band owns, so exactly one instance
+ * must exist at any width — two would be two tab stops with the same name, and zero would lose the
+ * controls. The widths step either side of 800 because that boundary is asked twice, once by the
+ * CSS and once by the rune in `Page.svelte`, and the failure mode is them disagreeing
+ * (docs/app.md §Where the utilities live).
+ */
+test('mounts each utility exactly once at every width', async ({ page }) => {
+  for (const width of [360, 390, 430, 560, 700, 799, 800, 801, 900, 1200, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    for (const name of ['Copy link', 'Export CSV']) {
+      await expect(page.getByRole('button', { name }), `at ${width}px`).toHaveCount(1);
+    }
+    await expect(page.getByRole('button', { name: /^Toggle theme/ })).toHaveCount(1);
+    await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
+  }
+});
+
+// And the swap survives a resize rather than only a fresh load: the rune is what moves them, so a
+// listener that never fires would pass every case above and still strand the controls in the wrong
+// band for anyone who rotates a phone or drags a window.
+test('moves the utilities between bands on a resize', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('header').getByRole('button', { name: 'Copy link' })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.locator('[data-testid="toolbar"]').getByRole('button', { name: 'Copy link' }))
+    .toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+});
+
+/**
  * Every row of chrome is paid before the first shoe, so narrowing the window may ADD a row — the
  * content genuinely stops fitting — but must never add one that a narrower window then hands back.
  * A band standing taller than the viewports on both sides of it is height nothing on screen asked

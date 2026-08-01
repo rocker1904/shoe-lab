@@ -1,9 +1,11 @@
 <script lang="ts">
-  import type { Theme } from '../lib/theme';
+  import type { Snippet } from 'svelte';
 
-  let { total, builtAt, theme, onexport, ontheme }: {
-    total: number; builtAt: string; theme: Theme;
-    onexport: () => void; ontheme: () => void;
+  let { total, builtAt, utilities }: {
+    total: number; builtAt: string;
+    /** Written once in `Page.svelte` and handed to exactly one host: this one above 800px, the
+     *  toolbar below it (docs/app.md §Where the utilities live). */
+    utilities?: Snippet;
   } = $props();
   /**
    * `2026-07-27` reads like debug output. Locale AND zone are both pinned, so the string does not
@@ -14,25 +16,6 @@
   const updated = $derived(new Intl.DateTimeFormat('en-GB',
     { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(builtAt)));
 
-  let copied = $state(false);
-  /**
-   * The URL *is* the view (docs/app.md §View and URL ownership), so copying the address bar is the
-   * whole share feature — a stated project goal that had no affordance at all. The confirmation is
-   * its own live region rather than a relabelled button: swapping the label would change the
-   * control's accessible name to something you cannot then press.
-   */
-  async function copyLink() {
-    // Absent outside a secure context, and it can reject on a denied permission. Neither is worth
-    // an error state — but neither may claim success either, so both leave the region unsaid.
-    if (!navigator.clipboard) return;
-    try {
-      await navigator.clipboard.writeText(location.href);
-      copied = true;
-      setTimeout(() => (copied = false), 2000);
-    } catch {
-      copied = false;
-    }
-  }
 </script>
 
 <header>
@@ -46,29 +29,9 @@
     <span class="credit-label">Lab data by</span>
     <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </a>
-  <!-- One box, so the three actions wrap as a group. Left loose they are three flex items competing
-       for the end of a line: between 560px and 800px the bar broke mid-group, leaving Copy link
-       alone at the end of the masthead and the other two starting the row below
-       (docs/app.md §The header names the catalogue, the receipt owns the count). -->
-  <div class="actions">
-    <button type="button" onclick={copyLink}>Copy link</button>
-    <!-- Rendered whether or not there is anything to say: a live region created together with its
-         text is not reliably announced, so only the text may arrive late. -->
-    <span class="copied" class:said={copied} role="status">{copied ? 'Copied' : ''}</span>
-    <button type="button" onclick={onexport}>Export CSV</button>
-    <!-- An icon per state, and the `aria-label` is what makes the three-way cycle usable without
-         sight — the drawing is decoration and carries no accessible name of its own. -->
-    <button type="button" class="icon" onclick={ontheme} aria-label="Toggle theme (currently {theme})"
-            title="Theme: {theme}">
-      {#if theme === 'auto'}
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 010 12z" fill="currentColor"/></svg>
-      {:else if theme === 'light'}
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      {:else}
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-      {/if}
-    </button>
-  </div>
+  <!-- `{#if}`, not `{@render utilities?.()}` on its own: an empty span is still a flex item and
+       still takes the header's gap, which is exactly what would stop the banner being flush. -->
+  {#if utilities}<span class="utils-host">{@render utilities()}</span>{/if}
 </header>
 
 <style>
@@ -79,11 +42,6 @@
   h1 { font-size: var(--t-xl); margin: 0; }
   .count { color: var(--text-dim); font-family: var(--font-mono); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
-  /* The header's own gap inside it, so grouping the three changes no spacing at any width. It never
-     wraps internally: at 360px it measures 232px against the 269px left beside the credit, and the
-     e2e row count reads the header's direct children, so a group that broke its own line would be
-     counted as one row (`smoke.spec.ts`). */
-  .actions { display: flex; align-items: center; gap: var(--gap-x); }
   .credit { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-decoration: none; color: var(--text); }
   /* 9px as a literal, deliberately below the scale: `--t-xs` is 12px and the type scale bottoms out
      there, because 12px is the floor for anything a reader has to READ. This label is not read — it
@@ -92,15 +50,6 @@
   .credit-label { font-size: 9px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-dim); }
   .credit-name { display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-sm); font-weight: 500; }
   .credit:hover .credit-name { color: var(--accent); }
-  .icon { display: inline-flex; align-items: center; justify-content: center; }
-  .copied { font-size: var(--t-sm); color: var(--good); }
-  /* A silent region is still a flex item, so it would carry a gap on each side and space the header
-     differently depending on whether a link had ever been copied. */
-  .copied:not(.said) { margin-inline-start: calc(-1 * var(--gap-x)); }
-  /* `--t-sm` stated rather than left to the UA's 13.33px: the size is part of the one secondary-button
-     treatment (docs/app.md §Theming), and matching it by 0.05px of luck is not carrying it. */
-  button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--r-sm); font-size: var(--t-sm); }
-  button:hover { background: var(--accent-dim); }
   /* Below 800px every pixel of chrome is paid before the first shoe, on the screen with the least
      of it — so this tier buys height back three ways and none of them drops a control.
      `--s5` of side padding is a desktop gutter: at 390px it spent 48px of a 390px line and was what

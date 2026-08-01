@@ -23,6 +23,7 @@
   import Toolbar from './components/Toolbar.svelte';
   import { TABLE_ANCHOR_ID } from './lib/anchor';
   import { exportCsv } from './lib/csv-export';
+  import { ICON_PATHS } from './components/icons';
   import { indexTests } from './lib/dataset';
   import { debounce } from './lib/debounce';
   import { applyFilters, EMPTY_FILTERS } from './lib/filters';
@@ -97,17 +98,31 @@
   });
 
   /**
-   * The sidebar is a drawer only below 800px; above it, it is simply part of the page. One left
-   * open across a resize would carry its focus trap into a layout where nothing is modal, so the
-   * width at which it stops being a drawer is the width that closes it.
+   * Which host draws the utilities, asked in the script rather than as an `@media` rule, because
+   * **only one may be in the DOM at a time** — a `display: none` button is still a tab stop for
+   * anything that does not evaluate CSS, and two nodes answering to `Copy link` are two answers to
+   * "how do I share this?" (docs/app.md §Two renderings, and only one of them mounted).
+   * The query is the sidebar's own `max-width: 800px` inverted rather than a `min-width` twin: two
+   * queries that are meant to be complements drift apart at fractional widths, and this boundary is
+   * shared with the drawer.
    */
+  const MOBILE_QUERY = '(max-width: 800px)';
+  let mobile = $state(untrack(() => window.matchMedia?.(MOBILE_QUERY).matches ?? false));
   $effect(() => {
-    const mq = window.matchMedia?.('(max-width: 800px)');
+    const mq = window.matchMedia?.(MOBILE_QUERY);
     if (!mq) return;
-    const sync = () => { if (!mq.matches) showFilters = false; };
+    const sync = () => (mobile = mq.matches);
+    sync();
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   });
+  /**
+   * The sidebar is a drawer only below 800px; above it, it is simply part of the page. One left
+   * open across a resize would carry its focus trap into a layout where nothing is modal, so the
+   * width at which it stops being a drawer is the width that closes it. The same rune, not a second
+   * `matchMedia` on the same string: one boundary, one home (docs/app.md §Where the utilities live).
+   */
+  $effect(() => { if (!mobile) showFilters = false; });
 
   let drawerEl = $state<HTMLElement>();
   /** Everything inside the drawer that can hold focus, in document order. */
@@ -284,7 +299,68 @@
   function onTheme() {
     theme = cycleTheme();
   }
+
+  let copied = $state(false);
+  /**
+   * The URL *is* the view (docs/app.md §View and URL ownership), so copying the address bar is the
+   * whole share feature — a stated project goal that had no affordance at all. The confirmation is
+   * its own live region rather than a relabelled button: swapping the label would change the
+   * control's accessible name to something you cannot then press.
+   */
+  async function copyLink() {
+    // Absent outside a secure context, and it can reject on a denied permission. Neither is worth
+    // an error state — but neither may claim success either, so both leave the region unsaid.
+    if (!navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(location.href);
+      copied = true;
+      setTimeout(() => (copied = false), 2000);
+    } catch {
+      copied = false;
+    }
+  }
 </script>
+
+<!-- Written once and mounted in the host its band owns, never in both with one hidden
+     (docs/app.md §Where the utilities live). It reads `mobile` directly rather than taking a
+     parameter: there is one instance, so there is nothing to parameterise. -->
+{#snippet utilities()}
+  {@const worded = !mobile}
+  <span class="utils">
+    <button type="button" class:icon={!worded} onclick={copyLink}
+            aria-label="Copy link" title={worded ? undefined : 'Copy link'}>
+      {#if worded}Copy link{:else}
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d={ICON_PATHS.copy} stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+      {/if}
+    </button>
+    <!-- Rendered whether or not there is anything to say: a live region created together with its
+         text is not reliably announced, so only the text may arrive late. -->
+    <span class="copied" class:said={copied} role="status">{copied ? 'Copied' : ''}</span>
+    <button type="button" class:icon={!worded} onclick={onExport}
+            aria-label="Export CSV" title={worded ? undefined : 'Export CSV'}>
+      {#if worded}Export CSV{:else}
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d={ICON_PATHS.export} stroke="currentColor" stroke-width="1.4"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      {/if}
+    </button>
+    <!-- An icon per state at both bands, and the `aria-label` is what makes the three-way cycle
+         usable without sight — the drawing carries no accessible name of its own. -->
+    <button type="button" class="icon" onclick={onTheme}
+            aria-label="Toggle theme (currently {theme})" title="Theme: {theme}">
+      {#if theme === 'auto'}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 010 12z" fill="currentColor"/></svg>
+      {:else if theme === 'light'}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {:else}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      {/if}
+    </button>
+  </span>
+{/snippet}
 
 <!-- First in the document, because a skip link that is not the first tab stop skips nothing: it is
      dozens of stops from here to the first table row, and the count moves with the sidebar's rows —
@@ -295,14 +371,15 @@
      reachable from anywhere in a 25,000px table; the receipt below reports rather than controls,
      so it scrolls (docs/app.md §Columns and sorting). -->
 <div class="chrome" bind:clientHeight={chromeHeight}>
-  <Header total={data.shoes.length} builtAt={data.builtAt} {theme}
-          onexport={onExport} ontheme={onTheme} />
+  <Header total={data.shoes.length} builtAt={data.builtAt}
+          utilities={mobile ? undefined : utilities} />
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
   <Toolbar zone={zoneMark} onzone={onZone} {selected}
            onstory={onStory} {showFilters} showGroups={!stripOpen}
            stability={view.stability} onstability={setStability}
            onabout={() => (aboutOpen = true)}
+           utilities={mobile ? utilities : undefined}
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
@@ -369,6 +446,22 @@
 
 <style>
   .chrome { position: sticky; top: 0; z-index: 5; }
+  /* The utilities, wherever their band mounts them. Authored here because a snippet carries the
+     scope of the file it is written in, so rules left behind in `Header.svelte` would stop reaching
+     these three buttons the moment they moved (docs/app.md §Where the utilities live). */
+  .utils { display: flex; align-items: center; gap: var(--s3); }
+  /* The one secondary-button treatment (docs/app.md §Theming); `--t-sm` stated rather than left to
+     the UA's 13.33px, because matching it by 0.05px of luck is not carrying it. */
+  .utils button { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
+                  background: var(--surface); color: var(--text); border-radius: var(--r-sm);
+                  font-size: var(--t-sm); }
+  .utils button:hover { background: var(--accent-dim); }
+  .utils .icon { display: inline-flex; align-items: center; justify-content: center; }
+  .copied { font-size: var(--t-sm); color: var(--good); }
+  /* A silent region is still a flex item, so it would carry a gap on each side and space the row
+     differently depending on whether a link had ever been copied. The group's OWN gap now, not the
+     header's `--gap-x`: that variable is Header-local and does not exist in the bar. */
+  .copied:not(.said) { margin-inline-start: calc(-1 * var(--s3)); }
   /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes an automatic minimum of min-content, and
      the table's 14rem name column plus its headers' own longest words inflate that past the
      viewport, so the whole document scrolled sideways at desktop widths. */
