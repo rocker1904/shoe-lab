@@ -171,8 +171,10 @@ Precedence is the table order.
 ## Curated release months
 
 `curated/release-dates.jsonl` holds hand-researched months, one JSON object per
-line, sorted by slug. It lives outside `data/` because `data/` is
-machine-generated and must not be hand-edited
+line, in no guaranteed order and in either whitespace spelling — sessions append
+to it and nothing rewrites it, so read it with a JSON parse rather than a fixed
+pattern (docs/operations.md §Resuming release-date curation). It lives outside
+`data/` because `data/` is machine-generated and must not be hand-edited
 (docs/decisions.md §Git is the database), and it is JSONL rather than a
 TypeScript module because it holds hundreds of entries with prose quotes:
 appends are safe, diffs are one line per shoe, and a malformed quote is a

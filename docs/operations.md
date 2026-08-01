@@ -187,9 +187,17 @@ produces a committed file, and adds nothing to the weekly refresh
 gates are docs/scraping.md §Curated release months; method and evidence rules
 are the spec under docs/superpowers/specs.
 
-**State when you pick this up.** `curated/release-dates.jsonl` holds the work so
-far; `grep -c '"month":null' curated/release-dates.jsonl` counts the evidenced
-dead ends. The population needing a month is every shoe whose
+**State when you pick this up**, counted rather than remembered. The file is
+written by many sessions and carries both `"month":null` and `"month": null`, so
+every count over it wants `-E` and an optional space, or a JSON parse:
+
+```
+grep -cE '"month": ?null' curated/release-dates.jsonl        # evidenced dead ends
+grep -cE '"reliability": ?"suspect"' curated/release-dates.jsonl  # months that may be off by one
+node -e 'console.log(require("./data/shoes.json").shoes.filter(s=>!s.releaseDateSource||s.releaseDateSource==="listing").length)'
+```
+
+The third is the population still needing a month: every shoe whose
 `releaseDateSource` is `listing` or null — all of them, because the listing year
 runs late in only one direction, so no shoe can be assumed outside a recency
 window.
