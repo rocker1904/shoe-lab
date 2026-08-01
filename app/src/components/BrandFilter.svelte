@@ -22,7 +22,7 @@
   <summary>{selected.length ? `${selected.length} selected` : 'Any brand'}
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </summary>
-  <!-- Fifty brands in a 14rem scroll box is a list you scroll rather than read. -->
+  <!-- The whole fleet's brands in a 14rem scroll box is a list you scroll rather than read. -->
   <input class="q" type="search" aria-label="Search brands" placeholder="Search brands…" bind:value={query} />
   <ul class="scrollport">
     {#each shown as [brand, n] (brand)}

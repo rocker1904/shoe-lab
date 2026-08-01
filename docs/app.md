@@ -343,7 +343,7 @@ touch step mean the same thing in three engines.
 both bounds in one click and deletes the key outright — leaving `{}` behind
 would mean `isDefaultView` never returned true again and the toolbar could
 never mark `All` again. Its control is an **✕** icon rather than the word
-"Clear": ten rows spelling it out is most of the sidebar's width, and the
+"Clear": one row per range key spelling it out is most of the sidebar's width, and the
 `aria-label="Clear {name}"` still says which row it belongs to. Removing drops
 the row and its bound together, and is offered on **any row that is not
 curated**, not only on a hand-added one: a row can also be on screen as one half
@@ -413,7 +413,7 @@ reflow under the cursor, and a 0 is an answer.
 `parseView` keeps `brands` verbatim on purpose (§URL encoding), so a link naming
 a brand the catalogue has since dropped — or spelling one differently, the
 catalogue says `HOKA` — applied a filter with no control anywhere on screen:
-`?brands=Nonesuch` read **1 selected** with none of the 34 listed brands ticked
+`?brands=Nonesuch` read **1 selected** with none of the listed brands ticked
 and the word nowhere in the document, on a phone as much as on the desktop. The
 only recovery was `Clear filters`, which discards every other filter the link
 carried. A selected brand the fleet does not hold now gets a row like any other
@@ -422,7 +422,7 @@ exceeds the number of controls that can act on it. Seeded through a `Set`, so a
 selected brand the catalogue *does* hold gets one row rather than two.
 
 A search box narrows the
-fifty-odd brands in a 14rem scroll box. Its `<summary>` **suppresses the UA
+brand list in a 14rem scroll box. Its `<summary>` **suppresses the UA
 marker and draws an SVG chevron**, exactly as the column picker's does: those two
 are the only `<details>` in the app, and one of them showing the browser's
 triangle read as an oversight rather than a choice.
@@ -504,8 +504,9 @@ conservative — a wider trim buys travel but starts discarding real spread.
 
 **Snapping is to values that exist, not to round numbers.** £5 and 1g detents
 are arbitrary; a boundary between two shoes is not, and the rule self-adjusts
-across the two regimes the fleet contains — 43 stops on price (10% distinct),
-324 on energy return (90%) — with no constants. Both axis ends are readings too,
+across the two regimes the fleet contains — price repeats itself so heavily that
+most shoes share a value with several others, energy return barely repeats at
+all — with no constants. Both axis ends are readings too,
 because `quantile` is floor-of-rank.
 
 **Bounds may cross, and a crossed range honestly matches zero shoes.** Dragging
@@ -517,7 +518,7 @@ and further typing would append to what it rewrote.
 
 Two details the plot has to get right. **It is not a tab stop**: giving it
 `tabindex` so `:focus-within` could reveal the grips would add an empty stop in
-an app that already spends 55 before the first shoe
+an app that already spends dozens before the first shoe
 (docs/app.md §Table presentation), so the reveal hangs off the **row** — hover or
 focus-within on the fieldset — which also means tabbing into either number
 field reveals them. And **the touch hit areas are gap-aware**: 44px on a 222px
@@ -527,9 +528,10 @@ visible, because hover never fires there. A *set* bound is drawn either way — 
 edge is state, a grip is affordance, and they have different visibility rules.
 
 **Each number field is named for the metric it bounds** — `Weight (g) minimum`,
-not `min`. Ten range rows put twenty of these on screen, and a fieldset's
-accessible name is not announced with the field inside it, so the metric is the
-only thing that tells them apart.
+not `min`. The default sidebar puts two of these on screen for every key in
+`CURATED_RANGE_KEYS` (`lib/lineage.ts`), and a fieldset's accessible name is not
+announced with the field inside it, so the metric is the only thing that tells
+them apart.
 
 **Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
 one action, `lib/roving.ts`, applied to all four of them — the zone, the story
@@ -967,10 +969,10 @@ a *sibling* row rather than a child of the control, so nothing else says what
 the row expands, and it exists only while the row does — an IDREF naming a node
 that is not in the document resolves to nothing.
 
-**A skip link is the first element in the page.** It is 55 tab stops from the
-top to the first table row once the strip has handed over, and 70 while the
-strip is still up — measured at 1200px with the real fleet; the sidebar's rows
-move it, so it is a scale rather than a constant. `SkipLink.svelte` moves focus to
+**A skip link is the first element in the page.** Tabbing from the top to the
+first table row costs dozens of stops once the strip has handed over, and more
+again while the strip is still up; the sidebar's rows move both, so it is a
+scale rather than a constant and no figure is quoted. `SkipLink.svelte` moves focus to
 `TABLE_ANCHOR_ID` (`lib/anchor.ts`) itself rather than letting the `href`
 navigate: the query string is the view and nothing else may write to the
 address bar, so a `#shoe-table` left behind would ride along in every copied
@@ -1396,9 +1398,9 @@ year was ever real (docs/scraping.md §Release-date provenance). `displayRelease
 in `lib/release-date.ts` is the single spelling of that rule, shared by the
 table and the mobile strip.
 
-The day is never shown, even for the 24 shoes whose date is precise: a column
-that is day-precise for 5% of rows implies a resolution the dataset does not
-have. The day is not lost — `releasedAt` keeps it, so sorting stays exact and
+The day is never shown, even where RunRepeat flagged the date precise: a column
+that is day-precise on a small minority of rows implies a resolution the dataset
+does not have. The day is not lost — `releasedAt` keeps it, so sorting stays exact and
 the CSV exports it in full, for the same reason the numbers are unrounded
 (docs/app.md §Number display).
 
@@ -1410,9 +1412,9 @@ because that export has a fixed header.
 ## Released after is month-granular
 
 Every bound is stored as the first of a month. The dataset is month-precision
-at best — only 24 of 450 shoes could supply a day
-(docs/scraping.md §Release-date provenance) — so a day picker would offer a
-bound the data cannot honour.
+at best — only a `page` or `page-estimated` shoe can carry a real day at all,
+and most of the fleet is neither (docs/scraping.md §Release-date provenance) —
+so a day picker would offer a bound the data cannot honour.
 
 **The control is `MonthPicker.svelte`, not `input type="month"`.** Firefox and
 WebKit implement none of that type: both reflect it back as `text`, so what
@@ -2645,10 +2647,11 @@ runner filters: narrow to recent shoes and an arriving metric fills in while a
 retiring one empties out, which is more than a static label could have said.
 
 `SPARSE_BELOW` and `isSparse` stay, redefined: they are a **preset-safety**
-threshold, not a warning threshold. Nothing on screen reads them; the one
-consumer is `presets.test.ts`, which asserts in both directions that no preset
-bounds a metric below it — a preset that recommends against itself is
-self-inflicted. Why generations exist at all is docs/scraping.md §Test lineage.
+threshold, not a warning threshold. Nothing on screen reads them; their
+consumers are the two suite guards that ride on the threshold — the preset bound
+(§Presets) and the score's own half of it (§The story scores) — which is where a
+retune or a deletion has to be argued. Why generations exist at all is
+docs/scraping.md §Test lineage.
 
 ## Decisions
 
