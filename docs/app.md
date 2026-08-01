@@ -1228,20 +1228,16 @@ chosen:
   that is raised on the phone and recessed on the desktop is two answers to one
   question.
 - That leaves **49px of header text** inside the 53px column at 360px, which is
-  what `app/src/lib/labels.ts` validates every catalogue name against, at a
-  `MAX_LABEL_PX` of 48 — a pixel under, because `CHAR_PX` sums approximate the
-  browser to about ±1px. The table is measured for **Inter Tight 600 at 12px
-  with -0.02em tracking**, by `app/scripts/measure-label-widths.mjs`, and every
-  number in it — `FALLBACK_PX` included — is specific to that face, size, weight
-  and tracking. Regenerate it with that script if any of the four moves.
-- Because the app **ships** its header face, the assertion now means the same
-  thing on every OS; under `system-ui` the widths were only ever true on the
-  machine that measured them. `Δ` is the one exception and stays one: it is
-  outside the latin subset the app ships, so the browser falls back per glyph
-  and that number is still a `system-ui` measurement.
-- **26 `SHORT_LABELS` entries survive**, and the count is a measurement rather
-  than a list: a narrower face brings names back inside the bound, and which
-  ones is whatever the catalogue says when it is re-run. A short label is only
+  what `app/src/lib/labels.ts` validates every catalogue name against. The bound
+  itself, the face and size its width table was measured for, and when to
+  regenerate that table, are documented at `MAX_LABEL_PX` and `CHAR_PX` — they
+  guard one code site, so they are stated there and not restated here. Because
+  the app **ships** its header face, the assertion means the same thing on every
+  OS; under `system-ui` the widths were only ever true on the machine that
+  measured them.
+- **`SHORT_LABELS` is a measurement rather than a list**: a narrower face brings
+  names back inside the bound, and which entries survive is whatever the
+  catalogue says when it is re-run. A short label is only
   deleted when the real name fits in **two** lines — `MAX_LABEL_LINES` stays 3
   because names with no short label still need somewhere to go, but a deletion
   may not spend the third line, which is paid by every screen for as long as
