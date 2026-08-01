@@ -2,7 +2,11 @@
   import type { Snippet } from 'svelte';
 
   let { total, builtAt, utilities }: {
-    total: number; builtAt: string;
+    /** Absent only while the dataset is still in flight, where this component is laid out to
+     *  reserve the masthead's height (docs/app.md §Decisions). The count is a fact about the
+     *  catalogue, so it waits for one rather than standing in for it: the line box is reserved,
+     *  the words are not invented. */
+    total?: number; builtAt?: string;
     /** Written once in `Page.svelte` and handed to exactly one host: this one above 800px, the
      *  toolbar below it (docs/app.md §Where the utilities live). */
     utilities?: Snippet;
@@ -13,7 +17,7 @@
    * previous day for every reader west of Greenwich. The old `builtAt.slice(0, 10)` had no such
    * problem, so dropping the zone would be a regression rather than an omission.
    */
-  const updated = $derived(new Intl.DateTimeFormat('en-GB',
+  const updated = $derived(builtAt === undefined ? null : new Intl.DateTimeFormat('en-GB',
     { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(builtAt)));
 
 </script>
@@ -27,7 +31,7 @@
        The micro-label does the explaining, so the name is set in plain text and no link colour
        competes with the wash. -->
   <span class="prov">
-    <span class="count">{total} shoes · updated {updated}</span>
+    <span class="count">{#if updated !== null}{total} shoes · updated {updated}{/if}</span>
     <a class="credit" href="https://runrepeat.com/catalog/running-shoes" rel="noopener" target="_blank">
       <span class="credit-label">Lab data by</span>
       <span class="credit-name">RunRepeat <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 7L7 3M7 3H3.8M7 3v3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -44,7 +48,11 @@
      (docs/app.md §Columns and sorting). */
   header { --gap-x: var(--s4); display: flex; align-items: center; gap: var(--gap-x); padding: var(--s2) var(--s5); border-bottom: 1px solid var(--border); background: var(--chrome); }
   h1 { font-size: var(--t-xl); margin: 0; }
-  .count { color: var(--text-dim); font-family: var(--font-mono); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+  /* `inline-flex` with a `1lh` floor so the line box stands whether or not there is a count in it
+     yet: the loading placeholder lays this component out to reserve the masthead's height, and an
+     empty inline span would collapse the banner by a whole line at every phone width. */
+  .count { display: inline-flex; min-height: 1lh; color: var(--text-dim); font-family: var(--font-mono);
+           font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
   .spacer { flex: 1; }
   /* Above 800px the two facts are header items in their own right, in the order the visual-polish
      pass settled — the wrapper exists for the banner, and grouping them here would move the

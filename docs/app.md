@@ -2582,9 +2582,55 @@ layout. The e2e fixture's own labels are not the catalogue's, so the two flip at
 different widths and the test probes a viewport well inside each band rather than
 the boundary itself.
 
-`App.test.ts` pins the row count, the cell count and the structure — the parts
-that are DOM facts — and `smoke.spec.ts` measures the geometry against the real
-table in a browser, because none of it exists in jsdom. The pulse stays behind a
+**The contract had an axis it never covered, and it was the one that moved.**
+`x`, `w`, the head band and the row height were all asserted; `y` was not, and the
+table landed **285px** below the placeholder at 1440px. The cause is that the
+placeholder was the only element in the document: the chrome, the setup strip and
+the receipt all mount above it at once when the data lands.
+
+**The room above the table is reserved by the real bands, laid out and made
+invisible.** No constant could state it — the chrome steps four times between
+1440px and 320px, the strip five, and both move again when the face swaps in — so
+`App.svelte` renders `Header`, `Toolbar` and (on a first arrival) `SetupStrip`
+inside `.reserve`, which is `visibility: hidden` and `inert`. That keeps the
+layout while taking every box out of the accessibility tree, out of hit-testing
+and out of the tab order, and it is the one form of the height that cannot drift
+from the one the page will use. Nothing is drawn and nothing is offered: a visible
+band of controls that did nothing when pressed would be a worse defect than the
+jump.
+
+**Whether the strip is reserved is `isFirstArrival()`**, in `lib/persist.ts` —
+the same predicate `Page.svelte` opens the strip on, written once, because a
+placeholder reserving a strip the page then did not draw is the jump in the other
+direction. `Header` therefore takes `total` and `builtAt` as **optional**: the
+count is a fact about the catalogue and it waits for one rather than standing in
+for it, so the loading masthead reserves the count's line box (`min-height: 1lh`
+on `.count`) and states nothing.
+
+**What is left is the receipt, and it is left deliberately.** Its wording counts
+shoes, so how many lines it takes is a fact about the data the placeholder is
+waiting for; the placeholder reserves the receipt's own box with **one** line in
+it. The residual is 0–1px at 1440, 1200 and 800px and one line box where the real
+receipt wraps, which is the bound `smoke.spec.ts` holds. Reserving three lines
+instead would be the same error pointing the other way.
+
+**The inner tracks are not part of the contract, and must not be "fixed" to
+match.** The placeholder lays out `14rem repeat(n, 1fr)`; the real name column is
+`min-width: 14rem` under `table-layout: auto`, so what it *takes* — 370px at
+1440px — is set by the shoe names in the dataset the placeholder is waiting for.
+The test asserts the half that is knowable: the placeholder's name track is the
+table's own declared minimum, read off the cell rather than restated.
+
+**Below 700px the placeholder is still the desktop table's chassis**, which the
+phone rendering is not (§Two renderings, and only one of them mounted): the real
+table there is 8px wider and 4px further left, and its head band shorter. Known
+and unreserved — the assertions run at desktop widths, where the placeholder and
+the table are the same object.
+
+`App.test.ts` pins the row count, the cell count, the structure and which bands
+the reserve holds — the parts that are DOM facts — and `smoke.spec.ts` measures
+the geometry against the real table in a browser, at both a first arrival and a
+returning visitor, because none of it exists in jsdom. The pulse stays behind a
 `prefers-reduced-motion` guard.
 
 ### Sharing is copying the address bar

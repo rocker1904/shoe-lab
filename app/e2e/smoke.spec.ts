@@ -111,28 +111,42 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
  * inside each band under both, which is what makes them a check on the reserve rather than on the
  * fixture's wording.
  */
-for (const width of [1440, 1200]) {
-  test(`the loading skeleton reserves the geometry the table lands in at ${width}px`, async ({ page }) => {
+// The strip is the biggest term above the table and only a FIRST ARRIVAL draws it, so both loads
+// are measured: a query string is what makes the second one not a first arrival, which is exactly
+// the predicate `isFirstArrival()` answers for the placeholder and for the strip alike.
+for (const { width, path, strip } of [
+  { width: 1440, path: '/', strip: true },
+  { width: 1200, path: '/', strip: true },
+  { width: 1440, path: '/?plate=carbon', strip: false },
+]) {
+  const who = strip ? 'a first arrival' : 'a returning visitor';
+  test(`the loading skeleton reserves the geometry the table lands in at ${width}px, ${who}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     let release = () => {};
     const held = new Promise<void>((resolve) => { release = resolve; });
     await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
 
-    await page.goto('/');
+    await page.goto(path);
     const skeleton = await page.locator('.skeleton').evaluate((el) => {
       const box = el.getBoundingClientRect();
       const head = el.querySelector('.head')!.getBoundingClientRect();
       const row = el.querySelector('.row')!;
-      return { x: Math.round(box.x), w: Math.round(box.width), headH: Math.round(head.height),
+      return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width),
+               headH: Math.round(head.height),
                rowH: Math.round(row.getBoundingClientRect().height),
-               cols: row.querySelectorAll('i').length };
+               cols: row.querySelectorAll('i').length,
+               // The bars fill their grid tracks, so the first one IS the name track.
+               nameW: Math.round(row.querySelector('i')!.getBoundingClientRect().width) };
     });
 
     release();
     await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+    expect(await page.getByTestId('setup-strip').count(),
+      `the placeholder reserved a strip this load ${strip ? 'did not draw' : 'then drew'}`)
+      .toBe(strip ? 1 : 0);
     const table = await page.locator('.tblwrap').evaluate((el) => {
       const box = el.getBoundingClientRect();
-      return { x: Math.round(box.x), w: Math.round(box.width),
+      return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width),
                headH: Math.round(el.querySelector('thead')!.getBoundingClientRect().height),
                rowH: Math.round(el.querySelector('tbody tr.shoe')!.getBoundingClientRect().height),
                cols: el.querySelectorAll('thead th').length };
@@ -141,6 +155,14 @@ for (const width of [1440, 1200]) {
     expect(skeleton.cols, 'the skeleton draws a different number of columns').toBe(table.cols);
     expect(skeleton.x, 'the skeleton does not reserve the sidebar track').toBe(table.x);
     expect(skeleton.w, 'the skeleton is not the width of the table').toBe(table.w);
+    // The axis nobody had measured, and the one that moved: the table used to land 285px below the
+    // placeholder, because the chrome, the strip and the receipt all mount above it at once. The
+    // bound is one line box of the receipt's own face — its wording counts shoes, so how many lines
+    // it takes is a fact about the data the placeholder is still waiting for
+    // (docs/app.md §Decisions).
+    expect(Math.abs(skeleton.y - table.y),
+      `the table lands ${table.y - skeleton.y}px from where the placeholder drew it`)
+      .toBeLessThanOrEqual(16);
     // A line box or two of slack, and no more: these are line-box reservations against the real
     // thing, so rounding is fair and a design difference is not. A whole missing name line is 18px,
     // so this bound is what makes the reserve assertable at all.
@@ -148,6 +170,13 @@ for (const width of [1440, 1200]) {
       `head band ${skeleton.headH}px against the table's ${table.headH}px`).toBeLessThanOrEqual(2);
     expect(Math.abs(skeleton.rowH - table.rowH),
       `row ${skeleton.rowH}px against the table's ${table.rowH}px`).toBeLessThanOrEqual(1);
+    // The name track is the table's own MINIMUM, which is all the placeholder can know: what the
+    // column actually takes is set by the names in the dataset it is waiting for
+    // (docs/app.md §Decisions owns why the inner tracks are not part of the contract).
+    const nameMin = await page.locator('td.name').first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).minWidth));
+    expect(skeleton.nameW, 'the placeholder reserves a name column the table would not accept')
+      .toBe(Math.round(nameMin));
   });
 }
 

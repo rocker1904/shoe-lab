@@ -29,7 +29,7 @@
   import { debounce } from './lib/debounce';
   import { applyFilters, EMPTY_FILTERS, narrowingNames } from './lib/filters';
   import type { Zone } from './lib/lineage';
-  import { readStoredView, writeStoredView } from './lib/persist';
+  import { isFirstArrival, readStoredView, writeStoredView } from './lib/persist';
   import { applyPreset, PRESETS } from './lib/presets';
   import { scoreMap, type ScoreColumns } from './lib/score';
   import { SCORE_DEFS } from './lib/score-defs';
@@ -47,8 +47,11 @@
   const initial = untrack(() => {
     const qs = location.search.replace(/^\?/, '');
     const stored = qs ? null : readStoredView();
+    // `isFirstArrival()` rather than `!qs && stored === null` spelled again: the loading placeholder
+    // reserves the strip's height off the same predicate, and two spellings would let the reserve
+    // and the strip disagree (docs/app.md §Decisions).
     return { view: parseView(qs || stored || '', indexTests(data.tests)), restored: stored !== null,
-             bare: !qs && stored === null };
+             bare: isFirstArrival() };
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);

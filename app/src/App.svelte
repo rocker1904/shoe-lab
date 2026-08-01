@@ -10,7 +10,11 @@
 
 <script lang="ts">
   import type { ShoesFile } from '../../shared/types.js';
+  import Header from './components/Header.svelte';
+  import SetupStrip from './components/SetupStrip.svelte';
+  import Toolbar from './components/Toolbar.svelte';
   import { loadShoes } from './lib/data';
+  import { isFirstArrival } from './lib/persist';
   import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
   import Page from './Page.svelte';
 
@@ -20,6 +24,13 @@
    *  it is the `+ 1` (docs/app.md §Decisions). */
   const skeletonCells = Array.from(
     { length: defaultColumns(DEFAULT_ZONE).length + 1 }, (_, i) => i);
+
+  /** Whether THIS load will draw the setup strip — the same predicate `Page.svelte` opens it on,
+   *  so the room reserved and the room used are one answer (docs/app.md §Decisions). */
+  const strip = isFirstArrival();
+  /** The reserve is laid out and invisible, so nothing it renders can be pressed and nothing it
+   *  holds means anything. Handlers exist because the components require them. */
+  const inert = () => {};
 
   let data = $state<ShoesFile | null>(null);
   let error = $state<string | null>(null);
@@ -48,21 +59,46 @@
 {:else if data}
   <Page {data} />
 {:else if slow}
-  <!-- Shaped like what is coming — a chrome bar over a stack of rows — rather than a spinner,
-       so the layout does not jump when the real thing arrives. -->
-  <!-- The track count rides in a custom property so the grid and the cells are one number: written
-       twice they drift the moment `defaultColumns` gains an entry. -->
-  <div class="skeleton" role="status" aria-label="Loading shoe data"
-       style:--skel-cols={skeletonCells.length - 1}>
-    <div class="head">
-      <div class="h-names">{#each skeletonCells as c (c)}<i></i>{/each}</div>
-      <!-- Empty on purpose: the unit line is there to reserve its line box, and a bar in it would
-           claim a unit for the name column, which never has one. -->
-      <div class="h-units"></div>
+  <!-- Everything above the table, laid out and made invisible. The placeholder's contract is that
+       the table lands where it is standing, and the bands above it are heights no constant can
+       state: the chrome steps four times between 1440px and 320px and the setup strip five, and
+       both move again with the face. So the room is reserved by the REAL bands, which is the one
+       form of the number that cannot drift from the one the page will use. `visibility: hidden`
+       keeps the layout while taking the boxes out of the accessibility tree, out of hit-testing and
+       out of the tab order; `inert` says the same thing where CSS has not loaded
+       (docs/app.md §Decisions). -->
+  <div class="reserve" inert>
+    <Header />
+    <Toolbar zone={DEFAULT_ZONE} onzone={inert} selected={null} onstory={inert}
+             showFilters={false} onfilters={inert} stability={false} onstability={inert}
+             onabout={inert} showGroups={!strip} />
+  </div>
+  {#if strip}
+    <div class="reserve" inert>
+      <SetupStrip zone={DEFAULT_ZONE} selected={null} onzone={inert} onstory={inert} onabout={inert} />
     </div>
-    {#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
-      <div class="row">{#each skeletonCells as c (c)}<i></i>{/each}</div>
-    {/each}
+  {/if}
+  <div class="pane">
+    <!-- The receipt's own box, one line of it. Its wording counts shoes, so its height is a fact
+         about the data the placeholder is waiting for — one line is the floor, and the surplus at a
+         width where it wraps is the residual `smoke.spec.ts` bounds. -->
+    <div class="receipt-space"></div>
+    <!-- Shaped like what is coming — a chrome bar over a stack of rows — rather than a spinner,
+         so the layout does not jump when the real thing arrives. -->
+    <!-- The track count rides in a custom property so the grid and the cells are one number: written
+         twice they drift the moment `defaultColumns` gains an entry. -->
+    <div class="skeleton" role="status" aria-label="Loading shoe data"
+         style:--skel-cols={skeletonCells.length - 1}>
+      <div class="head">
+        <div class="h-names">{#each skeletonCells as c (c)}<i></i>{/each}</div>
+        <!-- Empty on purpose: the unit line is there to reserve its line box, and a bar in it would
+             claim a unit for the name column, which never has one. -->
+        <div class="h-units"></div>
+      </div>
+      {#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
+        <div class="row">{#each skeletonCells as c (c)}<i></i>{/each}</div>
+      {/each}
+    </div>
   </div>
 {/if}
 
@@ -83,11 +119,20 @@
      `Page.svelte`'s two-column layout, not a full-bleed block: without it the placeholder starts at
      x=16 and the table lands at x=276, which is the jump measured. Below 800px the sidebar is a
      drawer and the track is gone, so the reservation goes with it. */
-  .skeleton { container-type: inline-size;
-              margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); background: var(--surface);
+  /* Laid out, painted by nothing. It is the height above the table that is being reserved, and the
+     bands are what state it. */
+  .reserve { visibility: hidden; }
+  /* The margins moved here from `.skeleton` when the receipt joined it: both stand in the second
+     cell of the layout, so the track is reserved once for the pair rather than twice. */
+  .pane { margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); }
+  @media (max-width: 800px) { .pane { margin-left: var(--s4); } }
+  /* The receipt's own box — `Receipt.svelte`'s margin, padding and face — with one line of it
+     reserved as a line box rather than as a number. */
+  .receipt-space { margin: 0 0 var(--s2); padding: var(--s2) var(--s1);
+                   font-size: var(--t-sm); min-height: 1lh; }
+  .skeleton { container-type: inline-size; background: var(--surface);
               border: 1px solid var(--border); border-radius: var(--r-md);
               box-shadow: var(--shadow-panel); overflow: hidden; }
-  @media (max-width: 800px) { .skeleton { margin-left: var(--s4); } }
   /* The band the table's `thead` builds, stated in line boxes of the same two faces rather than as
      a pixel height, so it follows the type scale: 8px of padding, the header name's lines, a 1px
      gap, the mono unit line, 8px of padding and the 2px rule under it. `e2e/smoke.spec.ts` measures

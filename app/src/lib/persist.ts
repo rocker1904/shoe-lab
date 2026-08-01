@@ -19,6 +19,17 @@ export function readStoredView(): string | null {
   }
 }
 
+/**
+ * A genuine first arrival — no query string **and** no stored view. Two things key off it and they
+ * have to answer alike: the setup strip opens on it (docs/app.md §The setup strip), and the loading
+ * placeholder reserves the strip's height for it (docs/app.md §Decisions). Written once here rather
+ * than in each caller, because a placeholder reserving a strip the page then did not draw would be
+ * the very jump it exists to prevent.
+ */
+export function isFirstArrival(): boolean {
+  return location.search.replace(/^\?/, '') === '' && readStoredView() === null;
+}
+
 export function writeStoredView(qs: string): void {
   try {
     localStorage.setItem(VIEW_STORAGE_KEY, qs);

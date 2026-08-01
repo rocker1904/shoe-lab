@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { tick } from 'svelte';
 import { afterEach, expect, it, vi } from 'vitest';
 import App, { SKELETON_AFTER_MS } from './App.svelte';
+import { VIEW_STORAGE_KEY } from './lib/persist';
 import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
 
 /** `readFileSync(new URL(...))` does not resolve under jsdom, so the path is built the long way. */
@@ -13,6 +14,7 @@ const appDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  localStorage.clear();
 });
 
 it('renders the error state with a retry button when loading fails', async () => {
@@ -72,4 +74,27 @@ it('shapes the skeleton like the table that replaces it', async () => {
     expect(row.querySelectorAll('i')).toHaveLength(cells);
   }
   expect(container.querySelectorAll('.skeleton .head .h-names i')).toHaveLength(cells);
+});
+
+/**
+ * The room above the table is reserved by the real bands rather than by a constant, so what jsdom
+ * can hold is which bands are there and that none of them is reachable — the heights are measured
+ * against the real page in `e2e/smoke.spec.ts`.
+ */
+it.each([
+  ['a first arrival', null, 1],
+  ['a returning visitor', 'plate=carbon', 0],
+] as const)('reserves the strip for %s', async (_who, stored, strips) => {
+  if (stored) localStorage.setItem(VIEW_STORAGE_KEY, stored);
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+  const { container } = render(App);
+  vi.advanceTimersByTime(SKELETON_AFTER_MS);
+  await tick();
+
+  expect(container.querySelector('.reserve header')).not.toBeNull();
+  expect(container.querySelector('.reserve [data-testid="toolbar"]')).not.toBeNull();
+  expect(container.querySelectorAll('.reserve [data-testid="setup-strip"]')).toHaveLength(strips);
+  // Reserved, never offered: every one of these controls would do nothing if it were pressed.
+  for (const band of container.querySelectorAll('.reserve')) expect(band).toHaveAttribute('inert');
 });
