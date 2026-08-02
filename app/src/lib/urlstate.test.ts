@@ -17,6 +17,7 @@ describe('urlstate', () => {
   it('round-trips a complex state', () => {
     const v: ViewState = {
       filters: {
+        categorical: {},
         ranges: { 'heel-stack': { min: 36 }, msrpGbp: { max: 200 }, weight: { min: 200, max: 250 } },
         plate: ['none'], releasedAfter: '2024-07-01', brands: ['Nike', 'New Balance'], search: 'peg', discontinued: 'hide',
       },
@@ -112,7 +113,7 @@ describe('urlstate hostile input', () => {
     a.filters.ranges['weight'] = { min: 1 };
     a.columns.push('bogus');
     a.sort.key = 'weight';
-    expect(defaultView()).toEqual({ filters: { ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {}, rows: [], stability: false });
+    expect(defaultView()).toEqual({ filters: { categorical: {}, ranges: {} }, sort: { key: 'score', dir: 'desc' }, columns, generations: {}, rows: [], stability: false });
     expect(defaultColumns('heel')).toEqual(columns);
   });
   it('resolves repeated keys to the last valid occurrence', () => {
@@ -304,6 +305,7 @@ describe('equality against the baseline', () => {
   // which runs in verify — instead of silently going untested.
   const setters: Record<keyof FilterState, (f: FilterState) => void> = {
     ranges: (f) => { f.ranges['weight'] = {}; },
+    categorical: (f) => { f.categorical['heel-tab'] = ['pull-tab']; },
     plate: (f) => { f.plate = ['carbon']; },
     search: (f) => { f.search = 'nike'; },
     brands: (f) => { f.brands = ['ASICS']; },
@@ -325,7 +327,8 @@ describe('equality against the baseline', () => {
     // whose value is undefined — every sidebar clear path leaves the key behind. A
     // key-count comparison would never let the band re-expand.
     for (const [field, mutate] of Object.entries(setters)) {
-      if (field === 'ranges') continue;              // ranges clear by deletion, not by undefined
+      // Both records clear by deleting the key that held the value, not by going undefined.
+      if (field === 'ranges' || field === 'categorical') continue;
       const v = defaultView();
       mutate(v.filters);
       (v.filters as unknown as Record<string, unknown>)[field] = undefined;

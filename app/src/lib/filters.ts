@@ -4,6 +4,10 @@ import { numericValue, type TestIndex } from './dataset';
 export interface RangeBound { min?: number; max?: number }
 export interface FilterState {
   ranges: Record<string, RangeBound>;
+  /** Test slug to selected raw readings — option slugs, `'true'`/`'false'` for a bool. Required and
+   *  `{}` when empty, like `ranges`, so the compiler finds every site that builds one; a selection
+   *  that empties deletes its key, or `isDefaultView` never returns true again (docs/app.md §Filters). */
+  categorical: Record<string, string[]>;
   /** The real values a shoe can carry. Empty or absent constrains nothing (docs/app.md §Filters). */
   plate?: Plate[];
   releasedAfter?: string;
@@ -15,7 +19,7 @@ export interface FilterState {
    *  `applyFilters` receives a FilterState and nothing else (docs/app.md §Filters). */
   showMissing?: boolean;
 }
-export const EMPTY_FILTERS: FilterState = { ranges: {} };
+export const EMPTY_FILTERS: FilterState = { ranges: {}, categorical: {} };
 /** `considered` is the denominator every other count reconciles against, and what coverage measures over. */
 export interface FilterResult {
   visible: Shoe[]; considered: Shoe[]; outsideBounds: number; hiddenMissing: number;
@@ -44,6 +48,7 @@ export function narrowingNames(f: FilterState): string[] {
   if (f.plate?.length) names.push('the plate selection');
   if (f.brands?.length) names.push('the brand selection');
   if (f.discontinued) names.push('the discontinued filter');
+  if (Object.values(f.categorical).some((values) => values.length)) names.push('the feature selection');
   if (hasBound(f)) names.push('the bounds');
   return names;
 }
@@ -56,6 +61,14 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
   let undatedHidden = 0;
   const search = f.search?.toLowerCase();
   const active = Object.entries(f.ranges).filter(([, b]) => b.min !== undefined || b.max !== undefined);
+  // Resolved to test ids once, because that is how a reading is keyed. A key naming no test in this
+  // catalogue is dropped rather than failing every shoe: it has no control to untick, so it must not
+  // be what empties the table — `parseView` is the strict door (docs/app.md §URL encoding).
+  const facets: { id: string; values: string[] }[] = [];
+  for (const [key, values] of Object.entries(f.categorical)) {
+    const test = idx.bySlug.get(key);
+    if (test && values.length) facets.push({ id: String(test.id), values });
+  }
   outer: for (const s of shoes) {
     if (f.discontinued && s.discontinued !== (f.discontinued === 'only')) continue;
     // Name OR brand. The brand half is not redundant with the name: 442 of 450 names already begin
@@ -66,6 +79,15 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
       && !(s.brand ?? '').toLowerCase().includes(search)) continue;
     if (f.brands?.length && !f.brands.includes(s.brand ?? '')) continue;
     if (f.plate?.length && !f.plate.includes(s.plate)) continue;
+    // Membership, beside brand and plate rather than beside the bounds: a facet moves the coverage
+    // denominator exactly as a brand tick does, and a shoe with no reading fails an active selection
+    // as a brandless shoe fails a brand selection (docs/app.md §Filters, §Coverage).
+    // Absence is tested before the string, or a link carrying the literal `undefined` would select
+    // exactly the shoes that have no reading.
+    if (facets.some(({ id, values }) => {
+      const raw = s.values[id];
+      return raw === undefined || !values.includes(String(raw));
+    })) continue;
     if (f.releasedAfter) {
       // An undated shoe cannot be shown to qualify, so it stays hidden — but it is counted, or the
       // receipt would report it as excluded by a bound it was never measured against.

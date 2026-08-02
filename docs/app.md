@@ -341,8 +341,9 @@ makes for itself.
 **The empty state names what is actually narrowing.** `narrowingNames` in
 `lib/filters.ts` reads the live filter state and returns the classes that are
 set — the search, the release-date bound, the plate selection, the brand
-selection, the discontinued filter, the bounds — in the order the sidebar draws
-them, so the sentence reads down the column it is sending the reader to. The
+selection, the discontinued filter, the feature selection, the bounds — in the
+order the sidebar draws them, so the sentence reads down the column it is
+sending the reader to. The
 paragraph is `Clear <a, b or c> to see shoes`, with `a filter` when nothing is
 named, plus the clause *each bound says how many shoes it is excluding* only
 when a bound is one of them.

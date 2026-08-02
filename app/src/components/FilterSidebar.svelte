@@ -286,7 +286,7 @@
     <!-- Named for what it does, and the qualifier is the point: the toolbar has no Clear — `All` is
          what returns the whole view to this runner's baseline (docs/app.md §The toolbar) — while
          this one touches the filters and nothing else. -->
-    <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
+    <button type="button" class="reset" onclick={() => patch((v) => { v.filters = { ranges: {}, categorical: {} }; v.generations = {}; v.rows = []; })}>Clear filters</button>
   </div>
   {#if adding}
     <AddFilterDialog options={withCoverage()} groups={data.groups}

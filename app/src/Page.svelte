@@ -367,7 +367,7 @@
       return upToColumnOrder(v, { ...defaultView(), columns: defaultColumns(zone), stability: v.stability });
     }
     const next = structuredClone(v) as ViewState;
-    next.filters = { ...EMPTY_FILTERS, ranges: {} };
+    next.filters = { ...EMPTY_FILTERS, ranges: {}, categorical: {} };
     return next;
   }
 

@@ -368,7 +368,7 @@ describe('FilterSidebar filter set management', () => {
     await fireEvent.input(boundOf(/^Stack — Heel/), { target: { value: '36' } });
     const next = onchange.mock.lastCall![0];
     expect(next.filters).toEqual({
-      search: 'racer', brands: ['Brand'],
+      search: 'racer', brands: ['Brand'], categorical: {},
       ranges: { 'energy-return-heel': { max: 80 }, 'heel-stack': { min: 36 } },
     });
     expect(next).not.toBe(view);

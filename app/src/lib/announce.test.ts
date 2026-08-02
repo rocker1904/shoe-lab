@@ -36,7 +36,7 @@ describe('viewAnnouncement announces', () => {
     expect(say((v) => { v.rows.push('stiffness'); })).toBe('Filter added: Stiffness');
   });
   it('a filter row leaving, and takes its own bound with it', () => {
-    const held: ViewState = { ...base(), rows: ['stiffness'], filters: { ranges: { stiffness: { min: 3 } } } };
+    const held: ViewState = { ...base(), rows: ['stiffness'], filters: { categorical: {}, ranges: { stiffness: { min: 3 } } } };
     expect(say((v) => { v.rows = []; v.filters.ranges = {}; }, held)).toBe('Filter removed: Stiffness');
   });
   it('a header press, in the words the ordering line uses', () => {
@@ -75,8 +75,8 @@ describe('viewAnnouncement is silent for', () => {
   // whole-surface action the receipt reports honestly.
   it('Clear filters over more than one bound', () => {
     const from: ViewState = { ...base(), rows: ['stiffness'],
-      filters: { ranges: { stiffness: { min: 3 }, weight: { max: 250 } } } };
-    expect(say((v) => { v.rows = []; v.filters = { ranges: {} }; }, from)).toBeNull();
+      filters: { categorical: {}, ranges: { stiffness: { min: 3 }, weight: { max: 250 } } } };
+    expect(say((v) => { v.rows = []; v.filters = { categorical: {}, ranges: {} }; }, from)).toBeNull();
   });
   it('a view that did not change at all', () => {
     expect(viewAnnouncement(base(), base(), idx)).toBeNull();

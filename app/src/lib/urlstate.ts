@@ -65,7 +65,7 @@ const TEST_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_SLUG_LEN = 64;
 
 export function defaultView(): ViewState {
-  return { filters: { ...EMPTY_FILTERS, ranges: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_ZONE), generations: {}, rows: [], stability: false };
+  return { filters: { ...EMPTY_FILTERS, ranges: {}, categorical: {} }, sort: { ...DEFAULT_SORT }, columns: defaultColumns(DEFAULT_ZONE), generations: {}, rows: [], stability: false };
 }
 
 /**
