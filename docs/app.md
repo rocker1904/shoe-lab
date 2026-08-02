@@ -566,9 +566,10 @@ and the counting is a walk of the population rather than one per brand.
 
 A search box narrows the
 brand list in a 14rem scroll box. Its `<summary>` **suppresses the UA
-marker and draws an SVG chevron**, exactly as the column picker's does: those two
-are the only `<details>` in the app, and one of them showing the browser's
-triangle read as an oversight rather than a choice.
+marker and draws an SVG chevron**, which is the rule for **every** `<details>`
+this app draws rather than a trait of this one: a disclosure wearing the
+browser's triangle beside one that does not reads as an oversight rather than a
+choice, so each one added obeys it too.
 
 The sidebar carries **two heading styles on purpose**. `h3` names a *section* —
 Search, Brand, Plate — and is an uppercase micro-label at the same size and

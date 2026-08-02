@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import type { LabTest } from '../../../shared/types.js';
 import { labTest } from '../lib/test-fixtures';
@@ -10,7 +10,11 @@ const gusset = labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusse
     { value: 'bootie', name: 'Bootie' },
   ] });
 const insole = labTest({ id: 41, slug: 'removable-insole', name: 'Removable insole', type: 'bool', groupId: '3' });
-const TESTS: LabTest[] = [gusset, insole];
+// Two bools, as the catalogue carries: one tri-state cannot show that each group moves on its own.
+const reflective = labTest({ id: 42, slug: 'reflective-elements', name: 'Reflective elements', type: 'bool', groupId: '3' });
+const TESTS: LabTest[] = [gusset, insole, reflective];
+
+const triGroup = (name: string) => within(screen.getByRole('radiogroup', { name }));
 
 /** What `stableFacetCounts` hands over: declared values, plus any stale or undeclared one. */
 const COUNTS: Record<string, Map<string, number>> = {
@@ -84,7 +88,7 @@ describe('FeaturesFilter', () => {
   it('emits one value or none from a tri-state, never both', async () => {
     const { onchange } = mount({ 'removable-insole': ['true'] });
     for (const name of ['Yes', 'No', 'Any']) {
-      await fireEvent.click(screen.getByRole('radio', { name }));
+      await fireEvent.click(triGroup('Removable insole').getByRole('radio', { name }));
     }
     expect(onchange.mock.calls.map(([, v]) => v)).toEqual([['true'], ['false'], undefined]);
     // The invariant, stated over every call: a link carrying both loses the filter at the far end,
@@ -96,7 +100,33 @@ describe('FeaturesFilter', () => {
 
   it('shows Any for a stored selection no tri-state could display', () => {
     mount({ 'removable-insole': ['true', 'false'] });
-    expect(screen.getByRole('radio', { name: 'Any' })).toHaveAttribute('aria-checked', 'true');
+    expect(triGroup('Removable insole').getByRole('radio', { name: 'Any' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  // Without this the `use:roving` action could be deleted and every other test would still pass,
+  // although `role=radiogroup` promises the arrows move the selection (lib/roving.ts).
+  it('moves within each tri-state with an arrow key, one group at a time', async () => {
+    const { onchange } = mount();
+    for (const [slug, name] of [['removable-insole', 'Removable insole'],
+                                ['reflective-elements', 'Reflective elements']]) {
+      const any = triGroup(name!).getByRole('radio', { name: 'Any' });
+      any.focus();
+      await fireEvent.keyDown(any, { key: 'ArrowRight' });
+      expect(onchange, name).toHaveBeenCalledWith(slug, ['true']);
+    }
+  });
+
+  it('draws a restored selection as ticked, so a narrowed fleet never shows empty boxes', () => {
+    // The untickable state: a link filters the table and every control reads as unset.
+    mount({ 'tongue-gusset-type': ['none'] });
+    expect(screen.getByLabelText(/None \(0\)/)).toBeChecked();
+    expect(screen.getByLabelText(/Both sides \(semi\)/)).not.toBeChecked();
+  });
+
+  it('unticks one value and keeps the rest of the facet', async () => {
+    const { onchange } = mount({ 'tongue-gusset-type': ['both-sides-semi', 'none'] });
+    await fireEvent.click(screen.getByLabelText(/None \(0\)/));
+    expect(onchange).toHaveBeenCalledWith('tongue-gusset-type', ['both-sides-semi']);
   });
 
   it('names each facet group with the noun the rest of the app uses', () => {

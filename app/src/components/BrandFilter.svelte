@@ -17,8 +17,8 @@
 <!-- `details` maps to role=group, so it needs a name of its own or it joins the sidebar's
      range groups as an unnamed one. -->
 <details aria-label="Brand">
-  <!-- Marker suppressed and drawn instead, exactly as `ColumnPicker.svelte` does it: the two are the
-       only `<details>` in the app, and one of them showing the UA triangle read as an oversight. -->
+  <!-- Marker suppressed and drawn instead, which every `<details>` in this app does: one wearing the
+       UA triangle beside one that does not reads as an oversight (docs/app.md §Filters). -->
   <summary>{selected.length ? `${selected.length} selected` : 'Any brand'}
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </summary>
