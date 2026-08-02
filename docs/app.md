@@ -330,11 +330,18 @@ search has.
 `FeaturesFilter` draws every categorical test — the same rule that decides which
 of them can become a column (§Categorical columns) — so an upstream addition
 arrives with a control the way it already arrives with a cell, rather than as a
-code change. An `option` test is a flat checklist of its declared choices in
-catalogue order with the absence last, each row carrying the count of shoes that
-would match it, taken over the population with **that one facet removed** and
-everything else still filtering, which is the brand facet's rule and the same
-zero-row rule with it. A `bool` test is an Any/Yes/No tri-state built the way
+code change. An `option` test is a flat checklist in catalogue order with the
+absence last, each row carrying the count of shoes that would match it, taken
+over the population with **that one facet removed** and everything else still
+filtering, which is the brand facet's rule and the same zero-row rule with it.
+**Its rows are not only the declared choices**: they are the declared options,
+plus every value the whole fleet's readings carry for that test, plus whatever
+the selection holds — the brand facet's three seeds, each earning its place. The
+declared ones so a choice nothing matches still shows its zero; the fleet's so a
+value the catalogue does not declare gets a row that stays put rather than one
+appearing and vanishing as another filter moves the pool; the selection's so a
+link carrying a value the catalogue has since dropped keeps a control to untick
+it with. A `bool` test is an Any/Yes/No tri-state built the way
 Discontinued is, and carries no counts: ticking both boxes would be a near-no-op
 whose only effect is excluding the handful of unread shoes, which is not a state
 a runner means. A selection is set membership on the population side, so it moves
@@ -1031,8 +1038,8 @@ one home for three renders. The two pickers' legends sit **outside** their
 list's scrollport and carry the same margin: inside one, the legend scrolls away
 with the first few rows and every glyph under it stops meaning anything. **The
 sidebar's cannot** — the sidebar *is* the scrollport — so it stands at the head
-of the run of rows it explains, below the five sections that carry no mark and
-would otherwise read as claims about Search and Brand. What makes that
+of the run of rows it explains, below the sections that carry no mark and would
+otherwise read as claims about Search and Brand. What makes that
 survivable is the one thing these rows have that a picker's do not: each states
 its own units beside the glyph, which is the ambiguity the legend was written
 for. `size-rating` is

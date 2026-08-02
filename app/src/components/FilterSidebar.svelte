@@ -157,7 +157,9 @@
   const featureTests = $derived(data.tests.filter((t) => isCategorical(t)));
   /** One reader per facet, made once and kept: each figure is a walk of the population, and a reader
    *  rebuilt per render would hold nothing and re-walk on every frame of a drag
-   *  (docs/app.md §What a drag may recompute). */
+   *  (docs/app.md §What a drag may recompute). `recompute-budget.test.ts` is what holds this, not
+   *  review: rebuilding the reader per call takes the fleet passes per bound change from 3 to 5 and
+   *  fails its bound, so this map is asserted rather than merely intended. */
   const facetReaders = new Map<string, ReturnType<typeof stableFacetCounts>>();
   function countsFor(slug: string): Map<string, number> {
     let read = facetReaders.get(slug);
@@ -281,8 +283,8 @@
                     })} />
   </section>
 
-  <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the five
-       sections above carry no direction mark, so a legend over them would read as a claim about
+  <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the sections
+       above carry no direction mark, so a legend over them would read as a claim about
        Search and Brand. It is the one legend of the three that cannot sit outside its scrollport —
        the sidebar IS the scrollport — so it scrolls with the rows rather than above them; what
        makes that survivable here is that these rows state their own units where the pickers' do
