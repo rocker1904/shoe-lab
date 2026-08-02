@@ -85,7 +85,7 @@ wins where they disagree.
   trailer `Co-Authored-By: <authoring model> <noreply@anthropic.com>` naming
   the model that wrote the commit (e.g. `Claude Opus 5 (1M context)`), on
   commits, never in PR descriptions.
-- **Comments are WHY-only** — docs/README.md §Rules, rule 5.
+- **Comments are WHY-only** — docs/README.md §Rules, rule 6.
 - **Design and delivery use the local skills** `designing` and `delivering`
   (`.claude/skills/`), which supersede superpowers' brainstorming,
   writing-plans, executing-plans and subagent-driven-development here; the

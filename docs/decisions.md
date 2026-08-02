@@ -97,6 +97,12 @@ aspiration consolidated in BACKLOG.md. The build-time
 spec and plan under `docs/superpowers/` are frozen artifacts — docs/ wins on
 any disagreement.
 
+Rule 4 — counts are asserted, never written — was added 2026-08-02. The
+first hunt's doc sweep found every drifted claim was an enumeration of the
+app's current shape and every decision and measurement still true; the fix
+wave converted those enumerations to generated lines and assertions, and the
+rule is what stops the species being reintroduced by hand.
+
 Four domain docs, not the original three. docs/shoe-stories.md earns its own
 file because the reasoning behind a story's terms is neither a frontend
 contract nor a scraping fact — it is what a runner means by an easy or a tempo

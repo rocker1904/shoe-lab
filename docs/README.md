@@ -22,18 +22,26 @@ docs/decisions.md §Doc system.
    derived from the code plus what was expensive to derive (payload formats,
    endpoint behaviour, empirical data quirks). Never restate what a module
    or workflow file encodes — restated code is the main doc-rot vector.
-4. **Decisions live with their subsystem.** Each domain doc carries a
+4. **Counts are asserted, never written.** A doc may record a decision or
+   a measurement of the world; it may not enumerate the system's current
+   shape — row counts, field lists, brand tallies, tab stops — as prose.
+   The first hunt found the docs wrong exactly where they enumerated and
+   right everywhere they recorded a decision or a measurement
+   (docs/hunting.md §The failure classes this app actually produces). An
+   enumerable quantity belongs in a test assertion or a generated line,
+   the way the fleet and workflow figures are produced today.
+5. **Decisions live with their subsystem.** Each domain doc carries a
    `## Decisions` section, one `### <name>` per decision: what was decided,
    why, and what an agent must not "fix". Project-wide decisions live in
    docs/decisions.md. Supersessions are collapsed into the current decision
    text — no layered "Update:" blocks. Enumerate all decision sections:
    `grep -rn '^## Decisions' docs/`.
-5. **Comments explain WHY only** — constraints, failure modes, cross-file
+6. **Comments explain WHY only** — constraints, failure modes, cross-file
    coupling, deliberate tradeoffs — for a reader who knows the tooling.
    Placement: guards one code site → comment at that site; guards several
    sites or shapes a design → the owning doc holds it and comments point
    there.
-6. **Aspiration lives in BACKLOG.md only.** Committed docs describe current
+7. **Aspiration lives in BACKLOG.md only.** Committed docs describe current
    behaviour; future work is a backlog entry, not a "we should later"
    sentence in a domain doc. (This repo deploys `main` continuously, so
    there is no live-vs-codified split to track.)
@@ -54,6 +62,6 @@ Run when a major phase lands or a backlog sweep happens. Per doc:
 literals (endpoints, thresholds, test ids) for second homes; (3) decisions
 superseded by merged work but not collapsed; (4) compression — delete every
 word that doesn't change what an agent would do; (5) comment sweep per
-rule 5 over files touched since the last gc. Fix inline. This contract is
+rule 6 over files touched since the last gc. Fix inline. This contract is
 the standard to review against; if the contract itself is wrong, change it
 deliberately and record why in docs/decisions.md.
