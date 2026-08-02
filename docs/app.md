@@ -1211,15 +1211,28 @@ Inside that opinion column **pros and cons stack, one under the other**, at ever
 `.a-lists` sits in the 20rem track, so splitting it in two left each list about 18
 characters a line — narrower than the phone shows them, on the widest screen there is.
 
-**The breakdown is the one centred element, at its natural width.** `justify-self: center`
-sizes a grid item to fit-content, which is the whole declaration. Its table used to stretch
-to whatever track it was in and open a gulf between the Term column and the Reading beside
-it — **12px now, against 47–125px before** across the widths sampled, and at 1440px the old
-widest tier squeezed it the other way, to 418px against a 449px natural width, wrapping the
-term names. Centred inside the **capped box**, never inside the panel: the panel is as wide
-as the table and centring there would put the card under whichever column happened to be in
-the middle. With several score columns on screen every card is the same width (475px in
-Chromium, 481px in Firefox, six of them measured) so they align down the page.
+**The breakdown takes its natural width, and where it sits is a question of the
+tier.** `justify-self` sizes a grid item to fit-content whichever value it takes, and that
+is the part that never varies: its table used to stretch to whatever track it was in and
+open a gulf between the Term column and the Reading beside it — **12px now, against
+47–125px before** across the widths sampled, and at 1440px the old widest tier squeezed it
+the other way, to 418px against a 449px natural width, wrapping the term names. With several
+score columns on screen every card is the same width (475px in Chromium, 481px in Firefox,
+six of them measured) so they align down the page.
+
+**Left in the single-column tier, centred in the two-column one.** Below 700px of container
+every zone above the card — the photo, the facts, the prose — is one left-anchored column,
+so a centred card is the only thing in the row that does not begin on that axis; above it
+the row is two columns and the card sits under the pair, where there is no single axis to
+join and centring reads as belonging to both. That tier is also the **phone** rendering's
+expanded row, because `DetailPanel.svelte` is shared — one question, one answer, in both
+renderings. Measured on the real fleet: the card's left gap is **0px** from 390px to 740px
+of window and its two gaps are equal from 750px up, reaching **167px either side** at the
+cap and staying there to 1920px. The rule lives **inside the existing container query**
+rather than at a boundary of its own: what it needs to know is how many columns are above
+the card, which is exactly what that query already asks. Either way it is placed inside the
+**capped box**, never inside the panel — the panel is as wide as the table, and centring
+there would put the card under whichever column happened to be in the middle.
 
 `max-width: 100%` beside it is not belt and braces. `.scroll` is a scrollport whose
 min-content size is its table's rather than zero, so on a phone fit-content resolves *above*
@@ -1267,9 +1280,13 @@ the phone's expanded row is on `--well` too, or the same question would have two
 two screens.
 
 Empty space beside prose is margin; empty space beside a bordered card is a hole — which is
-why the breakdown sits at the foot with the full width of the capped box to be centred in,
-and never in a rail beside the review. Its margins are symmetric and nothing stands beside
-it, which is what makes them read as centring. Balancing column heights is the wrong goal.
+why the breakdown sits at the foot with the full width of the capped box to place it in, and
+never in a rail beside the review. Nothing stands beside it at either tier, which is what
+lets the placement be a question of alignment rather than of columns. Balancing column
+heights is the wrong goal. Left-aligning in the stacked tier makes **one** bigger hole where
+centring made two smaller ones, and that is the trade: the card's left edge lands on the same
+axis as the prose, the photo and the capped box's own anchor, and a card that begins where
+everything above it begins reads as part of the row rather than as an inset.
 
 ### Two renderings, and only one of them mounted
 

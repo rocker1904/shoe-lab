@@ -430,14 +430,15 @@ test('never shrinks the shoe photo as the window widens', async ({ page }) => {
  * edge under the shoe name (docs/app.md §The expanded row). Three claims in one walk, because they
  * are one decision: the CAP (every zone inside one box no wider than the summary's measure), the
  * LEFT ANCHOR (the box starts where the panel starts, and all the slack falls right into the well)
- * and the CENTRED BREAKDOWN (the one element constrained to its natural width and centred — inside
- * that box, never inside the panel).
+ * and the BREAKDOWN'S PLACEMENT (the one element constrained to its natural width, left-aligned
+ * where the row is one column and centred where it is two — inside that box, never inside the
+ * panel).
  *
  * It replaces a shared-right-edge assertion between the summary and the prose columns. That edge
  * still exists and is still asserted, but it is now the capped box's own edge rather than a
  * coincidence between two rules: the summary is co-extensive with the container at every tier.
  */
-test('caps the expanded row at the summary, anchored left, with the breakdown centred', async ({ page }) => {
+test('caps the expanded row at the summary, anchored left, with the breakdown placed by tier', async ({ page }) => {
   const CAP = 800;
   for (const { width, cols, pageMayScroll, atCap } of [
     { width: 1440, cols: NARROW, pageMayScroll: false, atCap: true },
@@ -477,7 +478,11 @@ test('caps the expanded row at the summary, anchored left, with the breakdown ce
                         right: gb.right - parseFloat(cs.paddingRight) };
       return { content, grid: { left: gb.left, right: gb.right }, detail: r('.detail')!,
                body: r('.a-body')!, intro: r('.a-body .intro')!, prose: r('.a-prose')!,
-               bd: r('.a-bd') };
+               bd: r('.a-bd'),
+               // Which tier is in force, read off the layout rather than inferred from the width:
+               // the boundary is a CONTAINER query and the container is the table's, not the
+               // window's (docs/app.md §The expanded row).
+               tracks: cs.gridTemplateColumns.split(/\s+/).length };
     });
     const contentW = g.content.right - g.content.left;
 
@@ -501,14 +506,23 @@ test('caps the expanded row at the summary, anchored left, with the breakdown ce
       .toBeLessThanOrEqual(1);
     expect(Math.abs(g.intro.right - g.body.right), `summary overshoots at ${width}px`).toBeLessThanOrEqual(1);
 
-    // 4. The breakdown is centred in that box — symmetric at every tier, including the stacked one
-    //    where it fills the width and both slacks are zero.
+    // 4. The breakdown is placed BY TIER, and the tier is read off the grid rather than assumed
+    //    from the width: two tracks means the row is two columns and the card has no single left
+    //    axis to join, so it centres; one track means every zone above it is one left-anchored
+    //    column and the card joins them (docs/app.md §The expanded row).
     const bd = g.bd!;
     expect(bd, `no breakdown to place at ${width}px`).not.toBeNull();
-    expect(Math.abs((bd.left - g.content.left) - (g.content.right - bd.right)),
-      `the breakdown is not centred at ${width}px`).toBeLessThanOrEqual(1);
-    // And it is centred at its NATURAL width rather than stretched to the box: a stretched card
-    // would also be symmetric, so the strict inequality is what says it shrank to fit its table.
+    const leftGap = bd.left - g.content.left;
+    const rightGap = g.content.right - bd.right;
+    if (g.tracks === 1) {
+      expect(leftGap, `the breakdown is not left-aligned in the single-column tier at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    } else {
+      expect(Math.abs(leftGap - rightGap),
+        `the breakdown is not centred in the two-column tier at ${width}px`).toBeLessThanOrEqual(1);
+    }
+    // And it takes its NATURAL width rather than stretching to the box: a stretched card is both
+    // left-aligned and symmetric, so the strict inequality is what says it shrank to fit its table.
     if (atCap) {
       expect(bd.width, `the breakdown stretched to the cap at ${width}px`).toBeLessThan(contentW - 1);
     }

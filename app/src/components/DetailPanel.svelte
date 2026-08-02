@@ -188,15 +188,20 @@
      that box IS the container, which is what makes the summary co-extensive with the row. */
   .a-body { max-width: 430px; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s6); }
   .a-body .intro { grid-column: 1 / -1; }
-  /* THE CENTRED BREAKDOWN, and the one centred thing in the row. `justify-self: center` sizes a grid
-     item to fit-content, which is the whole declaration: the table used to stretch to its track and
-     open a 121px gulf between the Term column and the Reading beside it, so constraining it to its
-     natural width is what closes that gap. Centred within the CAPPED box, never within the panel.
+  /* THE BREAKDOWN CARD. `justify-self` sizes a grid item to fit-content whichever value it takes,
+     which is the part that never varies: the table used to stretch to its track and open a 121px
+     gulf between the Term column and the Reading beside it, so constraining it to its natural width
+     is what closes that gap.
+     `start` is the SINGLE-COLUMN tier's, and that tier is where the phone's expanded row lives too.
+     Everything above the card there — the photo, the facts, the prose — is one left-anchored
+     column, so a centred card is the only thing in the row that does not begin on that axis, and
+     the hole it opens is the widest one on the narrowest screen. The two-column tier takes `center`
+     below, where the card sits under two columns and has no single axis to join.
      `max-width` is not belt and braces: `.scroll` is a scrollport whose min-content is its table's,
      not zero, so on a phone fit-content resolves ABOVE the available width and the card overflowed
      the panel by 47px with the page going sideways for it. The clamp hands the width back to the
      scrollport, which is the block that is supposed to handle it. */
-  .a-bd { justify-self: center; max-width: 100%; }
+  .a-bd { justify-self: start; max-width: 100%; }
 
   /* The one boundary left. Above it the image takes a COLUMN OF ITS OWN at its own stated size,
      rather than a share of twelve tracks that had to be arithmetic-checked against 280px at every
@@ -210,6 +215,12 @@
     .a-img { grid-column: 1; }
     .a-facts { grid-column: 2; }
     .a-body { max-width: var(--panel-cap); grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
+    /* Centred HERE and nowhere else. Above this boundary the row is two columns, so there is no
+       single left axis for the card to join and centring it under the pair reads as belonging to
+       both; below it every zone is one left-anchored column and the card joins them. Inside the
+       existing tier rather than at a boundary of its own — the question is "how many columns are
+       above it", which is exactly what this query already asks. */
+    .a-bd { justify-self: center; }
   }
   /* aspect-ratio, so the box is the right height BEFORE the image loads and the panel does not
      shift the rows under it; `contain` keeps a non-conforming shot undistorted inside it. Neither
