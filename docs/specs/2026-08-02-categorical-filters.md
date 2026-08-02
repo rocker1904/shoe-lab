@@ -99,6 +99,17 @@ exists to refuse. Values are deduped; an all-separator value stays absent
 (declared-with-none-sunk, stale values after), so serialisation is stable
 whatever the click order.
 
+Two clauses added during delivery (task-4 review). **The token joins the
+arrival registry**: `OWNED` in `arrival.ts` is a second home of the URL
+grammar this spec's file map missed, and without it a link carrying only a
+feature selection reads as a bare arrival and opens the setup strip —
+scrub-and-treat-as-bare is docs/policies.md §Identity and sharing's rule
+for tokens the app does *not* own, and this one it now does. **Repeated
+`c.` keys for one slug merge before validation**: URLSearchParams yields
+every occurrence, and last-wins made `c.removable-insole=true&
+c.removable-insole=false` select No where the one-key spelling collapses
+to absent — the both-values rule must not depend on the spelling.
+
 **Vocabulary is looked up, never restated** (docs/policies.md §Vocabulary).
 Group nouns come from `chipLabel` — already the one home that renders
 "Gusset" without a second colon — value words from the catalogue's declared
@@ -168,7 +179,7 @@ precedent).
 | 1 State + membership | `app/src/lib/filters.ts`, `filters.test.ts` |
 | 2 Facet value order | `app/src/lib/categorical.ts`, `categorical.test.ts` |
 | 3 Facet counts | `app/src/lib/population.ts`, `population.test.ts` |
-| 4 URL token | `app/src/lib/urlstate.ts`, `urlstate.test.ts` |
+| 4 URL token | `app/src/lib/urlstate.ts`, `urlstate.test.ts`, `app/src/lib/arrival.ts` + test *(amended: the grammar's second registry)* |
 | 5 Section component | `app/src/components/FeaturesFilter.svelte` (create), `FeaturesFilter.test.ts` (create) |
 | 6 Sidebar wiring | `app/src/components/FilterSidebar.svelte`, `FilterSidebar.test.ts` |
 | 7 Announcement exemption | `app/src/lib/announce.test.ts` |
