@@ -20,6 +20,11 @@
 //    out of the layout viewport and out of nothing a media query can see. The regime is forced by
 //    launching HEADED — the Firefox prefs do nothing headless, which is why `.hunt/fixlog-f13.md`
 //    filed this hypothesis dead.
+// 5. **They hold when the scrollbar arrives from the CONTENT rather than from the window.** Every
+//    claim above resizes, and a resize is the one cause the app could never miss. Clearing a filter
+//    makes the document tall enough for a classic scrollbar, which takes its 12–15px out of the
+//    layout with no event of any kind — so a width read off window events goes stale exactly there
+//    and the table already up stops fitting (`lib/layout-width.ts`).
 //
 // The e2e fixture is five shoes with one-word names and its document fits at every width, so no
 // assertion in the suite can see any of these — docs/app.md §Table presentation records why widening
@@ -117,6 +122,37 @@ const READ = () => {
       .map((td) => td.scrollWidth - td.clientWidth)),
   };
 };
+
+/**
+ * Claim 5's search: a term the real fleet answers with a handful of shoes, so the document is short
+ * enough to draw no scrollbar at all. Checked rather than trusted — if the fleet stops answering it
+ * the run says so instead of measuring an already-scrolling page and calling it clean.
+ */
+const SHORT_QUERY = 'vaporfly';
+
+/**
+ * Claim 5, once: load short at `width`, then clear the search and let 450 rows back in. The
+ * document goes tall, a classic scrollbar appears, and the layout loses its width — with no resize
+ * event anywhere. The page is never resized, so a fresh context per width is the only way to ask.
+ */
+async function afterContentGrows(browser, url, width) {
+  const context = await browser.newContext({ viewport: { width, height: 900 } });
+  const p = await context.newPage();
+  await p.goto(`${url}/?q=${SHORT_QUERY}`);
+  await p.waitForSelector('.tblwrap, [data-testid="shoe-table-mobile"]');
+  await p.evaluate(() => document.fonts?.ready);
+  const before = await p.evaluate(READ);
+  // The sidebar is a drawer at every width in this band — its boundary is 1191 of layout and the
+  // band sits either side of 931 — so the search box is behind the trigger.
+  await p.getByRole('button', { name: 'Filters' }).click();
+  await p.fill('input[type="search"]', '');
+  await p.keyboard.press('Escape');
+  await p.waitForFunction(() => document.querySelectorAll('tbody tr').length > 100);
+  await p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  const after = await p.evaluate(READ);
+  await context.close();
+  return { before, after };
+}
 
 const ENGINES = { chromium, firefox, webkit };
 /**
@@ -260,6 +296,33 @@ for (const engine of engines) {
       for (const r of walk) {
         if (r.permanent && r.rendering === 'phone') {
           failures.push(`${tag} ${r.width}px: a permanent sidebar beside the stacked list`);
+        }
+      }
+
+      /**
+       * Claim 5, over the band where it can bite: the widths at which the desktop table mounts on a
+       * window with no scrollbar in it and would not once one appears — `[firstDesktop − scrollbar,
+       * firstDesktop)`. The overrun is largest at the bottom of that band and falls a pixel per
+       * pixel of width, so the first three rungs are the extreme and its neighbours rather than a
+       * sample. Measured on `f8ed7e9`: 1px of sideways scroll at a 931px window in headed Chromium,
+       * held until something moved the window.
+       */
+      if (set.ladder && scrollbar > 0) {
+        const firstDesktop = walk.find((r) => r.rendering === 'desktop');
+        for (let i = 0; firstDesktop && i < Math.min(3, scrollbar); i++) {
+          const width = firstDesktop.width - scrollbar + i;
+          const { before, after } = await afterContentGrows(browser, server.url, width);
+          const line = `${tag} ${width}px window, content-driven scrollbar: `
+            + `${before.layout}px layout / ${before.rendering} → ${after.layout}px / `
+            + `${after.rendering}, overflow ${after.over}px`;
+          if (before.over > 0 || before.layout !== width) {
+            skipped.push(`${tag} ${width}px claim 5: \`?q=${SHORT_QUERY}\` left a document that `
+              + 'already scrolls, so there is no scrollbar-free start to grow from');
+          } else if (after.over > 0 || after.tableOver > 0) {
+            failures.push(`${line} — the rendering did not follow the layout width the content took `
+              + 'away, and no resize event was ever going to tell it');
+          }
+          console.error(line);
         }
       }
 

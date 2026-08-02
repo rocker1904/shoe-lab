@@ -16,6 +16,7 @@
   import { loadShoes } from './lib/data';
   import { isBareArrival } from './lib/arrival';
   import { SIDEBAR_PERMANENT_PX } from './lib/fit';
+  import { layoutWidth, observeLayoutWidth } from './lib/layout-width';
   import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
   import Page from './Page.svelte';
 
@@ -45,14 +46,8 @@
    * is served a reserve that the loaded page then takes back, which is one frame at the end of a
    * fetch rather than a layout a runner reads.
    */
-  const layoutWidth = () => document.documentElement.clientWidth || window.innerWidth;
   let permanent = $state(layoutWidth() >= SIDEBAR_PERMANENT_PX);
-  $effect(() => {
-    const sync = () => (permanent = layoutWidth() >= SIDEBAR_PERMANENT_PX);
-    sync();
-    window.addEventListener('resize', sync);
-    return () => window.removeEventListener('resize', sync);
-  });
+  $effect(() => observeLayoutWidth((px) => (permanent = px >= SIDEBAR_PERMANENT_PX)));
 
   let data = $state<ShoesFile | null>(null);
   let error = $state<string | null>(null);

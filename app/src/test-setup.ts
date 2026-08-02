@@ -16,17 +16,51 @@ window.Element.prototype.animate ??= function () {
   return anim as unknown as Animation;
 };
 
+/** Every stand-in observer with something under observation, so a test can stand in for the box
+ *  changing size. */
+const liveObservers = new Set<() => void>();
+
 /**
- * jsdom implements no layout and no `ResizeObserver`, and Svelte's `bind:clientHeight` is built on
- * one — `Page.svelte` measures the pinned chrome that way (docs/app.md §Columns and sorting).
- * A no-op observer is the honest stand-in: every box in jsdom is zero-sized, so the binding would
- * report 0 whatever it did, and the offset it feeds is a CSS variable no jsdom test can see.
+ * Delivers to every stand-in observer — what a test calls to say *the document resized without the
+ * window doing so*, which is the case `lib/layout-width.ts` exists for and the only one a `resize`
+ * event cannot express (docs/app.md §Two renderings, and only one of them mounted).
+ */
+export const fireResizeObservers = (): void => { for (const fn of [...liveObservers]) fn(); };
+
+/**
+ * jsdom implements no layout and no `ResizeObserver`, and two things in this app are built on one:
+ * Svelte's `bind:clientHeight`, which `Page.svelte` measures the pinned chrome with
+ * (docs/app.md §Columns and sorting), and `lib/layout-width.ts`.
+ *
+ * It reports no sizes, because every box in jsdom is zero-sized and a fabricated number would be a
+ * fiction the suite could then assert against — the width consumers re-read `documentElement`
+ * anyway, and jsdom's own `innerWidth` is the number a test plants. What it does implement is
+ * delivery: a window `resize` reaches it, because resizing the viewport really does resize the
+ * documentElement every consumer here observes, and `fireResizeObservers` reaches it without one.
  */
 window.ResizeObserver ??= class {
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  #targets = new Set<Element>();
+  #deliver: () => void;
+  constructor(callback: ResizeObserverCallback) {
+    this.#deliver = () => callback(
+      [...this.#targets].map((target) => ({ target }) as ResizeObserverEntry),
+      this as unknown as ResizeObserver);
+  }
+  observe(target: Element): void {
+    this.#targets.add(target);
+    liveObservers.add(this.#deliver);
+  }
+  unobserve(target: Element): void {
+    this.#targets.delete(target);
+    if (!this.#targets.size) liveObservers.delete(this.#deliver);
+  }
+  disconnect(): void {
+    this.#targets.clear();
+    liveObservers.delete(this.#deliver);
+  }
 } as unknown as typeof ResizeObserver;
+
+window.addEventListener('resize', fireResizeObservers);
 
 /**
  * The same stand-in for the same reason: jsdom implements no `IntersectionObserver`, and

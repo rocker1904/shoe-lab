@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/sve
 import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Page, { VIEW_WRITE_MS } from './Page.svelte';
+import { fireResizeObservers } from './test-setup';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { indexTests } from './lib/dataset';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
@@ -979,14 +980,20 @@ describe('Page keeps the view in the URL alone', () => {
  * docs/app.md §Two renderings, and only one of them mounted
  */
 describe('Page mounts the rendering that fits', () => {
-  /** jsdom defines `innerWidth` as a getter and lays nothing out, so `documentElement.clientWidth`
-   *  is 0 and the width has to be planted. Returns a setter that also tells the listeners. */
+  /**
+   * jsdom defines `innerWidth` as a getter and lays nothing out, so `documentElement.clientWidth`
+   * is 0 and the width has to be planted. Returns a setter that also tells the page.
+   *
+   * `windowMoved: false` is the case a `resize` listener could never have seen: the layout width
+   * changing while the window stands still (`lib/layout-width.ts`).
+   */
   function stubWidth(width: number) {
     let now = width;
     Object.defineProperty(window, 'innerWidth', { get: () => now, configurable: true });
-    return async (next: number) => {
+    return async (next: number, { windowMoved = true } = {}) => {
       now = next;
-      window.dispatchEvent(new Event('resize'));
+      if (windowMoved) window.dispatchEvent(new Event('resize'));
+      else fireResizeObservers();
       await tick();
     };
   }
@@ -1024,6 +1031,28 @@ describe('Page mounts the rendering that fits', () => {
     await at(2400);
     expect(desktop()).not.toBeNull();
     expect(mobile()).toBeNull();
+  });
+
+  /**
+   * The width is OBSERVED, never inferred from window events. A filter cleared or a row opened
+   * makes the document tall enough for a classic scrollbar, which takes 12–15px out of the layout
+   * with no `resize` anywhere — and near the fit threshold the table already up stops fitting.
+   * Measured headed at a 931px window on the real fleet: the document scrolled sideways by 1px and
+   * stayed that way until something moved the window.
+   * docs/app.md §Two renderings, and only one of them mounted
+   *
+   * jsdom lays nothing out, so the phone floor is the boundary a planted width can cross; the
+   * mechanism under test is the same one.
+   */
+  it('follows the layout width when the document resizes and the window does not', async () => {
+    history.replaceState(null, '', '/?cols=weight');
+    const at = stubWidth(760);
+    render(Page, { props: { data } });
+    expect(desktop()).not.toBeNull();
+
+    await at(690, { windowMoved: false });
+    expect(mobile()).not.toBeNull();
+    expect(desktop()).toBeNull();
   });
 
   it('mounts the phone list below the floor whatever fits, and never both tables', () => {

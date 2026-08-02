@@ -454,7 +454,7 @@ row and `Filters` sits on it **carrying its word**.
 affordance Escape gives. The drawer already traps focus; the scrim states in the
 interface what the trap enforces, and nothing else in the new elevation language
 floats above content without one. It never renders where the sidebar is
-permanent, because the resize effect forces `showFilters` false there.
+permanent, because the `drawer` rune forces `showFilters` false there.
 
 **The empty state's hint follows the same rune.** `They are behind Filters.` is
 appended only where the sidebar is a closed drawer; standing open beside the
@@ -1390,6 +1390,20 @@ that then overflows. This is also why the sidebar's boundary is no longer a medi
 query: a media query answers about the window, so the two differed by exactly a
 scrollbar and the sidebar arrived before the table's share of the width had been
 recomputed (§Filters).
+
+**And it is observed rather than inferred**, by a `ResizeObserver` on
+`documentElement` — `lib/layout-width.ts`, the one home for both the read and the
+subscription. A `resize` event says the *window* moved; the layout width also
+moves when it did not, because clearing a filter or opening a row makes the
+document tall enough for a classic scrollbar and that takes its 12–15px with no
+event of any kind. Read off window events the width went stale exactly there:
+measured headed at a 931px window on the real fleet, a search cleared back to 450
+rows left the desktop table up and the document scrolling sideways by 1px until
+something moved the window. Observing the element the width is *about* answers
+both causes with one subscription, and it cannot oscillate — the taller rendering
+is the one chosen at the narrower width, so a scrollbar the swap brings in never
+argues for swapping back. `hunt/fit-boundary.mjs` walks the band a fresh page at a
+time, never resizing.
 
 **Because only one is mounted, neither may own the open-row set.** A set held in the
 component is dropped whole the moment the rendering changes, so a phone rotated
@@ -2384,6 +2398,16 @@ number.** Each has one home, and the two answer different questions:
 |---|---|---|---|---|
 | **chrome density** | `800px` | the WINDOW | how much room has this bar for words? | `CHROME_QUERY` in `Page.svelte`, and `@media (max-width: 800px)` in the bar, the masthead and the pickers |
 | **sidebar fit** | `1191px` floor, further out per column set | the LAYOUT (`documentElement.clientWidth`) | can the table be seen beside a 260px track, by the fit rule's own criterion? | `sidebarPermanentAt` in `lib/fit.ts` owns it over the fit model; `Page.svelte`'s `drawer` rune reads it and writes a class the layout, the scrim and the drawer's own rules answer; the `Filters` trigger takes it as a prop; `App.svelte`'s reserve asks the floor directly |
+
+**Everything in the app that reads a width is in that table**, and the list is
+short on purpose: the chrome's `matchMedia` rune, the sidebar's and the mount
+decision's shared `layoutPx` rune in `Page.svelte`, and the placeholder's
+`permanent` rune in `App.svelte`. The last two subscribe through
+`lib/layout-width.ts` and the first cannot — CSS has no way to ask about the
+layout width, so a boundary a stylesheet has to agree with is a window boundary
+by necessity (§Two renderings, and only one of them mounted). A third notion is
+not wanted; the mistake to guard against is adding a width read that answers to
+neither of these two.
 
 They were one number until the sidebar's own was measured (§Filters), and
 collapsing them again is the mistake to guard against: the chrome's is a
