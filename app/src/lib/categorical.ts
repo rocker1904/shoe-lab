@@ -65,6 +65,26 @@ export function isNegativeReading(shoe: Shoe, key: string, idx: TestIndex): bool
   return raw === false || raw === 'none';
 }
 
+/**
+ * The rows a facet checklist draws: the test's declared choices in catalogue order, with `none`
+ * sunk to the end. Sunk because it was rendered and read rather than argued — heel-tab declares
+ * None third of four, and a list ending in None reads as a scale where one interrupted by it does
+ * not (spec 2026-08-02-categorical-filters, mockup approved as drawn).
+ *
+ * The label is the catalogue's declared name and there is no fallback here: a value the catalogue
+ * no longer declares has no row of its own, and reaches the checklist from the counts map, which is
+ * the only place that knows a stale selection is still held.
+ *
+ * Anything that is not an option test answers with no rows rather than throwing — absence is how
+ * this module answers every question about a reading it cannot render — and it asks `isCategorical`,
+ * so a bool, a numeric test and the slug the `plate` field owns are all refused at the one door.
+ */
+export function facetValues(test: LabTest): { value: string; label: string }[] {
+  if (!isCategorical(test) || test.type !== 'option') return [];
+  const rows = (test.options ?? []).map((o) => ({ value: o.value, label: o.name }));
+  return [...rows.filter((r) => r.value !== 'none'), ...rows.filter((r) => r.value === 'none')];
+}
+
 /** The categorical columns the picker offers, in catalogue order. Reads the same rule as every
  *  other caller, so a field-owned slug cannot be offered twice. */
 export function categoricalEntries(tests: LabTest[]): { key: string; label: string; groupId: string | null }[] {

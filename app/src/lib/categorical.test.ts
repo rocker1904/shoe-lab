@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { categoricalEntries, categoricalValue, isCategorical, isNegativeReading } from './categorical';
+import { categoricalEntries, categoricalValue, facetValues, isCategorical, isNegativeReading } from './categorical';
 import { indexTests } from './dataset';
-import { TESTS, shoe } from './test-fixtures';
+import { TESTS, labTest, shoe } from './test-fixtures';
 import type { LabTest } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
@@ -71,6 +71,51 @@ describe('isCategorical and categoricalEntries', () => {
     expect(categoricalEntries(TESTS).map((e) => e.key).sort())
       .toEqual(['heel-tab', 'removable-insole', 'tongue-gusset-type']);
     expect(categoricalEntries(TESTS).every((e) => e.groupId === '3')).toBe(true);
+  });
+});
+
+/**
+ * The rows a facet checklist draws. Both fixtures carry the real catalogue's choices, because the
+ * rule is about the shape of a real list: gusset declares None seventh of seven, heel-tab third of
+ * four, and only the second one moves.
+ */
+describe('facetValues', () => {
+  const gusset = labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', options: [
+    { value: 'both-sides-full', name: 'Both sides (full)' }, { value: 'both-sides-semi', name: 'Both sides (semi)' },
+    { value: 'one-side-full', name: 'One side (full)' }, { value: 'one-side-semi', name: 'One side (semi)' },
+    { value: 'sock-like', name: 'Sock like' }, { value: 'bootie', name: 'Bootie' }, { value: 'none', name: 'None' },
+  ] });
+  const heelTab = labTest({ id: 40, slug: 'heel-tab', name: 'Heel tab', type: 'option', options: [
+    { value: 'pull-tab', name: 'Pull tab' }, { value: 'finger-loop', name: 'Finger loop' },
+    { value: 'none', name: 'None' }, { value: 'extended-heel-collar', name: 'Extended heel collar' },
+  ] });
+
+  it('carries the option slug as the value and its declared name as the label', () => {
+    expect(facetValues(heelTab)[0]).toEqual({ value: 'pull-tab', label: 'Pull tab' });
+  });
+  it('keeps the catalogue order of everything that is not none', () => {
+    expect(facetValues(gusset).map((v) => v.value)).toEqual([
+      'both-sides-full', 'both-sides-semi', 'one-side-full', 'one-side-semi', 'sock-like', 'bootie', 'none',
+    ]);
+  });
+  it('sinks none from the middle of the list to the end', () => {
+    expect(facetValues(heelTab).map((v) => v.value)).toEqual([
+      'pull-tab', 'finger-loop', 'extended-heel-collar', 'none',
+    ]);
+  });
+  it('ends both real lists on None, whichever place the catalogue declared it', () => {
+    for (const t of [gusset, heelTab]) {
+      expect(facetValues(t).at(-1), t.slug).toEqual({ value: 'none', label: 'None' });
+    }
+  });
+  it('is empty for a bool, for a numeric test, and for an option test declaring no choices', () => {
+    expect(facetValues(idx.bySlug.get('removable-insole')!)).toEqual([]);
+    expect(facetValues(idx.bySlug.get('heel-stack')!)).toEqual([]);
+    expect(facetValues(labTest({ id: 99, slug: 'empty-option', name: 'Empty', type: 'option' }))).toEqual([]);
+  });
+  it('is empty for a test whose slug a shoe field owns, even typed option', () => {
+    expect(facetValues(labTest({ id: 69, slug: 'plate', name: 'Plate', type: 'option',
+      options: [{ value: 'carbon', name: 'Carbon' }] }))).toEqual([]);
   });
 });
 
