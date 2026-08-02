@@ -37,15 +37,19 @@ mode switches in the ledger.
 - **Crew** — an implementer subagent, sequential, **reused across
   consecutive tasks**. For longer sheets of clearer tasks. Reuse
   amortises the warm-up read (CLAUDE.md + owning docs + spec) and
-  carries learnings forward. Budget: start a new task on the same
-  implementer only while its summed reported usage is under ~45% of its
-  context window (~450k tokens of a 1M window — completions report
-  usage; keep the running total in the ledger). That leaves headroom for
-  the task plus its fix rounds. On rotation: distil the outgoing agent's
-  learnings into a ledger note, and seed the fresh agent's first brief
-  with it. Rotate early if a reused implementer's tasks start needing
-  more fix rounds than its earlier ones did — that is degradation,
-  and riding it to the budget line buys nothing.
+  carries learnings forward. Reuse is the default and means the *same
+  warm agent*: hand it the next task by follow-up message — a fresh
+  spawn is a rotation, not a reuse. Budget: start a new task on the
+  same implementer only while its summed reported usage is under ~45%
+  of its context window (~450k tokens of a 1M window). Count tokens the
+  harness reports per completion, keep the running total in the ledger,
+  and never substitute the agent's own estimate of its context use —
+  self-reports have been wrong where the reported totals were not. That
+  leaves headroom for the task plus its fix rounds. On rotation: distil
+  the outgoing agent's learnings into a ledger note, and seed the fresh
+  agent's first brief with it. Rotate early if a reused implementer's
+  tasks start needing more fix rounds than its earlier ones did — that
+  is degradation, and riding it to the budget line buys nothing.
 - **Parallel worktree agents** — only for genuinely independent tasks
   with frozen interfaces, with the merge cost priced in. Sequential is
   the default.
@@ -53,10 +57,17 @@ mode switches in the ledger.
   model in any mode.
 
 **Model floor:** implementation from a build sheet is judgment work —
-implementers and reviewers take the strong model by default. The
-measured basis: same brief, same rig, the cheap model filed zero
-findings where the strong one filed six. A cheap "done" can be a
-direction never actually searched.
+implementers and reviewers take the strong model by default. In this
+project that tier is **Opus**: a top-tier controller (Fable) designs
+and runs the delivery but is never dispatched as implementer or
+reviewer. The measured basis for the floor: same brief, same rig, the
+cheap model filed zero findings where the strong one filed six. A
+cheap "done" can be a direction never actually searched.
+
+**Dispatch in the background, always.** Sequencing comes from *when*
+you dispatch, not from blocking on the call: send the agent, end your
+turn with a short status, act on the completion notification. A
+synchronous dispatch holds the conversation hostage for the whole run.
 
 ## The brief (crew mode)
 
@@ -126,6 +137,15 @@ enforce the wrong document.
   provenance.
 - Then superpowers:finishing-a-development-branch. After landing, delete
   `.delivery/<spec>/` — git history is the record now.
+
+## Bedding in
+
+These skills are new. Throughout the run, keep a holding-pen section in
+the ledger: every place this skill was unclear, silent, or wrong; every
+deviation you chose and why; every step you invented that worked. At
+the end of the engagement, report that list to the user unprompted,
+with your judgement of what the skill should say instead — evidence
+from the run, not impressions. This section retires when the skills do.
 
 ## Rationalizations
 

@@ -91,6 +91,15 @@ Then stop. No further review rounds on the document — from here,
 findings come from implementation review, where they attach to real code
 instead of prose.
 
+## Bedding in
+
+These skills are new. Note every place this skill was unclear, silent,
+or wrong as you work — including interview mechanics that failed (prose
+attached to a question tool is not surfaced; ask in plain text) — and
+report the list to the user unprompted at the end of the engagement,
+with what the skill should say instead. This section retires when the
+skills do.
+
 ## Terminal state
 
 Invoke `delivering`. When a later spec supersedes this one, this one is
