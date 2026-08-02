@@ -668,6 +668,43 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
 });
 
 /**
+ * **A range grip sits ON the bound it marks, and inside the row.** The grip is 10px of content
+ * inside a 2px ring at `box-sizing: content-box`, so the painted control is 14px while the offset
+ * pulling it back onto its own position was half of *ten* — every grip was drawn 2px to the right
+ * of its value and 2px below the plot's centre line, measured at 19.22px against the 17.22px the
+ * bound actually sits at.
+ *
+ * Asserted against the `edge` marker rather than against a number: the edge is the same bound drawn
+ * by a rule that was already right, so "the two agree" is the invariant, and it cannot go stale when
+ * the axis, the fleet or the column width moves. A browser, because none of this exists in jsdom.
+ */
+test('draws each range grip on the bound it marks, with room inside the row', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  const row = page.locator('fieldset.range').first();
+  await row.getByLabel(/minimum$/).fill('40');
+  await row.getByLabel(/maximum$/).fill('160');
+
+  const marks = await row.evaluate((fs) => {
+    const mid = (el: Element) => { const b = el.getBoundingClientRect(); return b.left + b.width / 2; };
+    const box = fs.getBoundingClientRect();
+    const edges = [...fs.querySelectorAll('.edge')].map(mid).sort((a, b) => a - b);
+    const grips = [...fs.querySelectorAll('.handle')].map(mid).sort((a, b) => a - b);
+    const out = [...fs.querySelectorAll<HTMLElement>('.handle, .edge')]
+      .map((m) => m.getBoundingClientRect())
+      .map((b) => Math.max(box.left - b.left, b.right - box.right));
+    return { edges, grips, worstOut: Math.max(...out) };
+  });
+
+  expect(marks.edges, 'both bounds are set, so both edges are drawn').toHaveLength(2);
+  for (const [i, grip] of marks.grips.entries()) {
+    expect(grip, 'the grip is drawn off the bound it marks').toBeCloseTo(marks.edges[i]!, 1);
+  }
+  expect(marks.worstOut, 'a marker reaches outside the row that has to hold it').toBeLessThanOrEqual(0);
+});
+
+/**
  * **No pill changes width when it is picked.** The selected state carries `font-weight: 600` and
  * the unselected one 400, so every control in the segmented family was sized by whichever weight it
  * happened to be wearing: `Stability` grew 70→73px as it came on, `Forefoot` 70→76px, and the four

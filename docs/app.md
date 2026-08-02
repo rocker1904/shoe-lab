@@ -618,6 +618,25 @@ handles are within 88px. Under `@media (hover: none)` the grips are permanently
 visible, because hover never fires there. A *set* bound is drawn either way — an
 edge is state, a grip is affordance, and they have different visibility rules.
 
+**The grip's half-width is one number and it answers two questions.** The control
+is 10px of fill inside a 2px ring at `box-sizing: content-box`, so it paints
+14px — and the offset pulling it back onto its own position was half of *ten*,
+which drew every grip **2px to the right of the bound it marks** and 2px below
+the plot's centre line. Measured at 19.22px against the 17.22px the bound sits
+at; the two ends of a row read 8.7px and 4.7px clear where they should have been
+equal, which is what made it look like an overhang at one end. The same `7px`
+is the room the row keeps clear at each end, taken as `padding-inline` and given
+straight back as a negative margin — the technique the scrollports use for their
+bars (§Theming) — so the plot, the legend and the number fields do not move by a
+pixel and only the grip does. What the gutter buys is an axis with **no
+outliers** at one end: the plot reserves 6% for an overflow bin only where there
+is one, and without it a grip at the extreme reached past the row into the
+sidebar's own 4px of padding. Every axis the shipped fleet draws reserves both
+ends, so that was one filtered population away rather than a thing on screen.
+`cross-browser.spec.ts` holds the grip to the *edge* marker's position rather
+than to a number, because the edge is the same bound drawn by the rule that was
+already right.
+
 **Each number field is named for the metric it bounds** — `Weight (g) minimum`,
 not `min`. The default sidebar puts two of these on screen for every key in
 `CURATED_RANGE_KEYS` (`lib/lineage.ts`), and a fieldset's accessible name is not

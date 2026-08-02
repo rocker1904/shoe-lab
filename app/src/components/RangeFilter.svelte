@@ -191,14 +191,32 @@
 </fieldset>
 
 <style>
-  .range { border: none; padding: 0; margin: 0 0 var(--s4); }
+  /*
+   * `--grip-r` is the PAINTED grip's half-width, and it answers two questions with one number
+   * because they are the same fact: how far back the grip has to be pulled to sit ON the value it
+   * marks rather than beside it, and how much room the row has to keep clear at each end so a grip
+   * at either extreme of the axis is still inside it. 10px of content inside a 2px ring, sized
+   * `content-box`, so the control is 14px however small the fill reads — which is what the old
+   * `-5px` missed, drawing every grip 2px to the right of its own value and 2px below the plot's
+   * centre line.
+   *
+   * The gutter is taken from the row and given straight back as a negative margin — the technique
+   * the scrollports use for their bars (docs/app.md §Theming) — so the row's OUTER width does not
+   * change and nothing else in the sidebar moves for it. What it buys is the axis with no outliers
+   * at one end, where the plot reserves no room of its own and the grip reached past the row into
+   * the sidebar's padding. Every axis the shipped fleet draws reserves 6% at both ends, so that was
+   * one filtered population away rather than on screen.
+   */
+  .range { --grip-r: 7px; border: none; margin: 0 0 var(--s4);
+           padding-inline: var(--grip-r); margin-inline: calc(-1 * var(--grip-r)); }
   legend.on { color: var(--text); font-weight: 700; }
   legend { font-size: var(--t-sm); color: var(--text-dim); padding: 0; margin-bottom: var(--s1); }
   /* `touch-action: none`, or a drag on a phone scrolls the drawer instead of moving the bound. */
   .plot { position: relative; height: 24px; margin-bottom: var(--s1); touch-action: none; cursor: ew-resize; }
   svg { width: 100%; height: 24px; display: block; }
   .edge { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--accent); }
-  .handle { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  .handle { position: absolute; top: 50%; width: 10px; height: 10px;
+            margin: calc(-1 * var(--grip-r)) 0 0 calc(-1 * var(--grip-r));
             border-radius: var(--r-full); background: var(--accent); border: 2px solid var(--surface);
             box-sizing: content-box; opacity: 0; transition: opacity 120ms; }
   /* Hung off the row, not the plot: tabbing into either number field reveals the grips, which is
