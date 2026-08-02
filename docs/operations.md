@@ -144,7 +144,10 @@ An issue therefore means one of two things:
   hand-edit a fixture to make a test pass.
 
 Then run the matching refresh by hand: drift usually means the last scheduled
-run either failed or wrote nothing.
+run either failed or wrote nothing. Where the fix legitimately moves the whole
+fleet — a real category rename, a test retired upstream — the fleet gates hold
+the run red until the shift is taken deliberately
+(docs/scraping.md §Validation gates).
 
 `check:live` is not the only drift detector. `lineage.test.ts` asserts the
 declared heel/forefoot pairs (docs/app.md §Columns and sorting) against the

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ValidationError, validateDetailsRecord, validateMetrics, validatePlateOverrides, validateShoesFile } from '../src/validate.js';
-import type { MetricsFile, Plate, ShoesFile, TestsFile } from '../../shared/types.js';
+import { ValidationError, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile } from '../src/validate.js';
+import type { DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
-import { labTest, shoe } from './helpers.js';
+import { detailRecord, labTest, shoe } from './helpers.js';
 
 function makeMetrics(shoeCount: number, testIds: number[] = [5, 6]): MetricsFile {
   const shoes: MetricsFile['shoes'] = {};
@@ -177,6 +177,64 @@ describe('validateShoesFile', () => {
       shoes: [shoe({ slug: 'a', values: { '39': 'anything' } })],
     };
     expect(() => validateShoesFile(noVocab)).not.toThrow();
+  });
+});
+
+// Each bound is stated as a number here so upstream drift fails the build rather than the reader
+// arguing about what "a big change" is (docs/scraping.md §Validation gates).
+describe('validateFleetAgainstPrevious boundaries', () => {
+  const fleetOf = (n: number, make: (i: number) => Partial<Shoe> = () => ({})): ShoesFile => ({
+    builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: tests.tests,
+    shoes: Array.from({ length: n }, (_, i) => shoe({ slug: `shoe-${i}`, values: { '5': 1 }, ...make(i) })),
+  });
+  const noDetails: DetailsFile = { shoes: {} };
+  const check = (next: ShoesFile, prev: ShoesFile, details: DetailsFile = noDetails): void =>
+    validateFleetAgainstPrevious(next, prev, details);
+
+  it('accepts exactly 95% of the previous fleet and rejects one below', () => {
+    expect(() => check(fleetOf(380), fleetOf(400))).not.toThrow();
+    expect(() => check(fleetOf(379), fleetOf(400))).toThrow(ValidationError);
+  });
+
+  it('accepts exactly 5% vanished (slug,test) pairs and rejects a hair more', () => {
+    const prev = fleetOf(400, () => ({ values: { '5': 1, '6': 2, '7': 3, '8': 4, '9': 5 } })); // 2000 pairs
+    const exact = fleetOf(400, (i): Partial<Shoe> => ({ values: i < 100 ? { '5': 1, '6': 2, '7': 3, '8': 4 } : { '5': 1, '6': 2, '7': 3, '8': 4, '9': 5 } }));
+    expect(() => check(exact, prev)).not.toThrow();
+    const over = structuredClone(exact);
+    delete over.shoes[100]!.values['9'];
+    expect(() => check(over, prev)).toThrow(ValidationError);
+  });
+
+  it('accepts a plate class at exactly 75% of its previous count and rejects one below', () => {
+    const prev = fleetOf(400, (i) => ({ plate: i < 40 ? 'carbon' as const : 'none' as const }));
+    expect(() => check(fleetOf(400, (i) => ({ plate: i < 30 ? 'carbon' as const : 'none' as const })), prev)).not.toThrow();
+    expect(() => check(fleetOf(400, (i) => ({ plate: i < 29 ? 'carbon' as const : 'none' as const })), prev)).toThrow(ValidationError);
+  });
+
+  it('ignores a plate class the previous run had fewer than 20 of', () => {
+    const prev = fleetOf(400, (i) => ({ plate: i < 19 ? 'plated-other' as const : 'none' as const }));
+    expect(() => check(fleetOf(400), prev)).not.toThrow();
+  });
+
+  it('accepts prose on exactly 90% of the previous share and rejects one shoe below', () => {
+    const withProse = (n: number) => (i: number) => (i < n ? { details: { pros: ['p'], cons: ['c'], intro: 'i', whoShouldBuy: null, whoShouldNotBuy: null, features: [] } } : {});
+    const prev = fleetOf(400, withProse(400));
+    expect(() => check(fleetOf(400, withProse(360)), prev)).not.toThrow();
+    expect(() => check(fleetOf(400, withProse(359)), prev)).toThrow(ValidationError);
+  });
+
+  it('rejects a shoe readmitted on a record that predates the previous build', () => {
+    const prev = fleetOf(400);
+    const next = fleetOf(401);
+    const at = (scrapedAt: string): DetailsFile => ({ shoes: { 'shoe-400': detailRecord({ scrapedAt }) } });
+    expect(() => check(next, prev, at('2026-07-20T00:00:00Z'))).toThrow(ValidationError);
+    expect(() => check(next, prev, at('2026-07-20T00:00:01Z'))).not.toThrow();
+    expect(() => check(next, prev)).not.toThrow(); // no record yet: genuinely new, not readmitted
+  });
+
+  it('rejects a readmission on a stale tombstone too', () => {
+    expect(() => check(fleetOf(401), fleetOf(400), { shoes: { 'shoe-400': { gone: true, scrapedAt: '2026-07-19T00:00:00Z' } } }))
+      .toThrow(ValidationError);
   });
 });
 

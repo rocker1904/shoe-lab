@@ -3,7 +3,7 @@ import { isTombstone } from '../../shared/types.js';
 import { csvLine } from './csv.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
 import { REVIEW_LANGUAGE_OVERRIDES } from './review-language-overrides.js';
-import { MIN_SHOES, ValidationError, validateShoesFile } from './validate.js';
+import { MIN_SHOES, ValidationError, validateFleetAgainstPrevious, validateShoesFile } from './validate.js';
 
 const RUNNING_CATEGORY = 'running-shoes';
 const CSV_TEST_TYPES = new Set(['float', 'score', 'percent', 'rating']);
@@ -53,8 +53,12 @@ function publishedTests(tests: LabTest[], shoes: Shoe[], testGroups: Record<stri
     .map((t) => ({ ...t, groupId: t.groupId ?? testGroups?.[String(t.id)] ?? null }));
 }
 
-// `releaseYears` deliberately does not feed builtAt (docs/scraping.md §Determinism).
-export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile, curated?: Map<string, string>): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate>; pageDated: Map<string, boolean> } {
+/**
+ * `releaseYears` deliberately does not feed builtAt (docs/scraping.md §Determinism). `previous` is
+ * the last published `shoes.json`, which is what the relative gates compare against — omitted or
+ * null means a first run, and the absolute gates stand alone (docs/scraping.md §Validation gates).
+ */
+export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile, curated?: Map<string, string>, previous?: ShoesFile | null): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate>; pageDated: Map<string, boolean> } {
   let builtAt = metrics.scrapedAt;
   for (const rec of Object.values(details.shoes)) {
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;
@@ -133,6 +137,7 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
   const published = publishedTests(tests.tests, shoes, details.testGroups);
   const shoesFile: ShoesFile = { builtAt, source: 'RunRepeat', groups: tests.groups, tests: published, shoes };
   validateShoesFile(shoesFile);
+  if (previous) validateFleetAgainstPrevious(shoesFile, previous, details);
 
   const csvTests = published.filter((t) => CSV_TEST_TYPES.has(t.type)).sort((a, b) => a.id - b.id);
   const header = ['slug', 'name', 'brand', 'releasedAt', 'releaseDateSource', 'score', 'msrpGbp', 'plate', 'discontinued', ...csvTests.map((t) => t.slug)];

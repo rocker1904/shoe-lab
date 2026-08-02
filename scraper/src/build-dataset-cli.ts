@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { DetailsFile, MetricsFile, ReleaseYearsFile, TestsFile } from '../../shared/types.js';
+import type { DetailsFile, MetricsFile, ReleaseYearsFile, ShoesFile, TestsFile } from '../../shared/types.js';
 import { buildDataset } from './build-dataset.js';
 import { dataDir } from './data-files.js';
 import { parseCuratedDates, validateCuratedDates } from './curated-dates.js';
@@ -19,7 +19,12 @@ try {
   // hand-edited (docs/decisions.md §Git is the database). Absent is fine: the file is optional.
   const curatedPath = fileURLToPath(new URL('../../curated/release-dates.jsonl', import.meta.url));
   const curated = existsSync(curatedPath) ? parseCuratedDates(readFileSync(curatedPath, 'utf8')) : new Map<string, string>();
-  const { shoesFile, csv, ruleDerived, pageDated } = buildDataset(tests, metrics, details, releaseYears, curated);
+  // The last published dataset is the previous run: git is the database, so it is simply on disk
+  // (docs/decisions.md §Git is the database). A genuine catalogue shift is a deliberate act, and
+  // SHOE_LAB_ALLOW_FLEET_SHIFT=1 builds it as a first run does — absolute gates only
+  // (docs/scraping.md §Validation gates).
+  const previous = process.env.SHOE_LAB_ALLOW_FLEET_SHIFT === '1' ? null : dir.read<ShoesFile>('shoes.json');
+  const { shoesFile, csv, ruleDerived, pageDated } = buildDataset(tests, metrics, details, releaseYears, curated, previous);
   validatePlateOverrides(ruleDerived);
   validateCuratedDates(curated, pageDated);
   dir.write('shoes.json', shoesFile);

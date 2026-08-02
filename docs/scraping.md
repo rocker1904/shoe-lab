@@ -120,6 +120,33 @@ means a red workflow and untouched `data/` — never a partial write.
   writing, so a bad join cannot reach the app either. The absolute shoe floor is
   re-applied after the category exclusion (§Non-running shoes), so a renamed
   category fails the run instead of quietly emptying the dataset.
+- **Fleet gates, against the last published `shoes.json`.** No absolute gate can
+  see a fleet-wide payload drift: `extractDetails` degrades field by field on
+  purpose, so a renamed or moved block arrives as an empty field on every shoe
+  rather than as an error, and the join publishes it. Only the comparison with
+  what shipped last time can. Six weeks of `git log -- data/shoes.json` say a
+  refresh moves these aggregates by 0.0 % and the fleet has never gained a shoe,
+  so each bound is far wider than a real week and still narrower than a blanking:
+  - **fleet size ≥ 95 % of the previous run**;
+  - **no readmission** — a shoe absent from the previous fleet may not join it on
+    a details record already on disk at the previous `builtAt`. That is the
+    category discriminator ceasing to bite, not a new shoe, and it is the only
+    signature a fleet-wide `categorySlug` blanking leaves;
+  - **≤ 5 % of previously published (slug, testId) pairs may vanish** — the
+    largest single test is ~2.8 % of them, so an upstream retirement survives
+    while losing every page-derived reading (7.0 %) does not;
+  - **no plate class of 20 or more may fall below 75 % of its count** — a
+    fleet-wide re-tag takes carbon from 72 to 2;
+  - **pros, cons and intro each present on ≥ 90 % of their previous share**,
+    which is 100 % on all three today.
+
+  Skipped with no `shoes.json` yet, as the metrics gates are with no
+  `metrics.json`. `scraper/test/fleet-drift.test.ts` is the matrix these are
+  calibrated against — every bound has a boundary test, and a fleet-wide drift
+  of each field has a red one. A **genuine** catalogue shift is a deliberate act:
+  `SHOE_LAB_ALLOW_FLEET_SHIFT=1 npm -w scraper run build:dataset` builds it the
+  way a first run builds, absolute gates only, so the shift lands in one
+  reviewable data commit and the next run is relative to it again.
 
 ## Determinism
 
