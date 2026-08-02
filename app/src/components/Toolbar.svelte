@@ -142,8 +142,8 @@
   /* The CHROME-DENSITY boundary. Below 800px every pixel of chrome is paid before the first shoe,
      on the screen with the least of it: the gutter and the vertical padding halve, and every word
      but `About` becomes a glyph. It is a question about how much room this bar has for words, which
-     is why it stays at 800 while the drawer's own boundary sits at 1191 — between the two, Filters
-     is on the bar carrying its word.
+     is why it does not move with the drawer's own boundary, which sits far wider — between the two,
+     Filters is on the bar carrying its word.
      ONE band split, not two: the design asked for a merged line from 700 to 800 and the shipped
      components do not fit one, so the bands separate for the whole sub-800 range. The ACTIONS lead
      — what acts on the table above what the table is, so the row carrying every word sits nearest
@@ -169,9 +169,9 @@
   }
 
   /* At 430px and below the cap is wider than the row, so it stops meaning anything and the row goes
-     flush to both padding edges — which is the property the rebuild exists to restore. 414px is the
-     row's own content width at 430px: above that it holds this spacing rather than growing gaps
-     that reach 171px by 700px.
+     flush to both padding edges — which is the property the rebuild exists to restore. The cap above
+     is the row's own content width at 430px, so above that it holds this spacing rather than growing
+     gaps that widen with the screen.
      The pills tighten again on the same boundary rather than on one of their own — 360px is the
      binding width, not 375, because it is the usual Android one. ALL of them: the zone group's
      padding lives in `ZoneToggle.svelte`, a scoped style block this rule cannot reach, so the step

@@ -222,7 +222,7 @@
      — forty-odd metrics against a 22rem cap — and the coverage figure is the right-most thing in
      every row, so it ended flush with the port's content edge with 4px of ring room between it and
      the bar: read as touching where the bar takes layout, and painted UNDER it where the bar is an
-     overlay, which is Firefox's default on Linux (`.hunt/fixlog-f15.md` measures both at 4px).
+     overlay, which is Firefox's default on Linux; both measured at 4px.
      `--s3` is one classic bar on the engines this project measures on (12px, GTK Firefox), and it
      is given straight back as margin, so the ROW keeps the width it had in both regimes — measured
      identical at 308px classic and 320px overlay before and after — and only the bar moves, out of

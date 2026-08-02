@@ -309,7 +309,7 @@ describe('Page', () => {
    * it is a rune over the fit model and not the media query it used to be. Ticking past what fits
    * beside a 260px track at a width that has not moved leaves the sidebar a drawer, and that is what
    * stops the track arriving at a width where the table would have to go back to the stacked list
-   * (docs/app.md §Filters, `.hunt/fixlog-f14.md`).
+   * (docs/app.md §Filters).
    */
   it('keeps the sidebar a drawer where the columns on screen cannot afford its track', async () => {
     const wide = ['releasedAt', 'score', 'msrpGbp', 'plate', ...TESTS.slice(0, 7).map((t) => t.slug)];
@@ -329,8 +329,7 @@ describe('Page', () => {
   });
 
   /**
-   * The scope control on the wave that widened the drawer: the utilities answer the chrome
-   * boundary, not the sidebar's, so a 1000px window draws them worded in the masthead while the
+   * The two boundaries do not move together: the utilities answer the chrome's, not the sidebar's, so a 1000px window draws them worded in the masthead while the
    * drawer behind it is still a drawer (docs/app.md §Where the utilities live).
    */
   it('leaves the utilities in the masthead at a width where the sidebar is still a drawer', async () => {

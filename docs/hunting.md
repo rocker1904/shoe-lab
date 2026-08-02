@@ -1,12 +1,10 @@
 # Hunting
 
 How to find failure modes in this project with agents, what this app's failure modes actually
-**are**, and the instrument that measures them. Written after the first hunt: seven Opus agents,
-45 findings, roughly 1.4M tokens.
+**are**, and the instrument that measures them.
 
-This earns a doc under the test docs/decisions.md §Doc system sets for a fifth one — a body of
-knowledge expensive to reconstruct that no existing doc can own without distorting its own subject.
-It cost a hunt to learn, and putting it in docs/app.md would file testing technique inside a
+It earns a file of its own under docs/decisions.md §Doc system's test for a fifth doc: it cost a
+parallel hunt to learn, and putting it in docs/app.md would file testing technique inside a
 document about view state.
 
 ## Decisions
@@ -50,13 +48,10 @@ arithmetic is mature and the defects are somewhere else entirely.**
 
 Independently confirmed clean by four agents: receipt arithmetic under composed bounds,
 leave-one-out exclusion counts, coverage denominators over `considered`, the wash ramp, sort with
-missing-last, every control's persistence, CSV fidelity under filter and sort, the score breakdown
-reconstructing its own answer to ≤0.02, and `build:dataset` being byte-identical over unchanged
-inputs. **"Every control's persistence" no longer names anything**: F7 deleted the stored view
-outright, so the URL is the only home for it and storage holds preferences alone
-(docs/app.md §View and URL ownership). A later brief that reads this list as a map of the app will
-go looking for a mechanism that is gone. **Do not start a hunt by re-checking sums.** Six directions
-paid instead:
+missing-last, CSV fidelity under filter and sort, the score breakdown reconstructing its own answer
+to ≤0.02, and `build:dataset` being byte-identical over unchanged inputs. **Read it as a list of
+directions that did not pay, not as a map of the app** — mechanisms move, and one on this list
+already has. **Do not start a hunt by re-checking sums.** Six directions paid instead:
 
 **Vocabulary — one word or glyph meaning two things.** The em dash is both "no reading" and the
 real value `none`, and the proof was that sorting sends the same glyph to opposite ends of the
@@ -64,12 +59,13 @@ table one click apart. Search matches `name` while Brand matches `brand`. Ask wh
 on *another* surface, not whether it is right on this one.
 
 **Lifecycle — state that does not survive a reload or a second visitor.** A link to the default
-view carries nothing, so the recipient's own stored session answers it. `Copy link` inside the
-200ms debounce copies the previous view. These need two histories or a race, so no unit test
+view carries nothing, so the recipient's own stored session answers it. `Copy link` pressed inside
+the URL write's debounce copies the previous view. These need two histories or a race, so no unit test
 reaches them.
 
 **Geometry the suite never looks at.** The chrome pinned to the viewport rather than the document;
-801px adding 259px of overflow where 800px added 87px; a picker off the left edge at 320px. The
+one pixel of window either side of a viewport boundary costing hundreds of pixels of
+sideways overflow (docs/app.md §Filters); a picker off the left edge at 320px. The
 suite asserts what it was told to; nobody had walked the width ladder.
 
 **Announcement.** The receipt is the only live region and it reports a *count*, so a control is

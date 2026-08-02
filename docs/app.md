@@ -277,8 +277,8 @@ anything added by hand. Price leads because it is the bound almost every search
 has.
 
 **The search box matches a case-insensitive substring of the name *or* the
-brand.** The brand half is not redundant: 442 of 450 names already begin with
-their brand (§Table presentation), and the handful that shorten it — Topo, Hylo,
+brand.** The brand half is not redundant: almost every name already begins with
+its brand (§Table presentation), and the handful that shorten it — Topo, Hylo,
 On — were exactly where the box and the brand facet one control below it
 disagreed. `On` returned 29 shoes in the facet and 124 in the box, because "on"
 sits inside Cushion, Wilson and Carbon; `Topo Athletic` returned 7 and 0. Two
@@ -391,56 +391,47 @@ from an **Any** chip: a chip that sets a date cannot also clear it.
 
 **The sidebar is a drawer everywhere the table cannot be seen beside it, and
 that is a fit decision rather than a width.** `sidebarPermanentAt` in `lib/fit.ts`
-is the boundary: the larger of a 1191px floor and the width at which *the columns
-on screen* still clear the 260px track by the fit rule's own slack. The floor is
-`SIDEBAR_PERMANENT_PX`, derived the same way for the default view — its
-min-content width plus the slack, the page's leading gutter and the track,
-903 + 12 + 16 + 260 on today's fleet (§Two renderings, and only one of them
-mounted). On today's fleet ten columns move the boundary to 1362px and twelve to
-1539px, which `hunt/fit-boundary.mjs` prints rather than asserts.
+is the boundary and owns its own derivation: the larger of the
+`SIDEBAR_PERMANENT_PX` floor and the width at which *the columns on screen* still
+clear the 260px track by the fit rule's own slack.
 
-**It is a LAYOUT width — `documentElement.clientWidth` — and it is asked in
-script, not in a `@media` rule.** Those are two different widths: a media query
-answers about the window, which includes a classic scrollbar the layout never
-receives. Until F14 the sidebar took its column 12–15px of window before the
-mount decision could know it had, and mounted a table up to 173px too wide in the
+**The `max` is what makes the two boundaries one decision.** Taking the track
+costs the table 260px at a single pixel of window, so a boundary that cannot see
+the column set stands the sidebar up at a width where the fit rule then refuses
+the table, and the rendering reads desktop → list → desktop as a window is
+dragged *wider*. Consulting the model closes that for every set at once, and buys
+the property the sidebar was always described as having: **it never stands beside
+the stacked list**, because it waits for the table it exists to tune. No constant
+can have it, because no constant answers a question about a set the runner picks
+(§Two renderings, and only one of them mounted).
+
+**It is a LAYOUT width — `documentElement.clientWidth` — asked in script, not in
+a `@media` rule.** Those are two different widths: a media query answers about the
+window, which includes a classic scrollbar the layout never receives, so the
+sidebar claimed its column a scrollbar's width of window before the mount decision
+could know it had and a table well over a hundred pixels too wide went up in the
 gap. `Page.svelte` derives `drawer` from the fit model and writes it as a class,
-which the layout, the scrim, the drawer's focus trap and the `Filters` trigger
-all read; nothing about the sidebar is stated as a number in CSS any more. In a
-browser drawing classic scrollbars the sidebar therefore arrives at a ~1203–1206px
-window, which is the same boundary seen from outside the layout.
+which the layout, the scrim, the drawer's focus trap and the `Filters` trigger all
+read; nothing about the sidebar is stated as a number in CSS. In a browser drawing
+classic scrollbars the sidebar therefore arrives that much further out in window
+terms, which is the same boundary seen from outside the layout.
 
-**Why the fit rule's criterion rather than "the whole page fits"**: taking the
-track costs the table 260px at one pixel of window, so a boundary chosen where
-the page *merely* fits stands the sidebar's column up at a width where the fit
-rule then refuses the table. It shipped that way for one wave — 1180 was where
-the document first fitted, with 2px in hand against the 12 the fit rule wants —
-and the rendering read desktop → list → desktop as a window was dragged from
-1179px to 1191px. Moving the constant closed that for the default view and left
-it open for every wider set, because a constant cannot answer a question about a
-set the runner picks: a ten-column view handed 170px of width back to the stacked
-list at exactly 1191px. **The `max` is what makes the two boundaries one
-decision**, and it buys the property the sidebar was always described as having —
-it never stands beside the stacked list, because it waits for the table it exists
-to tune. `hunt/fit-boundary.mjs` asserts all of it across three column sets and
-both scrollbar regimes, and it is what to read first if a boundary is ever moved
-by hand.
+`hunt/fit-boundary.mjs` asserts all of it against the real fleet across three
+column sets and both scrollbar regimes, and it is what to read first if a boundary
+is ever moved by hand.
 
 The price is stated rather than hidden: a set wide enough to push its boundary
 past the window keeps its drawer at widths where a narrower set would have a
 column. That is the drawer standing in for a sidebar there is no room for, not a
 column withheld — and the list it stands beside is a coherent screen.
 
-**It used to be 800px, and one pixel of window cost 259px of overflow.** At
-800px the sidebar was a drawer and the document overran a default view by 117px;
-at 801px it claimed its column and the document overran by **376px** — the grid
-going from `800px` to `260px 541px` while the table's own width did not move.
-Widening the window from there made it *worse*, not better: still 297px over at
-880px, 177px at 1000px, and not clean until 1177px. The tuning-loop argument
-below is the whole case for a permanent sidebar, and it only holds where the
-table is on screen beside it; between 801 and 1176 the runner was paying a
-column of filters for a table pushed off the right edge. The two halves of that
-claim are guarded separately, because the fixture cannot see one of them:
+**A viewport constant is what not to go back to.** It was 800px, and at 801px the
+sidebar claimed its column while the table's own width did not move: the runner
+paid a column of filters for a table pushed off the right edge, and widening the
+window shrank the overrun without closing it for hundreds of pixels. The
+tuning-loop argument below is the whole case for a permanent sidebar, and it only
+holds where the table is on screen beside it. The two halves of that claim are
+guarded separately, because the fixture cannot see one of them:
 `keeps the sidebar a drawer until the table can be seen beside it` measures the
 displacement in the suite, and `hunt/fit-boundary.mjs` measures the overflow
 against the real fleet, which is the only place it exists (§Table presentation).
@@ -1119,8 +1110,8 @@ lands the anchor at y=0 and the runner arrives looking at the third row.
 brand and the remaining 8 shorten it ("Topo", "Hylo") rather than drop it, so
 the line was duplication on every row. `brand` stays in the data: it is still
 filtered and sorted on. There is no dimming of discontinued rows either — the
-`disc-tag` chip says it in text, and dimming would argue against the
-`discontinued=only` filter, which exists because those shoes are worth finding.
+`disc-tag` chip says it in text, for the reason the chip's own treatment is
+neutral (above).
 
 The `thead` pins at `--thead-top`, and the first column pins left.
 
@@ -1149,7 +1140,8 @@ phone header sits flush against the chrome once the faces have loaded — which 
 promise settles against the loads pending when it is asked, and this SPA asks
 before the table that requests the faces has mounted, so under load it resolved
 with both faces in `error` and left every measurement behind it reading a
-fallback face (`.hunt/fixlog-webkit-fit.md`).
+fallback face. `awaitFacesLoaded`'s own docblock owns the rest of that
+derivation, including why `document.fonts.check()` cannot stand in for it.
 `cross-browser.spec.ts` carries the panel's two overflow claims, which are
 scroll-extent facts rather than font-metric ones and therefore belong in the
 suite Firefox and WebKit run (§Two renderings, and only one of them mounted).
@@ -1445,8 +1437,7 @@ chosen:
 - **The whole list sits in one panel** — a single inset, rounded, hairline
   `--surface` box. One card for the table, not one per shoe: it supplies the
   missing depth without spending any of the density, and it matches the desktop
-  chassis. Elevation follows what is **pinned**: page, then this panel, then the
-  sticky header on top of it.
+  chassis, and it takes §Theming's elevation order with it.
 - **The panel takes the table's own width arithmetic**, so it is the table's
   container at every column count. It used to be sized by the viewport, which is
   the six-column table's width and nothing else's: at seven columns the table
@@ -2482,9 +2473,9 @@ nothing about fit chooses between the two values.
 **The pill padding steps at `429.98px`, not at the `374.98px` the design named.**
 That figure came from a rig carrying the app's tokens but not its components, and
 its pills are narrower than the real ones by enough to move the boundary. Held
-at the band above's `--s2`, the three groups measure **374px in Chromium and
-376px in Firefox and WebKit** against the 344px available at 360px — 30 to 32px
-over — and they are still 15 to 17px over at 375px and 0 to 2.4px over at 390px,
+at the band above's `--s2`, the three groups measure what the merged line above
+needs — 374/376px — against the 344px available at 360px, so they are 30 to 32px
+over there, still 15 to 17px over at 375px and 0 to 2.4px over at 390px,
 so the flush band, the one the rebuild exists to make flush, overflowed at all
 three. At `--s1` for **every** pill they measure 318px and 320px, which is 24 to
 26px clear at 360px. So the step moved to the boundary that already existed for
@@ -2531,8 +2522,8 @@ for the two table renderings (§Two renderings, and only one of them mounted): a
 `display: none` button is still a tab stop for anything that does not evaluate
 CSS, and two nodes answering to `Copy link` are two answers to "how do I share
 this?". The copy confirmation is one always-rendered `role="status"`, empty until
-it has something to say, for the same reason — a live region created together
-with its text is not reliably announced.
+it has something to say, for the same reason and for one more
+(§What a control says it did).
 
 **The band is asked in the script, not as an `@media` rule**, exactly as
 `PHONE_QUERY` already is, because a media rule cannot unmount anything. It is
@@ -2567,8 +2558,7 @@ cost is deliberate — a 760px laptop window gets glyph-only Filters and Columns
 even though the merged line has slack for the words. Both render **both forms**
 and let CSS choose, so the accessible name never changes with the viewport, and
 the glyph is default-hidden and *revealed* by the query rather than paired with a
-`min-width` twin: the pair is then exhaustive at any width, including the
-fractional ones zoom and Firefox both produce. The column picker's count badge is
+`min-width` twin, for the reason above. The column picker's count badge is
 what survives its word — the count is the only thing on that control that
 changes, and it is why the label was given a badge rather than a growing string —
 so the summary carries `aria-label="Columns, N shown"`, and the picker owns its
@@ -2887,12 +2877,21 @@ as a bare UA control among styled ones — which is exactly what it looks like.
 `button, input, select, textarea { font-family: inherit }` in `app.css`, because
 `font-family` does not inherit into a form control: with no rule a `<button>`
 renders in the UA's own default form face. That is not a treatment a component
-could reasonably choose — this app *self-hosts* Inter Tight so it never has to
-ask the machine what it has — and the exception had swallowed forty-five
-controls, `About` and the story pills among them. Four components
-(`MonthPicker`, `Receipt`, `SetupStrip` and the Display panel's theme control) had
-already written `font: inherit` for themselves, which is the same fact
-discovered four times.
+could reasonably choose — this app *self-hosts* Inter Tight so it never has to ask
+the machine what it has — and it is not one a component should state for itself
+either, which several of them used to.
+
+It is also a **measurement** rule, and that is the half to know. The UA face is
+not one face: Chromium asks for `Arial`, Firefox and WebKit for the generic
+`sans-serif`, and every host resolves those against its own fontconfig. Without
+the rule the one-row toolbar's slack at 801px swings across a 51px range on what
+a machine has installed — comfortable on a developer's machine, **negative on a
+GitHub runner whose `sans-serif` is DejaVu Sans**, where the row wrapped — so
+every measured width in §The chrome bands was a number about the *host* rather
+than about the app. With it they are the app's, identical on every machine to
+within 2.4px, and `draws every control in a face this app names` fails the build
+on the next control that escapes it. The `font: inherit` shorthand is rejected
+for the reset: it also resets `font-size`, which each component owns.
 
 **A scrollport reserves room for its scrollbar as well as for its ring, and the
 two are different facts.** A bar is drawn at the port's inline end, and the two
@@ -2908,19 +2907,6 @@ and only the bar moves, out of the figures and into the panel's own padding.
 classic bar already takes its layout, and the property has no effect at all on an
 overlay one. `smoke.spec.ts` enumerates the ports and holds each to one bar's
 width, in the same shape and for the same reason the ring's room is enumerated.
-
-It is also a **measurement** rule, and that is what made it urgent. The UA face
-is not one face: Chromium asks for `Arial`, Firefox and WebKit for the generic
-`sans-serif`, and every host resolves those against its own fontconfig. So the
-one-row toolbar's slack at 801px measured 7px on a developer's machine, 32px in
-the Playwright image, and **−15px on a GitHub runner whose `sans-serif` is
-DejaVu Sans**, where it wrapped and failed CI twice while passing everywhere
-else (`.hunt/fixlog-f13.md`). Every measured width in §The chrome bands was a
-number about the *host*. With this rule they are the app's, identical on every
-machine to within 2.4px, and `draws every control in a face this app names`
-fails the build on the next control that escapes it. The `font: inherit`
-shorthand was rejected for the reset: it also resets `font-size`, which each
-component owns.
 
 **One focus ring, with one exemption.** A 2px surface-coloured ring inside a
 2px accent ring, drawn with `box-shadow` so both rings are painted rather than
@@ -3387,10 +3373,8 @@ spacer is exactly what holds the right edge.
 
 **Desktop is the default and the banner is the override**, never the other way
 round. Writing it banner-first would need a `min-width` twin of the sidebar's
-`max-width: 800px`, and every fractional width between the two would match
-neither — which browser zoom and Firefox's fractional viewport widths both
-produce (§Where the utilities live). One query, and its complement is whatever
-the query does not match. The `.prov` wrapper therefore **dissolves to
+`max-width: 800px`, and a twin is not a complement (§Where the utilities live).
+One query, and its complement is whatever the query does not match. The `.prov` wrapper therefore **dissolves to
 `display: contents` above 800px**, with `order` putting the count back beside the
 wordmark, so the desktop masthead keeps the exact arrangement the visual-polish
 pass settled and one wrapper serves both bands without a second copy of the count
@@ -3617,9 +3601,10 @@ take several rows and every bound with them; both are left to the receipt.
 `Copy link` in the header **flushes the pending view write and then** writes
 `location.href` to the clipboard, which is the whole feature: the URL already *is*
 the view (§View and URL ownership). The flush is the feature working at all rather
-than a refinement — the write path is debounced at 200ms, so a runner who changes a
-filter and reaches straight for the button copied the *previous* view while the new
-one was on screen, measured at 52ms with the status region saying `Copied` over it.
+than a refinement — the write path is debounced (§View and URL ownership), so a
+runner who changes a filter and reaches straight for the button copied the
+*previous* view while the new one was on screen, well inside the interval and with
+the status region saying `Copied` over it.
 It sits in this handler rather than in a shorter interval: the interval exists for
 the drag, and this is the one press that has to be current. The
 confirmation is a separate node rather than a relabelled button — swapping the

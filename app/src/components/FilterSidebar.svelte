@@ -139,18 +139,11 @@
     return excludedBy(data.shoes, view.filters, key, idx);
   };
   /**
-   * Counted over the population with the brand filter itself removed, not over `population` and not
-   * over the fleet. `applyFilters` applies brands *before* pushing to `considered` (filters.ts), so
-   * counting over the passed-in population would read `(0)` beside every unticked brand the moment
-   * one is ticked — and clicking one of those still returns shoes, because brands are OR'd. A facet
-   * must not filter itself. The key set is seeded from the whole fleet so a brand matching nothing
-   * still has a row to show its zero (docs/app.md §Filters).
-   *
-   * And from the SELECTION as well as the fleet, which is the case a link makes: `parseView` keeps
-   * `brands` verbatim on purpose, so a link naming a brand the catalogue has since dropped applied
-   * a filter that had no control anywhere on screen — "1 selected", nothing ticked, and only
-   * `Clear filters` to escape it, which discards every other filter the link carried. A `Set`
-   * rather than a concat: a selected brand the catalogue does hold must not get a second row.
+   * Three separate decisions, each argued in docs/app.md §Filters and none of them safe to simplify
+   * here: the count is over the population with the brand filter itself REMOVED (a facet must not
+   * filter itself), the key set is seeded from the whole FLEET (so a brand matching nothing still
+   * shows its zero), and from the SELECTION too (so a link naming a brand the catalogue has since
+   * dropped still has a control to untick). The `Set` is what stops the last two colliding.
    */
   const brandPool = $derived(applyFilters(data.shoes, { ...view.filters, brands: undefined }, idx).considered);
   const brandCounts = $derived(new Map(

@@ -57,7 +57,7 @@ export async function start({ port = 4180, build = true, root = HERE } = {}) {
    * `npm -w app run e2e` in any checkout rewrites `app/dist/shoes.json` with the 5-shoe fixture
    * mid-session, and from that moment every measurement is of `cushy` and `Cushy 2` rather than
    * the fleet — silently, because the page still renders and only a screenshot gives it away. It
-   * happened twice (`.hunt/fixlog-f15.md`, and F12 hit the same collision). Served from memory the
+   * happened twice, in two different waves. Served from memory the
    * collision cannot occur at all: the bytes are taken once, at start, and nothing on disk is
    * written or read for them again.
    */
@@ -87,7 +87,7 @@ export async function start({ port = 4180, build = true, root = HERE } = {}) {
   };
 }
 
-// `node .hunt/serve-real.mjs` serves until killed, for hand-driving in a browser.
+// `node hunt/serve-real.mjs` serves until killed, for hand-driving in a browser.
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { url, shoeCount } = await start();
   console.error(`serving ${shoeCount} shoes at ${url}`);

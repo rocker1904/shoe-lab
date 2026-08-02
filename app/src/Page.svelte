@@ -200,13 +200,13 @@
    * it. Below it a permanent sidebar would buy a column of filters by pushing the table it is
    * meant to tune off the screen (docs/app.md §Filters).
    *
-   * A `$derived` over `lib/fit.ts`, and **not** a `matchMedia` — this was `DRAWER_QUERY` until F14
-   * and the query was wrong twice over. A media query answers about the WINDOW, which includes a
+   * A `$derived` over `lib/fit.ts`, and **not** a `matchMedia`, which would be wrong twice over.
+   * A media query answers about the WINDOW, which includes a
    * classic scrollbar the layout never gets, so the sidebar took its column 12–15px of window
    * before the fit decision (which reads `clientWidth`) could know it had, and the table mounted up
    * to 173px too wide in the gap. And a media query cannot read the column set, so at nine columns
    * the track arrived where the table no longer fitted beside it and the width went back to the
-   * stacked list (`.hunt/fixlog-f14.md`). One rune over the same layout width the mount decision
+   * stacked list. One rune over the same layout width the mount decision
    * uses answers both: the boundary rides the columns, and the CSS below is driven from this class
    * rather than from a restated number (docs/app.md §The chrome bands).
    */
@@ -524,8 +524,8 @@
     // Revoking in the same tick can cancel the download before the browser has taken its own
     // reference to the blob; yielding once is enough.
     setTimeout(() => URL.revokeObjectURL(url), 0);
-    // Nothing about the view changed and nothing on screen moved: a file was written. This is the
-    // action the sweep found standing beside `Copy link`, one with a status node and one without.
+    // Nothing about the view changed and nothing on screen moved: a file was written — so this
+    // says so, exactly as `Copy link` beside it does (docs/app.md §What a control says it did).
     void announce(EXPORTED);
   }
   // Reads back what main.ts already put on the DOM at boot (docs/app.md §Theming).
@@ -809,9 +809,9 @@
      window and whether the table can be seen beside a 260px track is a question about the layout
      and the column set — which no media query can ask (docs/app.md §The chrome bands). The script
      decides once and writes `.drawer` here, so the layout, the panel and its scrim cannot disagree
-     about which it is, and cannot disagree with the mount decision either. It was
-     `@media (max-width: 1190.98px)` until F14, and a media query is 12–15px of scrollbar and a
-     whole column set away from the answer (docs/app.md §Filters). */
+     about which it is, and cannot disagree with the mount decision either. A media query here would
+     be 12–15px of scrollbar and a whole column set away from the answer
+     (docs/app.md §Filters). */
   .layout.drawer {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -13,8 +13,9 @@ bad citizen toward runrepeat.com.
 - `BACKLOG.md` — prioritised follow-ups; the one home for aspiration.
 - `docs/README.md` — the documentation contract. Read it before writing any
   doc or comment.
-- `main` is deployed continuously — what's merged is what's live (deploy
-  lags a push by CI plus the deploy, ~4 min, and a red CI deploys nothing; there is no separate live-state doc).
+- `main` is deployed continuously — what's merged is what's live; the deploy
+  lags a push by CI plus the deploy itself and a red CI deploys nothing, so
+  there is no separate live-state doc (docs/operations.md §Deploy).
 
 ## Doc index
 

@@ -140,8 +140,8 @@ body { margin: 0; background: var(--bg); color: var(--text); }
  * WebKit for the generic `sans-serif`, and each host resolves those against its own fontconfig — so
  * the toolbar's one-row band measured 7px of slack on a developer's machine, 32px in the Playwright
  * image and −15px on a CI runner whose `sans-serif` is DejaVu Sans, where it wrapped. A band whose
- * width is the HOST's cannot be held to a number by any test (`.hunt/fixlog-f13.md`,
- * docs/app.md §The chrome bands). With this rule every measured width in that section is the app's
+ * width is the HOST's cannot be held to a number by any test
+ * (docs/app.md §The chrome bands). With this rule every measured width in that section is the app's
  * own, and `draws every control in a face this app names` fails the build on the next control that
  * escapes it.
  *
@@ -163,9 +163,8 @@ button, input, select, textarea { font-family: inherit; }
  * exists once: the rule below reserves exactly what the ring paints and the two cannot drift.
  *
  * `:where()` keeps specificity at zero, which means it loses to any component rule naming the same
- * element — so the one per-component `outline` rule this replaces, on the setup strip's cards, is
- * DELETED by the task that owns it rather than left to be overridden. The other two are the table
- * rows below, and those are kept on purpose.
+ * element — so a component ring is an override rather than an addition, and the only ones left are
+ * the table rows below, which are exempt on purpose.
  *
  * `:not(tr)` is the first exemption, and it is deliberate rather than an omission. A `box-shadow`
  * ring is drawn OUTSIDE the element; a row spans the full width of the table and abuts the rows

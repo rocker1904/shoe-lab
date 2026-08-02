@@ -27,10 +27,10 @@
 
   /**
    * The sidebar this dialog is written inside is `position: sticky`, and a sticky element creates a
-   * stacking context whatever its z-index — so `z-index: 20` below was being measured against the
-   * sidebar's own children, not the page, and the pinned chrome and the table's sticky header both
-   * painted over the open dialog. Moving the node to `<body>` is what makes the number mean what it
-   * says (docs/app.md §Stacking order). It runs before the focus call below, because `appendChild` on a
+   * stacking context whatever its z-index — so the dialog's own layer below would be measured
+   * against the sidebar's children rather than the page, and the pinned chrome and the table's
+   * sticky header would both paint over an open dialog. Moving the node to `<body>` is what makes
+   * the number mean what it says (docs/app.md §Stacking order). It runs before the focus call below, because `appendChild` on a
    * subtree containing the active element drops the focus it is about to hand out.
    */
   function toBody(node: HTMLElement) {

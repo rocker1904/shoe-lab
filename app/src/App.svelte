@@ -38,7 +38,7 @@
    * Whether the page this placeholder stands in for will have a permanent sidebar, asked of the
    * LAYOUT width and not of a media query: a classic scrollbar is 12–15px the layout never receives,
    * and reserving the track from a window width put the reservation on the wrong side of the
-   * boundary for those pixels (docs/app.md §Filters, `.hunt/fixlog-f14.md`).
+   * boundary for those pixels (docs/app.md §Filters).
    *
    * The FLOOR is the right constant here where `Page.svelte` asks the fit model: the placeholder
    * draws the DEFAULT columns — it is waiting for the dataset every other set's width is computed

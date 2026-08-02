@@ -114,7 +114,8 @@ finds outside the refresh chain is the drift reporter
   scrape every week. Failed slugs simply stay absent from `details.json` and
   are retried next week; the step still shows red in the run.
 - **`refresh-details.yml`, `scrape:releases`** — a drifted supplement must not
-  discard a ~460-request details crawl. `build:dataset` works without
+  discard a full details crawl (its budget is
+  docs/scraping.md §Politeness). `build:dataset` works without
   `release-years.json`, and shoes already dated by it keep their previous
   values.
 
@@ -199,9 +200,9 @@ and not a preference.
 
 `score.test.ts` is the fourth, and the only one that reads coverage rather than
 names: it fails when a metric a story's score *weights* drops below
-`SPARSE_BELOW` over that story's pool (docs/app.md §The story scores). The
-thinnest term has 83% today, so this fires only on a real collapse upstream —
-retire the term or the story rather than the threshold.
+`SPARSE_BELOW` over that story's pool. Every term sits well clear of it, so
+this fires only on a real collapse upstream, and what to do about one is
+docs/app.md §The story scores' — not a threshold to lower.
 
 ## Resuming release-date curation
 
@@ -261,8 +262,9 @@ captures are regional — so treat a lone hit as a bound recorded in `notes`.
 Pages is configured to publish from the workflow (build type: workflow), not
 from a branch — `deploy.yml` uploads `app/dist` as the Pages artifact and
 `deploy-pages` publishes it. Nothing else writes to Pages, and there is no
-`gh-pages` branch to keep in sync. Merged `main` is live within about a
-minute, which is why the repo has no separate live-state doc.
+`gh-pages` branch to keep in sync. Merged `main` is live once **every** CI job
+has passed and the deploy has run — a few minutes, and a red CI deploys nothing
+— which is why the repo has no separate live-state doc.
 
 ## Decisions
 

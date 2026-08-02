@@ -43,8 +43,7 @@ const WRAPPER_BORDER_PX = 2;
  * `.content { padding: 0 var(--s4) }` in `Page.svelte`, the LEADING gutter only — deliberately, and
  * this is the one number in here that is a judgement rather than a transcription.
  *
- * The question this model answers is the one the wave was sent to remove: would the document scroll
- * sideways. A block's trailing padding is not part of its scrollable overflow in any engine, so a
+ * The question this model answers is: would the document scroll sideways. A block's trailing padding is not part of its scrollable overflow in any engine, so a
  * table that overruns its content box by up to 16px still leaves `scrollWidth` equal to the window —
  * measured on the real fleet, where the default view's document is 917px against a 902px panel and a
  * pair of 16px gutters. Counting both gutters would make the model reject widths at which nothing
@@ -62,22 +61,22 @@ const SIDEBAR_TRACK_PX = 260;
  * boundary, and for any column set wider than the default it stands further out.
  *
  * **It is a LAYOUT width**, like every other number in this file — `documentElement.clientWidth`,
- * which a classic scrollbar has already been subtracted from. It was a media query until F14, which
- * made it a WINDOW width instead, and the two differ by exactly the scrollbar: the sidebar claimed
- * its column 12–15px of window before the fit decision could know it had, and mounted a table up to
- * 173px too wide in the gap (`.hunt/fixlog-f14.md`). A browser drawing classic scrollbars therefore
- * stands the sidebar up at a ~1203–1206px window, which is this number seen from outside the layout
- * rather than a different one.
+ * which a classic scrollbar has already been subtracted from. Written as a media query it would be
+ * a WINDOW width instead, and the two differ by exactly the scrollbar: the sidebar would claim its
+ * column 12–15px of window before the fit decision could know it had, and mount a table up to 173px
+ * too wide in the gap. A browser drawing classic scrollbars therefore stands the sidebar up at a
+ * ~1203–1206px window, which is this number seen from outside the layout rather than a different
+ * one.
  *
  * It is derived from the rule below rather than measured against it: it is the first width at which
  * the **default view** still fits beside the track, which is
  * `desktopMinWidth(defaults) + FIT_SLACK_PX + CONTENT_GUTTER_PX + SIDEBAR_TRACK_PX` — 903 + 12 + 16
  * + 260 on today's fleet. Chosen against any other criterion it opens a band where the rendering
  * reads desktop → list → desktop as a window is dragged WIDER, because taking the track costs the
- * table 260px at one pixel of window: 1180 was the width at which the page merely fit, with 2px in
- * hand against the 12 the fit rule holds it to, and 1180–1190px was that band
- * (`.hunt/fixlog-f12.md`). `hunt/fit-boundary.mjs` is where the derivation is checked, because only
- * the real fleet can state the 903.
+ * table 260px at one pixel of window: 1180 is where the page merely fits, with 2px in hand against
+ * the 12 the fit rule holds it to, and 1180–1190px is the band that buys.
+ * `hunt/fit-boundary.mjs` is where the derivation is checked, because only the real fleet can state
+ * the 903.
  */
 export const SIDEBAR_PERMANENT_PX = 1191;
 
@@ -277,12 +276,12 @@ export function desktopMinWidth(columns: readonly string[], model: FitModel): nu
  * The `max` is the whole rule, and it is what makes the two decisions one. The track costs the table
  * 260px at a single pixel of window, so a permanence boundary that cannot see the column set stands
  * the sidebar up at a width where the fit rule then refuses the table — and the rendering reads
- * desktop → list → desktop as the window is dragged WIDER. F12 fixed that for the default set by
- * moving the constant; a nine-column view still handed 170px of width back to the stacked list at
- * exactly 1191px, because a constant cannot answer a question about a set the runner picks
- * (`.hunt/fixlog-f14.md`). Consulting the model instead closes it for every set at once, and gives
- * the stronger property the sidebar was always supposed to have: **it never stands beside the
- * stacked list**, because it waits for the table it exists to tune.
+ * desktop → list → desktop as the window is dragged WIDER. Moving the constant closes that for one
+ * column set and leaves it open for every wider one — a nine-column view handed 170px of width back
+ * to the stacked list at exactly 1191px — because a constant cannot answer a question about a set
+ * the runner picks. Consulting the model closes it for every set at once, and gives the stronger
+ * property the sidebar was always supposed to have: **it never stands beside the stacked list**,
+ * because it waits for the table it exists to tune.
  */
 export function sidebarPermanentAt(columns: readonly string[], model: FitModel): number {
   return Math.max(SIDEBAR_PERMANENT_PX,
@@ -317,7 +316,7 @@ export function fitsDesktop(columns: readonly string[], availableWidth: number,
  * a classic scrollbar — because that is the width the table is laid out in and the fleet is always
  * long enough to draw one.
  *
- * Monotone in the width by construction, which is the property F14 was sent to guarantee: below
+ * Monotone in the width by construction, which is the property that matters most here: below
  * `sidebarPermanentAt` the available width is `layoutWidth - 16` and rises with the window, above it
  * `layoutWidth - 276`, and the boundary is *defined* as a width at which the second still clears the
  * table's minimum. So the step down at the boundary can never cross the requirement, and a rendering

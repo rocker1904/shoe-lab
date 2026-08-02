@@ -22,7 +22,7 @@ const FIXTURE: ShoesFile = JSON.parse(readFileSync(
 
 /**
  * Widest measured disagreement between the model and a rendered table is 2.0px, over eight column
- * sets on the real 450-shoe fleet in Chromium and Firefox (`.hunt/fixlog-f11.md`). Four is that with
+ * sets on the real 450-shoe fleet in Chromium and Firefox. Four is that with
  * room, and small enough that a regenerated font table or a changed padding fails here rather than
  * quietly moving the width at which the rendering switches.
  */
@@ -40,7 +40,7 @@ export const FIT_TOLERANCE_PX = 4;
  * That is a guard measuring the wrong thing rather than a guard failing, and the direction it lies
  * in is the HOST's, not the app's: in the Playwright image the fallback is narrower than Inter Tight
  * (a condensed face), so the fit tests read ~29px under and mostly passed, while on the CI runner it
- * is wider and the same race read 137px over (`.hunt/fixlog-webkit-fit.md`).
+ * is wider and the same race read 137px over.
  *
  * `document.fonts.check()` cannot stand in for this: it returned true for `600 14.72px "Inter Tight"`
  * while that face's own `status` was `error`. Only the FontFace's status answers the question.

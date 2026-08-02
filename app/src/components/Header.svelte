@@ -14,8 +14,8 @@
   /**
    * `2026-07-27` reads like debug output. Locale AND zone are both pinned, so the string does not
    * vary by visitor: `builtAt` is a UTC instant, and formatting it in local time renders the
-   * previous day for every reader west of Greenwich. The old `builtAt.slice(0, 10)` had no such
-   * problem, so dropping the zone would be a regression rather than an omission.
+   * previous day for every reader west of Greenwich. Dropping the zone is a regression, not a
+   * simplification.
    */
   const updated = $derived(builtAt === undefined ? null : new Intl.DateTimeFormat('en-GB',
     { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(builtAt)));

@@ -292,10 +292,9 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
 });
 
 /**
- * The tier claims this test used to make are `lays the chrome out in bands`'s now, including the
- * one about the story group taking the row it is given. What is left is the `--thead-top` guard,
- * which is a different property entirely: the offset is MEASURED and ResizeObserver-backed, so the
- * pinned header row has to clear a chrome box whose height is a function of the viewport
+ * The `--thead-top` guard, and only that: the offset is MEASURED and ResizeObserver-backed, so the
+ * pinned header row has to clear a chrome box whose height is a function of the viewport. The
+ * chrome's own band claims are `lays the chrome out in bands`'s
  * (docs/app.md §Columns and sorting).
  *
  * None of it is observable in jsdom: it applies no component CSS, so every box reports zero.
@@ -994,7 +993,7 @@ test('never ships an icon without its name', async ({ page }) => {
  * Chromium asks for `Arial`, Firefox and WebKit for the generic `sans-serif`, and the three
  * machines this repo renders on resolve those to three different widths. The toolbar's one-row band
  * had 7px of slack here, 32px in the Playwright image and −15px on a runner whose `sans-serif` is
- * DejaVu, which is the whole of `.hunt/fixlog-f13.md`.
+ * DejaVu.
  *
  * So the claim is exact rather than approximate: every control renders in a face this app names.
  * `--font-mono` is as legitimate an answer as `--font-ui` — the count badges and figure inputs are
@@ -1248,7 +1247,7 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
  *
  * Measured as the distance from the right-most painted thing to where the bar is drawn, which is
  * the same number in both regimes — headless Playwright only ever gives the overlay one
- * (docs/app.md §Theming, `.hunt/fixlog-f15.md`). Enumerated like the ring's room above, so a port
+ * (docs/app.md §Theming). Enumerated like the ring's room above, so a port
  * added later has to answer for it too.
  */
 test('leaves every scrollport room for the scrollbar it draws over no text', async ({ page }) => {
@@ -1272,7 +1271,7 @@ test('leaves every scrollport room for the scrollbar it draws over no text', asy
       // a figure makes it unreadable, which is the whole defect; a decoration that reaches the same
       // edge — `RangeFilter`'s `aria-hidden` bound markers overhang their track by 5px and clear
       // the sidebar's bar by 7 — is bounded by the port's own padding and is a different question
-      // (`.hunt/fixlog-f15.md` records it).
+      // (docs/app.md §Theming records it).
       let worst = -Infinity;
       let who = '';
       for (const node of el.querySelectorAll<HTMLElement>('*')) {

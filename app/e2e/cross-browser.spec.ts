@@ -625,7 +625,7 @@ test('keeps an open panel across the rendering swap', async ({ page }) => {
  * every machine only because the controls carry the app's own face. Until they did, this row was
  * drawn in whatever form face the HOST resolved for the engine — 9px of slack in the Playwright
  * image, −15px on a runner whose `sans-serif` is DejaVu Sans, which is what failed CI twice while
- * passing everywhere else (`.hunt/fixlog-f13.md`). Hence the face assertion below: it is not
+ * passing everywhere else. Hence the face assertion below: it is not
  * decoration on this test, it is the precondition that makes the other two numbers mean anything,
  * and `draws every control in a face this app names` guards the rule itself.
  */
@@ -724,11 +724,11 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
 
 /**
  * The guard above is only worth its precision if it cannot measure a fallback face by mistake, and
- * for three waves it could: it waited on `document.fonts.ready`, which resolves against the loads
+ * `document.fonts.ready` does not stop it: that promise resolves against the loads
  * pending when it is asked and so resolved before the mounted table had requested the faces at all.
  * The reading that followed was the fallback's, and whether that read under or over the model is the
  * host's choice of fallback rather than anything about this app — which is why it stayed green in
- * the Playwright image for three landings and failed only on CI (`.hunt/fixlog-webkit-fit.md`).
+ * the Playwright image and failed only on CI.
  *
  * So: with the faces made unreachable, `measureFit` must REFUSE to answer rather than answer with a
  * fallback's number. The short timeout keeps a test that is deliberately never satisfied cheap.

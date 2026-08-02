@@ -9,7 +9,11 @@ import { ValidationError } from './validate.js';
 const API = 'https://api.runrepeat.com';
 const PAGE_SIZE = 30;
 const MAX_PAGES = 100;
-const MIN_SHOES = 300;
+/** This supplement's OWN floors, deliberately not `validate.ts`'s `MIN_SHOES`: that gate is about
+ *  the fleet a build may publish, these are about whether one API walk saw enough of the catalogue
+ *  to be worth writing down. Same magnitude today, different questions — a name shared with the
+ *  other would invite moving them together (docs/scraping.md §Validation gates). */
+const MIN_SLUGS_SEEN = 300;
 const MIN_YEARS = 100;
 const YEAR = /^\d{4}$/;
 
@@ -54,7 +58,7 @@ export async function scrapeReleases({ http, dataDir, log = () => {} }: ScrapeRe
 
   const shoeCount = slugs.size;
   const yearCount = Object.keys(years).length;
-  if (shoeCount < MIN_SHOES) throw new ValidationError(`only ${shoeCount} shoes seen (<${MIN_SHOES})`);
+  if (shoeCount < MIN_SLUGS_SEEN) throw new ValidationError(`only ${shoeCount} shoes seen (<${MIN_SLUGS_SEEN})`);
   if (yearCount < MIN_YEARS) throw new ValidationError(`only ${yearCount} release years found (<${MIN_YEARS})`);
 
   dataDir.write('release-years.json', { scrapedAt: new Date().toISOString(), years } satisfies ReleaseYearsFile);

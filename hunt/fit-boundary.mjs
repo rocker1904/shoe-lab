@@ -14,12 +14,11 @@
 //    permanence and the mount decision are one decision over one model; chosen apart they disagree,
 //    and the rendering flips twice across the disagreement. A ten-column view handed 170px of width
 //    back to the stacked list at exactly 1191px until the sidebar started consulting the fit model
-//    (`.hunt/fixlog-f14.md`).
 // 4. **Both hold in both scrollbar regimes.** Playwright draws overlay scrollbars headless, so every
 //    guard in this repo was measuring a world with no scrollbar in it; a classic one takes 12–15px
 //    out of the layout viewport and out of nothing a media query can see. The regime is forced by
-//    launching HEADED — the Firefox prefs do nothing headless, which is why `.hunt/fixlog-f13.md`
-//    filed this hypothesis dead.
+//    launching HEADED — the Firefox prefs do nothing headless, which is why a headless test of
+//    this hypothesis once filed it dead.
 // 5. **They hold when the scrollbar arrives from the CONTENT rather than from the window.** Every
 //    claim above resizes, and a resize is the one cause the app could never miss. Clearing a filter
 //    makes the document tall enough for a classic scrollbar, which takes its 12–15px out of the
@@ -61,7 +60,7 @@ const LADDER = [320, 360, 390, 500, 699, 700, 760, 800, 900, 916, 917, 930, 931,
  * list's six 53px columns need 332px plus the panel, which is why 360px is documented as the
  * narrowest phone the table is drawn for — docs/app.md §Two renderings, and only one of them mounted
  * — and the toolbar's contents have needed 338px since the chrome rebuild
- * (`.hunt/fixlog-f10.md`, and a backlog item of its own). Asserting there would be asserting against
+ * (and a backlog item of its own). Asserting there would be asserting against
  * the design rather than against a regression.
  *
  * A LAYOUT width, like every other number here. A 360px window with a 15px classic scrollbar is a
@@ -176,7 +175,7 @@ const awaitFaces = (p) => p.waitForFunction(() => {
 const ENGINES = { chromium, firefox, webkit };
 /**
  * The two scrollbar worlds. Overlay is what Playwright gives headless and what every guard in this
- * repo measured until F14; classic is what a GTK Firefox and a desktop Chromium actually draw, and
+ * repo used to measure; classic is what a GTK Firefox and a desktop Chromium actually draw, and
  * it appears only with a real display behind the browser.
  */
 const REGIMES = [
@@ -297,11 +296,10 @@ for (const engine of engines) {
        * Claim 3, and the one that ties the two boundaries together: **widening the window never
        * takes the table away.** The sidebar's track is a 260px step in what the table has to lay
        * itself out in, so a permanence boundary that does not consult the fit model opens a band
-       * where the rendering reads desktop → list → desktop as a window is dragged wider. One ran
-       * 1180–1190px on the default view until F12 moved the constant, and 1191–1361px on a
-       * ten-column view until F14 made the sidebar's permanence a fit decision of its own. This is
-       * what keeps both shut, and it is the assertion to read first if a boundary is ever moved by
-       * hand.
+       * where the rendering reads desktop → list → desktop as a window is dragged wider. Two such
+       * bands have shipped, one on the default view and a 170px one on a ten-column view, and both
+       * closed only once the sidebar's permanence became a fit decision of its own. This is what
+       * keeps them shut, and it is the assertion to read first if a boundary is ever moved by hand.
        */
       for (let i = 1; i < walk.length; i++) {
         if (walk[i].rendering === 'phone' && walk[i - 1].rendering === 'desktop') {
@@ -327,7 +325,7 @@ for (const engine of engines) {
        * window with no scrollbar in it and would not once one appears — `[firstDesktop − scrollbar,
        * firstDesktop)`. The overrun is largest at the bottom of that band and falls a pixel per
        * pixel of width, so the first three rungs are the extreme and its neighbours rather than a
-       * sample. Measured on `f8ed7e9`: 1px of sideways scroll at a 931px window in headed Chromium,
+       * sample. Measured at 1px of sideways scroll at a 931px window in headed Chromium,
        * held until something moved the window.
        */
       if (set.ladder && scrollbar > 0) {

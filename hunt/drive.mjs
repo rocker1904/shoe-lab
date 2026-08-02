@@ -6,14 +6,14 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync } from 'node:fs';
 import { chromium, firefox, webkit } from 'playwright';
-// Promoted from journey 5, which built it after finding that computed contrast disagrees with paint.
+// Here because computed contrast disagrees with what is painted, and only the pixels settle it.
 import { decodePng, contrast } from './png.mjs';
 
 const SHOTS = join(dirname(fileURLToPath(import.meta.url)), '../.hunt/shots');
 const ENGINES = { chromium, firefox, webkit };
 let shotSeq = 0;
 
-/** Everything a shared view is supposed to carry, in one comparable snapshot. Built by journey 3. */
+/** Everything a shared view is supposed to carry, in one comparable snapshot. */
 const FINGERPRINT = /* js */ `() => {
   const q = (s) => document.querySelector(s);
   const txt = (el) => (el?.textContent ?? '').replace(/\\s+/g, ' ').trim();
@@ -259,8 +259,8 @@ export async function open({
     /**
      * `focused: false` means the measurement is meaningless, not that a ring is missing. An element
      * that is display:none at this viewport swallows .focus() silently, and reading its resting
-     * style then reports `painted: false` for a control that is simply not there — a false alarm
-     * that cost journey-1 real time to rule out.
+     * style then reports `painted: false` for a control that is simply not there, which is a false
+     * alarm expensive to rule out by hand.
      */
     async focusRing(sel) {
       const target = page.locator(sel).first();
@@ -271,7 +271,7 @@ export async function open({
         focused: el === document.activeElement,
         // :focus-visible does not apply to a programmatic .focus() once the last interaction was a
         // pointer, so a probe that clicks a trigger and then measures reads spread 0 — identical to
-        // a missing ring. This produced one wrong reading before journey 5 caught it.
+        // a missing ring, so the flag is reported rather than assumed.
         focusVisible: el.matches(':focus-visible'),
       }));
       if (!state.focused) return { focused: false, visible: true, why: `${sel} did not take focus — is it disabled or inert?`, painted: null, clippedBy: [] };
@@ -281,8 +281,8 @@ export async function open({
 
     /**
      * Ring measurement the only way it is valid: driven by Tab, so :focus-visible actually applies.
-     * Returns one row per stop with the ring and any clipping ancestor — which is how 0028 (the
-     * third brand list nobody had treated) was found.
+     * Returns one row per stop with the ring and any clipping ancestor — a clipped ring is
+     * invisible to every per-control check, so only the walk finds one.
      */
     async ringWalk(steps = 40) {
       const out = [];
@@ -359,7 +359,7 @@ export async function open({
       return rig;
     },
 
-    /** What is actually painted at a point — the question three findings needed and had to hand-roll. */
+    /** What is actually painted at a point, which is not always what the DOM says is there. */
     at: (x, y) => page.evaluate(([px, py]) => {
       const el = document.elementFromPoint(px, py);
       if (!el) return null;
@@ -401,19 +401,19 @@ export async function open({
         text: (el.textContent ?? '').trim().slice(0, 30),
       }))),
 
-    /** Reload-and-return is where journey 1 found two bugs; these were hand-rolled every time. */
+    /** Reload-and-return questions all need this, and it was hand-rolled every time. */
     storage: () => page.evaluate(() => Object.fromEntries(
       Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)]),
     )),
 
     /**
-     * One comparable snapshot of everything a shared view is supposed to carry. Built by journey 3,
-     * promoted here because it is the core instrument of any round-trip question — pair it with the
-     * exported `diff()` rather than eyeballing two blobs.
+     * One comparable snapshot of everything a shared view is supposed to carry — the core
+     * instrument of any round-trip question. Pair it with the exported `diff()` rather than
+     * eyeballing two blobs.
      */
     fingerprint: () => page.evaluate(new Function(`return (${FINGERPRINT})()`)),
 
-    /** What actually lands on the clipboard, which 0017 proved is not always what is on screen. */
+    /** What actually lands on the clipboard, which is not always what is on screen. */
     async copyLink(sel = 'button:has-text("Copy link")') {
       await page.locator(sel).first().click();
       return page.evaluate(() => navigator.clipboard.readText().catch(() => null));

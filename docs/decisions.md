@@ -54,9 +54,10 @@ and expect every published score to move.
 
 ### Testing bar: adversarial, no live network
 Every module has tests that attack its failure modes (hostile URL states,
-sanitiser breakouts, boundary-exact gates), not just happy paths. Coverage
-thresholds (lines ≥90, branches ≥85 on scraper src and app lib) are enforced
-by `test:coverage` in CI. No test may touch the live site — fixtures were
+sanitiser breakouts, boundary-exact gates), not just happy paths. Line and
+branch coverage floors on the scraper's `src` and the app's `lib` are enforced
+by `test:coverage` in CI, and the two `vitest.config.ts` files state them. No
+test may touch the live site — fixtures were
 captured once and are committed; the monthly contract-drift workflow is the
 only sanctioned recurring live check besides refreshes.
 
@@ -90,8 +91,9 @@ decision recorded here first.
 
 ### Doc system (2026-07-27)
 Docs follow an agent-first contract (docs/README.md), deliberately small: no
-separate live-state doc because `main` deploys continuously (merged == live,
-deploy lags CI, ~4 min, and is gated on it); aspiration consolidated in BACKLOG.md. The build-time
+separate live-state doc because `main` deploys continuously — merged == live,
+and the deploy is gated on CI and lags it (docs/operations.md §Deploy);
+aspiration consolidated in BACKLOG.md. The build-time
 spec and plan under `docs/superpowers/` are frozen artifacts — docs/ wins on
 any disagreement.
 
