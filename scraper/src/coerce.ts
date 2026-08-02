@@ -31,8 +31,17 @@ export function coerceValue(raw: unknown, type: TestType): MetricValue {
       if (raw === false || raw === 0 || raw === '0' || raw === 'false') return false;
       throw new CoercionError(`not a bool: ${String(raw)}`);
     }
+    // The shapes the fact path accepts, and for the same reason: `String()` turns the nested link
+    // object RunRepeat uses elsewhere in the payload into the literal reading "[object Object]"
+    // and an array into a comma-joined one, both of which read like readings and are not
+    // (docs/scraping.md §Fact values). An `option` refuses a number as well, because its readings
+    // are slugs from the test's declared vocabulary and no number can be one.
     case 'option':
+      if (typeof raw !== 'string') throw new CoercionError(`not an option slug: ${typeof raw}`);
+      return raw;
     case 'text':
-      return String(raw);
+      if (typeof raw === 'string') return raw;
+      if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
+      throw new CoercionError(`not text: ${typeof raw}`);
   }
 }

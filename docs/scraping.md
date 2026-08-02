@@ -112,7 +112,8 @@ means a red workflow and untouched `data/` — never a partial write.
 - **Release supplement** carries its own floors: 300 slugs seen, 100 years
   found.
 - **Post-join:** `build:dataset` re-validates the assembled `shoes.json`
-  (builtAt present, arrays, slug/name present, plate within the enum) before
+  (builtAt present, arrays, slug/name present, plate within the enum, and every
+  `option` reading naming one of its test's declared choices) before
   writing, so a bad join cannot reach the app either. The absolute shoe floor is
   re-applied after the category exclusion (§Non-running shoes), so a renamed
   category fails the run instead of quietly emptying the dataset.
@@ -370,7 +371,13 @@ saying so rather than hiding it.
 Readings store the option **slug** (`both-sides-semi`), so `LabTest.options`
 carries the declared choices and their English names — without them the app
 would print the slug. Only `value` and `name` are kept; `config` also holds
-per-locale translations and scoring weights, which nothing reads.
+per-locale translations and scoring weights, which nothing reads. That list is
+also the vocabulary the post-join gate checks every published `option` reading
+against (§Validation gates), which is the second half of "dropped rather than
+guessed at": an `option` refuses anything but a string at coercion — a nested
+link object would otherwise stringify to a reading that looks real (§Fact
+values) — and a reading that survives coercion but names no declared choice
+fails the run.
 
 The other `option` and `text` tests really are empty: `length`,
 `leather-suede-quality`, `tested-size` and `outsole-design` return nothing on any

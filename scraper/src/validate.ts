@@ -54,10 +54,19 @@ const PLATES = new Set(['carbon', 'plated-other', 'none']);
 export function validateShoesFile(f: ShoesFile): void {
   if (!f.builtAt) throw new ValidationError('builtAt missing');
   if (!Array.isArray(f.tests) || !Array.isArray(f.shoes)) throw new ValidationError('tests/shoes must be arrays');
+  // A published `option` reading has to name one of the choices its test declares, or the app
+  // prints a value it cannot label and offers it as a filter beside the vocabulary it is not in.
+  const vocabulary = new Map(f.tests.filter((t) => t.options).map((t) => [String(t.id), new Set(t.options!.map((o) => o.value))]));
   for (const s of f.shoes) {
     if (!s.slug || !s.name) throw new ValidationError(`shoe missing slug/name: ${JSON.stringify(s.slug)}`);
     if (!s.values || typeof s.values !== 'object') throw new ValidationError(`${s.slug}: values missing`);
     if (!PLATES.has(s.plate)) throw new ValidationError(`${s.slug}: bad plate ${String(s.plate)}`);
+    for (const [testId, value] of Object.entries(s.values)) {
+      const choices = vocabulary.get(testId);
+      if (choices && !choices.has(String(value))) {
+        throw new ValidationError(`${s.slug}: test ${testId} has ${JSON.stringify(value)}, not a declared option`);
+      }
+    }
   }
 }
 

@@ -144,6 +144,32 @@ describe('validateShoesFile', () => {
   it('accepts a file with no shoes yet still checks structure', () => {
     expect(() => validateShoesFile({ ...good, shoes: [] })).not.toThrow();
   });
+
+  // A categorical reading outside its declared choices is unlabellable — the app would print the
+  // raw value and offer it as a filter choice next to the vocabulary it is not in
+  // (docs/scraping.md §Readings taken from the page).
+  it('rejects an option reading the test does not declare', () => {
+    const withOptions: ShoesFile = {
+      ...good,
+      tests: [labTest({ id: 39, slug: 'tongue-gusset-type', type: 'option', options: [{ value: 'both-sides-semi', name: 'Both sides (semi)' }] })],
+      shoes: [shoe({ slug: 'a', values: { '39': 'both-sides-semi' } })],
+    };
+    expect(() => validateShoesFile(withOptions)).not.toThrow();
+    for (const bad of ['[object Object]', 'invented-slug'] as const) {
+      const f = structuredClone(withOptions);
+      f.shoes[0]!.values['39'] = bad;
+      expect(() => validateShoesFile(f)).toThrow(ValidationError);
+    }
+  });
+
+  it('leaves an option test that declares no choices unchecked', () => {
+    const noVocab: ShoesFile = {
+      ...good,
+      tests: [labTest({ id: 39, slug: 'tongue-gusset-type', type: 'option' })],
+      shoes: [shoe({ slug: 'a', values: { '39': 'anything' } })],
+    };
+    expect(() => validateShoesFile(noVocab)).not.toThrow();
+  });
 });
 
 describe('validatePlateOverrides', () => {

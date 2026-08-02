@@ -227,4 +227,18 @@ describe('categorical readings taken from the page', () => {
   it('is an empty object when the page carries no categorical readings', () => {
     expect(extractDetails({ product: { id: 1, name: 'Shoe' } }, 'shoe', 'T').pageValues).toEqual({});
   });
+
+  // The nested link shape RunRepeat already uses for facts: a bare cast would store the literal
+  // reading "[object Object]" (docs/scraping.md §Fact values).
+  it('drops an option reading that arrives in the nested link shape', () => {
+    const rec = extractDetails({
+      product: { id: 1, name: 'Shoe' },
+      lab_tests: { tests: {
+        39: { id: 39, type: 'option', value: [{ text: 'Both sides', slug: 'both-sides-semi' }] },
+        40: { id: 40, type: 'option', value: { text: 'Pull tab', slug: 'pull-tab' } },
+        41: { id: 41, type: 'bool', value: '1' },
+      } },
+    }, 'shoe', 'T');
+    expect(rec.pageValues).toEqual({ 41: true });
+  });
 });
