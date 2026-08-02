@@ -700,14 +700,31 @@ direction. `dismissOnFocusLeave` is the mirror of the press listener: captured o
 onto the trigger is not leaving, and it closes only when a move **starts** inside
 and **ends** outside.
 
-**A null `relatedTarget` is not a departure.** Focus going nowhere identifiable
-is what a press on unfocusable chrome produces — and also what the month picker's
-year stepper produces when it disables itself under the pointer at the ends of
-the fleet (§Released after is month-granular). Treating null as a departure would
-shut that panel on the runner mid-step; treating it as staying costs nothing,
-because the pointer case is already answered by the press listener. The two
-`<body>`-mounted dialogs need none of this: they trap Tab, so focus cannot leave
-them in the first place.
+**A press deafens the focus listener for the length of that press**, and that is
+the boundary between the two halves rather than a special case: a focus move a
+pointer caused is never the keyboard exit, and the press listener has already
+answered it — outside dismisses, inside belongs to the trigger. Asking
+`relatedTarget` instead handed the answer to the engine, and the engines
+disagree. **macOS does not focus a button that is pressed**, so where the other
+platforms report the trigger — inside the anchor, not a departure — WebKit on
+macOS reported a node outside it: the month picker closed on the `focusout` and
+its own `click` reopened it, which is precisely the `click` failure mode
+`pointerdown` was chosen to avoid, reaching the same panel by another door. Green
+in all three engines on Linux and red on the macOS job alone, which is what makes
+the platform rather than the engine the variable. The column picker was never
+exposed: its trigger is a `<summary>`, which macOS does focus on a press.
+
+**A null `relatedTarget` is judged by where focus settles, one task later.**
+Focus going nowhere identifiable is what the month picker's year stepper produces
+when it disables itself at the ends of the fleet (§Released after is
+month-granular), and equally what an engine declining to name a genuine exit
+produces. The two are indistinguishable at the event and plain a task
+afterwards: the stepper catches the runner back into the grid on the microtask
+its own `await tick()` resolves on, so the check finds focus inside and closes
+nothing, where a real exit has left `document.activeElement` outside. Treating
+null as *staying* was the older rule, and it made a panel's keyboard exit depend
+on the engine naming its destination. The two `<body>`-mounted dialogs need none
+of this: they trap Tab, so focus cannot leave them in the first place.
 
 **Escape is stopped exactly where a second handler would hear it.** The month
 picker stops it, and is now the only one that does, because its panel is a real
@@ -1735,10 +1752,13 @@ without emitting. And the year is **clamped in the step handler**, not only by
 the buttons' `disabled`: a guard living in markup is one a stray click walks
 past, and disabling a focused stepper drops focus to `<body>`, which arrives at
 `focusout` as a null `relatedTarget` — closing on that would make the last year
-unreachable, so a null is explicitly not treated as leaving. That rule now lives
-in `dismissOnFocusLeave`, which every anchored panel shares
-(§Every floating panel dismisses the same way), and this is the case that put it
-there.
+unreachable. What saves it is the **recovery**, not the null: the handler awaits
+its own `tick` and catches focus back into the grid, so `dismissOnFocusLeave`'s
+settle check — one task later, after that microtask — finds focus inside and
+closes nothing. That is why the recovery is load-bearing rather than a courtesy,
+and why the shared rule can afford to treat a null as a possible departure
+(§Every floating panel dismisses the same way). This is the case that put the
+rule there.
 
 Firefox and WebKit run this filter in CI for exactly this reason
 (docs/operations.md §The e2e run needs three browsers).

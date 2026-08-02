@@ -4,6 +4,10 @@ import { dismissOnFocusLeave, dismissOnOutsidePress } from './dismiss';
 /** jsdom implements no `PointerEvent`, and this listener reads nothing but `target`. */
 const press = (target: EventTarget) =>
   target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+const release = (target: EventTarget = document) =>
+  target.dispatchEvent(new Event('pointerup', { bubbles: true }));
+/** One task, which is how long the settle check waits for focus to land. */
+const settle = () => new Promise((r) => setTimeout(r, 0));
 
 let stop: (() => void) | undefined;
 afterEach(() => {
@@ -102,12 +106,53 @@ describe('dismissOnFocusLeave', () => {
     expect(dismiss).not.toHaveBeenCalled();
   });
 
-  /** The documented subtlety: a stepper that disables itself under the pointer drops focus to
-   *  nothing, and that is indistinguishable from a click on unfocusable chrome
-   *  (docs/app.md §Released after is month-granular). Neither may close the panel. */
-  it('leaves a move to nothing alone', () => {
+  /*
+   * A focus move a POINTER caused is never the keyboard exit this listener exists for, and where
+   * the engine says that focus went is not a fact the app can rely on: on macOS a press on a
+   * button does not focus it, and WebKit named a node outside the anchor instead — so the month
+   * picker's own trigger closed the panel on `focusout` and its click reopened it, which is the
+   * `click` failure mode `dismissOnOutsidePress` exists to avoid, arriving by another door.
+   */
+  it('leaves a focus move a pointer press caused alone, wherever it says focus went', () => {
+    const { panel, inside, outside, dismiss } = setup();
+    press(panel);
+    leave(inside, outside);
+    expect(dismiss).not.toHaveBeenCalled();
+  });
+
+  it('is deaf only for the press itself, so the next keyboard exit still dismisses', () => {
+    const { panel, inside, outside, dismiss } = setup();
+    press(panel);
+    release();
+    leave(inside, outside);
+    expect(dismiss).toHaveBeenCalledOnce();
+  });
+
+  /** The documented subtlety: a stepper that disables itself drops focus to nothing, and that
+   *  arrives as a null `relatedTarget` — same as a genuine exit the engine declined to name
+   *  (docs/app.md §Released after is month-granular). Where focus SETTLES tells them apart. */
+  it('leaves a move to nothing alone when the panel catches focus back', async () => {
+    const { inside, deeper, dismiss } = setup();
+    leave(deeper, null);
+    inside.focus();
+    await settle();
+    expect(dismiss).not.toHaveBeenCalled();
+  });
+
+  it('dismisses a move to nothing once focus has settled outside', async () => {
     const { deeper, dismiss } = setup();
     leave(deeper, null);
+    expect(dismiss, 'nothing has settled yet').not.toHaveBeenCalled();
+    await settle();
+    expect(dismiss).toHaveBeenCalledOnce();
+  });
+
+  it('drops a pending settle check when the returned function runs', async () => {
+    const { deeper, dismiss } = setup();
+    leave(deeper, null);
+    stop!();
+    stop = undefined;
+    await settle();
     expect(dismiss).not.toHaveBeenCalled();
   });
 

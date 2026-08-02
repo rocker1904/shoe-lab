@@ -54,23 +54,55 @@ export function dismissOnOutsidePress(
  * rather than the panel, so Tabbing back to the trigger is not leaving: it is how the runner shuts
  * the panel they just opened.
  *
- * **A null `relatedTarget` does NOT close.** Focus going nowhere identifiable is what a click on
- * unfocusable chrome produces, and also what a stepper that disables itself under the pointer
- * produces (docs/app.md §Released after is month-granular) — the month picker steps its year that
- * way and would shut itself at the ends of the fleet. The pointer case is already answered by the
- * press listener, so treating null as "not a departure" costs nothing and saves that.
+ * **A press deafens it for the length of that press.** A focus move a pointer caused is never the
+ * keyboard exit this listener exists for, and the press listener above has already answered it:
+ * outside dismisses, inside belongs to the trigger. Reading `relatedTarget` instead handed that
+ * answer to the ENGINE — macOS does not focus a button that is pressed, so WebKit named a node
+ * outside the anchor, the month picker's own trigger closed the panel on `focusout`, and its
+ * `click` reopened it. That is the exact failure `pointerdown` was chosen to avoid, arriving by
+ * another door, and green in all three engines on Linux, where a pressed button takes focus.
+ *
+ * **A null `relatedTarget` is answered by where focus SETTLES, one task later.** Focus going
+ * nowhere identifiable is what a stepper that disables itself produces — the month picker steps its
+ * year that way and catches the runner back into the grid, which is the case
+ * docs/app.md §Released after is month-granular sets out — and it is equally what an engine
+ * declining to name a genuine exit produces.
+ * The two are indistinguishable at the event and plain a task afterwards: the stepper's recovery
+ * runs on the microtask its own `await tick()` resolves on, so the check finds focus back inside
+ * and closes nothing, where a real exit has left `document.activeElement` outside.
  */
 export function dismissOnFocusLeave(
   within: () => Node | null | undefined,
   dismiss: () => void,
 ): () => void {
+  let pressing = false;
+  let settling: ReturnType<typeof setTimeout> | undefined;
+  const down = () => { pressing = true; };
+  const up = () => { pressing = false; };
   const onleave = (e: FocusEvent) => {
     const box = within();
     if (!box?.contains(e.target as Node | null)) return;
+    if (pressing) return;
     const to = e.relatedTarget as Node | null;
-    if (to === null || box.contains(to)) return;
-    dismiss();
+    if (to !== null) {
+      if (!box.contains(to)) dismiss();
+      return;
+    }
+    clearTimeout(settling);
+    settling = setTimeout(() => {
+      const now = within();
+      if (now && !now.contains(document.activeElement)) dismiss();
+    });
   };
+  document.addEventListener('pointerdown', down, true);
+  document.addEventListener('pointerup', up, true);
+  document.addEventListener('pointercancel', up, true);
   document.addEventListener('focusout', onleave, true);
-  return () => document.removeEventListener('focusout', onleave, true);
+  return () => {
+    clearTimeout(settling);
+    document.removeEventListener('pointerdown', down, true);
+    document.removeEventListener('pointerup', up, true);
+    document.removeEventListener('pointercancel', up, true);
+    document.removeEventListener('focusout', onleave, true);
+  };
 }

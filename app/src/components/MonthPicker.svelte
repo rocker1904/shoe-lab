@@ -120,9 +120,10 @@
   /**
    * Both dismissals, guarded on the whole anchor rather than the panel: the trigger's own press
    * counts as inside and is left to `toggle`, and Tabbing back onto the trigger is not leaving.
-   * `lib/dismiss.ts` owns the reasoning for both, including why a null `relatedTarget` must not
-   * close this one — that is the stepper at the ends of the fleet disabling itself under the
-   * pointer. The column picker runs the same pair.
+   * `lib/dismiss.ts` owns the reasoning for both, including why a focus move a press caused is
+   * left to the press listener, and why a null `relatedTarget` is judged by where focus settles
+   * rather than treated as staying — `step` above is the case that put that rule there, and its
+   * recovery is what the settle check finds. The column picker runs the same pair.
    */
   $effect(() => {
     if (!open) return;

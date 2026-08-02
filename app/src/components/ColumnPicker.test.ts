@@ -193,19 +193,23 @@ describe('ColumnPicker dismissal', () => {
     const add = vi.spyOn(document, 'addEventListener');
     const remove = vi.spyOn(document, 'removeEventListener');
     const { summary, unmount } = await setup();
-    expect(pointerListeners(add)).toBe(1);
+    // The BALANCE, not a count: both halves of the policy listen for a press — the outside-press
+    // half to dismiss on it, the focus half to stay out of the focus move it causes — so a literal
+    // here would make this test a hostage to how many `lib/dismiss.ts` happens to install.
+    const perOpen = pointerListeners(add);
+    expect(perOpen).toBeGreaterThan(0);
     expect(pointerListeners(remove)).toBe(0);
 
     await fireEvent.click(summary);
     await settle();
-    expect(pointerListeners(remove)).toBe(1);
+    expect(pointerListeners(remove)).toBe(perOpen);
 
     await fireEvent.click(summary);
     await settle();
-    expect(pointerListeners(add)).toBe(2);
+    expect(pointerListeners(add)).toBe(perOpen * 2);
     unmount();
     await settle();
-    expect(pointerListeners(remove)).toBe(2);
+    expect(pointerListeners(remove)).toBe(perOpen * 2);
     add.mockRestore();
     remove.mockRestore();
   });
