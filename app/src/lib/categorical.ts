@@ -31,6 +31,14 @@ export const CATEGORICAL_TEST_TYPES: ReadonlySet<string> = new Set(['option', 'b
  */
 const FIELD_OWNED_SLUGS: ReadonlySet<string> = new Set(['plate']);
 
+/**
+ * How an option test spells "this shoe has none of the thing" — both option tests in the catalogue
+ * use this literal. One home because two readings key on it and they must agree: the phone's name
+ * line drops the value, and a facet checklist sinks its row to the end. An upstream rename lands
+ * here, not in two conditions a screen apart.
+ */
+export const ABSENCE_OPTION = 'none';
+
 export function isCategorical(test: LabTest | undefined): boolean {
   return test !== undefined && !FIELD_OWNED_SLUGS.has(test.slug) && CATEGORICAL_TEST_TYPES.has(test.type);
 }
@@ -62,14 +70,14 @@ export function isNegativeReading(shoe: Shoe, key: string, idx: TestIndex): bool
   const test = idx.bySlug.get(key);
   if (!isCategorical(test)) return false;
   const raw = shoe.values[String(test!.id)];
-  return raw === false || raw === 'none';
+  return raw === false || raw === ABSENCE_OPTION;
 }
 
 /**
- * The rows a facet checklist draws: the test's declared choices in catalogue order, with `none`
- * sunk to the end. Sunk because it was rendered and read rather than argued — heel-tab declares
- * None third of four, and a list ending in None reads as a scale where one interrupted by it does
- * not (spec 2026-08-02-categorical-filters, mockup approved as drawn).
+ * The rows a facet checklist draws: the test's declared choices in catalogue order, with the
+ * absence sunk to the end. Sunk because the list was rendered at both widths and read rather than
+ * argued about: a list ending in None reads as a scale, and one interrupted by it does not —
+ * heel-tab declares None third of four, so the order it arrives in is not the order it reads in.
  *
  * The label is the catalogue's declared name and there is no fallback here: a value the catalogue
  * no longer declares has no row of its own, and reaches the checklist from the counts map, which is
@@ -82,7 +90,7 @@ export function isNegativeReading(shoe: Shoe, key: string, idx: TestIndex): bool
 export function facetValues(test: LabTest): { value: string; label: string }[] {
   if (!isCategorical(test) || test.type !== 'option') return [];
   const rows = (test.options ?? []).map((o) => ({ value: o.value, label: o.name }));
-  return [...rows.filter((r) => r.value !== 'none'), ...rows.filter((r) => r.value === 'none')];
+  return [...rows.filter((r) => r.value !== ABSENCE_OPTION), ...rows.filter((r) => r.value === ABSENCE_OPTION)];
 }
 
 /** The categorical columns the picker offers, in catalogue order. Reads the same rule as every
