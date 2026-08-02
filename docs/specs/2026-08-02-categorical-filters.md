@@ -175,6 +175,13 @@ precedent).
 - `facetValues(test: LabTest): { value: string; label: string }[]`
   (categorical.ts) — declared options in catalogue order, `none` sunk last;
   option tests only.
+- `facetLabel(test: LabTest, value: string): string` (categorical.ts) — the
+  declared option name, or the value itself when undeclared. *(Amended
+  during delivery, task-2 review: as first written nothing could label a
+  stale link-borne value — `facetValues` excludes it by design and
+  `categoricalValue` needs a shoe that does not exist — so the component
+  would have restated the raw-slug fallback §Vocabulary forbids it to own.
+  One home; task 5 implements and consumes it.)*
 - `stableFacetCounts(slug: string): (shoes: Shoe[], f: FilterState, idx: TestIndex) => Map<string, number>`
   (population.ts) — keys are raw value strings.
 - `FeaturesFilter.svelte` props:
@@ -209,9 +216,12 @@ precedent).
    docs/app.md §URL encoding.
 5. **Section component.** `FeaturesFilter.svelte`: checklists with counts,
    zero rows greyed-not-disabled, tri-states, quiet group headings,
-   summary `Any feature` / `N selected`. Evidence: `FeaturesFilter.test.ts`
+   summary `Any feature` / `N selected`. Stale rows label through
+   `facetLabel` (Interfaces, amended), implemented here with its test —
+   this task is its consumer. Evidence: `FeaturesFilter.test.ts`
    — display-order emission, key deletion on empty, tri-state exclusivity,
-   stale row rendered from selection. → spec §Decisions; docs/app.md
+   stale row rendered from selection — plus `categorical.test.ts` for
+   `facetLabel`'s fallback. → spec §Decisions; docs/app.md
    §Categorical columns, §Theming.
 6. **Sidebar wiring.** Section after Discontinued, before the legend;
    counts closures instantiated where `readBrandCounts` is; `Clear filters`
