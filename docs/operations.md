@@ -1,12 +1,13 @@
 # Operations
 
 Five workflows, no other moving parts: there is no server, no database and no
-deploy key. Everything runs on `ubuntu-latest` with the `.nvmrc` Node and
-`npm ci`. Request budgets and gate thresholds are docs/scraping.md.
+deploy key. Everything runs on `ubuntu-latest` with the `.nvmrc` Node and `npm ci`, bar one
+job (§The classic-scrollbar job). Request budgets and gate thresholds are
+docs/scraping.md.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main` | typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit |
+| `ci.yml` | PRs, pushes to `main` | two jobs: `ci` on `ubuntu-latest` — typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
 | `deploy.yml` | After `CI` succeeds on a `main` push (deploys that exact commit), + dispatch — the refresh chain’s path, ungated because its `GITHUB_TOKEN` pushes never ran CI (§The refresh chain) | builds the app, publishes to Pages |
@@ -52,6 +53,26 @@ The image tag is **read from the installed `@playwright/test` at run time**
 rather than written down: the dependency is a caret range, so a pinned tag
 would drift silently on the next `npm install`, and a container whose bundled
 browsers do not match the client refuses to launch.
+
+## The classic-scrollbar job
+
+A scrollbar that takes layout is 12–15px this app's boundaries are all about
+(docs/app.md §Two renderings, and only one of them mounted), and no Linux runner
+here draws one: Playwright is headless, which is overlay in every engine, and a
+headed WebKit under `xvfb` inside the Playwright image hangs. So `ci.yml`'s
+second job runs on `macos-latest`, sets `AppleShowScrollBars` to `Always`,
+installs **WebKit only**, and asks the two things a bar can break — the real
+fleet's fit boundary through `hunt/fit-boundary.mjs`, then `cross-browser.spec.ts`
+**headed**, which is where the one-row toolbar's fit, the panels' ways out, the
+sidebar's tab stops and the fit ladder live.
+
+**Whether Playwright's WebKit honours that default is answered by the log, not
+assumed.** The rig measures the bar and names the width it found for each regime
+on its closing line, so `0px bar` there means macOS served an overlay after all
+and the job is covering WebKit's layout rather than the classic regime.
+
+It gates the deploy like every job in this workflow — `deploy.yml` waits on the
+whole workflow's conclusion (§Deploy).
 
 ## The refresh chain
 

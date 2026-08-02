@@ -33,3 +33,54 @@ jobs:
           path: app/playwright-report/
           retention-days: 7
           if-no-files-found: ignore
+
+  # The one scrollbar regime Linux cannot draw here. Playwright gives OVERLAY scrollbars headless in
+  # every engine, and inside the Playwright image a headed WebKit under xvfb hangs — so every guard
+  # this repo owns about a bar taking 12-15px out of the layout viewport is measured in Chromium and
+  # Firefox and nowhere else. macOS draws WebKit's own bars, and `AppleShowScrollBars` is what makes
+  # them classic rather than the overlay a trackpad gets.
+  #
+  # Whether Playwright's WebKit honours that default is a question this job answers in its own log
+  # rather than one anybody takes on trust: `fit-boundary` MEASURES the bar and names the width it
+  # found for each regime on its closing line. `0px bar` there means macOS served an overlay after
+  # all and this job covers WebKit's layout rather than the classic regime — which is worth knowing,
+  # and worth keeping either way.
+  #
+  # It gates the deploy, like every job here: `deploy.yml` waits on this WORKFLOW's conclusion
+  # (docs/operations.md §Deploy).
+  classic-scrollbars:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: defaults write -g AppleShowScrollBars -string Always
+      # WebKit alone. It is the engine macOS draws natively, and the other two already run both
+      # regimes on a developer's machine through `hunt/fit-boundary.mjs`.
+      - run: npx playwright install webkit
+      # The real 450-shoe fleet, and before `e2e` swaps the five-shoe fixture into `dist/`: the fit
+      # boundary is a claim only the fleet can make, and its classic half has never run anywhere
+      # (`.hunt/fixlog-f14.md`).
+      - run: node hunt/fit-boundary.mjs webkit
+      # Headed, which is the whole point: the suite's own scrollbar-implicated geometry — the
+      # one-row toolbar's fit at 801px, the sidebar's tab stops, the panels' ways out, the fit
+      # ladder — asked in the regime where a bar takes layout.
+      #
+      # One expected exception to read carefully: a 360px window with a classic bar is a 345px
+      # LAYOUT, which is inside the narrowest phone this table is designed for, and `fit-boundary`
+      # asserts from 360px of LAYOUT for exactly that reason. If `fits six columns and keeps the
+      # rest reachable at 360px` is what goes red here, it is the design's own floor being asked in
+      # window widths rather than a regression.
+      # docs/app.md §Two renderings, and only one of them mounted
+      - run: npm -w app run e2e -- --project=webkit --headed
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-macos
+          path: app/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore

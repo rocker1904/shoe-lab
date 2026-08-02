@@ -1,4 +1,4 @@
-// The four claims about this app that ONLY the real fleet can make.
+// The five claims about this app that ONLY the real fleet can make.
 //
 // 1. **1191px of LAYOUT is where the sidebar fits beside the default table.** With 450 shoes and the
 //    default columns the table's own min-content is 903px, and the floor under the sidebar's
@@ -32,6 +32,8 @@
 //
 //   node hunt/fit-boundary.mjs                    # chromium + firefox, both regimes
 //   sh hunt/in-docker.sh hunt/fit-boundary.mjs    # all three; the classic regime needs xvfb-run
+//   node hunt/fit-boundary.mjs webkit             # what CI's macOS job runs
+//                                                 (docs/operations.md §The classic-scrollbar job)
 //
 // Run it when the fleet grows, when `defaultColumns` changes, when a cell's wording moves, or when
 // `lib/fit.ts`'s font tables are regenerated: those are the inputs that move these numbers, and each
@@ -140,7 +142,7 @@ async function afterContentGrows(browser, url, width) {
   const p = await context.newPage();
   await p.goto(`${url}/?q=${SHORT_QUERY}`);
   await p.waitForSelector('.tblwrap, [data-testid="shoe-table-mobile"]');
-  await p.evaluate(() => document.fonts?.ready);
+  await awaitFaces(p);
   const before = await p.evaluate(READ);
   // The sidebar is a drawer at every width in this band — its boundary is 1191 of layout and the
   // band sits either side of 931 — so the search box is behind the trigger.
@@ -153,6 +155,23 @@ async function afterContentGrows(browser, url, width) {
   await context.close();
   return { before, after };
 }
+
+/**
+ * Every width here is a measurement of the app's own faces, so nothing may be read until both have
+ * actually loaded. `document.fonts.ready` is NOT that test — it settles against the loads pending
+ * when it is asked, and this rig asks before the SPA has mounted the table that requests them, so
+ * it has resolved with a face still `loading` or `error` and the walk went on to measure a
+ * fallback. `app/e2e/fit-support.ts` owns the full derivation; this is the same wait in plain node,
+ * and it matters most where the fallback is WIDER than Inter Tight, which is the case on a runner
+ * this rig has never been run on.
+ */
+const awaitFaces = (p) => p.waitForFunction(() => {
+  const faces = [...document.fonts];
+  if (document.fonts.status !== 'loaded') return false;
+  if (faces.some((f) => f.status === 'loading' || f.status === 'error')) return false;
+  return ['Inter Tight', 'JetBrains Mono']
+    .every((n) => faces.some((f) => f.family === n && f.status === 'loaded'));
+}, null, { timeout: 15_000 });
 
 const ENGINES = { chromium, firefox, webkit };
 /**
@@ -193,7 +212,10 @@ for (const engine of engines) {
         + 'a display (try `xvfb-run -a node hunt/fit-boundary.mjs`)');
       continue;
     }
-    ran.push(`${engine}/${regime.name}`);
+    // Named with the bar it turned out to draw, because a headed run that yields an overlay after
+    // all is a regime nobody measured wearing the name of one that was.
+    const pair = { name: `${engine}/${regime.name}`, scrollbar: null };
+    ran.push(pair);
     // One page per engine and regime, resized rather than relaunched: a browser per width would cost
     // hundreds of launches, and a resize is what a runner does anyway.
     const context = await browser.newContext({ viewport: { width: SWEEP_TO, height: 900 } });
@@ -207,13 +229,14 @@ for (const engine of engines) {
     for (const set of SETS) {
       await p.goto(server.url + set.path);
       await p.waitForLoadState('networkidle');
-      await p.evaluate(() => document.fonts?.ready);
+      await awaitFaces(p);
       const tag = `${engine}/${regime.name} · ${set.name}`;
 
       // Measured, never assumed: 0 under an overlay, 12px on this GTK Firefox, 15px in Chromium —
       // and every claim below is about the layout width that is left once it is taken.
       const first = await at(SWEEP_TO);
       const scrollbar = first.window - first.layout;
+      pair.scrollbar = scrollbar;
 
       // Claim 1, stated in LAYOUT widths so the assertion survives the scrollbar rather than being
       // silently 12px out in one regime. The default view only: it is the set the floor is derived
@@ -344,4 +367,4 @@ if (failures.length) {
 }
 console.error(`\nthe sidebar fits from ${BOUNDARY}px of layout up, no view scrolls sideways from `
   + `${ASSERT_FROM}px, and no column set hands the table back as the window widens, in `
-  + `${ran.join(', ')}.`);
+  + `${ran.map((r) => `${r.name} (${r.scrollbar}px bar)`).join(', ')}.`);
