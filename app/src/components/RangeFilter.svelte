@@ -207,8 +207,11 @@
    * the sidebar's padding. Every axis the shipped fleet draws reserves 6% at both ends, so that was
    * one filtered population away rather than on screen.
    */
+  /* `padding` in full, never `padding-inline` alone: a `<fieldset>` carries UA padding on all four
+     sides, so setting only the inline pair hands the block pair back — about 14px a row, which over
+     ten rows moved every tab stop below them and cost the last one its ring room in WebKit. */
   .range { --grip-r: 7px; border: none; margin: 0 0 var(--s4);
-           padding-inline: var(--grip-r); margin-inline: calc(-1 * var(--grip-r)); }
+           padding: 0 var(--grip-r); margin-inline: calc(-1 * var(--grip-r)); }
   legend.on { color: var(--text); font-weight: 700; }
   legend { font-size: var(--t-sm); color: var(--text-dim); padding: 0; margin-bottom: var(--s1); }
   /* `touch-action: none`, or a drag on a phone scrolls the drawer instead of moving the bound. */
