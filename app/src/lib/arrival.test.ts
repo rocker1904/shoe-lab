@@ -12,12 +12,29 @@ describe('isBareArrival', () => {
     history.replaceState(null, '', '/?');
     expect(isBareArrival()).toBe(true);
   });
-  it('is false once the address carries anything at all', () => {
-    history.replaceState(null, '', '/?plate=carbon');
-    expect(isBareArrival()).toBe(false);
-    // including a token the app never reads: something was sent, so this is not a fresh start
-    history.replaceState(null, '', '/?utm_source=twitter');
-    expect(isBareArrival()).toBe(false);
+  it('is false once the address carries a token this app owns', () => {
+    for (const qs of ['plate=carbon', 'r.weight=~250', 'q=nova', 'sort=-weight', 'cols=score',
+                      'stab=1', 'gen.midsole-softness-22=midsole-softness', 'open=some-shoe']) {
+      history.replaceState(null, '', `/?${qs}`);
+      expect(isBareArrival(), qs).toBe(false);
+    }
+  });
+  /**
+   * A token this app does not own is not "something sent". A link forwarded through a newsletter
+   * arrives wearing these, they say nothing about the fleet, and the runner must get the arrival
+   * the bare address would have given them (docs/app.md §View and URL ownership).
+   */
+  it('is true for tokens the app does not own, alone or beside each other', () => {
+    for (const qs of ['utm_source=twitter', 'fbclid=xyz', 'utm_source=n&utm_medium=email&ref=x']) {
+      history.replaceState(null, '', `/?${qs}`);
+      expect(isBareArrival(), qs).toBe(true);
+    }
+  });
+  /** The canonical address is what `Page.svelte` asks about, and it only ever holds owned keys —
+   *  so a link whose every token parsing dropped canonicalises to nothing and reads as bare. */
+  it('reads a composed address as bare exactly when it is empty', () => {
+    expect(isBareArrival('')).toBe(true);
+    expect(isBareArrival('plate=carbon')).toBe(false);
   });
   // The whole point of the change: storage no longer answers for the view, so nothing a previous
   // session left in the browser can make a bare address read as anything but a fresh start.

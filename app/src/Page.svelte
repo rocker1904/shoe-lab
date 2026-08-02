@@ -41,7 +41,7 @@
   import { SCORE_DEFS } from './lib/score-defs';
   import { projectZone, zoneOf } from './lib/zone';
   import { sortShoes } from './lib/sort';
-  import { currentTheme, cycleTheme, type Theme } from './lib/theme';
+  import { currentTheme, setTheme, type Theme } from './lib/theme';
   import DisplayMenu from './components/DisplayMenu.svelte';
   import { installWash, readDisplay, writeDisplay } from './lib/display';
   import { resolveWash, type DisplayPrefs } from './lib/wash';
@@ -55,11 +55,14 @@
   // there is no previous session for a link to have to beat.
   const initial = untrack(() => {
     const qs = location.search.replace(/^\?/, '');
-    // `isBareArrival()` rather than `qs === ''` spelled again: the loading placeholder reserves the
-    // strip's height off the same predicate, and two spellings would let the reserve and the strip
-    // disagree (docs/app.md §Decisions).
+    const view = parseView(qs, indexTests(data.tests));
     const openRows = parseOpen(qs, new Set(data.shoes.map((s) => s.slug)));
-    return { view: parseView(qs, indexTests(data.tests)), bare: isBareArrival(), open: openRows };
+    // Asked of the CANONICAL address rather than the one the runner arrived on, so a link wearing
+    // nothing but `utm_source` is the fresh start it behaves as. `isBareArrival` rather than a
+    // comparison spelled again here: the loading placeholder reserves the strip's height off the
+    // same predicate, and two spellings would let the reserve and the strip disagree
+    // (docs/app.md §Decisions).
+    return { view, bare: isBareArrival(addressOf(view, openRows)), open: openRows };
   });
   let view = $state<ViewState>(initial.view);
   let showFilters = $state(false);
@@ -241,7 +244,13 @@
     // Awaited: until the class lands the drawer is still translated off-canvas and
     // `visibility: hidden`, and a hidden element cannot take focus.
     await tick();
-    drawerStops()[0]?.focus();
+    // The PANEL, never its first stop. That stop is the search box, and focusing a text input on a
+    // phone raises the keyboard over the filters the runner just asked to see — every tap of
+    // `Filters` cost a dismissal before anything could be read (docs/app.md §Filters). The panel
+    // itself carries `tabindex="-1"` for this: `.focus()` on a plain container is a silent no-op,
+    // which is the same lesson the skip link's anchor already carries. Everything else about the
+    // drawer is unchanged — the trap, Escape, and the return to the opener.
+    drawerEl?.focus();
   }
   function closeFilters() {
     showFilters = false;
@@ -268,7 +277,12 @@
     const first = stops[0];
     const last = stops.at(-1);
     if (!first || !last) return;
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    // The panel itself is the third case, and it exists because the panel is what `openFilters`
+    // hands focus to now. It is not one of the stops — a `tabindex="-1"` container is not in the
+    // tab order — and it PRECEDES all of them, so a forward Tab reaches the first stop by itself
+    // while a backwards one would walk straight out of the drawer past the trap.
+    if (e.shiftKey && document.activeElement === drawerEl) { e.preventDefault(); last.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 
@@ -361,10 +375,24 @@
   /** The address bar carries the view and the reading, composed here rather than in
    *  `serializeView`, which is what keeps the `open` token out of every other view comparison
    *  (docs/app.md §View and URL ownership). */
-  const addressOf = (v: ViewState, rows: string[]) =>
-    [serializeView(v), serializeOpen(rows)].filter(Boolean).join('&');
+  // A declaration rather than a `const` arrow, because `initial` above composes the same address to
+  // ask whether the arrival was bare, and there is one composition of "the address of this view".
+  function addressOf(v: ViewState, rows: string[]): string {
+    return [serializeView(v), serializeOpen(rows)].filter(Boolean).join('&');
+  }
   const writeAddress = (address: string) =>
     history.replaceState(null, '', address ? `?${address}` : location.pathname);
+
+  /**
+   * The address bar is reconciled to the parsed view once, at init. `parseView` treats the query
+   * string as hostile and drops what it cannot vouch for (§URL encoding) — but only from the VIEW,
+   * so a link shared through a newsletter kept its `utm_source` in the bar for the whole session
+   * and the runner's own `Copy link` forwarded someone else's analytics with it.
+   *
+   * It is the same composition `initial.bare` was asked about, so the scrub and the strip cannot
+   * disagree about what the link carried: junk changes nothing at all (§View and URL ownership).
+   */
+  untrack(() => writeAddress(addressOf(initial.view, initial.open)));
 
   /**
    * Still the one write path, now asynchronous. A drag fires about sixty view updates a second, so
@@ -508,8 +536,8 @@
   }
   // Reads back what main.ts already put on the DOM at boot (docs/app.md §Theming).
   let theme = $state<Theme>(currentTheme());
-  function onTheme() {
-    theme = cycleTheme();
+  function onTheme(next: Theme) {
+    theme = setTheme(next);
   }
 
   /**
@@ -530,6 +558,29 @@
    */
   const saveDisplay = debounce(writeDisplay, VIEW_WRITE_MS);
   onDestroy(() => saveDisplay.flush());
+  /**
+   * Whether the Display panel is up, held HERE rather than inside `DisplayMenu`. The utilities
+   * snippet changes host at the chrome boundary (§Where the utilities live), so the component is
+   * destroyed and rebuilt on a crossing — and host-owned state dies with the host, which is the
+   * same lesson the open-row set already carries.
+   */
+  let displayOpen = $state(false);
+  /**
+   * The state survives the crossing; the DOM cannot. Focus was on a node that has just been
+   * destroyed, so it falls to `<body>` and a keyboard runner is left with an open panel and no ring
+   * anywhere — the trigger in the band they have just arrived in is where it belongs. Depends on
+   * `mobile` alone: `displayOpen` is read untracked, or opening the panel would re-focus the
+   * trigger and take focus off the control the runner reached for.
+   */
+  $effect(() => {
+    // The band is the dependency, and the host it names is where the rebuilt trigger has to be:
+    // asking for it inside that host is what makes this fail loudly rather than focus a stale node
+    // if the two ever disagree.
+    const host = mobile ? '[data-testid="toolbar"]' : 'header';
+    if (!untrack(() => displayOpen)) return;
+    void tick().then(() =>
+      document.querySelector<HTMLElement>(`${host} [data-testid="display-trigger"]`)?.focus());
+  });
 
   let copied = $state(false);
   /**
@@ -591,6 +642,7 @@
     <!-- The theme cycle moved INSIDE this panel when the wash became tunable: one Display control
          rather than a fourth utility beside three (docs/app.md §Where the utilities live). -->
     <DisplayMenu prefs={display} resolved={wash} {theme} ontheme={onTheme} worded={worded}
+                 open={displayOpen} onopen={(next) => (displayOpen = next)}
                  onchange={(p) => { display = p; saveDisplay(p); }} />
   </span>
 {/snippet}
@@ -660,8 +712,10 @@
   <!-- The handler is a key trap for the panel wherever it is a drawer, not a control: giving this
        box a role would announce a landmark that is only a drawer below the sidebar's boundary. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- `tabindex="-1"` so opening the drawer can put focus HERE rather than on its search box:
+       `.focus()` on a plain container is a no-op, the same reason the table anchor carries one. -->
   <div class="sidebar scrollport" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
-       style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
+       tabindex="-1" style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
     <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
   </div>
   <div class="content" style:--thead-top="{chromeHeight}px">

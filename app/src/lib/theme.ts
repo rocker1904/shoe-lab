@@ -1,7 +1,9 @@
 export type Theme = 'auto' | 'light' | 'dark';
 
+/** Every state the control offers, in the order it draws them (docs/app.md §Theming). */
+export const THEMES: readonly Theme[] = ['auto', 'light', 'dark'];
+
 const KEY = 'theme';
-const NEXT: Record<Theme, Theme> = { auto: 'light', light: 'dark', dark: 'auto' };
 
 function set(theme: Theme): Theme {
   // 'auto' is the absence of an override, so the OS preference media query takes over again.
@@ -38,9 +40,13 @@ export function applySavedTheme(): Theme {
   return set(saved === 'light' || saved === 'dark' ? saved : 'auto');
 }
 
-export function cycleTheme(): Theme {
+/**
+ * Named rather than stepped. The control is a three-pill segmented group, so the runner presses the
+ * state they want and there is no order for a cycle to walk (docs/app.md §Theming).
+ */
+export function setTheme(theme: Theme): Theme {
   // Apply first, persist second: a throwing write must not cost the visible switch.
-  const next = set(NEXT[currentTheme()]);
+  const next = set(theme);
   write(next);
   return next;
 }

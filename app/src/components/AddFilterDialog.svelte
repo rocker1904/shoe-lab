@@ -139,8 +139,14 @@
      is where the room is reserved, for this list and the three others (docs/app.md §Theming). The
      negative inline margin gives that room back to the dialog's own padding, so the rows sit
      exactly where they did; the block room is left to stand, where it reads as part of the gap. */
+  /* The INLINE-END pair is the SCROLLBAR's room, not the ring's, and it is the same reservation the
+     column picker's list makes for the same reason: every row here ends in a coverage figure, and
+     it sat 4px from a bar that takes layout in one regime and is painted straight over the figure
+     in the other (docs/app.md §Theming). Given straight back as margin, so the rows keep the width
+     they had and only the bar moves out of the numbers. */
   .list { overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
-          margin-inline: calc(-1 * var(--ring-room)); }
+          margin-inline: calc(-1 * var(--ring-room)); padding-inline-end: var(--s3);
+          margin-inline-end: calc(-1 * var(--s3)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   /* Separated, and the same rule and the same margin as the column picker's: the three clauses are
      one sentence and read as three headings without them. */

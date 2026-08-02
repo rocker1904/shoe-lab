@@ -9,6 +9,40 @@ knowledge expensive to reconstruct that no existing doc can own without distorti
 It cost a hunt to learn, and putting it in docs/app.md would file testing technique inside a
 document about view state.
 
+## Decisions
+
+Three calls that are settled rather than observed. They were filed among the observations below
+until it became clear what the difference costs: an observation invites a cheaper alternative next
+time, and each of these already had its cheaper alternative tried.
+
+### WebKit needs Docker
+
+It cannot launch on Arch — it wants `libicu74`, `libxml2`, `libflite1`, the same wall
+docs/operations.md §The e2e run needs three browsers records. Build outside, then:
+
+```
+sh hunt/in-docker.sh .hunt/your-probe.mjs      # probe calls start({ build: false })
+```
+
+~3–4 minutes for a three-engine probe. It found two S2s on its first run, both invisible to the
+other engines. **Its limit: Playwright's WebKit is WebCore, not Mobile Safari** — iOS focus
+auto-zoom is not observable, `visualViewport.scale` stays exactly 1. That one needs a real iPhone.
+
+### Opus is the floor
+
+The one controlled comparison in the hunt: same journey, same rig, same brief — **Sonnet filed 0
+findings, Opus filed 6.** Sonnet is fine for mechanical work like shaking the rig down, and its pass
+paid for itself by finding two rig defects. But a cheap agent reporting "nothing found" retires a
+direction that was never searched, and nothing downstream can tell that apart from a clean one.
+
+### Sequencing
+
+Shake the rig down with one solo agent before any parallelism — its gaps are false-positive
+generators and you pay for them once instead of N times. Then run journeys before class sweeps:
+class-based sweeps miss integration failures because every class looks fine in isolation.
+
+Costs, for planning: an Opus journey is ~200–245k tokens, 40–125 tool calls, 20–30 minutes.
+
 ## The failure classes this app actually produces
 
 The most useful result of the first hunt was not any finding. It was discovering that **the
@@ -18,7 +52,11 @@ Independently confirmed clean by four agents: receipt arithmetic under composed 
 leave-one-out exclusion counts, coverage denominators over `considered`, the wash ramp, sort with
 missing-last, every control's persistence, CSV fidelity under filter and sort, the score breakdown
 reconstructing its own answer to ≤0.02, and `build:dataset` being byte-identical over unchanged
-inputs. **Do not start a hunt by re-checking sums.** Six directions paid instead:
+inputs. **"Every control's persistence" no longer names anything**: F7 deleted the stored view
+outright, so the URL is the only home for it and storage holds preferences alone
+(docs/app.md §View and URL ownership). A later brief that reads this list as a map of the app will
+go looking for a mechanism that is gone. **Do not start a hunt by re-checking sums.** Six directions
+paid instead:
 
 **Vocabulary — one word or glyph meaning two things.** The em dash is both "no reading" and the
 real value `none`, and the proof was that sorting sends the same glyph to opposite ends of the
@@ -57,7 +95,7 @@ pointers, so a finding correctly reporting a broken pointer would fail the build
 
 | file | what it does |
 |---|---|
-| `hunt/serve-real.mjs` | builds if stale, **always re-copies the real `data/shoes.json` into `dist/`**, serves on :4180 |
+| `hunt/serve-real.mjs` | builds if stale, serves on :4180, and answers `/shoes.json` from an **in-memory read** of the real `data/shoes.json` — never a copy into `dist/`, which is a race a rig cannot see (below) |
 | `hunt/drive.mjs` | `open()`/`session()`/`cold()`/`pair()` plus the measurement helpers, and `diff()` |
 | `hunt/report.mjs` | `file()` — which **refuses a finding with no reproduction** — and `suspect()` |
 | `hunt/png.mjs` | minimal PNG decoder, so contrast can be read off painted pixels |
@@ -91,19 +129,6 @@ the branch changed nothing. Without the baseline every one of those would have b
 "the branch does not address this", which is a false all-clear rather than a null result. A probe
 that cannot reproduce a finding on the checkout it was found on says nothing about any other.
 
-### WebKit needs Docker
-
-It cannot launch on Arch — it wants `libicu74`, `libxml2`, `libflite1`, the same wall
-docs/operations.md §The e2e run needs three browsers records. Build outside, then:
-
-```
-sh hunt/in-docker.sh .hunt/your-probe.mjs      # probe calls start({ build: false })
-```
-
-~3–4 minutes for a three-engine probe. It found two S2s on its first run, both invisible to the
-other engines. **Its limit: Playwright's WebKit is WebCore, not Mobile Safari** — iOS focus
-auto-zoom is not observable, `visualViewport.scale` stays exactly 1. That one needs a real iPhone.
-
 ### Rig lessons, each of which cost an agent real time
 
 **The rig produced four confidently wrong measurements over the hunt, and an agent caught every one
@@ -125,7 +150,13 @@ of them — the rig never caught itself.** That is the strongest argument for th
    table at 600px, a 317px overflow that does not exist.
 7. **Do not pipe a probe through `tail` and wait** — `tail` blocks until exit, so it looks hung.
    Redirect to a file and read it.
-8. **In WebKit a pointer press disables Tab until focus is moved off what it pressed.** WebKit
+8. **A dataset copied into `dist/` is raced by any `npm -w app run e2e` anywhere.** `serve-real`
+   copied `data/shoes.json` into `app/dist/` once at start; a suite run in any checkout then wrote
+   the 5-shoe fixture over it, and from that moment every measurement was of `cushy` and `Cushy 2`
+   rather than the fleet — silently, because the page still renders. It cost two runs before a
+   screenshot gave it away, and F12 hit the same collision. Serving from an in-memory read taken at
+   start costs nothing and removes the class.
+9. **In WebKit a pointer press disables Tab until focus is moved off what it pressed.** WebKit
    anchors sequential focus navigation to the *node the pointer last pressed*, not to
    `activeElement`. Press a child that cannot take focus — the word inside the column picker's
    `<summary>`, say — and every later Tab and Shift+Tab resolves back to that child's focusable
@@ -164,10 +195,6 @@ from a hunt where more than one thing varied at a time, and should be held loose
 
 ### What else measurably helped
 
-- **Opus is the floor.** The one controlled comparison in the hunt: same journey, same rig, same
-  brief — **Sonnet filed 0 findings, Opus filed 6.** Sonnet is fine for mechanical work like
-  shaking the rig down, and its pass paid for itself by finding two rig defects. But a cheap agent
-  reporting "nothing found" retires a direction that was never searched.
 - **Tell each agent what is already proved clean.** Coverage compounds; later agents started
   further along and stopped re-walking arithmetic.
 - **Hand over a spec's claims as a list to falsify**, not as background reading. Every number in
@@ -178,14 +205,6 @@ from a hunt where more than one thing varied at a time, and should be held loose
   defect goes unowned; give it to someone.
 - **Let an agent append to an existing finding** rather than opening a near-duplicate. Three did,
   and one *corrected* a wave-1 finding that was backwards.
-
-### Sequencing
-
-Shake the rig down with one solo agent before any parallelism — its gaps are false-positive
-generators and you pay for them once instead of N times. Then run journeys before class sweeps:
-class-based sweeps miss integration failures because every class looks fine in isolation.
-
-Costs, for planning: an Opus journey is ~200–245k tokens, 40–125 tool calls, 20–30 minutes.
 
 ## The queue
 

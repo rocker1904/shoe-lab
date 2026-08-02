@@ -3,7 +3,7 @@
 // see (the 1200px overflow being the known one) is only reachable from here.
 import { createServer } from 'node:http';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, copyFileSync, statSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, statSync, readdirSync, existsSync } from 'node:fs';
 import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,13 +52,24 @@ export async function start({ port = 4180, build = true, root = HERE } = {}) {
   const DIST = join(root, 'app/dist');
   const DATA = join(root, 'data/shoes.json');
   if (build) buildIfStale(root, DIST, DATA);
-  // Unconditional, even on a reused build: an `npm -w app run e2e` at any point leaves the 5-shoe
-  // fixture sitting in dist/, and a rig that silently served it would report a clean bill of health
-  // on exactly the data that cannot show the bugs.
-  copyFileSync(DATA, join(DIST, 'shoes.json'));
+  /**
+   * Read into memory, never copied into `dist/`. Copying is a RACE the rig cannot see: an
+   * `npm -w app run e2e` in any checkout rewrites `app/dist/shoes.json` with the 5-shoe fixture
+   * mid-session, and from that moment every measurement is of `cushy` and `Cushy 2` rather than
+   * the fleet — silently, because the page still renders and only a screenshot gives it away. It
+   * happened twice (`.hunt/fixlog-f15.md`, and F12 hit the same collision). Served from memory the
+   * collision cannot occur at all: the bytes are taken once, at start, and nothing on disk is
+   * written or read for them again.
+   */
+  const shoes = readFileSync(DATA);
 
   const server = createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    if (path === '/shoes.json') {
+      res.writeHead(200, { 'content-type': TYPES['.json'] });
+      res.end(shoes);
+      return;
+    }
     const file = join(DIST, path === '/' ? 'index.html' : path);
     if (!file.startsWith(DIST) || !existsSync(file) || statSync(file).isDirectory()) {
       res.writeHead(404).end('not found');
@@ -71,7 +82,7 @@ export async function start({ port = 4180, build = true, root = HERE } = {}) {
   await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
   return {
     url: `http://127.0.0.1:${port}`,
-    shoeCount: JSON.parse(readFileSync(DATA, 'utf8')).shoes.length,
+    shoeCount: JSON.parse(shoes.toString('utf8')).shoes.length,
     stop: () => new Promise((resolve) => server.close(resolve)),
   };
 }

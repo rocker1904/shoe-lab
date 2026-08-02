@@ -14,6 +14,14 @@ const idx = indexTests(TESTS);
 /** The key view state lived under until the URL became its only home. Nothing in the app writes it
  *  any more, so it is planted by hand: these tests are about a browser still carrying one. */
 const DEAD_VIEW_KEY = 'shoe-lab.view.v4';
+/**
+ * The invariant is **no view in storage**, not an empty storage: preferences legitimately live
+ * there (docs/app.md §View and URL ownership), and the display preference is one of them. Stated
+ * as an allowlist rather than a count, so a sixth key has to be declared here — and a view smuggled
+ * in under a name of its own fails on the day it is written.
+ */
+const PREFERENCE_KEYS = ['theme', 'display'];
+const strayStorageKeys = () => Object.keys(localStorage).filter((k) => !PREFERENCE_KEYS.includes(k));
 // An extra numeric test that is not in the sidebar's curated list, so the "Add filter…" select renders.
 const EXTRA: LabTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' });
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, EXTRA] };
@@ -411,33 +419,35 @@ describe('Page', () => {
   });
 
   /**
-   * The theme cycle is a control inside the Display panel now rather than a utility of its own:
-   * one `Display` button replaced it in that slot (docs/app.md §Where the utilities live). What it
-   * does is unchanged, which is what these two check.
+   * The theme control is a three-pill segmented group inside the Display panel now, rather than a
+   * cycling utility of its own (docs/app.md §Where the utilities live, §Theming). What it applies
+   * and what it persists are unchanged, which is what these two check.
    */
   async function openTheme() {
     await fireEvent.click(screen.getByRole('button', { name: 'Display' }));
-    return screen.getByRole('button', { name: /^Theme, currently/ });
+    return screen.getByRole('radiogroup', { name: 'Theme' });
   }
-  it('cycles the theme and remembers the choice', async () => {
+  const pill = (name: string) => screen.getByRole('radio', { name });
+  it('applies a named theme and remembers the choice', async () => {
     render(Page, { props: { data } });
-    const toggle = await openTheme();
-    await fireEvent.click(toggle);
-    expect(document.documentElement.dataset.theme).toBe('light');
-    expect(localStorage.getItem('theme')).toBe('light');
-    await fireEvent.click(toggle);
+    await openTheme();
+    // Straight to Dark, in one press: no state on this control is more than one press away.
+    await fireEvent.click(pill('Dark'));
     expect(document.documentElement.dataset.theme).toBe('dark');
-    await fireEvent.click(toggle);
+    expect(localStorage.getItem('theme')).toBe('dark');
+    await fireEvent.click(pill('Light'));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    await fireEvent.click(pill('Auto'));
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem('theme')).toBe('auto');
   });
-  it('names the active theme on the control', async () => {
+  it('marks the theme in force on the group', async () => {
     render(Page, { props: { data } });
-    const toggle = await openTheme();
-    expect(toggle).toHaveAccessibleName(/currently Auto/);
-    await fireEvent.click(toggle);
-    expect(screen.getByRole('button', { name: /^Theme, currently/ }))
-      .toHaveAccessibleName(/currently Light/);
+    await openTheme();
+    expect(pill('Auto')).toBeChecked();
+    await fireEvent.click(pill('Light'));
+    expect(pill('Light')).toBeChecked();
+    expect(pill('Auto')).not.toBeChecked();
   });
   /**
    * The wave's load-bearing claim, checked where it is actually painted: a runner who never opens
@@ -572,6 +582,19 @@ describe('Page', () => {
     // The view owns the query string; a fragment left behind would ride along in every shared link.
     expect(location.hash).toBe('');
   });
+  /**
+   * The PANEL takes focus, never its search box. Focusing a text input on a phone raises the
+   * keyboard over the filters the runner has just asked to see, so every tap of `Filters` cost a
+   * dismissal before anything could be read (docs/app.md §Filters).
+   */
+  it('puts focus on the drawer itself rather than in its search box', async () => {
+    render(Page, { props: { data } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Filters' }));
+    await tick();
+    const drawer = screen.getByTestId('filter-drawer');
+    expect(document.activeElement).toBe(drawer);
+    expect(screen.getByLabelText('Search')).not.toHaveFocus();
+  });
   it('traps focus in the open drawer and hands it back on Escape', async () => {
     render(Page, { props: { data } });
     const toggle = screen.getByRole('button', { name: 'Filters' });
@@ -583,6 +606,12 @@ describe('Page', () => {
 
     const focusable = [...drawer.querySelectorAll<HTMLElement>('input, button, select, a[href]')];
     const last = focusable.at(-1)!;
+    // Backwards off the panel itself is the way out the trap has to answer now: the container is
+    // not a tab stop and precedes every one of them, so an unanswered Shift+Tab walks straight out
+    // of a drawer that is covering the page.
+    await fireEvent.keyDown(drawer, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
     last.focus();
     await fireEvent.keyDown(last, { key: 'Tab' });
     expect(document.activeElement).toBe(focusable[0]);
@@ -858,7 +887,49 @@ describe('Page keeps the view in the URL alone', () => {
     await fireEvent.click(screen.getByRole('checkbox', { name: 'Carbon' }));
     settle();
     expect(location.search).toContain('plate=carbon');
-    expect(Object.keys(localStorage)).toHaveLength(0);
+    expect(strayStorageKeys()).toEqual([]);
+  });
+
+  /**
+   * The address bar is reconciled to the parsed view once, at init. `parseView` drops what it
+   * cannot vouch for (§URL encoding) — but only from the VIEW, so a link shared through a
+   * newsletter kept its `utm_source` in the bar all session and the runner's own `Copy link`
+   * forwarded someone else's analytics with it (docs/app.md §View and URL ownership).
+   */
+  it('scrubs a link\'s inert tokens at init and keeps the view it did carry', () => {
+    history.replaceState(null, '', '/?utm_source=newsletter&plate=carbon&fbclid=xyz');
+    render(Page, { props: { data } });
+    expect(location.search).toBe('?plate=carbon');
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 1 of the 1 shoes');
+  });
+  /**
+   * A link of nothing but inert tokens IS a bare arrival: junk changes no behaviour at all, so the
+   * runner gets the table and the strip the bare address would have given them, with the junk gone
+   * from the bar (docs/app.md §View and URL ownership).
+   */
+  it('treats a link of nothing but inert tokens exactly as the bare address', () => {
+    history.replaceState(null, '', '/?utm_source=newsletter&fbclid=xyz');
+    const { container } = render(Page, { props: { data } });
+    expect(location.search).toBe('');
+    expect(strip()).toBeInTheDocument();
+    // Read before the unmount, or the container is emptied along with it. The histogram's hatch
+    // pattern carries a per-instance counter that keeps rising across renders, so it is normalised
+    // away: it is an id, not a rendering.
+    const shape = (html: string) => html.replace(/hatch-\d+/g, 'hatch');
+    const withJunk = shape(container.innerHTML);
+    cleanup();
+
+    // The whole rendered page, not merely a similar one.
+    history.replaceState(null, '', '/');
+    const plain = render(Page, { props: { data } });
+    expect(withJunk).toBe(shape(plain.container.innerHTML));
+  });
+  /** And a link that carried something the app owns is still not bare, junk beside it or not. */
+  it('keeps the strip away where a real token arrived among the junk', () => {
+    history.replaceState(null, '', '/?utm_source=newsletter&plate=carbon');
+    render(Page, { props: { data } });
+    expect(location.search).toBe('?plate=carbon');
+    expect(strip()).not.toBeInTheDocument();
   });
   it('gives a filtered visitor the default table on their next bare arrival', async () => {
     render(Page, { props: { data } });

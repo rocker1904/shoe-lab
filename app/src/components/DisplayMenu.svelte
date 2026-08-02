@@ -1,20 +1,29 @@
 <script lang="ts">
   import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { DISPLAY_BOUNDS } from '../lib/display';
-  import type { Theme } from '../lib/theme';
+  import { roving } from '../lib/roving';
+  import { THEMES, type Theme } from '../lib/theme';
   import { DISPLAY_DEFAULTS, type DisplayPrefs, type ResolvedWash } from '../lib/wash';
   import { ICON_PATHS } from './icons';
 
-  let { prefs, resolved, onchange, theme, ontheme, worded }: {
+  let { prefs, resolved, onchange, theme, ontheme, worded, open, onopen }: {
     prefs: DisplayPrefs;
     /** Resolved once per change in `Page.svelte`: the panel reports the guard, it does not run it. */
     resolved: ResolvedWash;
     onchange: (p: DisplayPrefs) => void;
     theme: Theme;
-    ontheme: () => void;
+    ontheme: (t: Theme) => void;
     /** The masthead band spells the control out; the toolbar band draws it
      *  (docs/app.md §Where the utilities live). */
     worded: boolean;
+    /**
+     * Whether the panel is up — the CALLER's state, not this component's. The utilities snippet
+     * changes host at the chrome boundary, so this component is destroyed and rebuilt on a
+     * crossing and anything it owned locally would die with it: a runner who rotated a phone with
+     * the panel open watched it shut itself (docs/app.md §Where the utilities live).
+     */
+    open: boolean;
+    onopen: (next: boolean) => void;
   } = $props();
 
   /**
@@ -25,7 +34,6 @@
    * still renders its children, where nothing invisible may pay for itself
    * (docs/app.md §What a drag may recompute): eleven controls and two swatches is not free.
    */
-  let open = $state(false);
   let box = $state<HTMLElement | null>(null);
   let trigger = $state<HTMLElement | null>(null);
 
@@ -34,14 +42,14 @@
   // focus to it is not a departure. `lib/dismiss.ts` owns the rest.
   $effect(() => {
     if (!open) return;
-    const stops = [dismissOnOutsidePress(() => box, () => (open = false)),
-                   dismissOnFocusLeave(() => box, () => (open = false))];
+    const stops = [dismissOnOutsidePress(() => box, () => onopen(false)),
+                   dismissOnFocusLeave(() => box, () => onopen(false))];
     return () => stops.forEach((s) => s());
   });
 
   function onkeydown(e: KeyboardEvent) {
     if (e.key !== 'Escape' || !open) return;
-    open = false;
+    onopen(false);
     // Back to the trigger, or focus lands on `<body>` and a keyboard user loses the bar.
     trigger?.focus();
   }
@@ -61,7 +69,7 @@
 <span class="display" bind:this={box}>
   <button type="button" bind:this={trigger} class:icon={!worded} data-testid="display-trigger"
           aria-expanded={open} aria-haspopup="true" aria-label="Display"
-          title={worded ? undefined : 'Display'} onclick={() => (open = !open)}>
+          title={worded ? undefined : 'Display'} onclick={() => onopen(!open)}>
     {#if worded}Display{:else}
       <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d={ICON_PATHS.displayRails} stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
@@ -80,10 +88,18 @@
       </div>
 
       <div class="body scrollport">
+        <!-- The app's segmented language, exactly as the toolbar's zone and story groups draw it:
+             one tab stop, arrows move AND activate, `aria-checked` carries the state
+             (docs/app.md §Theming). Three named pills rather than a cycle — a cycle makes the
+             runner press twice to reach the third state and never says what the other two are. -->
         <div class="row theme">
-          <span class="lbl">Theme</span>
-          <button type="button" class="cycle" onclick={ontheme}
-                  aria-label="Theme, currently {THEME_WORD[theme]}">{THEME_WORD[theme]}</button>
+          <span class="lbl" id="d-theme">Theme</span>
+          <span class="seg" role="radiogroup" aria-labelledby="d-theme" use:roving>
+            {#each THEMES as t (t)}
+              <button type="button" role="radio" aria-checked={theme === t} class:on={theme === t}
+                      onclick={() => ontheme(t)}>{THEME_WORD[t]}</button>
+            {/each}
+          </span>
         </div>
 
         <fieldset>
@@ -189,9 +205,15 @@
      reachable from a ramp that has been dragged somewhere unreadable
      (docs/app.md §Theming). The negative margin gives the 4px back to the panel's own padding, so
      nothing moved on screen. */
+  /* The inline-end pair is the SCROLLBAR's room, not the ring's, and it is the same reservation the
+     column picker's list makes for the same reason: every row here ends in an `<output>` at the
+     port's right edge, and on a short window this body scrolls. Given straight back as margin, so
+     the rows keep their width and only the bar moves out of the numbers
+     (docs/app.md §Theming). */
   .body { max-height: min(70vh, 30rem); overflow-y: auto;
           display: flex; flex-direction: column; gap: var(--s2);
-          margin-inline: calc(-1 * var(--ring-room)); }
+          margin-inline: calc(-1 * var(--ring-room)); padding-inline-end: var(--s3);
+          margin-inline-end: calc(-1 * var(--s3)); }
 
   /* Below 800px the trigger is no longer the end of a row that fits: the actions band takes the
      whole width and at 320px the bar's own contents need 331px against 304px, so the control sits
@@ -238,10 +260,19 @@
                            background: var(--surface); border: 2px solid var(--text); cursor: pointer; }
 
   .check { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-xs); }
-  .cycle { grid-column: 2 / -1; justify-self: start; cursor: pointer; font-family: inherit;
-           padding: 2px var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm);
-           background: var(--surface); color: var(--text); font-size: var(--t-xs); }
-  .cycle:hover { background: var(--accent-dim); }
+  /* The toolbar groups' own treatment, restated because Svelte scopes a style block to its own
+     file: a recessed `--bg` track, `--r-md` outside and `--r-sm` pills inside, and the chosen one
+     filled `--accent-solid` carrying `--on-accent` — the only ink allowed on it
+     (docs/app.md §Theming). `overflow: visible`, like the zone group's, because the focus ring is
+     a box-shadow drawn outside the pill. `--t-xs` rather than the bar's `--t-sm`: this group
+     stands among the panel's own labels, not among the toolbar's pills, and the three words have
+     to sit inside a 20rem panel's second column at 320px. */
+  .seg { grid-column: 2 / -1; justify-self: start; display: inline-flex; background: var(--bg);
+         border: 1px solid var(--border); border-radius: var(--r-md); padding: 2px; gap: 2px;
+         overflow: visible; }
+  .seg button { padding: 2px var(--s2); border: none; border-radius: var(--r-sm); background: none;
+                color: var(--text-dim); cursor: pointer; font-size: var(--t-xs); }
+  .seg button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
   .note { margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
   .note.warn { color: var(--bad); }
   .mono { font-family: var(--font-mono); }

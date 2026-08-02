@@ -63,7 +63,12 @@ test('opens on the setup strip, and the address is the only thing that keeps a v
   await page.goto('/');
   await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
   await expect(strip).toBeVisible();
-  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+  // The invariant is **no view in storage**, not an empty storage: preferences legitimately live
+  // there and the display preference is one of them (docs/app.md §View and URL ownership). Stated
+  // as an allowlist rather than a count, so a third key has to be declared here and a view smuggled
+  // in under a name of its own fails on the day it is written.
+  expect(await page.evaluate(() =>
+    Object.keys(localStorage).filter((k) => !['theme', 'display'].includes(k)))).toEqual([]);
 });
 
 test('picks a zone, keeps the strip open through it, and returns to that zone\'s table via All', async ({ page }) => {
@@ -659,7 +664,7 @@ test('mounts each utility exactly once at every width', async ({ page }) => {
     for (const name of ['Copy link', 'Export CSV']) {
       await expect(page.getByRole('button', { name }), `at ${width}px`).toHaveCount(1);
     }
-    // The theme cycle is inside this control now, not beside it (docs/app.md §Where the utilities live).
+    // The theme control is inside this one now, not beside it (docs/app.md §Where the utilities live).
     await expect(page.getByRole('button', { name: 'Display' }), `at ${width}px`).toHaveCount(1);
     await expect(page.getByRole('status'), `at ${width}px`).toHaveCount(1);
   }
@@ -771,6 +776,42 @@ test('moves the utilities between bands on a resize', async ({ page }) => {
   await expect(page.locator('[data-testid="toolbar"]').getByRole('button', { name: 'Copy link' }))
     .toBeVisible();
   await expect(page.getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+});
+
+/**
+ * And an OPEN Display panel survives that move. The host swap destroys and rebuilds the control, so
+ * a panel whose open flag lived inside it shut itself the moment a phone was rotated — the same
+ * lesson the open-row set already carries, which is why the flag is `Page.svelte`'s
+ * (docs/app.md §Where the utilities live). Both directions, because only one of them was ever
+ * walked before.
+ *
+ * Focus is asserted with it: the state can be lifted and the DOM cannot, so a keyboard runner would
+ * otherwise arrive in the new band with the panel up and no ring anywhere on the page.
+ */
+test('keeps the Display panel open across the chrome boundary, in both directions', async ({ page }) => {
+  const panel = page.getByRole('group', { name: 'Display settings' });
+  const focused = () => page.evaluate(() =>
+    document.activeElement?.getAttribute('data-testid') ?? document.activeElement?.tagName ?? null);
+
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Display' }).click();
+  await expect(panel).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.locator('[data-testid="toolbar"]').getByRole('button', { name: 'Display' }))
+    .toBeVisible();
+  await expect(panel, 'the panel shut itself on the way down').toBeVisible();
+  await expect(panel).toHaveCount(1);
+  await expect.poll(focused, { message: 'focus fell to the body on the way down' })
+    .toBe('display-trigger');
+
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await expect(page.locator('header').getByRole('button', { name: 'Display' })).toBeVisible();
+  await expect(panel, 'the panel shut itself on the way back up').toBeVisible();
+  await expect(panel).toHaveCount(1);
+  await expect.poll(focused, { message: 'focus fell to the body on the way back up' })
+    .toBe('display-trigger');
 });
 
 /**
@@ -919,7 +960,7 @@ test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
 
 /**
  * Four controls lose their words at 800px — Copy link, Export CSV, Filters and Columns (the theme
- * cycle is a glyph at every width and never had a word to lose). Each keeps the name its worded
+ * control lives inside the Display panel and has no band of its own). Each keeps the name its worded
  * form had, at every width: an icon that ships without one is unusable and untestable at once.
  */
 test('never ships an icon without its name', async ({ page }) => {
@@ -931,7 +972,7 @@ test('never ships an icon without its name', async ({ page }) => {
       await expect(page.getByRole('button', { name, exact: true }), `${name} at ${width}px`)
         .toHaveCount(1);
     }
-    // The theme cycle is inside this control now, not beside it (docs/app.md §Where the utilities live).
+    // The theme control is inside this one now, not beside it (docs/app.md §Where the utilities live).
     await expect(page.getByRole('button', { name: 'Display' }), `at ${width}px`).toHaveCount(1);
     // Filters answers the SIDEBAR boundary, not this one: it exists all the way to
     // `SIDEBAR_PERMANENT_PX`, worded from 801px up and a glyph below
@@ -1201,6 +1242,68 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
 });
 
 /**
+ * The scrollbar's room, which is a different fact from the ring's and was reserved by neither. A
+ * scrolling port draws its bar at the inline end, and the two ports whose rows END in a number —
+ * the column picker's coverage figures and the Display panel's outputs — put that number flush
+ * against it: 4px of air, so the bar reads as touching the figure where it takes layout and is
+ * painted straight over it where it is an overlay, which is Firefox's own default on Linux.
+ *
+ * Measured as the distance from the right-most painted thing to where the bar is drawn, which is
+ * the same number in both regimes — headless Playwright only ever gives the overlay one
+ * (docs/app.md §Theming, `.hunt/fixlog-f15.md`). Enumerated like the ring's room above, so a port
+ * added later has to answer for it too.
+ */
+test('leaves every scrollport room for the scrollbar it draws over no text', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 560 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Add filter/ }).click();
+  await page.evaluate(() => {
+    for (const d of document.querySelectorAll<HTMLDetailsElement>('details')) d.open = true;
+    document.querySelector<HTMLElement>('[data-testid="display-trigger"]')!.click();
+  });
+
+  const ports = await page.evaluate(() => {
+    const out = [];
+    for (const el of document.querySelectorAll<HTMLElement>('.scrollport')) {
+      const b = el.getBoundingClientRect();
+      if (b.width === 0) continue;
+      const cs = getComputedStyle(el);
+      const bar = el.offsetWidth - el.clientWidth
+        - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
+      // TEXT-bearing leaves only, and that is the claim rather than a convenience. A bar drawn over
+      // a figure makes it unreadable, which is the whole defect; a decoration that reaches the same
+      // edge — `RangeFilter`'s `aria-hidden` bound markers overhang their track by 5px and clear
+      // the sidebar's bar by 7 — is bounded by the port's own padding and is a different question
+      // (`.hunt/fixlog-f15.md` records it).
+      let worst = -Infinity;
+      let who = '';
+      for (const node of el.querySelectorAll<HTMLElement>('*')) {
+        if (node.children.length) continue;
+        const text = (node.textContent ?? '').trim();
+        if (!text) continue;
+        const r = node.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (r.right > worst) { worst = r.right; who = text.slice(0, 16); }
+      }
+      out.push({
+        name: el.getAttribute('id') ?? el.className.split(/\s+/)[0] ?? el.tagName.toLowerCase(),
+        // Null where the port paints no text at all — counted as a port, exempt from the bound.
+        air: worst === -Infinity ? null : Math.round(b.right - parseFloat(cs.borderRightWidth) - bar - worst),
+        who,
+      });
+    }
+    return out;
+  });
+
+  expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(5);
+  // One classic bar on the engines this project measures on: 12px on a GTK Firefox.
+  for (const p of ports) {
+    if (p.air === null) continue;
+    expect(p.air, `${p.name}: the scrollbar is drawn over "${p.who}"`).toBeGreaterThanOrEqual(12);
+  }
+});
+
+/**
  * The panel is anchored, and an anchored box is only ever as reachable as the trigger it hangs off.
  * Every DOM assertion this suite already makes passed while all 52 checkboxes sat at a negative x —
  * `toBeVisible` is a CSS question, not a geometry one — so this measures the painted box against
@@ -1307,7 +1410,10 @@ test('traps focus in the filter drawer and hands it back on Escape', async ({ pa
 
   await toggle.click();
   await expect(drawer).toBeVisible();
-  await expect(page.getByLabel('Search', { exact: true })).toBeFocused();
+  // The PANEL, not its search box. A programmatically focused text input raises the phone keyboard
+  // over the filters the runner just asked to see (docs/app.md §Filters).
+  await expect(drawer).toBeFocused();
+  await expect(page.getByLabel('Search', { exact: true })).not.toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(drawer).toBeHidden();

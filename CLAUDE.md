@@ -28,7 +28,7 @@ before working in its domain.
 | docs/app.md | frontend contracts: view/URL ownership, sanitised-HTML boundary, presets, filters |
 | docs/shoe-stories.md | what Easy, Tempo and Race mean to a runner, and why each score's terms and weights follow |
 | docs/operations.md | workflows, refresh model, deploy chain, contract-drift runbook |
-| docs/hunting.md | finding failure modes with agents: this app's failure classes, the `hunt/` rig, the agent brief |
+| docs/hunting.md | finding failure modes with agents: the settled decisions, this app's failure classes, the `hunt/` rig, the agent brief |
 | README.md | user-facing: what this is, attribution, quick start (not agent reference) |
 | BACKLOG.md | prioritised future work |
 

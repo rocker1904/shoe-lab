@@ -217,9 +217,19 @@
      a min-width is applied last and the 20rem would otherwise win. */
   @media (max-width: 359.98px) { .panel { left: var(--s2); width: auto; min-width: 0; } }
   /* `.scrollport` in `app.css` pays the ring's room; the negative margin gives that room back to
-     the panel's own padding, so the rows sit exactly where they did (docs/app.md §Theming). */
+     the panel's own padding, so the rows sit exactly where they did (docs/app.md §Theming).
+     The INLINE-END pair is the scrollbar's, and it is a different fact. This list always overflows
+     — forty-odd metrics against a 22rem cap — and the coverage figure is the right-most thing in
+     every row, so it ended flush with the port's content edge with 4px of ring room between it and
+     the bar: read as touching where the bar takes layout, and painted UNDER it where the bar is an
+     overlay, which is Firefox's default on Linux (`.hunt/fixlog-f15.md` measures both at 4px).
+     `--s3` is one classic bar on the engines this project measures on (12px, GTK Firefox), and it
+     is given straight back as margin, so the ROW keeps the width it had in both regimes — measured
+     identical at 308px classic and 320px overlay before and after — and only the bar moves, out of
+     the figures and into the panel's own padding. */
   .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
-          margin-inline: calc(-1 * var(--ring-room)); }
+          margin-inline: calc(-1 * var(--ring-room)); padding-inline-end: var(--s3);
+          margin-inline-end: calc(-1 * var(--s3)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
   label { font-size: var(--t-sm); display: grid; grid-template-columns: auto 1fr auto 3rem 2.2rem; align-items: center; gap: var(--s2); }
   .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }

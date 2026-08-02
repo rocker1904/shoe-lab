@@ -51,11 +51,33 @@ stops a second call site defaulting by accident. `parseView` has nothing to
 resolve before it builds that baseline — the columns a link carries are the
 zone it carries.
 
-Init takes a query string or the defaults, and nothing else can speak. **A bare
-address — no query string — is a fresh start**, whoever is arriving and whatever
-they did last week; `isBareArrival()` in `lib/arrival.ts` is that predicate, and
-the setup strip and the loading placeholder both read it so the room reserved and
-the room used are one answer (§The setup strip, §Decisions).
+Init takes a query string or the defaults, and nothing else can speak. **An
+address that carries nothing this app owns is a fresh start**, whoever is arriving
+and whatever they did last week; `isBareArrival()` in `lib/arrival.ts` is that
+predicate, and the setup strip and the loading placeholder both read it so the
+room reserved and the room used are one answer (§The setup strip, §Decisions).
+
+**Init also writes the address bar once, and that write is a scrub.** `parseView`
+drops what it cannot vouch for (§URL encoding) — but only from the *view*, so a
+link shared through a newsletter or a chat app kept its `utm_source` and `fbclid`
+in the bar for the whole session, and the runner's own `Copy link` then forwarded
+someone else's analytics along with their filters. The first `replaceState`
+therefore writes the parsed, composed address, so what is on screen and what is in
+the bar agree from the first frame. It is the same composition every later write
+uses, so there is no second spelling of "the address of this view".
+
+**A token this app does not own changes nothing at all.** A link wearing only
+`utm_source` and its kin is a **bare arrival**: same table, same setup strip, same
+rendered page as the bare address — asserted as the whole page, not as a
+resemblance — with the junk gone from the bar. The predicate is therefore asked of
+the **canonical** address rather than the one the runner arrived on, and the two
+callers ask one rule of two addresses: `Page.svelte` passes the address it has
+just composed, where it reduces to "is it empty", and `App.svelte`'s placeholder
+has no catalogue yet and passes the raw one, where it is the same question asked
+of what the address *carries*. The residue between them is exactly an owned key
+whose value parsing then drops — `?plate=xyz` — which costs one layout shift on a
+hand-mangled link; making it exact would need the catalogue the placeholder is
+waiting for. A link that carried a real token, junk beside it or not, is not bare.
 
 **Stability rides in `ViewState` and therefore in the URL alone.** It resets on a
 bare arrival like every other field, and any bookmark or shared link of a
@@ -630,7 +652,20 @@ on a transform rather than toggling `display`, which cannot be animated;
 immediately on the way in — the panel is handed focus the moment it opens, and
 a hidden element cannot take it — and 200ms late on the way out, so the slide
 is seen first. Escape closes it and returns focus to the control that opened
-it, found by its `aria-controls`. **A drawer left open across a resize past the
+it, found by its `aria-controls`.
+
+**What takes that focus is the panel, never its first control.** The first
+control is the search box, and focusing a text input on a phone raises the
+keyboard over the filters the runner has just asked to see — so every tap of
+`Filters` cost a dismissal before anything could be read. The panel carries
+`tabindex="-1"` for it, because `.focus()` on a plain container is a silent
+no-op (the same lesson the table anchor and the skip link already carry). The
+trap grows one case with it: the container is not a tab stop and *precedes*
+every stop in the drawer, so a forward Tab reaches the first control by itself
+while a backwards one would walk straight out of a panel that is covering the
+page, and is sent to the last stop instead. **The Add-filter dialog keeps its
+autofocus**: it is a search-centric dialog opened by a runner whose next action
+is typing, and it is not what a tap of `Filters` produces. **A drawer left open across a resize past the
 sidebar's boundary closes itself**: above it the panel is simply part of the
 page, and its trap would hold the keyboard inside something that is no longer
 modal. A resize
@@ -2074,8 +2109,9 @@ than in a punctuation mark. The invite carries **no `↗`** — that mark means
 *this leaves the app* on the masthead credit, and this opens a modal. One glyph,
 one meaning; the accent colour is what carries the affordance.
 
-**Visibility is ephemeral `$state`**, initialised from "no query string" — a bare
-arrival, which `Page.svelte` already knows at init — cleared on the first story
+**Visibility is ephemeral `$state`**, initialised from "the address canonicalises
+to nothing" — a bare arrival, which `Page.svelte` already knows at init, and which
+a link wearing nothing but tracking tokens is (§View and URL ownership) — cleared on the first story
 click, never serialised and never persisted. So the strip is offered on **every**
 bare arrival rather than once per browser: view state lives in the URL alone
 (§View and URL ownership), and a dismissal flag in storage is what this section
@@ -2517,12 +2553,25 @@ exactly two sanctioned sinks (§Sanitised-HTML boundary). The `<svg>` wrapper, i
 size and its `aria-hidden` belong to each template, because the accessible name
 is the button's and an icon carrying one of its own would announce twice.
 
-Two e2e guards hold it: `mounts each utility exactly once at every width` steps
+**Because the snippet changes host, nothing rendered inside it may own state that
+has to survive the band.** A host swap destroys and rebuilds every component in
+the snippet, so `DisplayMenu`'s open flag lives in `Page.svelte` and arrives as a
+prop: held locally, the panel shut itself the moment a phone was rotated or a
+window dragged across 800px. The state can be lifted and the DOM cannot, so
+`Page.svelte` also hands focus to the trigger in the band that has just arrived —
+otherwise a keyboard runner crosses the boundary with the panel still up and no
+ring anywhere on the page. That effect depends on the band alone and reads the
+open flag untracked, or opening the panel would yank focus back to the trigger.
+
+Three e2e guards hold it: `mounts each utility exactly once at every width` steps
 either side of 800 because that boundary is asked twice, once by the CSS and once
-by the rune, and the failure mode is the two disagreeing; and
+by the rune, and the failure mode is the two disagreeing;
 `moves the utilities between bands on a resize`, because a listener that never
 fires would pass the first guard at every width and still strand the controls in
-the wrong band for anyone who rotates a phone or drags a window.
+the wrong band for anyone who rotates a phone or drags a window; and
+`keeps the Display panel open across the chrome boundary, in both directions`,
+which is the state-and-focus half and walks both ways because only one of them
+was ever walked before.
 
 ## The About panel
 
@@ -2677,10 +2726,20 @@ foot of the screen with nothing to scroll.
 
 ## Theming
 
-Three-state cycle (auto → light → dark) persisted in `localStorage` and
-applied in `main.ts` **before** the dataset fetch, so a saved dark theme never
-flashes light. Storage access is wrapped: it throws rather than returning null
-in blocked contexts, and losing the preference beats losing the click.
+Three states — auto, light and dark — persisted in `localStorage` and applied in
+`main.ts` **before** the dataset fetch, so a saved dark theme never flashes light.
+Storage access is wrapped: it throws rather than returning null in blocked
+contexts, and losing the preference beats losing the click.
+
+**The control is a three-pill segmented group inside the Display panel, not a
+cycle.** `lib/theme.ts` exports `setTheme(name)` and no stepper, because a cycle
+is the wrong shape for three named states: reaching the third costs two presses,
+and the button can only ever show the state you are *in* rather than the ones you
+could have. The group is the same language the toolbar's zone and story groups
+speak — `lib/roving.ts` for one tab stop and arrows that move *and* activate,
+`aria-checked` for the state, a recessed `--bg` track, and the chosen pill filled
+`--accent-solid` carrying `--on-accent`. It measures 133px against 78px of slack
+inside the panel at every width from 360px to 1440px, and 54px at 320px.
 
 Colour, spacing, radius, type and elevation all live in `app.css` as tokens on
 `:root`, with dark values under both `prefers-color-scheme` and `[data-theme]`
@@ -2761,9 +2820,24 @@ renders in the UA's own default form face. That is not a treatment a component
 could reasonably choose — this app *self-hosts* Inter Tight so it never has to
 ask the machine what it has — and the exception had swallowed forty-five
 controls, `About` and the story pills among them. Four components
-(`MonthPicker`, `Receipt`, `SetupStrip` and the Display panel's theme cycle) had
+(`MonthPicker`, `Receipt`, `SetupStrip` and the Display panel's theme control) had
 already written `font: inherit` for themselves, which is the same fact
 discovered four times.
+
+**A scrollport reserves room for its scrollbar as well as for its ring, and the
+two are different facts.** A bar is drawn at the port's inline end, and the two
+ports whose rows *end* in a number — the column picker's coverage figures and the
+Display panel's outputs — put that number flush against it: 4px of air, so the bar
+read as touching the figure where it takes layout and was painted straight over it
+where it is an **overlay**, which is Firefox's own default on Linux. Both ports
+therefore pay `--s3` of `padding-inline-end` and give it straight back as a
+negative `margin-inline-end`, so the *row* keeps the width it had — measured
+identical at 308px with a classic bar and 320px with an overlay, before and after —
+and only the bar moves, out of the figures and into the panel's own padding.
+`scrollbar-gutter: stable` was the obvious tool and answers neither case: the
+classic bar already takes its layout, and the property has no effect at all on an
+overlay one. `smoke.spec.ts` enumerates the ports and holds each to one bar's
+width, in the same shape and for the same reason the ring's room is enumerated.
 
 It is also a **measurement** rule, and that is what made it urgent. The UA face
 is not one face: Chromium asks for `Arial`, Firefox and WebKit for the generic
@@ -3316,7 +3390,9 @@ jump.
 **Whether the strip is reserved is `isBareArrival()`**, in `lib/arrival.ts` —
 the same predicate `Page.svelte` opens the strip on, written once, because a
 placeholder reserving a strip the page then did not draw is the jump in the other
-direction. `Header` therefore takes `total` and `builtAt` as **optional**: the
+direction. It is asked here of the address the runner arrived on, and there of the
+canonical one, which is one rule over two addresses and diverges only on an owned
+key parsing drops (§View and URL ownership). `Header` therefore takes `total` and `builtAt` as **optional**: the
 count is a fact about the catalogue and it waits for one rather than standing in
 for it, so the loading masthead reserves the count's line box (`min-height: 1lh`
 on `.count`) and states nothing.
