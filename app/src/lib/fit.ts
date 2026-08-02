@@ -57,13 +57,20 @@ const CONTENT_GUTTER_PX = 16;
 const SIDEBAR_TRACK_PX = 260;
 
 /**
- * The width at which the sidebar stops being a drawer and takes a column of its own — `Page.svelte`
- * owns the media query itself (docs/app.md §Filters); this is the same number, because the table's
- * share of the window steps by 260px there and a fit decision that missed it would answer for a
- * layout the page is not in.
+ * The FLOOR under the width at which the sidebar stops being a drawer and takes a column of its own
+ * (docs/app.md §Filters). A floor and not the boundary itself: `sidebarPermanentAt` below is the
+ * boundary, and for any column set wider than the default it stands further out.
  *
- * It is derived from the rule below rather than measured against it: the boundary is the first
- * width at which the **default view** still fits beside the track, which is
+ * **It is a LAYOUT width**, like every other number in this file — `documentElement.clientWidth`,
+ * which a classic scrollbar has already been subtracted from. It was a media query until F14, which
+ * made it a WINDOW width instead, and the two differ by exactly the scrollbar: the sidebar claimed
+ * its column 12–15px of window before the fit decision could know it had, and mounted a table up to
+ * 173px too wide in the gap (`.hunt/fixlog-f14.md`). A browser drawing classic scrollbars therefore
+ * stands the sidebar up at a ~1203–1206px window, which is this number seen from outside the layout
+ * rather than a different one.
+ *
+ * It is derived from the rule below rather than measured against it: it is the first width at which
+ * the **default view** still fits beside the track, which is
  * `desktopMinWidth(defaults) + FIT_SLACK_PX + CONTENT_GUTTER_PX + SIDEBAR_TRACK_PX` — 903 + 12 + 16
  * + 260 on today's fleet. Chosen against any other criterion it opens a band where the rendering
  * reads desktop → list → desktop as a window is dragged WIDER, because taking the track costs the
@@ -71,9 +78,6 @@ const SIDEBAR_TRACK_PX = 260;
  * hand against the 12 the fit rule holds it to, and 1180–1190px was that band
  * (`.hunt/fixlog-f12.md`). `hunt/fit-boundary.mjs` is where the derivation is checked, because only
  * the real fleet can state the 903.
- *
- * A column set wider than the default still costs its own band here — the track is 260px whatever
- * is on screen — and that is a property of a sidebar that appears at a width, not of this number.
  */
 export const SIDEBAR_PERMANENT_PX = 1191;
 
@@ -265,11 +269,40 @@ export function desktopMinWidth(columns: readonly string[], model: FitModel): nu
     + columns.reduce((sum, col) => sum + model.columnPx(col), 0);
 }
 
-/** What the table has to lay itself out in: the window less the page's own gutters, less the
+/**
+ * The first layout width at which the sidebar takes a column of its own beside **these** columns:
+ * the floor, or the width at which the table still clears the track by the fit rule's own slack,
+ * whichever is further out (docs/app.md §Filters).
+ *
+ * The `max` is the whole rule, and it is what makes the two decisions one. The track costs the table
+ * 260px at a single pixel of window, so a permanence boundary that cannot see the column set stands
+ * the sidebar up at a width where the fit rule then refuses the table — and the rendering reads
+ * desktop → list → desktop as the window is dragged WIDER. F12 fixed that for the default set by
+ * moving the constant; a nine-column view still handed 170px of width back to the stacked list at
+ * exactly 1191px, because a constant cannot answer a question about a set the runner picks
+ * (`.hunt/fixlog-f14.md`). Consulting the model instead closes it for every set at once, and gives
+ * the stronger property the sidebar was always supposed to have: **it never stands beside the
+ * stacked list**, because it waits for the table it exists to tune.
+ */
+export function sidebarPermanentAt(columns: readonly string[], model: FitModel): number {
+  return Math.max(SIDEBAR_PERMANENT_PX,
+    desktopMinWidth(columns, model) + FIT_SLACK_PX + CONTENT_GUTTER_PX + SIDEBAR_TRACK_PX);
+}
+
+/** Whether the sidebar is a column rather than a drawer at this layout width — the predicate
+ *  `Page.svelte` drives the layout, the drawer's focus trap and the `Filters` trigger from, so all
+ *  of them answer one boundary (docs/app.md §Filters). */
+export function sidebarPermanent(columns: readonly string[], layoutWidth: number,
+  model: FitModel): boolean {
+  return layoutWidth >= sidebarPermanentAt(columns, model);
+}
+
+/** What the table has to lay itself out in: the width less the page's own gutter, less the
  *  sidebar's track wherever the sidebar has one (docs/app.md §Filters). */
-export function availableForTable(layoutWidth: number): number {
+export function availableForTable(columns: readonly string[], layoutWidth: number,
+  model: FitModel): number {
   return layoutWidth - CONTENT_GUTTER_PX
-    - (layoutWidth >= SIDEBAR_PERMANENT_PX ? SIDEBAR_TRACK_PX : 0);
+    - (sidebarPermanent(columns, layoutWidth, model) ? SIDEBAR_TRACK_PX : 0);
 }
 
 /** The question in one line: would the desktop table fit, with the slack it is held to? */
@@ -283,9 +316,16 @@ export function fitsDesktop(columns: readonly string[], availableWidth: number,
  * single predicate. `layoutWidth` is the LAYOUT width — `documentElement.clientWidth`, which excludes
  * a classic scrollbar — because that is the width the table is laid out in and the fleet is always
  * long enough to draw one.
+ *
+ * Monotone in the width by construction, which is the property F14 was sent to guarantee: below
+ * `sidebarPermanentAt` the available width is `layoutWidth - 16` and rises with the window, above it
+ * `layoutWidth - 276`, and the boundary is *defined* as a width at which the second still clears the
+ * table's minimum. So the step down at the boundary can never cross the requirement, and a rendering
+ * once mounted survives every wider window
+ * (docs/app.md §Two renderings, and only one of them mounted).
  */
 export function rendersPhone(columns: readonly string[], layoutWidth: number,
   model: FitModel): boolean {
   if (layoutWidth < DESKTOP_FLOOR_PX) return true;
-  return !fitsDesktop(columns, availableForTable(layoutWidth), model);
+  return !fitsDesktop(columns, availableForTable(columns, layoutWidth, model), model);
 }

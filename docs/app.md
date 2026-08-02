@@ -367,14 +367,26 @@ that arrived by link holding a non-curated bound is seeded into the list by
 `parseView`, or clearing it would silently remove it. Released after is unset
 from an **Any** chip: a chip that sets a date cannot also clear it.
 
-**The sidebar is a drawer below 1191px, and a permanent column at 1191px and
-up.** That number is `SIDEBAR_PERMANENT_PX` in `lib/fit.ts`, and it is derived
-from the fit rule rather than measured against a different question: it is the
-default view's own min-content width plus the slack every rendering decision is
-held to, the page's leading gutter, and the 260px track — 903 + 12 + 16 + 260 on
-today's fleet (§Two renderings, and only one of them mounted). 1190 is the last
-drawer width and 1191 the first permanent one, which is why the query is written
-`max-width: 1190.98px` on the repo's `.98` convention (§The chrome bands).
+**The sidebar is a drawer everywhere the table cannot be seen beside it, and
+that is a fit decision rather than a width.** `sidebarPermanentAt` in `lib/fit.ts`
+is the boundary: the larger of a 1191px floor and the width at which *the columns
+on screen* still clear the 260px track by the fit rule's own slack. The floor is
+`SIDEBAR_PERMANENT_PX`, derived the same way for the default view — its
+min-content width plus the slack, the page's leading gutter and the track,
+903 + 12 + 16 + 260 on today's fleet (§Two renderings, and only one of them
+mounted). On today's fleet ten columns move the boundary to 1362px and twelve to
+1539px, which `hunt/fit-boundary.mjs` prints rather than asserts.
+
+**It is a LAYOUT width — `documentElement.clientWidth` — and it is asked in
+script, not in a `@media` rule.** Those are two different widths: a media query
+answers about the window, which includes a classic scrollbar the layout never
+receives. Until F14 the sidebar took its column 12–15px of window before the
+mount decision could know it had, and mounted a table up to 173px too wide in the
+gap. `Page.svelte` derives `drawer` from the fit model and writes it as a class,
+which the layout, the scrim, the drawer's focus trap and the `Filters` trigger
+all read; nothing about the sidebar is stated as a number in CSS any more. In a
+browser drawing classic scrollbars the sidebar therefore arrives at a ~1203–1206px
+window, which is the same boundary seen from outside the layout.
 
 **Why the fit rule's criterion rather than "the whole page fits"**: taking the
 track costs the table 260px at one pixel of window, so a boundary chosen where
@@ -382,15 +394,20 @@ the page *merely* fits stands the sidebar's column up at a width where the fit
 rule then refuses the table. It shipped that way for one wave — 1180 was where
 the document first fitted, with 2px in hand against the 12 the fit rule wants —
 and the rendering read desktop → list → desktop as a window was dragged from
-1179px to 1191px. The two boundaries are one decision; `hunt/fit-boundary.mjs`
-asserts that the rendering never reverts as the window widens, which is the
-assertion to read first if either number is ever moved by hand.
+1179px to 1191px. Moving the constant closed that for the default view and left
+it open for every wider set, because a constant cannot answer a question about a
+set the runner picks: a ten-column view handed 170px of width back to the stacked
+list at exactly 1191px. **The `max` is what makes the two boundaries one
+decision**, and it buys the property the sidebar was always described as having —
+it never stands beside the stacked list, because it waits for the table it exists
+to tune. `hunt/fit-boundary.mjs` asserts all of it across three column sets and
+both scrollbar regimes, and it is what to read first if a boundary is ever moved
+by hand.
 
-A column set **wider** than the default still costs a band of its own here — the
-track is 260px whatever is on screen, so ticking past what fits beside it hands
-the width back to the stacked list until the window has caught up. That is a
-property of a sidebar that arrives at a width rather than of this number, and
-the list is a coherent screen at those widths.
+The price is stated rather than hidden: a set wide enough to push its boundary
+past the window keeps its drawer at widths where a narrower set would have a
+column. That is the drawer standing in for a sidebar there is no room for, not a
+column withheld — and the list it stands beside is a coherent screen.
 
 **It used to be 800px, and one pixel of window cost 259px of overflow.** At
 800px the sidebar was a drawer and the document overran a default view by 117px;
@@ -407,10 +424,11 @@ displacement in the suite, and `hunt/fit-boundary.mjs` measures the overflow
 against the real fleet, which is the only place it exists (§Table presentation).
 
 **The chrome's 800px did not move with it**, and the two are now separate
-boundaries with separate homes (§The chrome bands). Between them — 801px to
-1190px — the bar is one row and `Filters` sits on it **carrying its word**.
+boundaries with separate homes (§The chrome bands). Between them — from 801px to
+wherever the sidebar's boundary falls for the columns on screen — the bar is one
+row and `Filters` sits on it **carrying its word**.
 
-**Below 1191px the drawer carries a scrim**, and clicking it closes — the same
+**Wherever the sidebar is a drawer it carries a scrim**, and clicking it closes — the same
 affordance Escape gives. The drawer already traps focus; the scrim states in the
 interface what the trap enforces, and nothing else in the new elevation language
 floats above content without one. It never renders where the sidebar is
@@ -606,15 +624,16 @@ tab stop is whatever is checked, tracked through a `MutationObserver` on
 carries it too; a group with nothing checked still admits focus at its first
 radio.
 
-**Below 1191px the sidebar is a drawer, and a drawer traps focus.** It slides
+**Wherever the sidebar is a drawer it traps focus.** It slides
 on a transform rather than toggling `display`, which cannot be animated;
 `visibility` is what keeps a closed drawer out of the tab order, switched
 immediately on the way in — the panel is handed focus the moment it opens, and
 a hidden element cannot take it — and 200ms late on the way out, so the slide
 is seen first. Escape closes it and returns focus to the control that opened
-it, found by its `aria-controls`. **A drawer left open across a resize past
-1191px closes itself**: above that width it is simply part of the page, and its
-trap would hold the keyboard inside a panel that is no longer modal. A resize
+it, found by its `aria-controls`. **A drawer left open across a resize past the
+sidebar's boundary closes itself**: above it the panel is simply part of the
+page, and its trap would hold the keyboard inside something that is no longer
+modal. A resize
 that only crosses 800px must NOT close it — that is the chrome's boundary, and
 the drawer is still a drawer on the other side of it (§Filters).
 `keeps the drawer open above the chrome boundary, where the sidebar is still a
@@ -1293,15 +1312,27 @@ window and assert which table mounts. The phone rendering is checked directly in
 `ShoeTableMobile.test.ts` and at real widths by Playwright.
 
 **The width available to the table steps down by 260px when the sidebar takes
-its column**, so that boundary is this rule's as much as it is §Filters'. It is
-`SIDEBAR_PERMANENT_PX`, and it is *derived* from this rule — the first width at
-which the default view clears the track by the same slack every other width is
-judged by. Chosen any other way it opens a band where the rendering reads
-desktop → list → desktop as the window is dragged wider; one ran 1180–1190px for
-a wave, and `hunt/fit-boundary.mjs` now asserts across the whole ladder that the
-rendering never reverts as the window widens. A column set wider than the default
-still hands the width back to the list until the window catches up, which
-§Filters states as the price of a sidebar that arrives at a width.
+its column**, so that boundary is not a second decision — it is this one asked
+about a layout that has the track in it. `sidebarPermanentAt` is the larger of
+the `SIDEBAR_PERMANENT_PX` floor and the width at which the columns on screen
+still clear the track by the same slack (§Filters), so **the step down at the
+boundary can never cross the requirement** and the rendering is monotone in the
+width by construction: mounted once, it survives every wider window. Chosen any
+other way it opens a band where the rendering reads desktop → list → desktop as
+the window is dragged wider — one ran 1180–1190px on the default view for a wave,
+and 1191–1361px on a ten-column view for two more, because a constant answers for
+one column set and the runner picks the set. `fit.test.ts` walks every width from
+the floor to 2400px for five column sets and asserts the sequence never goes
+back; `hunt/fit-boundary.mjs` walks the real fleet in two engines and both
+scrollbar regimes.
+
+**The width the decision reads is the LAYOUT width**, `documentElement.clientWidth`,
+which excludes a classic scrollbar. With 450 shoes there is always one, and
+counting its 12–15px as room for the table is how a model comes to mount a table
+that then overflows. This is also why the sidebar's boundary is no longer a media
+query: a media query answers about the window, so the two differed by exactly a
+scrollbar and the sidebar arrived before the table's share of the width had been
+recomputed (§Filters).
 
 **Because only one is mounted, neither may own the open-row set.** A set held in the
 component is dropped whole the moment the rendering changes, so a phone rotated
@@ -2107,7 +2138,7 @@ has gone.
 `Toolbar.svelte` is the permanent surface: a setup group of three controls in one
 visual language — the zone, then `All | Easy | Tempo | Race`, then the
 `Stability` pill — and an actions group pushed right by `margin-left: auto`:
-`About`, `Filters` (below 1191px only, where the sidebar is a drawer), `Columns`,
+`About`, `Filters` (only where the sidebar is a drawer), `Columns`,
 and below 800px the three utilities as well (§Where the utilities live). The
 strip cannot hold the controls that reset it, because it is gone by the time they
 are needed.
@@ -2242,8 +2273,8 @@ what the table is — and above it **two**.
 
 | query | composition |
 |---|---|
-| (none — 1191px and up) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No `Filters`: the sidebar is permanent, so the toggle has nothing to toggle |
-| `max-width: 1190.98px` | `Filters` joins `.actions`, because the sidebar is a drawer here (§Filters). Still one row, and the word is still a word |
+| (none — above the sidebar's boundary) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No `Filters`: the sidebar is permanent, so the toggle has nothing to toggle — and it is *absent*, not hidden, because the decision is the script's |
+| (the `drawer` prop, below that boundary) | `Filters` joins `.actions`, because the sidebar is a drawer here (§Filters). Still one row, and the word is still a word |
 | `max-width: 800px` | two rows: `.actions` first (`order: -1`), then `.setup`, which is `space-between`, capped at 414px and centred. Every word on the actions row but `About` becomes a glyph, `Filters` included. Pill inline padding `--s3` → `--s2` |
 | `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges. **Every** pill's inline padding `--s2` → `--s1`, the zone group's included |
 
@@ -2291,16 +2322,24 @@ view that scrolls sideways at all, which the test's own
 **There are two named boundaries in this app, and they are not the same
 number.** Each has one home, and the two answer different questions:
 
-| boundary | number | question it answers | asked by |
-|---|---|---|---|
-| **chrome density** | `800px` | how much room has this bar for words? | `CHROME_QUERY` in `Page.svelte`, and `@media (max-width: 800px)` in the bar, the masthead and the pickers |
-| **sidebar fit** | `1191px` | can the table be seen beside a 260px track, by the fit rule's own criterion? | `SIDEBAR_PERMANENT_PX` in `lib/fit.ts` owns it; `DRAWER_QUERY` in `Page.svelte` derives from it, and `@media (max-width: 1190.98px)` restates it in `Page.svelte`'s layout, `Toolbar.svelte`'s toggle and `App.svelte`'s reserve |
+| boundary | number | width it is about | question it answers | asked by |
+|---|---|---|---|---|
+| **chrome density** | `800px` | the WINDOW | how much room has this bar for words? | `CHROME_QUERY` in `Page.svelte`, and `@media (max-width: 800px)` in the bar, the masthead and the pickers |
+| **sidebar fit** | `1191px` floor, further out per column set | the LAYOUT (`documentElement.clientWidth`) | can the table be seen beside a 260px track, by the fit rule's own criterion? | `sidebarPermanentAt` in `lib/fit.ts` owns it over the fit model; `Page.svelte`'s `drawer` rune reads it and writes a class the layout, the scrim and the drawer's own rules answer; the `Filters` trigger takes it as a prop; `App.svelte`'s reserve asks the floor directly |
 
 They were one number until the sidebar's own was measured (§Filters), and
 collapsing them again is the mistake to guard against: the chrome's is a
 question about *type and gaps*, which stop fitting at 800px, and the sidebar's
 is a question about *the table's min-content*, which is 917px on its own and
 1177px with the track. Nothing about the first predicts the second.
+
+**They are not even about the same width.** A media query measures the window,
+which includes a classic scrollbar; the fit model measures the layout the table
+is given, which does not. That is right for the chrome — the bar spans the
+window — and wrong for the sidebar, which is why the sidebar's boundary stopped
+being a media query in F14 and became a rune over a width the script reads. The
+mismatch was worth 12–15px, and in it the sidebar had its column while the table
+was still being sized as though it did not (§Filters).
 
 Between them the bar is one row carrying an extra control it never used to
 carry — `Filters`, **with its word**, because words-become-icons is the chrome's
@@ -2321,12 +2360,13 @@ property of either engine's layout. The measurements below were retaken on all
 three engines afterwards.
 
 **`800px` is written `800px` rather than `799.98px`**, so exactly 800 is
-"mobile" as it always has been. `429.98px` and `1190.98px` take the repo's `.98`
-convention so no width matches two tiers at once, and so the number that gets
-named is the first width of the *upper* tier: a `max-width: 430px` matches *at*
-430 and would put the flush band's rules on the width meant to open the capped
-one, and a `max-width: 1191px` would leave the sidebar a drawer on the first
-width at which it fits.
+"mobile" as it always has been. `429.98px` takes the repo's `.98` convention so
+no width matches two tiers at once, and so the number that gets named is the
+first width of the *upper* tier: a `max-width: 430px` matches *at* 430 and would
+put the flush band's rules on the width meant to open the capped one. The
+sidebar's boundary needs no such spelling any more — a `>=` in the script is the
+whole convention, and `SIDEBAR_PERMANENT_PX` is the first PERMANENT width by
+construction rather than by a hundredth of a pixel.
 
 **The design asked for a merged line from 700px to 800px, and the shipped
 controls do not fit one.** Measured with the icon forms in place, the setup row
@@ -2416,7 +2456,7 @@ with its text is not reliably announced.
 **The band is asked in the script, not as an `@media` rule**, exactly as
 `PHONE_QUERY` already is, because a media rule cannot unmount anything. It is
 `CHROME_QUERY`, the chrome-density boundary, and it is **not** the sidebar's —
-the drawer has its own rune on `DRAWER_QUERY` at 1190.98px, and a 1000px window
+the drawer has its own rune over the fit model, and a 1000px window
 draws the utilities worded in the masthead with a drawer still behind it
 (§The chrome bands). Each is `max-width` and **inverted rather than
 duplicated**: a `min-width` twin of a `max-width` boundary is not its
@@ -2535,8 +2575,8 @@ indentation, not the column:
 | ↳ Display panel | 10 | *the chrome's children only* |
 | **sidebar** — sticky, so a context at `z-index: auto` | — | the page, at 0 |
 | ↳ month picker panel | 20 | *the sidebar's children only* |
-| drawer scrim, below 1191px | 25 | the page |
-| filter drawer, below 1191px | 30 | the page |
+| drawer scrim, wherever the sidebar is a drawer | 25 | the page |
+| filter drawer, wherever the sidebar is a drawer | 30 | the page |
 | Add-filter dialog's scrim, About panel's scrim | 32 | the page |
 | Add-filter dialog, About panel | 35 | the page |
 | skip link | 40 | the page |
@@ -2555,8 +2595,8 @@ over the open dialog, and no value would have fixed it — 2000 inside a context
 that sits at 0 still loses. The dialog moves itself to `<body>` on mount and is
 removed from there when it closes.
 
-The drawer is the reason the dialog sits at 35 rather than below 30: below
-1191px the dialog opens *from* the drawer, and once it is no longer a descendant
+The drawer is the reason the dialog sits at 35 rather than below 30: wherever
+the sidebar is a drawer the dialog opens *from* it, and once it is no longer a descendant
 of that drawer it has to outrank it explicitly. Its own scrim takes the gap
 between the two — over the drawer it has to dim, under the dialog it belongs to
 — which is why the dialog and its scrim are siblings in `<body>` rather than
@@ -2567,7 +2607,7 @@ only catches its own failure.
 
 **The About panel takes the Add-filter dialog's own 35 over 32 rather than a
 layer of its own**, because the two can never be open at once. The reason is the
-modality, not the drawer: above 1191px the sidebar is permanent and both openers
+modality, not the drawer: above the sidebar's boundary it is permanent and both openers
 sit on surfaces that are simply part of the page. Each dialog lays its own scrim
 at 32 over everything else and traps Tab inside itself, so whichever is up puts
 the other's opener behind a scrim and out of reach (§The About panel).
@@ -2862,8 +2902,8 @@ cover both:
 
 - **Flat mark** — the inactive histogram bars and the pickers' coverage bars are
   a single fill, drawn or not. They clear **3:1 against every surface they are
-  actually drawn on**, which is three: `--surface` inside the drawer below
-  1191px, `--bg` above it, where the sidebar declares no background of its own,
+  actually drawn on**, which is three: `--surface` inside the drawer, `--bg`
+  where the sidebar is a column and declares no background of its own,
   and `--border-soft`, the track the pickers' coverage fill sits in. "Every
   surface" is the load-bearing part — a value chosen against `--surface` alone
   clears the bar in the one case that only happens inside the drawer.
@@ -3231,7 +3271,7 @@ Three more parts of that contract. The placeholder **reserves the sidebar track*
 (`--sidebar-w`, the token `Page.svelte` lays out against), because what replaces
 it is the second cell of a two-column layout rather than a full-bleed block:
 without the reservation the placeholder starts at x=16 and the table lands at
-x=276. It reserves it **on the sidebar's own boundary**, 1191px, not the
+x=276. It reserves it **on the sidebar's own boundary**, the floor under it, not the
 chrome's — the reserve exists to hold the geometry the loaded page will have, so
 a track reserved at a width where the page then draws none is the 260px jump
 this shape was built to prevent, only in the other direction (§Filters).

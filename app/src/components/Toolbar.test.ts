@@ -5,7 +5,7 @@ import type { Zone } from '../lib/lineage';
 
 const props = {
   zone: 'heel' as Zone | null, onzone: vi.fn(), selected: 'all' as string | null,
-  onstory: vi.fn(), showFilters: false, onfilters: vi.fn(),
+  onstory: vi.fn(), showFilters: false, onfilters: vi.fn(), drawer: true,
   stability: false, onstability: vi.fn(), onabout: vi.fn(),
 };
 
@@ -129,6 +129,18 @@ describe('Toolbar', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await fireEvent.click(toggle);
     expect(onfilters).toHaveBeenCalled();
+  });
+
+  /**
+   * Not hidden — absent. Where the sidebar is a column there is no drawer to open, and a control
+   * hidden by a rule is still a control to anything that does not evaluate CSS. It was a
+   * `display: none` under a media query until the boundary stopped being a width
+   * (docs/app.md §Filters).
+   */
+  it('offers no Filters toggle where the sidebar is not a drawer', () => {
+    render(Toolbar, { props: { ...props, drawer: false } });
+    expect(screen.queryByRole('button', { name: 'Filters' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'About' })).toBeInTheDocument();
   });
 });
 

@@ -28,7 +28,7 @@
   import { COPIED, EXPORTED, viewAnnouncement } from './lib/announce';
   import { isBareArrival } from './lib/arrival';
   import { exportCsv } from './lib/csv-export';
-  import { fitModel, rendersPhone, SIDEBAR_PERMANENT_PX } from './lib/fit';
+  import { fitModel, rendersPhone, sidebarPermanent } from './lib/fit';
   import { keepFocusInScrollports } from './lib/focus-scroll';
   import { ICON_PATHS } from './components/icons';
   import { indexTests } from './lib/dataset';
@@ -203,22 +203,17 @@
    * it. Below it a permanent sidebar would buy a column of filters by pushing the table it is
    * meant to tune off the screen (docs/app.md §Filters).
    *
-   * The number is `SIDEBAR_PERMANENT_PX`, which is the fit rule's own — the first width at which
-   * the default view clears the track by the same slack it is held to everywhere else. Held to
-   * that criterion and no other, or the two disagree and the rendering flips twice as a window is
-   * dragged wider. Written `.98` on the repo's convention, so `SIDEBAR_PERMANENT_PX` is the first
-   * PERMANENT width rather than the last drawer one.
+   * A `$derived` over `lib/fit.ts`, and **not** a `matchMedia` — this was `DRAWER_QUERY` until F14
+   * and the query was wrong twice over. A media query answers about the WINDOW, which includes a
+   * classic scrollbar the layout never gets, so the sidebar took its column 12–15px of window
+   * before the fit decision (which reads `clientWidth`) could know it had, and the table mounted up
+   * to 173px too wide in the gap. And a media query cannot read the column set, so at nine columns
+   * the track arrived where the table no longer fitted beside it and the width went back to the
+   * stacked list (`.hunt/fixlog-f14.md`). One rune over the same layout width the mount decision
+   * uses answers both: the boundary rides the columns, and the CSS below is driven from this class
+   * rather than from a restated number (docs/app.md §The chrome bands).
    */
-  const DRAWER_QUERY = `(max-width: ${SIDEBAR_PERMANENT_PX - 0.02}px)`;
-  let drawer = $state(untrack(() => window.matchMedia?.(DRAWER_QUERY).matches ?? false));
-  $effect(() => {
-    const mq = window.matchMedia?.(DRAWER_QUERY);
-    if (!mq) return;
-    const sync = () => (drawer = mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  });
+  const drawer = $derived(!sidebarPermanent(view.columns, windowWidth, fit));
   /**
    * One left open across a resize would carry its focus trap into a layout where nothing is modal,
    * so the width at which it stops being a drawer is the width that closes it. The same rune the
@@ -621,7 +616,7 @@
   <!-- The strip asks both questions in words while it is up, so the bar carries only its own
        actions until it has been handed them (docs/app.md §Presets). -->
   <Toolbar zone={zoneMark} onzone={onZone} {selected}
-           onstory={onStory} {showFilters} showGroups={!stripOpen}
+           onstory={onStory} {showFilters} {drawer} showGroups={!stripOpen}
            stability={view.stability} onstability={setStability}
            onabout={() => (aboutOpen = true)}
            utilities={mobile ? utilities : undefined}
@@ -654,7 +649,7 @@
   </div>
 {/if}
 
-<div class="layout" class:show-filters={showFilters}>
+<div class="layout" class:show-filters={showFilters} class:drawer>
   <!-- The drawer already traps focus; the scrim states in the interface what the trap enforces.
        Clicking it closes, which is the same affordance Escape gives. -->
   {#if showFilters}
@@ -761,41 +756,37 @@
   #shoe-table { scroll-margin-top: var(--thead-top); }
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   .empty strong { display: block; color: var(--text); font-size: var(--t-lg); font-weight: 600; margin-bottom: var(--s1); }
-  /* The SIDEBAR-FIT boundary, not the chrome's: `.utils` above answers 800px and this answers
-     1190.98, because how much room the bar has for words and whether the table can be seen beside a
-     260px track are two different questions with two different answers. Every rule that makes the
-     sidebar a drawer is in this one block, so the layout, the panel and its scrim cannot disagree
-     about which it is. `1190.98` on the repo's `.98` convention: 1191 is `SIDEBAR_PERMANENT_PX`,
-     the first width at which the default table clears the track by the fit rule's own slack, and it
-     is the first PERMANENT width (docs/app.md §Filters).
-     A media query cannot read a TypeScript constant, so this is the one number restated by hand —
-     `smoke.spec.ts` drives a browser at `SIDEBAR_PERMANENT_PX` and one pixel below it, so the
-     restatement fails the suite rather than the runner if the two ever part. */
-  @media (max-width: 1190.98px) {
-    /* Below the drawer's 30 and above the page. Never rendered where the sidebar is permanent,
-       because the resize effect forces `showFilters` false there (docs/app.md §Stacking order). */
-    .scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
-    @media (prefers-reduced-motion: no-preference) {
-      .scrim { animation: fade 200ms ease-out; }
-    }
-    .layout { grid-template-columns: minmax(0, 1fr); }
-    /* Off-canvas rather than `display: none`: display cannot be animated, so the drawer appeared
-       and vanished with no sense of where it came from. `visibility` is what keeps a closed drawer
-       out of the tab order — a panel that is merely translated away is still focusable — and it is
-       one of the few properties that can be transitioned alongside a transform without fading. */
-    .sidebar {
-      position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(20rem, 88vw);
-      max-height: none; background: var(--surface); border-right: 1px solid var(--border);
-      box-shadow: var(--shadow-dialog); transform: translateX(-100%); visibility: hidden;
-    }
-    .layout.show-filters .sidebar { transform: none; visibility: visible; }
+  /* The SIDEBAR-FIT boundary, not the chrome's: `.utils` above answers 800px in a media query and
+     this answers a CLASS, because how much room the bar has for words is a question about the
+     window and whether the table can be seen beside a 260px track is a question about the layout
+     and the column set — which no media query can ask (docs/app.md §The chrome bands). The script
+     decides once and writes `.drawer` here, so the layout, the panel and its scrim cannot disagree
+     about which it is, and cannot disagree with the mount decision either. It was
+     `@media (max-width: 1190.98px)` until F14, and a media query is 12–15px of scrollbar and a
+     whole column set away from the answer (docs/app.md §Filters). */
+  .layout.drawer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Below the drawer's 30 and above the page. Never rendered where the sidebar is permanent,
+     because the resize effect forces `showFilters` false there (docs/app.md §Stacking order). */
+  .layout.drawer .scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
+  /* Off-canvas rather than `display: none`: display cannot be animated, so the drawer appeared
+     and vanished with no sense of where it came from. `visibility` is what keeps a closed drawer
+     out of the tab order — a panel that is merely translated away is still focusable — and it is
+     one of the few properties that can be transitioned alongside a transform without fading. */
+  .layout.drawer .sidebar {
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(20rem, 88vw);
+    max-height: none; background: var(--surface); border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-dialog); transform: translateX(-100%); visibility: hidden;
+  }
+  .layout.drawer.show-filters .sidebar { transform: none; visibility: visible; }
+  @media (prefers-reduced-motion: no-preference) {
+    .layout.drawer .scrim { animation: fade 200ms ease-out; }
     /* `visibility` cannot be interpolated, so it is switched at whichever end of the slide is
        right: immediately on the way in, or the panel is still hidden when it is handed focus, and
        200ms late on the way out, so the slide is seen before it leaves the tab order. */
-    @media (prefers-reduced-motion: no-preference) {
-      .sidebar { transition: transform 200ms ease-out, visibility 0s linear 200ms; }
-      .layout.show-filters .sidebar { transition: transform 200ms ease-out, visibility 0s; }
-    }
+    .layout.drawer .sidebar { transition: transform 200ms ease-out, visibility 0s linear 200ms; }
+    .layout.drawer.show-filters .sidebar { transition: transform 200ms ease-out, visibility 0s; }
   }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 </style>

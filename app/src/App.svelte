@@ -15,6 +15,7 @@
   import Toolbar from './components/Toolbar.svelte';
   import { loadShoes } from './lib/data';
   import { isBareArrival } from './lib/arrival';
+  import { SIDEBAR_PERMANENT_PX } from './lib/fit';
   import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
   import Page from './Page.svelte';
 
@@ -31,6 +32,27 @@
   /** The reserve is laid out and invisible, so nothing it renders can be pressed and nothing it
    *  holds means anything. Handlers exist because the components require them. */
   const inert = () => {};
+
+  /**
+   * Whether the page this placeholder stands in for will have a permanent sidebar, asked of the
+   * LAYOUT width and not of a media query: a classic scrollbar is 12–15px the layout never receives,
+   * and reserving the track from a window width put the reservation on the wrong side of the
+   * boundary for those pixels (docs/app.md §Filters, `.hunt/fixlog-f14.md`).
+   *
+   * The FLOOR is the right constant here where `Page.svelte` asks the fit model: the placeholder
+   * draws the DEFAULT columns — it is waiting for the dataset every other set's width is computed
+   * from — and the floor is exactly the default view's own boundary. A link carrying wider columns
+   * is served a reserve that the loaded page then takes back, which is one frame at the end of a
+   * fetch rather than a layout a runner reads.
+   */
+  const layoutWidth = () => document.documentElement.clientWidth || window.innerWidth;
+  let permanent = $state(layoutWidth() >= SIDEBAR_PERMANENT_PX);
+  $effect(() => {
+    const sync = () => (permanent = layoutWidth() >= SIDEBAR_PERMANENT_PX);
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  });
 
   let data = $state<ShoesFile | null>(null);
   let error = $state<string | null>(null);
@@ -70,7 +92,8 @@
   <div class="reserve" inert>
     <Header />
     <Toolbar zone={DEFAULT_ZONE} onzone={inert} selected={null} onstory={inert}
-             showFilters={false} onfilters={inert} stability={false} onstability={inert}
+             showFilters={false} onfilters={inert} drawer={!permanent}
+             stability={false} onstability={inert}
              onabout={inert} showGroups={!strip} />
   </div>
   {#if strip}
@@ -78,7 +101,7 @@
       <SetupStrip zone={DEFAULT_ZONE} selected={null} onzone={inert} onstory={inert} onabout={inert} />
     </div>
   {/if}
-  <div class="pane">
+  <div class="pane" class:track={permanent}>
     <!-- The receipt's own box, one line of it. Its wording counts shoes, so its height is a fact
          about the data the placeholder is waiting for — one line is the floor, and the surplus at a
          width where it wraps is the residual `smoke.spec.ts` bounds. -->
@@ -120,15 +143,17 @@
      x=16 and the table lands at x=276, which is the jump measured. Below `SIDEBAR_PERMANENT_PX` the
      sidebar is a drawer and the track is gone, so the reservation goes with it — the same boundary
      the loaded page lays out on, or the placeholder reserves a column that never arrives
-     (docs/app.md §Decisions). `smoke.spec.ts` drives the width one pixel below it, so the constant
-     and this restatement of it cannot part unnoticed. */
+     (docs/app.md §Decisions). The width is read in the script above rather than in a media query
+     here, because the loaded page reads the layout width and a media query would answer about the
+     window: the two differ by a classic scrollbar (docs/app.md §Filters). `smoke.spec.ts` drives
+     the width one pixel below the boundary, so the two cannot part unnoticed. */
   /* Laid out, painted by nothing. It is the height above the table that is being reserved, and the
      bands are what state it. */
   .reserve { visibility: hidden; }
   /* The margins moved here from `.skeleton` when the receipt joined it: both stand in the second
      cell of the layout, so the track is reserved once for the pair rather than twice. */
-  .pane { margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); }
-  @media (max-width: 1190.98px) { .pane { margin-left: var(--s4); } }
+  .pane { margin: 0 var(--s4); }
+  .pane.track { margin-left: calc(var(--sidebar-w) + var(--s4)); }
   /* The receipt's own box — `Receipt.svelte`'s margin, padding and face — with one line of it
      reserved as a line box rather than as a number. */
   .receipt-space { margin: 0 0 var(--s2); padding: var(--s2) var(--s1);

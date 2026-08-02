@@ -233,9 +233,15 @@ describe('Page', () => {
 
   /**
    * Two boundaries with two different jobs, so a band has to be able to answer them separately —
-   * and a resize has to reach the runes, which the flat stub above cannot do. Each `matchMedia`
-   * call gets a live `matches` getter over the current width and keeps its listener, so `at()`
-   * moves the window and tells everyone who asked (docs/app.md §The chrome bands).
+   * and a resize has to reach the runes, which the flat stub above cannot do
+   * (docs/app.md §The chrome bands).
+   *
+   * It moves the window BOTH ways the app asks about it, because the two boundaries no longer ask
+   * the same way: the chrome's is still a `matchMedia`, so each call gets a live `matches` getter
+   * and keeps its listener, while the sidebar's reads the layout width off a `resize` — which is
+   * the change that let it start answering about the column set (docs/app.md §Filters). jsdom lays
+   * nothing out, so `documentElement.clientWidth` is 0 there and `innerWidth` is what the app falls
+   * back to.
    */
   function stubViewport(width: number) {
     let now = width;
@@ -248,7 +254,14 @@ describe('Page', () => {
       removeEventListener: () => {}, dispatchEvent: () => false,
       addListener: () => {}, removeListener: () => {},
     })) as unknown as typeof window.matchMedia);
-    return async (next: number) => { now = next; for (const fn of [...listeners]) fn(); await tick(); };
+    window.innerWidth = now;
+    return async (next: number) => {
+      now = next;
+      window.innerWidth = next;
+      window.dispatchEvent(new Event('resize'));
+      for (const fn of [...listeners]) fn();
+      await tick();
+    };
   }
 
   /**
@@ -270,13 +283,40 @@ describe('Page', () => {
 
   it('closes the drawer at the width where the sidebar becomes permanent', async () => {
     const at = stubViewport(390);
-    render(Page, { props: { data } });
+    const { container } = render(Page, { props: { data } });
     const toggle = screen.getByRole('button', { name: 'Filters' });
     await fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
     await at(1400);
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    // The trigger goes with the drawer it opened: above the boundary there is nothing to toggle,
+    // so the button is not there to be pressed (docs/app.md §Filters).
+    expect(screen.queryByRole('button', { name: 'Filters' })).toBeNull();
+    expect(container.querySelector('.layout')!.classList).not.toContain('show-filters');
+  });
+
+  /**
+   * The boundary is a question about the columns on screen, not only about the width — which is why
+   * it is a rune over the fit model and not the media query it used to be. Ticking past what fits
+   * beside a 260px track at a width that has not moved leaves the sidebar a drawer, and that is what
+   * stops the track arriving at a width where the table would have to go back to the stacked list
+   * (docs/app.md §Filters, `.hunt/fixlog-f14.md`).
+   */
+  it('keeps the sidebar a drawer where the columns on screen cannot afford its track', async () => {
+    const wide = ['releasedAt', 'score', 'msrpGbp', 'plate', ...TESTS.slice(0, 7).map((t) => t.slug)];
+    history.replaceState(null, '', `/?cols=${wide.join(',')}`);
+    const at = stubViewport(390);
+    render(Page, { props: { data } });
+    await at(1250);
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument();
+
+    // The same width, the default columns: the track fits beside them, so it is a column again.
+    cleanup();
+    history.replaceState(null, '', '/');
+    const at2 = stubViewport(390);
+    render(Page, { props: { data } });
+    await at2(1250);
+    expect(screen.queryByRole('button', { name: 'Filters' })).toBeNull();
   });
 
   /**

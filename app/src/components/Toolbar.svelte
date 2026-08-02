@@ -6,7 +6,7 @@
   import { ICON_PATHS } from './icons';
   import ZoneToggle from './ZoneToggle.svelte';
 
-  let { zone, onzone, selected, onstory, showFilters, onfilters, columns, utilities,
+  let { zone, onzone, selected, onstory, showFilters, onfilters, drawer, columns, utilities,
         stability, onstability, onabout, showGroups = true }: {
     /** Derived in `Page.svelte`, never stored: null while the view names both halves or neither
      *  (docs/app.md §Presets). */
@@ -17,6 +17,13 @@
     selected: string | null;
     onstory: (id: string) => void;
     showFilters: boolean; onfilters: () => void;
+    /** Whether the sidebar is a drawer at this width and this column set. Decided once in
+     *  `Page.svelte` over the fit model and passed down, because it is not a question a media query
+     *  can ask: it depends on the columns on screen and on the layout width rather than the window
+     *  (docs/app.md §Filters). The trigger is rendered exactly where there is a drawer behind it —
+     *  a `display: none` button is still a control to anything that does not evaluate CSS, and this
+     *  one would toggle nothing (docs/app.md §Two renderings, and only one of them mounted). */
+    drawer: boolean;
     /** The column picker, passed through rather than imported: it needs the whole dataset, which
      *  the toolbar has no other reason to know about. */
     columns?: Snippet;
@@ -76,14 +83,17 @@
          know what Columns is for. -->
     <button type="button" class="about" onclick={onabout}>About</button>
     <!-- Both forms are rendered and CSS chooses, so the accessible name never changes with the
-         viewport (docs/app.md §Where the utilities live). -->
-    <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
-            onclick={onfilters} aria-label="Filters">
-      <span class="word">Filters</span>
-      <svg class="glyph" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d={ICON_PATHS.filters} stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
-      </svg>
-    </button>
+         viewport (docs/app.md §Where the utilities live). The BUTTON is a `{#if}` and not a rule,
+         because whether there is a drawer to open is the script's answer (docs/app.md §Filters). -->
+    {#if drawer}
+      <button type="button" class="filters-toggle" aria-expanded={showFilters} aria-controls="filter-sidebar"
+              onclick={onfilters} aria-label="Filters">
+        <span class="word">Filters</span>
+        <svg class="glyph" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d={ICON_PATHS.filters} stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+        </svg>
+      </button>
+    {/if}
     {@render columns?.()}
     <!-- `{#if}`, not a bare render: an empty span is still a flex item and still takes the row's
          gap, which is exactly what would stop the utilities being flush right. -->
@@ -113,23 +123,16 @@
      `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
      `tokens.test.ts` fails the build on a raw white in a component's style block. */
   .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
-  /* Hidden by default rather than by a query: at 1191px and up the sidebar is permanent, so the
-     drawer toggle has nothing to toggle. It is the fifth carrier of the one secondary-button
+  /* Present exactly where the `drawer` prop says there is a drawer, which reaches 390px further
+     than the width at which this bar stops being a phone's — so it is on the bar carrying its word
+     across the whole band between the two boundaries (docs/app.md §The chrome bands). It carries no
+     rule of its own about WHEN, because that question moved to the script when it stopped being
+     answerable by a width (docs/app.md §Filters). The fifth carrier of the one secondary-button
      treatment (docs/app.md §Theming). */
-  .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer;
-                    border: 1px solid var(--border); background: var(--surface); color: var(--text);
-                    border-radius: var(--r-sm); font-size: var(--t-sm); }
+  .filters-toggle { display: inline-flex; align-items: center; padding: var(--s1) var(--s3);
+                    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+                    color: var(--text); border-radius: var(--r-sm); font-size: var(--t-sm); }
   .filters-toggle:hover { background: var(--accent-dim); }
-  /* The SIDEBAR-FIT boundary, and the only rule on this bar that answers it: the trigger exists
-     wherever the sidebar is a drawer, which reaches 390px further than the width at which this bar
-     stops being a phone's. Its own block rather than the 800px one below, or the button would be
-     missing across the whole band where it is the only way to the filters
-     (docs/app.md §The chrome bands). The number is `SIDEBAR_PERMANENT_PX` less the repo's `.98`,
-     restated because a media query cannot read a constant and driven at both sides of it by
-     `smoke.spec.ts`. */
-  @media (max-width: 1190.98px) {
-    .filters-toggle { display: inline-flex; align-items: center; }
-  }
   /* The sixth carrier of the one secondary-button treatment (docs/app.md §Theming). */
   .about { padding: var(--s1) var(--s3); cursor: pointer; border: 1px solid var(--border);
            background: var(--surface); color: var(--text); border-radius: var(--r-sm);
