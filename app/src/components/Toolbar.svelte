@@ -155,15 +155,14 @@
        at any width including the fractional ones zoom and Firefox both produce. */
     .word { display: none; }
     .glyph { display: inline-flex; }
-    /* The pills' own padding is what buys the fit: at the base `--s3` the setup row is wider than
-       the cap below, so it would overflow its own band before any viewport did. */
+    /* DENSITY, not fit: this is the band where every pixel of chrome is paid before the first shoe
+       (above), and at the base `--s3` the row lands within a pixel of its own cap either way
+       (docs/app.md §The chrome bands). */
     .s { padding-inline: var(--s2); }
     .actions { order: -1; flex-basis: 100%; }
     /* `--s1` rather than the base `--s2`, and it is SPACING: under `space-between` the gap is only
        a floor, so the visible gaps are whatever the row has spare and it shows only at the widths
-       where the row nearly fills. It was written as a fit rule against a Firefox row that came out
-       4px over the screen at 360px — but that 9px of Firefox-over-Chromium was the UA form face,
-       not the engine, and the row now clears every width at either value
+       where the row nearly fills. The row clears every width at either value
        (docs/app.md §The chrome bands). */
     .setup { flex-basis: 100%; justify-content: space-between; gap: var(--s1);
              max-width: 414px; margin-inline: auto; }

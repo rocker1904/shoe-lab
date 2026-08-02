@@ -2432,14 +2432,13 @@ row's remaining slack is **36px in Chromium and 33px in Firefox and WebKit**;
 run there are the two whose UA form face is the generic `sans-serif`, which is
 how this row once wrapped on CI alone.
 
-**Every number in this section is the app's own face, and until F13 none of
-them were.** The controls did not inherit `font-family`, so the bar was drawn in
-whatever form face the host resolved for the engine (§Theming). The three
-engines now agree to within **2.4px** across the whole setup row, where they
-used to disagree by nine — the "nine pixels" this section turned two rules on
-was the gap between Firefox's `sans-serif` and Chromium's `Arial`, not a
-property of either engine's layout. The measurements below were retaken on all
-three engines afterwards.
+**Every number in this section is the app's own face, and that is not
+automatic**: a form control does not inherit `font-family`, so without the one
+rule in `app.css` that gives it back the bar is drawn in whatever face the host
+resolves for the engine, and the numbers below swing across a 51px range on what
+a machine has installed (§Theming). With the rule in place the three engines
+agree to within **2.4px** across the whole setup row. Anything retaken here must
+be measured with it, or it is one machine's.
 
 **`800px` is written `800px` rather than `799.98px`**, so exactly 800 is
 "mobile" as it always has been. `429.98px` takes the repo's `.98` convention so
@@ -2460,9 +2459,7 @@ for, not the band; below 731 the bar wraps anyway with the two rows in the
 **wrong order**, because `flex-wrap` puts the actions after the setup where the
 design puts them above it. So the split stays on the boundary that already
 exists and the bands are separate for the whole sub-800 range, which is one row
-of chrome between 700px and 800px that the design hoped to save. The old figures
-here — 411px and 330px, for a 765px/777px minimum — were the host UA face, and
-the app's own face is what moved them.
+of chrome between 700px and 800px that the design hoped to save.
 
 **The actions lead and the setup follows.** What acts on the table sits above
 what the table is, so the row carrying every word and all the colour is the one
@@ -2475,6 +2472,12 @@ surplus. Below 430 the cap is wider than
 the row, so it stops meaning anything and the row goes flush to both padding
 edges, which is the property the whole rebuild exists to restore. `space-around`
 was measured and rejected: it never touches the padding edge again at any width.
+
+**The `--s3` → `--s2` pill step at 800px is density, not fit.** It is the band
+where every pixel of chrome is paid before the first shoe, and that is the whole
+reason for it: held at the base `--s3` the setup row's content lands within a
+pixel of the 414px cap — 1px under in Chromium, 0.8px over in Firefox — so
+nothing about fit chooses between the two values.
 
 **The pill padding steps at `429.98px`, not at the `374.98px` the design named.**
 That figure came from a rig carrying the app's tokens but not its components, and
@@ -2496,17 +2499,13 @@ the zone group a step behind its neighbours between 430px and 800px: one group
 padded differently from the two it stands with, in a row whose whole point is
 that the three read as one family.
 
-**The setup row's `gap` is `--s1` below 800px, and it no longer binds
-anywhere.** Under `space-between` the gap is only a floor, so the visible gaps
-are whatever the row has spare and the value changes nothing above the binding
-widths — and at `--s2` the row is now 16 to 18px clear at 360px and 30 to 32px
-clear of the 414px cap above 430. It was written as a fit rule because at `--s2`
-Firefox's row came out 4px over the screen at 360px and 6px over the cap at
-430px, and that 9px of Firefox-over-Chromium was the UA form face rather than
-the engine (§Theming). **It stays `--s1` as spacing**, unchanged: the three
-engines are clean walking 360px to 1440px in 10px steps either way, so there is
-nothing to buy by moving it and a visible step at 360px to lose. Do not restore
-the fit claim in a comment — the number that justified it is gone.
+**The setup row's `gap` is `--s1` below 800px, and it is spacing rather than
+fit.** Under `space-between` the gap is only a floor, so the visible gaps are
+whatever the row has spare and the value changes nothing above the binding
+widths: at `--s2` the row is 16 to 18px clear at 360px and 30 to 32px clear of
+the 414px cap above 430, and the engines walk 360px to 1440px in 10px steps clean
+at either value. So there is nothing to buy by moving it and a visible step at
+360px to lose.
 
 **The group divider is gone** at every width (§The toolbar).
 
