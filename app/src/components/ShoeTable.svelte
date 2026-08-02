@@ -255,6 +255,15 @@
      alone in the gutter to its right (docs/app.md §Table presentation). */
   th.fig .h-units { margin-right: var(--caret-w); }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
+  /* THE PANEL IS THE RECESSED SURFACE, so nothing may be drawn around it. This cell took the
+     figures' own `--s2` and paints nothing itself, which framed the `--well` panel in 8px of the
+     table's `--surface` on every side — a raised border around a thing whose whole point is to sit
+     BELOW the row (docs/app.md §The expanded row). Measured 8/8/8/9px, both engines, both themes;
+     subtler in dark, where the frame is `#1a1d21` against the panel's `#16191d`, and the same
+     defect. The panel owns every pixel of its own spacing, so the cell has nothing to add: the
+     phone rendering answers the same question by painting its cell `--well` instead, because there
+     the panel does not span it. */
+  tr.expand td { padding: 0; }
   td.fig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   /* No `overflow` here, deliberately: it would make the wrapper a scrollport and detach the sticky
      `thead`, which is the failure `.content` already documents.

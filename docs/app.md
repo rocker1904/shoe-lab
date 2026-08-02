@@ -1350,6 +1350,18 @@ the row above it rather than floating over the table, and **both** renderings fo
 the phone's expanded row is on `--well` too, or the same question would have two answers on
 two screens.
 
+**And nothing is drawn around it.** The desktop cell took the figures' own `--s2` and painted
+nothing itself, so the recessed panel sat inside an **8px frame of the table's raised
+`--surface`** on every side — measured 8/8/8/9px in Chromium and Firefox in both themes, the
+dark one subtler at `#1a1d21` against the panel's `#16191d` and the same defect. A raised
+border around the one thing whose whole point is to sit *below* the row is the paragraph above
+contradicting itself in paint. The cell now zeroes its padding: the panel owns every pixel of
+its own spacing, so the cell has nothing to add, and the row's divider reaches its full width
+instead of stopping 8px short. The phone answers the same question the other way round — its
+cell takes the `--well` — because there the panel does not span it. Both answers are legal, so
+what `cross-browser.spec.ts` asserts is the **result**: either the panel fills its cell, or the
+cell paints the panel's own colour into the gap, at every tier.
+
 Empty space beside prose is margin; empty space beside a bordered card is a hole — which is
 why the breakdown sits at the foot with the full width of the capped box to place it in, and
 never in a rail beside the review. Nothing stands beside it at either tier, which is what

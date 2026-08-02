@@ -481,6 +481,11 @@ test('caps the expanded row at the summary, anchored left, with the breakdown pl
       return { content, grid: { left: gb.left, right: gb.right }, detail: r('.detail')!,
                body: r('.a-body')!, intro: r('.a-body .intro')!, prose: r('.a-prose')!,
                bd: r('.a-bd'), links: r('.a-links'), review: r('.a-links > a'),
+               // The cell the panel sits in, and what each of them paints: a gap between the two
+               // is only harmless if the cell is drawing the panel's own surface into it.
+               cell: r('tr.expand td'),
+               cellBg: getComputedStyle(document.querySelector('tr.expand td')!).backgroundColor,
+               panelBg: getComputedStyle(document.querySelector('.detail')!).backgroundColor,
                // Which tier is in force, read off the layout rather than inferred from the width:
                // the boundary is a CONTAINER query and the container is the table's, not the
                // window's (docs/app.md §The expanded row).
@@ -547,6 +552,17 @@ test('caps the expanded row at the summary, anchored left, with the breakdown pl
     expect(review, `the review link is not in the trailing line at ${width}px`).not.toBeNull();
     expect(review.width, `the review link has no box at ${width}px`).toBeGreaterThan(0);
     expect(review.top, `the review link fell below the breakdown at ${width}px`).toBeLessThan(bd.top);
+
+    // 6. Nothing is drawn AROUND the panel. It is the recessed surface, so a cell that inset it and
+    //    painted nothing framed it in the table's own raised `--surface` — 8px on every side, both
+    //    engines, both themes, and a raised border around the one thing that is supposed to sit
+    //    below the row (docs/app.md §The expanded row). The two renderings answer this differently
+    //    and both answers are legal, so the assertion is the RESULT: either the panel fills its
+    //    cell, or the cell is painting the panel's own colour into the gap.
+    const cell = g.cell!;
+    const gap = Math.max(g.detail.left - cell.left, cell.right - g.detail.right, g.detail.top - cell.top);
+    expect(gap >= -0.5 && (gap <= 0.5 || g.cellBg === g.panelBg),
+      `the expanded panel is framed by ${gap}px of ${g.cellBg} at ${width}px`).toBe(true);
   }
 });
 
