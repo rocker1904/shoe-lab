@@ -33,8 +33,10 @@ test('bounds the fleet by release month without a native month input', async ({ 
   await expect(page).toHaveURL(/after=\d{4}-03/);
   await expect(trigger).toHaveText(/March \d{4}/);
 
-  // The chips still own clearing: a chip that sets a date cannot also unset it.
-  await page.getByRole('button', { name: 'Any', exact: true }).click();
+  // The chips still own clearing: a chip that sets a date cannot also unset it. Scoped to its own
+  // group, because the discontinued filter offers an `Any` too and neither is the other's.
+  await page.getByRole('radiogroup', { name: 'Released after, quick bounds' })
+    .getByRole('radio', { name: 'Any', exact: true }).click();
   await expect(page).not.toHaveURL(/after=/);
   await expect(trigger).toHaveText(/Any month/);
 });
