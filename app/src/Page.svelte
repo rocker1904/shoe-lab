@@ -47,7 +47,7 @@
   import DisplayMenu from './components/DisplayMenu.svelte';
   import { installWash, readDisplay, writeDisplay } from './lib/display';
   import { resolveWash, type DisplayPrefs } from './lib/wash';
-  import { DEFAULT_ZONE, defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, type ViewState } from './lib/urlstate';
+  import { DEFAULT_ZONE, defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder, type ViewState } from './lib/urlstate';
 
   let { data }: { data: ShoesFile } = $props();
 
@@ -364,17 +364,18 @@
     // `All` must not silently turn it off — and the mark is `sameValue(v, allView(v, zone))`, so a
     // reset here would also unmark `All` for anyone who had set it (docs/app.md §Presets).
     if (zone !== null) {
-      const plain = { ...defaultView(), columns: defaultColumns(zone), stability: v.stability };
-      // Column order is add-history, not intent — nothing in the app reorders columns
-      // deliberately — so a view that differs from the plain table only in order already is that
-      // table: returned as-is, the mark lights and a press changes nothing, rather than All
-      // reordering what the runner never chose (docs/app.md §What All does).
-      const sorted = (view: ViewState) => ({ ...view, columns: [...view.columns].sort() });
-      return sameValue(sorted(v), sorted(plain)) ? v : plain;
+      return upToColumnOrder(v, { ...defaultView(), columns: defaultColumns(zone), stability: v.stability });
     }
     const next = structuredClone(v) as ViewState;
     next.filters = { ...EMPTY_FILTERS, ranges: {} };
     return next;
+  }
+
+  /** What a story press produces — and, exactly as with `All`, what lights it: `applyPreset`'s
+   *  view resolved through `upToColumnOrder`, so a story stays marked and inert on its own table
+   *  whatever order the columns arrived in (docs/app.md §Presets). */
+  function storyView(id: string, v: ViewState, zone: Zone): ViewState {
+    return upToColumnOrder(v, applyPreset(id, zone, v.stability));
   }
 
   const atAll = $derived(sameValue(snapshot, allView(snapshot, zoneMark)));
@@ -385,7 +386,7 @@
    */
   const storyMark = $derived(
     zoneMark === null ? null
-    : PRESETS.find((p) => sameValue(snapshot, applyPreset(p.id, zoneMark, view.stability)))?.id ?? null);
+    : PRESETS.find((p) => sameValue(snapshot, storyView(p.id, snapshot, zoneMark)))?.id ?? null);
   const selected = $derived(atAll ? 'all' : storyMark);
 
   /** The address bar carries the view and the reading, composed here rather than in
@@ -497,14 +498,14 @@
     // Already there, so there is nothing to do. Rebuilding would be harmless — projecting onto the
     // zone a view already names is the identity — but it would spend a URL write on it.
     if (next === zoneMark) return;
-    setView(storyMark ? applyPreset(storyMark, next, view.stability) : projectZone(snapshot, next));
+    setView(storyMark ? storyView(storyMark, snapshot, next) : projectZone(snapshot, next));
   }
   async function onStory(id: string) {
     // The strip's own question, answered — the only thing the cards hold that the bar does not is
     // the descriptions, which are a first-encounter need.
     const handingOver = stripOpen;
     stripOpen = false;
-    setView(id === 'all' ? allView(snapshot, zoneMark) : applyPreset(id, workingZone, view.stability));
+    setView(id === 'all' ? allView(snapshot, zoneMark) : storyView(id, snapshot, workingZone));
     // The card that was just pressed is about to be unmounted with the strip around it, and nothing
     // else catches the focus it holds: `activeElement` became `<body>`, so no ring was drawn
     // anywhere and the pill that replaced the card was up to ten Shift+Tabs BEHIND the runner —

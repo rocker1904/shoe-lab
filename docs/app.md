@@ -1977,9 +1977,12 @@ counter-example `presets.test.ts` builds for it. The equivalent claim for a rank
 is made per term, and belongs to the scores (docs/app.md §The story scores).
 
 Selection is **derived, never stored**: a story reads as chosen while the view
-equals what `applyPreset` would build for it right now. Editing a bound drops
-the highlight because the view genuinely is not that story any more, where a
-stored `preset` field would keep claiming Easy.
+equals what `applyPreset` would build for it right now — **up to column order**,
+through the same `upToColumnOrder` every mark resolves by (§What All does):
+untick and retick one of Easy's columns and the view is still Easy, so the mark
+holds and pressing the lit pill changes nothing. Editing a bound drops the
+highlight because the view genuinely is not that story any more, where a stored
+`preset` field would keep claiming Easy.
 
 ### The story scores
 
@@ -2204,10 +2207,12 @@ nothing** is true by construction and cannot drift.
 With a derived zone, `All` restores that zone's plain table — **up to column
 order**. Column order is add-history, not intent: nothing in the app reorders
 columns deliberately, so a view that differs from the plain table only in order
-already is that table. `allView` returns it unchanged, the mark lights, and a
-press changes nothing — where an order-sensitive restore unmarked `All` the
-moment a default column was unticked and reticked (it comes back at the end),
-and then had a lit press reorder columns the runner never chose. With no
+already is that table. `upToColumnOrder` returns it unchanged, the mark lights,
+and a press changes nothing — where an order-sensitive restore unmarked `All`
+the moment a default column was unticked and reticked (it comes back at the
+end), and then had a lit press reorder columns the runner never chose. The rule
+is the helper's, not `All`'s: the story marks resolve through the same function
+(§Presets), so no mark in the group is order-sensitive. With no
 derived zone `All` replaces the filters and touches nothing else — there is no
 defensible column set to impose on a deliberately mixed table, and clearing a
 bound is not removing its row (docs/app.md §Filters), so a hand-added row that

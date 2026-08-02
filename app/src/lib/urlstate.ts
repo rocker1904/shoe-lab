@@ -84,6 +84,19 @@ export function sameValue(a: unknown, b: unknown): boolean {
   return false;
 }
 
+/**
+ * The target, unless `v` differs from it only in column order — then `v` already *is* the target
+ * and is returned as-is. Column order is add-history, not intent: nothing in the app reorders
+ * columns deliberately, so a control built as `setView(X(v))` and marked by `sameValue(v, X(v))`
+ * must neither go unlit over an order it never offered to change nor, lit, reorder columns the
+ * runner never chose. `All` and every story mark resolve through this
+ * (docs/app.md §What All does, §Presets).
+ */
+export function upToColumnOrder(v: ViewState, target: ViewState): ViewState {
+  const sorted = (view: ViewState) => ({ ...view, columns: [...view.columns].sort() });
+  return sameValue(sorted(v), sorted(target)) ? v : target;
+}
+
 /** Current-generation slug to retired-generation slug, for every pair the catalogue resolves. */
 function pairsOf(idx: TestIndex): Map<string, string> {
   const pairs = new Map<string, string>();

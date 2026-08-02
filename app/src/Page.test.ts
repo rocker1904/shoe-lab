@@ -7,7 +7,8 @@ import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { indexTests } from './lib/dataset';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { zoneOfKey } from './lib/lineage';
-import { defaultColumns, parseView } from './lib/urlstate';
+import { applyPreset } from './lib/presets';
+import { defaultColumns, parseView, serializeView } from './lib/urlstate';
 import { DISPLAY_DEFAULTS, washAlpha } from './lib/wash';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
@@ -692,6 +693,21 @@ describe('Page story selection', () => {
     history.replaceState(null, '', '/?plate=carbon');
     render(Page, { props: { data } });
     expect(markedStory()).toEqual([]);
+  });
+  // The story marks ride the same machinery as All's: a table that differs from a story's only in
+  // column order is that story, so it stays lit and a press leaves the order alone rather than
+  // reordering columns the runner never chose (docs/app.md §Presets).
+  it('keeps a story marked when its table differs only in column order', async () => {
+    const easy = applyPreset('easy', 'heel', false);
+    easy.columns = [...easy.columns.filter((c) => c !== 'weight'), 'weight'];
+    history.replaceState(null, '', `/?${serializeView(easy)}`);
+    render(Page, { props: { data } });
+    expect(markedStory()).toEqual(['Easy']);
+
+    await fireEvent.click(screen.getByRole('radio', { name: 'Easy' }));
+    expect(markedStory()).toEqual(['Easy']);
+    settle();
+    expect(parseView(location.search.slice(1), idx).columns).toEqual(easy.columns);
   });
   // The strip asks both questions once and hands over for good: while it is up, the bar carries no
   // second copy of the same four stories (docs/app.md §Presets).

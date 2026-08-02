@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
-import { defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, type ViewState } from './urlstate';
+import { defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder, type ViewState } from './urlstate';
 import type { FilterState } from './filters';
 import { FLEET, TESTS, labTest } from './test-fixtures';
 
@@ -497,5 +497,25 @@ describe('open rows', () => {
   });
   it('parseView ignores an open token', () => {
     expect(sameValue(parseView('open=cushy', idx), defaultView())).toBe(true);
+  });
+});
+
+describe('upToColumnOrder', () => {
+  it('returns the view itself when only column order differs from the target', () => {
+    const target = defaultView();
+    const v = { ...structuredClone(target), columns: [...target.columns].reverse() };
+    expect(upToColumnOrder(v, target)).toBe(v);
+  });
+  it('returns the target when the column sets differ', () => {
+    const target = defaultView();
+    const missing = { ...structuredClone(target), columns: target.columns.slice(1) };
+    expect(upToColumnOrder(missing, target)).toBe(target);
+  });
+  it('returns the target when anything beyond the columns differs', () => {
+    const target = defaultView();
+    const resorted = structuredClone(target);
+    resorted.columns = [...target.columns].reverse();
+    resorted.sort = { ...target.sort, dir: 'asc' };
+    expect(upToColumnOrder(resorted, target)).toBe(target);
   });
 });
