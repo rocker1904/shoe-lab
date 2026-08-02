@@ -478,7 +478,7 @@ test('caps the expanded row at the summary, anchored left, with the breakdown pl
                         right: gb.right - parseFloat(cs.paddingRight) };
       return { content, grid: { left: gb.left, right: gb.right }, detail: r('.detail')!,
                body: r('.a-body')!, intro: r('.a-body .intro')!, prose: r('.a-prose')!,
-               bd: r('.a-bd'),
+               bd: r('.a-bd'), links: r('.a-links'), review: r('.a-links > a'),
                // Which tier is in force, read off the layout rather than inferred from the width:
                // the boundary is a CONTAINER query and the container is the table's, not the
                // window's (docs/app.md §The expanded row).
@@ -526,6 +526,25 @@ test('caps the expanded row at the summary, anchored left, with the breakdown pl
     if (atCap) {
       expect(bd.width, `the breakdown stretched to the cap at ${width}px`).toBeLessThan(contentW - 1);
     }
+
+    // 5. The trailing links — the lineage line and the review — are the row's own last line rather
+    //    than the foot of one prose column: they begin on the summary's left axis and span the box
+    //    at BOTH tiers, so which column happens to be taller stops deciding where they sit
+    //    (docs/app.md §The expanded row). In the single-column tier that is where they always were,
+    //    which is the point: this half of the rule must read as no change at all.
+    const links = g.links!;
+    expect(links, `no trailing links at ${width}px`).not.toBeNull();
+    expect(Math.abs(links.left - g.body.left),
+      `the trailing links are not on the summary's axis at ${width}px`).toBeLessThanOrEqual(1);
+    expect(Math.abs(links.right - g.body.right),
+      `the trailing links do not span the box at ${width}px`).toBeLessThanOrEqual(1);
+    // Attribution, not layout: the review link is repositioned and never demoted
+    // (docs/decisions.md §Be a good citizen toward RunRepeat). It is on screen, inside the row,
+    // and below nothing but the prose it belongs to.
+    const review = g.review!;
+    expect(review, `the review link is not in the trailing line at ${width}px`).not.toBeNull();
+    expect(review.width, `the review link has no box at ${width}px`).toBeGreaterThan(0);
+    expect(review.top, `the review link fell below the breakdown at ${width}px`).toBeLessThan(bd.top);
   }
 });
 

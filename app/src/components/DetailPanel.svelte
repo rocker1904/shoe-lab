@@ -50,6 +50,26 @@
   const LANGUAGE_NAMES: Record<string, string> = { es: 'Spanish' };
 </script>
 
+<!--
+  The lineage line and the review link, in one place rather than once per branch: they belong to the
+  shoe rather than to whether RunRepeat wrote it up, and they sit BELOW both prose columns wherever
+  there are two (docs/app.md §The expanded row). The review link's immediacy is attribution and is
+  not the layout's to trade away (docs/decisions.md §Be a good citizen toward RunRepeat) — it moves,
+  it is never demoted.
+-->
+{#snippet trailingLinks()}
+  <div class="a-links">
+    {#if lineage.length}
+      <ul class="lineage">
+        {#each lineage as { label, ref } (label)}
+          <li>{label}: <a href={reviewUrl(ref!.slug)} rel="noopener" target="_blank">{ref!.name}</a></li>
+        {/each}
+      </ul>
+    {/if}
+    <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
+  </div>
+{/snippet}
+
 <div class="detail">
   <div class="grid">
     <div class="a-img">
@@ -90,28 +110,13 @@
           {#if shoe.details.whoShouldBuy}<h4>Who should buy</h4><div>{@html shoe.details.whoShouldBuy}</div>{/if}
           <!-- eslint-disable-next-line svelte/no-at-html-tags -->
           {#if shoe.details.whoShouldNotBuy}<h4>Who should NOT buy</h4><div>{@html shoe.details.whoShouldNotBuy}</div>{/if}
-          {#if lineage.length}
-            <ul class="lineage">
-              {#each lineage as { label, ref } (label)}
-                <li>{label}: <a href={reviewUrl(ref!.slug)} rel="noopener" target="_blank">{ref!.name}</a></li>
-              {/each}
-            </ul>
-          {/if}
-          <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
         </div>
+        {@render trailingLinks()}
       {:else}
         <p class="intro missing">Details not yet crawled for this shoe.</p>
         <div class="a-lists"></div>
-        <div class="a-prose">
-          {#if lineage.length}
-            <ul class="lineage">
-              {#each lineage as { label, ref } (label)}
-                <li>{label}: <a href={reviewUrl(ref!.slug)} rel="noopener" target="_blank">{ref!.name}</a></li>
-              {/each}
-            </ul>
-          {/if}
-          <a href={shoe.url} rel="noopener" target="_blank">Full review on RunRepeat →</a>
-        </div>
+        <div class="a-prose"></div>
+        {@render trailingLinks()}
       {/if}
     </div>
     <!-- One per score column on screen, and the block itself is absent without one: the panel
@@ -188,6 +193,21 @@
      that box IS the container, which is what makes the summary co-extensive with the row. */
   .a-body { max-width: 430px; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s6); }
   .a-body .intro { grid-column: 1 / -1; }
+  /* BELOW BOTH COLUMNS, on the summary's own left axis. They used to sit at the foot of the prose
+     column, which put `Replaced:` and the review link under the right-hand half of a row whose
+     every other left-anchored thing began at the summary's edge — and the taller column decided
+     where they landed. Spanning both tracks makes them the row's own trailing line instead.
+     In the single-column tier — which is also the phone's expanded row, `DetailPanel.svelte` being
+     shared — `1 / -1` is the one column, so nothing moves LATERALLY there.
+     What it costs there is a grid ROW where the links used to be the last two things inside the
+     prose, and that has to be paid back to the pixel: the distance that must not change is the one
+     to the prose's last PARAGRAPH, the two were siblings in one block and collapsed to `--s3`, and
+     across a grid row nothing collapses while `.a-prose`'s own box already carries that paragraph's
+     `--s2` bottom margin. So the row gap is cancelled and the remainder is what is left to add.
+     Left uncompensated the whole trailing line dropped 24px; measured at 390px and 700px in both
+     engines, before and after. */
+  .a-links { grid-column: 1 / -1; margin-top: calc(var(--s3) - var(--s2) - var(--s4)); }
+  .a-links > :first-child { margin-top: 0; }
   /* THE BREAKDOWN CARD. `justify-self` sizes a grid item to fit-content whichever value it takes,
      which is the part that never varies: the table used to stretch to its track and open a 121px
      gulf between the Term column and the Reading beside it, so constraining it to its natural width

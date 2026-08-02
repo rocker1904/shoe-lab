@@ -1238,6 +1238,30 @@ shared box satisfies both, and the prose measure falls out of the box rather tha
 separately. At the cap that box **is** the container, so the summary is co-extensive with the
 row and the prose columns share its edges — asserted in `cross-browser.spec.ts`.
 
+**The trailing links are the row's own last line, not the foot of a column.**
+`Replaced: {shoe}` and `Full review on RunRepeat →` used to sit at the bottom of
+the prose column, which put them under the right-hand half of a row whose every
+other left-anchored thing — the summary, the photo, the facts — begins at the
+capped box's left edge, and left the *taller* column deciding where they landed.
+They now span both tracks and start on the summary's axis. **This changes the
+two-column tier only.** In the single-column tier — which is the phone's expanded
+row too, `DetailPanel.svelte` being shared — `1 / -1` is the one column, so they
+are exactly where they were: measured at 700px and 390px in both engines, the
+lineage line, the review link and the breakdown all land on the same pixel before
+and after, and the panel screenshots are byte-identical. That cost a compensation
+worth stating, because it is easy to undo by accident: the distance that must not
+change is the one to the prose's last *paragraph*, the two used to be siblings in
+one block and their margins collapsed to `--s3`, and across a grid row nothing
+collapses while `.a-prose`'s box already carries that paragraph's `--s2`. So the
+row gap is cancelled and the remainder added; uncompensated, the whole trailing
+line dropped 24px on the phone.
+
+The review link is **repositioned and never demoted**. Its visibility and
+immediacy are the attribution this project owes RunRepeat
+(docs/decisions.md §Be a good citizen toward RunRepeat), so where it sits is a
+layout question and whether it is prominent is not one — the e2e asserts it has a
+box, sits inside the row and stays above the breakdown at every tier.
+
 Inside that opinion column **pros and cons stack, one under the other**, at every tier.
 `.a-lists` sits in the 20rem track, so splitting it in two left each list about 18
 characters a line — narrower than the phone shows them, on the widest screen there is.
