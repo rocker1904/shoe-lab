@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { categoricalEntries } from './categorical';
 import { indexTests, NUMERIC_TEST_TYPES } from './dataset';
-import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, MAX_UNITS_PX, shortLabel, unitsPx, widestWordPx } from './labels';
+import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, MAX_UNITS_CLEAR_PX, MAX_UNITS_PX, shortLabel, unitsPx, widestWordPx } from './labels';
 import { headerUnits } from './units';
 import type { LabTest } from '../../../shared/types.js';
 import type { Zone } from './lineage';
@@ -141,14 +141,24 @@ describe('the units line', () => {
   const keys = [...numeric.map((t) => t.slug), 'releasedAt', 'score', 'msrpGbp', 'plate',
     ...SCORE_DEFS.flatMap((def) => ZONES.map((zone) => def.keys[zone]))];
 
-  it('keeps every unit string on one line of a phone column', () => {
-    const tooWide = keys.filter((key) => unitsPx(headerUnits(key, bySlug.get(key))) > MAX_UNITS_PX);
-    expect(tooWide).toEqual([]);
+  it('keeps every unit string clear of the sort caret, which bites before the wrap does', () => {
+    const fouled = keys.filter((key) => unitsPx(headerUnits(key, bySlug.get(key))) > MAX_UNITS_CLEAR_PX);
+    expect(fouled).toEqual([]);
   });
 
-  it('holds the bound at seven characters, which is what an eighth is measured to cost', () => {
+  it('holds the wrap bound at seven characters, which is what an eighth is measured to cost', () => {
     expect(unitsPx('1234567')).toBeLessThanOrEqual(MAX_UNITS_PX);
     expect(unitsPx('12345678')).toBeGreaterThan(MAX_UNITS_PX);
+  });
+
+  // The caret is the tighter of the two and therefore the one the catalogue is held to. A
+  // six-character string is the case that made the difference matter: it fits the line and still
+  // renders with a glyph under the mark, so the wrap bound alone would have shipped it.
+  it('holds the caret bound at five characters, and the wrap bound cannot see the sixth', () => {
+    expect(MAX_UNITS_CLEAR_PX).toBeLessThan(MAX_UNITS_PX);
+    expect(unitsPx('3=TTS')).toBeLessThanOrEqual(MAX_UNITS_CLEAR_PX);
+    expect(unitsPx('123456')).toBeGreaterThan(MAX_UNITS_CLEAR_PX);
+    expect(unitsPx('123456')).toBeLessThanOrEqual(MAX_UNITS_PX);
   });
 
   it('is measured for the phone line, not the desktop one', () => {

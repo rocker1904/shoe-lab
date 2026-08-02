@@ -131,6 +131,65 @@ for (const engine of engines) {
   await browser.close();
 }
 
+/**
+ * The phone header's corner caret, and the one block here that measures INK rather than advance.
+ * The mark is out of flow in the cell's bottom-right corner and lands ON the unit line, so the
+ * budget the centred string actually has is not the column's text width but the gap to the mark's
+ * leftmost painted pixel — which is neither the caret's box (12px of which 3.7 is air) nor the
+ * path's own bounding rect (the engines disagree about whether that includes the stroke, and both
+ * disagree with what is painted by about 0.35px). Pixels are the only instrument that answers, and
+ * both engines paint the mark in exactly the same place.
+ *
+ * The SVG is read out of `SortCaret.svelte` rather than copied, so the mark cannot drift from the
+ * component. Its PLACEMENT is copied — the `.caret.corner` rule's `right`, the `--caret-w` token
+ * and the phone column's 53.33px/2px geometry — and a change to any of those is a change to this
+ * block (docs/app.md §Table presentation).
+ */
+const CARET_SVG = readFileSync(join(here, '../src/components/SortCaret.svelte'), 'utf8')
+  .match(/<svg[\s\S]*?<\/svg>/)[0];
+const COLUMN_PX = 53.328;   // six columns of a 360px phone, `--table-w` in ShoeTableMobile.svelte
+const TH_PAD_PX = 2;        // th padding, deliberately not --s1 (same file)
+const CARET_RIGHT_PX = 2;   // .caret.corner's own offset
+const CARET_W_PX = 12;      // --caret-w (app.css)
+const SHOT_SCALE = 8;
+
+const caret = {};
+for (const engine of engines) {
+  const browser = await ENGINES[engine].launch();
+  const page = await browser.newPage({ deviceScaleFactor: SHOT_SCALE });
+  await page.setContent(`<style>
+    body { margin: 0; background: #fff; }
+    .th { position: relative; box-sizing: border-box; width: ${COLUMN_PX}px; height: 20px;
+          padding: 0 ${TH_PAD_PX}px; }
+    .caret { position: absolute; right: ${CARET_RIGHT_PX}px; bottom: 4px; display: inline-flex;
+             justify-content: flex-end; width: ${CARET_W_PX}px; color: #000; }
+  </style><div class="th"><span class="caret">${CARET_SVG}</span></div>`);
+  const shot = (await page.locator('.th').screenshot()).toString('base64');
+  // Decoded by the browser that took it: a PNG decoder in here would be a second thing to keep
+  // right, and `createImageBitmap` is exact.
+  caret[engine] = await page.evaluate(async ({ shot, scale, pad }) => {
+    const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${shot}`)).blob());
+    const cv = document.createElement('canvas');
+    cv.width = bmp.width; cv.height = bmp.height;
+    cv.getContext('2d').drawImage(bmp, 0, 0);
+    const d = cv.getContext('2d').getImageData(0, 0, bmp.width, bmp.height).data;
+    let min = Infinity, max = -Infinity;
+    for (let y = 0; y < bmp.height; y++) {
+      for (let x = 0; x < bmp.width; x++) {
+        // Any departure from the white ground counts, antialiased edges included: the fringe is
+        // what a glyph meets first.
+        if (d[(y * bmp.width + x) * 4] > 247) continue;
+        if (x < min) min = x;
+        if (x > max) max = x;
+      }
+    }
+    const box = document.querySelector('.th').getBoundingClientRect();
+    const contentW = box.width - 2 * pad;
+    return { contentW, inkLeft: min / scale - pad, inkRight: (max + 1) / scale - pad };
+  }, { shot, scale: SHOT_SCALE, pad: TH_PAD_PX });
+  await browser.close();
+}
+
 FACES.forEach((face, i) => {
   const tables = engines.map((e) => measured[e][i]);
   const merged = Object.fromEntries(face.chars.map((ch) => [ch,
@@ -159,3 +218,20 @@ FACES.forEach((face, i) => {
     console.log(`UNIFORM ADVANCE = ${uniform}  (every character but Δ measures the same)`);
   }
 });
+
+const advance = measured[engines[0]][FACES.findIndex((f) => f.name.startsWith('UNITS_CHAR_PX'))].m;
+console.log(`\n/* MAX_UNITS_CLEAR_PX (app/src/lib/labels.ts)   [engines: ${engines.join('+')}]`);
+console.log(`   phone sort caret — ${CARET_W_PX}px box at right:${CARET_RIGHT_PX}px in a ${COLUMN_PX}px column with ${TH_PAD_PX}px padding */`);
+for (const engine of engines) {
+  const { contentW, inkLeft, inkRight } = caret[engine];
+  // What a centred string may take before its ADVANCE BOX reaches the mark. Its ink stops a side
+  // bearing short of that, which is the whole margin the five-character `3=TTS` lives in.
+  const clear = 2 * inkLeft - contentW;
+  console.log(`   ${engine}: text box ${contentW.toFixed(2)}px; caret ink ${inkLeft.toFixed(2)}..${inkRight.toFixed(2)} from its left edge`);
+  console.log(`     mark starts ${(contentW - inkLeft).toFixed(2)}px inside the text box's right edge`);
+  console.log(`     centred advance box clears it at <= ${clear.toFixed(2)}px = ${(clear / advance).toFixed(2)} characters`);
+  for (const n of [4, 5, 6]) {
+    const over = (n * advance - clear) / 2;
+    console.log(`     ${n} chars = ${(n * advance).toFixed(2)}px advance, right edge ${over > 0 ? `${over.toFixed(2)}px under the mark` : `${(-over).toFixed(2)}px clear of it`}`);
+  }
+}

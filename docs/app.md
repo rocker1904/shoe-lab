@@ -1001,12 +1001,23 @@ for. `size-rating` is
 the one units override: it reads `3=TTS`, because `/5` would present a
 runs-small / true / runs-large scale as a mediocre mark. The abbreviation is a
 measurement, not a house style — `3 = true` is eight monospaced characters
-against the seven the phone column holds, so it wrapped and stood the unit line
-at 32px where every neighbour stood at 16, and in any view whose names all fit
-one line that was the whole pinned header: 58px against 42. `MAX_UNITS_PX` in
-`labels.ts` is the bound and owns the arithmetic; the units line is the one
-header line with no short form and no third line to grow into
-(§Two renderings, and only one of them mounted).
+against the seven the line holds before it wraps, so it wrapped and stood the
+unit line at 32px where every neighbour stood at 16, and in any view whose names
+all fit one line that was the whole pinned header: 58px against 42.
+`MAX_UNITS_PX` in `labels.ts` is that wrap bound and owns its arithmetic; the
+units line is the one header line with no short form and no third line to grow
+into (§Two renderings, and only one of them mounted).
+
+**Wrapping is not what bites first.** The phone's caret is out of flow in the
+cell's bottom-right corner, on this line rather than beside it, and its painted
+ink starts 8.33px inside the 49.33px text box's right edge — so a centred string
+gets **five** characters before its last glyph sits under the stroke, where the
+wrap admits seven. `MAX_UNITS_CLEAR_PX` is that tighter bound and is the one
+every unit string is held to; `3=TTS` spends it exactly, touching the mark's
+outermost antialiased pixel and no more. The mark's ink is measured, never
+derived: `app/scripts/measure-label-widths.mjs` reads it off the pixels, because
+the caret's box is a third air and the path's own bounding rect is reported
+differently by each engine and about 0.35px right of what either paints.
 
 **The table sits in a `--surface` panel** — hairline, `--r-md`, `--shadow-panel`
 — and that wrapper carries **no `overflow`**, deliberately: an `overflow` there
@@ -1629,8 +1640,10 @@ chosen:
   `unitsPx` existed. Same 49px of text, its own table from the same script, and
   a whole-string bound rather than a per-word one — a unit line that wraps at
   all is the failure, and it is the header line with no `SHORT_LABELS` to fall
-  back on. The one string it has ever caught is `size-rating`'s
-  (§Table presentation).
+  back on. It is bounded **twice**, because the sort caret lands on this line
+  and runs out of room two characters before the wrap does; `MAX_UNITS_CLEAR_PX`
+  is the tighter of the two and therefore the one the catalogue is held to. The
+  one string either has ever caught is `size-rating`'s (§Table presentation).
 - **`SHORT_LABELS` is a measurement rather than a list**: a narrower face brings
   names back inside the bound, and which entries survive is whatever the
   catalogue says when it is re-run. A short label is only

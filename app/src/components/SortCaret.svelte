@@ -46,9 +46,12 @@
    * against, and this mark is rendered in EVERY column whether or not it is the sorted one — so
    * inline it spends `--caret-w` of that budget permanently, which is enough to put `Weight` on a second
    * line and grow a header that is pinned and therefore paid by every screen. Out of flow it costs
-   * the budget nothing. The `th` is already `position: sticky`, so it is the containing block, and
-   * `bottom` lands the caret on the unit line, clear of the centred text at every unit string the
-   * catalogue emits.
+   * the NAME line nothing. The `th` is already `position: sticky`, so it is the containing block,
+   * and `bottom` lands the mark on the unit line — on it, not beside it, so what it costs instead
+   * is that line's clearance: its painted ink starts 8.33px inside the 49.33px text box's right
+   * edge, which leaves a centred string five characters before a glyph sits under the stroke.
+   * `MAX_UNITS_CLEAR_PX` in `lib/labels.ts` is that bound, owns the arithmetic, and is what every
+   * unit string the catalogue emits is held to — asserted rather than believed.
    */
   .caret.corner { position: absolute; right: 2px; bottom: var(--s1); }
 </style>

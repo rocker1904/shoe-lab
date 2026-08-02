@@ -184,7 +184,7 @@ const widestWordPx = (s: string, table: Record<string, number>): number =>
  */
 export function headerMinPx(key: string, test: LabTest | undefined): number {
   // The units line is mono and cannot wrap — no unit string carries a space now that `size-rating`
-  // reads `3=TTS`, and `MAX_UNITS_PX` in `labels.ts` is what keeps it that short — so its width is
+  // reads `3=TTS`, and `MAX_UNITS_CLEAR_PX` in `labels.ts` is what keeps it that short — so its width is
   // a character count over the whole line (docs/app.md §Table presentation).
   const unitsPx = headerUnits(key, test).length * UNITS_ADVANCE_PX;
   return Math.max(

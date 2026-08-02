@@ -158,6 +158,27 @@ const UNITS_CHAR_PX = 6.76;
 export const MAX_UNITS_PX = 49;
 
 /**
+ * The tighter of the two bounds, and therefore the one the catalogue is held to: the phone's sort
+ * caret is out of flow in the cell's bottom-right corner and lands ON the unit line, so a centred
+ * string runs out of room before it runs out of line.
+ *
+ * Measured by `app/scripts/measure-label-widths.mjs`, identically in both engines: the mark's
+ * painted ink starts 8.33px inside the 49.33px text box's right edge — not the 12px its box takes,
+ * a third of which is air, and not the path's own bounding rect, which the engines report
+ * differently and both about 0.35px right of what they paint. A centred string's ADVANCE BOX
+ * therefore clears the mark only up to 2 × 41.00 − 49.33 = 32.67px, which is four characters.
+ *
+ * Five is nevertheless the bound, because ink is what collides and a glyph stops short of its own
+ * advance box: at five characters the box crosses by 0.57px and `3=TTS` puts 0.1px of the `S` into
+ * the mark's outermost antialiased pixel — 0.5px where Firefox sets the string wider — which
+ * renders as the two touching. At six the box crosses by 3.95px and the whole last glyph sits
+ * under the stroke, struck through, in the one column a phone draws a caret in at all. The value
+ * sits midway between the two, where neither the 0.21px per character the engines disagree by nor
+ * the model's own rounding can flip a five into a six (docs/app.md §Table presentation).
+ */
+export const MAX_UNITS_CLEAR_PX = 37;
+
+/**
  * The whole string, not its longest word: a units line that wraps at all is the failure, so there
  * is no per-word bound to take. `.length` stands in for a per-character table because every glyph
  * the units alphabet holds measures the same — a character outside the shipped mono subset would
