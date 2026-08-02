@@ -162,6 +162,7 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
   const validSortKey = (k: string) =>
     SORT_FIELDS.has(k) || numericTest(k) || isCategorical(idx.bySlug.get(k));
   const genRaw = new Map<string, string>();
+  const facetRaw = new Map<string, string[]>();
   for (const [key, raw] of p.entries()) {
     if (key.startsWith('gen.')) {
       genRaw.set(key.slice(4), raw);
@@ -178,23 +179,10 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       if (max !== undefined) b.max = max;
       if (b.min !== undefined || b.max !== undefined) v.filters.ranges[target] = b;
     } else if (key.startsWith('c.')) {
-      // Strict on the key — a slug naming no categorical test has no control to untick and no cell
-      // to cost, so the token is dropped and the view falls back, the ranges posture. The value is
-      // deliberately NOT strict for an option test: `data/` regenerates on a schedule, and refusing
-      // a slug the catalogue has renamed would silently narrow a shared link with nothing on screen
-      // saying why — the `brands` posture, for the `brands` reason.
+      // Collected rather than resolved here: one selection can arrive spelled as two keys, and every
+      // rule below is applied to the merged values so that none of them depends on the spelling.
       const target = key.slice(2);
-      const test = idx.bySlug.get(target);
-      if (!test || !isCategorical(test)) continue;
-      const values = [...new Set(raw.split(',').filter(Boolean))];
-      // `true`/`false` are this app's words rather than the catalogue's, so a refresh cannot rename
-      // them and they stay allowlisted. A link carrying both collapses to absent: the tri-state has
-      // no state that shows both, and a state no control can display is what this parse refuses.
-      const kept = test.type === 'bool' ? values.filter((x) => x === 'true' || x === 'false') : values;
-      if (test.type === 'bool' && kept.length !== 1) continue;
-      // An all-separator value stays absent rather than becoming an empty selection, which would
-      // keep `isDefaultView` false forever (docs/app.md §Filters). Same rule as `brands`.
-      if (kept.length) v.filters.categorical[target] = kept;
+      facetRaw.set(target, [...(facetRaw.get(target) ?? []), ...raw.split(',').filter(Boolean)]);
     } else if (key === 'plate' && raw) {
       // Same all-separator rule as `brands`: ",," stays absent rather than becoming an empty array.
       const picked = new Set(raw.split(','));
@@ -238,6 +226,25 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
         .filter((k) => validRangeKey(k) && !CURATED_RANGE_KEYS.includes(k));
       if (rows.length) v.rows = rows;
     }
+  }
+  // Every occurrence of a slug has been merged by here, so these rules read one selection whichever
+  // way the link spelled it. Strict on the key — a slug naming no categorical test has no control to
+  // untick and no cell to cost, so the token is dropped and the view falls back, the ranges posture.
+  // The value is deliberately NOT strict for an option test: `data/` regenerates on a schedule, and
+  // refusing a slug the catalogue has renamed would silently narrow a shared link with nothing on
+  // screen saying why — the `brands` posture, for the `brands` reason.
+  for (const [slug, arrived] of facetRaw) {
+    const test = idx.bySlug.get(slug);
+    if (!test || !isCategorical(test)) continue;
+    const values = [...new Set(arrived)];
+    // `true`/`false` are this app's words rather than the catalogue's, so a refresh cannot rename
+    // them and they stay allowlisted. Both values collapse the key to absent: the tri-state has no
+    // state that shows both, and a state no control can display is what this parse refuses.
+    const kept = test.type === 'bool' ? values.filter((x) => x === 'true' || x === 'false') : values;
+    if (test.type === 'bool' && kept.length !== 1) continue;
+    // Nothing left stays absent rather than becoming an empty selection, which would keep
+    // `isDefaultView` false forever (docs/app.md §Filters) — every list-valued token's rule.
+    if (kept.length) v.filters.categorical[slug] = kept;
   }
   // A URL is the one place both generations of a pair can arrive together, so exclusion is settled
   // here rather than trusted from the caller. The current generation wins; the other is dropped.

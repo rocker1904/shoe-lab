@@ -14,7 +14,10 @@ describe('isBareArrival', () => {
   });
   it('is false once the address carries a token this app owns', () => {
     for (const qs of ['plate=carbon', 'r.weight=~250', 'q=nova', 'sort=-weight', 'cols=score',
-                      'stab=1', 'gen.midsole-softness-22=midsole-softness', 'open=some-shoe']) {
+                      'stab=1', 'gen.midsole-softness-22=midsole-softness', 'open=some-shoe',
+                      // A feature selection is something sent, like every other filter: a link
+                      // carrying only one must not open on the strip a bare address gets.
+                      'c.heel-tab=none', 'c.removable-insole=true']) {
       history.replaceState(null, '', `/?${qs}`);
       expect(isBareArrival(), qs).toBe(false);
     }

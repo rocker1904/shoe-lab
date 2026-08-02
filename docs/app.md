@@ -267,11 +267,16 @@ range and sort keys must name a numeric test or a numeric shoe field, a
 malformed bound voids that whole range (dropping one side would silently widen
 it), `after` and `disc` are pattern-checked, a `q` of nothing but whitespace is
 the empty query (§Filters), `plate` keeps only allowlisted members and is
-deduped into declared order, an all-separator `brands`, `plate` or `rows` stays
-absent instead of becoming an empty array, a `c.` key survives only when its
-slug names a **categorical** test in the current catalogue — a numeric test and
-the slug the `plate` field owns are refused there as they are everywhere else —
-and its values are deduped and kept in arrival order, `rows` keeps only rangeable
+deduped into declared order, **a list-valued token left holding nothing — an
+all-separator value, or one whose every member was refused — stays absent rather
+than becoming an empty array**, which is the rule for every such token including
+one added later, because an empty array would keep `isDefaultView` false forever
+and never let `All` light again. A `c.` key survives only when its slug names a
+**categorical** test in the current catalogue (a numeric test and the slug the
+`plate` field owns are refused there as they are everywhere else), its values are
+deduped and kept in arrival order, and every occurrence of one slug is merged
+before any rule is applied, so a selection means the same thing spelled as one
+key or as two. `rows` keeps only rangeable
 non-curated keys, and `cols` is deduped and kept unless it is a sort-only field
 or could never be a slug — the one permissive key, and
 §Columns are permissive, ranges and sorts are strict owns why.

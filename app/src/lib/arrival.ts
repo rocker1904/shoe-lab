@@ -18,11 +18,15 @@
 
 /**
  * Every query key this app can emit, so a key outside it cannot survive parsing whatever its value.
- * `r.` and `gen.` are prefixes; the rest are whole names. `open` is here too — it is not view state,
- * but a link that names a shoe to read carried an intention and is not a fresh start
+ * `r.`, `c.` and `gen.` are prefixes; the rest are whole names. `open` is here too — it is not view
+ * state, but a link that names a shoe to read carried an intention and is not a fresh start
  * (docs/app.md §URL encoding).
+ *
+ * This is the URL grammar's second home, and it has to be added to in the same breath as
+ * `serializeView`: a token the app emits but does not list here makes its own links read as bare
+ * arrivals, which opens the setup strip on a link that plainly sent something.
  */
-const OWNED = /^(?:r\.|gen\.)|^(?:plate|after|brands|q|disc|missing|stab|sort|rows|cols|open)$/;
+const OWNED = /^(?:r\.|c\.|gen\.)|^(?:plate|after|brands|q|disc|missing|stab|sort|rows|cols|open)$/;
 
 /**
  * `address` is a query string with no leading `?`. `Page.svelte` passes the **canonical** one it has

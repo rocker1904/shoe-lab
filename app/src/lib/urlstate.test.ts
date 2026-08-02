@@ -409,6 +409,28 @@ describe('the feature selection token', () => {
     }
   });
 
+  /**
+   * `URLSearchParams` yields every occurrence of a key, so one selection can arrive spelled two
+   * ways. They merge before any rule is applied, or the both-values collapse would depend on the
+   * spelling — `c.x=true&c.x=false` selecting No where `c.x=true,false` refuses.
+   */
+  it('merges repeated keys for one slug instead of letting the last win', () => {
+    const merged = parseView('c.heel-tab=pull-tab&c.heel-tab=none', idx).filters.categorical;
+    expect(merged).toEqual({ 'heel-tab': ['pull-tab', 'none'] });
+    expect(merged).toEqual(parseView('c.heel-tab=pull-tab,none', idx).filters.categorical);
+  });
+
+  it('collapses a bool spelled as two keys exactly as it collapses one key carrying both', () => {
+    const twoKeys = parseView('c.removable-insole=true&c.removable-insole=false', idx).filters.categorical;
+    expect(twoKeys).toEqual({});
+    expect(twoKeys).toEqual(parseView('c.removable-insole=true,false', idx).filters.categorical);
+  });
+
+  it('dedupes across occurrences, not only within one', () => {
+    expect(parseView('c.heel-tab=none&c.heel-tab=none', idx).filters.categorical)
+      .toEqual({ 'heel-tab': ['none'] });
+  });
+
   it('survives a full round trip beside every other filter', () => {
     const v = defaultView();
     v.filters.categorical = { 'tongue-gusset-type': ['none'], 'removable-insole': ['true'] };
