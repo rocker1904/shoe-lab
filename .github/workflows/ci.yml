@@ -9,7 +9,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  ci:
+  # The whole gate — everything that can run on Linux: the verify sequence and all three
+  # engines' e2e (overlay scrollbars, the regime Linux draws). `classic-scrollbars` below is
+  # the one regime this job cannot reach.
+  full-suite:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

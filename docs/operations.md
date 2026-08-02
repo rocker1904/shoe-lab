@@ -7,7 +7,7 @@ docs/scraping.md.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main` | two jobs: `ci` on `ubuntu-latest` — typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
+| `ci.yml` | PRs, pushes to `main` | two jobs: `full-suite` on `ubuntu-latest` — typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
 | `deploy.yml` | After `CI` succeeds on a `main` push (deploys that exact commit), + dispatch — the refresh chain’s path, ungated because its `GITHUB_TOKEN` pushes never ran CI (§The refresh chain) | builds the app, publishes to Pages |
