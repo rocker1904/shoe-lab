@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { labToLch, mixLab, oklabToRgb, rgb255, rgbToOklab } from './oklab';
+import { mixLab, oklabToRgb, rgb255, rgbToOklab, toGamutLab } from './oklab';
 import {
   DEFAULT_PAINT, DISPLAY_DEFAULTS, greyAlpha, rankedAlpha, rankedMix, resolveWash, washAlpha,
   WASH_FLOOR, WASH_PEAK, WASH_THEMES, type DisplayPrefs, type ThemeName, type WashPaint,
@@ -33,27 +33,30 @@ function over(fill: number[], alpha: number, surface: number[]): number[] {
  * `--border-soft` groove. Asserting against `--surface` alone measures the case that only happens
  * inside the drawer.
  */
+// The primary colour's own tokens (washFill, accent, accentSolid, accentDim) are the engine's
+// output at the default request — 235° hue, 0.2 chroma, gamut-reduced independently per theme —
+// not a designer's `hsl()` any more (docs/app.md §The display preferences).
 const THEMES = [
   { name: 'light', surface: [0xff, 0xff, 0xff], page: [0xf5, 0xf5, 0xf4],
     track: [0xee, 0xee, 0xec], ink: [0x16, 0x18, 0x1b],
     chrome: [0xfb, 0xfb, 0xfa], well: [0xfa, 0xf9, 0xf8],
-    accentDim: [0xe8, 0xf2, 0xfd],     // hsl(211 84% 95%)
+    accentDim: [0xe5, 0xf3, 0xfc],
     dimInk: [0x5f, 0x66, 0x73],        // --text-dim
-    washFill: [0x14, 0x7c, 0xeb],      // hsl(211 84% 50%)
+    washFill: [0x00, 0x89, 0xbe],
     greyFill: [0x82, 0x89, 0x97],      // hsl(220 9% 55%)
     histDim: [0x7f, 0x87, 0x94],       // --hist-dim
-    accent: [0x13, 0x72, 0xd8],        // hsl(211 84% 46%), which --hover-wash is 6% of
-    accentSolid: [0x12, 0x6d, 0xce] }, // hsl(211 84% 44%)
+    accent: [0x00, 0x7e, 0xaf],        // which --hover-wash is 6% of
+    accentSolid: [0x00, 0x78, 0xa8] },
   { name: 'dark', surface: [0x1a, 0x1d, 0x21], page: [0x0f, 0x11, 0x13],
     track: [0x22, 0x26, 0x2a], ink: [0xec, 0xee, 0xf1],
     chrome: [0x15, 0x18, 0x1b], well: [0x16, 0x19, 0x1d],
-    accentDim: [0x19, 0x37, 0x57],     // hsl(211 55% 22%)
+    accentDim: [0x00, 0x3b, 0x54],
     dimInk: [0x98, 0xa0, 0xab],
-    washFill: [0x00, 0x6b, 0xcf],      // #006bcf — the shared OKLCh point at this theme's own washL
+    washFill: [0x00, 0x76, 0xa5],      // the shared OKLCh point at this theme's own washL
     greyFill: [0x96, 0x9c, 0xa6],      // hsl(220 8% 62%)
     histDim: [0x6b, 0x74, 0x82],
-    accent: [0x38, 0x87, 0xdc],        // hsl(211 70% 54%)
-    accentSolid: [0x22, 0x6e, 0xbf] }, // hsl(211 70% 44%)
+    accent: [0x00, 0x90, 0xc8],
+    accentSolid: [0x00, 0x76, 0xa5] }, // == washFill, at this theme's pin — not a coincidence to rely on
 ];
 /** `--on-accent`. A token, not a literal, everywhere it is used (Global Constraints). */
 const ON_ACCENT = [0xff, 0xff, 0xff];
@@ -213,7 +216,7 @@ describe('dim text stands off every surface it is set on', () => {
 
 /**
  * `--accent` is a signed-off value and is never used behind text; `--accent-solid` is the darker
- * variant that is. `--on-accent` on the dark accent measures 3.71:1, which is why the two cannot be
+ * variant that is. `--on-accent` on the dark accent measures 3.61:1, which is why the two cannot be
  * one token (docs/app.md §Theming).
  */
 describe('--on-accent on a filled accent', () => {
@@ -257,8 +260,8 @@ describe('the shipped ramp at the default preferences', () => {
 
   it('leaves the stylesheet alone entirely', () => {
     expect(r.tokenFill).toBe(true);
-    expect(r.better.light).toBe('#147ceb');
-    expect(r.better.dark).toBe('#006bcf');
+    expect(r.better.light).toBe('#0089be');
+    expect(r.better.dark).toBe('#0076a5');
   });
 
   it('resolves to the three frozen constants and paints at the frozen peak', () => {
@@ -268,17 +271,15 @@ describe('the shipped ramp at the default preferences', () => {
   });
 
   /**
-   * The trap any retune of the defaults walks into: `usesTokenFill` keys off these two
-   * numbers, so moving them without moving `--wash-blue` with them leaves the panel reading one
-   * colour while the default state paints another. Held to the sliders' own steps — 1° and 0.001 —
-   * because that is the finest the defaults can be stated in.
+   * The trap any retune of the defaults walks into: `usesTokenFill` keys off these two numbers, so
+   * moving them without moving `--wash-blue` with them leaves the panel reading one colour while
+   * the default state paints another. Chroma is not held to the request itself — 0.2 does not fit
+   * sRGB at either theme's pinned lightness — so this checks the property that actually matters:
+   * the token IS what the engine would compute for these exact numbers, gamut reduction included.
    */
-  it('states the default colour as the light token, to the step the slider can hold', () => {
-    const token = labToLch(rgbToOklab(WASH_THEMES.light.blue.map((v) => v / 255) as [number, number, number]));
-    expect(Math.abs(token.h - DISPLAY_DEFAULTS.primaryHue), `token hue ${token.h.toFixed(2)}°`)
-      .toBeLessThanOrEqual(0.5);
-    expect(Math.abs(token.C - DISPLAY_DEFAULTS.primaryChroma), `token chroma ${token.C.toFixed(4)}`)
-      .toBeLessThanOrEqual(0.0005);
+  it('states the default colour as the light token, gamut-reduced exactly as the engine would', () => {
+    const engineLab = toGamutLab(WASH_THEMES.light.washL, DISPLAY_DEFAULTS.primaryChroma, DISPLAY_DEFAULTS.primaryHue);
+    expect(rgb255(oklabToRgb(engineLab))).toEqual([...WASH_THEMES.light.blue]);
   });
 
   it('reproduces the alpha of every step of the shipped curve exactly', () => {

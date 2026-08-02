@@ -94,10 +94,11 @@ describe('over', () => {
 });
 
 describe('reading a token back', () => {
-  it('resolves the light wash fill to the byte value app.css paints', () => {
-    // `--wash-blue: hsl(211 84% 50%)`, which every figure in wash.test.ts is computed from.
-    expect(toHex(hslToRgb(211, 0.84, 0.50))).toBe('#147ceb');
-    expect(rgb255(hslToRgb(211, 0.70, 0.44))).toEqual([0x22, 0x6e, 0xbf]);
+  it('resolves the neutral wash fill to the byte value app.css paints', () => {
+    // `--wash-grey: hsl(220 9% 55%)`, the neutral ramp's fill in both themes — the primary colour's
+    // own tokens are engine-derived now, not an `hsl()` this function would round-trip.
+    expect(toHex(hslToRgb(220, 0.09, 0.55))).toBe('#828997');
+    expect(rgb255(hslToRgb(220, 0.08, 0.62))).toEqual([0x96, 0x9c, 0xa6]);
   });
 
   it('walks all six sectors of the wheel', () => {

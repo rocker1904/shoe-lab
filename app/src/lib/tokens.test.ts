@@ -15,15 +15,15 @@ describe('design tokens', () => {
   it('defines the ranked and neutral wash fills for both themes', () => {
     for (const v of ['--wash-blue:', '--wash-grey:']) expect(css).toContain(v);
     // The fill is not the accent: a large translucent area needs less chroma than a small solid mark.
-    expect(css).toContain('hsl(211 84% 50%)');
-    expect(css).toContain('hsl(211 70% 44%)');
+    expect(css).toContain('--wash-blue: #0089be');
+    expect(css).toContain('--wash-blue: #0076a5');
   });
 
   it('defines the accent, a darker solid variant, and the one ink allowed on it', () => {
-    expect(css).toContain('hsl(211 84% 46%)');
-    expect(css).toContain('hsl(211 70% 54%)');
+    expect(css).toContain('--accent: #007eaf');
+    expect(css).toContain('--accent: #0090c8');
     expect(css).toContain('--accent-solid:');
-    expect(css).toContain('hsl(211 84% 44%)');
+    expect(css).toContain('--accent-solid: #0078a8');
     // A token rather than a literal `#fff` in each component that fills with the accent: the pass
     // exists to move colour choices into app.css, and the guard below is what keeps them there.
     // docs/app.md §Theming names the readers; a count here would be a second home for that list.

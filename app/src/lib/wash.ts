@@ -14,7 +14,7 @@
  */
 
 import {
-  contrast, hslToRgb, labToLch, mixLab, oklabToRgb, over, rgb255, rgbToOklab, toGamutLab, toHex,
+  contrast, labToLch, mixLab, oklabToRgb, over, rgb255, rgbToOklab, toGamutLab, toHex,
   type Lab, type Rgb,
 } from './oklab';
 
@@ -83,19 +83,19 @@ export interface DisplayPrefs {
 }
 
 /**
- * The hue and chroma are `--wash-blue`'s own in the LIGHT theme, rounded to the sliders' steps:
- * the painted token `#147ceb` is OKLCh 255.305° / 0.1889, so 255° and 0.189. Rounded rather than
- * exact because `<input type="range">` snaps its thumb to the step and would otherwise show a value
- * the preference does not hold — and because nothing is painted from these two at the default state
- * anyway: `resolveWash` reports `tokenFill` there and `app.css`'s own tokens reach the screen
- * untouched (docs/app.md §The display preferences).
+ * The hue and chroma are a request, not a token read backward: 235° and 0.2, the sliders' own
+ * steps. Neither theme's `--wash-blue` is hand-picked any more — both are `toGamutLab(washL, 0.2,
+ * 235)` at their own pinned lightness, gamut-reduced independently (light lands at chroma ≈0.126,
+ * dark ≈0.114; sRGB cannot hold 0.2 at either theme's pin). Nothing is painted from these two at
+ * the default state regardless: `resolveWash` reports `tokenFill` there and `app.css`'s own tokens
+ * reach the screen untouched (docs/app.md §The display preferences).
  *
  * They are still held to the token by `wash.test.ts`, because `usesTokenFill` keys off them:
  * moving these without moving `--wash-blue` with them would leave the panel reading one colour
  * while the default state paints another.
  */
 export const DISPLAY_DEFAULTS: DisplayPrefs = {
-  primaryHue: 255, primaryChroma: 0.189,
+  primaryHue: 235, primaryChroma: 0.2,
   baseOn: false, baseHue: 25, baseChroma: 0.12,
   strength: WASH_PEAK, curve: WASH_CURVE, floor: WASH_FLOOR,
 };
@@ -194,24 +194,26 @@ const ON_ACCENT: readonly number[] = [255, 255, 255];
 export const WASH_THEMES: Record<ThemeName, WashTheme> = {
   light: {
     name: 'light', surface: hexBytes('#ffffff'), ink: hexBytes('#16181b'),
-    accent: rgb255(hslToRgb(211, 0.84, 0.46)),
-    accentSolid: rgb255(hslToRgb(211, 0.84, 0.44)),
-    accentDim: rgb255(hslToRgb(211, 0.84, 0.95)),
+    // The whole family is the engine's own output at the default request (235°/0.2), not a
+    // designer's HSL any more — held to `app.css` byte for byte by `tokens.test.ts`.
+    accent: hexBytes('#007eaf'),
+    accentSolid: hexBytes('#0078a8'),
+    accentDim: hexBytes('#e5f3fc'),
     textDim: hexBytes('#5f6673'),
     markSurfaces: [hexBytes('#ffffff'), hexBytes('#f5f5f4'), hexBytes('#eeeeec')],
-    blue: hexBytes('#147ceb'), washL: rgbToOklab(bytesToRgb(hexBytes('#147ceb')))[0],
+    blue: hexBytes('#0089be'), washL: rgbToOklab(bytesToRgb(hexBytes('#0089be')))[0],
   },
   dark: {
     name: 'dark', surface: hexBytes('#1a1d21'), ink: hexBytes('#eceef1'),
-    accent: rgb255(hslToRgb(211, 0.70, 0.54)),
-    accentSolid: rgb255(hslToRgb(211, 0.70, 0.44)),
-    accentDim: rgb255(hslToRgb(211, 0.55, 0.22)),
+    accent: hexBytes('#0090c8'),
+    accentSolid: hexBytes('#0076a5'),
+    accentDim: hexBytes('#003b54'),
     textDim: hexBytes('#98a0ab'),
     markSurfaces: [hexBytes('#1a1d21'), hexBytes('#0f1113'), hexBytes('#22262a')],
     // Decision A: the dark fill IS the shared OKLCh point at this theme's pinned lightness, so the
     // runner's first nudge moves it a little rather than stepping it to a different blue
     // (docs/app.md §The display preferences).
-    blue: hexBytes('#006bcf'), washL: rgbToOklab(bytesToRgb(hexBytes('#006bcf')))[0],
+    blue: hexBytes('#0076a5'), washL: rgbToOklab(bytesToRgb(hexBytes('#0076a5')))[0],
   },
 };
 

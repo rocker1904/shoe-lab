@@ -3008,7 +3008,7 @@ never worse. Its ratios are not restated here: one fact, one home.
 jobs.** `--accent` is the small mark — hairlines, carets, in-range bars, links,
 the focus ring — and never sits behind text. `--accent-solid` is the darker
 variant used only where a filled accent carries text: `--on-accent` on
-`--accent` is 4.74:1 in light but **3.71:1 in dark**, so the two themes cannot
+`--accent` is 4.56:1 in light but **3.61:1 in dark**, so the two themes cannot
 share one solid value. `--on-accent` is the one ink allowed on it, and it is a
 token rather than a `#fff` written into each component, because the fill and its
 ink are one fact and a literal splits it across the components that read it —
@@ -3383,23 +3383,22 @@ always have, in both themes, byte for byte — asserted from both ends in
 `wash.test.ts` (the alpha of all 401 steps against the frozen closed form) and
 `display.test.ts` (the empty stylesheet). It is one predicate for both, because
 it is one preference: either the stylesheet's colours paint or the engine's do.
-This is why the defaults are the light theme's blue **rounded to the sliders'
-steps** — 255° / 0.189 against the painted token's 255.305 / 0.1889 — and why
-that rounding costs nothing: those two numbers are a starting point for a tweak,
-never a colour that is painted. They are still pinned to the token, because
-`usesTokenFill` keys off them: moving them without moving `--wash-blue` would
-leave the panel reading one colour while the default state painted another.
+This is why the defaults are stated at the sliders' own steps — 235° / 0.2 —
+rather than at some rounder or more familiar pair: they are a colour someone
+asked the sliders for directly, with no existing token to round to. They are
+still pinned to `--wash-blue`, because `usesTokenFill` keys off them: moving
+them without moving the token would leave the panel reading one colour while
+the default state painted another. `wash.test.ts`'s guard checks that
+directly — the token IS `toGamutLab(washL, primaryChroma, primaryHue)` at
+these two numbers, not merely close to what they nominally ask for.
 
-**The dark theme's `--wash-blue` is written as the value the engine derives.**
-`#006bcf` is the shared OKLCh point at that theme's own pinned lightness, and it
-is a hex rather than an `hsl()` for exactly that reason. Before it, the two
-themes' fills were not one colour — dark was 253.6° / 0.146 against light's
-255.3° / 0.189 — so a runner's first tick of the hue slider *stepped* the dark
-fill to a different blue, 0.029 of OKLab away, where light's moved 0.006.
-Deriving it removes the step: the first nudge now travels 0.015, which is the
-gamut boundary being steep at that hue rather than a discontinuity. It is not
-zero, and calling it continuous would be the claim this project does not make.
-The light token is untouched.
+**Both themes' `--wash-blue` are written as the value the engine derives.**
+Chroma 0.2 does not fit sRGB at either theme's pinned lightness, so each token
+is that theme's own gamut-reduced point at 235° — light lands at chroma ≈0.126,
+dark at ≈0.114, both hex rather than an `hsl()` because neither is a value a
+designer chose by eye any more. The accent family follows the same rule:
+`--accent`, `--accent-solid` and `--accent-dim` in `app.css` are `solveAccents`'
+own output at the default request, not a hand-picked `hsl()`.
 
 **The override stylesheet mirrors `app.css`'s own blocks**, and has to: the
 dark values sit under both `prefers-color-scheme` and `[data-theme]` so the theme

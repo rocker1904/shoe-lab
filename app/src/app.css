@@ -32,12 +32,12 @@
   /* Darker than --border on purpose: a group divider sits on --chrome, where a border-coloured
      hairline measures 1.22:1 and simply is not there. This one measures 1.61:1 there. */
   --divider: #c9c9c3;
-  --accent: hsl(211 84% 46%); --accent-dim: hsl(211 84% 95%);
+  --accent: #007eaf; --accent-dim: #e5f3fc;
   /* ONLY for a filled accent carrying --on-accent text — the toolbar pill, the month grid's chosen
-     cell. --on-accent on --accent is 4.74:1 in light but 3.71:1 in dark, so the two themes cannot
-     share one value; this one is 5.12:1 light / 5.18:1 dark. Never a hairline, a bar or a text
+     cell. --on-accent on --accent is 4.56:1 in light but 3.61:1 in dark, so the two themes cannot
+     share one value; this one is 4.94:1 light / 5.08:1 dark. Never a hairline, a bar or a text
      colour; `wash.test.ts` holds it to 4.5:1 (docs/app.md §Theming). */
-  --accent-solid: hsl(211 84% 44%);
+  --accent-solid: #0078a8;
   /* The one ink allowed on --accent-solid, and a token so no component hard-codes it. Both themes
      fill with a dark enough accent that this stays white in both — one fact, stated here rather
      than once per component that reads it (docs/app.md §Theming names them). */
@@ -50,7 +50,7 @@
   --hist-dim: #7f8794;
   /* The FILL, not the accent: a large translucent area needs less chroma than a small solid mark.
      Alpha comes from lib/wash.ts, which is where the contrast rule is enforced. */
-  --wash-blue: hsl(211 84% 50%); --wash-grey: hsl(220 9% 55%);
+  --wash-blue: #0089be; --wash-grey: hsl(220 9% 55%);
   --hover-wash: color-mix(in oklab, var(--accent) 6%, transparent);
   /* The sidebar's track, named once: `Page.svelte` lays the page out against it and `App.svelte`'s
      loading skeleton reserves it, and a skeleton reserving a different width IS the layout jump it
@@ -80,9 +80,9 @@
     --bg: #0f1113; --surface: #1a1d21; --chrome: #15181b; --well: #16191d;
     --text: #eceef1; --text-dim: #98a0ab;
     --border: #282c31; --border-soft: #22262a; --divider: #434c59;
-    --accent: hsl(211 70% 54%); --accent-dim: hsl(211 55% 22%);
-    --accent-solid: hsl(211 70% 44%);
-    /* Still white: the dark fill is dark enough to carry it at 5.18:1. Restated rather than
+    --accent: #0090c8; --accent-dim: #003b54;
+    --accent-solid: #0076a5;
+    /* Still white: the dark fill is dark enough to carry it at 5.08:1. Restated rather than
        inherited, so the two blocks stay symmetric and a future retune has somewhere to land. */
     --on-accent: #ffffff;
     --good: #4ade80; --bad: #f0836f;
@@ -94,7 +94,7 @@
        OKLCh point at this theme's pinned lightness, so a runner's first nudge of the primary colour
        moves it a little instead of stepping it to a different blue
        (docs/app.md §The display preferences). */
-    --wash-blue: #006bcf; --wash-grey: hsl(220 8% 62%);
+    --wash-blue: #0076a5; --wash-grey: hsl(220 8% 62%);
     --shadow-panel: none;
     --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.7);
     --shadow-dialog: 0 16px 40px -12px rgb(0 0 0 / 0.7);
@@ -107,9 +107,9 @@
   --bg: #0f1113; --surface: #1a1d21; --chrome: #15181b; --well: #16191d;
   --text: #eceef1; --text-dim: #98a0ab;
   --border: #282c31; --border-soft: #22262a; --divider: #434c59;
-  --accent: hsl(211 70% 54%); --accent-dim: hsl(211 55% 22%);
-  --accent-solid: hsl(211 70% 44%);
-  /* Still white: the dark fill is dark enough to carry it at 5.18:1. Restated rather than
+  --accent: #0090c8; --accent-dim: #003b54;
+  --accent-solid: #0076a5;
+  /* Still white: the dark fill is dark enough to carry it at 5.08:1. Restated rather than
      inherited, so the two blocks stay symmetric and a future retune has somewhere to land. */
   --on-accent: #ffffff;
   --good: #4ade80; --bad: #f0836f;
@@ -121,7 +121,7 @@
      OKLCh point at this theme's pinned lightness, so a runner's first nudge of the primary colour
      moves it a little instead of stepping it to a different blue
      (docs/app.md §The display preferences). */
-  --wash-blue: #006bcf; --wash-grey: hsl(220 8% 62%);
+  --wash-blue: #0076a5; --wash-grey: hsl(220 8% 62%);
   --shadow-panel: none;
   --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.7);
   --shadow-dialog: 0 16px 40px -12px rgb(0 0 0 / 0.7);
