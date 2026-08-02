@@ -378,13 +378,14 @@ const WIDE = 'score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,
  * it is kept because a breakdown is what used to make the widest tier fire at all.
  */
 test('never shrinks the shoe photo as the window widens', async ({ page }) => {
-  // ONE ladder, straight through the sidebar's 1180px boundary. It used to be two: the sidebar
+  // ONE ladder, straight through the sidebar's boundary. It used to be two: the sidebar
   // taking its permanent 260px column narrowed every container inside the content track at once
   // and the photo stepped 280px → 270px across it, so a single ladder measured the sidebar
   // arriving rather than this panel's own tiers. Capping the content at the summary's width killed
-  // that step — the container stops varying with the window well below 1180px — so the regimes
+  // that step — the container stops varying with the window well below it — so the regimes
   // no longer need walking apart (docs/app.md §The expanded row).
-  const widths = [820, 900, 1000, 1100, 1179, 1180, 1250, 1300, 1440, 1600];
+  const widths = [820, 900, 1000, 1100, SIDEBAR_PERMANENT_PX - 1, SIDEBAR_PERMANENT_PX,
+    1250, 1300, 1440, 1600];
   const seen: { width: number; img: number }[] = [];
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
@@ -579,7 +580,8 @@ test('keeps an open panel across the 700px rendering swap', async ({ page }) => 
 });
 
 /**
- * The drawer's band now reaches 1179px, where the bar is ONE row and `Filters` still carries its
+ * The drawer's band now reaches one pixel below `SIDEBAR_PERMANENT_PX`, where the bar is ONE row
+ * and `Filters` still carries its
  * word — so that row gained a control it never had to fit. 801px with a dozen columns ticked is
  * the row at its longest against the least width it ever has.
  *

@@ -44,7 +44,7 @@
   --on-accent: #ffffff;
   --good: #15803d; --bad: #b4331f;
   /* Flat mark. 3.62:1 on --surface, 3.32:1 on --bg, 3.12:1 on --border-soft — all three asserted in
-     wash.test.ts, because the histogram sits on --bg above 1180px and the pickers' coverage fill
+     wash.test.ts, because the histogram sits on --bg above the sidebar boundary and the pickers' coverage fill
      sits in a --border-soft track. The old #8b929d cleared only the first of the three
      (docs/app.md §Theming). */
   --hist-dim: #7f8794;

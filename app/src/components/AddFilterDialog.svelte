@@ -108,7 +108,7 @@
 </div>
 
 <style>
-  /* 35 puts it over the filter drawer's 30, which is the layer it opens from below 1180px, and under
+  /* 35 puts it over the filter drawer's 30, which is the layer it opens from below the sidebar boundary, and under
      the skip link's 40. Moving the node to `<body>` is what makes these numbers comparable at all:
      inside the sticky sidebar they were measured against that sidebar's children
      (docs/app.md §Stacking order). */
@@ -167,7 +167,7 @@
   /* PROVISIONAL with the element it paints — these four rules are the whole of it, and nothing
      above depends on them (BACKLOG.md).
      32: under the dialog's 35 and over the drawer's 30, which is the layer it opens from below
-     1180px (docs/app.md §Stacking order). Rendered at every width — unlike the drawer's scrim, this
+     the sidebar boundary (docs/app.md §Stacking order). Rendered at every width — unlike the drawer's scrim, this
      dialog is modal on the desktop too. */
   .scrim { position: fixed; inset: 0; z-index: 32; background: var(--scrim); }
   @media (prefers-reduced-motion: no-preference) {

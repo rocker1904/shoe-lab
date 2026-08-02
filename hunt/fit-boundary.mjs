@@ -1,12 +1,15 @@
-// The two claims about this app that ONLY the real fleet can make.
+// The three claims about this app that ONLY the real fleet can make.
 //
-// 1. **1180px is where the sidebar fits beside the table.** With 450 shoes and the default columns
-//    the document needs 1177px, so a 260px track any narrower buys a column of filters by pushing
-//    the table off the screen (docs/app.md §Filters).
+// 1. **1191px is where the sidebar fits beside the table.** With 450 shoes and the default columns
+//    the table's own min-content is 903px, and the boundary is that plus the fit rule's slack, the
+//    page's leading gutter and the 260px track — so a permanent sidebar any narrower buys a column
+//    of filters by taking the table off the screen (docs/app.md §Filters).
 // 2. **The default view scrolls sideways at no width.** Which of the two renderings is mounted is a
 //    fit decision now, so the table is only ever up where it fits and the list takes over where it
 //    would not (docs/app.md §Two renderings, and only one of them mounted). The band that used to
 //    run 700→916px at up to 217px over is what this ladder exists to keep closed.
+// 3. **Widening the window never takes the table away.** The two boundaries above are one decision:
+//    chosen apart they disagree, and the rendering flips twice across the disagreement.
 //
 // The e2e fixture is five shoes with one-word names and its document fits at every width, so no
 // assertion in the suite can see either — docs/app.md §Table presentation records why widening it is
@@ -24,15 +27,17 @@ import { start } from './serve-real.mjs';
 import { open } from './drive.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-/** The first width at which the sidebar is a permanent column — `app/src/Page.svelte`'s own. */
-const BOUNDARY = 1180;
+/** The first width at which the sidebar is a permanent column — `SIDEBAR_PERMANENT_PX` in
+ *  `app/src/lib/fit.ts`, restated because this file is plain node and that one is TypeScript. */
+const BOUNDARY = 1191;
 /**
- * The ladder for claim 2. It samples both renderings, both sidebar regimes, the phone floor at 700
- * and the widths either side of the fit threshold the default view computes (931px on today's
- * fleet), because a threshold is exactly where an off-by-one lands.
+ * The ladder for claims 2 and 3. It samples both renderings, both sidebar regimes, the phone floor
+ * at 700 and the widths either side of BOTH thresholds — the fit threshold the default view computes
+ * (931px on today's fleet) and the sidebar's — because a threshold is exactly where an off-by-one
+ * lands, and 1180 and 1190 are kept as rungs because they are where the closed band ran.
  */
 const LADDER = [320, 360, 390, 500, 699, 700, 760, 800, 900, 916, 917, 930, 931, 932, 1000, 1100,
-  1179, 1180, 1190, 1191, 1280, 1440, 1920];
+  1179, 1180, 1190, BOUNDARY - 1, BOUNDARY, BOUNDARY + 1, 1280, 1440, 1920];
 /**
  * 320px is sampled and not asserted, because two DESIGNED minimums are wider than it: the stacked
  * list's six 53px columns need 332px plus the panel, which is why 360px is documented as the
@@ -94,11 +99,14 @@ for (const engine of engines) {
   rig.base = server.url;
   await rig.goto('/');
   const rows = [];
+  /** The rendering at each rung, for claim 3 below. */
+  const renders = [];
   for (const width of LADDER) {
     await rig.resize(width, 900, { settle: 150 });
     const m = await rig.page.evaluate(READ);
     rows.push(`${String(width).padStart(5)} ${m.rendering.padStart(8)} over ${String(m.over).padStart(3)}` +
       ` table ${m.tableOver}`);
+    renders.push([width, m.rendering]);
     if (width >= ASSERT_FROM && m.tableOver > 0) {
       failures.push(`${engine} ${width}px: the ${m.rendering} rendering is ${m.tableOver}px wider ` +
         `than the window — the fit decision mounted a table that does not fit`);
@@ -110,6 +118,24 @@ for (const engine of engines) {
   await rig.close();
   console.error(`\n${engine} ladder — width, rendering, document overflow, table overflow\n` +
     rows.join('\n'));
+
+  /**
+   * Claim 3, and the one that ties the two boundaries together: **widening the window never takes
+   * the table away.** The sidebar's track is a 260px step in what the table has to lay itself out
+   * in, so a permanent-sidebar boundary chosen against any criterion other than the fit rule's own
+   * opens a band where the rendering reads desktop → list → desktop as a window is dragged wider.
+   * One ran 1180–1190px until the boundary was moved to where the fit rule puts it
+   * (`.hunt/fixlog-f12.md`); this is what keeps it shut, and it is the assertion to read first if
+   * `BOUNDARY` above is ever changed by hand.
+   */
+  const walked = renders.filter(([width]) => width >= ASSERT_FROM);
+  for (let i = 1; i < walked.length; i++) {
+    if (walked[i][1] === 'phone' && walked[i - 1][1] === 'desktop') {
+      failures.push(`${engine} ${walked[i][0]}px: the rendering reverts to the list at a width ` +
+        `WIDER than ${walked[i - 1][0]}px, where the table was up — the sidebar's boundary and the ` +
+        `fit rule disagree about what fits beside a permanent sidebar`);
+    }
+  }
 }
 
 await server.stop();

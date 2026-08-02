@@ -28,7 +28,7 @@
   import { COPIED, EXPORTED, viewAnnouncement } from './lib/announce';
   import { isBareArrival } from './lib/arrival';
   import { exportCsv } from './lib/csv-export';
-  import { fitModel, rendersPhone } from './lib/fit';
+  import { fitModel, rendersPhone, SIDEBAR_PERMANENT_PX } from './lib/fit';
   import { keepFocusInScrollports } from './lib/focus-scroll';
   import { ICON_PATHS } from './components/icons';
   import { indexTests } from './lib/dataset';
@@ -200,13 +200,16 @@
 
   /**
    * The SIDEBAR-FIT boundary: the sidebar is a drawer everywhere the table cannot be seen beside
-   * it. 1180 is the first width at which the default six columns and the 260px track both fit —
-   * the real fleet's document needs 1177px, identically in all three engines — so below it a
-   * permanent sidebar buys a column of filters by pushing the table it is meant to tune off the
-   * screen (docs/app.md §Filters). Written `1179.98` on the repo's `.98` convention, so 1180 is the
-   * first PERMANENT width rather than the last drawer one.
+   * it. Below it a permanent sidebar would buy a column of filters by pushing the table it is
+   * meant to tune off the screen (docs/app.md §Filters).
+   *
+   * The number is `SIDEBAR_PERMANENT_PX`, which is the fit rule's own — the first width at which
+   * the default view clears the track by the same slack it is held to everywhere else. Held to
+   * that criterion and no other, or the two disagree and the rendering flips twice as a window is
+   * dragged wider. Written `.98` on the repo's convention, so `SIDEBAR_PERMANENT_PX` is the first
+   * PERMANENT width rather than the last drawer one.
    */
-  const DRAWER_QUERY = '(max-width: 1179.98px)';
+  const DRAWER_QUERY = `(max-width: ${SIDEBAR_PERMANENT_PX - 0.02}px)`;
   let drawer = $state(untrack(() => window.matchMedia?.(DRAWER_QUERY).matches ?? false));
   $effect(() => {
     const mq = window.matchMedia?.(DRAWER_QUERY);
@@ -660,7 +663,7 @@
     <div class="scrim" onclick={closeFilters}></div>
   {/if}
   <!-- The handler is a key trap for the panel wherever it is a drawer, not a control: giving this
-       box a role would announce a landmark that is only a drawer below 1180px. -->
+       box a role would announce a landmark that is only a drawer below the sidebar's boundary. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="sidebar scrollport" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
        style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
@@ -685,7 +688,7 @@
     {#if visibleSorted.length === 0}
       <!-- The table still renders: its headers keep the sort controls reachable. -->
       <!-- The hint names a control the reader can actually see, and only where they cannot see the
-           rows it is about: below 1180px the sidebar is a CLOSED drawer, so pointing at it names
+           rows it is about: below the sidebar's boundary it is a CLOSED drawer, so pointing at it names
            something off screen. Said at a width where the sidebar is standing open beside this
            paragraph it would send the reader hunting for a button that is not there. It reads the
            rune rather than a `@media` rule for the same reason the hosts do — a media rule cannot
@@ -759,13 +762,16 @@
   .empty { padding: var(--s6); text-align: center; color: var(--text-dim); }
   .empty strong { display: block; color: var(--text); font-size: var(--t-lg); font-weight: 600; margin-bottom: var(--s1); }
   /* The SIDEBAR-FIT boundary, not the chrome's: `.utils` above answers 800px and this answers
-     1179.98, because how much room the bar has for words and whether the table can be seen beside a
+     1190.98, because how much room the bar has for words and whether the table can be seen beside a
      260px track are two different questions with two different answers. Every rule that makes the
      sidebar a drawer is in this one block, so the layout, the panel and its scrim cannot disagree
-     about which it is. `1179.98` on the repo's `.98` convention: 1180 is the first width at which
-     the default table and the track both fit, and it is the first PERMANENT width
-     (docs/app.md §Filters). */
-  @media (max-width: 1179.98px) {
+     about which it is. `1190.98` on the repo's `.98` convention: 1191 is `SIDEBAR_PERMANENT_PX`,
+     the first width at which the default table clears the track by the fit rule's own slack, and it
+     is the first PERMANENT width (docs/app.md §Filters).
+     A media query cannot read a TypeScript constant, so this is the one number restated by hand —
+     `smoke.spec.ts` drives a browser at `SIDEBAR_PERMANENT_PX` and one pixel below it, so the
+     restatement fails the suite rather than the runner if the two ever part. */
+  @media (max-width: 1190.98px) {
     /* Below the drawer's 30 and above the page. Never rendered where the sidebar is permanent,
        because the resize effect forces `showFilters` false there (docs/app.md §Stacking order). */
     .scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import { FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
@@ -599,7 +600,7 @@ test('lays the chrome out in bands', async ({ page }) => {
 
   // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
   // what the table is, so the row carrying every word is the one nearest the table. This boundary is
-  // the CHROME's own and no longer the sidebar's, which sits at 1180 — the merged line the design
+  // the CHROME's own and no longer the sidebar's, which sits far wider — the merged line the design
   // wanted from 700 up does not fit the shipped controls until 777px, which is not a band
   // (docs/app.md §The chrome bands).
   for (const width of [800, 760, 660]) {
@@ -656,10 +657,15 @@ test('mounts each utility exactly once at every width', async ({ page }) => {
 
 /**
  * The sidebar's own boundary, which is NOT the chrome's. A permanent 260px column is only worth
- * having where the table can be seen beside it, and the default six columns plus that track do not
- * both fit until 1180px — so one pixel of window at 801px used to add 259px of horizontal overflow,
- * pushing the table the sidebar exists to tune off the right of the screen
+ * having where the table can be seen beside it, and the default columns plus that track do not both
+ * fit until `SIDEBAR_PERMANENT_PX` — so one pixel of window at 801px used to add 259px of horizontal
+ * overflow, pushing the table the sidebar exists to tune off the right of the screen
  * (docs/app.md §Filters).
+ *
+ * Driven off the CONSTANT rather than a literal, because four style blocks restate that number in
+ * media queries no TypeScript can reach — `Page.svelte`, `Toolbar.svelte`, `App.svelte` — and this
+ * is what holds the restatements to it: a boundary moved in `lib/fit.ts` alone fails here rather
+ * than in a band a runner finds.
  *
  * Measured as the table's own left edge rather than as overflow, because the e2e fixture is five
  * shoes with one-word names and its document fits at every width here — the overflow half of the
@@ -681,7 +687,7 @@ test('keeps the sidebar a drawer until the table can be seen beside it', async (
     });
   };
 
-  for (const width of [700, 760, 800, 801, 900, 1000, 1100, 1179]) {
+  for (const width of [700, 760, 800, 801, 900, 1000, 1100, SIDEBAR_PERMANENT_PX - 1]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const seen = await layout();
@@ -695,7 +701,7 @@ test('keeps the sidebar a drawer until the table can be seen beside it', async (
   }
 
   // And at the boundary it is a column again, because there it is one a runner can use.
-  for (const width of [1180, 1200, 1440]) {
+  for (const width of [SIDEBAR_PERMANENT_PX, 1250, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const seen = await layout();
@@ -712,30 +718,36 @@ test('keeps the sidebar a drawer until the table can be seen beside it', async (
  * page lays out on — reserve a column the page then does not draw and the table slides 260px left
  * as the data lands, which is the exact jump the reserve exists to prevent
  * (docs/app.md §Decisions on the skeleton). The loop above measures the reserve in full at 1440 and
- * 1200; this is the one width on the other side of the boundary, and it is only about the track.
+ * 1250; these are the widths on the other side of the boundary, and they are only about the track.
+ *
+ * One pixel below `SIDEBAR_PERMANENT_PX` as well as a plain mid-band width, because the placeholder
+ * states the boundary in a media query of its OWN (`App.svelte`): a boundary moved in `lib/fit.ts`
+ * and not here leaves the placeholder reserving 260px the loaded page then takes back.
  */
-test('reserves no sidebar track at a width where the loaded page has none', async ({ page }) => {
-  await page.setViewportSize({ width: 1000, height: 900 });
-  let release = () => {};
-  const held = new Promise<void>((resolve) => { release = resolve; });
-  await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
+for (const width of [1000, SIDEBAR_PERMANENT_PX - 1]) {
+  test(`reserves no sidebar track at ${width}px, where the loaded page has none`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    let release = () => {};
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route('**/shoes.json*', async (route) => { await held; await route.continue(); });
 
-  await page.goto('/');
-  const placeholder = await page.locator('.skeleton').evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    return { x: Math.round(box.x), w: Math.round(box.width) };
+    await page.goto('/');
+    const placeholder = await page.locator('.skeleton').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return { x: Math.round(box.x), w: Math.round(box.width) };
+    });
+
+    release();
+    await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+    const table = await page.locator('.tblwrap').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return { x: Math.round(box.x), w: Math.round(box.width) };
+    });
+
+    expect(placeholder.x, 'the placeholder reserves a sidebar track the page never draws').toBe(table.x);
+    expect(placeholder.w, 'the placeholder is not the width of the table').toBe(table.w);
   });
-
-  release();
-  await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
-  const table = await page.locator('.tblwrap').evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    return { x: Math.round(box.x), w: Math.round(box.width) };
-  });
-
-  expect(placeholder.x, 'the placeholder reserves a sidebar track the page never draws').toBe(table.x);
-  expect(placeholder.w, 'the placeholder is not the width of the table').toBe(table.w);
-});
+}
 
 // And the swap survives a resize rather than only a fresh load: the rune is what moves them, so a
 // listener that never fires would pass every case above and still strand the controls in the wrong
@@ -821,9 +833,9 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
     // Scrolled on purpose: unpinned, the chrome and the table header sit above the dialog's box and
     // no amount of wrong stacking would be visible.
     await page.evaluate(() => window.scrollTo(0, 1500));
-    // The sidebar's boundary, not the chrome's: below 1180 the filters are behind the drawer, so
+    // The sidebar's boundary, not the chrome's: below it the filters are behind the drawer, so
     // Add filter has to be reached through it (docs/app.md §Filters).
-    if (width < 1180) await page.getByRole('button', { name: 'Filters' }).click();
+    if (width < SIDEBAR_PERMANENT_PX) await page.getByRole('button', { name: 'Filters' }).click();
     await page.getByRole('button', { name: 'Add filter' }).click();
     await expect(page.getByRole('dialog', { name: 'Add filter' })).toBeVisible();
 
@@ -910,9 +922,10 @@ test('never ships an icon without its name', async ({ page }) => {
     }
     // The theme cycle is inside this control now, not beside it (docs/app.md §Where the utilities live).
     await expect(page.getByRole('button', { name: 'Display' }), `at ${width}px`).toHaveCount(1);
-    // Filters answers the SIDEBAR boundary, not this one: it exists all the way to 1180px, worded
-    // between 801 and 1179 and a glyph below (docs/app.md §The chrome bands).
-    if (width < 1180) {
+    // Filters answers the SIDEBAR boundary, not this one: it exists all the way to
+    // `SIDEBAR_PERMANENT_PX`, worded from 801px up and a glyph below
+    // (docs/app.md §The chrome bands).
+    if (width < SIDEBAR_PERMANENT_PX) {
       await expect(page.getByRole('button', { name: 'Filters', exact: true })).toHaveCount(1);
     }
     // NOT `getByRole`: `<summary>` has no implicit ARIA role, so a role query never matches it

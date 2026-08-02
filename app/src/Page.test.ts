@@ -553,7 +553,7 @@ describe('Page', () => {
     expect(toggle).toHaveFocus();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
-  // Under 1180px the sidebar is itself the drawer, so one Escape must not dismiss both.
+  // Under the sidebar boundary the sidebar is itself the drawer, so one Escape must not dismiss both.
   it('closes the Add-filter dialog on Escape and leaves the drawer open', async () => {
     render(Page, { props: { data: dataPlus } });
     const drawer = screen.getByRole('button', { name: 'Filters' });

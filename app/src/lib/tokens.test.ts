@@ -45,7 +45,7 @@ describe('design tokens', () => {
     // The token and the literal in wash.test.ts are one fact in two files; drifting them apart is
     // how a flat mark gets lightened into invisibility with nothing failing. Light moved off
     // #8b929d because that value cleared 3:1 only against --surface, and the sidebar's bars sit on
-    // --bg above 1180px (2.88:1) and in a --border-soft track in the pickers (2.70:1).
+    // --bg above the sidebar boundary (2.88:1) and in a --border-soft track in the pickers (2.70:1).
     expect(css).toContain('--hist-dim: #7f8794');
     expect(css).toContain('--hist-dim: #6b7482');
   });

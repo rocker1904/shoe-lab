@@ -113,7 +113,7 @@
      `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
      `tokens.test.ts` fails the build on a raw white in a component's style block. */
   .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
-  /* Hidden by default rather than by a query: at 1180px and up the sidebar is permanent, so the
+  /* Hidden by default rather than by a query: at 1191px and up the sidebar is permanent, so the
      drawer toggle has nothing to toggle. It is the fifth carrier of the one secondary-button
      treatment (docs/app.md §Theming). */
   .filters-toggle { display: none; padding: var(--s1) var(--s3); cursor: pointer;
@@ -121,11 +121,13 @@
                     border-radius: var(--r-sm); font-size: var(--t-sm); }
   .filters-toggle:hover { background: var(--accent-dim); }
   /* The SIDEBAR-FIT boundary, and the only rule on this bar that answers it: the trigger exists
-     wherever the sidebar is a drawer, which reaches 379px further than the width at which this bar
+     wherever the sidebar is a drawer, which reaches 390px further than the width at which this bar
      stops being a phone's. Its own block rather than the 800px one below, or the button would be
      missing across the whole band where it is the only way to the filters
-     (docs/app.md §The chrome bands). */
-  @media (max-width: 1179.98px) {
+     (docs/app.md §The chrome bands). The number is `SIDEBAR_PERMANENT_PX` less the repo's `.98`,
+     restated because a media query cannot read a constant and driven at both sides of it by
+     `smoke.spec.ts`. */
+  @media (max-width: 1190.98px) {
     .filters-toggle { display: inline-flex; align-items: center; }
   }
   /* The sixth carrier of the one secondary-button treatment (docs/app.md §Theming). */
@@ -137,7 +139,7 @@
   /* The CHROME-DENSITY boundary. Below 800px every pixel of chrome is paid before the first shoe,
      on the screen with the least of it: the gutter and the vertical padding halve, and every word
      but `About` becomes a glyph. It is a question about how much room this bar has for words, which
-     is why it stays at 800 while the drawer's own boundary sits at 1180 — between the two, Filters
+     is why it stays at 800 while the drawer's own boundary sits at 1191 — between the two, Filters
      is on the bar carrying its word.
      ONE band split, not two: the design asked for a merged line from 700 to 800 and the shipped
      components do not fit one, so the bands separate for the whole sub-800 range. The ACTIONS lead

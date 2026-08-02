@@ -58,11 +58,24 @@ const SIDEBAR_TRACK_PX = 260;
 
 /**
  * The width at which the sidebar stops being a drawer and takes a column of its own — `Page.svelte`
- * and `app.css` own the boundary itself (docs/app.md §Filters); this is the same number, because the
- * table's share of the window steps by 260px there and a fit decision that missed it would answer
- * for a layout the page is not in.
+ * owns the media query itself (docs/app.md §Filters); this is the same number, because the table's
+ * share of the window steps by 260px there and a fit decision that missed it would answer for a
+ * layout the page is not in.
+ *
+ * It is derived from the rule below rather than measured against it: the boundary is the first
+ * width at which the **default view** still fits beside the track, which is
+ * `desktopMinWidth(defaults) + FIT_SLACK_PX + CONTENT_GUTTER_PX + SIDEBAR_TRACK_PX` — 903 + 12 + 16
+ * + 260 on today's fleet. Chosen against any other criterion it opens a band where the rendering
+ * reads desktop → list → desktop as a window is dragged WIDER, because taking the track costs the
+ * table 260px at one pixel of window: 1180 was the width at which the page merely fit, with 2px in
+ * hand against the 12 the fit rule holds it to, and 1180–1190px was that band
+ * (`.hunt/fixlog-f12.md`). `hunt/fit-boundary.mjs` is where the derivation is checked, because only
+ * the real fleet can state the 903.
+ *
+ * A column set wider than the default still costs its own band here — the track is 260px whatever
+ * is on screen — and that is a property of a sidebar that appears at a width, not of this number.
  */
-export const SIDEBAR_PERMANENT_PX = 1180;
+export const SIDEBAR_PERMANENT_PX = 1191;
 
 /**
  * Below this the phone rendering, whatever the arithmetic says. A two-column desktop table is not a

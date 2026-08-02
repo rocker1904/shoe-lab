@@ -117,17 +117,18 @@
      no longer matches causes the jump it exists to prevent.
      The left margin RESERVES the sidebar track, because the table it replaces is the second cell of
      `Page.svelte`'s two-column layout, not a full-bleed block: without it the placeholder starts at
-     x=16 and the table lands at x=276, which is the jump measured. Below 1180px the sidebar is a
-     drawer and the track is gone, so the reservation goes with it — the same boundary the loaded
-     page lays out on, or the placeholder reserves a column that never arrives
-     (docs/app.md §Decisions). */
+     x=16 and the table lands at x=276, which is the jump measured. Below `SIDEBAR_PERMANENT_PX` the
+     sidebar is a drawer and the track is gone, so the reservation goes with it — the same boundary
+     the loaded page lays out on, or the placeholder reserves a column that never arrives
+     (docs/app.md §Decisions). `smoke.spec.ts` drives the width one pixel below it, so the constant
+     and this restatement of it cannot part unnoticed. */
   /* Laid out, painted by nothing. It is the height above the table that is being reserved, and the
      bands are what state it. */
   .reserve { visibility: hidden; }
   /* The margins moved here from `.skeleton` when the receipt joined it: both stand in the second
      cell of the layout, so the track is reserved once for the pair rather than twice. */
   .pane { margin: 0 var(--s4) 0 calc(var(--sidebar-w) + var(--s4)); }
-  @media (max-width: 1179.98px) { .pane { margin-left: var(--s4); } }
+  @media (max-width: 1190.98px) { .pane { margin-left: var(--s4); } }
   /* The receipt's own box — `Receipt.svelte`'s margin, padding and face — with one line of it
      reserved as a line box rather than as a number. */
   .receipt-space { margin: 0 0 var(--s2); padding: var(--s2) var(--s1);
