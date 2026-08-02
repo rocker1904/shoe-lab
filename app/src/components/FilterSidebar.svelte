@@ -6,6 +6,7 @@
   import { applyFilters, type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
   import { excludedBy } from '../lib/relax';
+  import { roving } from '../lib/roving';
   import type { ViewState } from '../lib/urlstate';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
@@ -24,6 +25,11 @@
 
   const idx = $derived(indexTests(data.tests));
   const ZONE_LABEL: Record<Zone, string> = { forefoot: 'Forefoot', heel: 'Heel' };
+
+  /** The bound each quick chip sets, resolved ONCE so the value a chip writes and the value its
+   *  mark compares against are the same string. Computed at click time they were two reads of the
+   *  clock, and a chip could set a bound it then failed to look selected for. */
+  const QUICK_BOUNDS = [1, 2, 3].map((years) => ({ years, iso: startOfMonth(isoYearsAgo(new Date(), years)) }));
 
   /** `score` and `msrpGbp` are shoe fields, not catalogue tests, so `metricEntries` cannot emit
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
@@ -218,11 +224,20 @@
          (docs/app.md §Released after is month-granular). -->
     <MonthPicker value={view.filters.releasedAfter} min={fleetRange.min} max={fleetRange.max}
                  onchange={(iso) => patch((v) => { v.filters.releasedAfter = iso; })} />
-    <div class="chips">
+    <!-- `radiogroup`, because the four are exclusive and each names a whole state of one bound
+         rather than a thing to switch on: `Any` IS the unset state, so it lights when nothing is
+         bound (docs/app.md §Released after is month-granular). A view the month picker put outside
+         all four marks none, which a radiogroup is allowed to do — same shape as the toolbar's
+         nullable marks. -->
+    <div class="chips" role="radiogroup" aria-label="Released after, quick bounds" use:roving>
       <!-- The only way to unset a date the chips set: a chip that sets one cannot also clear it. -->
-      <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = undefined; })}>Any</button>
-      {#each [1, 2, 3] as y (y)}
-        <button type="button" onclick={() => patch((v) => { v.filters.releasedAfter = startOfMonth(isoYearsAgo(new Date(), y)); })}>{y}y</button>
+      <button type="button" role="radio" aria-checked={view.filters.releasedAfter === undefined}
+              class:on={view.filters.releasedAfter === undefined} data-label="Any"
+              onclick={() => patch((v) => { v.filters.releasedAfter = undefined; })}>Any</button>
+      {#each QUICK_BOUNDS as q (q.years)}
+        <button type="button" role="radio" aria-checked={view.filters.releasedAfter === q.iso}
+                class:on={view.filters.releasedAfter === q.iso} data-label="{q.years}y"
+                onclick={() => patch((v) => { v.filters.releasedAfter = q.iso; })}>{q.years}y</button>
       {/each}
     </div>
   </section>
@@ -312,7 +327,22 @@
     .search { font-size: 16px; }
   }
   .chips { display: flex; gap: var(--s1); margin-top: var(--s1); }
-  .chips button { padding: var(--s1) var(--s2); border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface); color: var(--text-dim); cursor: pointer; }
+  /* A column for the same reason the toolbar's pills are one: the width reservation below sits
+     under the label rather than beside it. */
+  .chips button { display: inline-flex; flex-direction: column; align-items: center;
+                  padding: var(--s1) var(--s2); border: 1px solid var(--border);
+                  border-radius: var(--r-full); background: var(--surface); color: var(--text-dim);
+                  cursor: pointer; }
+  /* The segmented family's selected state, on the shape these chips already had: `--accent-solid`
+     filled and inked with `--on-accent`, which is the one job that token exists for
+     (docs/app.md §Theming). The border goes to the fill so a chosen chip is one colour rather than
+     a filled pill wearing a grey outline. */
+  .chips button.on { background: var(--accent-solid); border-color: var(--accent-solid);
+                     color: var(--on-accent); font-weight: 600; }
+  /* The same reservation the toolbar's pills carry, and here it is what keeps four chips in a row
+     from shuffling sideways as the choice moves along them (docs/app.md §The toolbar). */
+  .chips button::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden;
+                         visibility: hidden; pointer-events: none; }
   .metric { display: flex; flex-direction: column; gap: var(--s1); }
   /* Wrapping, not shrinking: the drawer is 88vw at 360px and the pair measure their labels, so a
      no-wrap row would overflow the sidebar's own scrollport rather than take a second line. */

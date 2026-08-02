@@ -62,8 +62,12 @@
           <!-- `data-story` is how the strip's hand-over finds the pill that replaces the card it
                just unmounted (docs/app.md §Presets). By id rather than by the checked mark, because
                a view that matches no story marks nothing and focus would fall to `<body>` again. -->
+          <!-- `data-label` is the width reservation's, not the control's: the style block below
+               draws it again at the selected weight so the pill cannot change size when it is
+               picked (docs/app.md §The toolbar). -->
           {#each STORIES as s (s.id)}
-            <button type="button" role="radio" class="s" data-story={s.id} aria-checked={selected === s.id}
+            <button type="button" role="radio" class="s" data-story={s.id} data-label={s.label}
+                    aria-checked={selected === s.id}
                     class:on={selected === s.id} onclick={() => onstory(s.id)}>{s.label}</button>
           {/each}
         </span>
@@ -73,7 +77,7 @@
            in the same family rather than as a checkbox standing among segmented groups. Its words
            are the About panel's now (docs/app.md §The About panel). -->
       <span class="seg one">
-        <button type="button" class="s pill" aria-pressed={stability}
+        <button type="button" class="s pill" aria-pressed={stability} data-label="Stability"
                 class:on={stability} onclick={() => onstability(!stability)}>Stability</button>
       </span>
     </div>
@@ -115,9 +119,20 @@
      swallow it (docs/app.md §Theming). */
   .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
          border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
-  .s { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); border: none;
+  /* A COLUMN, so the width reservation below can sit under the label without standing beside it.
+     Every pill here holds one string and nothing else, which is what makes the direction free. */
+  .s { display: inline-flex; flex-direction: column; align-items: center; padding: var(--s1) var(--s3); border: none;
        border-radius: var(--r-sm); background: none; color: var(--text-dim); cursor: pointer;
        font-size: var(--t-sm); white-space: nowrap; }
+  /* THE WIDTH RESERVATION, and it is the whole family's — the zone group states it again for the
+     reason its own file gives. A selected pill is 600 and an unselected one 400, so the box grew as
+     it came on: 70→73px for the lone `Stability` toggle and 70→76px for `Forefoot`, with a group of
+     four redistributing on every press, measured in both engines. The ghost is the same string at
+     the selected weight in a zero-height line of the same column, so the box is sized by the wider
+     of the two states in both of them and nothing moves. `visibility: hidden`, not `opacity`: it
+     keeps the duplicate out of the accessibility tree as well as off the screen. */
+  .s::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden;
+              visibility: hidden; pointer-events: none; }
   /* `--accent-solid`, not `--accent`: --on-accent on the accent is 3.71:1 in dark. A filled accent
      under --on-accent text is the only kind of site that token exists for (docs/app.md §Theming).
      `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —

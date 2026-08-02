@@ -21,6 +21,20 @@ describe('Toolbar', () => {
     expect(screen.queryByRole('button', { name: /^Clear$/ })).toBeNull();
   });
 
+  /*
+   * The width reservation's input. A selected pill is 600 and an unselected one 400, so the box
+   * grew as it came on — 70→73px for `Stability`, 70→76px for `Forefoot`, and a group of four
+   * redistributing on every press. The CSS draws `data-label` again at the selected weight in a
+   * zero-height line, so the label has to be there and has to match (docs/app.md §The toolbar).
+   */
+  it('gives every setup pill the label its selected width is reserved from', () => {
+    const { container } = render(Toolbar, { props: { ...props } });
+    const pills = [...container.querySelectorAll<HTMLElement>('.setup button')];
+    expect(pills.map((p) => p.textContent?.trim()))
+      .toEqual(['Heel', 'Forefoot', 'All', 'Easy', 'Tempo', 'Race', 'Stability']);
+    for (const p of pills) expect(p.dataset['label']).toBe(p.textContent?.trim());
+  });
+
   // A scored story's count is the size of its pool rather than of a shortlist, so the number
   // promised a filtering that no longer happens (docs/app.md §The toolbar).
   it('names the stories without counting them', () => {

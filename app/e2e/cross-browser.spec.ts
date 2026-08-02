@@ -668,6 +668,53 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
 });
 
 /**
+ * **No pill changes width when it is picked.** The selected state carries `font-weight: 600` and
+ * the unselected one 400, so every control in the segmented family was sized by whichever weight it
+ * happened to be wearing: `Stability` grew 70→73px as it came on, `Forefoot` 70→76px, and the four
+ * story pills redistributed on every press, shifting the groups beside them. Measured in Chromium
+ * and Firefox before the reservation went in.
+ *
+ * It has to be a browser: the fix is a pseudo-element drawing the same string at the selected
+ * weight in a zero-height line, so what it is worth is entirely a question of text metrics, and
+ * that is exactly the sort of thing one engine rounds differently. Hence this file rather than the
+ * Chromium-only suite — and the sidebar's released-after chips are the same family, same rule.
+ */
+test('holds every segmented pill to one width across its own toggle', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  // Through the strip, not by URL: the bar draws no setup group until the strip has handed over,
+  // and `story` is not a token the address owns (docs/app.md §The toolbar).
+  await page.locator('.card.story').filter({ hasText: 'Easy' }).click();
+  await expect(page.locator('.setup button')).toHaveCount(7);
+
+  const widths = () => page.evaluate(() => Object.fromEntries(
+    [...document.querySelectorAll<HTMLElement>('.setup button, .chips button')]
+      .map((el) => [el.textContent!.trim(), el.getBoundingClientRect().width])));
+
+  const seen = new Map<string, Set<number>>();
+  const record = async () => {
+    for (const [name, w] of Object.entries(await widths())) {
+      let ws = seen.get(name);
+      if (!ws) seen.set(name, ws = new Set());
+      ws.add(Math.round(w * 100) / 100);
+    }
+  };
+  // Every state each group can be in, so each pill is measured both wearing its mark and not.
+  await record();
+  for (const name of ['Forefoot', 'Heel', 'All', 'Easy', 'Tempo', 'Race', 'Stability', '1y', '3y', 'Any']) {
+    await page.getByRole('button', { name, exact: true })
+      .or(page.getByRole('radio', { name, exact: true })).first().click();
+    await record();
+  }
+
+  expect(seen.size, 'nothing was measured — the selectors have moved').toBeGreaterThan(8);
+  for (const [name, ws] of seen) {
+    expect([...ws], `${name} changes width when it is picked`).toHaveLength(1);
+  }
+});
+
+/**
  * The two-colour cell rule is the app's only NESTED `color-mix`, and nesting is exactly the kind of
  * thing one engine implements and another drops on the floor — a dropped inner mix resolves the
  * whole declaration to nothing, so the base-on ramp would paint bare cells with no error anywhere

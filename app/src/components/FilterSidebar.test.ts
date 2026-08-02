@@ -25,6 +25,16 @@ const open = (trigger: HTMLElement) => {
   return fireEvent.click(trigger);
 };
 
+/**
+ * Which section a control belongs to, because two of them now offer one called `Any`: the release
+ * chips, whose unset state that is, and the discontinued group. The chips' own comment predicted
+ * this — "a second control named Any arriving in this sidebar cannot silently retarget the click" —
+ * so every query for either says which section it means. The LAST match, for the tests that render
+ * a second sidebar over the first.
+ */
+const sectionNamed = (heading: string) => within([...document.querySelectorAll('section')]
+  .filter((s) => s.querySelector('h3')?.textContent === heading).at(-1)!);
+
 /** Scoped to its own row: zone pairs put several range groups on screen, so an index would drift.
  *  Matched by suffix, because each field is now named for the metric it bounds. */
 const boundOf = (name: RegExp, part: 'min' | 'max' = 'min') =>
@@ -121,13 +131,64 @@ describe('FilterSidebar', () => {
     vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
     try {
       const onchange = setup();
-      await fireEvent.click(screen.getByRole('button', { name: '2y' }));
+      await fireEvent.click(sectionNamed('Released after').getByRole('radio', { name: '2y' }));
       expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(startOfMonth(isoYearsAgo(new Date(), 2)));
       expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe('2024-07-01');
     } finally {
       vi.useRealTimers();
     }
   });
+  /*
+   * The chips carry the segmented family's selected state now, so each has to SAY which state of
+   * the bound it names — `Any` included, because "no bound" is a state of the filter rather than an
+   * absence of one (docs/app.md §Released after is month-granular). A fill with no `aria-checked`
+   * behind it is the untrue-claim species: visible to one runner and invisible to the next.
+   */
+  describe('released-after chips mark the bound they name', () => {
+    const chips = (container: HTMLElement) => within([...container.querySelectorAll('section')]
+      .find((s) => s.querySelector('h3')?.textContent === 'Released after')!)
+      .getAllByRole('radio');
+    const marked = (container: HTMLElement) => chips(container)
+      .filter((c) => c.getAttribute('aria-checked') === 'true').map((c) => c.textContent?.trim());
+
+    it('lights Any when nothing is bound, because that is the state Any names', () => {
+      const { container } = render(FilterSidebar,
+        { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+      expect(marked(container)).toEqual(['Any']);
+    });
+
+    it('lights the chip whose own bound the view holds', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
+      try {
+        const view = defaultView();
+        view.filters.releasedAfter = startOfMonth(isoYearsAgo(new Date(), 2));
+        const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+        expect(marked(container)).toEqual(['2y']);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    // The month picker can set a bound no chip names, and a group marking nothing is the same shape
+    // the toolbar's own take on a hand-edited view (docs/app.md §The toolbar).
+    it('marks nothing for a bound the month picker set between them', () => {
+      const view = defaultView();
+      view.filters.releasedAfter = '2019-04-01';
+      const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+      expect(marked(container)).toEqual([]);
+      expect(chips(container).filter((c) => c.tabIndex === 0), 'still one tab stop').toHaveLength(1);
+    });
+
+    /** The reservation's input: without it a chip is sized by whichever weight it is wearing and
+     *  the row shuffles as the choice moves along it (docs/app.md §The toolbar). */
+    it('gives every chip its own label to reserve the selected width with', () => {
+      const { container } = render(FilterSidebar,
+        { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+      for (const c of chips(container)) expect(c.dataset['label']).toBe(c.textContent?.trim());
+    });
+  });
+
   it('resets every filter at once', async () => {
     const onchange = vi.fn();
     const view = defaultView();
@@ -212,7 +273,7 @@ describe('FilterSidebar text and toggle controls', () => {
     // "Any" arriving in this sidebar cannot silently retarget the click.
     const section = [...container.querySelectorAll('section')]
       .find((s) => s.querySelector('h3')?.textContent === 'Released after')!;
-    await fireEvent.click(within(section).getByRole('button', { name: 'Any' }));
+    await fireEvent.click(within(section).getByRole('radio', { name: 'Any' }));
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
@@ -228,7 +289,7 @@ describe('FilterSidebar text and toggle controls', () => {
 
   it('emits the discontinued choice, and undefined for Any', async () => {
     const onchange = setup();
-    expect(screen.getByRole('radio', { name: 'Any' })).toBeChecked();
+    expect(sectionNamed('Discontinued').getByRole('radio', { name: 'Any' })).toBeChecked();
     await fireEvent.click(screen.getByRole('radio', { name: 'Only discontinued' }));
     expect(onchange.mock.lastCall![0].filters.discontinued).toBe('only');
 
@@ -237,7 +298,7 @@ describe('FilterSidebar text and toggle controls', () => {
     const off = vi.fn();
     render(FilterSidebar, { props: { data, view: chosen, onchange: off, population: FLEET } });
     expect(screen.getAllByRole('radio', { name: 'Hide discontinued' }).at(-1)!).toBeChecked();
-    await fireEvent.click(screen.getAllByRole('radio', { name: 'Any' }).at(-1)!);
+    await fireEvent.click(sectionNamed('Discontinued').getByRole('radio', { name: 'Any' }));
     expect(off.mock.lastCall![0].filters.discontinued).toBeUndefined();
     expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });
@@ -377,7 +438,7 @@ describe('FilterSidebar filter set management', () => {
     const view = defaultView();
     view.filters.releasedAfter = '2024-01-01';
     render(FilterSidebar, { props: { data, view, onchange, population: FLEET } });
-    await fireEvent.click(screen.getByRole('button', { name: 'Any' }));
+    await fireEvent.click(sectionNamed('Released after').getByRole('radio', { name: 'Any' }));
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBeUndefined();
     expect(onchange.mock.lastCall![0].filters).toEqual(defaultView().filters);
   });

@@ -1774,6 +1774,26 @@ narrowing it. That is the deliberate direction: this filter's failure mode
 should be showing a shoe that is marginally too old, not hiding one that
 qualifies.
 
+**The four chips are a radiogroup, and `Any` lights when nothing is bound.**
+They are exclusive, and each names a whole state of one bound rather than a thing
+to switch on — so they take the segmented family's selected state, filled
+`--accent-solid` under `--on-accent` on the pill shape they already had, with the
+border going to the fill so a chosen chip is one colour rather than a filled pill
+wearing a grey outline (§Theming). **No bound is a state of this filter, not an
+absence of one**, and `Any` is the control that names it, so `Any` is marked
+exactly when `releasedAfter` is unset: a group that marked nothing on the default
+view would be telling a runner their filter was in no state at all. A bound the
+month picker set *between* the three offsets marks none of the four, which is
+the same shape the toolbar's own groups take on a hand-edited view (§The toolbar),
+and `roving` still gives a group with nothing checked one tab stop. `aria-checked`
+rather than fill alone: a control that looks chosen and does not say so is
+visible to one runner and invisible to the next.
+
+Each chip's bound is resolved **once**, when the sidebar renders, rather than at
+the moment it is clicked. The mark compares the view against those strings, so
+two reads of the clock could have let a chip set a bound it then failed to look
+selected for.
+
 The URL carries `after=YYYY-MM`. A day-precise `after` from an older link still
 parses and normalises inward, so shared links keep working and round-trip
 stably thereafter.
@@ -2235,6 +2255,25 @@ pill, which is where the grouping actually breaks.
 a `--bg` track with a 2px pad — §Theming owns why that pair is two tokens rather
 than `--accent` and a literal white. Each track keeps `overflow: visible`,
 because the focus ring is a `box-shadow` and a clipped track would swallow it.
+
+**No pill changes width when it is picked, and that costs a reservation.** The
+selected state also carries `font-weight: 600`, so every control in the family
+was sized by whichever weight it happened to be wearing: `Stability` grew from
+70px to 73px as it came on, `Forefoot` from 70px to 76px, and the four story
+pills redistributed on every press, shifting the groups beside them. A lone
+toggle is where it reads worst — the thing you pressed moves under your finger —
+but it was never only that pill. Each pill therefore carries its own label a
+second time, in a `data-label` the CSS draws again at the selected weight in a
+**zero-height line of the same column**, so the box is sized by the wider of the
+two states and neither moves. `visibility: hidden` rather than `opacity`, which
+keeps the duplicate out of the accessibility tree as well as off the screen; the
+zone group states the rule again because Svelte's scoping puts its two buttons
+out of `Toolbar.svelte`'s reach, exactly as their padding already is. The
+sidebar's released-after chips are the same family and carry the same
+reservation. The bound is `holds every segmented pill to one width across its own
+toggle`, in `cross-browser.spec.ts` rather than the Chromium-only suite: what the
+trick is worth is a question of text metrics, which is the kind of thing one
+engine rounds differently.
 
 **`About` is the first of the actions group, at every width and in both states.**
 It explains the table rather than acting on it, so it stays on the bar whether

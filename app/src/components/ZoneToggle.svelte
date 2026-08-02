@@ -17,9 +17,10 @@
 <!-- No visible lede: the toolbar is two segmented groups in one language, and the setup strip is
      where the question gets asked in words (docs/app.md §Presets). -->
 <span class="zone" role="radiogroup" aria-label="Measured at" use:roving>
+  <!-- `data-label` is the width reservation's, not the control's; the style block draws it. -->
   {#each ZONES as s (s.v)}
     <button type="button" role="radio" aria-checked={zone === s.v} class:on={zone === s.v}
-            onclick={() => onchange(s.v)}>{s.label}</button>
+            data-label={s.label} onclick={() => onchange(s.v)}>{s.label}</button>
   {/each}
 </span>
 
@@ -27,10 +28,17 @@
   /* `overflow: visible`, not hidden: the focus ring is a box-shadow (docs/app.md §Theming). */
   .zone { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
           border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
-  button { padding: var(--s1) var(--s3); border: none; border-radius: var(--r-sm); background: none;
+  button { display: inline-flex; flex-direction: column; align-items: center;
+           padding: var(--s1) var(--s3); border: none; border-radius: var(--r-sm); background: none;
            color: var(--text-dim); cursor: pointer; font-size: var(--t-sm); }
   /* `--accent-solid` carrying `--on-accent`, like the toolbar's pill (docs/app.md §Theming). */
   button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
+  /* The same width reservation the bar's own pills carry, restated for the same reason their
+     padding is: Svelte's scoping puts these two buttons out of `Toolbar.svelte`'s reach. `Forefoot`
+     was the family's worst — 70px unselected against 76px selected in Chromium — so the group's
+     own width changed under the runner on every press (docs/app.md §The toolbar). */
+  button::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden;
+                  visibility: hidden; pointer-events: none; }
   /* The bar steps every pill on its setup row at both of its boundaries, and this group's buttons
      are two of them — but their padding is authored here, so `Toolbar.svelte`'s `.s` rule has never
      reached them. Stated twice because Svelte's scoping gives it no choice; the numbers and the
