@@ -77,7 +77,11 @@ robots.txt, is docs/decisions.md §Be a good citizen toward RunRepeat.
   `/api/product/lab-test-list/1`, `scrape:details` on a representative
   `/uk/…` path — and skips even that request when it has nothing to fetch.
   The parser reads the `*` group only (RFC 9309 grouping, consecutive
-  user-agent lines share a group) and fails closed by aborting the run.
+  user-agent lines share a group), resolves `Allow` against `Disallow` by
+  most-specific-match with a tie going to the allow, and anchors a rule whose
+  **last** character is `$` — only the last, because a `$` anywhere else is a
+  literal dollar sign in the implementation RFC 9309 codifies. A disallowed
+  path fails closed by aborting the run.
 - **Request budget**, today: metrics ≈ 60 (1 robots + 1 seed page + 58 tests),
   details incremental = 1 robots + one page per uncrawled slug,
   `--force-all` ≈ 465 (one page per catalogued shoe) or 0 with `--from-corpus`,
