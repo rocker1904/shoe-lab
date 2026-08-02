@@ -68,8 +68,9 @@ one pixel of window either side of a viewport boundary costing hundreds of pixel
 sideways overflow (docs/app.md §Filters); a picker off the left edge at 320px. The
 suite asserts what it was told to; nobody had walked the width ladder.
 
-**Announcement.** The receipt is the only live region and it reports a *count*, so a control is
-announced only if it happens to change how many shoes show — 8 of 14 announce nothing.
+**Announcement.** The receipt reports a *count*, so on its own it announces a control only when
+that control happens to change how many shoes show. What each control is supposed to say, and which
+say nothing on purpose, is docs/app.md §What a control says it did.
 
 **Engine-specific focus behaviour.** Everything WebKit gave up was focus, not layout: `@container`,
 the overflow pair, the sticky header, `color-mix` and every catalogue label are identical across
@@ -110,8 +111,8 @@ those are the inputs that move the boundary, and each moves it silently.
 after any UI change — the selectors move.
 
 Serving the **real 450-shoe dataset** is the point: `app/scripts/prepare-e2e.mjs` deliberately swaps
-it for a 5-shoe fixture, which is why the 1200px overflow kept CI red for ~30 commits before anyone
-traced it.
+it for a 5-shoe fixture — which is why the 1200px overflow survived a long run of green CI before
+anyone traced it.
 
 ### Re-running a finding against a branch
 
@@ -150,8 +151,8 @@ of them — the rig never caught itself.** That is the strongest argument for th
    copied `data/shoes.json` into `app/dist/` once at start; a suite run in any checkout then wrote
    the 5-shoe fixture over it, and from that moment every measurement was of `cushy` and `Cushy 2`
    rather than the fleet — silently, because the page still renders. It cost two runs before a
-   screenshot gave it away, and F12 hit the same collision. Serving from an in-memory read taken at
-   start costs nothing and removes the class.
+   screenshot gave it away, and it has caught two separate waves. Serving from an in-memory read
+   taken at start costs nothing and removes the class.
 9. **In WebKit a pointer press disables Tab until focus is moved off what it pressed.** WebKit
    anchors sequential focus navigation to the *node the pointer last pressed*, not to
    `activeElement`. Press a child that cannot take focus — the word inside the column picker's

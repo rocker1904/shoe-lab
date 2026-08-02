@@ -201,8 +201,8 @@ and not a preference.
 `score.test.ts` is the fourth, and the only one that reads coverage rather than
 names: it fails when a metric a story's score *weights* drops below
 `SPARSE_BELOW` over that story's pool. Every term sits well clear of it, so
-this fires only on a real collapse upstream, and what to do about one is
-docs/app.md §The story scores' — not a threshold to lower.
+this fires only on a real collapse upstream. What to do about one is
+docs/app.md §The story scores — and it is not lowering the threshold.
 
 ## Resuming release-date curation
 

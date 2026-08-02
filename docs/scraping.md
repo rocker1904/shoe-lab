@@ -370,21 +370,19 @@ carries the whole catalogue with that shoe's reading on each test, so a
 
 `bool` readings come from there too, and for a stronger reason: **the metrics
 API cannot express a "no".** Its lab-test-list only returns the shoes that have
-the feature, so `metrics.json` holds 209 `true` values for `reflective-elements`
-and not one `false` — while the pages say `0` on 219 of the 450 shoes and carry
-a reading of some kind on 428. Taken from the API alone, a column that is
-measured on 95% of the fleet reads as 46% coverage, and 219 shoes that were
-tested and found to have no reflective elements show an em dash meaning
-*unknown*. `removable-insole` is the same shape, milder: 430 yes, 16 no, 4
-unread.
+the feature, so `metrics.json` holds `true` values for `reflective-elements` and
+not one `false`, while the pages say `0` on about half the fleet. Taken from the
+API alone, a column measured on nearly every shoe reads as about half covered,
+and every shoe tested and found to have no reflective elements shows an em dash
+meaning *unknown*. `removable-insole` is the same shape, milder.
 
 Nothing numeric is taken from the page. Those readings already arrive via the
 metrics API, refreshed weekly, and taking them from the page too would let a
 stale page value shadow a fresher API one — the two disagree already, mildly:
-`size-rating` differs in the last decimal on about 19 of 12,700 values, the page
-being a rounding of the same source. A page value in a shape its declared type
-does not accept is dropped rather than guessed at; that is one cell on one shoe,
-and the run has 449 others.
+`size-rating` differs in the last decimal on a handful of readings out of every
+thousand, the page being a rounding of the same source. A page value in a shape
+its declared type does not accept is dropped rather than guessed at; that is one
+cell on one shoe, and the rest of the run is unaffected.
 
 `DetailRecord.pageValues` keys them by test id as string, coerced through the
 same `coerceValue` the metrics path uses, and `build:dataset` merges them
@@ -464,14 +462,16 @@ not reading RunRepeat (§Determinism).
 A response can list the same slug twice (locale variants, duplicated rows).
 The first row with a usable value is kept and later ones ignored, rather than
 last-wins or an error: the endpoint is ordered by relevance, and a duplicate
-is not a data problem worth failing a 60-request run over. Do not "fix" this
+is not a data problem worth failing a whole metrics run over. Do not "fix" this
 into a merge or a conflict check — with one value per (slug, test) there is
 nothing to merge, and the validation gates already catch mass value loss.
+"First with a *usable* value" is the operative half, and what makes a value
+usable is §Empty values are skipped before duplicates are resolved.
 
 ### Non-running shoes
 A `lab-test-list` response is the whole lab-tested catalogue rather than one
-category, so RunRepeat's hiking footwear rides in with the running shoes — 14 of
-464, 9 `hiking-boots` and 5 `hiking-shoes`. The shoe page's top-level
+category, so RunRepeat's hiking footwear rides in with the running shoes, as
+`hiking-boots` and `hiking-shoes`. The shoe page's top-level
 `pageData.category.slug` is the authoritative per-shoe category, captured as
 `categorySlug`, and `build:dataset` drops a shoe whose details record carries one
 that is present and not `running-shoes`. Absence keeps the shoe: no details

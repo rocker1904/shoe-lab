@@ -1016,12 +1016,10 @@ overflow: below it the stacked list takes over. The band that ran 700px to 916px
 at up to 217px over is gone, measured on the real fleet at twenty-three widths in
 both engines, and the ladder that says so is `hunt/fit-boundary.mjs`.
 
-That band used to run from 800px to 1176px as well, at up to 376px over: the
-sidebar took its column at 801px whether or not the table had room left beside
-it. The figures in this section were measured in that layout and several are
-about it — `1177px` below is the old document, the sidebar's track included. It
-is not what the sidebar's boundary is derived from: that is this rule's own
-arithmetic (§Filters).
+A second band ran from 800px to 1176px, at up to 376px over, while the sidebar
+took its column at 801px whether or not the table had room left beside it. That
+one is the sidebar's own, and it is closed by the sidebar's own rule rather than
+by anything here (§Filters).
 
 The e2e assertion is `toBeLessThanOrEqual(1200)` rather than `toBe(1200)`.
 Equality tested more than the claim: a document *narrower* than the viewport
@@ -1368,9 +1366,9 @@ still clear the track by the same slack (§Filters), so **the step down at the
 boundary can never cross the requirement** and the rendering is monotone in the
 width by construction: mounted once, it survives every wider window. Chosen any
 other way it opens a band where the rendering reads desktop → list → desktop as
-the window is dragged wider — one ran 1180–1190px on the default view for a wave,
-and 1191–1361px on a ten-column view for two more, because a constant answers for
-one column set and the runner picks the set. `fit.test.ts` walks every width from
+the window is dragged wider — two have shipped, 1180–1190px on the default view
+and 1191–1361px on a ten-column view, because a constant answers for one column
+set and the runner picks the set. `fit.test.ts` walks every width from
 the floor to 2400px for five column sets and asserts the sequence never goes
 back; `hunt/fit-boundary.mjs` walks the real fleet in two engines and both
 scrollbar regimes.
@@ -2206,9 +2204,9 @@ and below 800px the three utilities as well (§Where the utilities live). The
 strip cannot hold the controls that reset it, because it is gone by the time they
 are needed.
 
-**There is no group divider.** `main` drew a hairline between the zone and story
-groups above 880px. With the stability pill joining that run, a line between the
-first and second of three reads as arbitrary, and no band below 800px had one —
+**There is no group divider.** A hairline between the zone and story groups
+above 880px was measured and rejected: with the stability pill joining that run,
+a line between the first and second of three reads as arbitrary, and no band below 800px had one —
 so the same row looked different either side of that boundary. It is gone at
 every width. If it should come back it belongs between the story group and the
 pill, which is where the grouping actually breaks.
@@ -2410,7 +2408,7 @@ is a question about *the table's min-content*, which is 917px on its own and
 which includes a classic scrollbar; the fit model measures the layout the table
 is given, which does not. That is right for the chrome — the bar spans the
 window — and wrong for the sidebar, which is why the sidebar's boundary stopped
-being a media query in F14 and became a rune over a width the script reads. The
+being a media query and became a rune over a width the script reads. The
 mismatch was worth 12–15px, and in it the sidebar had its column while the table
 was still being sized as though it did not (§Filters).
 
@@ -2990,10 +2988,9 @@ touch-target guideline there is.
 That is also why there is no second ring exemption any more. A **native**
 checkbox was one: WebKit paints no `box-shadow` on a checkbox's rendered control,
 so the rule's `outline: none` half landed and its `box-shadow` half did not, and
-in Safari every checkbox in the app had no focus indicator whatsoever — four on
-the top-level walk, thirteen of fourteen in the brand list, and twenty
-consecutively in the column picker, on the one control whose whole job is
-choosing what the table shows. An `appearance: none` box is not a native control:
+in Safari every checkbox in the app had no focus indicator whatsoever, the column
+picker's whole list included — the one control whose job is choosing what the
+table shows. An `appearance: none` box is not a native control:
 WebKit paints the ring on it like anything else. That is a claim about one engine
 which was made wrongly once, so `cross-browser.spec.ts` asserts **the app's own
 two-layer ring** at `--ring-room` rather than "an indicator of some kind" — a UA
@@ -3404,13 +3401,11 @@ cell, a bad range hides the entire fleet. Do not unify the allowlists — but
 every sort a header offers has to be one the parser accepts, or `Copy link`
 hands out a URL that reopens on a different view than the one that was shared.
 
-**The code follows this, and for a while it did not.** `parseView` used to
-filter `cols` against the live catalogue, so an unknown slug got no column at
-all: `?cols=releasedAt,score,gone-metric-slug` rendered three headers instead of
-four, and `?cols=gone-one,gone-two` fell through the `if (cols.length)` guard and
-rendered the **default eight** — the exact opposite of the link's two-column
-request, with nothing on screen saying so. Permissive means permissive about
-whether the slug still exists, not only about the type of test behind it.
+**Permissive means permissive about whether the slug still exists**, not only
+about the type of test behind it. Filtering `cols` against the live catalogue
+instead drops the unknown column silently, and a link naming only unknown slugs
+falls through to the default set — the exact opposite of what it asked for, with
+nothing on screen saying so.
 
 Permissive about the slug is not permissive about the **shape**: an unknown key
 is rendered verbatim as a header, so what survives has to look like a slug —
@@ -3540,15 +3535,13 @@ that carries filters, because none of it exists in jsdom. The pulse stays behind
 
 ### What a control says it did
 
-The app had exactly two live regions — the receipt, whose text is a row
-**count**, and a `role="status"` holding `Copied` — so a control announced itself
-only if it happened to change how many shoes were showing. Driven cold and
-diffed one at a time, **six of fourteen controls announced and eight said
-nothing**: zone, stability, the column picker, a sort header, expanding a row,
-`Export CSV`, adding a filter and removing one. Two of those are loud. Switching
-zone renames every score column and moves every number in it with the receipt's
-text byte-identical; and `Export CSV` sits beside `Copy link` in the same
-snippet, one with a status node and one without.
+With only the receipt, whose text is a row **count**, and a `role="status"`
+holding `Copied`, a control announced itself only if it happened to change how
+many shoes were showing — which left most of the bar silent with the table below
+it rearranged. Two of those silences are loud: switching zone renames every score
+column and moves every number in it with the receipt's text byte-identical, and
+`Export CSV` sits beside `Copy link` in the same snippet, one with a status node
+and one without.
 
 **One region, not eight patches.** A single `role="status"` in `Page.svelte`,
 always rendered and only ever re-texted — a live region created together with its
@@ -3598,7 +3591,7 @@ swaps one row key for another rather than adding one, and `Clear filters` can
 take several rows and every bound with them; both are left to the receipt.
 
 ### Sharing is copying the address bar
-`Copy link` in the header **flushes the pending view write and then** writes
+`Copy link` **flushes the pending view write and then** writes
 `location.href` to the clipboard, which is the whole feature: the URL already *is*
 the view (§View and URL ownership). The flush is the feature working at all rather
 than a refinement — the write path is debounced (§View and URL ownership), so a

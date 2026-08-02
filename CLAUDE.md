@@ -48,9 +48,10 @@ not reference; where they disagree with docs/, docs/ wins.
   `npm -w app run dev | build | e2e` (e2e is CI's only step outside `verify` —
   needs the Playwright browsers: chromium, firefox and webkit,
   docs/operations.md §The e2e run needs three browsers).
-- **No live network in tests, ever.** Live requests happen only in the four
-  scraper CLIs and `check:live`, all via `PoliteHttp` (docs/scraping.md
-  §Politeness). Never call fetch directly against runrepeat.com.
+- **No live network in tests, ever.** Live requests happen only in
+  `scrape:metrics`, `scrape:details`, `scrape:releases` and `check:live`, all
+  via `PoliteHttp` (docs/scraping.md §Politeness) — `build:dataset` joins their
+  output offline. Never call fetch directly against runrepeat.com.
 - **Binding invariants** (each owned and explained in its doc — do not
   "fix" them): `{@html}` renders only the two build-time-sanitised fields
   (docs/app.md §Sanitised-HTML boundary); the Page owns view state locally
