@@ -59,6 +59,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: defaults write -g AppleShowScrollBars -string Always
+      # macOS ships Tab-skips-buttons (keyboard navigation off), so every keyboard-walk test lands
+      # on different stops than the app's real tab order — the job's first run failed exactly the
+      # three walk tests. 2 is "all controls", the setting a macOS keyboard user who tabs an app has.
+      - run: defaults write -g AppleKeyboardUIMode -int 2
       # WebKit alone. It is the engine macOS draws natively, and the other two already run both
       # regimes on a developer's machine through `hunt/fit-boundary.mjs`.
       - run: npx playwright install webkit
