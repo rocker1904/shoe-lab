@@ -1144,7 +1144,12 @@ that rows visibly scroll through. `bind:clientHeight` is ResizeObserver-backed
 and re-measures on that reflow, so this holds — but it is now load-bearing
 rather than incidental, and a refactor to a one-shot `clientHeight` read
 reintroduces the gap, only on a cold cache. `smoke.spec.ts` asserts the pinned
-phone header sits flush against the chrome after `document.fonts.ready`;
+phone header sits flush against the chrome once the faces have loaded — which is
+`fit-support.ts`'s `awaitFacesLoaded` and no longer `document.fonts.ready`: that
+promise settles against the loads pending when it is asked, and this SPA asks
+before the table that requests the faces has mounted, so under load it resolved
+with both faces in `error` and left every measurement behind it reading a
+fallback face (`.hunt/fixlog-webkit-fit.md`).
 `cross-browser.spec.ts` carries the panel's two overflow claims, which are
 scroll-extent facts rather than font-metric ones and therefore belong in the
 suite Firefox and WebKit run (§Two renderings, and only one of them mounted).

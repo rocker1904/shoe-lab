@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
-import { FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
+import { awaitFacesLoaded, FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
   await page.goto('/');
@@ -210,15 +210,13 @@ test('switches to the stacked list on a phone, and back', async ({ page }) => {
   // The pinned header must sit flush against the chrome AFTER the face swaps in — a webfont
   // reflows the chrome after first paint, and a one-shot measurement leaves a strip of page that
   // rows visibly scroll through (docs/app.md §Columns and sorting).
-  // `.then(() => null)`: `document.fonts.ready` resolves to a FontFaceSet, which has to cross the
-  // wire back to the test.
   // The header only pins once the table's top has passed under the chrome, and a five-shoe fixture
   // in an 800px window cannot scroll that far: 141px of travel against the 363px needed, so every
   // reading was taken with the header still in flow and the check below could only ever pass.
   // Shortening the window is what gives it something to measure.
   await page.setViewportSize({ width: 375, height: 400 });
-  await page.evaluate(() => document.fonts.ready.then(() => null));
-  // `fonts.ready` resolving is the swap, not the app's reaction to it: `--thead-top` is a
+  await awaitFacesLoaded(page);
+  // The faces having loaded is the swap, not the app's reaction to it: `--thead-top` is a
   // ResizeObserver-backed `bind:clientHeight`, so the reflowed chrome reaches the sticky offset a
   // frame later. Reading in the same task caught the app mid-measurement — a 34px gap, one wrapped
   // toolbar row — twice in nine full runs of the suite, on `main` as much as on any branch, and
@@ -352,7 +350,7 @@ test('keeps an expanded row below the chrome that opening it scrolls under', asy
   // the finding measured: a panel that FITS is scrolled into view harmlessly.
   await page.setViewportSize({ width: 1200, height: 400 });
   await page.goto('/');
-  await page.evaluate(() => document.fonts.ready);
+  await awaitFacesLoaded(page);
 
   for (const nth of [0, 2, 4]) {
     const measured = await page.evaluate(async (n) => {
@@ -401,7 +399,7 @@ test('opens a shoe on the phone below the chrome, and without moving the page si
   // Past the six-column bound on purpose: that is where the page can scroll sideways at all.
   await page.goto('/?cols=score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
     + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel');
-  await page.evaluate(() => document.fonts.ready);
+  await awaitFacesLoaded(page);
   await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
 
   for (const depth of [0, 400, 2000]) {
@@ -540,7 +538,7 @@ for (const width of [700, 390]) {
       + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel,'
       + 'shock-absorption-forefoot,outsole-durability,outsole-thickness,heel-counter-stiffness,'
       + 'midsole-width-in-the-heel,midsole-width-in-the-forefoot');
-    await page.evaluate(() => document.fonts.ready);
+    await awaitFacesLoaded(page);
     const maxScrollLeft = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(maxScrollLeft, `nothing scrolls sideways at ${width}px, so this asserts nothing`)
@@ -582,7 +580,7 @@ test('lays the chrome out in bands', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'About', exact: true })).toBeVisible();
     if (await card.count()) await card.click();
     await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
-    await page.evaluate(() => document.fonts.ready.then(() => null));
+    await awaitFacesLoaded(page);
   };
   const bands = () => page.evaluate(() => {
     const tb = document.querySelector('[data-testid="toolbar"]')!;
@@ -835,7 +833,7 @@ test('never adds a chrome row that a narrower window hands back', async ({ page 
   // handover is what the tiers below have to lay out.
   await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
   await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
-  await page.evaluate(() => document.fonts.ready.then(() => null));
+  await awaitFacesLoaded(page);
 
   // Flex lines, counted by clustering child centres: `align-items: center` puts items of different
   // heights on one line at different tops, so counting distinct top edges over-reports.
@@ -940,7 +938,7 @@ test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('setup-strip')).toBeVisible();
     await settled(width);
-    await page.evaluate(() => document.fonts.ready.then(() => null));
+    await awaitFacesLoaded(page);
     const h = await chrome();
     expect(h, `the chrome is ${h}px at ${width}px on a first arrival`).toBeLessThanOrEqual(ceiling);
   }
@@ -949,7 +947,7 @@ test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('setup-strip').getByRole('button', { name: /^All/ }).click();
   await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
-  await page.evaluate(() => document.fonts.ready.then(() => null));
+  await awaitFacesLoaded(page);
   for (const [width, ceiling] of [[360, 125], [390, 125], [430, 125], [700, 128], [900, 105]] as const) {
     await page.setViewportSize({ width, height: 900 });
     await settled(width);
@@ -1071,7 +1069,7 @@ for (const width of [360, 390]) {
   test(`keeps the banner one flush row at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
-    await page.evaluate(() => document.fonts.ready.then(() => null));
+    await awaitFacesLoaded(page);
 
     const seen = await page.evaluate(() => {
       const header = document.querySelector('header')!;
@@ -1105,7 +1103,7 @@ for (const width of [360, 390]) {
 test('lines a figure header up with its own unit line at 1440px', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await page.evaluate(() => document.fonts.ready.then(() => null));
+  await awaitFacesLoaded(page);
 
   const cols = await page.evaluate(() => [...document.querySelectorAll('table thead th.fig')].map((th) => {
     const name = th.querySelector('.h-name')!;
@@ -1591,7 +1589,7 @@ test('mounts the stacked list under the desktop chrome, and holds it to the meas
 
   await page.setViewportSize({ width, height: 900 });
   await page.goto(`/?cols=${cols.join(',')}`);
-  await page.evaluate(() => document.fonts.ready);
+  await awaitFacesLoaded(page);
 
   await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
   await expect(page.locator('.tblwrap')).toHaveCount(0);
@@ -1628,7 +1626,7 @@ test('keeps the open row, the view and the paint when a ticked column flips the 
   // tick below is what crosses the threshold — the window never moves.
   await page.setViewportSize({ width: 750, height: 900 });
   await page.goto('/?cols=score,msrpGbp,weight');
-  await page.evaluate(() => document.fonts.ready);
+  await awaitFacesLoaded(page);
   // A tuned wash first, so the flip has something of the runner's to lose.
   await page.getByRole('button', { name: 'Display' }).click();
   await page.getByLabel('Tint every ranked cell').check();

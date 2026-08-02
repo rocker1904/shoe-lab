@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
-import { FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
+import { awaitFacesLoaded, FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
 
 /**
  * Firefox and WebKit implement none of `input type="month"` — both reflect the type back as `text`,
@@ -277,7 +277,7 @@ test('keeps every sidebar tab stop on screen and clear of the clip edge', async 
   // The face swaps in after first paint and the chrome reflows by ~6px, which moves the sidebar's
   // own top and max-height (docs/app.md §Columns and sorting). Measuring across that reflow reads
   // one stop against the layout of the one before it.
-  await page.evaluate(() => document.fonts.ready);
+  await awaitFacesLoaded(page);
 
   const bad: string[] = [];
   for (let i = 0; i < 40; i++) {
@@ -636,7 +636,7 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
   await page.goto('/?story=easy&cols=score,msrpGbp,heel-stack,forefoot-stack,weight,'
     + 'energy-return-heel,energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel,'
     + 'shock-absorption-forefoot,outsole-durability,midsole-width-in-the-heel');
-  await page.evaluate(() => document.fonts.ready);
+  await awaitFacesLoaded(page);
   await expect(page.getByRole('radio', { name: /All/ })).toBeVisible();
   await expect(page.locator('details.picker summary')).toHaveAttribute('aria-label', /\d\d shown/);
 
@@ -723,6 +723,24 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
 }
 
 /**
+ * The guard above is only worth its precision if it cannot measure a fallback face by mistake, and
+ * for three waves it could: it waited on `document.fonts.ready`, which resolves against the loads
+ * pending when it is asked and so resolved before the mounted table had requested the faces at all.
+ * The reading that followed was the fallback's, and whether that read under or over the model is the
+ * host's choice of fallback rather than anything about this app — which is why it stayed green in
+ * the Playwright image for three landings and failed only on CI (`.hunt/fixlog-webkit-fit.md`).
+ *
+ * So: with the faces made unreachable, `measureFit` must REFUSE to answer rather than answer with a
+ * fallback's number. The short timeout keeps a test that is deliberately never satisfied cheap.
+ */
+test('refuses to measure the fit model against a fallback face', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.route('**/*.woff2', (r) => r.abort());
+  await expect(measureFit(page, FIT_SETS['wide']!, 1500))
+    .rejects.toThrow(/faces never finished loading/);
+});
+
+/**
  * The switch itself, at the width the model computes for this fixture rather than at a constant: one
  * pixel either side of it, which rendering is mounted, and — the half that matters — that the one
  * mounted fits. A ladder written against a hard-coded width would stop testing the rule the moment
@@ -741,7 +759,7 @@ test('mounts the rendering that fits on each side of the computed threshold', as
   for (const [width, want] of [[threshold - 1, 'phone'], [threshold, 'desktop'],
     [threshold + 40, 'desktop']] as const) {
     await page.setViewportSize({ width, height: 900 });
-    await page.evaluate(() => document.fonts.ready);
+    await awaitFacesLoaded(page);
     // Retried rather than read once: a resize reaches the decision through an event and the DOM
     // through Svelte's next flush, and WebKit reported the previous rendering to a single
     // evaluate — a timing artefact that reads exactly like a model that is one pixel out.
