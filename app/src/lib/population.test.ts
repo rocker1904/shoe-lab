@@ -110,6 +110,31 @@ describe('stableFacetCounts', () => {
     expect(counts.get('sock-like')).toBe(1);
   });
 
+  // Seeded from the whole fleet, like brand's: a row that appeared and vanished as the pool moved
+  // would reflow the checklist under the reader's hand.
+  it('holds an undeclared reading at a stable zero when another filter empties it from the pool', () => {
+    const odd = shoe({ slug: 'odd', values: { '39': 'sock-like' } });
+    const counts = stableFacetCounts(GUSSET)([...FEATURED, odd], { ranges: {}, categorical: {}, brands: ['Other'] }, idx);
+    expect(counts.has('sock-like')).toBe(true);
+    expect(counts.get('sock-like')).toBe(0);
+  });
+
+  it('mints no key in the pool walk: the rows are the declared, the fleet\'s and the selection', () => {
+    const odd = shoe({ slug: 'odd', values: { '39': 'sock-like' } });
+    const counts = stableFacetCounts(GUSSET)([...FEATURED, odd],
+      { ranges: {}, categorical: { [GUSSET]: ['bootie'] }, brands: ['Other'] }, idx);
+    expect([...counts.keys()].sort()).toEqual(['bootie', 'both-sides-semi', 'none', 'sock-like']);
+  });
+
+  // The same door `applyFilters` and `facetValues` use: a slug the `plate` field owns, or a numeric
+  // test, is not a facet, so it has no rows and reads no shoe.
+  it('has nothing to count for a slug that is not a categorical test', () => {
+    for (const slug of ['plate', 'heel-stack', 'nonesuch']) {
+      const counts = stableFacetCounts(slug)(FEATURED, { ranges: {}, categorical: {} }, idx);
+      expect([...counts.keys()], slug).toEqual([]);
+    }
+  });
+
   it('counts no shoe that has no reading at all', () => {
     const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: {} }, idx);
     expect([...counts.values()].reduce((x, y) => x + y, 0)).toBe(FEATURED.length - 1);

@@ -73,13 +73,18 @@ export function stableBrandCounts(): (shoes: Shoe[], f: FilterState, idx: TestIn
 /**
  * One facet's counts, holding the brand facet's three decisions over a categorical test: the pool is
  * the population with THIS ONE facet removed and every other filter — other facets included — still
- * narrowing it (a facet must not filter itself), the key set is seeded from the catalogue's declared
- * options (so a value no shoe carries shows its zero rather than vanishing), and from the SELECTION
- * too (so a link carrying a value the catalogue has since dropped still has a row to untick).
- * Seeding at zero is what stops those two colliding, and what makes this one walk of the pool.
+ * narrowing it (a facet must not filter itself), and the key set is seeded from the catalogue's
+ * declared options (so a value no shoe carries shows its zero rather than vanishing), from the whole
+ * FLEET's readings (so a value the data carries but the catalogue does not declare gets a row that
+ * stays put), and from the SELECTION (so a link carrying a value the catalogue has since dropped
+ * still has a row to untick). Seeding at zero is what stops the three colliding, and what makes this
+ * one walk of the pool.
  *
- * A reading the catalogue no longer declares still gets a row, as it still gets a cell: a value that
- * exists must be countable, or the figures under a checklist would not add up to the table.
+ * The fleet seed is brand's, and it is the row set's only source: keys minted by the pool walk would
+ * give an undeclared value a row that appeared and vanished as another filter moved the pool, which
+ * is the reflow the brand zeros exist to avoid (docs/app.md §Filters). The three seeds are therefore
+ * exhaustive — the pool is a subset of the fleet — so the walk only increments keys that are already
+ * there, and counting into an absent one is a defect rather than a case to tolerate.
  *
  * One closure per facet, for the reason there is one per call site: two facets count over pools that
  * differ by a filter, so a shared cache would evict on every call and hold nothing. The identity
@@ -99,15 +104,23 @@ export function stableFacetCounts(slug: string): (shoes: Shoe[], f: FilterState,
     const test = idx.bySlug.get(slug);
     const counts = new Map<string, number>();
     if (test) for (const { value } of facetValues(test)) counts.set(value, 0);
+    // Undefined for anything that is not a categorical test, which is how a slug the `plate` field
+    // owns reads no shoe here, exactly as it filters none in `applyFilters`.
+    const id = test && isCategorical(test) ? String(test.id) : undefined;
+    const readingOf = (s: Shoe): string | undefined => {
+      const raw = id === undefined ? undefined : s.values[id];
+      return raw === undefined ? undefined : String(raw);
+    };
+    for (const s of shoes) {
+      const value = readingOf(s);
+      if (value !== undefined && !counts.has(value)) counts.set(value, 0);
+    }
     for (const v of mine ?? []) if (!counts.has(v)) counts.set(v, 0);
-    if (test && isCategorical(test)) {
-      const id = String(test.id);
-      for (const s of pool) {
-        const raw = s.values[id];
-        if (raw === undefined) continue;
-        const key = String(raw);
-        counts.set(key, (counts.get(key) ?? 0) + 1);
-      }
+    for (const s of pool) {
+      const value = readingOf(s);
+      // Every reading in the fleet was just seeded and the pool is a subset of it, so the entry is
+      // there; a missing one would be a defect rather than a value to mint a row for.
+      if (value !== undefined) counts.set(value, counts.get(value)! + 1);
     }
     last = { pool, selected, counts };
     return counts;
