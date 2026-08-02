@@ -64,20 +64,22 @@ it('recomputes no score map when a range bound moves', async () => {
   expect(scoreMap).not.toHaveBeenCalled();
 });
 
-it('reads coverage only for the rows on screen while a bound moves', async () => {
+it('reads no coverage at all while a bound moves', async () => {
   render(Page, { props: { data } });
   await changeOneBound();
-  // One `coverageOf` is a full pass over the population. The sidebar's own headings are the only
-  // legitimate readers during a drag: the column picker is closed and the add-filter dialog is not
-  // mounted, and neither may pay for a figure nobody can see.
-  expect(vi.mocked(coverageOf).mock.calls.length).toBeLessThanOrEqual(24);
+  // One `coverageOf` is a full pass over the population, and a range cannot move the population
+  // (docs/app.md §Coverage) — so the sidebar's dozen headings are answered from the figures they
+  // already have. The column picker is closed and the add-filter dialog is not mounted, and
+  // neither may pay for a figure nobody can see either.
+  expect(coverageOf).not.toHaveBeenCalled();
 });
 
 it('filters the fleet a bounded number of times per bound change', async () => {
   render(Page, { props: { data } });
   await changeOneBound();
-  // The table's own pass, the brand facet's, and two per bounded row for its `excluded` count.
-  expect(vi.mocked(applyFilters).mock.calls.length).toBeLessThanOrEqual(6);
+  // The table's own pass and two per bounded row for its `excluded` count. The brand facet's is
+  // NOT among them: it counts over `considered`, which a range leaves alone.
+  expect(vi.mocked(applyFilters).mock.calls.length).toBeLessThanOrEqual(3);
 });
 
 it('ranks each rendered column once per bound change', async () => {

@@ -3,8 +3,9 @@
   import { coverageOf } from '../lib/coverage';
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import { startOfMonth } from '../lib/release-date';
-  import { applyFilters, type RangeBound } from '../lib/filters';
+  import { type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
+  import { stableBrandCounts } from '../lib/population';
   import { excludedBy } from '../lib/relax';
   import { roving } from '../lib/roving';
   import type { ViewState } from '../lib/urlstate';
@@ -144,18 +145,11 @@
     if (!b || (b.min === undefined && b.max === undefined)) return undefined;
     return excludedBy(data.shoes, view.filters, key, idx);
   };
-  /**
-   * Three separate decisions, each argued in docs/app.md §Filters and none of them safe to simplify
-   * here: the count is over the population with the brand filter itself REMOVED (a facet must not
-   * filter itself), the key set is seeded from the whole FLEET (so a brand matching nothing still
-   * shows its zero), and from the SELECTION too (so a link naming a brand the catalogue has since
-   * dropped still has a control to untick). The `Set` is what stops the last two colliding.
-   */
-  const brandPool = $derived(applyFilters(data.shoes, { ...view.filters, brands: undefined }, idx).considered);
-  const brandCounts = $derived(new Map(
-    [...new Set([...data.shoes.map((s) => s.brand).filter((b): b is string => !!b),
-      ...(view.filters.brands ?? [])])]
-      .map((b) => [b, brandPool.filter((s) => s.brand === b).length] as const)));
+  /** A figure per brand over a population a range cannot move, so the map is read through a reader
+   *  that holds its identity while one does (docs/app.md §What a drag may recompute). What the
+   *  three counting decisions are, and why none of them is safe to simplify, is `population.ts`. */
+  const readBrandCounts = stableBrandCounts();
+  const brandCounts = $derived(readBrandCounts(data.shoes, view.filters, idx));
 
   function patch(mutate: (v: ViewState) => void) {
     const next: ViewState = structuredClone($state.snapshot(view)) as ViewState;

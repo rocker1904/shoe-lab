@@ -183,11 +183,26 @@ values that exist puts most frames of a slow drag back on the same reading, so
 `RangeFilter` compares before calling `onchange` — an identical bound would
 otherwise cost a whole view rebuild for no change on screen.
 
-What remains per update is what genuinely moved: one filter pass, one sort, one
-ranking per rendered column (`percentileMap` defers to `rankMap`, one walk of
-the sorted run rather than one per shoe), the sidebar's own coverage headings,
-and the table's DOM. The DOM is now the larger half, which is a row-count
-problem rather than a reactivity one — BACKLOG.md holds it.
+**A population the change cannot move keeps its identity.** `considered` is the
+same shoes before and after a bound moves — that is what §Coverage rests on —
+but `applyFilters` builds a new array each time, and a `$derived` propagates on
+`!==`, so a fresh array per frame restarts every pass hanging off it. Everything
+that reads the population reads it through `population.ts`, which keys its
+answer on the filters *without* their ranges and hands back the array it already
+built: the sidebar's dozen coverage headings and the brand facet's figure per
+brand then cost nothing while a grip is held. Measured on the 450-shoe fleet at
+1440px, a drag step went from about 20,600 shoe-visits to about 1,200, and the
+main thread from about 9.4ms to about 6.9ms of the frame. Each call site holds
+its own reader: the sidebar's population and the brand facet's differ by one
+filter, so a shared entry would evict on every call and hold nothing.
+
+What remains per update is what genuinely moved: one filter pass, two more per
+**bounded** row for its `excluded` count — a leave-one-out is conditioned on the
+rest of the set, so moving any bound moves every other row's figure — one sort,
+one ranking per rendered column (`percentileMap` defers to `rankMap`, one walk
+of the sorted run rather than one per shoe), and the table's DOM. The DOM is now
+the larger half by far, which is a row-count problem rather than a reactivity
+one — BACKLOG.md holds it.
 
 ## Sanitised-HTML boundary
 
@@ -525,8 +540,9 @@ and the word nowhere in the document, on a phone as much as on the desktop. The
 only recovery was `Clear filters`, which discards every other filter the link
 carried. A selected brand the fleet does not hold now gets a row like any other
 zero — greyed, `(0)`, ticked, clickable to untick — so the summary count never
-exceeds the number of controls that can act on it. Seeded through a `Set`, so a
-selected brand the catalogue *does* hold gets one row rather than two.
+exceeds the number of controls that can act on it. Both seeds land in one map at
+zero, so a selected brand the catalogue *does* hold gets one row rather than two
+and the counting is a walk of the population rather than one per brand.
 
 A search box narrows the
 brand list in a 14rem scroll box. Its `<summary>` **suppresses the UA

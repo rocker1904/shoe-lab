@@ -37,6 +37,7 @@
   import { applyFilters, EMPTY_FILTERS, narrowingNames } from './lib/filters';
   import type { Zone } from './lib/lineage';
   import { orderingNote } from './lib/ordering';
+  import { stableConsidered } from './lib/population';
   import { applyPreset, PRESETS } from './lib/presets';
   import { scoreMap, type ScoreColumns } from './lib/score';
   import { SCORE_DEFS } from './lib/score-defs';
@@ -286,6 +287,14 @@
   }
 
   const filtered = $derived(applyFilters(data.shoes, view.filters, idx));
+  /**
+   * The coverage denominator, read through a reader that holds its identity while a range moves.
+   * `considered` is the same shoes, but a NEW array every frame of a drag, and everything
+   * downstream of it — a dozen coverage headings and the brand facet's count per brand — is a full
+   * pass over the fleet (docs/app.md §What a drag may recompute).
+   */
+  const readConsidered = stableConsidered();
+  const considered = $derived(readConsidered(data.shoes, view.filters, idx));
   /**
    * What the empty state names. Derived from the live filters, because one unconditional sentence
    * written for a range bound was being printed for every cause — a link emptied by a brand, a
@@ -685,7 +694,7 @@
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
-                    population={filtered.considered} {idx} generations={view.generations}
+                    population={considered} {idx} generations={view.generations}
                     onchange={(cols) => setView({ ...($state.snapshot(view) as ViewState), columns: cols })} />
     {/snippet}
   </Toolbar>
@@ -726,10 +735,10 @@
        `.focus()` on a plain container is a no-op, the same reason the table anchor carries one. -->
   <div class="sidebar scrollport" id="filter-sidebar" data-testid="filter-drawer" bind:this={drawerEl}
        tabindex="-1" style:--chrome-h="{chromeHeight}px" onkeydown={onDrawerKey}>
-    <FilterSidebar {data} {view} onchange={setView} population={filtered.considered} />
+    <FilterSidebar {data} {view} onchange={setView} population={considered} />
   </div>
   <div class="content" style:--thead-top="{chromeHeight}px">
-    <Receipt shown={visibleSorted.length} total={filtered.considered.length}
+    <Receipt shown={visibleSorted.length} total={considered.length}
              outsideBounds={filtered.outsideBounds} hiddenMissing={filtered.hiddenMissing}
              undatedHidden={filtered.undatedHidden}
              showingMissing={view.filters.showMissing ?? false} onshowmissing={onShowMissing} />
