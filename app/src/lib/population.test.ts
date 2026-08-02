@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { applyFilters, EMPTY_FILTERS, type FilterState } from './filters';
-import { stableBrandCounts, stableConsidered } from './population';
-import { FLEET, TESTS } from './test-fixtures';
+import { stableBrandCounts, stableConsidered, stableFacetCounts } from './population';
+import { FLEET, TESTS, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -55,6 +55,87 @@ describe('stableConsidered', () => {
     const b = yours(FLEET, EMPTY_FILTERS, idx);
     expect(mine(FLEET, { categorical: {}, ranges: { weight: { max: 250 } }, plate: ['carbon'] }, idx)).toBe(a);
     expect(yours(FLEET, { categorical: {}, ranges: { weight: { max: 250 } } }, idx)).toBe(b);
+  });
+});
+
+/**
+ * The brand facet's three seeded-map decisions, taken over a facet instead: the pool drops this one
+ * facet and nothing else, the declared options seed the keys, and so does the selection.
+ */
+describe('stableFacetCounts', () => {
+  const GUSSET = 'tongue-gusset-type';
+  // Readings on 39 and 40, so one facet can be shown to filter the other's pool.
+  const a = shoe({ slug: 'a', values: { '39': 'both-sides-semi', '40': 'pull-tab' } });
+  const b = shoe({ slug: 'b', values: { '39': 'none', '40': 'pull-tab' } });
+  const c = shoe({ slug: 'c', brand: 'Other', values: { '39': 'both-sides-semi', '40': 'none' } });
+  const unread = shoe({ slug: 'unread', values: {} });
+  const FEATURED = [a, b, c, unread];
+
+  it('counts the population with that one facet removed', () => {
+    const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: { [GUSSET]: ['both-sides-semi'] } }, idx);
+    // A facet that filtered itself would report every unticked value at zero.
+    expect(counts.get('both-sides-semi')).toBe(2);
+    expect(counts.get('none')).toBe(1);
+  });
+
+  it('lets another facet filter the pool it counts over', () => {
+    const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: { 'heel-tab': ['pull-tab'] } }, idx);
+    expect(counts.get('both-sides-semi')).toBe(1);   // a only: c is not a pull tab
+    expect(counts.get('none')).toBe(1);
+  });
+
+  it('lets every other filter narrow it too, brand included', () => {
+    const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: {}, brands: ['Other'] }, idx);
+    expect(counts.get('both-sides-semi')).toBe(1);
+    expect(counts.get('none')).toBe(0);
+  });
+
+  it('seeds every declared option, so a value matching nothing shows its zero', () => {
+    const counts = stableFacetCounts('heel-tab')([a, b], { ranges: {}, categorical: {} }, idx);
+    expect(counts.get('pull-tab')).toBe(2);
+    expect(counts.get('none')).toBe(0);              // declared, carried by no shoe here
+  });
+
+  it('seeds the selection too, so a value the catalogue has dropped keeps its row', () => {
+    const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: { [GUSSET]: ['bootie'] } }, idx);
+    expect(counts.has('bootie')).toBe(true);
+    expect(counts.get('bootie')).toBe(0);
+  });
+
+  // An upstream addition reads as itself rather than going missing, as it does in a cell
+  // (docs/app.md §Categorical columns).
+  it('gives a reading the catalogue does not declare a row of its own', () => {
+    const odd = shoe({ slug: 'odd', values: { '39': 'sock-like' } });
+    const counts = stableFacetCounts(GUSSET)([...FEATURED, odd], { ranges: {}, categorical: {} }, idx);
+    expect(counts.get('sock-like')).toBe(1);
+  });
+
+  it('counts no shoe that has no reading at all', () => {
+    const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: {} }, idx);
+    expect([...counts.values()].reduce((x, y) => x + y, 0)).toBe(FEATURED.length - 1);
+  });
+
+  it('keeps its identity across a range-bound change', () => {
+    const read = stableFacetCounts(GUSSET);
+    const first = read(FEATURED, { ranges: { weight: { max: 260 } }, categorical: { [GUSSET]: ['none'] } }, idx);
+    expect(read(FEATURED, { ranges: { weight: { max: 250 } }, categorical: { [GUSSET]: ['none'] } }, idx)).toBe(first);
+  });
+
+  it('rebuilds when its own selection moves, or another filter does', () => {
+    const read = stableFacetCounts(GUSSET);
+    const first = read(FEATURED, { ranges: {}, categorical: {} }, idx);
+    expect(read(FEATURED, { ranges: {}, categorical: { [GUSSET]: ['none'] } }, idx)).not.toBe(first);
+    expect(read(FEATURED, { ranges: {}, categorical: { 'heel-tab': ['pull-tab'] } }, idx)).not.toBe(first);
+    expect(read(FEATURED, { ranges: {}, categorical: {}, brands: ['Other'] }, idx)).not.toBe(first);
+  });
+
+  it('gives each facet its own reader, so two facets do not evict each other', () => {
+    const gusset = stableFacetCounts(GUSSET);
+    const tab = stableFacetCounts('heel-tab');
+    const g = gusset(FEATURED, { ranges: {}, categorical: {} }, idx);
+    const t = tab(FEATURED, { ranges: {}, categorical: {} }, idx);
+    expect(gusset(FEATURED, { ranges: { weight: { max: 250 } }, categorical: {} }, idx)).toBe(g);
+    expect(tab(FEATURED, { ranges: { weight: { max: 250 } }, categorical: {} }, idx)).toBe(t);
   });
 });
 

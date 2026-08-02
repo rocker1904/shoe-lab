@@ -1,4 +1,5 @@
 import type { Shoe } from '../../../shared/types.js';
+import { facetValues, isCategorical } from './categorical';
 import type { TestIndex } from './dataset';
 import { applyFilters, type FilterState } from './filters';
 
@@ -64,6 +65,50 @@ export function stableBrandCounts(): (shoes: Shoe[], f: FilterState, idx: TestIn
     for (const b of f.brands ?? []) if (!counts.has(b)) counts.set(b, 0);
     // The pool is a subset of the fleet every brand was just seeded from, so the entry is there.
     for (const s of pool) if (s.brand) counts.set(s.brand, counts.get(s.brand)! + 1);
+    last = { pool, selected, counts };
+    return counts;
+  };
+}
+
+/**
+ * One facet's counts, holding the brand facet's three decisions over a categorical test: the pool is
+ * the population with THIS ONE facet removed and every other filter — other facets included — still
+ * narrowing it (a facet must not filter itself), the key set is seeded from the catalogue's declared
+ * options (so a value no shoe carries shows its zero rather than vanishing), and from the SELECTION
+ * too (so a link carrying a value the catalogue has since dropped still has a row to untick).
+ * Seeding at zero is what stops those two colliding, and what makes this one walk of the pool.
+ *
+ * A reading the catalogue no longer declares still gets a row, as it still gets a cell: a value that
+ * exists must be countable, or the figures under a checklist would not add up to the table.
+ *
+ * One closure per facet, for the reason there is one per call site: two facets count over pools that
+ * differ by a filter, so a shared cache would evict on every call and hold nothing. The identity
+ * rule is the population's — a moving range cannot change any of these numbers
+ * (docs/app.md §What a drag may recompute).
+ */
+export function stableFacetCounts(slug: string): (shoes: Shoe[], f: FilterState, idx: TestIndex) => Map<string, number> {
+  const poolOf = stableConsidered();
+  let last: { pool: Shoe[]; selected: string; counts: Map<string, number> } | undefined;
+  return (shoes, f, idx) => {
+    const { [slug]: mine, ...others } = f.categorical;
+    const pool = poolOf(shoes, { ...f, categorical: others }, idx);
+    // The pool key drops this facet, so its selection is keyed here — as a value rather than a join,
+    // or one value carrying the separator keys the same as two values.
+    const selected = JSON.stringify(mine ?? []);
+    if (last && last.pool === pool && last.selected === selected) return last.counts;
+    const test = idx.bySlug.get(slug);
+    const counts = new Map<string, number>();
+    if (test) for (const { value } of facetValues(test)) counts.set(value, 0);
+    for (const v of mine ?? []) if (!counts.has(v)) counts.set(v, 0);
+    if (test && isCategorical(test)) {
+      const id = String(test.id);
+      for (const s of pool) {
+        const raw = s.values[id];
+        if (raw === undefined) continue;
+        const key = String(raw);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
     last = { pool, selected, counts };
     return counts;
   };

@@ -189,8 +189,9 @@ but `applyFilters` builds a new array each time, and a `$derived` propagates on
 `!==`, so a fresh array per frame restarts every pass hanging off it. Everything
 that reads the population reads it through `population.ts`, which keys its
 answer on the filters *without* their ranges and hands back the array it already
-built: the sidebar's dozen coverage headings and the brand facet's figure per
-brand then cost nothing while a grip is held. Measured on the 450-shoe fleet at
+built: the sidebar's dozen coverage headings, the brand facet's figure per brand
+and each feature checklist's figure per value then cost nothing while a grip is
+held. Measured on the 450-shoe fleet at
 1440px, a drag step went from about 20,600 shoe-visits to about 1,200, and the
 main thread from about 9.4ms to about 6.9ms of the frame. Each call site holds
 its own reader: the sidebar's population and the brand facet's differ by one
