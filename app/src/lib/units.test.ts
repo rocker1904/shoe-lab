@@ -28,8 +28,8 @@ describe('headerUnits', () => {
     expect(headerUnits('toebox-durability', ratingTest)).toBe('/5');
   });
 
-  it('shows 3 = true for size rating rather than a false five-point score', () => {
-    expect(headerUnits('size-rating', ratingTest)).toBe('3 = true');
+  it('says which rating is true to size rather than showing a false five-point score', () => {
+    expect(headerUnits('size-rating', ratingTest)).toBe('3=TTS');
   });
 
   it('knows the two shoe fields, which are not catalogue tests', () => {

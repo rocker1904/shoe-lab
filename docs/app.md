@@ -982,8 +982,15 @@ would otherwise read as claims about Search and Brand. What makes that
 survivable is the one thing these rows have that a picker's do not: each states
 its own units beside the glyph, which is the ambiguity the legend was written
 for. `size-rating` is
-the one units override: it reads `3 = true`, because `/5` would present a
-runs-small / true / runs-large scale as a mediocre mark.
+the one units override: it reads `3=TTS`, because `/5` would present a
+runs-small / true / runs-large scale as a mediocre mark. The abbreviation is a
+measurement, not a house style — `3 = true` is eight monospaced characters
+against the seven the phone column holds, so it wrapped and stood the unit line
+at 32px where every neighbour stood at 16, and in any view whose names all fit
+one line that was the whole pinned header: 58px against 42. `MAX_UNITS_PX` in
+`labels.ts` is the bound and owns the arithmetic; the units line is the one
+header line with no short form and no third line to grow into
+(§Two renderings, and only one of them mounted).
 
 **The table sits in a `--surface` panel** — hairline, `--r-md`, `--shadow-panel`
 — and that wrapper carries **no `overflow`**, deliberately: an `overflow` there
@@ -1599,6 +1606,15 @@ chosen:
   the app **ships** its header face, the assertion means the same thing on every
   OS; under `system-ui` the widths were only ever true on the machine that
   measured them.
+- **The unit line under it is bounded separately**, because nothing about the
+  name bound can see it: the width table above is Inter Tight and this line is
+  JetBrains Mono, and `MAX_LABEL_PX` is applied to `columnLabel`/`shortLabel`,
+  so a units string of any length shipped silently until `MAX_UNITS_PX` and
+  `unitsPx` existed. Same 49px of text, its own table from the same script, and
+  a whole-string bound rather than a per-word one — a unit line that wraps at
+  all is the failure, and it is the header line with no `SHORT_LABELS` to fall
+  back on. The one string it has ever caught is `size-rating`'s
+  (§Table presentation).
 - **`SHORT_LABELS` is a measurement rather than a list**: a narrower face brings
   names back inside the bound, and which entries survive is whatever the
   catalogue says when it is re-run. A short label is only

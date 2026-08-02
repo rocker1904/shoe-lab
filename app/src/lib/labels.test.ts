@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { categoricalEntries } from './categorical';
 import { indexTests, NUMERIC_TEST_TYPES } from './dataset';
-import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, shortLabel, widestWordPx } from './labels';
+import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, MAX_UNITS_PX, shortLabel, unitsPx, widestWordPx } from './labels';
+import { headerUnits } from './units';
 import type { LabTest } from '../../../shared/types.js';
 import type { Zone } from './lineage';
 import { EASY, SCORE_DEFS } from './score-defs';
@@ -18,10 +19,7 @@ const ZONES: Zone[] = ['heel', 'forefoot'];
 // rejects (direction.test.ts says the same).
 const catalogue = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../data/tests.json'), 'utf8'),
-) as {
-  tests: { slug: string; name: string; type: string; updateId: number | null;
-           previousId: number | null; id: number }[];
-};
+) as { tests: LabTest[] };
 
 // Only numeric tests can ever be a column header — `metricEntries` filters to these
 // (lineage.ts), so an `option`-typed test like `leather-suede-quality` is out of scope.
@@ -126,6 +124,38 @@ describe('the width table matches the shipped header face', () => {
     // FALLBACK_PX is face-specific too: left at the old face's value it would under-charge a name
     // full of characters the table has never seen, which is the one case the bound cannot catch.
     expect(widestWordPx('€')).toBeGreaterThanOrEqual(widestWordPx('m'));
+  });
+});
+
+/**
+ * The header's OTHER line. Every bound above runs over `columnLabel`/`shortLabel`, so a units
+ * string of any length used to ship silently — and unlike a name it has no short form to fall back
+ * on and no third line to grow into, so one bound over the whole string is the whole guard
+ * (docs/app.md §Table presentation).
+ */
+describe('the units line', () => {
+  const bySlug = new Map(catalogue.tests.map((t) => [t.slug, t]));
+  // Every key that can head a column, because `headerUnits` answers for the shoe fields and the
+  // synthetic score keys as well as for the catalogue's own — and `score` and `msrpGbp` carry
+  // units no catalogue record could have supplied.
+  const keys = [...numeric.map((t) => t.slug), 'releasedAt', 'score', 'msrpGbp', 'plate',
+    ...SCORE_DEFS.flatMap((def) => ZONES.map((zone) => def.keys[zone]))];
+
+  it('keeps every unit string on one line of a phone column', () => {
+    const tooWide = keys.filter((key) => unitsPx(headerUnits(key, bySlug.get(key))) > MAX_UNITS_PX);
+    expect(tooWide).toEqual([]);
+  });
+
+  it('holds the bound at seven characters, which is what an eighth is measured to cost', () => {
+    expect(unitsPx('1234567')).toBeLessThanOrEqual(MAX_UNITS_PX);
+    expect(unitsPx('12345678')).toBeGreaterThan(MAX_UNITS_PX);
+  });
+
+  it('is measured for the phone line, not the desktop one', () => {
+    // Same face and size, and the two are still different tables: the phone inherits the header
+    // button's -0.02em and the desktop sets none, which is 6.76 against 7. A table copied from
+    // `UNITS_ADVANCE_PX` would model the phone 0.24px per character too wide.
+    expect(unitsPx('x')).toBeLessThan(7);
   });
 });
 

@@ -183,11 +183,10 @@ const widestWordPx = (s: string, table: Record<string, number>): number =>
  * (docs/app.md §Table presentation).
  */
 export function headerMinPx(key: string, test: LabTest | undefined): number {
-  // The units line is mono, so its longest word is a character count. `size-rating` is the only
-  // multi-word unit string there is (`3 = true`), and it is the reason this is a word and not the
-  // whole line (docs/app.md §Table presentation).
-  const unitsPx = Math.max(0,
-    ...headerUnits(key, test).split(/\s+/).map((w) => w.length * UNITS_ADVANCE_PX));
+  // The units line is mono and cannot wrap — no unit string carries a space now that `size-rating`
+  // reads `3=TTS`, and `MAX_UNITS_PX` in `labels.ts` is what keeps it that short — so its width is
+  // a character count over the whole line (docs/app.md §Table presentation).
+  const unitsPx = headerUnits(key, test).length * UNITS_ADVANCE_PX;
   return Math.max(
     widestWordPx(columnLabel(key, test), HEADER_PX) + CARET_PX,
     unitsPx + (isFigure(key, test) ? CARET_PX : 0),

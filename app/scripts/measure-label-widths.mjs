@@ -33,6 +33,14 @@ const PHONE_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012
  * — `£` and `/` for units, `—` for an absent reading, `:` from "Tongue: gusset type".
  */
 const DESKTOP_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;/()%+-£—Δ'];
+/**
+ * A units string is a different alphabet from a name or a phrase, which is why it gets its own set
+ * rather than borrowing `DESKTOP_CHARS`: it is `test.units` straight from upstream (`HC`, `HA`,
+ * `SA`, `AC`, `BR`, `Nm`, `mm`, `g`, `N`, `°`) plus the five the app derives (`%`, `/5`, `/100`,
+ * `£`, and `size-rating`'s override). `°` and `=` appear nowhere else and were missing from the
+ * census the units tables were first taken over — `rocker` ships `°` today.
+ */
+const UNITS_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ./%=£°'];
 
 /**
  * `take` names which engine's measurements a consumer commits to, and every table below takes
@@ -76,7 +84,13 @@ const FACES = [
     name: 'UNITS_ADVANCE_PX (app/src/lib/fit.ts)',
     css: "font-family:J,ui-monospace;font-size:12px;font-weight:400;letter-spacing:normal",
     note: 'desktop units line — JetBrains Mono 400 at 12px (--t-xs), no tracking (ShoeTable.svelte .h-units)',
-    chars: DESKTOP_CHARS, take: 'chromium',
+    chars: UNITS_CHARS, take: 'chromium',
+  },
+  {
+    name: 'UNITS_CHAR_PX (app/src/lib/labels.ts)',
+    css: "font-family:J,ui-monospace;font-size:12px;font-weight:400;letter-spacing:-0.02em",
+    note: 'phone units line — JetBrains Mono 400 at 12px (--t-xs), -0.02em (ShoeTableMobile.svelte .h-units, which sets neither size nor tracking and inherits both from the th button)',
+    chars: UNITS_CHARS, take: 'chromium',
   },
 ];
 

@@ -134,6 +134,41 @@ export function shortLabel(key: string, fallback: string): string {
 }
 
 /**
+ * One number, because the header's second line is set in a monospaced face: **JetBrains Mono 400 at
+ * 12px with -0.02em**, which is `.h-units` in `ShoeTableMobile.svelte` declaring neither the size
+ * nor the tracking and inheriting both from the `th` button above it. That makes it a third table
+ * rather than a reuse of either neighbour — `CHAR_PX` is a different face and weight, and the
+ * desktop's `UNITS_ADVANCE_PX` (`fit.ts`) is this face at this size with no tracking, which is 7.
+ * `app/scripts/measure-label-widths.mjs` produces all three, over a units alphabet of its own:
+ * upstream's `HC`/`HA`/`SA`/`AC`/`BR`/`Nm`/`°` and the five the app derives are not the character
+ * census a name or a phrase takes.
+ */
+const UNITS_CHAR_PX = 6.76;
+
+/**
+ * The same 49px of header text `MAX_LABEL_PX` bounds, and a pixel wider than it, because a uniform
+ * advance times a length needs none of the slack a `CHAR_PX` sum does. What it does have to absorb
+ * is the engines' 0.21px per character: at the seven characters this buys, the widest of them
+ * renders 48.8px against the 49.33px the column measures.
+ *
+ * An eighth character is what it exists to stop, and the cost is not a truncation: the units line
+ * has no third line to grow into and no `SHORT_LABELS` to fall back on, so it wraps and doubles a
+ * header that is pinned and therefore paid by every screen (docs/app.md §Table presentation).
+ */
+export const MAX_UNITS_PX = 49;
+
+/**
+ * The whole string, not its longest word: a units line that wraps at all is the failure, so there
+ * is no per-word bound to take. `.length` stands in for a per-character table because every glyph
+ * the units alphabet holds measures the same — a character outside the shipped mono subset would
+ * fall back to a proportional face and be mismodelled here, which is the caveat `Δ` carries in
+ * `CHAR_PX` above.
+ */
+export function unitsPx(units: string): number {
+  return units.length * UNITS_CHAR_PX;
+}
+
+/**
  * The noun a categorical reading takes on the phone's name line, where it is prose rather than the
  * 49px of text in a 53px header — so `SHORT_LABELS` is the wrong source ("Remv. insole" reads as
  * an abbreviation in a sentence) and so is the catalogue name, because "Tongue: gusset type"

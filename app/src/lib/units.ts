@@ -9,10 +9,12 @@ import { isCategorical } from './categorical';
  *
  * `size-rating` is the one exception. It is a runs-small / true / runs-large scale on which 3 is
  * correct, so `/5` would read as a mediocre score — the header says what the number means instead
- * (docs/app.md §Theming).
+ * (docs/app.md §Theming). `TTS` rather than the words: this line is bounded at seven monospaced
+ * characters by the phone column it sets (`MAX_UNITS_PX` in `labels.ts`), and it is the one unit
+ * string long enough for that to bite.
  */
 function unitsOf(key: string, test: LabTest | undefined): string {
-  if (key === 'size-rating') return '3 = true';
+  if (key === 'size-rating') return '3=TTS';
   if (key === 'msrpGbp') return '£';
   if (key === 'score') return '/100';
   if (!test) return '';
