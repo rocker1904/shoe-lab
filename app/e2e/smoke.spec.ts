@@ -213,6 +213,16 @@ test('switches to the stacked list on a phone, and back', async ({ page }) => {
   // Shortening the window is what gives it something to measure.
   await page.setViewportSize({ width: 375, height: 400 });
   await page.evaluate(() => document.fonts.ready.then(() => null));
+  // `fonts.ready` resolving is the swap, not the app's reaction to it: `--thead-top` is a
+  // ResizeObserver-backed `bind:clientHeight`, so the reflowed chrome reaches the sticky offset a
+  // frame later. Reading in the same task caught the app mid-measurement — a 34px gap, one wrapped
+  // toolbar row — twice in nine full runs of the suite, on `main` as much as on any branch, and
+  // never once in thirty repeats of this test on its own: it takes the other workers' load to lose
+  // the race. Two frames is the observer's callback and the render that follows it, which is the
+  // state a runner actually sees painted.
+  await page.evaluate(() => new Promise<void>((r) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => r()));
+  }));
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const gap = await page.evaluate(() => {
     const chrome = document.querySelector('.chrome')!.getBoundingClientRect();
@@ -662,10 +672,10 @@ test('mounts each utility exactly once at every width', async ({ page }) => {
  * overflow, pushing the table the sidebar exists to tune off the right of the screen
  * (docs/app.md §Filters).
  *
- * Driven off the CONSTANT rather than a literal, because four style blocks restate that number in
- * media queries no TypeScript can reach — `Page.svelte`, `Toolbar.svelte`, `App.svelte` — and this
- * is what holds the restatements to it: a boundary moved in `lib/fit.ts` alone fails here rather
- * than in a band a runner finds.
+ * Driven off the CONSTANT rather than a literal: the fixture's own table is narrow enough that the
+ * floor is what binds for it, so this drives the same number `lib/fit.ts` states and fails here
+ * rather than in a band a runner finds. No style block restates it any more — `Page.svelte` writes
+ * a class and `Toolbar.svelte` takes a prop, both from the one rune (docs/app.md §Filters).
  *
  * Measured as the table's own left edge rather than as overflow, because the e2e fixture is five
  * shoes with one-word names and its document fits at every width here — the overflow half of the
@@ -721,8 +731,9 @@ test('keeps the sidebar a drawer until the table can be seen beside it', async (
  * 1250; these are the widths on the other side of the boundary, and they are only about the track.
  *
  * One pixel below `SIDEBAR_PERMANENT_PX` as well as a plain mid-band width, because the placeholder
- * states the boundary in a media query of its OWN (`App.svelte`): a boundary moved in `lib/fit.ts`
- * and not here leaves the placeholder reserving 260px the loaded page then takes back.
+ * asks the FLOOR on its own (`App.svelte`) — it has no dataset yet, so it cannot ask the fit model
+ * the loaded page asks: a boundary moved in `lib/fit.ts` and not read here leaves the placeholder
+ * reserving 260px the loaded page then takes back.
  */
 for (const width of [1000, SIDEBAR_PERMANENT_PX - 1]) {
   test(`reserves no sidebar track at ${width}px, where the loaded page has none`, async ({ page }) => {
