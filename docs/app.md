@@ -320,11 +320,28 @@ the fieldset legend, so the name is stated once — but the fieldset's accessibl
 name carries heading **and** zone, because two rows both called "Forefoot"
 would be indistinguishable to anyone not looking at the screen.
 
-The order is fixed: search, released after, plate, brand, discontinued, then
-the range rows, which come from one declared list, `CURATED_RANGE_KEYS` — price,
-then the measurements a runner narrows on most, then the rest curated, then
-anything added by hand. Price leads because it is the bound almost every search
-has.
+The order is fixed: search, released after, plate, brand, discontinued, features,
+then the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
+price, then the measurements a runner narrows on most, then the rest curated,
+then anything added by hand. Price leads because it is the bound almost every
+search has.
+
+**Features is one collapsed section, and its contents are the catalogue's.**
+`FeaturesFilter` draws every categorical test — the same rule that decides which
+of them can become a column (§Categorical columns) — so an upstream addition
+arrives with a control the way it already arrives with a cell, rather than as a
+code change. An `option` test is a flat checklist of its declared choices in
+catalogue order with the absence last, each row carrying the count of shoes that
+would match it, taken over the population with **that one facet removed** and
+everything else still filtering, which is the brand facet's rule and the same
+zero-row rule with it. A `bool` test is an Any/Yes/No tri-state built the way
+Discontinued is, and carries no counts: ticking both boxes would be a near-no-op
+whose only effect is excluding the handful of unread shoes, which is not a state
+a runner means. A selection is set membership on the population side, so it moves
+the coverage denominator exactly as a brand tick does (§Coverage), and a shoe
+with no reading fails an active selection as a brandless shoe fails a brand one.
+The Add-filter dialog stays numeric-only: it adds *range* rows, and a range over
+a categorical test empties the fleet in one click.
 
 **The search box matches a case-insensitive substring of the name *or* the
 brand.** The brand half is not redundant: almost every name already begins with
@@ -1795,9 +1812,12 @@ apart, so the regression test builds a catalogue where they collide rather than
 resting on that: the invariant is the key, not the label rules that currently
 protect it.
 
-**There is no categorical filter yet.** A set-membership facet is the obvious
-next step and is a backlog item, not an oversight — the column is useful for
-comparison without it.
+**These readings are filterable as well as readable.** The sidebar's Features
+section is set membership over the same values this section renders, drawn from
+the same catalogue rule, and §Filters owns it — including why a bool is a
+tri-state and why the counts leave their own facet out. Filtering and columns
+stay independent: ticking a value does not add its column, exactly as bounding a
+metric does not.
 
 ## Number display
 

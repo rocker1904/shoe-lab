@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
+  import { isCategorical } from '../lib/categorical';
   import { coverageOf } from '../lib/coverage';
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import { startOfMonth } from '../lib/release-date';
   import { type RangeBound } from '../lib/filters';
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
-  import { stableBrandCounts } from '../lib/population';
+  import { stableBrandCounts, stableFacetCounts } from '../lib/population';
   import { excludedBy } from '../lib/relax';
   import { roving } from '../lib/roving';
   import type { ViewState } from '../lib/urlstate';
@@ -13,6 +14,7 @@
   import BrandFilter from './BrandFilter.svelte';
   import DirectionLegend from './DirectionLegend.svelte';
   import DiscontinuedFilter from './DiscontinuedFilter.svelte';
+  import FeaturesFilter from './FeaturesFilter.svelte';
   import MetricRow from './MetricRow.svelte';
   import MonthPicker from './MonthPicker.svelte';
   import PlateFilter from './PlateFilter.svelte';
@@ -150,6 +152,21 @@
    *  three counting decisions are, and why none of them is safe to simplify, is `population.ts`. */
   const readBrandCounts = stableBrandCounts();
   const brandCounts = $derived(readBrandCounts(data.shoes, view.filters, idx));
+  /** The facets the catalogue describes, by the same rule that decides which of these can be a
+   *  column: an upstream categorical test arrives with a control the way it arrives with a cell. */
+  const featureTests = $derived(data.tests.filter((t) => isCategorical(t)));
+  /** One reader per facet, made once and kept: each figure is a walk of the population, and a reader
+   *  rebuilt per render would hold nothing and re-walk on every frame of a drag
+   *  (docs/app.md §What a drag may recompute). */
+  const facetReaders = new Map<string, ReturnType<typeof stableFacetCounts>>();
+  function countsFor(slug: string): Map<string, number> {
+    let read = facetReaders.get(slug);
+    if (!read) {
+      read = stableFacetCounts(slug);
+      facetReaders.set(slug, read);
+    }
+    return read(data.shoes, view.filters, idx);
+  }
 
   function patch(mutate: (v: ViewState) => void) {
     const next: ViewState = structuredClone($state.snapshot(view)) as ViewState;
@@ -250,6 +267,18 @@
   <section>
     <h3>Discontinued</h3>
     <DiscontinuedFilter value={view.filters.discontinued} onchange={(d) => patch((v) => { v.filters.discontinued = d; })} />
+  </section>
+
+  <section>
+    <h3>Features</h3>
+    <FeaturesFilter tests={featureTests} selections={view.filters.categorical} {countsFor}
+                    onchange={(slug, values) => patch((v) => {
+                      // An empty selection deletes its key, the ranges rule and for the ranges
+                      // reason: a leftover `[]` keeps `isDefaultView` false forever and All unlit
+                      // (docs/app.md §Filters).
+                      if (values?.length) v.filters.categorical[slug] = values;
+                      else delete v.filters.categorical[slug];
+                    })} />
   </section>
 
   <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the five

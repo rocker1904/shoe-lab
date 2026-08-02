@@ -6,7 +6,7 @@ import { startOfMonth } from '../lib/release-date';
 import { applyPreset, PRESETS } from '../lib/presets';
 import { projectZone } from '../lib/zone';
 import { defaultView, parseView, sameValue } from '../lib/urlstate';
-import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
+import { FLEET, TESTS, labTest, shoe } from '../lib/test-fixtures';
 import type { Zone } from '../lib/lineage';
 import type { ShoesFile } from '../../../shared/types.js';
 
@@ -304,6 +304,76 @@ describe('FilterSidebar text and toggle controls', () => {
   });
 });
 
+/** The section the catalogue's categorical tests describe, wired to the view the sidebar patches. */
+describe('the features section', () => {
+  const gusseted = shoe({ slug: 'gusseted', values: { '39': 'both-sides-semi' } });
+  const plain = shoe({ slug: 'plain', values: { '39': 'none' } });
+  const featureFleet = [gusseted, plain];
+
+  const mountFeatures = (view = defaultView()) => {
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: {
+      data: { ...data, shoes: featureFleet }, view, onchange, population: featureFleet,
+    } });
+    return onchange;
+  };
+
+  it('offers a facet row per declared value, counted over the population', () => {
+    mountFeatures();
+    const features = sectionNamed('Features');
+    expect(features.getByLabelText(/Both sides \(semi\) \(1\)/)).toBeInTheDocument();
+    expect(features.getByLabelText(/None \(1\)/)).toBeInTheDocument();
+  });
+
+  it('ticks a value through to the view', async () => {
+    const onchange = mountFeatures();
+    await fireEvent.click(sectionNamed('Features').getByLabelText(/Both sides \(semi\)/));
+    expect(onchange.mock.lastCall![0].filters.categorical)
+      .toEqual({ 'tongue-gusset-type': ['both-sides-semi'] });
+  });
+
+  it('deletes the key when the last value goes, so All can light again', async () => {
+    const view = defaultView();
+    view.filters.categorical = { 'tongue-gusset-type': ['none'] };
+    const onchange = mountFeatures(view);
+    await fireEvent.click(sectionNamed('Features').getByLabelText(/None \(1\)/));
+    const next = onchange.mock.lastCall![0];
+    expect(next.filters.categorical).toEqual({});
+    expect(sameValue(next, defaultView())).toBe(true);
+  });
+
+  it('counts a facet over the population its own selection does not narrow', async () => {
+    const view = defaultView();
+    view.filters.categorical = { 'tongue-gusset-type': ['both-sides-semi'] };
+    mountFeatures(view);
+    // A facet that filtered itself would report the unticked value at zero (docs/app.md §Filters).
+    expect(sectionNamed('Features').getByLabelText(/None \(1\)/)).toBeInTheDocument();
+  });
+
+  it('moves a mounted tri-state with an arrow key, from a single tab stop', async () => {
+    const onchange = mountFeatures();
+    const radios = within(screen.getByRole('radiogroup', { name: 'Removable insole' })).getAllByRole('radio');
+    expect(radios.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+    radios[0]!.focus();
+    await fireEvent.keyDown(radios[0]!, { key: 'ArrowRight' });
+    expect(onchange.mock.lastCall![0].filters.categorical).toEqual({ 'removable-insole': ['true'] });
+  });
+
+  it('clears the feature selection with Clear filters', async () => {
+    const view = defaultView();
+    view.filters.categorical = { 'tongue-gusset-type': ['none'], 'removable-insole': ['true'] };
+    const onchange = mountFeatures(view);
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(onchange.mock.lastCall![0].filters.categorical).toEqual({});
+  });
+
+  it('offers no facet for a test whose slug a shoe field owns', () => {
+    mountFeatures();
+    // The catalogue's `plate` bool: the column is the derived field, and so is the filter.
+    expect(sectionNamed('Features').queryByRole('radiogroup', { name: 'Plate' })).toBeNull();
+  });
+});
+
 const extraTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' });
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 
@@ -525,12 +595,14 @@ describe('FilterSidebar metric entries', () => {
 /** The direction glyph rides in the heading text, so this list is also the pin on which sidebar
  *  rows claim a better end and which stay neutral, `Outsole durability (mm)↓` being one that does. */
 const HEADINGS = [
-  'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
+  'Search', 'Released after', 'Plate', 'Brand', 'Discontinued', 'Features',
   'Price (£)↓', 'Stack', 'Energy return↑', 'Weight (g)↓',
   'Shock absorption↑', 'Outsole durability (mm)↓', 'Midsole width', 'Width / Fit',
 ];
 const GROUPS = [
   'Plate', 'Brand',
+  // A `details` is a group, and each facet inside the section is another.
+  'Features', 'Gusset', 'Heel tab',
   'Price (£)',
   'Stack — Forefoot', 'Stack — Heel',
   'Energy return — Forefoot', 'Energy return — Heel',
