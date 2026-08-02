@@ -62,6 +62,24 @@ describe('viewAnnouncement is silent for', () => {
     expect(say((v) => { v.filters.ranges['weight'] = { max: 250 }; })).toBeNull();
     expect(say((v) => { v.filters.releasedAfter = '2025-01-01'; })).toBeNull();
   });
+  // A feature selection is a filter value like the six above it: the checkbox's own `checked` says
+  // it is selected, and what changed on the table is a row count, which is the receipt's. Nothing in
+  // `announce.ts` speaks for these today — this is what stops a later rule quietly starting to.
+  it('a feature selection arriving, narrowing and going away', () => {
+    expect(say((v) => { v.filters.categorical['tongue-gusset-type'] = ['both-sides-semi']; })).toBeNull();
+    const held: ViewState = { ...base(),
+      filters: { categorical: { 'tongue-gusset-type': ['both-sides-semi', 'none'] }, ranges: {} } };
+    expect(say((v) => { v.filters.categorical['tongue-gusset-type'] = ['none']; }, held)).toBeNull();
+    expect(say((v) => { delete v.filters.categorical['tongue-gusset-type']; }, held)).toBeNull();
+  });
+  // The tri-state is a radiogroup, so `aria-checked` already says Yes on the control being pressed;
+  // the only other outcome is the count, and that is the receipt's side of the line.
+  it('a tri-state being set, switched and cleared', () => {
+    expect(say((v) => { v.filters.categorical['removable-insole'] = ['true']; })).toBeNull();
+    const on: ViewState = { ...base(), filters: { categorical: { 'removable-insole': ['true'] }, ranges: {} } };
+    expect(say((v) => { v.filters.categorical['removable-insole'] = ['false']; }, on)).toBeNull();
+    expect(say((v) => { delete v.filters.categorical['removable-insole']; }, on)).toBeNull();
+  });
   it('a story, which rewrites the sort and the columns together and moves the count', () => {
     for (const id of ['easy', 'tempo', 'race']) {
       expect(viewAnnouncement(base(), applyPreset(id, 'heel', false), idx), id).toBeNull();
@@ -100,6 +118,12 @@ describe('viewAnnouncement precedence', () => {
   // `All` from a story resets the sort and the columns together, so nothing claims the sort.
   it('leaves All to the receipt', () => {
     expect(viewAnnouncement(applyPreset('easy', 'heel', false), base(), idx)).toBeNull();
+  });
+  // One action, one sentence: a row arriving *while* a facet moves is not the row's story to tell,
+  // and `rowNote`'s "nothing else changed" guard is what refuses it — `nonRangeFilters` carries
+  // `categorical`, so the guard sees the facet without a line of its own.
+  it('leaves a row arrival unannounced when a facet moved in the same view', () => {
+    expect(say((v) => { v.rows.push('stiffness'); v.filters.categorical['heel-tab'] = ['pull-tab']; })).toBeNull();
   });
   it('reads a score sort through the score label', () => {
     expect(say((v) => { v.sort = { key: EASY.keys.heel, dir: 'desc' }; }))
