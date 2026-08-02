@@ -91,7 +91,7 @@ decision recorded here first.
 ### Doc system (2026-07-27)
 Docs follow an agent-first contract (docs/README.md), deliberately small: no
 separate live-state doc because `main` deploys continuously (merged == live,
-deploy lag ~1 min); aspiration consolidated in BACKLOG.md. The build-time
+deploy lags CI, ~4 min, and is gated on it); aspiration consolidated in BACKLOG.md. The build-time
 spec and plan under `docs/superpowers/` are frozen artifacts — docs/ wins on
 any disagreement.
 

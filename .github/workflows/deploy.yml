@@ -1,8 +1,13 @@
 name: Deploy
 on:
-  push:
+  # Gated on CI rather than firing on push: two red-CI commits deployed during the
+  # 2026-08 fix campaign before anyone read the CI result. The dispatch path stays
+  # ungated — the refresh chain validates its own data and its GITHUB_TOKEN pushes
+  # never ran CI anyway (docs/operations.md §The refresh chain).
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
-    paths: ['app/**', 'shared/**', 'data/shoes.json', '.github/workflows/deploy.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,6 +19,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -21,6 +27,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Deploy exactly the commit CI proved, not whatever main means by checkout time.
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc

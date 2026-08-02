@@ -9,7 +9,7 @@ deploy key. Everything runs on `ubuntu-latest` with the `.nvmrc` Node and
 | `ci.yml` | PRs, pushes to `main` | typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
-| `deploy.yml` | Push to `main` touching `app/`, `shared/`, `data/shoes.json` or itself, + dispatch | builds the app, publishes to Pages |
+| `deploy.yml` | After `CI` succeeds on a `main` push (deploys that exact commit), + dispatch — the refresh chain’s path, ungated because its `GITHUB_TOKEN` pushes never ran CI (§The refresh chain) | builds the app, publishes to Pages |
 | `contract-drift.yml` | 1st of the month 07:00 UTC + dispatch | `check:live`, files or comments on an issue when it fails |
 
 ## The e2e run needs three browsers

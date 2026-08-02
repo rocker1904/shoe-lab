@@ -14,7 +14,7 @@ bad citizen toward runrepeat.com.
 - `docs/README.md` — the documentation contract. Read it before writing any
   doc or comment.
 - `main` is deployed continuously — what's merged is what's live (deploy
-  lags a push by ~1 min; there is no separate live-state doc).
+  lags a push by CI plus the deploy, ~4 min, and a red CI deploys nothing; there is no separate live-state doc).
 
 ## Doc index
 
