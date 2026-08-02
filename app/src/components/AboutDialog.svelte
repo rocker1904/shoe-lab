@@ -42,7 +42,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="scrim" data-testid="about-scrim" onclick={onclose} use:toBody></div>
-<div class="dialog" role="dialog" aria-modal="true" aria-label="About this table"
+<div class="dialog" role="dialog" aria-modal="true" aria-label="About this table" tabindex="-1"
      onkeydown={onkeydown} bind:this={panel} use:toBody>
   <h2>About this table</h2>
   <!-- The body scrolls and the title and foot do not, so Close is reachable without scrolling to

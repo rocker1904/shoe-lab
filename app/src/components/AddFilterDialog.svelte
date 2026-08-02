@@ -77,8 +77,8 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="scrim" data-testid="add-filter-scrim" onclick={onclose} use:toBody></div>
-<div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" onkeydown={onkeydown}
-     bind:this={panel} use:toBody>
+<div class="dialog" role="dialog" aria-modal="true" aria-label="Add filter" tabindex="-1"
+     onkeydown={onkeydown} bind:this={panel} use:toBody>
   <input class="q" type="search" aria-label="Filter metrics" placeholder="Search metrics…"
          bind:value={query} bind:this={search} />
   <!-- Above the scrollport below, so it cannot scroll away from the glyphs it explains.

@@ -125,9 +125,11 @@
 <fieldset class="range" aria-label={name}>
   {#if label}<legend class:on={bounded}>{label}{units ? ` (${units})` : ''}</legend>{/if}
   {#if axis && plot}
-    <!-- No `tabindex`: a plot that could take focus would be one more tab stop carrying nothing, and
-         the grips are revealed from the row so tabbing into either number field shows them
-         (docs/app.md §Filters). -->
+    <!-- No `tabindex` and no role, deliberately: the plot is the pointer-only second input mode and
+         the number fields are the accessible one — a plot that could take focus would be one more
+         tab stop carrying nothing, and the grips are revealed from the row so tabbing into either
+         number field shows them (docs/app.md §Filters). -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="plot" bind:this={plotEl} onpointerdown={grab}>
       <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
         <defs>
