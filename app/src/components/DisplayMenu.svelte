@@ -102,20 +102,23 @@
           </span>
         </div>
 
+        <!-- One colour, and it is the app's: the tint the leaders carry AND the accent family the
+             chrome is drawn in, derived per theme with every token's lightness solved against its
+             own contract (docs/app.md §Theming). -->
         <fieldset>
-          <legend>Better colour <span class="swatch better"></span></legend>
+          <legend>Primary colour <span class="swatch better"></span></legend>
           <div class="row">
             <label for="d-bh">Hue</label>
             <input id="d-bh" class="hue" type="range" min="0" max="360" step="1"
-                   value={prefs.betterHue} oninput={(e) => set({ betterHue: num(e) })} />
-            <output for="d-bh">{Math.round(prefs.betterHue)}°</output>
+                   value={prefs.primaryHue} oninput={(e) => set({ primaryHue: num(e) })} />
+            <output for="d-bh">{Math.round(prefs.primaryHue)}°</output>
           </div>
           <div class="row">
             <label for="d-bc">Vividness</label>
-            <input id="d-bc" type="range" min={DISPLAY_BOUNDS.betterChroma[0]}
-                   max={DISPLAY_BOUNDS.betterChroma[1]} step="0.001"
-                   value={prefs.betterChroma} oninput={(e) => set({ betterChroma: num(e) })} />
-            <output for="d-bc">{prefs.betterChroma.toFixed(3)}</output>
+            <input id="d-bc" type="range" min={DISPLAY_BOUNDS.primaryChroma[0]}
+                   max={DISPLAY_BOUNDS.primaryChroma[1]} step="0.001"
+                   value={prefs.primaryChroma} oninput={(e) => set({ primaryChroma: num(e) })} />
+            <output for="d-bc">{prefs.primaryChroma.toFixed(3)}</output>
           </div>
         </fieldset>
 

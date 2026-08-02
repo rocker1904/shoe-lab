@@ -482,12 +482,17 @@ describe('Page', () => {
 
       const after = alphas(container).map(Number);
       expect(after).not.toEqual(before);
-      // Every painted cell moved by the same ratio: the strength scales the ramp, it does not
-      // reshape it.
+      // Every cell that is still painted moved by the same ratio: the strength scales the ramp, it
+      // does not reshape it. A cell whose scaled alpha falls under `WASH_MIN_PAINT` goes bare
+      // instead, which at the shipped emphasis of 4 takes the fixture's middle rank with it — so
+      // the comparison is over the cells that survive, and it asserts that some did.
+      let compared = 0;
       for (let i = 0; i < before.length; i++) {
-        if (before[i] === 0) continue;
+        if (!before[i] || !after[i]) continue;
         expect(after[i]! / before[i]!).toBeCloseTo(0.3 / 0.94, 6);
+        compared++;
       }
+      expect(compared, 'the whole ramp went bare — nothing was compared').toBeGreaterThan(0);
       // Storage holds preferences; the URL holds the view, and neither borrows the other's job.
       vi.advanceTimersByTime(500);
       expect(JSON.parse(localStorage.getItem('display')!).strength).toBe(0.3);
@@ -496,7 +501,7 @@ describe('Page', () => {
     });
 
     it('applies a stored preference at first paint', () => {
-      localStorage.setItem('display', JSON.stringify({ v: 1, ...DISPLAY_DEFAULTS, betterHue: 145 }));
+      localStorage.setItem('display', JSON.stringify({ v: 2, ...DISPLAY_DEFAULTS, primaryHue: 145 }));
       const { container } = render(Page, { props: { data } });
       // The colour is an override on the document; the alphas are untouched by a hue change.
       expect(document.getElementById('wash-prefs')?.textContent).toContain('--wash-blue');

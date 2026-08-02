@@ -97,7 +97,7 @@ describe('the theme control', () => {
 describe('the panel', () => {
   /** Sam will read these off the screen to choose new defaults, so every one of them is visible. */
   it('shows the number beside every slider', () => {
-    mount({ betterHue: 145, betterChroma: 0.12, strength: 0.5, curve: 2.4, floor: 0.2 });
+    mount({ primaryHue: 145, primaryChroma: 0.12, strength: 0.5, curve: 2.4, floor: 0.2 });
     const text = panel()!.textContent!;
     for (const shown of ['145°', '0.120', '0.50', '2.40', 'p 0.20']) {
       expect(text, `${shown} is not on screen`).toContain(shown);
@@ -105,7 +105,7 @@ describe('the panel', () => {
   });
 
   it('hands back every default in one press', async () => {
-    const { onchange } = mount({ betterHue: 10, baseOn: true, strength: 0.2, curve: 3 });
+    const { onchange } = mount({ primaryHue: 10, baseOn: true, strength: 0.2, curve: 3 });
     await fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(onchange).toHaveBeenCalledWith(DISPLAY_DEFAULTS);
   });
@@ -113,7 +113,7 @@ describe('the panel', () => {
   it('reports a slider move as one whole preference state', async () => {
     const { onchange } = mount();
     await fireEvent.input(screen.getByLabelText('Hue'), { target: { value: '30' } });
-    expect(onchange).toHaveBeenCalledWith({ ...DISPLAY_DEFAULTS, betterHue: 30 });
+    expect(onchange).toHaveBeenCalledWith({ ...DISPLAY_DEFAULTS, primaryHue: 30 });
   });
 
   /**
@@ -139,7 +139,7 @@ describe('the panel', () => {
     unmount();
 
     // A vivid red: the light theme's near-black ink is what gives way first (wash.test.ts).
-    mount({ betterHue: 29, betterChroma: 0.37, strength: 1 });
+    mount({ primaryHue: 29, primaryChroma: 0.37, strength: 1 });
     expect(screen.getByText(/Capped at/).textContent).toMatch(/light theme's ink binds first/);
   });
 
@@ -148,7 +148,7 @@ describe('the panel', () => {
     expect(screen.queryByText(/only hue says which is better/)).toBeNull();
     unmount();
 
-    mount({ baseOn: true, baseHue: 29, betterHue: 145 });
+    mount({ baseOn: true, baseHue: 29, primaryHue: 145 });
     expect(screen.getByText(/only hue says which is better/)).toBeInTheDocument();
   });
 
@@ -157,7 +157,7 @@ describe('the panel', () => {
    * be a live region (docs/app.md §The display preferences).
    */
   it('announces nothing at all', () => {
-    mount({ betterHue: 29, betterChroma: 0.37, strength: 1, baseOn: true });
+    mount({ primaryHue: 29, primaryChroma: 0.37, strength: 1, baseOn: true });
     expect(panel()!.querySelectorAll('[role="status"], [role="alert"], [aria-live]')).toHaveLength(0);
   });
 });

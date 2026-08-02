@@ -2785,16 +2785,41 @@ fill a step lighter — so the painted cell is a little *better* than the model,
 never worse. Its ratios are not restated here: one fact, one home.
 
 **`--accent`, `--accent-solid` and `--on-accent` are three tokens with three
-jobs.** `--accent` is the small mark — hairlines, carets, in-range bars, links
-— and never sits behind text. `--accent-solid` is the darker variant used only
-where a filled accent carries text: `--on-accent` on `--accent` is 4.74:1 in
-light but **3.71:1 in dark**, so the two themes cannot share one solid value.
-`--on-accent` is the one ink allowed on it, and it is a token rather than a
-`#fff` written into each component, because the fill and its ink are one fact
-and a literal splits it across the four components that read it —
-`Toolbar.svelte`, `ZoneToggle.svelte`, `MonthPicker.svelte` and
-`DiscontinuedFilter.svelte`. `tokens.test.ts` fails the build on a raw white in
-a component's style block.
+jobs.** `--accent` is the small mark — hairlines, carets, in-range bars, links,
+the focus ring — and never sits behind text. `--accent-solid` is the darker
+variant used only where a filled accent carries text: `--on-accent` on
+`--accent` is 4.74:1 in light but **3.71:1 in dark**, so the two themes cannot
+share one solid value. `--on-accent` is the one ink allowed on it, and it is a
+token rather than a `#fff` written into each component, because the fill and its
+ink are one fact and a literal splits it across the components that read it —
+`Toolbar.svelte`, `ZoneToggle.svelte`, `MonthPicker.svelte`,
+`DiscontinuedFilter.svelte` and the Display panel's theme group.
+`tokens.test.ts` fails the build on a raw white in a component's style block.
+
+**All three are DERIVED, per theme, from one primary colour**
+(§The display preferences), and each one's lightness is solved against its own
+obligation rather than shared. The three obligations are the three jobs:
+`--accent-solid` carries `--on-accent` at 4.5:1, `--accent-dim` carries
+`--text-dim` at 4.5:1, and `--accent` clears the **flat-mark 3:1** against every
+surface it is drawn on — which is also what makes the focus ring visible
+wherever a control sits. The derivation pins each role's OKLab lightness and
+*scales* its chroma, both read back off the shipped token rather than written
+down: the family then keeps the shape a designer gave it, so `--accent-dim`
+stays a pale tint of the primary rather than becoming a second vivid one, and a
+runner asking for a greyer primary gets a greyer family rather than a greyer
+mark beside an unchanged surface. Where a pin does not pay — a yellow at
+`--accent`'s own lightness is far brighter in the sense the contrast rule
+measures and stops being a mark on white — the lightness walks toward the end
+that does and stops at the first value that does. `wash.test.ts` sweeps 98
+hue/vividness points against all three obligations in both themes; the worst
+margins it records are the ones to read.
+
+**`--hover-wash` follows `--accent` by construction**, and that is a coupling
+rather than a convenience: it is `color-mix(in oklab, var(--accent) 6%,
+transparent)`, so a derived accent changes what a pointed-at cell composites to,
+and the wash's own strength cap therefore solves against the **derived** accent.
+A guard measuring the shipped blue while the chrome wore the runner's colour
+would be checking a screen nobody sees.
 
 `--divider` is deliberately **darker than `--border`**: a divider sits on
 `--chrome`, where a border-coloured hairline measures 1.22:1 and simply is not
@@ -2852,7 +2877,7 @@ fails the build on the next control that escapes it. The `font: inherit`
 shorthand was rejected for the reset: it also resets `font-size`, which each
 component owns.
 
-**One focus ring, with two exemptions.** A 2px surface-coloured ring inside a
+**One focus ring, with one exemption.** A 2px surface-coloured ring inside a
 2px accent ring, drawn with `box-shadow` so both rings are painted rather than
 transparent — a plain `outline-offset` shows whatever is behind, and on a chip
 carrying the wash's peak alpha the ring would sit accent-on-accent and nearly
@@ -2898,7 +2923,7 @@ instant, and a Tab held down through the sidebar would otherwise queue an
 animation per stop. `cross-browser.spec.ts` walks the sidebar in the two engines that get
 it wrong.
 
-The first exemption is **table rows**: a `box-shadow` ring draws outside the box, and
+The exemption is **table rows**: a `box-shadow` ring draws outside the box, and
 a row spans the full table width and abuts its neighbours with no gap, so an
 outside ring paints over both of them and inside the phone panel
 `overflow-y: clip` cuts it off at the first and last row. Rows draw an **inset**
@@ -2911,21 +2936,38 @@ sits on the first of them, and a ring round that one alone stops halfway down th
 thing it describes. Two outlines would draw a line between the rows and read as
 two rings.
 
-The second is a **native checkbox**, and it is the one control the app's ring
-cannot reach at all. WebKit paints no `box-shadow` on a checkbox's rendered
-control, so the rule's `outline: none` half landed and its `box-shadow` half did
-not: in Safari **every checkbox in the app had no focus indicator whatsoever** —
-four on the top-level walk, thirteen of fourteen in the brand list, and twenty
+**The checkbox is drawn by the app**, and the reason is contrast rather than
+taste. With a native control the browser owns the tick's ink and changes its mind
+about it: Chromium flips to a dark tick once the fill is light enough — 3.02:1
+against `--accent` in dark — WebKit lightens whatever fill it is given, and
+Chromium's own focus outline ignores `accent-color` entirely. None of that is
+reachable from a stylesheet, so a themed checkbox on a *runner-chosen* primary
+colour could not be guaranteed at all. Under `appearance: none` the painted
+colour **is** the token, so the same solver that answers for the ramp answers for
+the tick. The rule lives once in `app.css`, because there are checkboxes in the
+plate group, the brand list, the column picker and the Display panel and one
+control should not be four; `--accent-solid` fills it and `--on-accent` inks it,
+which is the one job `--accent-solid` exists for, and the unchecked face takes
+`--hist-dim` — the flat-mark token — because an empty box is a mark and not a
+word. The tick is a `background-image` because an `<input>` is a replaced element
+and generates no pseudo-element, and its ink is a literal inside an SVG data URI
+because a data URI cannot read a custom property: `tokens.test.ts` pins that
+literal to `--on-accent` from both sides. The box is 15px against the native
+13px, which costs about 2px a label row and is accepted — 13px was under every
+touch-target guideline there is.
+
+That is also why there is no second ring exemption any more. A **native**
+checkbox was one: WebKit paints no `box-shadow` on a checkbox's rendered control,
+so the rule's `outline: none` half landed and its `box-shadow` half did not, and
+in Safari every checkbox in the app had no focus indicator whatsoever — four on
+the top-level walk, thirteen of fourteen in the brand list, and twenty
 consecutively in the column picker, on the one control whose whole job is
-choosing what the table shows. The rule excludes `input[type="checkbox"]`, which
-gives the UA outline back. It is excluded in **every** engine rather than only
-where the shadow fails: Chromium and Firefox did paint the shadow there, and an
-engine-conditional ring would be two rules to keep true instead of one.
-`cross-browser.spec.ts` asserts the outline in the two engines
-`smoke.spec.ts` never runs, because whether a shadow reaches a native control is
-an engine question. The exclusion is written inside `:where()` so it adds no
-specificity — `input[type="checkbox"]` in a bare `:not()` would lift the whole
-rule above the component rules it has to lose to.
+choosing what the table shows. An `appearance: none` box is not a native control:
+WebKit paints the ring on it like anything else. That is a claim about one engine
+which was made wrongly once, so `cross-browser.spec.ts` asserts **the app's own
+two-layer ring** at `--ring-room` rather than "an indicator of some kind" — a UA
+outline appearing there would mean the shadow had silently stopped landing again,
+and a laxer assertion would pass.
 
 **`--text-dim` is held to 4.5:1 against every surface it is set on**, not against
 one representative surface: `--surface`, `--bg`, `--chrome`, `--well`,
@@ -2993,11 +3035,27 @@ cover both:
 ## The display preferences
 
 The ranked ramp above is **tunable**, from one `Display` menu, and every constant
-it names is that menu's default rather than its law. Six things move — the better
-colour's hue and vividness, a base colour with the same pair, strength, emphasis
-and the floor — and one thing does not, which is the whole design: **lightness**.
-`lib/wash.ts` owns the engine, `lib/display.ts` the preference and its
-stylesheet, `lib/oklab.ts` the colour space both work in.
+it names is that menu's default rather than its law. Six things move — the
+**primary colour**'s hue and vividness, a base colour with the same pair,
+strength, emphasis and the floor — and one thing does not, which is the whole
+design: **lightness**. `lib/wash.ts` owns the engine, `lib/display.ts` the
+preference and its stylesheet, `lib/oklab.ts` the colour space both work in.
+
+**The primary colour is the app's, not the table's.** One hue and one vividness
+feed the tint the leading cells carry *and* the whole accent family the chrome is
+drawn in (§Theming), because a table whose leaders read green under a blue
+toolbar is two decisions where a runner made one. The two halves cannot be tuned
+apart, and that is the point rather than a limitation.
+
+**The defaults are a podium, and the numbers say how much of one.** Emphasis 4
+over a floor of 0.35 at the shipped strength means a ranked column is bare below
+about **p 0.58** — measured on the real fleet, 41–44% of the cells in a ranked
+column carry any tint at all — and what is painted falls away fast: the top rank
+sits at 0.93 of alpha, the 5th percentile at 0.66, the 10th at 0.45, the 30th at
+0.05. "Only leaders read as tinted" is what the section above claims, and these
+are the numbers that make it true rather than approximately true. The emphasis
+slider runs to **6**, past its own default, because a slider that ended where the
+app ships could only ever be dragged one way.
 
 **Lightness is pinned per theme, because a lightness slider is a contrast
 slider.** WCAG contrast is a ratio of relative luminances, and OKLab's `L` is
@@ -3078,28 +3136,44 @@ reader's eyes and screen, so a link carrying one would repaint someone else's
 table for them. Its own key beside the theme's, a versioned shape, and every
 field clamped independently on read: an unrecognised version reads as the
 defaults, but one bad number costs that number rather than the four beside it.
+The shape is at **v2** — the colour's two fields were renamed when it became the
+primary colour, and the emphasis and floor defaults moved under them, so a v1
+record is neither readable by name nor trustworthy by value.
 
 **At the default state nothing is written at all.** `resolveWash` reports
 `tokenFill` there and no override stylesheet exists, so `app.css`'s own
-`--wash-blue` reaches the cells exactly as it always has, in both themes, byte
-for byte — asserted from both ends in `wash.test.ts` (the alpha of all 401 steps
-against the frozen closed form) and `display.test.ts` (the empty stylesheet).
+`--wash-blue` **and its own accent family** reach the screen exactly as they
+always have, in both themes, byte for byte — asserted from both ends in
+`wash.test.ts` (the alpha of all 401 steps against the frozen closed form) and
+`display.test.ts` (the empty stylesheet). It is one predicate for both, because
+it is one preference: either the stylesheet's colours paint or the engine's do.
 This is why the defaults are the light theme's blue **rounded to the sliders'
 steps** — 255° / 0.189 against the painted token's 255.305 / 0.1889 — and why
 that rounding costs nothing: those two numbers are a starting point for a tweak,
 never a colour that is painted. They are still pinned to the token, because
 `usesTokenFill` keys off them: moving them without moving `--wash-blue` would
-leave the panel reading one colour while the default state painted another. The
-cost that is real: the two themes' blues are not one OKLCh colour (the dark
-token is 253.6° / 0.146 against the light's 255.3° / 0.189), and one
-hue/vividness pair serves both, so the first nudge of either moves the dark
-theme's fill to the light theme's vividness. One pair for both themes is what
-makes the panel legible; the jump is at the first tick and never again.
+leave the panel reading one colour while the default state painted another.
 
-**The override stylesheet mirrors `app.css`'s own four blocks**, and has to: the
+**The dark theme's `--wash-blue` is written as the value the engine derives.**
+`#006bcf` is the shared OKLCh point at that theme's own pinned lightness, and it
+is a hex rather than an `hsl()` for exactly that reason. Before it, the two
+themes' fills were not one colour — dark was 253.6° / 0.146 against light's
+255.3° / 0.189 — so a runner's first tick of the hue slider *stepped* the dark
+fill to a different blue, 0.029 of OKLab away, where light's moved 0.006.
+Deriving it removes the step: the first nudge now travels 0.015, which is the
+gamut boundary being steep at that hue rather than a discontinuity. It is not
+zero, and calling it continuous would be the claim this project does not make.
+The light token is untouched.
+
+**The override stylesheet mirrors `app.css`'s own blocks**, and has to: the
 dark values sit under both `prefers-color-scheme` and `[data-theme]` so the theme
 control wins in either direction, and a single `:root` rule would paint the light
-tint on a runner whose OS is dark. Base-on switches a **rule** rather than a
+tint on a runner whose OS is dark. The accent family rides in the **same** rule as
+the wash, and `display.test.ts` holds every block to carrying both — a
+`prefers-color-scheme` rule that moved the tint and left the accent behind is a
+half-repaint. `--hover-wash` is deliberately absent: it is a `color-mix` of
+`--accent` in `app.css`, so it follows by construction and a declaration here
+would be a second home for the 6%. Base-on switches a **rule** rather than a
 value — `data-wash="dual"` on the root selects the two-colour cell rule in both
 tables — because the single-colour rule has to stay literally untouched at the
 default state for the byte-identical claim to mean anything, and a `var()`
@@ -3107,12 +3181,17 @@ fallback resolving to the same colour does not give that: it round-trips the
 token through OKLab first.
 
 **`wash.test.ts` asserts the property, not the constants.** It sweeps a grid of
-252 preference states — hues, chromas, strengths, emphases, base on and off —
-rebuilds the composite the stylesheet performs from the **resolved** values
-alone, and holds the theme's ink to 4.5:1 hovered in both themes. A solver
-checked against its own cell function proves nothing about what a cell paints.
-The shipped-constant assertions stay beside it: they are now the default case of
-the same rule.
+252 preference states — hues, chromas, strengths, emphases from 1 to 6, base on
+and off — rebuilds the composite the stylesheet performs from the **resolved**
+values alone, and holds the theme's ink to 4.5:1 hovered in both themes, with the
+**derived** accent as the hover overlay. A solver checked against its own cell
+function proves nothing about what a cell paints. A second sweep does the same
+for the accent family over 98 hue/vividness points. The shipped-constant
+assertions stay beside both: they are now the default case of the same rules.
+
+Both sweeps carry an explicit generous timeout. They are compute-bound — a few
+hundred bisections apiece — and a slow CI runner crossed vitest's 5s default once
+already; a correctness guard must not become a flake because a machine was busy.
 
 **Nothing here announces.** Every control in the app says what it did (§What a
 control says it did) and these are the exemption: a slider drag is sixty changes

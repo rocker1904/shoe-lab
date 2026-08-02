@@ -49,7 +49,7 @@ const THEMES = [
     chrome: [0x15, 0x18, 0x1b], well: [0x16, 0x19, 0x1d],
     accentDim: [0x19, 0x37, 0x57],     // hsl(211 55% 22%)
     dimInk: [0x98, 0xa0, 0xab],
-    washFill: [0x22, 0x6e, 0xbf],      // hsl(211 70% 44%)
+    washFill: [0x00, 0x6b, 0xcf],      // #006bcf — the shared OKLCh point at this theme's own washL
     greyFill: [0x96, 0x9c, 0xa6],      // hsl(220 8% 62%)
     histDim: [0x6b, 0x74, 0x82],
     accent: [0x38, 0x87, 0xdc],        // hsl(211 70% 54%)
@@ -57,6 +57,8 @@ const THEMES = [
 ];
 /** `--on-accent`. A token, not a literal, everywhere it is used (Global Constraints). */
 const ON_ACCENT = [0xff, 0xff, 0xff];
+/** A resolved `#rrggbb` back to the bytes every ratio here is computed on. */
+const hex = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 /**
  * The alpha in `--hover-wash`, which is `color-mix(in oklab, var(--accent) 6%, transparent)` —
  * i.e. the accent's own colour at this alpha. `ShoeTable.svelte` paints it as a background *image*
@@ -256,7 +258,7 @@ describe('the shipped ramp at the default preferences', () => {
   it('leaves the stylesheet alone entirely', () => {
     expect(r.tokenFill).toBe(true);
     expect(r.better.light).toBe('#147ceb');
-    expect(r.better.dark).toBe('#226ebf');
+    expect(r.better.dark).toBe('#006bcf');
   });
 
   it('resolves to the three frozen constants and paints at the frozen peak', () => {
@@ -266,16 +268,16 @@ describe('the shipped ramp at the default preferences', () => {
   });
 
   /**
-   * The trap the point-3 retune walks into (BACKLOG 16): `usesTokenFill` keys off these two
+   * The trap any retune of the defaults walks into: `usesTokenFill` keys off these two
    * numbers, so moving them without moving `--wash-blue` with them leaves the panel reading one
    * colour while the default state paints another. Held to the sliders' own steps — 1° and 0.001 —
    * because that is the finest the defaults can be stated in.
    */
   it('states the default colour as the light token, to the step the slider can hold', () => {
     const token = labToLch(rgbToOklab(WASH_THEMES.light.blue.map((v) => v / 255) as [number, number, number]));
-    expect(Math.abs(token.h - DISPLAY_DEFAULTS.betterHue), `token hue ${token.h.toFixed(2)}°`)
+    expect(Math.abs(token.h - DISPLAY_DEFAULTS.primaryHue), `token hue ${token.h.toFixed(2)}°`)
       .toBeLessThanOrEqual(0.5);
-    expect(Math.abs(token.C - DISPLAY_DEFAULTS.betterChroma), `token chroma ${token.C.toFixed(4)}`)
+    expect(Math.abs(token.C - DISPLAY_DEFAULTS.primaryChroma), `token chroma ${token.C.toFixed(4)}`)
       .toBeLessThanOrEqual(0.0005);
   });
 
@@ -299,7 +301,6 @@ describe('the shipped ramp at the default preferences', () => {
  * nothing about what a cell paints.
  */
 function paintedCell(theme: typeof THEMES[number], r: ReturnType<typeof resolveWash>, p: number): number[] {
-  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const name = theme.name as ThemeName;
   const better = hex(r.better[name]);
   if (!r.paint.dual) return over(better, rankedAlpha(p, r.paint), theme.surface);
@@ -329,27 +330,39 @@ describe('every preference state the sliders can reach stays legible', () => {
   const HUES = [0, 55, 110, 165, 220, 275, 330];
   const CHROMAS = [0.02, 0.188, 0.37];
   const STRENGTHS = [0.4, 1];
-  const CURVES = [1, 1.8, 4];
+  // Both ends of the emphasis slider and the shipped default between them: 6 is the max a runner
+  // can ask for, and a grid that stopped at the default would never test the half above it.
+  const CURVES = [1, 4, 6];
 
   const states: DisplayPrefs[] = [];
-  for (const betterHue of HUES) {
-    for (const betterChroma of CHROMAS) {
+  for (const primaryHue of HUES) {
+    for (const primaryChroma of CHROMAS) {
       for (const strength of STRENGTHS) {
         for (const curve of CURVES) {
           for (const baseOn of [false, true]) {
-            states.push({ ...DISPLAY_DEFAULTS, betterHue, betterChroma, strength, curve, baseOn,
+            states.push({ ...DISPLAY_DEFAULTS, primaryHue, primaryChroma, strength, curve, baseOn,
               // The base sits opposite the better colour, which is the arrangement that stresses
               // the mix hardest: a base near the better hue barely moves along the ramp.
-              baseHue: (betterHue + 180) % 360, baseChroma: betterChroma, floor: baseOn ? 0 : 0.15 });
+              baseHue: (primaryHue + 180) % 360, baseChroma: primaryChroma, floor: baseOn ? 0 : 0.35 });
           }
         }
       }
     }
   }
 
-  // Compute-bound: 252 solver states × two themes × 121 swept cells. A slow CI runner crossed
-  // vitest's 5s default; the guard's bound is correctness, not latency.
-  it(`holds 4.5:1 across ${states.length} states, both themes, hovered`, { timeout: 30_000 }, () => {
+  /**
+   * The hover overlay is 6% of `--accent`, and `--accent` is DERIVED from the same primary colour
+   * once the runner moves it — so the accent the sweep composites with has to be the one the page
+   * paints. Measuring the ramp under the shipped blue while the chrome wore the runner's own colour
+   * is a guard checking a screen nobody sees, and it is the coupling the accent family introduces.
+   */
+  const hoverOf = (theme: typeof THEMES[number], r: ReturnType<typeof resolveWash>) =>
+    r.tokenFill ? theme.accent : hex(r.accents[theme.name as ThemeName].accent);
+
+  // Compute-bound: 252 solver states × two themes × 121 swept cells, plus three accent solves per
+  // state. A slow CI runner crossed vitest's 5s default; the guard's bound is correctness, not
+  // latency.
+  it(`holds 4.5:1 across ${states.length} states, both themes, hovered`, { timeout: 60_000 }, () => {
     let worst = Infinity;
     let worstAt = '';
     for (const prefs of states) {
@@ -360,17 +373,100 @@ describe('every preference state the sliders can reach stays legible', () => {
       for (const theme of THEMES) {
         for (let i = 0; i <= 120; i++) {
           const p = i / 120;
-          const hovered = over(theme.accent, HOVER_ALPHA, paintedCell(theme, r, p));
+          const hovered = over(hoverOf(theme, r), HOVER_ALPHA, paintedCell(theme, r, p));
           const c = contrast(hovered, theme.ink);
           if (c < worst) {
             worst = c;
-            worstAt = `${theme.name} p=${p.toFixed(2)} hue=${prefs.betterHue} C=${prefs.betterChroma} `
+            worstAt = `${theme.name} p=${p.toFixed(2)} hue=${prefs.primaryHue} C=${prefs.primaryChroma} `
               + `s=${prefs.strength} curve=${prefs.curve} base=${prefs.baseOn} peak=${r.peak.toFixed(3)}`;
           }
         }
       }
     }
     expect(worst, `worst ${worst.toFixed(3)}:1 at ${worstAt}`).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
+ * **The accent family's property**, and the reason one preference can drive the chrome as well as
+ * the table. Every token the primary colour derives has an obligation of its own — a fill that
+ * carries white, a surface that carries `--text-dim`, a mark on three surfaces — and each is met at
+ * every hue and vividness the sliders can reach, in both themes.
+ *
+ * Written against the RESOLVED hexes rather than the solver's internals, for the same reason the
+ * ramp's sweep is: a solver checked against its own predicate proves nothing about the stylesheet.
+ */
+describe('every primary colour the sliders can reach derives a legible accent family', () => {
+  const HUES = [0, 30, 55, 85, 110, 145, 165, 200, 220, 255, 275, 300, 330, 355];
+  const CHROMAS = [0, 0.02, 0.08, 0.15, 0.189, 0.28, 0.37];
+  /** `--on-accent`, the one ink allowed on a filled accent. */
+  const ON = ON_ACCENT;
+
+  // Compute-bound like the ramp's sweep: 98 points × two themes × three bisected solves.
+  it(`meets every token's own contract across ${HUES.length * CHROMAS.length} primaries, both themes`,
+     { timeout: 60_000 }, () => {
+    const worst = { accentMark: Infinity, solidInk: Infinity, dimInk: Infinity };
+    let worstAt = '';
+    for (const primaryHue of HUES) {
+      for (const primaryChroma of CHROMAS) {
+        const r = resolveWash({ ...DISPLAY_DEFAULTS, primaryHue, primaryChroma, baseOn: true });
+        for (const theme of THEMES) {
+          const fam = r.accents[theme.name as ThemeName];
+          const where = `hue=${primaryHue} C=${primaryChroma} ${theme.name}`;
+
+          // `--accent` is a flat mark: 3:1 against every surface it is actually drawn on, which is
+          // also what makes the focus ring visible wherever a control sits.
+          for (const [what, bg] of [['--surface', theme.surface], ['--bg', theme.page],
+                                    ['--border-soft', theme.track]] as const) {
+            const c = contrast(hex(fam.accent), bg);
+            if (c < worst.accentMark) { worst.accentMark = c; worstAt = `${where} accent/${what}`; }
+            expect(c, `${where}: --accent ${fam.accent} on ${what} is ${c.toFixed(2)}:1`)
+              .toBeGreaterThanOrEqual(3);
+          }
+
+          // `--accent-solid` is the one fill `--on-accent` is allowed on.
+          const solid = contrast(hex(fam.accentSolid), ON);
+          worst.solidInk = Math.min(worst.solidInk, solid);
+          expect(solid, `${where}: --on-accent on --accent-solid ${fam.accentSolid} is ${solid.toFixed(2)}:1`)
+            .toBeGreaterThanOrEqual(4.5);
+
+          // `--accent-dim` is a surface, and `--text-dim` is set on it — a chosen setup card's
+          // description is the case that binds.
+          const dim = contrast(hex(fam.accentDim), theme.dimInk);
+          worst.dimInk = Math.min(worst.dimInk, dim);
+          expect(dim, `${where}: --text-dim on --accent-dim ${fam.accentDim} is ${dim.toFixed(2)}:1`)
+            .toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
+    // The margins are the fact worth having: a family that only ever just cleared the bar would be
+    // one retune of a neutral away from failing, and nothing else would say so.
+    expect(worst.accentMark, `worst mark ${worst.accentMark.toFixed(2)}:1 at ${worstAt}`)
+      .toBeGreaterThanOrEqual(3);
+  });
+
+  /**
+   * At the default primary the stylesheet is untouched, so the family the engine derives is not
+   * what paints — `app.css`'s own tokens are. This is the same three-way claim `tokenFill` makes
+   * for the ramp, said for the chrome (docs/app.md §Theming).
+   */
+  it('writes no family at all at the default primary', () => {
+    expect(resolveWash(DISPLAY_DEFAULTS).tokenFill).toBe(true);
+  });
+
+  /**
+   * And the shipped tokens themselves meet the contracts the solver enforces — otherwise the guard
+   * would be stricter than the design it guards, and the first nudge would be an improvement rather
+   * than a continuation.
+   */
+  it('holds the shipped tokens to the same three contracts', () => {
+    for (const t of THEMES) {
+      for (const bg of [t.surface, t.page, t.track]) {
+        expect(contrast(t.accent, bg), `${t.name} --accent`).toBeGreaterThanOrEqual(3);
+      }
+      expect(contrast(t.accentSolid, ON), `${t.name} --accent-solid`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t.accentDim, t.dimInk), `${t.name} --accent-dim`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });
 
@@ -394,15 +490,15 @@ describe('the cap and the theme that binds it', () => {
     // near-white ink. The two themes therefore bind on opposite halves of the wheel — measured:
     // red 29° caps light at 0.74 and leaves dark uncapped, green 145° caps dark at 0.92 and leaves
     // light uncapped. One cap could not have covered both.
-    expect(at({ betterHue: 29, betterChroma: 0.37, strength: 1 }).binding).toBe('light');
-    expect(at({ betterHue: 145, betterChroma: 0.37, strength: 1 }).binding).toBe('dark');
+    expect(at({ primaryHue: 29, primaryChroma: 0.37, strength: 1 }).binding).toBe('light');
+    expect(at({ primaryHue: 145, primaryChroma: 0.37, strength: 1 }).binding).toBe('dark');
   });
 
   it('reports itself capped only when the runner asked past the cap', () => {
-    const r = at({ betterHue: 29, betterChroma: 0.37, strength: 1 });
+    const r = at({ primaryHue: 29, primaryChroma: 0.37, strength: 1 });
     expect(r.capped).toBe(true);
     expect(r.peak).toBe(r.cap);
-    expect(at({ betterHue: 29, betterChroma: 0.37, strength: 0.2 }).capped).toBe(false);
+    expect(at({ primaryHue: 29, primaryChroma: 0.37, strength: 0.2 }).capped).toBe(false);
   });
 });
 
@@ -415,7 +511,7 @@ describe('the cap and the theme that binds it', () => {
 describe('the base-on ramp carries no lightness', () => {
   it('warns for a red → green ramp, and not for the single-colour one', () => {
     const rg = resolveWash({ ...DISPLAY_DEFAULTS, baseOn: true, baseHue: 29, baseChroma: 0.16,
-                             betterHue: 145, betterChroma: 0.16, curve: 1.4 });
+                             primaryHue: 145, primaryChroma: 0.16, curve: 1.4 });
     expect(rg.hueOnly).toBe(true);
     expect(rg.lightnessSpan).toBeLessThan(0.01);
     expect(resolveWash(DISPLAY_DEFAULTS).hueOnly).toBe(false);
@@ -438,7 +534,9 @@ describe('the ramp shape follows its preferences', () => {
   it('starts painting exactly where the floor says', () => {
     expect(rankedAlpha(0.3, paint({ floor: 0.3 }))).toBe(0);
     expect(rankedAlpha(0.31, paint({ floor: 0.3 }))).toBeGreaterThanOrEqual(0);
-    expect(rankedAlpha(0.2, paint({ floor: 0 }))).toBeGreaterThan(0);
+    // p = 0.5 rather than 0.2: at the shipped emphasis of 4 a fifth of the way up the ramp is
+    // genuinely under `WASH_MIN_PAINT` and bare, which is the podium doing its job.
+    expect(rankedAlpha(0.5, paint({ floor: 0 }))).toBeGreaterThan(0);
   });
 
   it('makes a higher emphasis more of a podium', () => {

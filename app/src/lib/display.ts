@@ -13,14 +13,22 @@
 import { DISPLAY_DEFAULTS, resolveWash, type DisplayPrefs, type ResolvedWash } from './wash';
 
 const KEY = 'display';
-/** Bumped when a stored shape stops being readable; an unrecognised version reads as defaults. */
-const VERSION = 1;
+/**
+ * Bumped when a stored shape stops being readable; an unrecognised version reads as defaults.
+ * **2** since the better colour became the primary colour: the two fields were renamed, and the
+ * curve and floor defaults moved under them, so a v1 record is neither readable by name nor
+ * trustworthy by value — half of it would be a runner's choice and half of it a stale default
+ * wearing the same shape (docs/app.md §The display preferences).
+ */
+const VERSION = 2;
 
 /** The sliders' own ranges, and the only values a stored preference may take. */
 const BOUNDS = {
-  betterHue: [0, 360], betterChroma: [0, 0.37],
+  primaryHue: [0, 360], primaryChroma: [0, 0.37],
   baseHue: [0, 360], baseChroma: [0, 0.37],
-  strength: [0, 1], curve: [1, 4], floor: [0, 0.5],
+  // Emphasis runs past the default rather than up to it: 4 is where the ramp ships, so a slider
+  // that ended there could only ever be dragged one way.
+  strength: [0, 1], curve: [1, 6], floor: [0, 0.5],
 } as const satisfies Record<string, readonly [number, number]>;
 
 export const DISPLAY_BOUNDS: Record<keyof typeof BOUNDS, readonly [number, number]> = BOUNDS;
@@ -44,8 +52,8 @@ export function coerceDisplay(raw: unknown): DisplayPrefs {
   const o = raw as Record<string, unknown>;
   if (o['v'] !== VERSION) return { ...DISPLAY_DEFAULTS };
   return {
-    betterHue: num(o['betterHue'], 'betterHue'),
-    betterChroma: num(o['betterChroma'], 'betterChroma'),
+    primaryHue: num(o['primaryHue'], 'primaryHue'),
+    primaryChroma: num(o['primaryChroma'], 'primaryChroma'),
     baseOn: o['baseOn'] === true,
     baseHue: num(o['baseHue'], 'baseHue'),
     baseChroma: num(o['baseChroma'], 'baseChroma'),
@@ -80,18 +88,26 @@ export function writeDisplay(prefs: DisplayPrefs): void {
  * The override stylesheet, or the empty string at the default colour.
  *
  * Empty is the load-bearing case: a runner who never opens the menu gets **no rule at all**, so
- * `app.css`'s own `--wash-blue` reaches the cells exactly as it always has, in both themes, byte
- * for byte. Nothing here is a re-statement of the default colour — there is no default colour to
- * re-state (docs/app.md §The display preferences).
+ * `app.css`'s own `--wash-blue` and its own accent family reach the screen exactly as they always
+ * have, in both themes, byte for byte. Nothing here is a re-statement of the default colour — there
+ * is no default colour to re-state (docs/app.md §The display preferences).
  *
- * The four selector blocks mirror `app.css`'s own, and they have to: the dark values sit under
+ * **The accent family rides in the same rule as the wash**, because it is the same preference: one
+ * primary colour drives the tint the leaders carry and the marks, fills and surfaces the chrome is
+ * drawn in. `--hover-wash` is left alone deliberately — it is `color-mix(in oklab, var(--accent) 6%,
+ * transparent)` in `app.css`, so it follows `--accent` by construction and a second declaration
+ * here would be a second home for the 6%.
+ *
+ * The three selector blocks mirror `app.css`'s own, and they have to: the dark values sit under
  * both `prefers-color-scheme` and `[data-theme]` so the toggle wins in either direction, and a
  * single `:root` rule here would paint the light tint on a runner whose OS is dark.
  */
 export function washCss(r: ResolvedWash): string {
   if (r.tokenFill) return '';
   const decl = (t: 'light' | 'dark') =>
-    `--wash-blue:${r.better[t]};--wash-base:${r.base[t]}`;
+    `--wash-blue:${r.better[t]};--wash-base:${r.base[t]}`
+    + `;--accent:${r.accents[t].accent};--accent-solid:${r.accents[t].accentSolid}`
+    + `;--accent-dim:${r.accents[t].accentDim}`;
   return [
     `:root{${decl('light')}}`,
     `@media (prefers-color-scheme: dark){:root:not([data-theme='light']){${decl('dark')}}}`,

@@ -72,6 +72,34 @@ describe('design tokens', () => {
     }
   });
 
+  /**
+   * The checkbox is drawn by the app so the engine can answer for its tick, which a native control
+   * never let it do (docs/app.md §Theming). Three things have to stay true together, and only the
+   * first is visible in a component: the control is not native, its fill is the one token allowed
+   * to carry text, and its tick ink is `--on-accent` — written as a literal inside the SVG data URI
+   * because a data URI cannot read a custom property, which is exactly why it needs pinning here.
+   */
+  it('draws its own checkbox, filled with the token allowed to carry a mark', () => {
+    expect(css).toMatch(/input\[type='checkbox'\][^{]*\{[^}]*appearance:\s*none/);
+    expect(css).toMatch(/input\[type='checkbox'\]:checked[^{]*\{[^}]*background:\s*var\(--accent-solid\)/);
+    // The unchecked face is the flat-mark token, not a text one: an empty box is a mark.
+    expect(css).toMatch(/input\[type='checkbox'\][^{]*\{[^}]*border:[^;]*var\(--hist-dim\)/);
+    // The tick's literal and `--on-accent` are one fact in two spellings; drifting them apart is
+    // how a themed control ends up inked in a colour no guard measures.
+    const onAccent = /--on-accent:\s*(#[0-9a-f]{3,6})/i.exec(css)?.[1]?.toLowerCase();
+    expect(onAccent, '--on-accent is not a hex any more').toBeDefined();
+    const tick = /stroke='%23([0-9a-f]{3,6})'/i.exec(css)?.[1]?.toLowerCase();
+    expect(tick, 'the checkbox tick has no ink').toBeDefined();
+    const norm = (h: string) => (h.length === 3 ? [...h].map((c) => c + c).join('') : h);
+    expect(norm(tick!), 'the tick is not --on-accent').toBe(norm(onAccent!.slice(1)));
+  });
+
+  it('keeps no focus-ring exemption for a checkbox, which is no longer a native control', () => {
+    // Under `appearance: none` the box is ordinary and WebKit paints the ring on it like anything
+    // else — measured in `cross-browser.spec.ts`, which is where the exemption came from.
+    expect(css).not.toMatch(/:not\([^)]*checkbox/);
+  });
+
   it('drops --tint-strength, because the endpoint is the cap', () => {
     expect(css).not.toContain('--tint-strength');
   });

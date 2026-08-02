@@ -14,14 +14,14 @@
  */
 
 import {
-  contrast, hslToRgb, mixLab, oklabToRgb, over, rgb255, rgbToOklab, toGamutLab, toHex,
+  contrast, hslToRgb, labToLch, mixLab, oklabToRgb, over, rgb255, rgbToOklab, toGamutLab, toHex,
   type Lab, type Rgb,
 } from './oklab';
 
 /** Below this percentile a ranked cell is bare. */
-export const WASH_FLOOR = 0.15;
+export const WASH_FLOOR = 0.35;
 /** How fast it climbs once it starts. Higher is more of a podium. */
-export const WASH_CURVE = 1.8;
+export const WASH_CURVE = 4;
 /**
  * Alpha at p = 1. The fill is chosen so this clears 4.5:1 with the theme's own ink; the light fill
  * tolerates up to 0.973, so there is headroom. Raising it past that breaks `wash.test.ts`.
@@ -54,17 +54,21 @@ export function greyAlpha(p: number): number {
 
 /**
  * Lightness is absent by design: contrast is very nearly a question of luminance alone, so a free
- * lightness slider is a free contrast slider. The engine pins each tint's OKLab `L` to that theme's
- * own wash instead (docs/app.md §The display preferences).
+ * lightness slider is a free contrast slider. The engine pins each colour's OKLab `L` to that
+ * theme's own token instead (docs/app.md §The display preferences).
  *
  * Hue and chroma are absolute OKLCh and shared by both themes; only the pinned `L` differs between
  * them. `strength`, `curve` and `floor` are the three constants above, made movable.
  */
 export interface DisplayPrefs {
-  /** OKLCh hue in degrees, 0–360, of the tint the BEST cells carry. */
-  betterHue: number;
-  /** OKLCh chroma of the same, reduced into sRGB at the pinned lightness where it does not fit. */
-  betterChroma: number;
+  /**
+   * OKLCh hue in degrees, 0–360, of the app's PRIMARY colour: the tint the best cells carry **and**
+   * the point the whole accent family is derived from (docs/app.md §Theming). One colour, because
+   * a table whose leaders are green under a blue toolbar is two decisions where a runner made one.
+   */
+  primaryHue: number;
+  /** OKLCh chroma of the same, reduced into sRGB at each pinned lightness where it does not fit. */
+  primaryChroma: number;
   /** Tint every ranked cell, with the COLOUR carrying the magnitude rather than the alpha. */
   baseOn: boolean;
   /** The tint the WORST ranked cell carries with `baseOn`; ignored without it. */
@@ -88,10 +92,10 @@ export interface DisplayPrefs {
  *
  * They are still held to the token by `wash.test.ts`, because `usesTokenFill` keys off them:
  * moving these without moving `--wash-blue` with them would leave the panel reading one colour
- * while the default state paints another (BACKLOG 16).
+ * while the default state paints another.
  */
 export const DISPLAY_DEFAULTS: DisplayPrefs = {
-  betterHue: 255, betterChroma: 0.189,
+  primaryHue: 255, primaryChroma: 0.189,
   baseOn: false, baseHue: 25, baseChroma: 0.12,
   strength: WASH_PEAK, curve: WASH_CURVE, floor: WASH_FLOOR,
 };
@@ -135,22 +139,42 @@ export function rankedMix(p: number, w: WashPaint): number {
 
 export type ThemeName = 'light' | 'dark';
 
+/** The alpha in `--hover-wash`; `ShoeTable.svelte` paints it as a background IMAGE over the wash. */
+const HOVER_ALPHA = 0.06;
+/** Small text — over the ramp, on a filled accent, on an accent surface. */
+const TARGET_TEXT = 4.5;
+/** A flat mark, drawn or not: the histogram bars, the coverage fills, the focus ring
+ *  (docs/app.md §Theming splits the two rules and owns why). */
+const TARGET_MARK = 3;
+/** Stops in the swept ramp. Swept whole, because with the base on it need not be monotone. */
+const RAMP_STOPS = 120;
+
 /**
- * The four `app.css` values the engine reads at runtime, frozen here as their one home and pinned
- * against the stylesheet by `tokens.test.ts` — the guard is what makes freezing them safe. Only
- * these four: a token the engine does not compute with belongs in `wash.test.ts`'s own table with
+ * The `app.css` values the engine reads at runtime, frozen here as their one home and pinned against
+ * the stylesheet by `tokens.test.ts` — the guard is what makes freezing them safe. Only what the
+ * engine computes WITH: a token it merely paints beside belongs in `wash.test.ts`'s own table with
  * the rest of the assertion material.
  *
  * `washL` is derived from the theme's own `--wash-blue` rather than written down, because it IS
  * that token read in another space: two numbers for one fact drift, and this one is the pin the
- * whole contrast guarantee hangs off.
+ * whole contrast guarantee hangs off. Every accent role's pin is derived the same way, from the
+ * bytes below.
  */
 export interface WashTheme {
   name: ThemeName;
   surface: readonly number[];
   ink: readonly number[];
-  /** `--accent`, which `--hover-wash` is 6% of. */
+  /** `--accent`, which `--hover-wash` is 6% of, and the mark the focus ring is drawn in. */
   accent: readonly number[];
+  /** `--accent-solid`, the only fill `--on-accent` is allowed on. */
+  accentSolid: readonly number[];
+  /** `--accent-dim`, a surface — the chosen card's, and the secondary button's hover. */
+  accentDim: readonly number[];
+  /** `--text-dim`, which `--accent-dim` has to carry. */
+  textDim: readonly number[];
+  /** Every surface a flat mark is drawn on: `--surface`, `--bg`, `--border-soft`
+   *  (docs/app.md §Theming). `--accent` clears 3:1 against all of them or it is not a mark. */
+  markSurfaces: readonly (readonly number[])[];
   /** `--wash-blue`, as the `app.css` token resolves. */
   blue: readonly number[];
   /** The OKLab lightness every tint in this theme is pinned to. */
@@ -163,24 +187,129 @@ function hexBytes(h: string): [number, number, number] {
 function bytesToRgb(b: readonly number[]): Rgb {
   return [b[0]! / 255, b[1]! / 255, b[2]! / 255];
 }
-function washTheme(name: ThemeName, surface: string, ink: string, accent: Rgb, blue: Rgb): WashTheme {
-  return {
-    name, surface: hexBytes(surface), ink: hexBytes(ink),
-    accent: rgb255(accent), blue: rgb255(blue), washL: rgbToOklab(blue)[0],
-  };
-}
+
+/** `--on-accent`. One ink, both themes, and a token rather than a literal per component. */
+const ON_ACCENT: readonly number[] = [255, 255, 255];
 
 export const WASH_THEMES: Record<ThemeName, WashTheme> = {
-  light: washTheme('light', '#ffffff', '#16181b', hslToRgb(211, 0.84, 0.46), hslToRgb(211, 0.84, 0.50)),
-  dark: washTheme('dark', '#1a1d21', '#eceef1', hslToRgb(211, 0.70, 0.54), hslToRgb(211, 0.70, 0.44)),
+  light: {
+    name: 'light', surface: hexBytes('#ffffff'), ink: hexBytes('#16181b'),
+    accent: rgb255(hslToRgb(211, 0.84, 0.46)),
+    accentSolid: rgb255(hslToRgb(211, 0.84, 0.44)),
+    accentDim: rgb255(hslToRgb(211, 0.84, 0.95)),
+    textDim: hexBytes('#5f6673'),
+    markSurfaces: [hexBytes('#ffffff'), hexBytes('#f5f5f4'), hexBytes('#eeeeec')],
+    blue: hexBytes('#147ceb'), washL: rgbToOklab(bytesToRgb(hexBytes('#147ceb')))[0],
+  },
+  dark: {
+    name: 'dark', surface: hexBytes('#1a1d21'), ink: hexBytes('#eceef1'),
+    accent: rgb255(hslToRgb(211, 0.70, 0.54)),
+    accentSolid: rgb255(hslToRgb(211, 0.70, 0.44)),
+    accentDim: rgb255(hslToRgb(211, 0.55, 0.22)),
+    textDim: hexBytes('#98a0ab'),
+    markSurfaces: [hexBytes('#1a1d21'), hexBytes('#0f1113'), hexBytes('#22262a')],
+    // Decision A: the dark fill IS the shared OKLCh point at this theme's pinned lightness, so the
+    // runner's first nudge moves it a little rather than stepping it to a different blue
+    // (docs/app.md §The display preferences).
+    blue: hexBytes('#006bcf'), washL: rgbToOklab(bytesToRgb(hexBytes('#006bcf')))[0],
+  },
 };
 
-/** The alpha in `--hover-wash`; `ShoeTable.svelte` paints it as a background IMAGE over the wash. */
-const HOVER_ALPHA = 0.06;
-/** Small text over the ramp. */
-const TARGET = 4.5;
-/** Stops in the swept ramp. Swept whole, because with the base on it need not be monotone. */
-const RAMP_STOPS = 120;
+// ---------------------------------------------------------------------------------------------
+// The accent family
+
+/**
+ * The three accent tokens, derived from the same OKLCh point the wash is
+ * (docs/app.md §Theming names what each one is for).
+ */
+export type AccentRole = 'accent' | 'accentSolid' | 'accentDim';
+export const ACCENT_ROLES: readonly AccentRole[] = ['accent', 'accentSolid', 'accentDim'];
+
+/**
+ * What a role owes, and which way its lightness has to travel to pay it.
+ *
+ * `toward` is not a preference: it is which end of the lightness axis the role's own backdrop or
+ * ink sits at. `--accent-solid` carries white in both themes, so it always darkens; `--accent` is a
+ * mark on the theme's surfaces, so it darkens on light and lightens on dark; `--accent-dim` is a
+ * surface under `--text-dim`, so it moves the opposite way to `--accent` in each theme.
+ */
+interface RoleContract {
+  /** Worst ratio this role achieves at `fill`, over everything it is drawn with. */
+  worst: (t: WashTheme, fill: readonly number[]) => number;
+  /** The bar. 3:1 for a mark, 4.5:1 for anything carrying text. */
+  target: number;
+  toward: (t: WashTheme) => 'darker' | 'lighter';
+}
+
+const ROLE_CONTRACTS: Record<AccentRole, RoleContract> = {
+  accent: {
+    worst: (t, fill) => Math.min(...t.markSurfaces.map((s) => contrast(fill, s))),
+    target: TARGET_MARK,
+    toward: (t) => (t.name === 'light' ? 'darker' : 'lighter'),
+  },
+  accentSolid: {
+    worst: (_t, fill) => contrast(fill, ON_ACCENT),
+    target: TARGET_TEXT,
+    toward: () => 'darker',
+  },
+  accentDim: {
+    worst: (t, fill) => contrast(fill, t.textDim),
+    target: TARGET_TEXT,
+    toward: (t) => (t.name === 'light' ? 'lighter' : 'darker'),
+  },
+};
+
+/** A role's own token read back in OKLCh: the lightness it is pinned to, and the chroma it holds
+ *  at the DEFAULT request. Derived rather than written down, for the same reason `washL` is. */
+function pinOf(t: WashTheme, role: AccentRole): { L: number; C: number } {
+  const { L, C } = labToLch(rgbToOklab(bytesToRgb(t[role])));
+  return { L, C };
+}
+
+/**
+ * One accent token, as `#rrggbb`.
+ *
+ * **Lightness is pinned and chroma is scaled**, exactly as the wash's is. The pin is the shipped
+ * token's own `L`, so the family keeps the shape a designer gave it — `--accent-dim` stays a pale
+ * tint of the primary rather than becoming a second vivid one — and the chroma travels with the
+ * request in the ratio the token already stood in, so the default request reproduces the token's
+ * own vividness and a runner asking for a greyer primary gets a greyer family rather than a greyer
+ * `--accent` beside an unchanged `--accent-dim`.
+ *
+ * **Then the obligation is SOLVED for.** A pinned lightness answers the hue-to-hue luminance swing
+ * only for the hue it was tuned at: WCAG luminance is 71% green, so a yellow at `--accent`'s own
+ * lightness is far brighter in the sense the rule measures and stops being a 3:1 mark on white. So
+ * where the pin does not pay, `L` walks toward the end that does, and stops at the first value that
+ * does — the least departure from the designed family that satisfies the contract.
+ */
+function solveRole(t: WashTheme, role: AccentRole, hue: number, chroma: number): string {
+  const pin = pinOf(t, role);
+  const c = ROLE_CONTRACTS[role];
+  const scaled = chroma * (pin.C / DISPLAY_DEFAULTS.primaryChroma);
+  const at = (L: number) => rgb255(oklabToRgb(toGamutLab(L, scaled, hue)));
+  const ok = (L: number) => c.worst(t, at(L)) >= c.target;
+  if (ok(pin.L)) return toHex(bytesToRgb(at(pin.L)));
+  // The extreme always pays — black carries white and stands off any surface, and so does white in
+  // the mirror — so bisection has a satisfying end to converge on. 24 steps resolve `L` to 6e-8.
+  let bad = pin.L;
+  let good = c.toward(t) === 'darker' ? 0 : 1;
+  for (let i = 0; i < 24; i++) {
+    const mid = (bad + good) / 2;
+    if (ok(mid)) good = mid; else bad = mid;
+  }
+  return toHex(bytesToRgb(at(good)));
+}
+
+export type AccentFamily = Record<AccentRole, string>;
+
+/** The whole family for one theme, from one OKLCh point. */
+export function solveAccents(t: WashTheme, hue: number, chroma: number): AccentFamily {
+  return {
+    accent: solveRole(t, 'accent', hue, chroma),
+    accentSolid: solveRole(t, 'accentSolid', hue, chroma),
+    accentDim: solveRole(t, 'accentDim', hue, chroma),
+  };
+}
 
 export interface ResolvedWash {
   /** Per theme, the `#rrggbb` the ranked ramp paints from. */
@@ -204,6 +333,9 @@ export interface ResolvedWash {
   hueOnly: boolean;
   /** No override is written at all — `app.css`'s own tokens paint, exactly as they always have. */
   tokenFill: boolean;
+  /** Per theme, the accent family the same OKLCh point derives. Empty of meaning while
+   *  `tokenFill` holds: there is no override to write there (docs/app.md §Theming). */
+  accents: Record<ThemeName, AccentFamily>;
   paint: WashPaint;
 }
 
@@ -224,11 +356,11 @@ function cellRgb(t: WashTheme, p: number, better: Lab, base: Lab, w: WashPaint):
  * cell and is the app's real worst case (docs/app.md §Theming). Excluding it would let the solver
  * hand back a strength that fails the moment a runner puts the pointer on the row.
  */
-function worstContrast(t: WashTheme, better: Lab, base: Lab, w: WashPaint): number {
+function worstContrast(t: WashTheme, better: Lab, base: Lab, w: WashPaint, hover: readonly number[]): number {
   let worst = Infinity;
   for (let i = 0; i <= RAMP_STOPS; i++) {
     const cell = cellRgb(t, i / RAMP_STOPS, better, base, w);
-    const c = contrast(over(t.accent, HOVER_ALPHA, cell), t.ink);
+    const c = contrast(over(hover, HOVER_ALPHA, cell), t.ink);
     if (c < worst) worst = c;
   }
   return worst;
@@ -243,13 +375,14 @@ function worstContrast(t: WashTheme, better: Lab, base: Lab, w: WashPaint): numb
  * and, with one ink, always closer to the ink — and the swept property in `wash.test.ts` is what
  * actually holds the result to 4.5:1 over a grid of states rather than trusting that.
  */
-function solveCap(t: WashTheme, better: Lab, base: Lab, shape: Omit<WashPaint, 'peak'>): number {
-  const at = (peak: number) => worstContrast(t, better, base, { ...shape, peak });
-  if (at(1) >= TARGET) return 1;
+function solveCap(t: WashTheme, better: Lab, base: Lab, shape: Omit<WashPaint, 'peak'>,
+                  hover: readonly number[]): number {
+  const at = (peak: number) => worstContrast(t, better, base, { ...shape, peak }, hover);
+  if (at(1) >= TARGET_TEXT) return 1;
   let lo = 0, hi = 1;
   for (let i = 0; i < 22; i++) {
     const mid = (lo + hi) / 2;
-    if (at(mid) >= TARGET) lo = mid; else hi = mid;
+    if (at(mid) >= TARGET_TEXT) lo = mid; else hi = mid;
   }
   return lo;
 }
@@ -277,11 +410,19 @@ function lightnessSpan(t: WashTheme, better: Lab, base: Lab, w: WashPaint): numb
 /** One 8-bit step of lightness, near enough: below this, nothing but hue is separating the cells. */
 const HUE_ONLY_SPAN = 0.01;
 
-/** True while `app.css`'s `--wash-blue` is still what the ranked ramp paints from. */
+/**
+ * True while `app.css`'s own colours are still what the app paints — the ranked ramp's fill and the
+ * whole accent family alike. It is one predicate because it is one preference: the primary colour
+ * drives both, so either both are the stylesheet's or neither is (docs/app.md §Theming).
+ *
+ * `baseOn` is in it because a base-on ramp paints from two fills and the single-colour cell rule is
+ * not what draws it; the accent family is unaffected by that, but a second predicate would be a
+ * second thing to keep true for one bit of information.
+ */
 export function usesTokenFill(prefs: DisplayPrefs): boolean {
   return !prefs.baseOn
-    && prefs.betterHue === DISPLAY_DEFAULTS.betterHue
-    && prefs.betterChroma === DISPLAY_DEFAULTS.betterChroma;
+    && prefs.primaryHue === DISPLAY_DEFAULTS.primaryHue
+    && prefs.primaryChroma === DISPLAY_DEFAULTS.primaryChroma;
 }
 
 /**
@@ -300,11 +441,23 @@ export function resolveWash(prefs: DisplayPrefs): ResolvedWash {
 
   const hex = {} as Record<ThemeName, { better: string; base: string }>;
   const lab = {} as Record<ThemeName, { better: Lab; base: Lab }>;
+  /**
+   * The family first, because the cap depends on it: `--hover-wash` is 6% of `--accent`, and a
+   * pointed-at cell is the ramp's real worst case. Solving the ramp against the SHIPPED accent while
+   * the page painted a derived one would be a guard measuring a colour the app does not draw.
+   */
+  const accents = {
+    light: solveAccents(WASH_THEMES.light, prefs.primaryHue, prefs.primaryChroma),
+    dark: solveAccents(WASH_THEMES.dark, prefs.primaryHue, prefs.primaryChroma),
+  };
+  const hoverOf = (name: ThemeName) =>
+    tokens ? WASH_THEMES[name].accent : hexBytes(accents[name].accent);
+
   for (const name of ['light', 'dark'] as const) {
     const t = WASH_THEMES[name];
     // At the default colour the token is what paints, so the token is what the guard must measure:
     // reconstructing it from the rounded slider values would solve for a colour nobody sees.
-    const better = tokens ? rgbToOklab(bytesToRgb(t.blue)) : toGamutLab(t.washL, prefs.betterChroma, prefs.betterHue);
+    const better = tokens ? rgbToOklab(bytesToRgb(t.blue)) : toGamutLab(t.washL, prefs.primaryChroma, prefs.primaryHue);
     const base = toGamutLab(t.washL, prefs.baseChroma, prefs.baseHue);
     hex[name] = { better: toHex(oklabToRgb(better)), base: toHex(oklabToRgb(base)) };
     // **Quantised before it is solved for.** What reaches the browser is a `#rrggbb`, so that is
@@ -317,8 +470,8 @@ export function resolveWash(prefs: DisplayPrefs): ResolvedWash {
   }
 
   const caps = {
-    light: solveCap(WASH_THEMES.light, lab.light.better, lab.light.base, shape),
-    dark: solveCap(WASH_THEMES.dark, lab.dark.better, lab.dark.base, shape),
+    light: solveCap(WASH_THEMES.light, lab.light.better, lab.light.base, shape, hoverOf('light')),
+    dark: solveCap(WASH_THEMES.dark, lab.dark.better, lab.dark.base, shape, hoverOf('dark')),
   };
   const binding: ThemeName = caps.light <= caps.dark ? 'light' : 'dark';
   const cap = Math.min(caps.light, caps.dark);
@@ -331,6 +484,6 @@ export function resolveWash(prefs: DisplayPrefs): ResolvedWash {
     base: { light: hex.light!.base, dark: hex.dark!.base },
     caps, cap, binding, capped: prefs.strength > cap, peak: paint.peak,
     lightnessSpan: span, hueOnly: span < HUE_ONLY_SPAN,
-    tokenFill: tokens, paint,
+    tokenFill: tokens, accents, paint,
   };
 }

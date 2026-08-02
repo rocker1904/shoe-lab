@@ -205,17 +205,22 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
 });
 
 /**
- * The one control the app's own focus ring cannot reach. `app.css` paints the ring with a
- * `box-shadow`, and WebKit draws no shadow on a native checkbox's rendered control — so the
+ * The control that used to be the app ring's one blind spot. `app.css` paints the ring with a
+ * `box-shadow`, and WebKit draws no shadow on a **native** checkbox's rendered control — so the
  * `outline: none` half of that rule landed and the shadow half did not, leaving every checkbox in
  * the app with no focus indicator at all in Safari, twenty of them consecutively inside the column
- * picker. The exemption keeps the UA outline in EVERY engine (docs/app.md §Theming), which is why
- * this asserts an outline rather than "a shadow, or an outline in WebKit".
+ * picker. The exemption that answered it is gone, because the control is not native any more: under
+ * `appearance: none` it is an ordinary box and WebKit paints the shadow on it like everything else
+ * (docs/app.md §Theming).
+ *
+ * That is a claim about one engine, made once and wrongly before, so this asserts the **app's own
+ * ring** rather than "an indicator of some kind" — a UA outline appearing here would mean the
+ * shadow had silently stopped landing again, and the previous shape of this test would have passed.
  *
  * Driven by Tab: `:focus-visible` does not apply to a programmatic focus after a pointer press, and
  * a ring measured that way reads as missing on a control that has one.
  */
-test('paints a focus indicator on a native checkbox', async ({ page }) => {
+test('paints the app ring on a checkbox, which is no longer a native control', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
   await page.locator('details.picker summary').focus();
@@ -233,16 +238,27 @@ test('paints a focus indicator on a native checkbox', async ({ page }) => {
     return {
       tag: el.tagName.toLowerCase(), type: el.getAttribute('type'),
       focusVisible: el.matches(':focus-visible'),
-      outlineStyle: cs.outlineStyle, outlineWidth: cs.outlineWidth,
+      appearance: cs.appearance,
+      boxShadow: cs.boxShadow,
+      // Resolved rather than compared as a string: `--accent` is an `hsl()` in the stylesheet and
+      // every engine serialises it into the shadow differently.
+      accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+      ringRoom: getComputedStyle(document.documentElement).getPropertyValue('--ring-room').trim(),
     };
   });
 
   expect(at.tag, 'Tab did not land on a checkbox — the picker markup has moved').toBe('input');
   expect(at.type).toBe('checkbox');
   expect(at.focusVisible, 'the keyboard walk did not produce :focus-visible').toBe(true);
-  expect(at.outlineStyle,
-    'no focus indicator on a checkbox — the UA outline was removed and nothing replaced it').not.toBe('none');
-  expect(parseFloat(at.outlineWidth)).toBeGreaterThan(0);
+  expect(at.appearance, 'the checkbox is native again, and the ring cannot reach a native one')
+    .toBe('none');
+  expect(at.boxShadow,
+    'no ring on a checkbox — the app paints it with a box-shadow and this engine dropped it')
+    .not.toBe('none');
+  // Two layers: the surface-coloured gap and the accent ring outside it, at `--ring-room`.
+  expect(at.boxShadow.split(/,(?![^(]*\))/), 'the ring is not the app\'s two-layer one')
+    .toHaveLength(2);
+  expect(at.boxShadow, `the outer layer is not --ring-room (${at.ringRoom})`).toContain(at.ringRoom);
 });
 
 /**

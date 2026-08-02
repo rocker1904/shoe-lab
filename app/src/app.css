@@ -89,8 +89,12 @@
     /* 3.58:1 on --surface, 4.01:1 on --bg, 3.22:1 on --border-soft */
     --hist-dim: #6b7482;
     /* Darker than light, not lighter. On a near-black surface the wash must stay dark enough for
-       light text to sit on it; a lighter dark fill fails contrast at the top of the ramp. */
-    --wash-blue: hsl(211 70% 44%); --wash-grey: hsl(220 8% 62%);
+       light text to sit on it; a lighter dark fill fails contrast at the top of the ramp.
+       Written as the hex the ENGINE derives rather than as an HSL of its own: this is the shared
+       OKLCh point at this theme's pinned lightness, so a runner's first nudge of the primary colour
+       moves it a little instead of stepping it to a different blue
+       (docs/app.md §The display preferences). */
+    --wash-blue: #006bcf; --wash-grey: hsl(220 8% 62%);
     --shadow-panel: none;
     --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.7);
     --shadow-dialog: 0 16px 40px -12px rgb(0 0 0 / 0.7);
@@ -112,8 +116,12 @@
   /* 3.58:1 on --surface, 4.01:1 on --bg, 3.22:1 on --border-soft */
   --hist-dim: #6b7482;
   /* Darker than light, not lighter. On a near-black surface the wash must stay dark enough for
-     light text to sit on it; a lighter dark fill fails contrast at the top of the ramp. */
-  --wash-blue: hsl(211 70% 44%); --wash-grey: hsl(220 8% 62%);
+     light text to sit on it; a lighter dark fill fails contrast at the top of the ramp.
+     Written as the hex the ENGINE derives rather than as an HSL of its own: this is the shared
+     OKLCh point at this theme's pinned lightness, so a runner's first nudge of the primary colour
+     moves it a little instead of stepping it to a different blue
+     (docs/app.md §The display preferences). */
+  --wash-blue: #006bcf; --wash-grey: hsl(220 8% 62%);
   --shadow-panel: none;
   --shadow-sticky: 0 4px 10px -6px rgb(0 0 0 / 0.7);
   --shadow-dialog: 0 16px 40px -12px rgb(0 0 0 / 0.7);
@@ -167,20 +175,54 @@ button, input, select, textarea { font-family: inherit; }
  * and inset shadows on the phone, where a shoe is two and the ring has to span both
  * (docs/app.md §Theming).
  *
- * A NATIVE CHECKBOX is the second, and it is the one place the app's ring cannot reach: WebKit
- * paints no `box-shadow` on a checkbox's rendered control, so the `outline: none` half of this rule
- * landed and the `box-shadow` half did not, leaving every checkbox in the app with no focus
- * indicator at all in Safari — 20 consecutive stops in the column picker. It keeps the UA outline
- * instead, in EVERY engine rather than only where the shadow fails, because one rule that all three
- * engines follow is worth more than a ring that matches on two of them (docs/app.md §Theming).
- * The exclusion is wrapped in `:where()` so it adds no specificity: `input[type='checkbox']` inside
- * a bare `:not()` would raise this rule above the component rules it must lose to.
+ * There is no second exemption. A checkbox used to be one — WebKit paints no `box-shadow` on a
+ * NATIVE checkbox's rendered control, so the `outline: none` half of this rule landed and the
+ * `box-shadow` half did not, leaving every checkbox in the app with no focus indicator at all in
+ * Safari. The control below is not native any more: under `appearance: none` it is an ordinary box,
+ * WebKit paints the ring on it like everything else, and `cross-browser.spec.ts` measures that in
+ * the engine the exemption existed for (docs/app.md §Theming).
  */
 :root { --ring-room: 4px; --focus-ring: 0 0 0 2px var(--surface), 0 0 0 var(--ring-room) var(--accent); }
-:where(a, button, input, select, textarea, summary, [tabindex]):not(tr, :where(input[type='checkbox'])):focus-visible {
+:where(a, button, input, select, textarea, summary, [tabindex]):not(tr):focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/**
+ * **The checkbox is drawn by the app, not by the engine**, and the reason is contrast rather than
+ * taste. With a native control the browser owns the tick's ink and changes its mind about it:
+ * Chromium flips to a dark tick once the fill is light enough (3.02:1 against `--accent` in dark),
+ * WebKit lightens whatever fill it is given, and Chromium's own focus outline ignores
+ * `accent-color` entirely. None of that is reachable from here, so a themed checkbox on a
+ * runner-chosen primary colour could not be guaranteed at all. Under `appearance: none` the painted
+ * colour IS the token, so the same solver that answers for the ramp answers for the tick
+ * (docs/app.md §Theming).
+ *
+ * `--accent-solid` and `--on-accent`, never `--accent`: this is a fill carrying a mark, which is
+ * the one job `--accent-solid` exists for. The unchecked face takes `--hist-dim` — the flat-mark
+ * token, held to 3:1 on every surface it is drawn on — rather than `--text-dim`, because an empty
+ * box is a mark and not a word.
+ *
+ * The tick is a `background-image` rather than a pseudo-element: an `<input>` is a replaced element
+ * and generates none. It is written as an SVG data URI with the ink as a literal `%23fff`, which is
+ * the one place a raw white is unavoidable — a data URI cannot read a custom property — so
+ * `--on-accent` is what the token guard reads and this is pinned to it by `tokens.test.ts`.
+ *
+ * 15px against the native 13, which costs about 2px per label row across the plate group, the brand
+ * list and the column picker. Accepted: a 13px box is under every touch-target guideline there is.
+ */
+input[type='checkbox'] {
+  appearance: none;
+  width: 15px; height: 15px; margin: 0; flex: none;
+  border: 1px solid var(--hist-dim); border-radius: var(--r-sm);
+  background: var(--surface); cursor: pointer;
+}
+input[type='checkbox']:checked {
+  border-color: var(--accent-solid); background: var(--accent-solid);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 4.8 8.5 9.5 3.6' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+input[type='checkbox']:disabled { cursor: default; opacity: 0.5; }
 
 /**
  * The other half of the same fact: a ring painted outside the element is clipped by any scrollport
