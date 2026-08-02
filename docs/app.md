@@ -2911,6 +2911,27 @@ within 2.4px, and `draws every control in a face this app names` fails the build
 on the next control that escapes it. The `font: inherit` shorthand is rejected
 for the reset: it also resets `font-size`, which each component owns.
 
+**A face whose load errors is asked for again**, twice, backing off — `lib/font-retry.ts`,
+wired in `main.ts` before the table can request one. `font-display: swap` covers
+the *paint*, so a face that never arrives costs a reflow rather than a blank
+page, but nothing re-requested one: a transient failure on the first load left a
+runner on a fallback for the whole session, and the app's own measured widths are
+the self-hosted face's. It is not hypothetical — WebKit under a loaded preview
+server was seen failing both faces and never retrying, which is why the fit guard
+had to be taught to refuse a fallback's metrics rather than measure it. That
+guard stays, and stays loud; this is the app declining to need it. A face still
+errored after the last attempt stays errored.
+
+Two mechanics are load-bearing. `FontFace.load()` returns the existing promise
+for anything whose status is not `unloaded`, so an errored face can never be
+asked again and a retry means constructing a **replacement** and adding it to the
+set. And the replacement's URL and descriptors are read back out of the CSSOM
+rule that failed, so `app.css` stays the one home for both — Vite fingerprints
+those URLs at build time, and restating them in script would be a second spelling
+a rebuild could quietly make wrong. Each rebuilt face is in the set, so its own
+failure arrives back at the same listener: the chain is driven by the failures
+rather than by a loop, and a per-family count is what ends it.
+
 **A scrollport reserves room for its scrollbar as well as for its ring, and the
 two are different facts.** A bar is drawn at the port's inline end, and the two
 ports whose rows *end* in a number — the column picker's coverage figures and the

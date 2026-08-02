@@ -1,10 +1,14 @@
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { applyDisplay, readDisplay } from './lib/display';
+import { retryFailedFaces } from './lib/font-retry';
 import { applySavedTheme } from './lib/theme';
 import './app.css';
 
 applySavedTheme();
+// Listening before the table requests a face, or the failure this exists to hear has already
+// happened. Never torn down: the faces belong to the document for as long as the document lives.
+retryFailedFaces();
 // Before the dataset fetch, exactly as the theme is: the ramp a runner tuned must be on the
 // document by the time the first row paints, not one frame after it
 // (docs/app.md §The display preferences).

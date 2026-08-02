@@ -48,6 +48,14 @@ export const FIT_TOLERANCE_PX = 4;
  * `required` names the families a caller's measurement actually depends on — a face nothing on the
  * page has used stays `unloaded` for ever, so waiting on it unconditionally would hang rather than
  * guard.
+ *
+ * **An errored face is judged per FAMILY, not on its own.** The app retries a face whose load
+ * errors by adding a replacement to the set (docs/app.md §Theming), and the failed original stays
+ * in `document.fonts` for ever — so `no face is in error` would fail a run the app had recovered
+ * from, which is the transient this helper was written for in the first place. A family with
+ * nothing loaded is still a failure, and that is the whole of the backstop. Names are compared
+ * unquoted: a CSS-connected face reports `Inter Tight` where a constructed one reports
+ * `"Inter Tight"` in Chromium, and the two are one family.
  */
 export async function awaitFacesLoaded(
   page: Page,
@@ -55,10 +63,13 @@ export async function awaitFacesLoaded(
 ): Promise<void> {
   try {
     await page.waitForFunction((families: string[]) => {
+      const bare = (n: string) => n.replace(/^["']|["']$/g, '');
       const faces = [...document.fonts];
       if (document.fonts.status !== 'loaded') return false;
-      if (faces.some((f) => f.status === 'loading' || f.status === 'error')) return false;
-      return families.every((n) => faces.some((f) => f.family === n && f.status === 'loaded'));
+      if (faces.some((f) => f.status === 'loading')) return false;
+      const loaded = new Set(faces.filter((f) => f.status === 'loaded').map((f) => bare(f.family)));
+      if (faces.some((f) => f.status === 'error' && !loaded.has(bare(f.family)))) return false;
+      return families.every((n) => loaded.has(bare(n)));
     }, required, { timeout });
   } catch {
     const seen = await page.evaluate(() =>

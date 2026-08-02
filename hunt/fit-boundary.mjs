@@ -165,11 +165,15 @@ async function afterContentGrows(browser, url, width) {
  * this rig has never been run on.
  */
 const awaitFaces = (p) => p.waitForFunction(() => {
+  const bare = (n) => n.replace(/^["']|["']$/g, '');
   const faces = [...document.fonts];
   if (document.fonts.status !== 'loaded') return false;
-  if (faces.some((f) => f.status === 'loading' || f.status === 'error')) return false;
-  return ['Inter Tight', 'JetBrains Mono']
-    .every((n) => faces.some((f) => f.family === n && f.status === 'loaded'));
+  if (faces.some((f) => f.status === 'loading')) return false;
+  // Per family, not per face: the app retries an errored face by adding a replacement, and the
+  // failed original never leaves the set. `app/e2e/fit-support.ts` owns that reasoning too.
+  const loaded = new Set(faces.filter((f) => f.status === 'loaded').map((f) => bare(f.family)));
+  if (faces.some((f) => f.status === 'error' && !loaded.has(bare(f.family)))) return false;
+  return ['Inter Tight', 'JetBrains Mono'].every((n) => loaded.has(n));
 }, null, { timeout: 15_000 });
 
 const ENGINES = { chromium, firefox, webkit };
