@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
+import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import { FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
@@ -1395,6 +1395,54 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
       .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
   });
 }
+
+/**
+ * **The stacked list under the DESKTOP chrome** — the regime the fit switch created and the one no
+ * other assertion reaches. The two boundaries are independent by design (§The chrome bands): the bar
+ * keeps its words from 801px up, while the table is only mounted where it fits, which on the real
+ * fleet is 931px. Between the two the runner gets a phone rendering under a bar that is not a
+ * phone's, and the pair has to be coherent — the list's own sticky header sits under a band whose
+ * height is measured in `Page.svelte` and handed to it as `--thead-top`, so the two waves' numbers
+ * meet here or the header row paints over the shoes.
+ *
+ * The width is COMPUTED from the model rather than stated, and asserted to be above the chrome's
+ * boundary: a fixture whose table shrinks below it would otherwise leave this test passing while
+ * testing the regime beside the one it names.
+ */
+test('mounts the stacked list under the desktop chrome, and holds it to the measured band', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const cols = FIT_SETS['default']!;
+  const { model } = await measureFit(page, cols);
+  // One pixel under the width the desktop rendering needs, in the drawer regime (`lib/fit.ts`).
+  const width = Math.ceil(model + FIT_SLACK_PX + 16) - 1;
+  expect(width, 'the fixture no longer reaches the band where the chrome is a desktop and the '
+    + 'table is not').toBeGreaterThan(800);
+
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`/?cols=${cols.join(',')}`);
+  await page.evaluate(() => document.fonts.ready);
+
+  await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
+  await expect(page.locator('.tblwrap')).toHaveCount(0);
+  // The chrome is still the desktop's here: the utilities are in the masthead, worded.
+  await expect(page.locator('header').getByRole('button', { name: 'Copy link' })).toBeVisible();
+
+  // Scrolled deep, so the list's header is doing its sticking rather than merely sitting there.
+  await page.evaluate(() => window.scrollTo(0, 3000));
+  const band = await page.evaluate(() => {
+    const chrome = document.querySelector('.chrome')!.getBoundingClientRect();
+    const th = document.querySelector('thead th')!.getBoundingClientRect();
+    const spacer = document.querySelector('.chrome-space')!.getBoundingClientRect();
+    return {
+      behind: Math.round(chrome.bottom - th.top),
+      spacerGap: Math.round(spacer.height - chrome.height),
+      over: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  expect(band.behind, 'the list header sits behind the pinned chrome').toBeLessThanOrEqual(0);
+  expect(band.spacerGap, 'the spacer is not the height of the band it replaces').toBe(0);
+  expect(band.over, 'the page scrolls sideways under six columns').toBe(0);
+});
 
 /**
  * The rendering can now change under a runner who never touched the window — ticking a column is

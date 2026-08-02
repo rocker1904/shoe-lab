@@ -1276,6 +1276,16 @@ which is the only place the overflow ever existed.
 absence of a third state rather than the presence of one: it holds every column
 at 53px and the page scrolls to reach the seventh, exactly as it always did.
 
+**The stacked list under the desktop chrome is a real screen, not an edge case.**
+The chrome's boundary is 800px and the table's is wherever it fits — 931px on
+today's default view — so between the two the runner gets a phone rendering under
+a bar carrying its words. That is the two boundaries being independent, working
+as intended (§The chrome bands), and it is the one regime the e2e fixture's own
+table is too narrow to wander into: `mounts the stacked list under the desktop
+chrome, and holds it to the measured band` computes the width from the model,
+refuses to run below the chrome's boundary, and holds the list's sticky header to
+the band `Page.svelte` measures for it.
+
 jsdom lays nothing out and vitest applies no component CSS, so the suite cannot
 see the difference at all: `documentElement.clientWidth` is 0 there and the
 decision falls back to `innerWidth`, which is what lets `Page.test.ts` plant a
