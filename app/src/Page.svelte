@@ -28,6 +28,7 @@
   import { COPIED, EXPORTED, viewAnnouncement } from './lib/announce';
   import { isBareArrival } from './lib/arrival';
   import { exportCsv } from './lib/csv-export';
+  import { fitModel, rendersPhone } from './lib/fit';
   import { keepFocusInScrollports } from './lib/focus-scroll';
   import { ICON_PATHS } from './components/icons';
   import { indexTests } from './lib/dataset';
@@ -153,19 +154,30 @@
    * Which table renders is a query the script asks, not a `@media` rule, because **only one may be
    * in the DOM at a time**: a `display: none` table is still queryable, and two tables' headers
    * would be two answers to "what are the columns?" for assistive tech and for the suite alike
-   * (docs/app.md §Columns and sorting). Read once at init so the first paint is already right,
-   * then kept live for a rotation or a resized window.
+   * (docs/app.md §Columns and sorting).
+   *
+   * What it asks is whether the desktop table FITS, not whether the window is narrow: a viewport
+   * constant answered for one column set and the runner picks the set. `lib/fit.ts` owns the
+   * arithmetic and the floor under it; this owns reading the width it is asked about and keeping it
+   * live (docs/app.md §Two renderings, and only one of them mounted).
+   *
+   * `documentElement.clientWidth`, not `innerWidth`: it excludes a classic scrollbar, and with 450
+   * shoes there is always one — counting its 15px as room for the table is how a model comes to
+   * mount a table that then overflows. jsdom lays nothing out and reports 0, so `innerWidth` is the
+   * fallback and the suite's window is a real number.
    */
-  const PHONE_QUERY = '(max-width: 699px)';
-  let phone = $state(untrack(() => window.matchMedia?.(PHONE_QUERY).matches ?? false));
+  const layoutWidth = () => document.documentElement.clientWidth || window.innerWidth;
+  let windowWidth = $state(untrack(layoutWidth));
   $effect(() => {
-    const mq = window.matchMedia?.(PHONE_QUERY);
-    if (!mq) return;
-    const sync = () => (phone = mq.matches);
+    const sync = () => (windowWidth = layoutWidth());
     sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
   });
+  /** Per dataset, because the widest phrase in a column is a fact about the fleet; the sum over the
+   *  columns on screen is per view, which is what makes a ticked column able to change the answer. */
+  const fit = $derived(fitModel(data, idx));
+  const phone = $derived(rendersPhone(view.columns, windowWidth, fit));
 
   /**
    * Which host draws the utilities, asked in the script rather than as an `@media` rule, because

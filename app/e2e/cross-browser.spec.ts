@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
+import { FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
 
 /**
  * Firefox and WebKit implement none of `input type="month"` — both reflect the type back as `text`,
@@ -655,4 +657,52 @@ test('paints the two-colour ramp this engine has to nest a color-mix for', async
   // …and the two ends are different colours, which is the whole ordering with the base on.
   expect(cells.best.bg, 'best and worst paint the same colour, so nothing ranks')
     .not.toBe(cells.worst.bg);
+});
+
+/**
+ * The fit model is arithmetic over committed per-character tables measured in Chromium, and these
+ * are the two engines it was never measured in. If Firefox or WebKit ever lays this table out wider
+ * than the model says, the app mounts a desktop table at a width where that engine scrolls sideways
+ * — silently, and only for the runners on that engine.
+ * docs/app.md §Two renderings, and only one of them mounted
+ */
+for (const [name, cols] of Object.entries(FIT_SETS)) {
+  test(`models the desktop table's own min-content width, ${name} columns`, async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const { model, rendered } = await measureFit(page, cols);
+    expect(Math.abs(model - rendered),
+      `the fit model says ${model.toFixed(1)}px and this engine renders ${rendered.toFixed(1)}px`)
+      .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
+  });
+}
+
+/**
+ * The switch itself, at the width the model computes for this fixture rather than at a constant: one
+ * pixel either side of it, which rendering is mounted, and — the half that matters — that the one
+ * mounted fits. A ladder written against a hard-coded width would stop testing the rule the moment
+ * the fixture or the face moved.
+ */
+test('mounts the rendering that fits on each side of the computed threshold', async ({ page }) => {
+  const cols = FIT_SETS['default']!;
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const { model } = await measureFit(page, cols);
+  // The drawer regime, so the sidebar takes no track: the table needs the model plus the slack, and
+  // the page's leading gutter on top (`lib/fit.ts`).
+  const threshold = Math.ceil(model + FIT_SLACK_PX + 16);
+  expect(threshold, 'the threshold is inside the drawer regime, or this ladder tests two rules')
+    .toBeLessThan(SIDEBAR_PERMANENT_PX);
+
+  for (const [width, want] of [[threshold - 1, 'phone'], [threshold, 'desktop'],
+    [threshold + 40, 'desktop']] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => document.fonts.ready);
+    // Retried rather than read once: a resize reaches the decision through an event and the DOM
+    // through Svelte's next flush, and WebKit reported the previous rendering to a single
+    // evaluate — a timing artefact that reads exactly like a model that is one pixel out.
+    await expect(page.locator('.tblwrap'), `at ${width}px`)
+      .toHaveCount(want === 'desktop' ? 1 : 0);
+    const over = await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(over, `the ${want} rendering scrolls sideways at ${width}px`).toBe(0);
+  }
 });

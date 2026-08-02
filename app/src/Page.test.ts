@@ -856,6 +856,91 @@ describe('Page keeps the view in the URL alone', () => {
 });
 
 /**
+ * Which rendering mounts, now that it is a fit question rather than a viewport constant. The model
+ * itself is `lib/fit.test.ts`'s and its agreement with a real browser is `cross-browser.spec.ts`'s;
+ * this owns the wiring — that the decision reads the live width, reacts to a resize and to a column
+ * being ticked, and that only one table is ever in the DOM.
+ * docs/app.md §Two renderings, and only one of them mounted
+ */
+describe('Page mounts the rendering that fits', () => {
+  /** jsdom defines `innerWidth` as a getter and lays nothing out, so `documentElement.clientWidth`
+   *  is 0 and the width has to be planted. Returns a setter that also tells the listeners. */
+  function stubWidth(width: number) {
+    let now = width;
+    Object.defineProperty(window, 'innerWidth', { get: () => now, configurable: true });
+    return async (next: number) => {
+      now = next;
+      window.dispatchEvent(new Event('resize'));
+      await tick();
+    };
+  }
+  const everyColumn = [...TESTS.map((t) => t.slug), 'releasedAt'].join(',');
+  const mobile = () => screen.queryByTestId('shoe-table-mobile');
+  const desktop = () => screen.queryByRole('button', { name: 'Shoe' });
+
+  it('mounts the desktop table where the columns fit the window', () => {
+    stubWidth(1400);
+    render(Page, { props: { data } });
+    expect(desktop()).not.toBeNull();
+    expect(mobile()).toBeNull();
+  });
+
+  it('mounts the phone list where they do not, above the phone floor', () => {
+    // Every test in the fixture at once, at a laptop width: the fit question has an answer a
+    // viewport constant could never give, because the width has not moved and the table has.
+    history.replaceState(null, '', `/?cols=${everyColumn}`);
+    stubWidth(1000);
+    render(Page, { props: { data } });
+    expect(mobile()).not.toBeNull();
+    expect(desktop()).toBeNull();
+  });
+
+  it('swaps the rendering on a resize, both ways', async () => {
+    history.replaceState(null, '', `/?cols=${everyColumn}`);
+    const at = stubWidth(2400);
+    render(Page, { props: { data } });
+    expect(desktop()).not.toBeNull();
+
+    await at(900);
+    expect(mobile()).not.toBeNull();
+    expect(desktop()).toBeNull();
+
+    await at(2400);
+    expect(desktop()).not.toBeNull();
+    expect(mobile()).toBeNull();
+  });
+
+  it('mounts the phone list below the floor whatever fits, and never both tables', () => {
+    history.replaceState(null, '', '/?cols=weight');
+    stubWidth(690);
+    const { container } = render(Page, { props: { data } });
+    expect(mobile()).not.toBeNull();
+    expect(container.querySelectorAll('table')).toHaveLength(1);
+  });
+
+  /**
+   * The reason the open set is `Page.svelte`'s and not a table's — see
+   * docs/app.md §Two renderings, and only one of them mounted. Crossing the boundary used to take a
+   * rotation; it now takes a tick of the column picker, which a runner does while reading a row.
+   */
+  it('keeps an open row open when a ticked column flips the rendering', async () => {
+    history.replaceState(null, '', '/?cols=weight&open=cushy');
+    const at = stubWidth(760);
+    const { container } = render(Page, { props: { data } });
+    const open = () => [...container.querySelectorAll('tr[aria-expanded="true"]')]
+      .map((r) => r.getAttribute('aria-controls'));
+    expect(desktop()).not.toBeNull();
+    expect(open()).toEqual(['detail-cushy']);
+
+    await at(690);
+    // Same open row, other rendering: the set is the Page's and both tables hold the same object.
+    expect(mobile()).not.toBeNull();
+    expect(open()).toEqual(['detail-cushy']);
+    expect(location.search).toContain('open=cushy');
+  });
+});
+
+/**
  * The desktop half of 0014. jsdom's `matchMedia` stub never matches, so the phone half is measured
  * at real widths by the rig and asserted in `cross-browser.spec.ts` — `lib/ordering.test.ts` holds
  * the decision itself for both renderings.

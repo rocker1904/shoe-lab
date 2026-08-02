@@ -710,7 +710,12 @@ a link or by the desktop's control, and stated by
 **The default view holds six numeric columns**, plus `releasedAt` and `plate`,
 which carry words and dates rather than figures. Six is the bound: it is the
 widest numeric set that fits the narrowest common phone without horizontal
-scrolling. `midsole-softness-22` is the column the default gives up — the
+scrolling. **That reasoning survives the fit switch unchanged**, and the 700px
+floor is what makes it survive: below the floor the stacked list is what renders
+whatever the arithmetic says, so a 360px phone still gets the six columns the
+bound was measured for (§Two renderings, and only one of them mounted). What the
+switch changed is which rendering a *laptop* gets, not how many columns the
+default holds anywhere. `midsole-softness-22` is the column the default gives up — the
 sparsest of the seven it used to carry, and the only one no story reads,
 because docs/shoe-stories.md argues softness should not drive a shortlist.
 This is a product change rather than a phone workaround, because **columns
@@ -941,13 +946,13 @@ Letting the cell wrap instead is measured and rejected: it takes the column to
 68px, but the plated rows then stand 71px against every other row's 36px, which
 is the raggedness `nowrap` exists to prevent.
 
-**Sideways scroll now exists only between 700px and 916px.** The default view's
+**This table never scrolls sideways any more, because it is only mounted where it
+fits** (§Two renderings, and only one of them mounted). The default view's
 document is **917px** wide once the sidebar is a drawer and the content track
-takes the full window — 217px over at 700px, 17px at 900px, clean from 917px up.
-Above that it fits at every width, the sidebar's arrival at 1180px included,
-because 1180 is chosen as the width where the 260px track and this same table
-both fit (§Filters). Below 700px the mobile rendering takes over and there is no
-horizontal scroll at all.
+takes the full window, and that number is now a threshold rather than an
+overflow: below it the stacked list takes over. The band that ran 700px to 916px
+at up to 217px over is gone, measured on the real fleet at twenty-three widths in
+both engines, and the ladder that says so is `hunt/fit-boundary.mjs`.
 
 That band used to run from 800px to 1176px as well, at up to 376px over: the
 sidebar took its column at 801px whether or not the table had room left beside
@@ -962,11 +967,12 @@ whenever the runner draws a classic scrollbar. The two forms agree in headless
 Chromium, where a fitting document reports exactly 1200 — this is a statement
 of the claim, not a bug fix.
 
-**The overflow above is measured, not guarded.** The e2e fixture is five shoes
-with one-word names, and its `scrollWidth` is 1200 with the long plate label or
-the short one, so no test in the suite reproduces the 12px the real fleet
-overran by. Widening the fixture is what a guard would take, and the counts and
-score values that every other e2e assertion pins are what makes that expensive.
+**The overflow above was measured, not guarded, for as long as it existed.** The
+e2e fixture is five shoes with one-word names, and its `scrollWidth` is 1200 with
+the long plate label or the short one, so no test in the suite ever reproduced
+the 12px the real fleet overran by. What guards it now is not a wider fixture but
+the model: the fixture is enough to check that the model agrees with the engine,
+and the real fleet's ladder lives in `hunt/`.
 
 The name cell is a
 plain `table-cell` with an inner flex row, because `display: flex` on a `td`
@@ -1195,28 +1201,101 @@ it, which is what makes them read as centring. Balancing column heights is the w
 
 ### Two renderings, and only one of them mounted
 
-Below 700px the same columns render as `ShoeTableMobile.svelte`: the shoe name
-takes its own full-width row with the chevron, and the numbers get the whole
-viewport beneath it in true columns under one shared sticky header. A pinned
-name column with the numbers scrolling behind it is not a design at 375px — it
-spends 40% of the width on the name and shows about two numbers.
+The same columns render as `ShoeTableMobile.svelte` wherever the desktop table
+would not fit: the shoe name takes its own full-width row with the chevron, and
+the numbers get the whole viewport beneath it in true columns under one shared
+sticky header. A pinned name column with the numbers scrolling behind it is not
+a design at 375px — it spends 40% of the width on the name and shows about two
+numbers.
 
-**Which one renders is decided in script, not by a media query.** `Page.svelte`
-holds a `matchMedia('(max-width: 699px)')`-backed `$state` and mounts only the
-winner, because a `display: none` table is still in the DOM: it would answer
-"what are the columns?" twice, for assistive tech and for the suite alike.
-jsdom evaluates no media query and vitest applies no component CSS, so the
-suite cannot see the difference at all — `test-setup.ts` stubs `matchMedia`
-non-matching, and the phone rendering is checked directly in
+**Which one renders is decided by fit, not by a viewport constant** — and in
+script, not by a media query. `Page.svelte` mounts only the winner, because a
+`display: none` table is still in the DOM: it would answer "what are the
+columns?" twice, for assistive tech and for the suite alike.
+
+A constant could only ever answer for one column set, and the runner picks the
+set. Under the old 699px rule the desktop table took a window it needed 917px
+for, so the default view scrolled sideways from 700px to 916px — 217px of it at
+the low end — and a nine-column view scrolled at every width there is.
+`rendersPhone` in `app/src/lib/fit.ts` is the rule instead: **the phone list
+below a 700px floor whatever the arithmetic says, and above the floor exactly
+when the desktop table's min-content plus a 12px slack does not fit the width the
+table would be laid out in.** The floor is why a two-column view still gets the
+list on a phone; the fit half is why a nine-column view gets it on a laptop.
+
+**The model is arithmetic, never a measurement of the mounted table.** Measuring
+what is on screen can only answer for the rendering already up, and switching on
+that answer is a feedback loop — mount the table, measure it too wide, mount the
+list, measure nothing, mount the table. `fit.ts` computes the width instead, from
+three kinds of input it keeps apart: the tokens (the 14rem name column, the
+`--s2` cell padding, `--caret-w`, the panel's own borders), committed
+per-character font tables generated by `app/scripts/measure-label-widths.mjs`,
+and the loaded fleet — the widest string each phrase column renders is upstream's
+and no constant can state it, so it is computed once per dataset and memoised.
+Each number's reasoning lives at the constant it belongs to, and is not restated
+here.
+
+**What the fit is measured against is the window less the page's leading gutter,
+less the sidebar's 260px track wherever the sidebar has one** (§Filters). The
+trailing gutter is deliberately not counted: a block's trailing padding is not
+part of its scrollable overflow, so requiring it would reject widths at which
+nothing scrolls at all. The slack is what keeps that gutter's air instead.
+
+**The model must not be able to rot, so CI mounts the real table and asks the
+engine.** `smoke.spec.ts` compares the model's width against the rendered
+`min-content` in Chromium — the engine the font tables were measured in — and
+`cross-browser.spec.ts` makes the same comparison in Firefox and WebKit, over
+four column sets, to a stated 4px tolerance. The measured disagreement is at most
+2.0px, which is also why the tables are one engine's rather than a per-character
+maximum over three: the maximum sums disagreements that never co-occur in one
+engine and measured 8–15px wide. `cross-browser.spec.ts` then walks a width
+ladder across the threshold the model computes for the fixture, asserting which
+rendering mounts on each side and that the mounted one does not scroll sideways;
+`hunt/fit-boundary.mjs` walks the same ladder against the real 450-shoe fleet,
+which is the only place the overflow ever existed.
+
+**The list can still page-scroll sideways past six columns**, which is the
+absence of a third state rather than the presence of one: it holds every column
+at 53px and the page scrolls to reach the seventh, exactly as it always did.
+
+jsdom lays nothing out and vitest applies no component CSS, so the suite cannot
+see the difference at all: `documentElement.clientWidth` is 0 there and the
+decision falls back to `innerWidth`, which is what lets `Page.test.ts` plant a
+window and assert which table mounts. The phone rendering is checked directly in
 `ShoeTableMobile.test.ts` and at real widths by Playwright.
 
+**One consequence is worth knowing before it is reported as a bug.** The width
+available to the table steps down by 260px at 1180px, where the sidebar takes its
+column, and that boundary is the first width at which the default table fits
+beside the track — with 2px in hand (§Filters). The fit rule wants 12px more than
+that, so on today's fleet the default view renders the desktop table up to
+1179px, the list from 1180 to 1190, and the table again from 1191. Nothing
+scrolls sideways in that band and nothing is lost across it, but the rendering
+does change twice as one window is dragged wider. Closing it means either moving
+the sidebar's boundary or spending the slack, and the first belongs to §Filters.
+
 **Because only one is mounted, neither may own the open-row set.** A set held in the
-component is dropped whole the moment the viewport crosses 700px, so a phone rotated
-mid-read closed every panel. `Page.svelte` owns it and passes it to whichever table is
-up, mutated in place rather than replaced — both renderings hold the same object. Each
+component is dropped whole the moment the rendering changes, so a phone rotated
+mid-read closed every panel — and now a ticked column can change the rendering at a
+width that never moved, which is a thing a runner does *while reading a row*.
+`Page.svelte` owns it and passes it to whichever table is up, mutated in place rather
+than replaced — both renderings hold the same object. The resolved wash is a prop for
+the same reason (§The display preferences). `smoke.spec.ts` ticks a column that flips
+the rendering with a row open and a tuned wash, and asserts all three survive. Each
 table keeps the `tick()`-then-scroll it does on open, because what a newly opened row
 has to clear is a property of the rendering and the two answer it differently
 (§Table presentation).
+
+**The stretched list is left uncapped, judged at 850–950px against two
+prototypes.** Its equal columns reach 143px at 900px, so the wash chips are
+wider than the phone's 53px ones by nearly three times. A 96px chip cap read
+best and is rejected: it also narrows the chip at 700px, which is inside the
+geometry contract below. A 112px cap clears that floor and buys a change most
+would not notice, at the price of a second home for the chip's width and a
+header that spans a wider box than the value under it — which is the detachment
+`table-layout: fixed` was chosen to prevent. The chip stays inset in its cell at
+every width, so the full-bleed band of colour the inset exists to avoid does not
+appear either way.
 
 The geometry is the contract, and these numbers are measured rather than
 chosen:
@@ -2170,9 +2249,15 @@ cannot disagree. The band starts as `sticky` and swaps to `fixed` only once that
 height is known (`.pinned`), so there is never a frame laid out with a pinned band
 over a spacer of nothing; measured over the first forty frames in both engines,
 `.content`'s top never moves. `holds the chrome over its own band with the
-document scrolled right` asserts it at 1000, 700 and 390px — nine columns, scrolled
+document scrolled right` asserts it at 700 and 390px — fifteen columns, scrolled
 fully right, every probe across the band inside `.chrome` and the table's header
-still clear of it.
+still clear of it. It used to run at 1000px too, and on nine columns: since the
+desktop table is mounted only where it fits, the widths at which any view scrolls
+sideways are the stacked list's past its six-column bound, and it takes fifteen
+53px columns to reach past 700px of window
+(§Two renderings, and only one of them mounted). At 1000px there is no longer a
+view that scrolls sideways at all, which the test's own
+`maxScrollLeft > 0` guard is what said.
 
 **There are two named boundaries in this app, and they are not the same
 number.** Each has one home, and the two answer different questions:
@@ -3137,11 +3222,18 @@ match.** The placeholder lays out `14rem repeat(n, 1fr)`; the real name column i
 The test asserts the half that is knowable: the placeholder's name track is the
 table's own declared minimum, read off the cell rather than restated.
 
-**Below 700px the placeholder is still the desktop table's chassis**, which the
-phone rendering is not (§Two renderings, and only one of them mounted): the real
-table there is 8px wider and 4px further left, and its head band shorter. Known
-and unreserved — the assertions run at desktop widths, where the placeholder and
-the table are the same object.
+**Wherever the stacked list is the rendering that fits, the placeholder is still
+the desktop table's chassis**, which the list is not (§Two renderings, and only
+one of them mounted): the real table there is 8px wider and 4px further left, and
+its head band shorter. It cannot be otherwise — the fit decision's inputs are the
+catalogue's labels and the fleet's own strings, which are in the payload the
+placeholder is waiting for, so at that moment the page does not yet know which
+rendering it will mount. What matters is the axis the reserve exists for, and
+that one holds: measured at 800px and 900px in both engines, where the list now
+mounts, the table lands within **1px** of where the placeholder drew it, with the
+same 4px and 8px residual the phone always had. Known and unreserved — the
+assertions run at desktop widths, where the placeholder and the table are the
+same object.
 
 `App.test.ts` pins the row count, the cell count, the structure and which bands
 the reserve holds — the parts that are DOM facts — and `smoke.spec.ts` measures

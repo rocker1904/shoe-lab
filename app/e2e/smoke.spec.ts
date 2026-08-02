@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
   await page.goto('/');
@@ -187,8 +188,8 @@ for (const { width, path, strip } of [
   });
 }
 
-// The 700px switch is invisible to jsdom: it applies no component CSS and evaluates no media
-// query, so only a real browser can say which of the two tables is on screen.
+// Which rendering is up is invisible to jsdom: it applies no component CSS and lays nothing out, so
+// only a real browser can say which of the two tables is on screen.
 test('switches to the stacked list on a phone, and back', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto('/');
@@ -235,7 +236,11 @@ test('switches to the stacked list on a phone, and back', async ({ page }) => {
   await expect(page.locator('.score-breakdown table')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
-  await page.setViewportSize({ width: 1200, height: 800 });
+  // 1400, not 1200: which rendering mounts is a fit question now, and Easy's eight columns do not
+  // fit a 1200px window once the sidebar has taken its 260px track — measured at 925.6px of table
+  // against 924px of room, so the list is the right answer there
+  // (docs/app.md §Two renderings, and only one of them mounted).
+  await page.setViewportSize({ width: 1400, height: 800 });
   await expect(mobile).toBeHidden();
   // Easy's own table by now, so its score column is what says the desktop rendering is back.
   await expect(page.getByRole('columnheader', { name: /Easy heel score/ })).toBeVisible();
@@ -500,17 +505,25 @@ test('opens with the actions flush to the bar trailing edge', async ({ page }) =
  * Two claims, because fixing the first by detaching the header would be no fix: nothing but chrome
  * paints in the band at any scroll position, AND the table's header still pins under it.
  */
-for (const width of [1000, 700, 390]) {
+/**
+ * The widths are the ones where a document can still scroll sideways at all, which the fit switch
+ * has narrowed to the phone rendering past its six-column bound: the desktop table is now mounted
+ * only where it fits, so no column set takes it past the viewport
+ * (docs/app.md §Two renderings, and only one of them mounted). 1000px left the loop with the last
+ * wave's reasoning attached to it — there is no view at 1000px that scrolls sideways any more, and
+ * the `maxScrollLeft` guard below is what said so.
+ */
+for (const width of [700, 390]) {
   test(`holds the chrome over its own band with the document scrolled right at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
-    // Eleven figure columns the fixture carries: far past the six-column bound, so the page is MEANT
-    // to scroll sideways here and there is a band beyond the viewport to measure at all. Nine used
-    // to do it and no longer does — 1000px is inside the drawer's band now, so the content track is
-    // the 260px the sidebar used to hold wider than it was (docs/app.md §Filters), and the
-    // `maxScrollLeft` guard below caught a case that had quietly stopped asserting anything.
+    // Fifteen figure columns, which is what it now takes to push the stacked list past a 700px
+    // window: its columns are 53px, so the count rather than the width is the lever. Both halves of
+    // the softness pair are left out deliberately — a superseded pair is one column and `parseView`
+    // would drop the sibling (docs/app.md §URL encoding).
     await page.goto('/?cols=score,msrpGbp,heel-stack,forefoot-stack,weight,energy-return-heel,'
       + 'energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel,'
-      + 'shock-absorption-forefoot,outsole-durability');
+      + 'shock-absorption-forefoot,outsole-durability,outsole-thickness,heel-counter-stiffness,'
+      + 'midsole-width-in-the-heel,midsole-width-in-the-forefoot');
     await page.evaluate(() => document.fonts.ready);
     const maxScrollLeft = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -1351,4 +1364,68 @@ test('Back takes only the open set, keeping a filter changed while the row was o
   await expect(page).toHaveURL(/plate=carbon/);
   await expect(page).toHaveURL(/sort=-weight/);
   await expect(page).not.toHaveURL(/open=/);
+});
+
+/**
+ * The Chromium half of the fit model's guard: these are the metrics its per-character tables were
+ * measured in, so a regenerated table, a changed padding or a moved token shows up here first.
+ * `cross-browser.spec.ts` holds the same comparison to Firefox and WebKit, which is where the model
+ * can be wrong without anyone having measured it.
+ * docs/app.md §Two renderings, and only one of them mounted
+ */
+for (const [name, cols] of Object.entries(FIT_SETS)) {
+  test(`models the desktop table's own min-content width, ${name} columns`, async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const { model, rendered } = await measureFit(page, cols);
+    expect(Math.abs(model - rendered),
+      `the fit model says ${model.toFixed(1)}px and Chromium renders ${rendered.toFixed(1)}px`)
+      .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
+  });
+}
+
+/**
+ * The rendering can now change under a runner who never touched the window — ticking a column is
+ * enough. Everything they were reading has to survive it: the open row, the view in the address bar
+ * and the wash they tuned. The open set is `Page.svelte`'s exactly so that it can
+ * (docs/app.md §Two renderings, and only one of them mounted), and the paint is a prop for the same
+ * reason (docs/app.md §The display preferences) — this is what proves both across the swap rather
+ * than asserting them of one rendering at a time.
+ */
+test('keeps the open row, the view and the paint when a ticked column flips the rendering', async ({ page }) => {
+  // 750px: three columns need 491px of it and six need 744px against the 734px it offers, so the
+  // tick below is what crosses the threshold — the window never moves.
+  await page.setViewportSize({ width: 750, height: 900 });
+  await page.goto('/?cols=score,msrpGbp,weight');
+  await page.evaluate(() => document.fonts.ready);
+  // A tuned wash first, so the flip has something of the runner's to lose.
+  await page.getByRole('button', { name: 'Display' }).click();
+  await page.getByLabel('Tint every ranked cell').check();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.tblwrap')).toBeVisible();
+
+  await page.getByText('cushy').first().click();
+  await expect(page.locator('tr.shoe[aria-expanded=true]')).toHaveCount(1);
+  const paintBefore = await page.locator('td.num.tinted.blue').first()
+    .evaluate((el) => el.style.getPropertyValue('--w'));
+  expect(paintBefore, 'the two-colour wash never reached the desktop cells').not.toBe('');
+
+  // Enough columns to take the table past this window, ticked the way a runner would.
+  await page.locator('details.picker summary').click();
+  for (const label of [/Tongue gusset/, /Outsole durability/, /Heel counter stiffness/]) {
+    await page.getByRole('checkbox', { name: label }).check();
+  }
+  await page.keyboard.press('Escape');
+
+  await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
+  await expect(page.locator('.tblwrap')).toHaveCount(0);
+  // The same row, still open, in the other rendering — and its panel with it.
+  await expect(page.locator('tr.shoe[aria-expanded=true]')).toHaveCount(1);
+  await expect(page.locator('tr.shoe[aria-expanded=true]')).toHaveAttribute('aria-controls', 'detail-cushy');
+  await expect(page.locator('#detail-cushy')).toBeVisible();
+  await expect(page).toHaveURL(/open=cushy/);
+  await expect(page).toHaveURL(/cols=[^&]*tongue-gusset-type/);
+  // And the wash the runner tuned, which the flip hands to the other table as a prop.
+  const paintAfter = await page.locator('span.chip.tinted.blue').first()
+    .evaluate((el) => el.style.getPropertyValue('--w'));
+  expect(paintAfter, 'the resolved paint did not survive the swap').not.toBe('');
 });
