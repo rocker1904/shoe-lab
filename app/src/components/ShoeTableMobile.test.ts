@@ -56,7 +56,7 @@ describe('ShoeTableMobile', () => {
   });
 
   // The set is the parent's now, so a card opened before the component remounts is still open after
-  // — which is what makes crossing 700px stop dropping every panel.
+  // — which is what makes a rendering swap stop dropping every panel.
   it('renders a panel for a card the parent already has open', () => {
     setup({ open: ['cushy'] });
     expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();

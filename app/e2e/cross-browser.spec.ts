@@ -437,7 +437,8 @@ test('caps the expanded row at the summary, anchored left, with the breakdown ce
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`/?cols=${cols}`);
-    // Re-expanded per iteration: crossing 699px swaps which table is mounted, and the open row
+    // Re-expanded per iteration: these widths straddle the fit threshold, so which table is
+    // mounted changes with them, and the open row
     // belongs to the component that just went away.
     await page.getByText('cushy').first().click();
     await expect(page.locator('.detail .a-body')).toBeVisible();
@@ -566,7 +567,7 @@ test('states the order on a phone whenever no header can carry the caret', async
   await expect(note).toHaveCount(0);
 });
 
-test('keeps an open panel across the 700px rendering swap', async ({ page }) => {
+test('keeps an open panel across the rendering swap', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
   await page.getByText('cushy').first().click();

@@ -20,7 +20,12 @@ const FINGERPRINT = /* js */ `() => {
   const rows = document.querySelectorAll('tbody tr');
   return {
     url: location.search,
-    stored: localStorage.getItem('shoe-lab.view.v4'),
+    // The view lives in the address bar and nowhere else, so this is a NEGATIVE reading: the keys
+    // present, which are the theme's and the display preferences' or nothing. It named the
+    // view key until that key was removed, and a fingerprint reading a key nothing writes any
+    // more reports 'no state carried' whatever the app is storing
+    // (docs/app.md §View and URL ownership).
+    stored: Object.keys(localStorage).sort(),
     rowCount: rows.length,
     firstRows: [...rows].slice(0, 3).map((r) => txt(r).slice(0, 60)),
     heads: [...document.querySelectorAll('thead th')].map((th) => ({ label: txt(th).slice(0, 40), sort: th.getAttribute('aria-sort') || null })),

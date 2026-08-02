@@ -27,8 +27,8 @@
     stability: boolean;
     /** A set, not a single slug: comparing two shoes means having both panels open at once. Owned
      *  by `Page.svelte`, because only one of the two tables is ever mounted and a set owned here
-     *  would be dropped whole every time the viewport crossed 700px
-     *  (docs/app.md §Two renderings, and only one of them mounted). */
+     *  would be dropped whole every time the rendering changed — which a ticked column can now do
+     *  at a width that never moved (docs/app.md §Two renderings, and only one of them mounted). */
     open: ReadonlySet<string>;
     ontoggle: (slug: string) => void;
     onchange: (v: ViewState) => void;
