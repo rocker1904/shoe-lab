@@ -69,8 +69,16 @@ counts are taken over the population with *that one facet* removed — a facet
 must not filter itself, and everything else (other facets included) does
 filter it. The key set is seeded from the catalogue's declared options, so a
 value matching nothing shows `(0)` greyed and still clickable (today real:
-`one-side-full` matches no shoe), and from the selection, so a link-borne
-value the catalogue has dropped still has a row to untick. Same
+`one-side-full` matches no shoe); from the **whole fleet's readings** for
+that test, so an undeclared value present in the data gets a stable row and
+a zero rather than a row that reflows with the pool — brand's whole-fleet
+seed, restored to the translation *(amended during delivery, task-3
+reviews: both reviewers independently found the pool walk minting keys —
+one row-set source too many, and the reflow §Filters rules out for brand
+zeros)*; and from the selection, so a link-borne value the catalogue has
+dropped still has a row to untick. The seeds are exhaustive: counting into
+an unseeded key is a defect, not a tolerance, since the pool is a subset of
+the fleet every reading was seeded from. Same
 identity-holding closure shape as `stableBrandCounts`, one per facet row.
 Tri-states carry no counts, like Discontinued — the machinery is easy to add
 if missed in practice.
