@@ -6,6 +6,7 @@ import { fireResizeObservers } from './test-setup';
 import { TABLE_ANCHOR_ID } from './lib/anchor';
 import { indexTests } from './lib/dataset';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
+import { zoneOfKey } from './lib/lineage';
 import { defaultColumns, parseView } from './lib/urlstate';
 import { DISPLAY_DEFAULTS, washAlpha } from './lib/wash';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
@@ -760,6 +761,35 @@ describe('Page story selection', () => {
     settle();
     expect(location.search).not.toContain('r.weight');
     expect(parseView(location.search.slice(1), idx).columns).toEqual(defaultColumns('forefoot'));
+  });
+
+  // Column order is add-history, not intent — nothing in the app reorders columns deliberately —
+  // so a plain table whose only difference is order IS the plain table, and All must stay a no-op
+  // on it rather than reorder what the runner never chose (docs/app.md §What All does).
+  it('All stays marked when the plain table differs only in column order', async () => {
+    const reordered = [...defaultColumns('forefoot').filter((c) => c !== 'score'), 'score'];
+    history.replaceState(null, '', `/?cols=${reordered.join(',')}`);
+    render(Page, { props: { data } });
+    expect(markedStory()).toEqual(['All']);
+
+    await fireEvent.click(screen.getByRole('radio', { name: /^All/ }));
+    expect(markedStory()).toEqual(['All']);
+    settle();
+    expect(parseView(location.search.slice(1), idx).columns).toEqual(reordered);
+  });
+
+  // The one-click return: a zone pressed from a table using neither half appends that zone's two
+  // measurement columns at the end, which is the plain table up to order — so All lights on the
+  // first click rather than demanding a second press to canonicalise an order nobody asked for.
+  it('marks All on the first zone click from a table with no measurements', async () => {
+    const zoneless = defaultColumns('heel').filter((c) => zoneOfKey(c) === null);
+    history.replaceState(null, '', `/?cols=${zoneless.join(',')}`);
+    render(Page, { props: { data } });
+    expect(markedStory()).toEqual(['All']);
+
+    await clickForefoot();
+    expect(markedStory()).toEqual(['All']);
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
   });
 
   it('All on a mixed view clears the filters, leaves the table\'s shape, and then marks itself', async () => {

@@ -363,7 +363,15 @@
     // `stability` rather than the default: it is a property of the runner, not of the search, so
     // `All` must not silently turn it off — and the mark is `sameValue(v, allView(v, zone))`, so a
     // reset here would also unmark `All` for anyone who had set it (docs/app.md §Presets).
-    if (zone !== null) return { ...defaultView(), columns: defaultColumns(zone), stability: v.stability };
+    if (zone !== null) {
+      const plain = { ...defaultView(), columns: defaultColumns(zone), stability: v.stability };
+      // Column order is add-history, not intent — nothing in the app reorders columns
+      // deliberately — so a view that differs from the plain table only in order already is that
+      // table: returned as-is, the mark lights and a press changes nothing, rather than All
+      // reordering what the runner never chose (docs/app.md §What All does).
+      const sorted = (view: ViewState) => ({ ...view, columns: [...view.columns].sort() });
+      return sameValue(sorted(v), sorted(plain)) ? v : plain;
+    }
     const next = structuredClone(v) as ViewState;
     next.filters = { ...EMPTY_FILTERS, ranges: {} };
     return next;

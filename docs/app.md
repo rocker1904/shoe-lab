@@ -2201,22 +2201,28 @@ marked exactly when `sameValue(v, allView(v, zone))`. One function rather than
 an action and a matching predicate, so **marked means pressing it changes
 nothing** is true by construction and cannot drift.
 
-With a derived zone, `All` restores that zone's plain table. With none it
-replaces the filters and touches nothing else — there is no defensible column
-set to impose on a deliberately mixed table, and clearing a bound is not
-removing its row (docs/app.md §Filters), so a hand-added row that was on screen
-only because it carried a bound stays listed and empty. The zoned branch is a
-wholesale restore, which by definition carries no hand-added rows, so there they
-go. The two branches disagreeing is the point.
+With a derived zone, `All` restores that zone's plain table — **up to column
+order**. Column order is add-history, not intent: nothing in the app reorders
+columns deliberately, so a view that differs from the plain table only in order
+already is that table. `allView` returns it unchanged, the mark lights, and a
+press changes nothing — where an order-sensitive restore unmarked `All` the
+moment a default column was unticked and reticked (it comes back at the end),
+and then had a lit press reorder columns the runner never chose. With no
+derived zone `All` replaces the filters and touches nothing else — there is no
+defensible column set to impose on a deliberately mixed table, and clearing a
+bound is not removing its row (docs/app.md §Filters), so a hand-added row that
+was on screen only because it carried a bound stays listed and empty. The zoned
+branch is a wholesale restore, which by definition carries no hand-added rows,
+so there they go. The two branches disagreeing is the point.
 
 **A view with no zone covers two states**, and this branch treats them alike: one
 using *both* halves, and one using *neither* — reachable by unticking Stack and
 Energy return in the column picker, or by a link like `cols=score,weight`. The
 second gets the timid rule too, so `All` leaves those columns alone rather than
-imposing a table on someone who chose not to have one. It costs a click getting
-back: pick a zone and the two measurement columns are appended at the end where
-`defaultColumns` interleaves them, so the order differs, `All` goes unlit, and a
-second press restores the plain table (BACKLOG.md).
+imposing a table on someone who chose not to have one. Getting back is one
+click: pick a zone and the two measurement columns are appended at the end
+where `defaultColumns` interleaves them — an order-only difference, so `All`
+lights on that first click.
 
 Two consequences follow from the identity, and both are deliberate:
 
