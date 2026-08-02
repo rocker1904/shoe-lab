@@ -230,7 +230,8 @@ boundary, and needs the decision above.
 
 Compact and default-omitting, so a shared link carries only what was changed:
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
-`plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`, `missing=1`,
+`plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`,
+`c.<slug>=<comma-joined values>` per feature selection, `missing=1`,
 `stab=1`, `rows` (comma-joined), `open` (comma-joined shoe slugs),
 `sort` (`-` prefix means descending), `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
@@ -267,7 +268,10 @@ malformed bound voids that whole range (dropping one side would silently widen
 it), `after` and `disc` are pattern-checked, a `q` of nothing but whitespace is
 the empty query (§Filters), `plate` keeps only allowlisted members and is
 deduped into declared order, an all-separator `brands`, `plate` or `rows` stays
-absent instead of becoming an empty array, `rows` keeps only rangeable
+absent instead of becoming an empty array, a `c.` key survives only when its
+slug names a **categorical** test in the current catalogue — a numeric test and
+the slug the `plate` field owns are refused there as they are everywhere else —
+and its values are deduped and kept in arrival order, `rows` keeps only rangeable
 non-curated keys, and `cols` is deduped and kept unless it is a sort-only field
 or could never be a slug — the one permissive key, and
 §Columns are permissive, ranges and sorts are strict owns why.
@@ -283,6 +287,15 @@ a shared link shows without saying so — the recipient would see a wider fleet
 than the sender sent and nothing would report the difference. The cost is paid
 in the sidebar instead, where a selected brand the fleet does not hold gets a
 row of its own so it can be seen and unticked (§Filters).
+
+**A `c.` enum value is kept verbatim for that same reason**, and its checklist
+pays the same cost: a selected value the catalogue has since renamed keeps a
+zero-count row rather than disappearing from a shared link. The **bool** tests
+are the exception inside the exception — `true` and `false` are this app's
+words rather than the catalogue's, so no refresh can rename them and they are
+allowlisted. A `c.` bool carrying both values collapses that key to absent: the
+tri-state has no state that shows both, and a state no control can display is
+what `parseView` exists to refuse.
 
 The two generations of a pair are mutually exclusive, and `parseView` is where
 that is enforced for URLs — the one place both can arrive together. When a

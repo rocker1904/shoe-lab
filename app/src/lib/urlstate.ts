@@ -129,6 +129,11 @@ export function serializeView(v: ViewState): string {
   if (v.filters.brands?.length) p.set('brands', v.filters.brands.join(','));
   if (v.filters.search) p.set('q', v.filters.search);
   if (v.filters.discontinued) p.set('disc', v.filters.discontinued);
+  // Written as the state holds them: the order inside a selection is the control's business, and
+  // the parse keeps arrival order, so whatever the UI emits round-trips unchanged.
+  for (const [slug, values] of Object.entries(v.filters.categorical)) {
+    if (values.length) p.set(`c.${slug}`, values.join(','));
+  }
   if (v.filters.showMissing) p.set('missing', '1');
   if (v.stability) p.set('stab', '1');
   if (v.sort.key !== DEFAULT_SORT.key || v.sort.dir !== DEFAULT_SORT.dir) {
@@ -172,6 +177,24 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       if (min !== undefined) b.min = min;
       if (max !== undefined) b.max = max;
       if (b.min !== undefined || b.max !== undefined) v.filters.ranges[target] = b;
+    } else if (key.startsWith('c.')) {
+      // Strict on the key — a slug naming no categorical test has no control to untick and no cell
+      // to cost, so the token is dropped and the view falls back, the ranges posture. The value is
+      // deliberately NOT strict for an option test: `data/` regenerates on a schedule, and refusing
+      // a slug the catalogue has renamed would silently narrow a shared link with nothing on screen
+      // saying why — the `brands` posture, for the `brands` reason.
+      const target = key.slice(2);
+      const test = idx.bySlug.get(target);
+      if (!test || !isCategorical(test)) continue;
+      const values = [...new Set(raw.split(',').filter(Boolean))];
+      // `true`/`false` are this app's words rather than the catalogue's, so a refresh cannot rename
+      // them and they stay allowlisted. A link carrying both collapses to absent: the tri-state has
+      // no state that shows both, and a state no control can display is what this parse refuses.
+      const kept = test.type === 'bool' ? values.filter((x) => x === 'true' || x === 'false') : values;
+      if (test.type === 'bool' && kept.length !== 1) continue;
+      // An all-separator value stays absent rather than becoming an empty selection, which would
+      // keep `isDefaultView` false forever (docs/app.md §Filters). Same rule as `brands`.
+      if (kept.length) v.filters.categorical[target] = kept;
     } else if (key === 'plate' && raw) {
       // Same all-separator rule as `brands`: ",," stays absent rather than becoming an empty array.
       const picked = new Set(raw.split(','));

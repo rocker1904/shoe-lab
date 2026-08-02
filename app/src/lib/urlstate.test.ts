@@ -338,6 +338,87 @@ describe('equality against the baseline', () => {
   });
 });
 
+/**
+ * `c.<slug>` carries a feature selection. Strict on the key, because a key naming no categorical
+ * test has no control to untick; deliberately unstrict on an enum value, because `data/` regenerates
+ * on a schedule and a strict parse would silently narrow a shared link when upstream renames an
+ * option slug (docs/app.md §URL encoding).
+ */
+describe('the feature selection token', () => {
+  const withSelection = (sel: Record<string, string[]>) => {
+    const v = defaultView();
+    v.filters.categorical = sel;
+    return v;
+  };
+
+  it('writes one token per selection and reads it back', () => {
+    const v = withSelection({ 'tongue-gusset-type': ['both-sides-semi'], 'heel-tab': ['pull-tab'] });
+    expect(parseView(serializeView(v), idx).filters.categorical)
+      .toEqual({ 'tongue-gusset-type': ['both-sides-semi'], 'heel-tab': ['pull-tab'] });
+    expect(serializeView(v)).toContain('c.tongue-gusset-type=both-sides-semi');
+    expect(serializeView(v)).toContain('c.heel-tab=pull-tab');
+  });
+
+  it('writes nothing when nothing is selected, and parses back to the default view', () => {
+    expect(serializeView(withSelection({}))).toBe('');
+    expect(serializeView(withSelection({ 'heel-tab': [] }))).toBe('');
+    expect(sameValue(parseView('', idx), defaultView())).toBe(true);
+  });
+
+  it('round-trips a multi-value selection in whatever order the state holds it', () => {
+    for (const values of [['none', 'both-sides-semi'], ['both-sides-semi', 'none']]) {
+      const qs = serializeView(withSelection({ 'tongue-gusset-type': values }));
+      expect(parseView(qs, idx).filters.categorical['tongue-gusset-type'], qs).toEqual(values);
+    }
+  });
+
+  it('dedupes values and keeps their arrival order, like brands', () => {
+    expect(parseView('c.tongue-gusset-type=none,both-sides-semi,none', idx).filters.categorical)
+      .toEqual({ 'tongue-gusset-type': ['none', 'both-sides-semi'] });
+  });
+
+  it('drops a key that names no categorical test in this catalogue', () => {
+    // A numeric test and the slug the `plate` field owns are refused here as they are everywhere
+    // else: neither has a control to untick.
+    for (const qs of ['c.weight=250', 'c.plate=true', 'c.nonesuch=x']) {
+      expect(parseView(qs, idx).filters.categorical, qs).toEqual({});
+      expect(sameValue(parseView(qs, idx), defaultView()), qs).toBe(true);
+    }
+  });
+
+  it('keeps an enum value the catalogue no longer declares, verbatim', () => {
+    expect(parseView('c.tongue-gusset-type=bootie', idx).filters.categorical)
+      .toEqual({ 'tongue-gusset-type': ['bootie'] });
+  });
+
+  it('takes only true or false for a bool test', () => {
+    expect(parseView('c.removable-insole=true', idx).filters.categorical).toEqual({ 'removable-insole': ['true'] });
+    expect(parseView('c.removable-insole=false', idx).filters.categorical).toEqual({ 'removable-insole': ['false'] });
+    expect(parseView('c.removable-insole=yes', idx).filters.categorical).toEqual({});
+  });
+
+  it('collapses a bool carrying both values to absent, because no tri-state can show both', () => {
+    expect(parseView('c.removable-insole=true,false', idx).filters.categorical).toEqual({});
+    expect(sameValue(parseView('c.removable-insole=true,false', idx), defaultView())).toBe(true);
+  });
+
+  it('leaves an all-separator value absent rather than storing an empty selection', () => {
+    // An empty array would keep `isDefaultView` false forever and never let `All` light again.
+    for (const qs of ['c.tongue-gusset-type=,,', 'c.tongue-gusset-type=']) {
+      expect(parseView(qs, idx).filters.categorical, qs).toEqual({});
+    }
+  });
+
+  it('survives a full round trip beside every other filter', () => {
+    const v = defaultView();
+    v.filters.categorical = { 'tongue-gusset-type': ['none'], 'removable-insole': ['true'] };
+    v.filters.brands = ['Brand'];
+    v.filters.ranges['heel-stack'] = { min: 36 };
+    v.filters.discontinued = 'hide';
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+});
+
 describe('the zone the view is about', () => {
   it('never writes a zone key', () => {
     // The shorthand is deferred, not built (BACKLOG.md), and one encoding of the zone is the
