@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ABSENCE_OPTION, categoricalEntries, categoricalValue, facetValues, isCategorical, isNegativeReading } from './categorical';
+import { ABSENCE_OPTION, BOOL_LABELS, categoricalEntries, categoricalValue, facetLabel, facetValues, isCategorical, isNegativeReading } from './categorical';
 import { indexTests } from './dataset';
 import { TESTS, labTest, shoe } from './test-fixtures';
 import type { LabTest } from '../../../shared/types.js';
@@ -71,6 +71,33 @@ describe('isCategorical and categoricalEntries', () => {
     expect(categoricalEntries(TESTS).map((e) => e.key).sort())
       .toEqual(['heel-tab', 'removable-insole', 'tongue-gusset-type']);
     expect(categoricalEntries(TESTS).every((e) => e.groupId === '3')).toBe(true);
+  });
+});
+
+/**
+ * The one home for a value's word, so a checklist row and a table cell cannot drift apart. It takes
+ * the test and the raw value rather than a shoe, because a stale link-borne value has no declared
+ * name and no shoe carrying it (docs/policies.md §Vocabulary).
+ */
+describe('facetLabel', () => {
+  const gusset = idx.bySlug.get('tongue-gusset-type')!;
+
+  it('renders a declared choice by its catalogue name', () => {
+    expect(facetLabel(gusset, 'both-sides-semi')).toBe('Both sides (semi)');
+  });
+  it('falls back to the value itself for a choice the catalogue does not declare', () => {
+    expect(facetLabel(gusset, 'bootie')).toBe('bootie');
+  });
+  it('falls back for a test that declares no choices at all', () => {
+    expect(facetLabel(idx.bySlug.get('removable-insole')!, 'true')).toBe('true');
+  });
+  it('is the same word the cell shows, because the cell reads it from here', () => {
+    const s = shoe({ slug: 'a', values: { '39': 'both-sides-semi' } });
+    expect(categoricalValue(s, 'tongue-gusset-type', idx)).toBe(facetLabel(gusset, 'both-sides-semi'));
+  });
+  it('keeps the bool words in one home too', () => {
+    expect(categoricalValue(shoe({ slug: 'a', values: { '41': true } }), 'removable-insole', idx)).toBe(BOOL_LABELS['true']);
+    expect(categoricalValue(shoe({ slug: 'a', values: { '41': false } }), 'removable-insole', idx)).toBe(BOOL_LABELS['false']);
   });
 });
 

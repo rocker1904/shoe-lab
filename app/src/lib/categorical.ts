@@ -43,20 +43,35 @@ export function isCategorical(test: LabTest | undefined): boolean {
   return test !== undefined && !FIELD_OWNED_SLUGS.has(test.slug) && CATEGORICAL_TEST_TYPES.has(test.type);
 }
 
+/** The two words a bool reading ever shows. One home because a cell and a tri-state both say them,
+ *  and two literals a screen apart is exactly how they would come to differ. */
+export const BOOL_LABELS = { true: 'Yes', false: 'No' } as const;
+
+/**
+ * The word for one raw value of one test: the catalogue's declared name for it, or the value itself
+ * when the catalogue declares no such choice. Keyed on the test and the value rather than on a shoe,
+ * because the values that most need a word are the ones no shoe carries — a link-borne choice the
+ * catalogue has since dropped has no reading anywhere to take it from.
+ *
+ * The fallback is the cell's, for the cell's reason: an upstream addition should read as an
+ * unfamiliar word rather than as a blank (docs/app.md §Categorical columns).
+ */
+export function facetLabel(test: LabTest, value: string): string {
+  return test.options?.find((o) => o.value === value)?.name ?? value;
+}
+
 /**
  * The reading as a reader should see it, or undefined when this shoe has none. Readings store the
- * option *slug*, so the label comes from the catalogue's declared choices; an unrecognised slug
- * falls back to itself rather than vanishing, because an upstream addition should show as an
- * unfamiliar word rather than as no reading at all.
+ * option *slug*, so the word comes from `facetLabel` — the same one a checklist row shows, which is
+ * what stops a cell and a control disagreeing about the same value (docs/policies.md §Vocabulary).
  */
 export function categoricalValue(shoe: Shoe, key: string, idx: TestIndex): string | undefined {
   const test = idx.bySlug.get(key);
   if (!isCategorical(test)) return undefined;
   const raw = shoe.values[String(test!.id)];
   if (raw === undefined) return undefined;
-  if (test!.type === 'bool') return raw === true ? 'Yes' : 'No';
-  const label = test!.options?.find((o) => o.value === raw)?.name;
-  return label ?? String(raw);
+  if (test!.type === 'bool') return raw === true ? BOOL_LABELS['true'] : BOOL_LABELS['false'];
+  return facetLabel(test!, String(raw));
 }
 
 /**
