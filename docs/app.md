@@ -123,14 +123,30 @@ wholesale would discard any filter changed while the row was open. The pending w
 be reached — and nothing is lost, because the state assignment was immediate and the
 reconciling write carries it.
 
-**A row opened by a link or reopened by Forward does not scroll, and Back announces
-nothing.** Where a row sits depends on the sort and the filters, so a runner arriving at
-a table they have not read must not be dropped into the middle of it, and a Back press is
-the one gesture whose whole point is to leave the place you were — yanking the page to a
-row would undo it. The silence is the same call `expanding a row` already makes: the row
-carries `aria-expanded` itself, so the fact is spoken by the element rather than by the
-status region (§What a control says it did), and announcing it only when history moved it
-would make one fact audible or silent depending on how it was reached.
+**A popstate that opens a row scrolls to it; one that only closes does not, and neither
+does a link.** Opening is opening: the same row, reached by Forward instead of by a press,
+gets the same landing — the row target, below both pinned bands, reduced-motion aware —
+because the alternative was one behaviour deciding itself on how the runner got there.
+Measured on the real fleet at a scroll depth of about 4,100px on the desktop rendering and
+7,400px on the phone's, Forward lands the row **flush under the bands, on the same pixel
+the click did**, in Chromium and Firefox alike. Where several rows open at once it is the
+**first in document order** — the sorted row order rather than the order the address lists
+them in, so it is whichever the runner meets first coming down the table — and a slug the
+filters have hidden has no row to land on and is skipped. `Page.svelte` decides *which*
+row; each rendering owns *how* it scrolls, which is why the two tables export the reveal
+rather than sharing one.
+
+The two halves that still do not scroll are the ones that reasoning was actually about. A
+**close** does not, because a click-close does not either, and Back is the one gesture
+whose point is to leave where you were. A **cold link-borne `open=`** does not, because
+where a row sits depends on the sort and the filters, and a runner arriving at a table
+they have not read must not be dropped into the middle of it.
+
+**Back announces nothing**, and that is unchanged. The silence is the same call `expanding
+a row` already makes: the row carries `aria-expanded` itself, so the fact is spoken by the
+element rather than by the status region (§What a control says it did), and announcing it
+only when history moved it would make one fact audible or silent depending on how it was
+reached.
 
 The open set is held **beside** `ViewState`, not in it. Every toolbar mark is a
 `sameValue` comparison of whole views (§Presets), so an `open` field would unmark the

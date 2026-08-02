@@ -687,6 +687,57 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
 });
 
 /**
+ * **Forward-reopening a row lands it on screen, exactly as clicking it does.** Back and Forward are
+ * the only way a row opens that is not a press, and the older rule left them the only way that did
+ * not move the page — the same row, opened the same way, behaving differently by how it was reached
+ * (docs/app.md §View and URL ownership).
+ *
+ * A browser, because the whole claim is about where a box ends up relative to two PINNED bands, and
+ * because `scrollIntoView` is a heuristic each engine owns — which is why this file rather than the
+ * Chromium-only suite. The window is short so the panel is genuinely taller than the viewport,
+ * which is the case that used to put the row itself behind the chrome.
+ */
+test('lands a Forward-reopened row below the pinned bands, as a click would', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 560 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+
+  const row = page.locator('tr.shoe[data-slug="cushy"]');
+  const bands = () => page.evaluate(() => {
+    const chrome = document.querySelector('.chrome')!.getBoundingClientRect();
+    const head = document.querySelector('thead th')!.getBoundingClientRect();
+    return Math.max(chrome.bottom, head.bottom);
+  });
+  const clear = async () => {
+    // `boundingBox` is document-relative; the bands are viewport-relative, so the row is read the
+    // same way they are.
+    const top = await row.evaluate((el) => el.getBoundingClientRect().top);
+    return { top: top - await bands(), bottom: page.viewportSize()!.height - top };
+  };
+
+  await row.click();
+  await expect(page).toHaveURL(/open=cushy/);
+  // Reduced motion is not set, so the click's own scroll is smooth and has to be waited out.
+  await page.waitForTimeout(600);
+  const clicked = await clear();
+  expect(clicked.top, 'the click-expand itself left the row behind the bands').toBeGreaterThanOrEqual(-1);
+
+  await page.goBack();
+  await expect(page).not.toHaveURL(/open=/);
+  await page.goForward();
+  await expect(page).toHaveURL(/open=cushy/);
+  await page.waitForTimeout(600);
+
+  const reopened = await clear();
+  expect(reopened.top, 'the reopened row sits behind the pinned bands').toBeGreaterThanOrEqual(-1);
+  expect(reopened.bottom, 'the reopened row is off the bottom of the window').toBeGreaterThan(0);
+  // The same landing, not merely a legal one: it is the click's rule being reused rather than a
+  // second rule that happens to agree.
+  expect(reopened.top, 'Forward landed the row somewhere a click would not have')
+    .toBeCloseTo(clicked.top, 0);
+});
+
+/**
  * **A range grip sits ON the bound it marks, and inside the row.** The grip is 10px of content
  * inside a 2px ring at `box-sizing: content-box`, so the painted control is 14px while the offset
  * pulling it back onto its own position was half of *ten* — every grip was drawn 2px to the right

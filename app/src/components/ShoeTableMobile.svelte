@@ -106,9 +106,27 @@
     ontoggle(slug);
     if (!opening) return;
     // The panel opens below the shoe, so a shoe near the fold opens off screen. Awaited so the
-    // panel exists to be measured. jsdom lays nothing out and defines neither `matchMedia` nor a
-    // real `scrollTo`, hence the guards and the optional call.
+    // panel exists to be measured.
     await tick();
+    reveal(row);
+  }
+
+  let body = $state<HTMLElement | null>(null);
+  /**
+   * The same landing a tap gets, for a row this component did not open. Back and Forward are the
+   * only other way one opens, and `Page.svelte` owns which row that is
+   * (docs/app.md §View and URL ownership) — it holds a slug off the address and no element, so the
+   * row is looked up here rather than passed in.
+   */
+  export async function revealRow(slug: string): Promise<void> {
+    await tick();
+    reveal(body?.querySelector<HTMLElement>(`tr.shoe[data-slug="${CSS.escape(slug)}"]`) ?? null);
+  }
+
+  /** jsdom lays nothing out and defines neither `matchMedia` nor a real `scrollTo`, hence the
+   *  guards and the optional call. */
+  function reveal(row: HTMLElement | null) {
+    // The name row, then the values row, then the panel.
     const panel = row?.nextElementSibling?.nextElementSibling;
     if (!row || !panel) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -166,14 +184,16 @@
         {/each}
       </tr>
     </thead>
-    <tbody>
+    <!-- `data-slug` is how `revealRow` finds a row Back or Forward opened, which arrives as a slug
+         off the address rather than as an element. -->
+    <tbody bind:this={body}>
       {#each shoes as s, i (s.slug)}
         {#if i > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
         <!-- `aria-expanded` says the row controls something; `aria-controls` is the only thing
              that says what, and the panel is a sibling row rather than a child of the control.
              Emitted only while it is open: the panel exists only then, and an IDREF naming a node
              that is not in the document is an unresolvable reference rather than a promise of one. -->
-        <tr class="shoe" tabindex="0" aria-expanded={open.has(s.slug)}
+        <tr class="shoe" tabindex="0" data-slug={s.slug} aria-expanded={open.has(s.slug)}
             aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
             onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
           <td class="ident" colspan={span}>

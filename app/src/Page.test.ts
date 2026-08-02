@@ -79,6 +79,12 @@ beforeEach(() => {
   // jsdom implements no layout, so Element.prototype has no scrollIntoView and the skip link would
   // throw. Planted rather than guarded at the call site.
   Element.prototype.scrollIntoView = vi.fn();
+  // Back to jsdom's own default. `stubWidth` below redefines this and never puts it back — it hands
+  // out a setter the test keeps driving — so every test after that block ran at whatever width the
+  // last one left, and WHICH TABLE IS MOUNTED is a function of that. Not hypothetical: it is how a
+  // scroll assertion came to watch the desktop rendering's `scrollIntoView` while the phone's
+  // `window.scrollTo` was the call actually being made.
+  Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true, configurable: true });
 });
 afterEach(() => {
   restoreUrls?.();
@@ -1250,10 +1256,82 @@ describe('history is row-based', () => {
     expect(replace).toHaveBeenCalledOnce();
   });
 
+  /*
+   * A popstate that RESULTS IN a row opening scrolls to it, exactly as a click-expand does. Not
+   * jumping was the older rule and it read as inconsistent: the same row, opened the same way,
+   * moved the page under one gesture and not the other. The two halves that still do not scroll are
+   * the ones that reasoning was actually about — a close, and a cold link-borne arrival
+   * (docs/app.md §View and URL ownership).
+   */
+  describe('a popstate that opens a row scrolls to it', () => {
+    // Pinned wide, because these are assertions about the DESKTOP rendering's scroll and which one
+    // mounts is a function of the width (docs/app.md §Two renderings, and only one of them mounted).
+    beforeEach(() => {
+      Object.defineProperty(window, 'innerWidth', { value: 1400, writable: true, configurable: true });
+    });
+    const popTo = async (search: string) => {
+      history.replaceState(null, '', search);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      await tick();
+      await tick();
+    };
+    const scrolls = () => vi.mocked(Element.prototype.scrollIntoView);
+
+    it('scrolls when Forward reopens the row Back closed', async () => {
+      render(Page, { props: { data } });
+      await fireEvent.click(rowFor('cushy'));
+      scrolls().mockClear();
+
+      await popTo('/');
+      expect(scrolls(), 'a popstate that CLOSES must not move the page').not.toHaveBeenCalled();
+
+      await popTo('/?open=cushy');
+      expect(scrolls(), 'a popstate that opens must land the row on screen').toHaveBeenCalled();
+    });
+
+    // The first in DOCUMENT order, which is the sorted row order rather than the token order in the
+    // address: whichever the runner meets first coming down the table is the one to land on.
+    it('lands on the first newly opened row in document order', async () => {
+      render(Page, { props: { data } });
+      scrolls().mockClear();
+      await popTo('/?open=trainer,cushy');
+      expect(scrolls()).toHaveBeenCalled();
+      const order = [...document.querySelectorAll<HTMLElement>('tr.shoe')]
+        .map((r) => r.dataset['slug']!).filter((s) => s === 'cushy' || s === 'trainer');
+      expect(order.length, 'both rows should be on screen to have an order').toBe(2);
+      // Whichever box the rendering chose to scroll — the row, or its panel where the panel fits,
+      // which is the desktop's own rule — belongs to one shoe, and it has to be the first of the
+      // two down the PAGE rather than the first the address happened to list.
+      const to = scrolls().mock.instances[0] as unknown as HTMLElement;
+      expect(to.dataset['slug'] ?? to.id.replace('detail-', ''),
+        'landed further down the table than the first row opened').toBe(order[0]);
+    });
+
+    // A row already open before the pop is not newly opened, so nothing moves for it.
+    it('does not scroll when the popped entry opens nothing new', async () => {
+      history.replaceState(null, '', '/?open=cushy');
+      render(Page, { props: { data } });
+      scrolls().mockClear();
+      await popTo('/?open=cushy&sort=name');
+      expect(scrolls()).not.toHaveBeenCalled();
+    });
+  });
+
   it('a link carrying open rows arrives with them open', () => {
     history.replaceState(null, '', '/?open=cushy');
     render(Page, { props: { data } });
     expect(screen.getByText(/Full review on RunRepeat/)).toBeInTheDocument();
+  });
+
+  // The other half of the F5 reasoning, and it stands: where a row sits depends on the sort and the
+  // filters, so a runner arriving at a table they have not read is not dropped into the middle of it.
+  it('a cold link-borne open row still does not scroll', async () => {
+    history.replaceState(null, '', '/?open=cushy');
+    vi.mocked(Element.prototype.scrollIntoView).mockClear();
+    render(Page, { props: { data } });
+    await tick();
+    await tick();
+    expect(vi.mocked(Element.prototype.scrollIntoView)).not.toHaveBeenCalled();
   });
 
   it('a link naming a shoe that has left the fleet opens nothing', () => {

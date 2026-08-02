@@ -77,7 +77,8 @@
    *
    * Seeded from the link, and a link-borne row deliberately does not scroll: where it sits depends
    * on the sort and the filters, and a runner arriving at a table they have not read should not be
-   * dropped into the middle of it past the receipt and the toolbar. Back is held to the same rule
+   * dropped into the middle of it past the receipt and the toolbar. A popstate that OPENS a row
+   * does scroll — `onPopState` below says why the two are not the same case
    * (docs/app.md §View and URL ownership).
    */
   const open = new SvelteSet<string>(initial.open);
@@ -91,6 +92,10 @@
    * out; the property it protects — a bare link opens expanded, a filtered link collapsed — is the
    * address bar's now, and this is how it is read.
    */
+  /** Whichever rendering is mounted, and only one ever is — so a row Back or Forward opened can be
+   *  landed on the way a tap's is. Each table owns HOW its own rendering scrolls; this is only the
+   *  ask (docs/app.md §View and URL ownership). */
+  let table = $state<{ revealRow: (slug: string) => Promise<void> } | undefined>();
   let stripOpen = $state(initial.bare);
   let stripEl = $state<HTMLElement>();
   /** A JS transition cannot be wrapped in an `@media` block, so the query is asked here instead.
@@ -441,17 +446,28 @@
    * no longer be reached. Nothing is lost — `setView` assigns the state immediately, so the live
    * view already holds the change and the write below carries it (docs/app.md §View and URL ownership).
    *
-   * It says nothing and it scrolls nowhere. The row carries `aria-expanded` itself, which is why
-   * opening one is exempt from the announcement policy in the first place
-   * (docs/app.md §What a control says it did), and yanking the page to a row the runner has just
-   * navigated away from is the same harm a link-borne open row avoids.
+   * It says nothing. The row carries `aria-expanded` itself, which is why opening one is exempt
+   * from the announcement policy in the first place (docs/app.md §What a control says it did).
+   *
+   * It DOES scroll, when the pop RESULTS IN a row opening: the same landing a click-expand gets, on
+   * the first newly opened row in document order. Not jumping was the older rule and it read as
+   * inconsistent — the same row, opened the same way, moved the page under one gesture and not the
+   * other. A pop that only CLOSES still scrolls nowhere, because a click-close does not either
+   * (docs/app.md §View and URL ownership).
    */
   function onPopState() {
     writeView.cancel();
     const rows = parseOpen(location.search.replace(/^\?/, ''), new Set(data.shoes.map((s) => s.slug)));
+    // Read before the set is reconciled below, or every row the entry names looks newly opened.
+    const opened = new Set(rows.filter((slug) => !open.has(slug)));
     for (const slug of [...open]) if (!rows.includes(slug)) open.delete(slug);
     for (const slug of rows) open.add(slug);
     writeAddress(addressOf(snapshot, [...open]));
+    // Document order, which is the SORTED row order and not the order the address lists them in:
+    // the one to land on is whichever the runner meets first coming down the table. A slug the
+    // filters have hidden has no row to land on and falls out here, being absent from the rendering.
+    const target = visibleSorted.find((s) => opened.has(s.slug));
+    if (target) void table?.revealRow(target.slug);
   }
 
   /**
@@ -721,10 +737,10 @@
     <!-- tabindex so the skip link can move focus here: .focus() on a plain container is a no-op. -->
     <div id={TABLE_ANCHOR_ID} tabindex="-1">
       {#if phone}
-        <ShoeTableMobile shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
+        <ShoeTableMobile bind:this={table} shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
                          paint={wash.paint} stability={view.stability} onchange={setView} />
       {:else}
-        <ShoeTable shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
+        <ShoeTable bind:this={table} shoes={visibleSorted} {data} {view} {scores} {open} ontoggle={toggleOpen}
                    paint={wash.paint} stability={view.stability} onchange={setView} />
       {/if}
     </div>
