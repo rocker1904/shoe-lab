@@ -9,12 +9,14 @@ const NUMERIC = new Set(['float', 'score', 'percent', 'rating']);
 /** The absolute shoe-count floor, applied both before and after the join (docs/scraping.md §Validation gates). */
 export const MIN_SHOES = 300;
 
-export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tests: TestsFile): void {
-  const count = Object.keys(next.shoes).length;
-  if (count < MIN_SHOES) throw new ValidationError(`only ${count} shoes (<${MIN_SHOES})`);
-  if (tests.tests.length < 50) throw new ValidationError(`only ${tests.tests.length} tests (<50)`);
+/**
+ * Every reading names a test the catalogue has, and matches that test's declared type. Separate
+ * from the floors below because the catalogue can be rewritten without the readings moving —
+ * `scrape:metrics --from-corpus` does exactly that (docs/scraping.md §Re-extracting from a corpus).
+ */
+export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], tests: TestsFile): void {
   const typeOf = new Map(tests.tests.map((t) => [String(t.id), t.type]));
-  for (const [slug, shoe] of Object.entries(next.shoes)) {
+  for (const [slug, shoe] of Object.entries(shoes)) {
     for (const [testId, value] of Object.entries(shoe.values)) {
       const t = typeOf.get(testId);
       if (!t) throw new ValidationError(`${slug}: value for unknown test ${testId}`);
@@ -24,6 +26,13 @@ export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tes
       if (!ok) throw new ValidationError(`${slug}: test ${testId} has ${typeof value}, expected ${t}`);
     }
   }
+}
+
+export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tests: TestsFile): void {
+  const count = Object.keys(next.shoes).length;
+  if (count < MIN_SHOES) throw new ValidationError(`only ${count} shoes (<${MIN_SHOES})`);
+  if (tests.tests.length < 50) throw new ValidationError(`only ${tests.tests.length} tests (<50)`);
+  validateValuesAgainstCatalogue(next.shoes, tests);
   if (prev) {
     const prevCount = Object.keys(prev.shoes).length;
     if (prevCount > 0 && count < prevCount * 0.9) {
@@ -57,11 +66,15 @@ export function validateShoesFile(f: ShoesFile): void {
   // A published `option` reading has to name one of the choices its test declares, or the app
   // prints a value it cannot label and offers it as a filter beside the vocabulary it is not in.
   const vocabulary = new Map(f.tests.filter((t) => t.options).map((t) => [String(t.id), new Set(t.options!.map((o) => o.value))]));
+  const published = new Set(f.tests.map((t) => String(t.id)));
   for (const s of f.shoes) {
     if (!s.slug || !s.name) throw new ValidationError(`shoe missing slug/name: ${JSON.stringify(s.slug)}`);
     if (!s.values || typeof s.values !== 'object') throw new ValidationError(`${s.slug}: values missing`);
     if (!PLATES.has(s.plate)) throw new ValidationError(`${s.slug}: bad plate ${String(s.plate)}`);
     for (const [testId, value] of Object.entries(s.values)) {
+      // Published tests are the catalogue's, filtered to those with a reading — so a reading no
+      // published test claims is one the catalogue itself has lost.
+      if (!published.has(testId)) throw new ValidationError(`${s.slug}: value for unknown test ${testId}`);
       const choices = vocabulary.get(testId);
       if (choices && !choices.has(String(value))) {
         throw new ValidationError(`${s.slug}: test ${testId} has ${JSON.stringify(value)}, not a declared option`);

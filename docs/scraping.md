@@ -104,7 +104,10 @@ means a red workflow and untouched `data/` — never a partial write.
   `lab_tests` payload fails before a single API call is spent.
 - **Type matching:** every value must match its test's declared type
   (numeric family → number, `bool` → boolean, everything else → string), and
-  a value for a test id absent from the catalogue is fatal.
+  a value for a test id absent from the catalogue is fatal. Checked wherever
+  the two can drift apart: the metrics crawl, the catalogue-only corpus rewrite
+  (§Re-extracting from a corpus), and the join, which sees page readings the
+  metrics path never does.
 - **Relative, previous-run gates:** shoe count below 90 % of the previous run,
   or more than 20 % of previously present (slug, testId) pairs missing. These
   are skipped when `metrics.json` does not yet exist — a first run is
@@ -421,7 +424,9 @@ a backfill needs `--from-corpus <dir> --force-all`, which reads every page and
 still makes no request;
 `scrape:metrics` re-extracts the **catalogue only** and deliberately leaves
 `metrics.json` untouched, because the readings live behind the API and cannot
-be replayed from a page. Neither path constructs a request, so neither passes
+be replayed from a page — so it validates those readings against the catalogue
+it is about to write, a seed that has dropped a test being the one way to
+orphan them (§Validation gates). Neither path constructs a request, so neither passes
 through the robots gate. Recorded `scrapedAt` values stand: re-reading disk is
 not reading RunRepeat (§Determinism).
 

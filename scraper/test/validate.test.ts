@@ -145,6 +145,14 @@ describe('validateShoesFile', () => {
     expect(() => validateShoesFile({ ...good, shoes: [] })).not.toThrow();
   });
 
+  // The rule §Validation gates states unqualified — it held on the metrics path alone until a
+  // catalogue rewrite proved it could be broken at the join.
+  it('rejects a reading for a test the published catalogue does not contain', () => {
+    const orphaned = structuredClone(good);
+    orphaned.shoes[0]!.values['999'] = 1;
+    expect(() => validateShoesFile(orphaned)).toThrow(ValidationError);
+  });
+
   // A categorical reading outside its declared choices is unlabellable — the app would print the
   // raw value and offer it as a filter choice next to the vocabulary it is not in
   // (docs/scraping.md §Readings taken from the page).

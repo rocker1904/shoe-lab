@@ -8,7 +8,7 @@ import { parseLabTestList } from './lab-test-list.js';
 import { extractPagePayload, PayloadError } from './page-payload.js';
 import { isPathAllowed, parseRobots } from './robots.js';
 import { extractTestCatalogue } from './test-catalogue.js';
-import { validateMetrics } from './validate.js';
+import { validateMetrics, validateValuesAgainstCatalogue } from './validate.js';
 
 const BASE = 'https://runrepeat.com';
 const API = 'https://api.runrepeat.com';
@@ -34,8 +34,12 @@ function catalogueFromCorpus(dataDir: DataDir, corpusDir: string, seed: string):
   // (docs/scraping.md §Determinism).
   const scrapedAt = dataDir.read<TestsFile>('tests.json')?.scrapedAt ?? new Date().toISOString();
   const tests = extractTestCatalogue(page.pageData, seed, scrapedAt);
+  const metrics = dataDir.read<MetricsFile>('metrics.json');
+  // The readings stay where they are, so a catalogue that no longer names one of them orphans it
+  // — the rule holds on this path too (docs/scraping.md §Validation gates).
+  if (metrics) validateValuesAgainstCatalogue(metrics.shoes, tests);
   dataDir.write('tests.json', tests);
-  return { shoeCount: Object.keys(dataDir.read<MetricsFile>('metrics.json')?.shoes ?? {}).length, testCount: tests.tests.length };
+  return { shoeCount: Object.keys(metrics?.shoes ?? {}).length, testCount: tests.tests.length };
 }
 
 export async function scrapeMetrics({ http, dataDir, seed, corpusDir, log = () => {} }: ScrapeMetricsOptions): Promise<{ shoeCount: number; testCount: number }> {

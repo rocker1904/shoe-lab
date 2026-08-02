@@ -381,6 +381,15 @@ describe('buildDataset empty-test drop', () => {
     details.shoes['shoe-010'] = detailRecord({ categorySlug: 'hiking-boots' });
     expect(buildDataset(tests, metrics, details).shoesFile.tests.map((t) => t.id)).not.toContain(17);
   });
+
+  // A catalogue rewrite can drop a test the readings on disk still name. Dropping it from
+  // `tests[]` is the empty-test rule doing its job; shipping its readings anyway is an orphan
+  // (docs/scraping.md §Validation gates).
+  it('refuses readings whose test the catalogue no longer contains', () => {
+    const { metrics, details } = baseInputs();
+    const without6: TestsFile = { ...tests, tests: tests.tests.filter((t) => t.id !== 6) };
+    expect(() => buildDataset(without6, metrics, details)).toThrow(ValidationError);
+  });
 });
 
 // A page groups only the tests its own shoe was run for, so the seed alone leaves about half

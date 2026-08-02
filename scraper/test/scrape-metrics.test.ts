@@ -101,6 +101,22 @@ describe('scrapeMetrics from a corpus', () => {
     expect(dir.read<MetricsFile>('metrics.json')).toEqual(metrics);
     expect(dir.read<TestsFile>('tests.json')!.scrapedAt).toBe('2026-02-02T00:00:00Z');
   });
+  // The catalogue is rewritten while the readings stay put, so this path is the one that can
+  // orphan them — a seed that dropped a test, or a --seed pointed at another shoe.
+  it('refuses a catalogue that orphans readings already on disk, and writes nothing', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    dir.write('metrics.json', { scrapedAt: '2026-01-01T00:00:00Z', shoes: { a: { name: 'A', url: 'u', values: { '99999': 1 } } } });
+    await expect(scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: corpus })).rejects.toThrow(/unknown test 99999/);
+    expect(dir.read('tests.json')).toBeNull();
+  });
+
+  it('accepts a catalogue that still covers every reading on disk', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    dir.write('metrics.json', { scrapedAt: '2026-01-01T00:00:00Z', shoes: { a: { name: 'A', url: 'u', values: { '5': 32.7 } } } });
+    await expect(scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: corpus })).resolves.toBeTruthy();
+    expect(dir.read<TestsFile>('tests.json')!.tests.length).toBeGreaterThanOrEqual(50);
+  });
+
   it('throws rather than falling back to the network when the seed is not in the corpus', async () => {
     const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
     await expect(scrapeMetrics({ dataDir: dir, seed: 'no-such-shoe', corpusDir: corpus })).rejects.toThrow(/not in corpus/);
