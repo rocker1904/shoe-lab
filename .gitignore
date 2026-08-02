@@ -15,3 +15,5 @@ test-results/
 # written: check:docs scans untracked-but-unignored files for dead doc pointers, so a finding
 # that correctly reports a broken pointer would fail the build by being right.
 .hunt/
+# The delivering skill's per-spec progress ledger — survives compaction, not git.
+.delivery/
