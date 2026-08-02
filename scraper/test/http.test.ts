@@ -11,7 +11,9 @@ function harness(responses: Array<{ status: number; body?: string } | Error>) {
       const next = responses.shift();
       if (!next) throw new Error('unexpected extra request');
       if (next instanceof Error) throw next;
-      return new Response(next.body ?? 'ok', { status: next.status });
+      // 204 and 304 are null-body statuses: giving Response one throws before the client sees it.
+      const nullBody = next.status === 204 || next.status === 304;
+      return new Response(nullBody ? null : next.body ?? 'ok', { status: next.status });
     }) as typeof fetch,
     sleep: async (ms) => { sleeps.push(ms); clock += ms; },
     now: () => clock,
@@ -66,6 +68,17 @@ describe('PoliteHttp', () => {
     const { http, calls } = harness([{ status: 404 }]);
     await expect(http.getText('https://x/a')).rejects.toThrow(HttpStatusError);
     expect(calls.length).toBe(1);
+  });
+  // fetch follows redirects itself, so a 3xx that reaches here is a 304 or a redirect it could
+  // not follow — an answer, and retrying it three times is 150 s and three requests for the
+  // same answer.
+  it('fails 3xx immediately without retry', async () => {
+    for (const status of [301, 304, 308]) {
+      const { http, calls, sleeps } = harness([{ status }]);
+      await expect(http.getText('https://x/a')).rejects.toThrow(HttpStatusError);
+      expect(calls.length).toBe(1);
+      expect(sleeps).toEqual([]);
+    }
   });
   it('parses JSON', async () => {
     const { http } = harness([{ status: 200, body: '{"a":1}' }]);

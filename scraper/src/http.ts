@@ -61,7 +61,9 @@ export class PoliteHttp {
         err = e;
       }
       if (res?.ok) return res;
-      if (res && res.status >= 400 && res.status < 500) throw new HttpStatusError(res.status, url);
+      // Only a 5xx or a network error is a transient. fetch follows redirects itself, so a 3xx
+      // here is an answer too — retrying one costs 150 s and three requests to be told it again.
+      if (res && res.status < 500) throw new HttpStatusError(res.status, url);
       const delay = this.retryDelays[attempt];
       if (delay === undefined) {
         if (res) throw new HttpStatusError(res.status, url);

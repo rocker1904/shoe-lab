@@ -382,6 +382,17 @@ describe('buildDataset empty-test drop', () => {
     expect(buildDataset(tests, metrics, details).shoesFile.tests.map((t) => t.id)).not.toContain(17);
   });
 
+  // A slug is a URL path segment, so nothing stops one naming an Object.prototype key. Read off
+  // a plain object it would publish the prototype's value — a shoe dated "function Object()".
+  it('reads no shoe field off the prototype chain', () => {
+    const { metrics, details } = baseInputs();
+    metrics.shoes['constructor'] = { name: 'Constructor', url: 'https://runrepeat.com/uk/constructor', values: { '6': 30 } };
+    const years: ReleaseYearsFile = { scrapedAt: '2026-07-20T00:00:00Z', years: {} };
+    const built = buildDataset(tests, metrics, details, years).shoesFile.shoes.find((s) => s.slug === 'constructor')!;
+    expect(built.releasedAt).toBeNull();
+    expect(built.details).toBeNull();
+  });
+
   // A catalogue rewrite can drop a test the readings on disk still name. Dropping it from
   // `tests[]` is the empty-test rule doing its job; shipping its readings anyway is an orphan
   // (docs/scraping.md §Validation gates).

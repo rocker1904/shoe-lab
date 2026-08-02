@@ -70,13 +70,18 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
   const ruleDerived = new Map<string, Plate>();
   // Slug -> whether the page gave a precise date, so the curated gate can see the whole fleet.
   const pageDated = new Map<string, boolean>();
-  const shoes: Shoe[] = Object.keys(metrics.shoes).sort().filter((slug) => isRunningShoe(details.shoes[slug])).map((slug) => {
+  // Both inputs are slug-keyed plain objects, and a slug is a URL path segment — nothing stops one
+  // being `constructor`, which off a plain object answers with Object.prototype's value rather
+  // than a miss. Maps have no prototype chain to read.
+  const detailOf = new Map(Object.entries(details.shoes));
+  const yearOf = new Map(Object.entries(releaseYears?.years ?? {}));
+  const shoes: Shoe[] = Object.keys(metrics.shoes).sort().filter((slug) => isRunningShoe(detailOf.get(slug))).map((slug) => {
     const m = metrics.shoes[slug]!;
-    const rec = details.shoes[slug];
+    const rec = detailOf.get(slug);
     const det = rec && !isTombstone(rec) ? rec : null;
     const features = det?.features ?? [];
     ruleDerived.set(slug, plateFromRules(features, det?.hasPlateSection === true));
-    const year = releaseYears?.years[slug];
+    const year = yearOf.get(slug);
     const pageDate = det?.releasedAt ?? null;
     const precise = pageDate !== null && det!.preciseReleaseDate;
     pageDated.set(slug, precise);

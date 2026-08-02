@@ -66,9 +66,10 @@ robots.txt, is docs/decisions.md §Be a good citizen toward RunRepeat.
 - **One request at a time, ≥1 s apart.** The gap is measured start-to-start
   from the previous request, so a slow response never shortens it and a fast
   one never lets two requests bunch. No concurrency, ever.
-- **Retries: three, 5 s → 25 s → 120 s, on 5xx and network errors only.** Any
-  4xx throws `HttpStatusError` immediately — a 404 is an answer, not a
-  transient, and retrying it is pure extra load. `scrape:details` converts
+- **Retries: three, 5 s → 25 s → 120 s, on 5xx and network errors only.**
+  Anything else throws `HttpStatusError` immediately — a 404 is an answer, not
+  a transient, and retrying it is pure extra load; so is a 3xx, which reaches us
+  only when `fetch` has already declined to follow it. `scrape:details` converts
   exactly the 404 into a tombstone (§Decisions).
 - **Honest User-Agent** with the repo URL as contact, one constant in
   `http.ts`. If RunRepeat objects, that is the channel.
