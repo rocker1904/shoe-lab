@@ -490,11 +490,11 @@ and its click runs the same `onclose` Escape does, so there is one dismissal
 path and not two. It renders at **every** width, unlike the drawer's, because
 this dialog is modal on the desktop too: it declares `aria-modal` and traps Tab,
 and without a scrim it floated over live content with nothing saying the page
-behind it was inert. **The dimming is provisional** — it is the only dim a
-runner meets at a desktop width, where the loop is *change a bound, read the
-table*, so the element and its rules are deliberately kept droppable and both
-sites say so (BACKLOG.md). The outside-press dismissal it carries is not
-provisional and would have to survive it
+behind it was inert. **The dimming stays**, and it is the only dim a runner meets
+at a desktop width: dimming is this app's one elevation language, and nothing
+that declares itself modal floats over live content without it — the drawer's
+scrim is the same statement wherever the sidebar is a drawer. The outside-press
+dismissal it carries is the affordance every floating panel gives
 (§Every floating panel dismisses the same way).
 
 The sidebar's **two whole-surface actions sit as a pair** at its foot — Add

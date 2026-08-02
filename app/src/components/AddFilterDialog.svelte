@@ -67,13 +67,9 @@
   }
 </script>
 
-<!-- PROVISIONAL, pending the decision recorded in BACKLOG.md: the dimming is on trial, the outside
-     click is not. Dropping it is this element, the `.scrim` rules below and the test that names
-     `add-filter-scrim` — nothing else reads any of the three, and `onclose` is the dialog's own
-     prop. Something must still dismiss on an outside press if this goes: every other floating
-     surface does (docs/app.md §Filters).
-     Moved to `<body>` on its own, not nested in the panel: it has to sit UNDER the dialog and over
-     the drawer, and a child of the dialog could only ever paint above it. -->
+<!-- Moved to `<body>` on its own, not nested in the panel: it has to sit UNDER the dialog and over
+     the drawer, and a child of the dialog could only ever paint above it. Its click is the outside
+     press every floating surface here answers (docs/app.md §Filters). -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="scrim" data-testid="add-filter-scrim" onclick={onclose} use:toBody></div>
@@ -170,9 +166,7 @@
            border: 1px solid var(--border); background: var(--surface); color: var(--text);
            border-radius: var(--r-sm); font: inherit; font-size: var(--t-sm); }
   .close:hover { background: var(--accent-dim); }
-  /* PROVISIONAL with the element it paints — these four rules are the whole of it, and nothing
-     above depends on them (BACKLOG.md).
-     32: under the dialog's 35 and over the drawer's 30, which is the layer it opens from below
+  /* 32: under the dialog's 35 and over the drawer's 30, which is the layer it opens from below
      the sidebar boundary (docs/app.md §Stacking order). Rendered at every width — unlike the drawer's scrim, this
      dialog is modal on the desktop too. */
   .scrim { position: fixed; inset: 0; z-index: 32; background: var(--scrim); }
