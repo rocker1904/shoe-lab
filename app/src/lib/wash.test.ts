@@ -347,7 +347,9 @@ describe('every preference state the sliders can reach stays legible', () => {
     }
   }
 
-  it(`holds 4.5:1 across ${states.length} states, both themes, hovered`, () => {
+  // Compute-bound: 252 solver states × two themes × 121 swept cells. A slow CI runner crossed
+  // vitest's 5s default; the guard's bound is correctness, not latency.
+  it(`holds 4.5:1 across ${states.length} states, both themes, hovered`, { timeout: 30_000 }, () => {
     let worst = Infinity;
     let worstAt = '';
     for (const prefs of states) {
