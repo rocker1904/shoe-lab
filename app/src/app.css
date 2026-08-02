@@ -122,6 +122,28 @@
 body { margin: 0; background: var(--bg); color: var(--text); }
 
 /**
+ * `font-family` does not inherit into a form control: with no rule here a `<button>` renders in the
+ * UA's own default form face, and this app self-hosts a face precisely so it never has to ask the
+ * machine what it has. Four components had already written `font: inherit` for themselves; this is
+ * that same fact, once, for the forty-five controls that had not.
+ *
+ * It is a MEASUREMENT rule as much as a typographic one, which is why it sits with the tokens rather
+ * than inside a component. The UA face is not one face: Chromium asks for `Arial`, Firefox and
+ * WebKit for the generic `sans-serif`, and each host resolves those against its own fontconfig — so
+ * the toolbar's one-row band measured 7px of slack on a developer's machine, 32px in the Playwright
+ * image and −15px on a CI runner whose `sans-serif` is DejaVu Sans, where it wrapped. A band whose
+ * width is the HOST's cannot be held to a number by any test (`.hunt/fixlog-f13.md`,
+ * docs/app.md §The chrome bands). With this rule every measured width in that section is the app's
+ * own, and `draws every control in a face this app names` fails the build on the next control that
+ * escapes it.
+ *
+ * `font-family` alone, not the `font` shorthand: the shorthand also resets `font-size` to the
+ * document's 16px for every control that states none, which is a layout change this rule has no
+ * business making. Each component keeps owning its own size.
+ */
+button, input, select, textarea { font-family: inherit; }
+
+/**
  * One ring for every focusable thing EXCEPT a table row. The 2px gap is PAINTED in the surface
  * colour rather than left transparent, because a plain `outline-offset` shows whatever is behind:
  * on a chip carrying the wash's peak alpha the ring would sit accent-on-accent and nearly vanish

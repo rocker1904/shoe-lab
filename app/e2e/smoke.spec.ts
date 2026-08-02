@@ -601,8 +601,8 @@ test('lays the chrome out in bands', async ({ page }) => {
   // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
   // what the table is, so the row carrying every word is the one nearest the table. This boundary is
   // the CHROME's own and no longer the sidebar's, which sits far wider — the merged line the design
-  // wanted from 700 up does not fit the shipped controls until 777px, which is not a band
-  // (docs/app.md §The chrome bands).
+  // wanted from 700 up does not fit the shipped controls until 731px, so it would cover 69 of the
+  // 100 pixels asked for and wrap in the wrong order below that (docs/app.md §The chrome bands).
   for (const width of [800, 760, 660]) {
     await page.setViewportSize({ width, height: 900 });
     const split = await bands();
@@ -934,6 +934,60 @@ test('never ships an icon without its name', async ({ page }) => {
     await expect(page.locator('details.picker summary'), `Columns at ${width}px`)
       .toHaveAttribute('aria-label', /^Columns, \d+ shown$/);
   }
+});
+
+/**
+ * A form control does not inherit `font-family`: with no reset a `<button>` renders in the UA's own
+ * default form face, which is not the document's and is not the same face twice. That is a
+ * typography defect on every screen — Arial pills beside an Inter Tight table — and it is also what
+ * makes a measured band unreproducible, because the face is the HOST's rather than the app's:
+ * Chromium asks for `Arial`, Firefox and WebKit for the generic `sans-serif`, and the three
+ * machines this repo renders on resolve those to three different widths. The toolbar's one-row band
+ * had 7px of slack here, 32px in the Playwright image and −15px on a runner whose `sans-serif` is
+ * DejaVu, which is the whole of `.hunt/fixlog-f13.md`.
+ *
+ * So the claim is exact rather than approximate: every control renders in a face this app names.
+ * `--font-mono` is as legitimate an answer as `--font-ui` — the count badges and figure inputs are
+ * deliberately mono — but a UA fallback is neither, and it is exactly what a missing reset reads as.
+ *
+ * Chromium-only is enough: the reset is a CSS rule, so an engine that has it has it, and the
+ * fallback name Chromium reports (`Arial`) fails this as loudly as Firefox's would.
+ */
+test('draws every control in a face this app names', async ({ page }) => {
+  const strayFaces = () => page.evaluate(() => {
+    const ui = getComputedStyle(document.documentElement).getPropertyValue('--font-ui').trim();
+    const mono = getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim();
+    // Compared on the FIRST family only: engines re-quote and re-space a font stack differently
+    // (`"Inter Tight", system-ui` against `Inter Tight, system-ui`), and the first name is the whole
+    // of the claim — a control that reached the app's face did not fall back.
+    const head = (s: string) => s.split(',')[0]!.trim().replace(/^["']|["']$/g, '');
+    const named = new Set([head(ui), head(mono)]);
+    return [...document.querySelectorAll<HTMLElement>('button, input, select, textarea')]
+      .map((el) => ({ ff: getComputedStyle(el).fontFamily,
+                      what: (el.getAttribute('aria-label') ?? el.textContent ?? el.id).trim().slice(0, 30) }))
+      .filter((c) => !named.has(head(c.ff)))
+      .map((c) => `${c.what || '(unnamed)'} → ${c.ff}`);
+  });
+
+  // 1440px, where the sidebar is a permanent column: every filter control is mounted with no scrim
+  // over it. The two floating panels are opened ONE AT A TIME and closed again, because an outside
+  // press dismisses the other (§Every floating panel dismisses the same way) — so a second click
+  // never reaches its target and the panel it was meant to open never mounts.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  expect(await strayFaces(), 'a desktop control fell back to the UA form face').toEqual([]);
+  for (const open of [() => page.locator('details.picker summary').click(),
+                      () => page.getByRole('button', { name: 'Display' }).click()]) {
+    await open();
+    expect(await strayFaces(), 'a control in a floating panel fell back').toEqual([]);
+    await page.keyboard.press('Escape');
+  }
+
+  // 390px, where the chrome is three bands and the table is the phone rendering — a different set
+  // of components, and the one the glyph forms and the stacked list only ever mount in.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  expect(await strayFaces(), 'a phone control fell back to the UA form face').toEqual([]);
 });
 
 test('opens the About panel from the bar and from the strip', async ({ page }) => {

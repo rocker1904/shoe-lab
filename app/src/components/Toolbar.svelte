@@ -156,11 +156,12 @@
        the cap below, so it would overflow its own band before any viewport did. */
     .s { padding-inline: var(--s2); }
     .actions { order: -1; flex-basis: 100%; }
-    /* `--s1` rather than the base `--s2`, and it is a FIT rule rather than a spacing one: under
-       `space-between` the gap is only a floor, so the visible gaps are whatever the row has spare
-       and this changes nothing above the binding widths. It changes everything at them, because
-       Firefox sets these groups wider than Chromium does and a Chromium-only check would have
-       shipped the overflow (docs/app.md §The chrome bands). */
+    /* `--s1` rather than the base `--s2`, and it is SPACING: under `space-between` the gap is only
+       a floor, so the visible gaps are whatever the row has spare and it shows only at the widths
+       where the row nearly fills. It was written as a fit rule against a Firefox row that came out
+       4px over the screen at 360px — but that 9px of Firefox-over-Chromium was the UA form face,
+       not the engine, and the row now clears every width at either value
+       (docs/app.md §The chrome bands). */
     .setup { flex-basis: 100%; justify-content: space-between; gap: var(--s1);
              max-width: 414px; margin-inline: auto; }
   }

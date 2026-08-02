@@ -587,10 +587,17 @@ test('keeps an open panel across the rendering swap', async ({ page }) => {
  * the row at its longest against the least width it ever has.
  *
  * It runs HERE rather than in `smoke.spec.ts` because the slack differs by ENGINE and the binding
- * one is not the suite's default: measured, 22px in Chromium, 34px in WebKit and **9px in
- * Firefox**, which is the same nine pixels of group width the bands below already turn on
- * (docs/app.md §The chrome bands). A Chromium-only check would read 22px clear on the width where
- * Firefox has nine, which is exactly how the sub-800 bands shipped an overflow once already.
+ * one is not the suite's default (docs/app.md §The chrome bands). A Chromium-only check would read
+ * the widest of the three on the width where the other two are tightest, which is exactly how the
+ * sub-800 bands shipped an overflow once already.
+ *
+ * The slack is 33px in Firefox and WebKit and 36px in Chromium, and those numbers are the same on
+ * every machine only because the controls carry the app's own face. Until they did, this row was
+ * drawn in whatever form face the HOST resolved for the engine — 9px of slack in the Playwright
+ * image, −15px on a runner whose `sans-serif` is DejaVu Sans, which is what failed CI twice while
+ * passing everywhere else (`.hunt/fixlog-f13.md`). Hence the face assertion below: it is not
+ * decoration on this test, it is the precondition that makes the other two numbers mean anything,
+ * and `draws every control in a face this app names` guards the rule itself.
  */
 test('keeps the one-row toolbar to one row at the narrowest width that has one', async ({ page }) => {
   await page.setViewportSize({ width: 801, height: 900 });
@@ -615,8 +622,14 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
       free: Math.round(tb.getBoundingClientRect().width - parseFloat(cs.paddingLeft)
         - parseFloat(cs.paddingRight) - setup.width - actions.width - parseFloat(cs.columnGap)),
       worded: getComputedStyle(tb.querySelector('.filters-toggle .word')!).display !== 'none',
+      // The widest control on the row, and the one whose face decides whether the row fits.
+      face: getComputedStyle(tb.querySelector('.about')!).fontFamily,
     };
   });
+  // Read first, because it is what the two widths below are a measurement OF: a row drawn in the
+  // host's form face has no reproducible width and the numbers in this file would be this
+  // machine's rather than the app's.
+  expect(bar.face, 'the toolbar fell back to the host UA form face').toContain('Inter Tight');
   // The word is what makes this tight at all, so a glyph here would pass the bound while retiring
   // the claim (docs/app.md §Where the utilities live).
   expect(bar.worded, 'Filters lost its word above the chrome boundary').toBe(true);

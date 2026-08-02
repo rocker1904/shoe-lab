@@ -194,8 +194,8 @@
           margin-inline: calc(-1 * var(--ring-room)); }
 
   /* Below 800px the trigger is no longer the end of a row that fits: the actions band takes the
-     whole width and at 320px the bar's own contents need 346px, so the control sits 19px PAST the
-     right edge and a panel anchored to it goes with it. Dropping the containing block hands the
+     whole width and at 320px the bar's own contents need 331px against 304px, so the control sits
+     up to 19px PAST the right edge and a panel anchored to it goes with it. Dropping the containing block hands the
      panel to `.chrome`, which is the viewport's width at every scroll position, and `top: 100%` is
      then the foot of the chrome band rather than the foot of the trigger. The same fix the column
      picker earned, for the same reason, and AFTER the base rule for the same one again: a media

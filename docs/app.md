@@ -2305,10 +2305,20 @@ is a question about *the table's min-content*, which is 917px on its own and
 Between them the bar is one row carrying an extra control it never used to
 carry — `Filters`, **with its word**, because words-become-icons is the chrome's
 boundary and did not move. Measured at 801px with a two-digit column badge, the
-row's remaining slack is 22px in Chromium, 34px in WebKit and **9px in
-Firefox**; `keeps the one-row toolbar to one row at the narrowest width that has
-one` is in `cross-browser.spec.ts` rather than the smoke suite for exactly that
-reason — the binding engine is not the one the layout suite runs.
+row's remaining slack is **36px in Chromium and 33px in Firefox and WebKit**;
+`keeps the one-row toolbar to one row at the narrowest width that has one` is in
+`cross-browser.spec.ts` rather than the smoke suite because the two engines that
+run there are the two whose UA form face is the generic `sans-serif`, which is
+how this row once wrapped on CI alone.
+
+**Every number in this section is the app's own face, and until F13 none of
+them were.** The controls did not inherit `font-family`, so the bar was drawn in
+whatever form face the host resolved for the engine (§Theming). The three
+engines now agree to within **2.4px** across the whole setup row, where they
+used to disagree by nine — the "nine pixels" this section turned two rules on
+was the gap between Firefox's `sans-serif` and Chromium's `Arial`, not a
+property of either engine's layout. The measurements below were retaken on all
+three engines afterwards.
 
 **`800px` is written `800px` rather than `799.98px`**, so exactly 800 is
 "mobile" as it always has been. `429.98px` and `1190.98px` take the repo's `.98`
@@ -2320,14 +2330,17 @@ width at which it fits.
 
 **The design asked for a merged line from 700px to 800px, and the shipped
 controls do not fit one.** Measured with the icon forms in place, the setup row
-needs 411px and the actions 330px — the actions carry a worded `About`, two
-glyphs and the three utilities — so the merged line's own minimum is a 765px
-viewport in Chromium and 777px in Firefox. A band 23px wide is not a band, and
-between 700 and 777 the bar wrapped anyway with the two rows in the **wrong
-order**: `flex-wrap` puts the actions after the setup, where the design puts them
-above it. So the split moved to the boundary that already exists, and the bands
-are separate for the whole sub-800 range. The cost is one row of chrome between
-700px and 800px that the design hoped to save.
+needs 374px in Chromium and 376px in Firefox and WebKit, and the actions 329px
+and 331px — the actions carry a worded `About`, two glyphs and the three
+utilities — so the merged line's own minimum is a **727px viewport in Chromium
+and 731px in the other two**. It covers 69 of the 100 pixels the design asked
+for, not the band; below 731 the bar wraps anyway with the two rows in the
+**wrong order**, because `flex-wrap` puts the actions after the setup where the
+design puts them above it. So the split stays on the boundary that already
+exists and the bands are separate for the whole sub-800 range, which is one row
+of chrome between 700px and 800px that the design hoped to save. The old figures
+here — 411px and 330px, for a 765px/777px minimum — were the host UA face, and
+the app's own face is what moved them.
 
 **The actions lead and the setup follows.** What acts on the table sits above
 what the table is, so the row carrying every word and all the colour is the one
@@ -2343,29 +2356,35 @@ was measured and rejected: it never touches the padding edge again at any width.
 
 **The pill padding steps at `429.98px`, not at the `374.98px` the design named.**
 That figure came from a rig carrying the app's tokens but not its components, and
-its pills are narrower than the real ones by enough to move the boundary: on the
-design's ladder the three groups measure 400px at 360px against the 344px
-available, so the flush band — the one the rebuild exists to make flush —
-overflowed at 360, 375 and 390. At `--s1` for **every** pill they measure 328px.
-So the step moved to the boundary that already existed for that band and one
-width changes shape instead of two.
+its pills are narrower than the real ones by enough to move the boundary. Held
+at the band above's `--s2`, the three groups measure **374px in Chromium and
+376px in Firefox and WebKit** against the 344px available at 360px — 30 to 32px
+over — and they are still 15 to 17px over at 375px and 0 to 2.4px over at 390px,
+so the flush band, the one the rebuild exists to make flush, overflowed at all
+three. At `--s1` for **every** pill they measure 318px and 320px, which is 24 to
+26px clear at 360px. So the step moved to the boundary that already existed for
+that band and one width changes shape instead of two.
 
 **Both steps are written twice, and Svelte's scoping leaves no way to state them
 once.** `ZoneToggle.svelte` owns its own buttons' padding in its own scoped style
 block, so `Toolbar.svelte`'s `.s` rule has never reached them — which is why
 "every pill" is spelled out. Stepping only the pills the toolbar owns leaves the
-row 16px over at 360px, and leaves the zone group a step behind its neighbours
-between 430px and 800px: one group padded differently from the two it stands
-with, in a row whose whole point is that the three read as one family.
+row 14px over at 360px in Chromium and 16px over in the other two, and leaves
+the zone group a step behind its neighbours between 430px and 800px: one group
+padded differently from the two it stands with, in a row whose whole point is
+that the three read as one family.
 
-**The setup row's `gap` is `--s1` below 800px, and that is a fit rule rather than
-a spacing one.** Under `space-between` the gap is only a floor, so the visible
-gaps are whatever the row has spare and the value changes nothing above the
-binding widths. It changes everything at them: **Firefox sets the three groups
-9px wider than Chromium does**, and at `--s2` its row came out 6px over the cap
-at 430px and 4px over the screen at 360px. A Chromium-only check would have
-shipped that. Both engines are now clean walking 360px to 1440px in 10px steps,
-for the header, the setup row and the actions row alike.
+**The setup row's `gap` is `--s1` below 800px, and it no longer binds
+anywhere.** Under `space-between` the gap is only a floor, so the visible gaps
+are whatever the row has spare and the value changes nothing above the binding
+widths — and at `--s2` the row is now 16 to 18px clear at 360px and 30 to 32px
+clear of the 414px cap above 430. It was written as a fit rule because at `--s2`
+Firefox's row came out 4px over the screen at 360px and 6px over the cap at
+430px, and that 9px of Firefox-over-Chromium was the UA form face rather than
+the engine (§Theming). **It stays `--s1` as spacing**, unchanged: the three
+engines are clean walking 360px to 1440px in 10px steps either way, so there is
+nothing to buy by moving it and a visible step at 360px to lose. Do not restore
+the fit claim in a comment — the number that justified it is gone.
 
 **The group divider is gone** at every width (§The toolbar).
 
@@ -2377,7 +2396,7 @@ node cannot serve both.
 
 **`Display` replaced the theme cycle in that slot rather than joining it.** Once
 the wash became tunable (§The display preferences) the alternative was a fourth
-utility beside three, on a bar whose contents already need 346px at 320px; the
+utility beside three, on a bar whose contents already need 331px at 320px; the
 theme is a display preference like the rest, so it moved **inside** the panel as
 a control and the bar kept three. Measured, the swap costs the row **1px** at
 320px and nothing at all from 360px up — the worded control is the same width as
@@ -2595,15 +2614,16 @@ extra specificity, so a `right: 0` declared below it would win.
 
 The Display panel takes the same fix for a different reading of the same fact:
 its trigger *is* the last control on the row, but the row itself does not fit
-below about 344px — the bar's contents need 346px at 320px, which is where they
-already needed 338px before this control existed — so at 320px the trigger sits
-19px past the right edge and a panel anchored to it goes with it. Handed to
-`.chrome` the panel measures 16px from the left edge and 8px from the right
-there. `top: 100%` is then the foot of the chrome band rather than the foot of
-the trigger, which is where a panel opened from a two-row bar wants to be
-anyway. **The trigger's own 19px is not fixed by this and is not new**: every
-utility has been past the right edge at 320px since the chrome rebuild, and 360
-is the width the phone bounds are stated at.
+below **345px in Chromium and 347px in Firefox and WebKit** — its contents need
+329px and 331px against the 304px a 320px screen leaves — so at 320px the
+trigger sits 17 to 19px past the right edge and a panel anchored to it goes with
+it. Handed to `.chrome` the panel measures 16px from the left edge and 8px from
+the right there. `top: 100%` is then the foot of the chrome band rather than the
+foot of the trigger, which is where a panel opened from a two-row bar wants to
+be anyway. **The trigger's own overhang is not fixed by this and is not new**:
+every utility has been past the right edge at 320px since the chrome rebuild,
+and 360 is the width the phone bounds are stated at, where the trigger clears
+the edge by 8px.
 
 That defect shipped through a green suite, because every assertion the suite
 made about the picker was a DOM one and an off-screen box is still `visible`.
@@ -2693,6 +2713,30 @@ rows' clear icon, the setup cards and the two `<details>` summaries each carry
 their own, and a global rule would have to be undone in more places than it
 applied. The cost of that choice is that a button which simply omits it renders
 as a bare UA control among styled ones — which is exactly what it looks like.
+
+**The one thing that IS global on a form control is its face.**
+`button, input, select, textarea { font-family: inherit }` in `app.css`, because
+`font-family` does not inherit into a form control: with no rule a `<button>`
+renders in the UA's own default form face. That is not a treatment a component
+could reasonably choose — this app *self-hosts* Inter Tight so it never has to
+ask the machine what it has — and the exception had swallowed forty-five
+controls, `About` and the story pills among them. Four components
+(`MonthPicker`, `Receipt`, `SetupStrip` and the Display panel's theme cycle) had
+already written `font: inherit` for themselves, which is the same fact
+discovered four times.
+
+It is also a **measurement** rule, and that is what made it urgent. The UA face
+is not one face: Chromium asks for `Arial`, Firefox and WebKit for the generic
+`sans-serif`, and every host resolves those against its own fontconfig. So the
+one-row toolbar's slack at 801px measured 7px on a developer's machine, 32px in
+the Playwright image, and **−15px on a GitHub runner whose `sans-serif` is
+DejaVu Sans**, where it wrapped and failed CI twice while passing everywhere
+else (`.hunt/fixlog-f13.md`). Every measured width in §The chrome bands was a
+number about the *host*. With this rule they are the app's, identical on every
+machine to within 2.4px, and `draws every control in a face this app names`
+fails the build on the next control that escapes it. The `font: inherit`
+shorthand was rejected for the reset: it also resets `font-size`, which each
+component owns.
 
 **One focus ring, with two exemptions.** A 2px surface-coloured ring inside a
 2px accent ring, drawn with `box-shadow` so both rings are painted rather than
