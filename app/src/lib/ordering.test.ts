@@ -39,7 +39,8 @@ describe('sortPhrase', () => {
 });
 
 /**
- * The three URL cases 0014 was filed on, plus the two that must stay silent. Derived display only:
+ * The three URL cases the note has to answer, plus the two that must stay silent. Derived display
+ * only:
  * nothing here reaches `ViewState`, and the line is present exactly when the sort is non-default
  * and no rendered header can carry the caret.
  */

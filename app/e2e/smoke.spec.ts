@@ -1,6 +1,18 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import { awaitFacesLoaded, FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
+
+/**
+ * Wait for the utilities to have landed in the host this width gives them. They move between the
+ * masthead and the toolbar through a rune rather than a media rule, so they land a frame after the
+ * viewport changes (docs/app.md §Where the utilities live) — and anything measured before that
+ * counts a masthead still carrying the bar's controls, or a bar still carrying the masthead's.
+ * `expect` polls, so this waits for the swap rather than sleeping through it.
+ */
+const utilitiesSettled = (page: Page, width: number) => expect(
+  page.locator(width <= 800 ? '[data-testid="toolbar"]' : 'header')
+    .getByRole('button', { name: 'Copy link' })).toHaveCount(1);
+
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
   await page.goto('/');
@@ -848,20 +860,13 @@ test('never adds a chrome row that a narrower window hands back', async ({ page 
     return lines('header') + lines('[data-testid="toolbar"]');
   });
 
-  // The utilities move host through a rune, a frame behind the viewport — the reasoning is
-  // docs/app.md §Where the utilities live. Unsettled, the masthead is briefly counted with the
-  // bar's own controls still in it.
-  const settled = (width: number) => expect(
-    page.locator(width <= 800 ? '[data-testid="toolbar"]' : 'header')
-      .getByRole('button', { name: 'Copy link' })).toHaveCount(1);
-
   let widest = 0;
   let rows = 0;
   for (const width of [1440, 1200, 1000, 940, 900, 860, 820, 801, 800, 790, 760, 720, 701, 700, 699,
                        680, 640, 600, 560, 500, 460, 431, 430, 429, 412, 400, 390, 380, 375, 370,
                        365, 360]) {
     await page.setViewportSize({ width, height: 800 });
-    await settled(width);
+    await utilitiesSettled(page, width);
     const next = await chromeRows();
     expect(next, `the chrome takes ${rows} rows at ${widest}px and only ${next} at ${width}px, so `
       + `${widest}px is paying for a row nothing on screen needs`).toBeGreaterThanOrEqual(rows);
@@ -921,22 +926,11 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
 test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
   const chrome = () => page.evaluate(() =>
     Math.round(document.querySelector('.chrome')!.getBoundingClientRect().height));
-  /**
-   * A resize moves the utilities between hosts through a rune rather than a media rule
-   * (docs/app.md §Where the utilities live), and the rune lands a frame after the viewport changes.
-   * Measured before it does, the masthead still carries three worded buttons at a phone width and
-   * wraps: 162px of chrome at 360px, against the 109px the band actually spends. `expect` polls, so
-   * this waits for the swap rather than sleeping through it.
-   */
-  const settled = (width: number) => expect(
-    page.locator(width <= 800 ? '[data-testid="toolbar"]' : 'header')
-      .getByRole('button', { name: 'Copy link' })).toHaveCount(1);
-
   for (const [width, ceiling] of [[360, 95], [390, 95]] as const) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
     await expect(page.getByTestId('setup-strip')).toBeVisible();
-    await settled(width);
+    await utilitiesSettled(page, width);
     await awaitFacesLoaded(page);
     const h = await chrome();
     expect(h, `the chrome is ${h}px at ${width}px on a first arrival`).toBeLessThanOrEqual(ceiling);
@@ -949,7 +943,7 @@ test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
   await awaitFacesLoaded(page);
   for (const [width, ceiling] of [[360, 125], [390, 125], [430, 125], [700, 128], [900, 105]] as const) {
     await page.setViewportSize({ width, height: 900 });
-    await settled(width);
+    await utilitiesSettled(page, width);
     const h = await chrome();
     expect(h, `the chrome is ${h}px at ${width}px`).toBeLessThanOrEqual(ceiling);
   }

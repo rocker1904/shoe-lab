@@ -188,7 +188,7 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
    * Measured on a five-line page carrying no app code: Chromium and Firefox navigate away from a
    * clicked summary in every case, WebKit only when the press landed on the summary's own text or
    * its padding rather than on a child element. Same class as the Firefox scrollport tab stop this
-   * file already drives around (0029) — a UA behaviour the spec steps over, not a claim about the app.
+   * file already drives around — a UA behaviour the spec steps over, not a claim about the app.
    */
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
 
@@ -226,7 +226,7 @@ test('paints the app ring on a checkbox, which is no longer a native control', a
   await page.locator('details.picker summary').focus();
   await page.keyboard.press('Enter');
   // Up to three, because Firefox gives a scrollport a tab stop of its own and the list is one
-  // (finding 0029 — UA behaviour, not the app's). The first checkbox is the stop under test.
+  // (UA behaviour, not the app's). The first checkbox is the stop under test.
   for (let i = 0; i < 3; i++) {
     await page.keyboard.press('Tab');
     if (await page.evaluate(() => document.activeElement?.getAttribute('type') === 'checkbox')) break;

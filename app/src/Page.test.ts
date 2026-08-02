@@ -1085,7 +1085,7 @@ describe('Page mounts the rendering that fits', () => {
 });
 
 /**
- * The desktop half of 0014. jsdom's `matchMedia` stub never matches, so the phone half is measured
+ * The desktop half of it. jsdom's `matchMedia` stub never matches, so the phone half is measured
  * at real widths by the rig and asserted in `cross-browser.spec.ts` — `lib/ordering.test.ts` holds
  * the decision itself for both renderings.
  * docs/app.md §The ordering is stated when no header can carry it

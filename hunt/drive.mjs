@@ -480,7 +480,7 @@ export async function session(serveUrl, opts = {}) {
 /**
  * A visit with provably no stored state. A fresh context starts empty, but the first `goto` may
  * already have written — so this clears and reloads, then asserts. Journey 3 hand-built this twice
- * and it is the whole basis of the cold-link-versus-returning-visitor distinction that 0015 turns on.
+ * and it is the whole basis of the cold-link-versus-returning-visitor distinction.
  */
 export async function cold(serveUrl, path = '/', opts = {}) {
   const rig = await session(serveUrl, { ...opts, path: '/' });
@@ -497,7 +497,7 @@ export async function cold(serveUrl, path = '/', opts = {}) {
 
 /**
  * Sender and recipient, as two independent browsing histories. This journey IS two contexts, and
- * a bug like 0015 — where the recipient's own last session answers a link — is invisible to any
+ * a bug where the recipient's own last session answers a link is invisible to any
  * rig that only ever has one.
  */
 export async function pair(serveUrl, opts = {}) {

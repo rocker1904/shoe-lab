@@ -462,7 +462,7 @@ describe('FilterSidebar metric entries', () => {
  * position is asserted too, and the group names carry heading *and* zone so no two collide.
  */
 /** The direction glyph rides in the heading text, so this list is also the pin on which sidebar
- *  rows claim a better end and which stay neutral — `Outsole durability (mm)↓` is 0001's row. */
+ *  rows claim a better end and which stay neutral, `Outsole durability (mm)↓` being one that does. */
 const HEADINGS = [
   'Search', 'Released after', 'Plate', 'Brand', 'Discontinued',
   'Price (£)↓', 'Stack', 'Energy return↑', 'Weight (g)↓',
