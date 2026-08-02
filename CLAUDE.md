@@ -24,6 +24,7 @@ before working in its domain.
 
 | Doc | Owns |
 |---|---|
+| docs/policies.md | the cross-cutting policy register — read before writing any feature spec |
 | docs/decisions.md | project-wide decisions: robots posture, git-as-database, testing bar |
 | docs/scraping.md | pipeline, endpoints, payload formats, politeness contract, validation gates |
 | docs/app.md | frontend contracts: view/URL ownership, sanitised-HTML boundary, presets, filters |
@@ -34,7 +35,9 @@ before working in its domain.
 | BACKLOG.md | prioritised future work |
 
 `docs/superpowers/` (spec + plan) are frozen build-time artifacts — history,
-not reference; where they disagree with docs/, docs/ wins.
+not reference. New specs, written by the `designing` skill, land in
+`docs/specs/` and freeze the same way once superseded. Either way, docs/
+wins where they disagree.
 
 ## Conventions
 
@@ -83,6 +86,11 @@ not reference; where they disagree with docs/, docs/ wins.
   the model that wrote the commit (e.g. `Claude Opus 5 (1M context)`), on
   commits, never in PR descriptions.
 - **Comments are WHY-only** — docs/README.md §Rules, rule 5.
+- **Design and delivery use the local skills** `designing` and `delivering`
+  (`.claude/skills/`), which supersede superpowers' brainstorming,
+  writing-plans, executing-plans and subagent-driven-development here; the
+  rest of superpowers stays in normal use. Specs live in `docs/specs/`,
+  frozen when superseded.
 
 ## Working approach
 
