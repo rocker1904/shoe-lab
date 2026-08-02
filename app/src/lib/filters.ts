@@ -1,4 +1,5 @@
 import type { Plate, Shoe } from '../../../shared/types.js';
+import { isCategorical } from './categorical';
 import { numericValue, type TestIndex } from './dataset';
 
 export interface RangeBound { min?: number; max?: number }
@@ -61,13 +62,16 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
   let undatedHidden = 0;
   const search = f.search?.toLowerCase();
   const active = Object.entries(f.ranges).filter(([, b]) => b.min !== undefined || b.max !== undefined);
-  // Resolved to test ids once, because that is how a reading is keyed. A key naming no test in this
-  // catalogue is dropped rather than failing every shoe: it has no control to untick, so it must not
-  // be what empties the table — `parseView` is the strict door (docs/app.md §URL encoding).
+  // Resolved to test ids once, because that is how a reading is keyed. `isCategorical` is the door
+  // every other reader of these readings goes through, so a numeric test cannot be ticked and the
+  // lab test whose slug the `plate` field owns cannot answer here either
+  // (docs/app.md §Categorical columns). A key it refuses is dropped rather than failing every shoe:
+  // such a key has no control to untick, so it must not be what empties the table — `parseView` is
+  // the strict door (docs/app.md §URL encoding).
   const facets: { id: string; values: string[] }[] = [];
   for (const [key, values] of Object.entries(f.categorical)) {
     const test = idx.bySlug.get(key);
-    if (test && values.length) facets.push({ id: String(test.id), values });
+    if (test && values.length && isCategorical(test)) facets.push({ id: String(test.id), values });
   }
   outer: for (const s of shoes) {
     if (f.discontinued && s.discontinued !== (f.discontinued === 'only')) continue;

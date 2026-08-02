@@ -171,7 +171,9 @@ describe('plate as a set', () => {
  * tick does, so it is tested before `considered` is built (docs/app.md §Filters, §Coverage).
  */
 describe('categorical selections', () => {
-  const gusseted = shoe({ slug: 'gusseted', values: { '39': 'both-sides-semi', '41': true } });
+  // The readings on 24 and 69 are what make the two guard cases below provable: without them a key
+  // naming a non-categorical test would look inert by matching nothing rather than by being refused.
+  const gusseted = shoe({ slug: 'gusseted', values: { '39': 'both-sides-semi', '41': true, '24': 250, '69': true } });
   const plain = shoe({ slug: 'plain', values: { '39': 'none', '41': false } });
   const unread = shoe({ slug: 'unread', values: {} });
   const FEATURES = [gusseted, plain, unread];
@@ -217,6 +219,19 @@ describe('categorical selections', () => {
   // `parseView` is where a key naming no categorical test is dropped (docs/app.md §URL encoding).
   it('a key naming no test in the catalogue constrains nothing', () => {
     expect(slugs(applyFilters(FEATURES, { ranges: {}, categorical: { nonesuch: ['x'] } }, idx))).toHaveLength(3);
+  });
+  // A numeric test is bounded, never ticked, so a key naming one is not a facet either — and
+  // `String(raw)` would happily compare `250` against a typed digit if it were let through.
+  it('a key naming a numeric test constrains nothing, though the reading is there to match', () => {
+    expect(gusseted.values['24']).toBe(250);
+    expect(slugs(applyFilters(FEATURES, { ranges: {}, categorical: { weight: ['250'] } }, idx))).toHaveLength(3);
+  });
+  // The catalogue's `plate` test and the shoe field of that name collide, and `isCategorical`
+  // refuses the reading everywhere else — the filter is not the door that lets it back in
+  // (docs/app.md §Categorical columns).
+  it('a key naming the test whose slug a shoe field owns constrains nothing', () => {
+    expect(gusseted.values['69']).toBe(true);
+    expect(slugs(applyFilters(FEATURES, { ranges: {}, categorical: { plate: ['true'] } }, idx))).toHaveLength(3);
   });
 });
 
