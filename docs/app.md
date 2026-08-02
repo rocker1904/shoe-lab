@@ -2860,10 +2860,11 @@ trigger sits 17 to 19px past the right edge and a panel anchored to it goes with
 it. Handed to `.chrome` the panel measures 16px from the left edge and 8px from
 the right there. `top: 100%` is then the foot of the chrome band rather than the
 foot of the trigger, which is where a panel opened from a two-row bar wants to
-be anyway. **The trigger's own overhang is not fixed by this and is not new**:
-every utility has been past the right edge at 320px since the chrome rebuild,
-and 360 is the width the phone bounds are stated at, where the trigger clears
-the edge by 8px.
+be anyway. **The trigger's own overhang is not fixed by this and is not a bug
+outstanding**: every utility has been past the right edge at 320px since the
+chrome rebuild, and 320px is below the supported floor — §The narrowest supported
+width is 360px measures what serving it would cost and declines to pay. At 360,
+where the phone bounds are stated, the trigger clears the edge by 8px.
 
 That defect shipped through a green suite, because every assertion the suite
 made about the picker was a DOM one and an off-screen box is still `visible`.
@@ -3452,6 +3453,46 @@ retune or a deletion has to be argued. Why generations exist at all is
 docs/scraping.md §Test lineage.
 
 ## Decisions
+
+### The narrowest supported width is 360px
+
+**320px is not supported, and the cost of supporting it is why.** Every phone
+bound in this document is stated at 360 — the usual Android width — and at 360
+the app is clean: the document scrolls sideways by **0px** in Chromium and
+Firefox, and every floating panel is on screen. At 320 it is not, and the
+failures are one failure wearing three faces:
+
+| at 320px | measured |
+|---|---|
+| the document scrolls sideways | **27px** Chromium, **26px** Firefox |
+| the toolbar overflows its own row | 27px in Firefox; Chromium spends it on a `.chrome` grown to 347px instead |
+| the column picker's panel leaves the screen | 19px past the right edge in Chromium |
+
+The cause is the same in all three: the six-column list needs **332px of table
+plus 2px of panel border**, and after the bleed the document's minimum is 347px.
+Nothing about the chrome is really at fault — it follows the document (§The
+chrome bands), so it reports the table's shortfall as its own.
+
+**So the only real fix is narrower columns, and that is the bill.** Fitting six
+into 320 means giving up 27px across them: 53px a column becomes about 48.5px,
+and the text bound inside it — `MAX_LABEL_PX`, 48px today — becomes about 44.5px.
+Measured against the real catalogue with the app's own `widestWordPx`, that takes
+the labels with a word too wide for their column from **2 of 55 to 21 of 55**.
+Nearly two in five column headers would clip or overhang, and the repair is not
+mechanical: each one needs a new hand-written `SHORT_LABELS` entry that still
+reads as the metric it names, and the whole `CHAR_PX` table and every bound in
+§The chrome bands would be re-measured against a size the design was never drawn
+at. The alternative — five columns below 360 — is a different default view on the
+narrowest screen, which is a design change rather than a fix.
+
+The decision is therefore to **hold the floor at 360px of layout** and leave 320
+as a width the app degrades on rather than one it serves. It already degrades
+gracefully: the page scrolls sideways and everything stays reachable. The floor
+is guarded rather than promised — `fit-boundary.mjs` asserts no view scrolls
+sideways **from 360px of layout up**, and `fits six columns and keeps the rest
+reachable at 360px` holds the column count there — and the 320px readings that
+appear elsewhere in this document are recorded as *what happens*, not as bugs
+outstanding. Revisit only if a 320px phone becomes worth a five-column default.
 
 ### Every row links back to RunRepeat
 Attribution is structural, not decorative: the header carries a permanent
