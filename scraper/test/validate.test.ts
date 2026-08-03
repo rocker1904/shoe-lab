@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ValidationError, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile } from '../src/validate.js';
+import { ValidationError, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile, validateValuesAgainstCatalogue } from '../src/validate.js';
 import type { DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
 import { detailRecord, labTest, shoe } from './helpers.js';
@@ -94,6 +94,36 @@ describe('validateMetrics boundaries', () => {
   });
 });
 
+// Every path that writes a catalogue indexes it through the same gate, because the shape is fatal
+// downstream and the metrics paths see tests no shoe reads yet
+// (docs/scraping.md §A duplicate option value fails the run).
+describe('duplicate option values in the catalogue', () => {
+  const gusset = (...values: string[]): TestsFile => ({
+    ...tests,
+    tests: [...tests.tests, labTest({
+      id: 39, slug: 'tongue-gusset-type', type: 'option',
+      options: values.map((value, i) => ({ value, name: `Choice ${i}` })),
+    })],
+  });
+
+  it('fails the metrics crawl on a test no shoe has a reading for', () => {
+    // makeMetrics reads tests 5 and 6 only, so nothing points at 39 — the catalogue alone is wrong.
+    expect(() => validateMetrics(makeMetrics(400), null, gusset('both-sides-semi', 'both-sides-semi')))
+      .toThrow(ValidationError);
+    expect(() => validateMetrics(makeMetrics(400), null, gusset('both-sides-semi', 'none'))).not.toThrow();
+  });
+
+  it('fails the corpus rewrite with no readings on disk at all', () => {
+    expect(() => validateValuesAgainstCatalogue({}, gusset('both-sides-semi', 'both-sides-semi')))
+      .toThrow(ValidationError);
+  });
+
+  it('names the test by slug and shows the duplicated value', () => {
+    expect(() => validateValuesAgainstCatalogue({}, gusset('both-sides-semi', 'both-sides-semi')))
+      .toThrow(/tongue-gusset-type.*"both-sides-semi"/);
+  });
+});
+
 describe('validateDetailsRecord', () => {
   it('passes tombstones and complete records, rejects broken ones', () => {
     expect(() => validateDetailsRecord({ gone: true, scrapedAt: 't' }, 's')).not.toThrow();
@@ -170,8 +200,8 @@ describe('validateShoesFile', () => {
     }
   });
 
-  // The app keys its facet rows by option value, so a value declared twice is a duplicate
-  // `{#each}` key: Svelte throws and the sidebar goes down rather than showing a wrong row.
+  // The join re-checks the catalogue it publishes, so a duplicate cannot arrive by the shorter
+  // route either (docs/scraping.md §A duplicate option value fails the run).
   it('rejects an option test that declares the same value twice', () => {
     const duplicated: ShoesFile = {
       ...good,
@@ -182,7 +212,7 @@ describe('validateShoesFile', () => {
       shoes: [shoe({ slug: 'a', values: { '39': 'both-sides-semi' } })],
     };
     expect(() => validateShoesFile(duplicated)).toThrow(ValidationError);
-    expect(() => validateShoesFile(duplicated)).toThrow(/both-sides-semi/);
+    expect(() => validateShoesFile(duplicated)).toThrow(/tongue-gusset-type.*"both-sides-semi"/);
   });
 
   it('leaves an option test that declares no choices unchecked', () => {

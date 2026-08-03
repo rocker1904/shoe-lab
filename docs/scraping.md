@@ -108,7 +108,10 @@ means a red workflow and untouched `data/` — never a partial write.
   a value for a test id absent from the catalogue is fatal. Checked wherever
   the two can drift apart: the metrics crawl, the catalogue-only corpus rewrite
   (§Re-extracting from a corpus), and the join, which sees page readings the
-  metrics path never does.
+  metrics path never does. All three index the catalogue through the same
+  function, so the catalogue's own shape is gated on every path that writes one,
+  including for a test no shoe has a reading for yet
+  (§A duplicate option value fails the run).
 - **Relative, previous-run gates:** shoe count below 90 % of the previous run,
   or more than 20 % of previously present (slug, testId) pairs missing. These
   are skipped when `metrics.json` does not yet exist — a first run is
@@ -118,11 +121,7 @@ means a red workflow and untouched `data/` — never a partial write.
 - **Post-join:** `build:dataset` re-validates the assembled `shoes.json`
   (builtAt present, arrays, slug/name present, plate within the enum, and every
   `option` reading naming one of its test's declared choices) before
-  writing, so a bad join cannot reach the app either. An `option` test declaring
-  the same value twice is fatal here rather than defended downstream: the facet
-  rows key a Svelte `{#each}` by option value (docs/app.md §Filters), so a
-  duplicate takes the sidebar down rather than rendering a wrong row, and only a
-  gate can decline to publish it. The absolute shoe floor is
+  writing, so a bad join cannot reach the app either. The absolute shoe floor is
   re-applied after the category exclusion (§Non-running shoes), so a renamed
   category fails the run instead of quietly emptying the dataset.
 - **Fleet gates, against the last published `shoes.json`.** No absolute gate can
@@ -470,7 +469,24 @@ is not a data problem worth failing a whole metrics run over. Do not "fix" this
 into a merge or a conflict check — with one value per (slug, test) there is
 nothing to merge, and the validation gates already catch mass value loss.
 "First with a *usable* value" is the operative half, and what makes a value
-usable is §Empty values are skipped before duplicates are resolved.
+usable is §Empty values are skipped before duplicates are resolved. A duplicate
+*inside* one test's declared `options` is the opposite call, for the reasons in
+§A duplicate option value fails the run.
+
+### A duplicate option value fails the run
+A `value` declared twice inside one test's `options` is fatal on every path that
+writes a catalogue, rather than deduped on the way in or defended in the app.
+The app keys its option rows by that value, and a keyed `{#each}` over a
+repeated key throws `each_key_duplicate`, which blanks the page rather than the
+row (docs/app.md §Categorical columns). No downstream reading of the payload is
+both faithful and renderable: drop the second value and the app labels shoes
+against a vocabulary the catalogue never declared, keep it and the sidebar dies.
+So the run fails and `data/` goes untouched — the only outcome that leaves
+someone a payload to look at. This is stricter than
+§First occurrence wins in lab-test-list, where the endpoint's own ordering picks
+the winner; here there is nothing to pick from. Do not soften it into a dedupe,
+and do not add a component-side guard instead — a guard can only paper over a
+catalogue that is already wrong.
 
 ### Non-running shoes
 A `lab-test-list` response is the whole lab-tested catalogue rather than one

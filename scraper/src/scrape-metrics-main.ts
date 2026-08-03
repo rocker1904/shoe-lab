@@ -36,8 +36,10 @@ function catalogueFromCorpus(dataDir: DataDir, corpusDir: string, seed: string):
   const tests = extractTestCatalogue(page.pageData, seed, scrapedAt);
   const metrics = dataDir.read<MetricsFile>('metrics.json');
   // The readings stay where they are, so a catalogue that no longer names one of them orphans it
-  // — the rule holds on this path too (docs/scraping.md §Validation gates).
-  if (metrics) validateValuesAgainstCatalogue(metrics.shoes, tests);
+  // — the rule holds on this path too (docs/scraping.md §Validation gates). Called with no
+  // readings as readily as with them: the catalogue's own shape is checked in there, and this
+  // path writes tests.json either way.
+  validateValuesAgainstCatalogue(metrics?.shoes ?? {}, tests);
   dataDir.write('tests.json', tests);
   return { shoeCount: Object.keys(metrics?.shoes ?? {}).length, testCount: tests.tests.length };
 }

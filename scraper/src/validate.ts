@@ -1,4 +1,4 @@
-import type { DetailRecord, DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
+import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, Shoe, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
 
@@ -9,16 +9,40 @@ const NUMERIC = new Set(['float', 'score', 'percent', 'rating']);
 /** The absolute shoe-count floor, applied both before and after the join (docs/scraping.md §Validation gates). */
 export const MIN_SHOES = 300;
 
+interface CatalogueEntry { type: LabTest['type']; choices: Set<string> | null }
+
+/**
+ * The by-test-id index every value gate needs, built so that a catalogue no index can represent
+ * fails the run on the way in: a value declared twice inside one `option` test has no downstream
+ * resolution (docs/scraping.md §A duplicate option value fails the run). Every path that writes a
+ * catalogue goes through here, because a test nothing reads yet still reaches `data/`.
+ */
+function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
+  const index = new Map<string, CatalogueEntry>();
+  for (const t of tests) {
+    let choices: Set<string> | null = null;
+    if (t.options) {
+      choices = new Set();
+      for (const o of t.options) {
+        if (choices.has(o.value)) throw new ValidationError(`test ${t.slug} declares option ${JSON.stringify(o.value)} twice`);
+        choices.add(o.value);
+      }
+    }
+    index.set(String(t.id), { type: t.type, choices });
+  }
+  return index;
+}
+
 /**
  * Every reading names a test the catalogue has, and matches that test's declared type. Separate
  * from the floors below because the catalogue can be rewritten without the readings moving —
  * `scrape:metrics --from-corpus` does exactly that (docs/scraping.md §Re-extracting from a corpus).
  */
 export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], tests: TestsFile): void {
-  const typeOf = new Map(tests.tests.map((t) => [String(t.id), t.type]));
+  const index = indexCatalogue(tests.tests);
   for (const [slug, shoe] of Object.entries(shoes)) {
     for (const [testId, value] of Object.entries(shoe.values)) {
-      const t = typeOf.get(testId);
+      const t = index.get(testId)?.type;
       if (!t) throw new ValidationError(`${slug}: value for unknown test ${testId}`);
       const ok = NUMERIC.has(t) ? typeof value === 'number'
         : t === 'bool' ? typeof value === 'boolean'
@@ -65,19 +89,9 @@ export function validateShoesFile(f: ShoesFile): void {
   if (!Array.isArray(f.tests) || !Array.isArray(f.shoes)) throw new ValidationError('tests/shoes must be arrays');
   // A published `option` reading has to name one of the choices its test declares, or the app
   // prints a value it cannot label and offers it as a filter beside the vocabulary it is not in.
-  const vocabulary = new Map<string, Set<string>>();
-  for (const t of f.tests) {
-    if (!t.options) continue;
-    const choices = new Set<string>();
-    for (const o of t.options) {
-      // The app's facet rows key an `{#each}` by option value, so a value declared twice is a
-      // duplicate key: Svelte throws and the sidebar goes down rather than rendering a wrong row.
-      if (choices.has(o.value)) throw new ValidationError(`test ${t.id} declares option ${JSON.stringify(o.value)} twice`);
-      choices.add(o.value);
-    }
-    vocabulary.set(String(t.id), choices);
-  }
-  const published = new Set(f.tests.map((t) => String(t.id)));
+  // The index is the same one the metrics paths build, so the join cannot publish a catalogue
+  // shape they would have refused to write.
+  const index = indexCatalogue(f.tests);
   for (const s of f.shoes) {
     if (!s.slug || !s.name) throw new ValidationError(`shoe missing slug/name: ${JSON.stringify(s.slug)}`);
     if (!s.values || typeof s.values !== 'object') throw new ValidationError(`${s.slug}: values missing`);
@@ -85,8 +99,9 @@ export function validateShoesFile(f: ShoesFile): void {
     for (const [testId, value] of Object.entries(s.values)) {
       // Published tests are the catalogue's, filtered to those with a reading — so a reading no
       // published test claims is one the catalogue itself has lost.
-      if (!published.has(testId)) throw new ValidationError(`${s.slug}: value for unknown test ${testId}`);
-      const choices = vocabulary.get(testId);
+      const entry = index.get(testId);
+      if (!entry) throw new ValidationError(`${s.slug}: value for unknown test ${testId}`);
+      const choices = entry.choices;
       if (choices && !choices.has(String(value))) {
         throw new ValidationError(`${s.slug}: test ${testId} has ${JSON.stringify(value)}, not a declared option`);
       }
