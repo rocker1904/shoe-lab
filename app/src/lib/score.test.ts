@@ -73,6 +73,11 @@ describe('terms', () => {
     // Less wear is better, so the term rises as the reading falls.
     expect(t({ '4': 1.0, '9': 2.0 }).outsoleDurability!)
       .toBeGreaterThan(t({ '4': 2.0, '9': 2.0 }).outsoleDurability!);
+    // Lighter is better, so this one falls with its reading too — and it is the only mapping
+    // written as a subtraction, so `w/W_REF` in place of `1 − w/W_REF` still scores every shoe and
+    // still spreads them, just upside down. Nothing else here would name that: the anchors catch it
+    // by going red about a constant, which sends the next reader to `score-defs.ts`.
+    expect(t({ '24': 200 }).weight!).toBeGreaterThan(t({ '24': 300 }).weight!);
     // Both stability terms too, and below their caps, where the mapping is still free to move: a
     // wider midsole on the same stack is the longer lever, and a stiffer counter holds more.
     expect(t({ '26': 95, '6': 40 }).midsoleWidth!)
