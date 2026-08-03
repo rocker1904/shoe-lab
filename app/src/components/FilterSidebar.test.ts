@@ -622,10 +622,17 @@ const nameOf = (el: Element) =>
   ?? el.ownerDocument.getElementById(el.getAttribute('aria-labelledby') ?? '')?.textContent?.trim()
   ?? null;
 
-const orderOf = (container: HTMLElement) => ({
-  headings: within(container).getAllByRole('heading').map((h) => h.textContent),
-  groups: within(container).getAllByRole('group').map(nameOf),
-});
+const orderOf = (container: HTMLElement) => {
+  // Every disclosure opened first, because jsdom does not implement the UA rule that hides a closed
+  // one's children: left shut, the facets below `Features` would be asserted here while no engine
+  // exposes them at all — the blind spot `app/e2e/features.spec.ts` exists for. Open, this sequence
+  // is one a browser answers with too.
+  for (const d of container.querySelectorAll('details')) d.open = true;
+  return {
+    headings: within(container).getAllByRole('heading').map((h) => h.textContent),
+    groups: within(container).getAllByRole('group').map(nameOf),
+  };
+};
 
 describe('FilterSidebar order', () => {
   it('renders one fixed order, identical across every zone and story', () => {

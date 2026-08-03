@@ -606,12 +606,24 @@ choice, so each one added obeys it too.
 The sidebar carries **two heading styles on purpose**. `h3` names a *section* —
 Search, Brand, Plate — and is an uppercase micro-label at the same size and
 tracking as the setup strip's group labels, which do the same job. `h4` names one
-*control* under a section — `MetricRow`'s measurement, a facet noun inside
-Features — and is sentence case, because uppercasing "Toebox width — widest part"
-makes a data label shout and costs the reading of the units in brackets after it.
-Both are real headings rather than styled paragraphs, so heading navigation stops
-at every control the sidebar names; a facet's group takes its accessible name
-from its own heading by id, rather than repeating the noun in an `aria-label`.
+*control* under a section and is sentence case, because uppercasing "Toebox width
+— widest part" makes a data label shout and costs the reading of the units in
+brackets after it. Two components draw one and they are not the same face:
+`MetricRow`'s measurement leads its row and takes the row's own emphasis, while a
+facet noun inside Features is smaller and dim, because the `Features` heading
+above it has to keep leading.
+
+Those two are the column's **only real headings**, so heading navigation stops at
+the metric rows and the facets and nowhere else in it — a range row is named by
+its fieldset, and the search box, the month picker and the foot buttons by their
+own labels. A facet's group takes its accessible name from its heading by id
+rather than repeating the noun in an `aria-label`, which is `DisplayMenu`'s
+pattern; the id is keyed by the test's slug. What makes a key safe to build an id
+from is that **the sidebar mounts once** — the drawer is that same element moved
+off-canvas by a class, never a second copy, which is the opposite of the table's
+arrangement (§Two renderings, and only one of them mounted). Mounting it twice
+would duplicate every id in the column, and each facet group's name would resolve
+to the first copy's heading with nothing failing.
 
 **Every bounded row states what it is costing**: `N excluded`, from
 `lib/relax.ts`, is the number of shoes that would return if *that one bound*

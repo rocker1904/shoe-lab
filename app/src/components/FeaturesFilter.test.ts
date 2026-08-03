@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import type { LabTest } from '../../../shared/types.js';
+import { isCategorical } from '../lib/categorical';
 import { labTest } from '../lib/test-fixtures';
 import FeaturesFilter from './FeaturesFilter.svelte';
 
@@ -173,5 +177,27 @@ describe('FeaturesFilter', () => {
   it('adds no text input, so the drawer\'s iOS zoom guard still enumerates them all', () => {
     const { container } = mount();
     expect(container.querySelectorAll('input:not([type=checkbox])')).toHaveLength(0);
+  });
+});
+
+/**
+ * `aria-labelledby` is an ID-reference *list*, so a slug carrying whitespace names two ids that do
+ * not exist and the group loses its name with nothing failing and nothing on screen. The slug comes
+ * straight off the upstream payload (`scraper/src/test-catalogue.ts`), which is why the guard runs
+ * over the **published** catalogue rather than a fixture — `labels.test.ts`'s rule, for its reason.
+ */
+describe('the id each facet mints', () => {
+  const catalogue = JSON.parse(
+    readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../data/tests.json'), 'utf8'),
+  ) as { tests: LabTest[] };
+  const ID_TOKEN = /^[a-z0-9-]+$/;
+
+  it('is one id token, whatever the catalogue calls a categorical test', () => {
+    expect(ID_TOKEN.test('tongue-gusset-type')).toBe(true);
+    // The shape that breaks it, and the one upstream is free to send tomorrow.
+    expect(ID_TOKEN.test('tongue gusset type')).toBe(false);
+    const facets = catalogue.tests.filter(isCategorical);
+    expect(facets.length).toBeGreaterThan(0); // or the filter below asserts nothing
+    expect(facets.map((t) => t.slug).filter((slug) => !ID_TOKEN.test(slug))).toEqual([]);
   });
 });

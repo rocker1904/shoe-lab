@@ -341,12 +341,10 @@
      outer 4px of it. Written as the arithmetic rather than as 12px, because the two halves are one
      measurement and a literal here drifts the moment the ring's spread does (docs/app.md §Theming). */
   aside { padding: calc(var(--s4) - var(--ring-room)); display: flex; flex-direction: column; gap: var(--s3); }
-  /* Two heading styles in one column, and both are deliberate. These `h3`s are uppercase micro-
-     labels naming a SECTION of the sidebar — Search, Brand, Plate — and they set at the same size
-     and tracking as the setup strip's group labels, because they do the same job. The metric rows
-     below use `MetricRow`'s sentence-case `h4`, because those name a MEASUREMENT and carry a
-     coverage figure beside them: uppercasing "Toebox width — widest part" makes a data label shout
-     and costs the reading of the units in brackets after it. */
+  /* One half of the sidebar's deliberate heading pair: these `h3`s are uppercase micro-labels
+     naming a SECTION — Search, Brand, Plate — and they set at the same size and tracking as the
+     setup strip's group labels, because they do the same job. The sentence-case `h4`s under them
+     are drawn by the components that own them (docs/app.md §Filters). */
   h3 { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
        color: var(--text-dim); margin: 0 0 var(--s2); }
   /* `--t-sm` stated rather than left to the UA: `input[type=search]` is 13.33px in Blink and Gecko

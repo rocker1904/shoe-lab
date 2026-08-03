@@ -73,14 +73,12 @@
   {#each tests as test (test.slug)}
     {@const noun = chipLabel(test.slug, test)}
     <!-- Each group is named by its own heading rather than by a second copy of the noun,
-         `DisplayMenu`'s pattern. The one axis these ids can collide on is the facet — `Page.svelte`
-         renders the sidebar once and makes it a drawer with a class, not with a second copy — so
-         the slug that keys the test keys the id (docs/app.md §Filters). -->
+         `DisplayMenu`'s pattern. The slug that keys the test keys the id, because the facet is the
+         only axis these can collide on — docs/app.md §Filters owns why. -->
     {#if test.type === 'bool'}
       <div class="facet">
         <h4 class="head" id="facet-{test.slug}">{noun}</h4>
-        <!-- Buttons rather than native radios, exactly as `DiscontinuedFilter` argues: two rendered
-             copies of the sidebar must not join one document-wide group by sharing a `name`. -->
+        <!-- Buttons rather than native radios, exactly as `DiscontinuedFilter` argues. -->
         <div class="tri" role="radiogroup" aria-labelledby="facet-{test.slug}" use:roving>
           {#each TRI as o (o.label)}
             <button type="button" role="radio" aria-checked={triOf(test.slug) === o.v}
@@ -115,8 +113,8 @@
   .facet { margin-top: var(--s2); }
   /* Quieter than the sidebar's uppercase micro-labels, which belong to the section rather than to
      the facets inside it: sentence case, dim and small, so the heading above still leads. Every
-     property the UA sets on an `h4` is restated here, size and weight and margin alike — the face
-     is the sidebar's and must not move with the element (docs/app.md §Filters). */
+     property a UA sets on an `h4` differently from a `p` is restated here — size, weight and
+     margin — so the face is the sidebar's and does not move with the element. */
   .head { margin: 0 0 var(--s1); font-size: var(--t-xs); font-weight: 600; color: var(--text-dim); }
   ul { list-style: none; margin: 0; padding: 0; }
   li { font-size: var(--t-sm); padding: 0.1rem 0; }

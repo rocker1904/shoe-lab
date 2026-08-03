@@ -41,6 +41,25 @@ test('opens the features section and filters the fleet from it', async ({ page }
   await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
 });
 
+/**
+ * The naming, as a platform resolves it rather than as an attribute: each facet group takes its
+ * accessible name from its own visible heading, and the headings sit one level under the section
+ * (docs/app.md §Filters). The unit suite can only assert that the `aria-labelledby` points
+ * somewhere — an id reference is a string until a browser resolves it, and it resolves against a
+ * document, which is where a duplicated id would be answered by the wrong heading.
+ */
+test('names each facet group from its own heading, in the accessibility tree', async ({ page }) => {
+  await page.goto('/');
+  const features = await openFeatures(page);
+  await expect(features).toMatchAriaSnapshot(`
+    - group "Features":
+      - group "Gusset":
+        - heading "Gusset" [level=4]
+      - heading "Removable insole" [level=4]
+      - radiogroup "Removable insole"
+  `);
+});
+
 test('makes each feature tri-state one tab stop the arrows move within', async ({ page }) => {
   await page.goto('/');
   const features = await openFeatures(page);
