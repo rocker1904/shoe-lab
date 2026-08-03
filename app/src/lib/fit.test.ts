@@ -109,8 +109,11 @@ describe('which rendering the width and the columns choose', () => {
     const m = model();
     // A set the floor is the binding term for, and one wide enough to push its own boundary out:
     // the track is 260px whatever is on screen, so the width that affords it is the set's.
+    // Six tests rather than five: a figure column's minimum lost the caret when the mark went out
+    // of flow (`headerMinPx`), and at five this set derived 1182px — under the floor, which left
+    // the assertions below comparing the floor against itself.
     const narrow = ['plate'];
-    const wide = ['releasedAt', 'score', 'msrpGbp', 'plate', ...TESTS.slice(0, 5).map((t) => t.slug)];
+    const wide = ['releasedAt', 'score', 'msrpGbp', 'plate', ...TESTS.slice(0, 6).map((t) => t.slug)];
     expect(sidebarPermanentAt(narrow, m)).toBe(SIDEBAR_PERMANENT_PX);
     expect(sidebarPermanentAt(wide, m))
       .toBe(desktopMinWidth(wide, m) + FIT_SLACK_PX + 16 + 260);

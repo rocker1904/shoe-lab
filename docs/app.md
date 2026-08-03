@@ -1113,16 +1113,36 @@ no text. `SortCaret.svelte` owns it and **both** renderings mount it, so one
 header cannot mean the same thing two ways; only its placement differs, and the
 component argues that difference where it makes it.
 
-Its footprint is `--caret-w`, and the desktop header **reserves that width to
-the right of its own text**. The mark is drawn in every sortable column, sorted
-or not, so it always occupies the end of the name line; right-aligning both
-lines of a figure header to the cell's edge therefore put the unit string under
-the *caret* rather than under the name's last glyph, and the two things a header
-states did not share an edge. Reserving it instead ends the text column before
-the mark, which leaves the caret alone in a gutter of its own — the same gutter
-in every figure column, since every one of them draws a caret. The width is a
-token rather than a number in each file precisely because two components measure
-against it.
+Its footprint is `--caret-w`, and **which line pays it is the column's kind**.
+The mark is drawn in every sortable column, sorted or not, so wherever it sits
+it sits permanently.
+
+- A **phrase** column is left-aligned, so the mark stays inline after the name,
+  which is where a trailing mark belongs and costs that column's edge nothing.
+- A **figure** column is right-aligned to the edge its numbers keep, and an
+  inline mark ends the header text a `--caret-w` short of them. So it goes out
+  of flow into the *leading* corner — `corner-start` — and the reserve moves to
+  the **left of the unit line**, which is the line that grows towards it.
+
+The reserve is in flow rather than bounded by a constant: the browser then sizes
+the column to keep it, so a long unit string widens its column instead of
+sliding under the mark. `headerMinPx` in `lib/fit.ts` states the same 12px, on
+whichever term carries it. The width is a token rather than a number in each
+file precisely because three files now measure against it.
+
+**Right-aligning a header is not `text-align` alone.** `th button` is
+`display: flex`, which blockifies it — but a `<button>`'s auto width still
+resolves to fit-content, so it is a block-level box narrower than its cell, and
+`text-align` moves inline-level content only and cannot touch it. Without
+`width: 100%` the button sits at the cell's inline start with all the slack piled
+to its right, and a figure column's right-aligned header renders **left-aligned**:
+measured 8px from the left edge in every column at 1700px and up, against figures
+128px away at 2560px. Below ~1500px the default columns sit at their minimum, the
+button fills the cell exactly, and the defect has nowhere to appear — which is
+why it survived a test that measured one width. `smoke.spec.ts` now sweeps 1440,
+1920 and 2560 and holds every figure header's name **and** unit line to its own
+column's right edge, which is the edge a runner reads down; the older test beside
+it keeps the two header lines honest against each other.
 
 **Row thumbnails are gone.** At 40×27 with `object-fit: cover` every shoe
 cropped to an indistinguishable grey strip, so they cost a column of width and
@@ -1763,14 +1783,18 @@ chosen:
   two different things on two screens" a fact rather than a comment. The `·` that
   separates the metadata run stops before it: the run is prose and the chip is a
   bordered box carrying its own margin.
-- **The sort mark is `SortCaret.svelte`, the desktop's**, and only its placement
-  differs. It sits in the header cell's bottom-right corner here, out of flow,
-  because it is rendered in every column whether or not that column is the sorted
-  one — inline it would spend its whole `--caret-w` of the 49px text budget
-  permanently, enough to
-  put `Weight` on a second line and grow a header that is pinned and therefore
-  paid by every screen. Any inline mark costs the same, a text glyph joined by a
-  space most of all, because the space is a wrap opportunity.
+- **The sort mark is `SortCaret.svelte`, the desktop's**, and only which corner
+  it takes differs. It is out of flow in **both** renderings now, and each puts it
+  in the corner its own header text is not aligned to: `corner-end`, the
+  bottom-right, here, where the names are centred; `corner-start` in a desktop
+  figure column, where they are right-aligned to the figures. What each rendering
+  cannot afford differs too. Here it is the WIDTH — the mark is rendered in every
+  column whether or not that column is the sorted one, so inline it would spend
+  its whole `--caret-w` of the 49px text budget permanently, enough to put
+  `Weight` on a second line and grow a header that is pinned and therefore paid by
+  every screen. Any inline mark costs the same, a text glyph joined by a space
+  most of all, because the space is a wrap opportunity. On the desktop it is the
+  EDGE, argued above.
 
 Rows are double height in this rendering, so roughly half as many shoes fit a
 screen. That is the direct price of keeping the numbers in columns, and it is
@@ -3812,11 +3836,14 @@ takes a third name line once a column is short enough to wrap one
 (§Table presentation), but which names those are arrives in the dataset the
 placeholder is waiting for — so the reserve keys off the input that does drive
 it, the width of the track the header wraps in, through a `@container` query on
-the placeholder's own box. At the default column set that threshold is **1025px
+the placeholder's own box. At the default column set that threshold is **956px
 of track**. It is a claim about the shipped catalogue's labels rather than a
 constant: `smoke.spec.ts` measures the placeholder against the real header on
 both sides of it, so a rename that moves it fails the build rather than the
-layout. The e2e fixture's own labels are not the catalogue's, so the two flip at
+layout. It has moved once already, from 1025px, when the sort mark left the name
+line in a figure column and handed that line `--caret-w` back — and it moved by
+69px rather than by 12, because a threshold is where one particular label breaks
+and not a width you can add the saving to. The e2e fixture's own labels are not the catalogue's, so the two flip at
 different widths and the test probes a viewport well inside each band rather than
 the boundary itself.
 

@@ -34,7 +34,8 @@ const NAME_COL_PX = 224;
 /** `--s2` either side, the `th`/`td` padding. */
 const CELL_PAD_PX = 16;
 /** `--caret-w`. Drawn in every sortable header, sorted or not, so it is in every column's minimum —
- *  inline after the name, and reserved again to the right of a figure column's units line. */
+ *  once, on whichever of the two header lines carries it: inline after the name in a phrase column,
+ *  reserved beside the units line in a figure column, where the mark is out of flow. */
 const CARET_PX = 12;
 /** `.tblwrap`'s two 1px side borders. The model answers for the panel, because the panel is what has
  *  to fit the content track. */
@@ -176,20 +177,25 @@ const widestWordPx = (s: string, table: Record<string, number>): number =>
   Math.max(0, ...s.split(/\s+/).flatMap((w) => w.split(/(?<=-)/)).map((w) => textPx(w, table)));
 
 /**
- * A header's min-content: the name line and the units line, whichever is wider, plus the caret each
- * of them carries. The name line is a flex row of text and caret, so its minimum is the longest word
- * plus the mark; the units line reserves the same width to its right in a figure column, which is
- * what lands the unit string under the name rather than under the caret
+ * A header's min-content: the name line and the units line, whichever is wider, plus the caret —
+ * which exactly ONE of the two lines carries, and which one is the column's kind
  * (docs/app.md §Table presentation).
+ *
+ * A phrase column keeps the mark inline after the name, so the name line's minimum is its longest
+ * word plus the mark, and its units line is empty. A figure column takes the mark out of flow into
+ * the leading corner, so the name line pays nothing and the units line reserves the width beside it
+ * — the reserve being what stops the browser sizing the column so tight that a unit string runs
+ * under the mark.
  */
 export function headerMinPx(key: string, test: LabTest | undefined): number {
   // The units line is mono and cannot wrap — no unit string carries a space now that `size-rating`
   // reads `3=TTS`, and `MAX_UNITS_CLEAR_PX` in `labels.ts` is what keeps it that short — so its width is
   // a character count over the whole line (docs/app.md §Table presentation).
   const unitsPx = headerUnits(key, test).length * UNITS_ADVANCE_PX;
+  const fig = isFigure(key, test);
   return Math.max(
-    widestWordPx(columnLabel(key, test), HEADER_PX) + CARET_PX,
-    unitsPx + (isFigure(key, test) ? CARET_PX : 0),
+    widestWordPx(columnLabel(key, test), HEADER_PX) + (fig ? 0 : CARET_PX),
+    unitsPx + (fig ? CARET_PX : 0),
   );
 }
 

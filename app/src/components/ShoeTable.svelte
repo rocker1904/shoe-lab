@@ -152,11 +152,18 @@
         </button>
       </th>
       {#each view.columns as col (col)}
-        <th class:fig={isFigure(col, idx.bySlug.get(col))}
+        {@const fig = isFigure(col, idx.bySlug.get(col))}
+        <th class:fig
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
+            <!-- The mark leaves the flow in a FIGURE column only. Its name and unit lines are
+                 right-aligned to the edge the figures keep, so inline it ends the text a
+                 `--caret-w` short of the numbers below and the header stops lining up with its own
+                 column. A phrase column is left-aligned, where a trailing mark is exactly where a
+                 mark belongs and costs that edge nothing (docs/app.md §Table presentation). -->
             <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}<SortCaret
-              dir={view.sort.key === col ? view.sort.dir : null} /></span>
+              dir={view.sort.key === col ? view.sort.dir : null}
+              placement={fig ? 'corner-start' : 'inline'} /></span>
             <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
                  second line would make the header rows different heights. -->
             <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
@@ -225,7 +232,18 @@
      lid has to ride in a box-shadow stack. */
   thead th { position: sticky; top: var(--thead-top); z-index: 2; box-shadow: var(--shadow-sticky);
              border-top: 1px solid var(--border); }
-  th button { display: flex; flex-direction: column; gap: 1px; background: none; border: none; color: var(--text);
+  /* `width: 100%` is what makes `text-align` on the `th` reach this at all, and its absence was a
+     silent misalignment for every viewport with slack in it. `display: flex` blockifies the button,
+     but a `<button>`'s auto width still resolves to fit-content — so it is a BLOCK-LEVEL box
+     narrower than its cell, and `text-align` moves inline-level content only and cannot touch it.
+     It therefore sat at the cell's inline start with the slack piled to its right, and a figure
+     column's right-aligned header read as left-aligned: measured 8px from the left edge in every
+     column at 1700px and above, against figures 128px away at 2560px. Below ~1500px the default
+     columns are at their minimum, the button fills the cell exactly, and the bug has nowhere to
+     show — which is why one width could not find it and `smoke.spec.ts` now sweeps three.
+     Filling the cell also makes the whole header the sort target rather than just its text
+     (docs/app.md §Columns and sorting). */
+  th button { display: flex; flex-direction: column; gap: 1px; width: 100%; background: none; border: none; color: var(--text);
               font: inherit; font-weight: 600; cursor: pointer; padding: 0; text-align: inherit; }
   /* Two lines of name are RESERVED whether or not this column's name needs them, so the pinned
      header's height stops being a function of which columns are ticked and a view of short names
@@ -247,13 +265,16 @@
   .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1lh; }
   th.fig, td.fig { text-align: right; }
   th.fig button { align-items: flex-end; }
-  /* The caret is drawn in EVERY sortable column, sorted or not, so it always occupies `--caret-w` at
-     the end of the name line. Right-aligning both lines to the button's own edge therefore landed
-     the unit string under the CARET rather than under the name's last glyph, and the two figures a
-     header states — what the column is and what it is measured in — did not share an edge. Reserving
-     the caret's width here ends the text column before the mark instead, which leaves the caret
-     alone in the gutter to its right (docs/app.md §Table presentation). */
-  th.fig .h-units { margin-right: var(--caret-w); }
+  /* The reserve the out-of-flow mark is owed, and it is on the LEFT because that is the corner
+     `corner-start` puts it in — the one a right-aligned header grows away from. In flow rather than
+     bounded by a constant: the browser then sizes the column to keep it, so a long unit string
+     widens its column instead of sliding under the mark, and `fit.ts` states the same 12px as
+     `CARET_PX` on the units term of `headerMinPx`.
+     It used to be `margin-right`, reserving a gutter the mark sat in inline. That kept the name and
+     unit lines on one edge — which they still are, and `smoke.spec.ts` still asserts — but it put
+     that shared edge a `--caret-w` inside the figures' own, so the header lined up with itself and
+     with nothing else (docs/app.md §Table presentation). */
+  th.fig .h-units { margin-left: var(--caret-w); }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
   /* THE PANEL IS THE RECESSED SURFACE, so nothing may be drawn around it. This cell took the
      figures' own `--s2` and paints nothing itself, which framed the `--well` panel in 8px of the

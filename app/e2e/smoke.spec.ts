@@ -140,9 +140,14 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
 // The strip is the biggest term above the table and only a BARE ARRIVAL draws it, so both loads
 // are measured: a query string is what makes the second one not bare, which is exactly the
 // predicate `isBareArrival()` answers for the placeholder and for the strip alike.
+// 880px and not 1200px for the three-line side: the threshold moved to a 956px track when the sort
+// mark left the name line (§Table presentation), and 1200px puts a 908px track BETWEEN the fixture's
+// own flip at 884px and the catalogue's — the one place the two disagree, so the reserve was right
+// for the shipped labels and wrong for the ones under test. 880px is a 848px track, inside the
+// three-line band under both, and still 40px clear of the width where this rendering hands over.
 for (const { width, path, strip } of [
   { width: 1440, path: '/', strip: true },
-  { width: 1200, path: '/', strip: true },
+  { width: 880, path: '/', strip: true },
   { width: 1440, path: '/?plate=carbon', strip: false },
 ]) {
   const who = strip ? 'a bare arrival' : 'a link that carries filters';
@@ -1094,10 +1099,14 @@ for (const width of [360, 390]) {
 
 /**
  * A figure header states two things — what the column is and what it is measured in — and they
- * share a right edge, with the sort caret alone in the gutter to their right
- * (docs/app.md §Table presentation). The caret is drawn in every column, so without the reserve the
- * unit line sits under the mark instead and no two-line header lines up with itself. Measured off a
- * Range over the name's own text, because the name box contains the caret as well.
+ * share a right edge (docs/app.md §Table presentation). That edge is now the figures' own, which
+ * the sweep below owns; this test is the other half of it, that the two header lines agree with
+ * each other and that the mark stays out of both.
+ *
+ * The mark is out of flow in the leading corner, so what it has to clear is the LEFT end of the
+ * unit line, which is the line that grows towards it — `th.fig .h-units` reserves `--caret-w` there
+ * for exactly this. It used to be asserted the other way round, against the name's right edge, back
+ * when the mark sat inline in a gutter at that end.
  */
 test('lines a figure header up with its own unit line at 1440px', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -1110,19 +1119,68 @@ test('lines a figure header up with its own unit line at 1440px', async ({ page 
     const range = document.createRange();
     range.setStart(text[0]!, 0);
     range.setEnd(text.at(-1)!, text.at(-1)!.textContent!.length);
-    const units = th.querySelector('.h-units')!.getBoundingClientRect().right;
+    const units = th.querySelector('.h-units')!.getBoundingClientRect();
     const caret = th.querySelector('.caret')!.getBoundingClientRect();
     return { col: (th as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
-             drift: Math.round(units - range.getBoundingClientRect().right),
-             caretClear: Math.round(caret.left - range.getBoundingClientRect().right) };
+             drift: Math.round(units.right - range.getBoundingClientRect().right),
+             caretClear: Math.round(units.left - caret.right) };
   }));
   expect(cols.length).toBeGreaterThan(2);
   for (const c of cols) {
     expect(c.drift, `${c.col}: unit line off the name's right edge`).toBe(0);
-    // And the mark is beside the name rather than over it, in its own reserved width.
-    expect(c.caretClear, `${c.col}: caret does not clear the name`).toBeGreaterThanOrEqual(0);
+    // And the mark is beside the unit line rather than under it, in its own reserved width.
+    expect(c.caretClear, `${c.col}: caret does not clear the unit line`).toBeGreaterThanOrEqual(0);
   }
 });
+
+/**
+ * And the header lines up with its OWN COLUMN, which is the edge a runner actually reads down. The
+ * test above asks only whether a header agrees with itself, and it passed for the whole time this
+ * did not hold: at 1440px the default columns sit at their minimum, the header button fills the cell
+ * exactly, and there is no slack for a misalignment to appear in. Every width with room to spare
+ * showed the figures right-aligned under a header pinned to the LEFT of the cell — 128px apart at
+ * 2560px (docs/app.md §Table presentation).
+ *
+ * Swept rather than fixed at one width, because a single width is what hid it: 1440 is the no-slack
+ * case and the two above it are where the slack is.
+ */
+for (const width of [1440, 1920, 2560]) {
+  test(`lines every figure header up with its own column at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await awaitFacesLoaded(page);
+
+    const cols = await page.evaluate(() => {
+      // Ranges throughout: a cell's box is the column, and what has to share an edge is the INK.
+      const inkRight = (el: Element) => {
+        const r = document.createRange();
+        r.selectNodeContents(el);
+        return r.getBoundingClientRect().right;
+      };
+      const heads = [...document.querySelectorAll('table thead th')];
+      const cells = [...document.querySelector('table tbody tr.shoe')!.children];
+      return heads.flatMap((th) => {
+        if (!th.classList.contains('fig')) return [];
+        const name = th.querySelector('.h-name')!;
+        const text = [...name.childNodes].filter((n) => n.nodeType === 3 && n.textContent!.trim());
+        const range = document.createRange();
+        range.setStart(text[0]!, 0);
+        range.setEnd(text.at(-1)!, text.at(-1)!.textContent!.length);
+        return [{
+          col: (th as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+          nameDrift: Math.round(range.getBoundingClientRect().right - inkRight(cells[heads.indexOf(th)]!)),
+          unitsDrift: Math.round(inkRight(th.querySelector('.h-units')!) - inkRight(cells[heads.indexOf(th)]!)),
+        }];
+      });
+    });
+
+    expect(cols.length).toBeGreaterThan(2);
+    for (const c of cols) {
+      expect(c.nameDrift, `${c.col}: header name off its column's right edge`).toBe(0);
+      expect(c.unitsDrift, `${c.col}: unit line off its column's right edge`).toBe(0);
+    }
+  });
+}
 
 // jsdom moves focus for nothing: neither Tab order nor a drawer that is hidden by `visibility` can
 // be observed there, and both are the whole point of these two.
@@ -1621,8 +1679,10 @@ test('mounts the stacked list under the desktop chrome, and holds it to the meas
  * than asserting them of one rendering at a time.
  */
 test('keeps the open row, the view and the paint when a ticked column flips the rendering', async ({ page }) => {
-  // 750px: three columns need 491px of it and six need 744px against the 734px it offers, so the
-  // tick below is what crosses the threshold — the window never moves.
+  // 750px: three columns need 443px of it and seven need 793px against the 734px it offers, so the
+  // ticks below are what cross the threshold — the window never moves. Seven and not six: a figure
+  // column's minimum lost `--caret-w` when the sort mark went out of flow (`headerMinPx`), and the
+  // six that used to overflow this window now come to 719px and fit inside it.
   await page.setViewportSize({ width: 750, height: 900 });
   await page.goto('/?cols=score,msrpGbp,weight');
   await awaitFacesLoaded(page);
@@ -1640,7 +1700,8 @@ test('keeps the open row, the view and the paint when a ticked column flips the 
 
   // Enough columns to take the table past this window, ticked the way a runner would.
   await page.locator('details.picker summary').click();
-  for (const label of [/Tongue gusset/, /Outsole durability/, /Heel counter stiffness/]) {
+  for (const label of [/Tongue gusset/, /Outsole durability/, /Heel counter stiffness/,
+    /Midsole softness/]) {
     await page.getByRole('checkbox', { name: label }).check();
   }
   await page.keyboard.press('Escape');
