@@ -105,7 +105,17 @@
       "previousId": null,
       "updateId": null,
       "primaryTestId": null,
-      "secondaryTestIds": []
+      "secondaryTestIds": [],
+      "options": [
+        {
+          "value": "both-sides-semi",
+          "name": "Both sides (semi)"
+        },
+        {
+          "value": "none",
+          "name": "None"
+        }
+      ]
     },
     {
       "type": "percent",
@@ -234,6 +244,21 @@
       "updateId": null,
       "primaryTestId": null,
       "secondaryTestIds": []
+    },
+    {
+      "id": 41,
+      "slug": "removable-insole",
+      "name": "Removable insole",
+      "type": "bool",
+      "units": "",
+      "groupId": "3",
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
+      "options": null
     }
   ],
   "shoes": [
@@ -264,7 +289,9 @@
         "66": 62,
         "67": 115,
         "68": 140,
-        "70": 40
+        "70": 40,
+        "39": "both-sides-semi",
+        "41": true
       },
       "details": {
         "pros": [
@@ -323,7 +350,9 @@
         "66": 68,
         "67": 125,
         "68": 150,
-        "70": 42
+        "70": 42,
+        "39": "none",
+        "41": false
       },
       "details": null,
       "facts": {},
@@ -359,7 +388,9 @@
         "66": 51,
         "67": 100,
         "68": 120,
-        "70": 30
+        "70": 30,
+        "39": "both-sides-semi",
+        "41": true
       },
       "details": null,
       "facts": {},
@@ -393,7 +424,9 @@
         "65": 55,
         "66": 45,
         "67": 90,
-        "68": 100
+        "68": 100,
+        "39": "none",
+        "41": false
       },
       "details": null,
       "facts": {},

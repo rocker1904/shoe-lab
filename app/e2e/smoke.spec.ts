@@ -279,8 +279,14 @@ test('drags a bound onto the histogram and clamps only the drawing', async ({ pa
   await page.goto('/');
   const row = page.getByRole('group', { name: 'Price (£)' });
   await expect(row).toBeVisible();
+  // Scrolled to before it is measured, because the sidebar's fixed sections grow: the Features
+  // section put this plot two pixels below an 800px fold, and a drag driven at coordinates outside
+  // the viewport silently does nothing while every locator still resolves.
+  await row.locator('.plot').scrollIntoViewIfNeeded();
   const box = await row.locator('.plot').boundingBox();
   expect(box, 'the plot never got a box, so nothing below would be measuring anything').not.toBeNull();
+  expect(box!.y + box!.height, 'the plot is below the fold, so the drag below would land nowhere')
+    .toBeLessThanOrEqual(800);
   const max = row.getByLabel('Price (£) maximum', { exact: true });
   const min = row.getByLabel('Price (£) minimum', { exact: true });
 
