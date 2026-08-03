@@ -379,8 +379,8 @@ describe('the feature selection token', () => {
   });
 
   it('drops a key that names no categorical test in this catalogue', () => {
-    // A numeric test and the slug the `plate` field owns are refused here as they are everywhere
-    // else: neither has a control to untick.
+    // A numeric test and the slug the `plate` field owns are refused here as they are refused *as
+    // categoricals* everywhere else — the numeric one is still what `r.`, `sort` and `cols` take.
     for (const qs of ['c.weight=250', 'c.plate=true', 'c.nonesuch=x']) {
       expect(parseView(qs, idx).filters.categorical, qs).toEqual({});
       expect(sameValue(parseView(qs, idx), defaultView()), qs).toBe(true);

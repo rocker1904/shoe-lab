@@ -191,11 +191,13 @@ that reads the population reads it through `population.ts`, which keys its
 answer on the filters *without* their ranges and hands back the array it already
 built: the sidebar's dozen coverage headings, the brand facet's figure per brand
 and each feature checklist's figure per value then cost nothing while a grip is
-held. Measured on the 450-shoe fleet at
-1440px, a drag step went from about 20,600 shoe-visits to about 1,200, and the
+held. Measured on the 450-shoe fleet at 1440px, before the feature checklists
+existed, a drag step went from about 20,600 shoe-visits to about 1,200, and the
 main thread from about 9.4ms to about 6.9ms of the frame. Each call site holds
-its own reader: the sidebar's population and the brand facet's differ by one
-filter, so a shared entry would evict on every call and hold nothing.
+its own reader — the sidebar's population and the brand facet's differ by one
+filter, and a facet's counts are one reader *per facet*, since each is taken over
+the population with its own facet lifted — so a shared entry would evict on every
+call and hold nothing.
 
 What remains per update is what genuinely moved: one filter pass, two more per
 **bounded** row for its `excluded` count — a leave-one-out is conditioned on the
@@ -272,15 +274,15 @@ all-separator value, or one whose every member was refused — stays absent rath
 than becoming an empty array**, which is the rule for every such token including
 one added later, because an empty array would keep `isDefaultView` false forever
 and never let `All` light again. A `c.` key survives only when its slug names a
-**categorical** test in the current catalogue (a numeric test and the slug the
-`plate` field owns are refused there as they are everywhere else), its values are
-deduped and kept in arrival order, and every occurrence of one slug is merged
-before any rule is applied, so a selection means the same thing spelled as one
-key or as two. `rows` keeps only rangeable
-non-curated keys, and `cols` is deduped and kept unless it is a sort-only field
-or could never be a slug — the one permissive key, and
-§Columns are permissive, ranges and sorts are strict owns why.
-A `gen.` choice survives only when its key names
+**categorical** test in the current catalogue — a numeric test and the slug the
+`plate` field owns are refused there as they are refused *as categoricals*
+everywhere else, the numeric one being exactly what `r.`, `sort` and `cols` do
+accept — its values are deduped and kept in arrival order, and every occurrence
+of one slug is merged before any rule is applied, so a selection means the same
+thing spelled as one key or as two. `rows` keeps only rangeable non-curated keys,
+and `cols` is deduped and kept unless it is a sort-only field or could never be a
+slug — the one permissive key, and §Columns are permissive, ranges and sorts are
+strict owns why. A `gen.` choice survives only when its key names
 the current generation of a resolved pair and its value names that pair's
 retired generation. Bound serialisation accepts everything `String(number)`
 emits, exponent form included, so round-trips are lossless.
@@ -385,11 +387,10 @@ makes for itself.
 `lib/filters.ts` reads the live filter state and returns the classes that are
 set — the search, the release-date bound, the plate selection, the brand
 selection, the discontinued filter, the feature selection, the bounds — in the
-order the sidebar draws them, so the sentence reads down the column it is
-sending the reader to. The
-paragraph is `Clear <a, b or c> to see shoes`, with `a filter` when nothing is
-named, plus the clause *each bound says how many shoes it is excluding* only
-when a bound is one of them.
+order the sidebar draws them, so the sentence reads down the column it is sending
+the reader to. The paragraph is `Clear <a, b or c> to see shoes`, with
+`a filter` when nothing is named, plus the clause *each bound says how many shoes
+it is excluding* only when a bound is one of them.
 
 It used to be one unconditional sentence written for a range bound: a link
 emptied by a brand, a search or a date advised clearing a bound directly under a

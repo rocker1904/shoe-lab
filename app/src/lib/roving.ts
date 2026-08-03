@@ -1,5 +1,5 @@
 /**
- * Arrow-key movement for a `role="radiogroup"`, applied as one action to all four of them
+ * Arrow-key movement for a `role="radiogroup"`, applied as one action to every one of them
  * (docs/app.md §Filters). The role promises that the group is a single tab stop and that the
  * arrows move the selection; every group here made each radio its own stop and ignored the keys,
  * so the promise was a lie to anyone navigating by keyboard.
@@ -10,7 +10,7 @@
  */
 type Step = (from: number, count: number) => number;
 
-/** Both axes, because one of the four groups (the generation picker) is a column, not a row. */
+/** Both axes, because not every group is a row — the generation picker is a column. */
 const STEPS: Record<string, Step> = {
   ArrowRight: (i, n) => (i + 1) % n,
   ArrowDown: (i, n) => (i + 1) % n,
@@ -26,8 +26,9 @@ export function roving(node: HTMLElement): { destroy(): void } {
    * when one is: a disabled control can be neither focused nor clicked, so making it the tab stop
    * takes the whole group out of the tab order and stepping onto it leaves the arrows dead. Both
    * were observed, in a grid that has since stopped using this action for an unrelated reason
-   * (docs/app.md §Released after is month-granular); none of the four current groups disables
-   * anything, so the filter is inert for all of them today.
+   * (docs/app.md §Released after is month-granular); no group disables a radio today, so the
+   * filter is inert — which is a fact about the groups that exist, not a property to rely on: the
+   * first group that disables one is exactly the case this was written for.
    */
   const all = (): HTMLElement[] => [...node.querySelectorAll<HTMLElement>('[role="radio"]')];
   const radios = (): HTMLElement[] => all().filter((r) => !(r as HTMLButtonElement).disabled);

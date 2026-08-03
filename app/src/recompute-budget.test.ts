@@ -77,8 +77,15 @@ it('reads no coverage at all while a bound moves', async () => {
 it('filters the fleet a bounded number of times per bound change', async () => {
   render(Page, { props: { data } });
   await changeOneBound();
-  // The table's own pass and two per bounded row for its `excluded` count. The brand facet's is
-  // NOT among them: it counts over `considered`, which a range leaves alone.
+  // The table's own pass and two per bounded row for its `excluded` count. Every *facet* reader —
+  // the brand counts and each feature checklist's — is outside that number, because each counts over
+  // `considered`, which a range leaves alone, and each is built once and kept.
+  //
+  // So this bound is what holds their build-once property: rebuild any of them per render and this
+  // fails rather than the drag quietly costing a fleet pass per facet
+  // (docs/app.md §What a drag may recompute). Raise it only for a cause you can name here, and only
+  // after checking the readers are still held — the readers scale with the catalogue's categorical
+  // tests, so the number they add is not a number this comment can carry.
   expect(vi.mocked(applyFilters).mock.calls.length).toBeLessThanOrEqual(3);
 });
 
