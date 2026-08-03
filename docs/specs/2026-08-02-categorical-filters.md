@@ -1,6 +1,10 @@
 # Categorical filters
 
-*2026-08-02 · BACKLOG item 5 · status: approved, in delivery*
+*2026-08-02 · from BACKLOG's "A filter for the categorical columns", removed on
+delivery · status: **delivered 2026-08-03 and frozen** — history rather than
+reference, and where it disagrees with docs/, docs/ wins. The build sheet below
+records what was done, and is not a list to run again; landing and the
+three-engine e2e run are what remain.*
 
 Make the four categorical columns filterable: `tongue-gusset-type` and
 `heel-tab` (closed enums), `removable-insole` and `reflective-elements`
@@ -252,7 +256,8 @@ precedent).
    §Announcement.
 8. **Docs ride the change.** `docs/app.md` §Filters (order sentence, the
    new section), §Categorical columns (replace "There is no categorical
-   filter yet"), §URL encoding (token list); BACKLOG item 5 removed.
+   filter yet"), §URL encoding (token list); BACKLOG's "A filter for the
+   categorical columns" removed — by title, because the list renumbers.
    Evidence: `npm run check:docs`. Rides the commits, not a trailing one.
 
 ### Global constraints
