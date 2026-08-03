@@ -269,9 +269,12 @@ describe('the Tempo score against the real fleet', () => {
       for (const stability of [false, true]) {
         const vs = [...scoreMap(TEMPO, POOL, zone, stability, realIdx).values()];
         const label = `${zone}/${stability ? 'on' : 'off'}`;
-        // The eligibility invariant Easy asserts holds for Tempo too, and for the same reason: the
-        // opt-in metrics are the best-covered in the fleet.
-        expect(vs.length, label).toBe(283);
+        // A share of the pool rather than a count of it: the fleet grows on every refresh, so a
+        // literal here fails on growth — which is not the regression worth catching. What is worth
+        // catching is a term's coverage collapsing, which leaves the fleet its size and quietly
+        // shortens the list a story can rank; the scraper's fleet gates do not see that, because
+        // no shoe vanished (docs/scraping.md §Validation gates).
+        expect(vs.length / POOL.length, label).toBeGreaterThan(0.65);
         expect(Math.max(...vs), label).toBeCloseTo(100, 1);
         expect(Math.min(...vs), label).toBeCloseTo(0, 1);
       }
@@ -316,7 +319,10 @@ describe('the Race score against the real fleet', () => {
   it('scores the whole fleet and anchors on it', () => {
     for (const zone of ZONES) {
       const vs = [...scoreMap(RACE, REAL.shoes, zone, false, realIdx).values()];
-      expect(vs.length, zone).toBe(378);
+      // A share of the fleet rather than a count of it, for the reason Tempo's bound states: a
+      // literal fails on the growth every refresh brings, where the regression worth catching is a
+      // term's coverage collapsing under a fleet that never changed size.
+      expect(vs.length / REAL.shoes.length, zone).toBeGreaterThan(0.75);
       expect(Math.max(...vs), zone).toBeCloseTo(100, 1);
       expect(Math.min(...vs), zone).toBeCloseTo(0, 1);
     }

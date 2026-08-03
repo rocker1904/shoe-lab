@@ -2128,7 +2128,7 @@ percentile would invent resolution the measurement does not have.
 
 **No story weights a thin term.** This is the score's half of the sparse-bound guard
 (§Presets), and it is the half that still has something to check: `score.test.ts` counts
-every weighted term over the pool its story is scored on — the plate-filtered 378 for
+every weighted term over the pool its story is scored on — the plate-filtered pool for
 Easy and Tempo, the fleet for Race — and fails when one falls below `SPARSE_BELOW`
 (§Coverage). The stability pair is counted too, because a runner can turn those terms on.
 Counting is on the **mapped term** rather than a metric slug: outsole life and midsole
@@ -2148,7 +2148,7 @@ the column's header carries no `/100`. `score.test.ts` pins every constant, so a
 accidental recompute fails the build rather than silently moving every score.
 
 **A divisor belongs to a pool, never to a story.** It is a property of
-`(metric, mapping, pool)`, so Easy and Tempo — which rank the same plate-filtered 378 —
+`(metric, mapping, pool)`, so Easy and Tempo — which rank the same plate-filtered pool —
 share **one object by reference**, and keeping two copies would be two homes for one
 fact. Race ranks the whole fleet, where carbon widens every spread, so its divisors are
 materially larger than the pooled ones — the values themselves live in `score-defs.ts`
