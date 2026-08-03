@@ -343,7 +343,13 @@ declared ones so a choice nothing matches still shows its zero; the fleet's so a
 value the catalogue does not declare gets a row that stays put rather than one
 appearing and vanishing as another filter moves the pool; the selection's so a
 link carrying a value the catalogue has since dropped keeps a control to untick
-it with. A `bool` test is an Any/Yes/No tri-state built the way
+it with. **Those rows are keyed by the option value**: a keyed `{#each}` over a
+value that appears twice throws `each_key_duplicate`, which blanks the whole
+page rather than drawing one wrong row. The fleet's and the selection's values
+are filtered against the declared ones, so the only way two rows can carry one
+value is a catalogue that declares it twice — refused upstream rather than
+defended here (docs/scraping.md §Decisions).
+A `bool` test is an Any/Yes/No tri-state built the way
 Discontinued is, and carries no counts: ticking both boxes would be a near-no-op
 whose only effect is excluding the handful of unread shoes, which is not a state
 a runner means. A selection is set membership on the population side, so it moves
