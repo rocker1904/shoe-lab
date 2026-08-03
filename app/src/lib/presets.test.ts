@@ -101,6 +101,30 @@ describe('presets', () => {
   });
 });
 
+/**
+ * A guard, not a behaviour test: nothing in `applyPreset` should read `stability` for anything but
+ * the field it assigns, because task 4's parse-side baseline is built with `stability: false` and
+ * relies on `stab=1` layering over it exactly as every other token does — which is only correct if
+ * no story's pool, sort or columns can vary with the preference (docs/app.md §The story scores,
+ * spec docs/specs/2026-08-03-url-zone-story-shorthand.md §Decisions). `PRESETS` rather than a
+ * hardcoded id list, so a fourth story is covered without an edit here.
+ */
+describe('applyPreset\'s stability argument changes nothing but stability', () => {
+  it('applyPreset(id, z, true) differs from applyPreset(id, z, false) only in stability', () => {
+    for (const zone of ZONES) {
+      for (const p of PRESETS) {
+        const stable = applyPreset(p.id, zone, true);
+        const unstable = applyPreset(p.id, zone, false);
+        expect(stable.stability, `${p.id}/${zone}`).toBe(true);
+        expect(unstable.stability, `${p.id}/${zone}`).toBe(false);
+        // Compare whole views rather than an enumerated field list, so a field added later is
+        // still caught by this guard without an edit here.
+        expect({ ...stable, stability: unstable.stability }, `${p.id}/${zone}`).toEqual(unstable);
+      }
+    }
+  });
+});
+
 describe('easy', () => {
   it('bounds nothing but the plate, and ranks by the score instead', () => {
     // The score rewards cushioning directly, so a stack floor would restate it; and the runner
