@@ -29,6 +29,29 @@ export const WASH_CURVE = 4;
 export const WASH_PEAK = 0.94;
 /** Below this, paint nothing rather than a tint no one can see. */
 export const WASH_MIN_PAINT = 0.015;
+/**
+ * Steps the painted ramp is quantised to, in each ramp's OWN range rather than in an absolute
+ * fraction — the neutral ramp tops out far below the ranked one, so an absolute step would be
+ * several times coarser there for nothing. It is a **performance** number that buys nothing
+ * visually: a dragged grip rewrites every tinted cell's `--a`, and a value that has not changed is
+ * a style recalculation the browser skips (docs/app.md §Theming owns the measured before and
+ * after, on both counts).
+ */
+export const WASH_STEPS = 128;
+
+/**
+ * Round onto the ramp's own steps. It samples the value the GUARDED ramp already produced, which is
+ * what keeps the contrast cap true through quantisation (docs/app.md §Theming).
+ *
+ * Called after the `WASH_MIN_PAINT` cutoff and never before it, so the cutoff keeps deciding what
+ * is bare on the ramp's own value. Half a step can then carry the first painted tint a hair BELOW
+ * that cutoff — `top / 256` of alpha, under an 8-bit step of anything — but never to zero, so a
+ * cell that paints goes on painting and the ramp stays monotone.
+ */
+function stepped(a: number, top: number): number {
+  const step = top / WASH_STEPS;
+  return Math.round(a / step) * step;
+}
 
 /**
  * The shipped ramp, written out rather than delegating to `rankedAlpha` below. The duplication is
@@ -36,6 +59,10 @@ export const WASH_MIN_PAINT = 0.015;
  * `wash.test.ts` compares against: this is the curve the app painted before there were any
  * preferences, and the parameterised engine has to reproduce it to the bit for a runner who never
  * opens the menu.
+ *
+ * It stays CONTINUOUS while the painted ramp is stepped (`WASH_STEPS`), so the test rounds it there
+ * rather than here: a reference that quantised itself could not say whether the two agree about the
+ * curve or merely about the rounding.
  */
 export function washAlpha(p: number): number {
   const t = Math.max(0, (p - WASH_FLOOR) / (1 - WASH_FLOOR));
@@ -43,10 +70,13 @@ export function washAlpha(p: number): number {
   return a < WASH_MIN_PAINT ? 0 : a;
 }
 
+/** The neutral ramp's alpha at p = 1, and therefore the range its steps are a fraction of. */
+const GREY_PEAK = 0.34;
+
 /** Linear, deliberately. See the note above. */
 export function greyAlpha(p: number): number {
-  const a = p * 0.34;
-  return a < WASH_MIN_PAINT ? 0 : a;
+  const a = p * GREY_PEAK;
+  return a < WASH_MIN_PAINT ? 0 : stepped(a, GREY_PEAK);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -119,10 +149,11 @@ export const DEFAULT_PAINT: WashPaint = {
 
 /** The ranked cell's alpha. Plain arguments, no allocation: this runs once per painted cell. */
 export function rankedAlpha(p: number, w: WashPaint): number {
+  // Flat at the peak, which is a step of its own range by construction — nothing to round.
   if (w.dual) return w.peak;
   const t = Math.max(0, (p - w.floor) / (1 - w.floor));
   const a = Math.pow(t, w.curve) * w.peak;
-  return a < WASH_MIN_PAINT ? 0 : a;
+  return a < WASH_MIN_PAINT ? 0 : stepped(a, w.peak);
 }
 
 /**
@@ -131,7 +162,7 @@ export function rankedAlpha(p: number, w: WashPaint): number {
  * so the hue has to (docs/app.md §The display preferences).
  */
 export function rankedMix(p: number, w: WashPaint): number {
-  return Math.pow(p, w.curve);
+  return stepped(Math.pow(p, w.curve), 1);
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { mixLab, oklabToRgb, rgb255, rgbToOklab, toGamutLab } from './oklab';
 import {
   DEFAULT_PAINT, DISPLAY_DEFAULTS, greyAlpha, rankedAlpha, rankedMix, resolveWash, washAlpha,
-  WASH_FLOOR, WASH_PEAK, WASH_THEMES, type DisplayPrefs, type ThemeName, type WashPaint,
+  WASH_FLOOR, WASH_MIN_PAINT, WASH_PEAK, WASH_STEPS, WASH_THEMES,
+  type DisplayPrefs, type ThemeName, type WashPaint,
 } from './wash';
 
 /** sRGB relative luminance, per WCAG. */
@@ -252,8 +253,10 @@ describe('the engine reads the same tokens this file asserts against', () => {
  * closed form above, and `app.css`'s own `--wash-blue` rather than a reconstruction of it
  * (docs/app.md §The display preferences).
  *
- * `washAlpha` is written out separately in `wash.ts` precisely so this comparison is between two
- * implementations rather than a function and itself.
+ * `washAlpha` is the CONTINUOUS closed form and stays that way: the painted ramp is stepped
+ * (docs/app.md §Theming), so what the default state has to reproduce is that curve rounded onto its
+ * own steps. The rounding is written out here for the same reason `washAlpha` is written out in
+ * `wash.ts` — this comparison is between two implementations rather than a function and itself.
  */
 describe('the shipped ramp at the default preferences', () => {
   const r = resolveWash(DISPLAY_DEFAULTS);
@@ -283,9 +286,10 @@ describe('the shipped ramp at the default preferences', () => {
   });
 
   it('reproduces the alpha of every step of the shipped curve exactly', () => {
+    const step = WASH_PEAK / WASH_STEPS;
     for (let i = 0; i <= 400; i++) {
       const p = i / 400;
-      expect(rankedAlpha(p, r.paint), `p=${p}`).toBe(washAlpha(p));
+      expect(rankedAlpha(p, r.paint), `p=${p}`).toBe(Math.round(washAlpha(p) / step) * step);
     }
   });
 
@@ -549,5 +553,76 @@ describe('the ramp shape follows its preferences', () => {
 
   it('still paints nothing where a tint would be invisible', () => {
     expect(rankedAlpha(0.16, paint({ peak: 0.02 }))).toBe(0);
+  });
+});
+
+/**
+ * **The painted ramp is stepped**, and each ramp is stepped in its OWN range rather than in an
+ * absolute 1/`WASH_STEPS` (docs/app.md §Theming owns why the ramp is stepped at all). The grey ramp
+ * tops out at 0.34, so an absolute step would make it three times coarser than the blue one — the
+ * fidelity that justifies the change is a property of each ramp's own range.
+ *
+ * The unquantised curve is written out here rather than imported, for the same reason `washAlpha`
+ * is: an error bound measured against the function's own arithmetic is not a bound.
+ */
+describe('every painted ramp is stepped in its own range', () => {
+  const RAMPS = [
+    {
+      name: 'rankedAlpha', top: WASH_PEAK,
+      of: (p: number) => rankedAlpha(p, DEFAULT_PAINT),
+      raw: (p: number) => {
+        const a = Math.pow(Math.max(0, (p - WASH_FLOOR) / (1 - WASH_FLOOR)), DEFAULT_PAINT.curve) * WASH_PEAK;
+        return a < WASH_MIN_PAINT ? 0 : a;
+      },
+    },
+    {
+      name: 'greyAlpha', top: greyAlpha(1),
+      of: greyAlpha,
+      raw: (p: number) => (p * 0.34 < WASH_MIN_PAINT ? 0 : p * 0.34),
+    },
+    {
+      name: 'rankedMix', top: 1,
+      of: (p: number) => rankedMix(p, DEFAULT_PAINT),
+      raw: (p: number) => Math.pow(p, DEFAULT_PAINT.curve),
+    },
+  ];
+  /** Far more samples than steps, so a ramp that failed to step would show it. */
+  const SAMPLES = 5000;
+
+  for (const { name, top, of, raw } of RAMPS) {
+    it(`${name} yields at most ${WASH_STEPS + 1} distinct values across the range`, () => {
+      const seen = new Set<number>();
+      for (let i = 0; i <= SAMPLES; i++) seen.add(of(i / SAMPLES));
+      expect(seen.size).toBeLessThanOrEqual(WASH_STEPS + 1);
+    });
+
+    /**
+     * The contrast guarantee survives by construction: the steps sample the guarded ramp itself, so
+     * the largest value is exactly the capped top and rounding can only land at or below it. That
+     * is why the sweeps above still bound the stepped ramp.
+     */
+    it(`${name} never lands above its own top, so the cap still binds`, () => {
+      for (let i = 0; i <= SAMPLES; i++) {
+        const p = i / SAMPLES;
+        expect(of(p), `p=${p}`).toBeLessThanOrEqual(top);
+      }
+      expect(of(1)).toBe(top);
+    });
+
+    it(`${name} is never more than half a step from the continuous ramp`, () => {
+      const half = top / WASH_STEPS / 2;
+      let worst = 0;
+      for (let i = 0; i <= SAMPLES; i++) {
+        worst = Math.max(worst, Math.abs(of(i / SAMPLES) - raw(i / SAMPLES)));
+      }
+      expect(worst, `worst ${worst} against half a step ${half}`).toBeLessThanOrEqual(half + 1e-12);
+    });
+  }
+
+  /** The flat base-on alpha is the peak itself, which is a step by construction. */
+  it('leaves the base-on ramp flat at the peak', () => {
+    const dual: WashPaint = { ...DEFAULT_PAINT, dual: true };
+    expect(rankedAlpha(0, dual)).toBe(DEFAULT_PAINT.peak);
+    expect(rankedAlpha(1, dual)).toBe(DEFAULT_PAINT.peak);
   });
 });

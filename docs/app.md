@@ -203,9 +203,12 @@ What remains per update is what genuinely moved: one filter pass, two more per
 **bounded** row for its `excluded` count — a leave-one-out is conditioned on the
 rest of the set, so moving any bound moves every other row's figure — one sort,
 one ranking per rendered column (`percentileMap` defers to `rankMap`, one walk
-of the sorted run rather than one per shoe), and the table's DOM. The DOM is now
-the larger half by far, which is a row-count problem rather than a reactivity
-one — BACKLOG.md holds it.
+of the sorted run rather than one per shoe), and the table's DOM. The DOM is
+still the larger half, which is a row-count problem rather than a reactivity
+one — BACKLOG.md holds it. A measured piece of it has already been taken back
+without touching the row count: the wash writes a **stepped** value, so most
+cells' alpha is the one they already carried and the style recalculation that
+would have followed never happens (§Theming owns the before and after).
 
 ## Sanitised-HTML boundary
 
@@ -3119,6 +3122,27 @@ themes and on both ramps. The neutral ramp clears by a wide margin, which is
 why it needs the assertion rather than a reason to skip it: an unasserted rule
 is one a retune deletes in silence.
 
+**The painted ramp is stepped, and that is a performance change rather than a
+visual one.** `rankedAlpha`, `greyAlpha` and `rankedMix` round their result onto
+`WASH_STEPS` steps of **each ramp's own** range — the neutral ramp tops out far
+below the ranked one, so an absolute step would be several times coarser there
+for nothing. What that buys is frames: a dragged range grip rewrites every
+tinted cell's inline `--a`, and a property whose value has not changed is a
+style recalculation the browser skips. Measured on the real fleet at 1440px over
+a 60-move grip drag, style recalculation falls from about 5.4ms to about 2.2ms a
+frame and the whole frame from about 22ms to about 16ms, against a 16.7ms
+budget (§What a drag may recompute).
+
+It buys **nothing** on screen, and that is the claim to keep true: against the
+continuous ramp the stepped render differs by at most **one 8-bit channel
+level**, with no pixel differing by more than that — desktop and phone, both
+themes, base ramp off and on. What is stepped is the rendered **quantity**, not
+the rank: `percentileMap` and `rankMap` are untouched, and stepping there would
+change which shoes lead rather than how they are painted. And the steps sample
+the **guarded** ramp rather than replacing it: the largest value is exactly the
+capped peak and rounding can only land at or below it, so the contrast cap
+survives by construction and the sweeps above still bound what is painted.
+
 **One ink at every step.** A ramp that switched to white numerals cannot
 satisfy 4.5:1 anywhere near the switch: it must pass through a crossover
 luminance where both inks are equally bad, and the best obtainable there is
@@ -3512,7 +3536,8 @@ record is neither readable by name nor trustworthy by value.
 `tokenFill` there and no override stylesheet exists, so `app.css`'s own
 `--wash-blue` **and its own accent family** reach the screen exactly as they
 always have, in both themes, byte for byte — asserted from both ends in
-`wash.test.ts` (the alpha of all 401 steps against the frozen closed form) and
+`wash.test.ts` (the alpha of all 401 steps against the frozen closed form,
+stepped the way the painted ramp is — §Theming) and
 `display.test.ts` (the empty stylesheet). It is one predicate for both, because
 it is one preference: either the stylesheet's colours paint or the engine's do.
 This is why the defaults are stated at the sliders' own steps — 235° / 0.2 —

@@ -9,7 +9,7 @@ import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { zoneOfKey } from './lib/lineage';
 import { applyPreset } from './lib/presets';
 import { defaultColumns, parseView, serializeView } from './lib/urlstate';
-import { DISPLAY_DEFAULTS, washAlpha } from './lib/wash';
+import { DISPLAY_DEFAULTS, washAlpha, WASH_PEAK, WASH_STEPS } from './lib/wash';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
@@ -470,13 +470,15 @@ describe('Page', () => {
       const { container } = render(Page, { props: { data } });
       const before = alphas(container).map(Number);
       expect(before.length).toBeGreaterThan(0);
-      // The top of a ranked column is p = 1, so the frozen peak is what it paints — to the bit.
-      // `wash.test.ts` holds the other 400 steps of the same curve.
       // The five-shoe fixture ranks at p = 0.875, 0.625, 0.375 and 0.125, the last of which is
       // under the floor and bare. Compared against `washAlpha` — the frozen closed form, which the
-      // preference engine never touches — so this is the painted table measured against the ramp
-      // that shipped, through the real render path.
-      expect(new Set(before)).toEqual(new Set([0.875, 0.625, 0.375, 0.125].map(washAlpha)));
+      // preference engine never touches — rounded onto the ramp's own steps, because that is what
+      // the app paints (docs/app.md §Theming). So this is the painted table measured against the
+      // ramp that shipped, to the bit, through the real render path; `wash.test.ts` holds the other
+      // 400 steps of the same curve and owns the stepping's own bounds.
+      const step = WASH_PEAK / WASH_STEPS;
+      expect(new Set(before)).toEqual(new Set([0.875, 0.625, 0.375, 0.125]
+        .map((p) => Math.round(washAlpha(p) / step) * step)));
       expect(document.getElementById('wash-prefs')).toBeNull();
       expect(document.documentElement.dataset['wash']).toBeUndefined();
       expect(localStorage.getItem('display')).toBeNull();
