@@ -323,7 +323,7 @@ name carries heading **and** zone, because two rows both called "Forefoot"
 would be indistinguishable to anyone not looking at the screen.
 
 The order is fixed: search, released after, plate, brand, discontinued, features,
-then metrics — the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
+then metrics: the range rows come from one declared list, `CURATED_RANGE_KEYS` —
 price, then the measurements a runner narrows on most, then the rest curated,
 then anything added by hand. Price leads because it is the bound almost every
 search has.

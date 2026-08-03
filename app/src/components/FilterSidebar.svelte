@@ -294,10 +294,11 @@
 
   <!-- The rows are a section like the six above, and the heading is what makes them one: without it
        every `MetricRow` `h4` follows `Features` with no `h3` between, so a heading outline reads
-       every measurement as a facet of that section. The word is not chosen here — the Add-filter
-       dialog, which is how a row arrives, already calls them metrics to the runner's face, and one
-       home per name is docs/policies.md §Vocabulary. The foot stays OUTSIDE: its two buttons act on
-       the whole surface, not on the measurements (docs/app.md §Filters). -->
+       every measurement as a facet of that section. The word is not chosen here: the Add-filter
+       dialog, which is how a row arrives, already calls them metrics to the runner's face, and
+       taking its noun rather than coining a second one is docs/policies.md §Vocabulary. The foot
+       stays OUTSIDE: its two buttons act on the whole surface, not on the measurements
+       (docs/app.md §Filters). -->
   <section>
     <h3>Metrics</h3>
     <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the sections

@@ -334,6 +334,14 @@ describe('the Tempo score against the real fleet', () => {
   });
 });
 
+/*
+ * Nothing here asserts that carbon fills the top of this ranking, deliberately. That the top of
+ * the list is carbon anyway is docs/shoe-stories.md §Race's claim about the shoes rather than one
+ * about the code — Race weights speed alone and gates no plate — so a better plate material, or a
+ * shoe reaching those numbers without one, would redden a suite that pinned it while the score
+ * carried on working as designed. Divergence from the market is the output, not a fault
+ * (docs/shoe-stories.md §Checking a set of weights).
+ */
 describe('the Race score against the real fleet', () => {
   it('pairs the Race score columns by zone', () => {
     expect(swapZone('race-score-forefoot', 'heel')).toBe('race-score-heel');
@@ -371,14 +379,6 @@ describe('the Race score against the real fleet', () => {
       .toBeGreaterThan(scoreMap(EASY, REAL.shoes, 'heel', false, realIdx).size);
   });
 
-  /*
-   * There is deliberately no assertion that carbon fills the top of this ranking. Race weights
-   * speed alone and filters no plate out, so carbon leading is a fact about what manufacturers
-   * currently sell rather than a property of the score: a better plate material, or a shoe that
-   * reaches the same numbers without a plate, would redden a suite that pinned it while the score
-   * carried on working exactly as designed. The same reason the presets are never tuned toward
-   * RunRepeat's own labels — divergence from the market is the output, not a fault.
-   */
 });
 
 /**
