@@ -381,6 +381,58 @@ export function desktopMinWidth(columns: readonly string[], model: FitModel): nu
 }
 
 /**
+ * How the desktop table shares a DECLARED track between its columns — the `<colgroup>`, one width
+ * per rendered column with the name column first, summing to `trackPx` exactly.
+ *
+ * `trackPx` is the table's own width, `WRAPPER_BORDER_PX` excluded: `desktopMinWidth` answers what
+ * the PANEL has to be given, and this answers what the table inside it does with what it got.
+ *
+ * **The table always fills its track**, which is a decision rather than an arithmetic necessity. A
+ * model is free not to stretch and a compact table reads better on two columns — but the expanded
+ * row lays out against the TABLE's width, not the window's (docs/app.md §The expanded row), so a
+ * table left at its natural width lays the panel out in a single stacked column
+ * (docs/specs/2026-08-03-virtualising-the-table.md §Decisions).
+ *
+ * **Two clauses, and the second is the one that is easy to leave out.**
+ *
+ * 1. While the slack is no more than the columns collectively still want, each column takes
+ *    `min + slack × want / Σwant`, where `want` is its own `max − min`. `Released`, `Price`,
+ *    `Plate` and `Weight` carry nowrap phrases or unbreakable mono figures and want nothing at all,
+ *    so giving them width is waste — the only column that reads better wider is the one that wraps.
+ * 2. Past that point every column is at its max and the excess is shared in proportion to
+ *    **max-content**. Without this clause a table of figure columns — where every `want` is zero —
+ *    gets `0/0` and stops short of its track by the whole excess. The alternative of giving the
+ *    excess to the name column was measured and lost: every figure column is right-aligned and the
+ *    last one ends at the track's edge whatever happens, so the only thing the rule can move is
+ *    where the figures START, and the name column takes them 159px further right at three columns.
+ *
+ * A column's max is floored at its own min here, and that is not defensive tidying: the name
+ * column's minimum is a DECLARED `14rem` floor rather than its content (`columnPx`), so on any
+ * fleet whose names are shorter than that the max-content sits UNDER the minimum, and a share taken
+ * in proportion to the smaller number would hand that column less than the engine will honour.
+ * Flooring makes `want` non-negative and clause two start from a width nothing can clip out of.
+ *
+ * Negative slack is clamped for the same one-sided reason. This is only ever called where the table
+ * has been judged to fit (`rendersPhone`), but a track under the sum of the minimums must overrun
+ * the panel rather than clip a cell (spec §Failure behaviour).
+ */
+export function columnWidths(columns: readonly string[], trackPx: number,
+  model: FitModel): number[] {
+  const keys = ['name', ...columns];
+  const mins = keys.map((k) => model.columnPx(k));
+  const maxes = keys.map((k, i) => Math.max(mins[i]!, model.columnMaxPx(k)));
+  const totalMin = mins.reduce((a, b) => a + b, 0);
+  const totalMax = maxes.reduce((a, b) => a + b, 0);
+  const totalWant = totalMax - totalMin;
+  const slack = Math.max(0, trackPx - totalMin);
+  if (totalWant > 0 && slack <= totalWant) {
+    return mins.map((min, i) => min + slack * ((maxes[i]! - min) / totalWant));
+  }
+  const excess = slack - totalWant;
+  return maxes.map((max) => max + excess * (max / totalMax));
+}
+
+/**
  * The first layout width at which the sidebar takes a column of its own beside **these** columns:
  * the floor, or the width at which the table still clears the track by the fit rule's own slack,
  * whichever is further out (docs/app.md §Filters).

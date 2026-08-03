@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { ShoesFile } from '../../../shared/types.js';
 import { indexTests } from './dataset';
 import {
-  availableForTable, cellMaxPx, DESKTOP_FLOOR_PX, desktopMinWidth, FIT_SLACK_PX, fitModel,
-  fitsDesktop, headerMaxPx, headerMinPx, nameCellMaxPx, rendersPhone, sidebarPermanent,
-  sidebarPermanentAt, SIDEBAR_PERMANENT_PX,
+  availableForTable, cellMaxPx, columnWidths, DESKTOP_FLOOR_PX, desktopMinWidth, FIT_SLACK_PX,
+  type FitModel, fitModel, fitsDesktop, headerMaxPx, headerMinPx, nameCellMaxPx, rendersPhone,
+  sidebarPermanent, sidebarPermanentAt, SIDEBAR_PERMANENT_PX,
 } from './fit';
 import { FLEET, labTest, shoe, TESTS } from './test-fixtures';
 
@@ -191,6 +191,138 @@ describe('the desktop table\'s max-content model', () => {
     expect(long.columnPx('name')).toBe(short.columnPx('name'));
     expect(long.columnMaxPx('name')).toBeGreaterThan(short.columnMaxPx('name'));
     expect(long.columnMaxPx('name')).toBeGreaterThan(long.columnPx('name'));
+  });
+});
+
+/**
+ * The rule that turns those two widths into a `<colgroup>`: how a table handed a declared track
+ * shares it out. These are arithmetic assertions over the fixture and they are deliberately written
+ * against the model rather than against constants, because the font tables move and the SHAPE of
+ * the distribution is what is being claimed (docs/app.md §Table presentation).
+ *
+ * **Nothing here pins the rule to what a browser would have done, and that is the spec's call**
+ * (docs/specs/2026-08-03-virtualising-the-table.md §Decisions): the model is the authority, the
+ * agreement with CSS auto layout is a convenience, and an assertion that pinned one to the other
+ * would make an engine's tie-breaking a requirement of this app.
+ */
+describe('sharing a declared track between the columns', () => {
+  /** Every expectation is over `['name', ...cols]`: the name column is the table's first and is in
+   *  no column set, so `columnWidths` prepends it. */
+  const keys = (cols: readonly string[]) => ['name', ...cols];
+  const sum = (ns: readonly number[]) => ns.reduce((a, b) => a + b, 0);
+  const mins = (cols: readonly string[], m: FitModel) => keys(cols).map((k) => m.columnPx(k));
+  /** Floored at the minimum, exactly as the rule floors it: a column's max-content can sit UNDER
+   *  its min-content wherever the minimum is a declared floor rather than content — the name
+   *  column, on any fleet whose names are shorter than `14rem`. */
+  const maxes = (cols: readonly string[], m: FitModel) =>
+    keys(cols).map((k) => Math.max(m.columnPx(k), m.columnMaxPx(k)));
+
+  it('prepends the name column, which no column set ever names', () => {
+    const m = model();
+    const cols = ['weight', 'plate'];
+    const w = columnWidths(cols, 900, m);
+    expect(w).toHaveLength(cols.length + 1);
+    expect(w[0]).toBeGreaterThanOrEqual(m.columnPx('name'));
+  });
+
+  it('fills the track exactly, under either clause and at every set', () => {
+    // The global constraint the expanded row is the reason for: a table that does not fill its
+    // track lays the panel out in a narrower box than the window offers.
+    const m = model();
+    const sets = [['score'], ['msrpGbp', 'weight', 'plate'],
+      ['releasedAt', 'score', 'msrpGbp', 'weight', 'plate', 'removable-insole']];
+    for (const cols of sets) {
+      for (const trackPx of [sum(mins(cols, m)), 900, 1146, 1440, 2560]) {
+        expect(sum(columnWidths(cols, trackPx, m)), `${cols.length} columns at ${trackPx}px`)
+          .toBeCloseTo(trackPx, 6);
+      }
+    }
+  });
+
+  it('gives a column that cannot use width nothing at all, while anything still wants some', () => {
+    // Clause one, and it is the clause that is right rather than merely conventional: `Plate` is a
+    // nowrap phrase under a one-word header and extra width buys it exactly nothing.
+    const m = model();
+    const cols = ['score', 'plate'];
+    const min = mins(cols, m);
+    const want = sum(maxes(cols, m)) - sum(min);
+    expect(want).toBeGreaterThan(0);
+    const w = columnWidths(cols, sum(min) + want / 2, m);
+    expect(w[0]).toBeCloseTo(min[0]!, 6);
+    expect(w[2]).toBeCloseTo(min[2]!, 6);
+    expect(w[1]! - min[1]!).toBeCloseTo(want / 2, 6);
+  });
+
+  it('splits the slack in proportion to what each column still needs', () => {
+    const m = model();
+    const cols = ['score', 'removable-insole'];
+    const min = mins(cols, m);
+    const max = maxes(cols, m);
+    const wants = max.map((v, i) => v - min[i]!);
+    expect(wants[1]).toBeGreaterThan(0);
+    expect(wants[2]).toBeGreaterThan(0);
+    const w = columnWidths(cols, sum(min) + sum(wants) / 2, m);
+    w.forEach((v, i) => expect(v - min[i]!).toBeCloseTo(wants[i]! / 2, 6));
+  });
+
+  it('puts every column at its max exactly where the columns stop wanting more', () => {
+    const m = model();
+    const cols = ['score', 'removable-insole', 'plate'];
+    const max = maxes(cols, m);
+    columnWidths(cols, sum(max), m).forEach((v, i) => expect(v).toBeCloseTo(max[i]!, 6));
+  });
+
+  it('shares the excess by max-content once nothing wants more — three columns of figures', () => {
+    // The case the second clause exists for, and the one a clause-one-only rule gets wrong: at
+    // `?cols=msrpGbp,weight,plate` every column is a nowrap phrase or an unbreakable mono figure,
+    // so `want` is zero across the whole table and `slack × want / Σwant` is 0/0. The table would
+    // be left short of its track by the whole excess.
+    const m = model();
+    const cols = ['msrpGbp', 'weight', 'plate'];
+    const max = maxes(cols, m);
+    expect(sum(max) - sum(mins(cols, m))).toBe(0);
+    const trackPx = 1146;
+    const w = columnWidths(cols, trackPx, m);
+    expect(sum(w)).toBeCloseTo(trackPx, 6);
+    const excess = trackPx - sum(max);
+    w.forEach((v, i) => expect(v).toBeCloseTo(max[i]! + excess * (max[i]! / sum(max)), 6));
+    // Each of them ends WIDER than it asked for. That is the whole claim: a column that cannot use
+    // width still has to take some, because the alternative is a table narrower than its track.
+    w.forEach((v, i) => expect(v).toBeGreaterThan(max[i]!));
+  });
+
+  it('reaches the second clause with the first one still having done work', () => {
+    // Σwant is non-zero here, so both clauses run: `score` unwraps its header first, and only the
+    // excess beyond that is shared by max-content.
+    const m = model();
+    const cols = ['score', 'msrpGbp', 'weight', 'plate'];
+    const max = maxes(cols, m);
+    expect(sum(max) - sum(mins(cols, m))).toBeGreaterThan(0);
+    const trackPx = sum(max) + 400;
+    const w = columnWidths(cols, trackPx, m);
+    w.forEach((v, i) => expect(v).toBeCloseTo(max[i]! + 400 * (max[i]! / sum(max)), 6));
+  });
+
+  it('never puts a column under its min-content, at a track that cannot hold them all', () => {
+    // The risk is one-sided: too narrow clips a cell, too wide only overruns the panel, and this
+    // model errs the second way by construction — every width is `min + share`, share never
+    // negative (spec §Failure behaviour).
+    const m = model();
+    const cols = ['releasedAt', 'score', 'msrpGbp', 'plate'];
+    const min = mins(cols, m);
+    const w = columnWidths(cols, 10, m);
+    w.forEach((v, i) => expect(v).toBeCloseTo(min[i]!, 6));
+    expect(sum(w)).toBeGreaterThan(10);
+  });
+
+  it('holds the name column at its declared floor where the fleet\'s names are narrower', () => {
+    // The fixture's names are one short word, so the name column is the case where max-content
+    // sits UNDER min-content — and a share taken in proportion to a max that small would hand the
+    // column less than the `14rem` the engine floors it at.
+    const m = model();
+    expect(m.columnMaxPx('name')).toBeLessThan(m.columnPx('name'));
+    const w = columnWidths(['msrpGbp', 'weight', 'plate'], 1146, m);
+    expect(w[0]).toBeGreaterThan(m.columnPx('name'));
   });
 });
 
