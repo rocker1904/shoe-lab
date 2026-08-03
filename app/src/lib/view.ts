@@ -2,6 +2,12 @@ import { EMPTY_FILTERS, type FilterState } from './filters';
 import type { SortState } from './sort';
 import { zoneKey, type Zone } from './lineage';
 
+/**
+ * What a view *is*, held apart from how a view *encodes* to and from a query string. A story
+ * needs a default view to build on and the encoder needs a story to write the shorthand a
+ * story's link takes, so the shape has to sit upstream of both — otherwise the two would import
+ * each other. New state belongs to `ViewState`; new URL grammar belongs to `urlstate.ts`.
+ */
 export interface ViewState {
   filters: FilterState; sort: SortState; columns: string[];
   /** Chosen generation of each superseded pair, keyed by the **current** generation's slug. A

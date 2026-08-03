@@ -85,7 +85,7 @@ export function swapZone(slug: string, zone: Zone): string {
  *  table showing only the Easy heel score is about the heel, and saying otherwise would leave the
  *  zone control unmarked on a view that names its zone in a column header. Lives here beside
  *  `swapZone`, which searches the same list, rather than in `zone.ts`: the score breakdown needs it
- *  too, and `zone.ts` imports `urlstate.ts`. */
+ *  too. */
 const ZONE_OF_KEY = new Map<string, Zone>(
   ALL_ZONE_PAIRS.flatMap((p) => [[p.forefoot, 'forefoot'] as const, [p.heel, 'heel'] as const]));
 
