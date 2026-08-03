@@ -380,8 +380,7 @@ brand out. Two controls a row apart cannot answer the same brand name with
 different fleets with nothing on screen saying why. The disagreement the other
 way is accepted and stays: `On` still returns far more in the box than in the
 facet, because "on" sits inside Cushion, Wilson and Carbon. The substring stays
-a substring — `Nike
-Pegasus` still matches by name, and no tokenising is implied.
+a substring — `Nike Pegasus` still matches by name, and no tokenising is implied.
 
 A query with no non-whitespace character in it is **the empty query**, and it is
 settled at both
@@ -1337,13 +1336,12 @@ the top of the scrollport is behind the pinned chrome: without it the jump
 lands the anchor at y=0 and the runner arrives looking at the third row.
 
 **No brand line under the name.** Almost every name already begins with its
-brand, and the handful that do not shorten it ("Topo", "Hylo") rather than drop
-it, so the line was duplication on every row. That is a fact about strings
+brand, and the handful that do not shorten it ("Topo", "Hylo") rather than
+drop it, so the line was duplication on every row. That is a fact about strings
 upstream owns, so it is a gate rather than a sentence: `lib/filters.test.ts`
 asserts it over the committed fleet, and a name that dropped its brand would
-fail the build rather than leave a row with no brand on it.
-`brand` stays in the data: it is still
-filtered and sorted on. There is no dimming of discontinued rows either — the
+fail the build rather than leave a row with no brand on it. `brand` stays in the
+data: it is still filtered and sorted on. There is no dimming of discontinued rows either — the
 `disc-tag` chip says it in text, for the reason the chip's own treatment is
 neutral (above).
 
@@ -1647,10 +1645,9 @@ scrollbar regimes.
 
 **The width the decision reads is the LAYOUT width**, `documentElement.clientWidth`,
 which excludes a classic scrollbar. The fleet never fits on one screen, so there
-is always one, and
-counting its 12–15px as room for the table is how a model comes to mount a table
-that then overflows. This is also why the sidebar's boundary is no longer a media
-query: a media query answers about the window, so the two differed by exactly a
+is always one, and counting its 12–15px as room for the table is how a model
+comes to mount a table that then overflows. This is also why the sidebar's
+boundary is no longer a media query: a media query answers about the window, so the two differed by exactly a
 scrollbar and the sidebar arrived before the table's share of the width had been
 recomputed (§Filters).
 
@@ -1660,13 +1657,13 @@ subscription. A `resize` event says the *window* moved; the layout width also
 moves when it did not, because clearing a filter or opening a row makes the
 document tall enough for a classic scrollbar and that takes its 12–15px with no
 event of any kind. Read off window events the width went stale exactly there:
-measured headed at a 931px window on the real fleet, a search cleared back to the
-whole fleet left the desktop table up and the document scrolling sideways by 1px until
-something moved the window. Observing the element the width is *about* answers
-both causes with one subscription, and it cannot oscillate — the taller rendering
-is the one chosen at the narrower width, so a scrollbar the swap brings in never
-argues for swapping back. `hunt/fit-boundary.mjs` walks the band a fresh page at a
-time, never resizing.
+measured headed at a 931px window on the real fleet, a search cleared back to
+the whole fleet left the desktop table up and the document scrolling sideways by
+1px until something moved the window. Observing the element the width is *about*
+answers both causes with one subscription, and it cannot oscillate — the taller
+rendering is the one chosen at the narrower width, so a scrollbar the swap
+brings in never argues for swapping back. `hunt/fit-boundary.mjs` walks the band
+a fresh page at a time, never resizing.
 
 **Because only one is mounted, neither may own the open-row set.** A set held in the
 component is dropped whole the moment the rendering changes, so a phone rotated
@@ -1865,9 +1862,9 @@ filter box; §Table presentation owns what the shorter string buys.
 
 **All three words have one home**, `PLATE_LABELS` in `lib/categorical.ts`. They
 were spelled in three files and drifted: the filter said `None` while the
-desktop cell printed an em dash for the same value, on most rows in the table. `none`
-is a reading the scraper derives deliberately (docs/scraping.md §Data quirks),
-so the cell names it — the em dash is reserved for an absent reading, and
+desktop cell printed an em dash for the same value, on most rows in the table.
+`none` is a reading the scraper derives deliberately
+(docs/scraping.md §Data quirks), so the cell names it — the em dash is reserved for an absent reading, and
 spending it on a value made one glyph mean two things one click apart (plate
 ascending sent its em dashes to the top as a value, width ascending sends its to
 the bottom as absences). The phone's name line still drops `none`, which is a
@@ -3674,9 +3671,9 @@ It is stated as **counts, not a percentage** — `«with a reading» / «conside
 measured` on the heading line — and **only below complete coverage**, so most
 rows on a default view fall silent. "84%" of an unstated pool is the complaint;
 both numbers on screen state the denominator instead of assuming it. Filter to
-last year and it reads `120 / 180`, where both numbers visibly moved. It is set in `--font-mono`
-with `tabular-nums`, so every figure in the sidebar shares a grid with every
-figure in the table.
+last year and it reads `120 / 180`, where both numbers visibly moved. It is set
+in `--font-mono` with `tabular-nums`, so every figure in the sidebar shares a
+grid with every figure in the table.
 
 **One vocabulary, and the shape decides only how many figures there are.** A
 single metric and a **zone pair** each carry one, on the heading line; a
@@ -3795,8 +3792,8 @@ row's click target is the expander. Do not remove or defer-load either link
 
 ### The header names the catalogue, the receipt owns the count
 The header states a fact about the **catalogue** — the fleet's size and the date
-it was built — which does not move under filtering. Everything that responds to a
-filter belongs to the receipt, whose wording is unchanged. Two counts a
+it was built — which does not move under filtering. Everything that responds
+to a filter belongs to the receipt, whose wording is unchanged. Two counts a
 centimetre apart with different denominators read as the app contradicting
 itself, even though both were correct: the header answered "how big is this
 dataset?" and the receipt answers "what did your filters do?", and nothing on
