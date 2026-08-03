@@ -105,7 +105,7 @@ describe('scrapeDetails', () => {
 
   it('throws when the corpus directory itself is absent', async () => {
     const { dir } = setup();
-    // a missing *file* is a skip; a missing *directory* is a typo, and skipping 464 shoes
+    // a missing *file* is a skip; a missing *directory* is a typo, and skipping every shoe
     // silently would look exactly like a successful backfill
     await expect(scrapeDetails({ dataDir: dir, corpusDir: join(tmpdir(), 'shoe-corpus-nope'), forceAll: true, now: () => 'T7' }))
       .rejects.toThrow(/corpus directory/i);

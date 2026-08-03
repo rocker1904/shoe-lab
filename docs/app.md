@@ -378,8 +378,8 @@ below it disagreed. `Topo Athletic` returned a brand's worth of shoes in the
 facet and none at all in a box reading `name` alone, because no name spells the
 brand out. Two controls a row apart cannot answer the same brand name with
 different fleets with nothing on screen saying why. The disagreement the other
-way is accepted and stays: `On` still returns far more in the box than in the
-facet, because "on" sits inside Cushion, Wilson and Carbon. The substring stays
+way is accepted and stays: `On` returns far more in the box than in the facet,
+because "on" sits inside Saucony, Hyperion and Salomon. The substring stays
 a substring — `Nike Pegasus` still matches by name, and no tokenising is implied.
 
 A query with no non-whitespace character in it is **the empty query**, and it is
@@ -1339,8 +1339,11 @@ lands the anchor at y=0 and the runner arrives looking at the third row.
 brand, and the handful that do not shorten it ("Topo", "Hylo") rather than
 drop it, so the line was duplication on every row. That is a fact about strings
 upstream owns, so it is a gate rather than a sentence: `lib/filters.test.ts`
-asserts it over the committed fleet, and a name that dropped its brand would
-fail the build rather than leave a row with no brand on it. `brand` stays in the
+asserts over the committed fleet that every name does one or the other. It
+reddens a build, not a refresh — the weekly run commits `data/` and dispatches
+the deploy itself (docs/operations.md §The refresh chain), so a name that
+dropped its brand would ship a row carrying none and be caught on the next
+push. `brand` stays in the
 data: it is still filtered and sorted on. There is no dimming of discontinued rows either — the
 `disc-tag` chip says it in text, for the reason the chip's own treatment is
 neutral (above).

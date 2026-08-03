@@ -93,7 +93,7 @@
     <div class="a-body">
       {#if shoe.details}
         {#if shoe.details.intro}<p class="intro">{shoe.details.intro}</p>{/if}
-        <!-- Keyed by index, not by value: dozens of shoes repeat a pro and some repeat a con, and a
+        <!-- Keyed by index, not by value: 85 shoes repeat a pro and 27 repeat a con, and a
              duplicate key is a runtime error. These lists are positional and hold no per-item
              state, so the index is the honest key. Do not "improve" this to `(p)`. -->
         <div class="a-lists">

@@ -19,7 +19,7 @@ describe('displayReleaseDate', () => {
   });
 
   it('shows month and year for a page date RunRepeat flagged imprecise', () => {
-    // The 94 shoes whose month was previously thrown away by slicing to the year.
+    // The shoes whose month was previously thrown away by slicing to the year.
     expect(displayReleaseDate('2021-12-09', 'page-estimated')).toBe('December 2021');
   });
 

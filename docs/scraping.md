@@ -14,7 +14,7 @@ authenticated, no route a visitor doesn't hit.
 
 **Lab-test list** — `GET api.runrepeat.com/api/product/lab-test-list/<testId>?product_id=<entityId>`.
 One call per fetchable test; each returns the *whole* catalogue's readings for
-that test, which is why 58 calls cover ~464 shoes. `entityId` is the seed
+that test, which is why one call per test covers the whole fleet. `entityId` is the seed
 page's `entity_id` (see below) — the endpoint wants the numeric product id of
 the page doing the asking, not a slug, and returns the full comparison table
 around it. Body is `{ rows: [[valueCell, nameCell], …] }`;

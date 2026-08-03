@@ -338,7 +338,7 @@ describe('every name in the fleet carries its brand', () => {
       const brand = (s.brand ?? '').toLowerCase();
       const name = s.name.toLowerCase();
       // `Topo Atmos` under `Topo Athletic` shortens the brand; `Cloudmonster` under `On` would drop it.
-      return !name.startsWith(brand) && !brand.startsWith(name.split(' ')[0] ?? name);
+      return !name.startsWith(brand) && !brand.startsWith(name.split(' ')[0]!);
     });
     expect(dropped.map((s) => `${s.brand} | ${s.name}`)).toEqual([]);
   });
