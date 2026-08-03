@@ -857,17 +857,27 @@ test('paints the two-colour ramp this engine has to nest a color-mix for', async
   await page.getByLabel('Tint every ranked cell').check();
 
   const cells = await page.evaluate(() => {
+    // The bucket a cell names is the whole of what it says about its colour now; on the two-colour
+    // ramp that bucket is the base → better MIX, so ordering by it orders by rank.
     const painted = [...document.querySelectorAll<HTMLElement>('td.num.tinted.blue')]
-      .map((el) => ({ w: Number(el.style.getPropertyValue('--w')),
-                      a: Number(el.style.getPropertyValue('--a')),
+      .map((el) => ({ ramp: [...el.classList].find((c) => /^w-[bm]-\d+$/.test(c))?.slice(0, 4),
+                      w: Number([...el.classList].find((c) => /^w-m-\d+$/.test(c))?.slice(4)),
                       bg: getComputedStyle(el).backgroundColor }))
       .sort((x, y) => y.w - x.w);
-    return { dual: document.documentElement.dataset['wash'], best: painted[0]!, worst: painted.at(-1)! };
+    const sheet = document.getElementById('wash-buckets')?.textContent ?? '';
+    return {
+      ramps: [...new Set(painted.map((c) => c.ramp))],
+      // The outer percentage of every two-colour rule — the flat alpha each bucket composites at.
+      alphas: [...new Set([...sheet.matchAll(/\.w-m-\d+\{[^}]*\) ([\d.]+)%,transparent\)/g)]
+        .map((m) => m[1]))],
+      best: painted[0]!, worst: painted.at(-1)!,
+    };
   });
 
-  expect(cells.dual, 'the document never asked for the two-colour rule').toBe('dual');
-  // Flat alpha, as the model says: every ranked cell is tinted at one strength.
-  expect(cells.best.a).toBe(cells.worst.a);
+  expect(cells.ramps, 'the ranked cells never moved to the two-colour ramp').toEqual(['w-m-']);
+  // Flat alpha, as the model says: every ranked cell is tinted at one strength, and with the base
+  // on only the inner mix moves.
+  expect(cells.alphas, 'the two-colour rules do not composite at one strength').toHaveLength(1);
   for (const c of [cells.best, cells.worst]) {
     expect(c.bg, 'the nested color-mix resolved to nothing in this engine')
       .not.toMatch(/rgba?\(0, 0, 0, 0\)|transparent/);

@@ -3,7 +3,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
-  import { DEFAULT_PAINT, greyAlpha, rankedAlpha, rankedMix, type WashPaint } from '../lib/wash';
+  import { DEFAULT_PAINT, washCellClass, type WashPaint } from '../lib/wash';
   import { categoricalValue, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { columnLabel } from '../lib/labels';
@@ -197,9 +197,10 @@
         {#each view.columns as col (col)}
           {@const p = percentiles.get(col)?.get(s.slug)}
           {@const blue = washOf(col) === 'blue'}
-          <td class="num" class:fig={isFigure(col, idx.bySlug.get(col))}
-              style:--a={p === undefined ? 0 : blue ? rankedAlpha(p, paint) : greyAlpha(p)}
-              style:--w={p !== undefined && blue && paint.dual ? rankedMix(p, paint) : undefined}
+          <!-- One class and no value at all: `lib/display.ts` declares what each bucket paints, so
+               a dragged grip never writes a custom property per cell (docs/app.md §Theming). -->
+          <td class="num {p === undefined ? '' : washCellClass(blue, p, paint)}"
+              class:fig={isFigure(col, idx.bySlug.get(col))}
               class:tinted={p !== undefined}
               class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
         {/each}
@@ -348,19 +349,9 @@
      (docs/app.md §Columns and sorting). */
   th.name, td.name { position: sticky; left: 0; z-index: 1; }
   thead th.name { z-index: 3; }
-  /* Alpha is resolved in lib/wash.ts, where the contrast rule is enforced. Blue may be a podium;
-     grey stays linear (docs/app.md §Theming). */
-  td.num.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
-  td.num.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
-  /* Base colour on: alpha is flat, so the COLOUR carries the magnitude and the cell mixes
-     base → better by `--w` before it is composited. A SECOND rule rather than a parameterised
-     first one — the single-colour declaration has to stay untouched for a runner who never opened
-     the menu to get exactly what they always got (docs/app.md §The display preferences). */
-  :global(:root[data-wash='dual']) td.num.tinted.blue {
-    background-color: color-mix(in oklab,
-      color-mix(in oklab, var(--wash-blue) calc(var(--w) * 100%), var(--wash-base))
-      calc(var(--a) * 100%), transparent);
-  }
+  /* No cell rule here: the wash is one class per cell, declared in the generated bucket stylesheet
+     (`lib/display.ts`) because both renderings share the grammar and a scoped selector would reach
+     only this one (docs/app.md §Theming). */
   @media (prefers-reduced-motion: no-preference) {
     .chev { transition: transform 120ms ease-out; }
     tr.expand td { animation: reveal 140ms ease-out; }

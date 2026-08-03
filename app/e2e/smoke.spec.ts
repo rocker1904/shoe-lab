@@ -1436,10 +1436,15 @@ test('repaints the table under an open Display panel', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 });
   await page.goto('/');
   const cell = () => page.locator('td.num.tinted.blue').first();
-  const read = async () => cell().evaluate((el) => ({
-    a: (el as HTMLElement).style.getPropertyValue('--a'),
-    bg: getComputedStyle(el).backgroundColor,
-  }));
+  // The cell names a bucket and the generated sheet declares what that bucket paints, so what a
+  // grip moves is the rule rather than the cell (docs/app.md §Theming). Both halves are read: the
+  // alpha the rule composites at, and the colour the engine actually resolved it to.
+  const read = async () => cell().evaluate((el) => {
+    const cls = [...el.classList].find((c) => /^w-b-\d+$/.test(c))!;
+    const sheet = document.getElementById('wash-buckets')!.textContent!;
+    const pct = new RegExp(`\\.${cls}\\{[^}]*var\\(--wash-blue\\) ([\\d.]+)%`).exec(sheet)![1]!;
+    return { a: Number(pct), bg: getComputedStyle(el).backgroundColor };
+  });
 
   await page.getByRole('button', { name: 'Display' }).click();
   const rest = await read();
@@ -1694,8 +1699,11 @@ test('keeps the open row, the view and the paint when a ticked column flips the 
 
   await page.getByText('cushy').first().click();
   await expect(page.locator('tr.shoe[aria-expanded=true]')).toHaveCount(1);
-  const paintBefore = await page.locator('td.num.tinted.blue').first()
-    .evaluate((el) => el.style.getPropertyValue('--w'));
+  // A `w-m-` class is only ever emitted from a paint with the base on, so its presence IS the
+  // resolved paint having reached the cell (docs/app.md §Theming).
+  const mixClass = (sel: string) => page.locator(sel).first()
+    .evaluate((el) => [...el.classList].find((c) => /^w-m-\d+$/.test(c)) ?? '');
+  const paintBefore = await mixClass('td.num.tinted.blue');
   expect(paintBefore, 'the two-colour wash never reached the desktop cells').not.toBe('');
 
   // Enough columns to take the table past this window, ticked the way a runner would.
@@ -1715,7 +1723,6 @@ test('keeps the open row, the view and the paint when a ticked column flips the 
   await expect(page).toHaveURL(/open=cushy/);
   await expect(page).toHaveURL(/cols=[^&]*tongue-gusset-type/);
   // And the wash the runner tuned, which the flip hands to the other table as a prop.
-  const paintAfter = await page.locator('span.chip.tinted.blue').first()
-    .evaluate((el) => el.style.getPropertyValue('--w'));
+  const paintAfter = await mixClass('span.chip.tinted.blue');
   expect(paintAfter, 'the resolved paint did not survive the swap').not.toBe('');
 });

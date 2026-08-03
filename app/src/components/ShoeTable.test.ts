@@ -54,13 +54,20 @@ describe('ShoeTable', () => {
     expect(rendered.container.querySelector('td.name img')).toBeNull();
   });
 
-  it('hands the cell a resolved alpha rather than a raw percentile', () => {
+  it('names the bucket its ramp puts the cell in, and carries no value at all', () => {
     const { rendered } = setup();
-    const tinted = rendered.container.querySelector('td.num.tinted')!;
+    const tinted = rendered.container.querySelector('td.num.tinted.blue')!;
+    // Exactly one, from `wash.ts`'s own grammar: the generated stylesheet declares what that
+    // bucket paints, so a second class on one cell would be a second colour (docs/app.md §Theming).
+    expect([...tinted.classList].filter((c) => /^w-[bmg]-\d+$/.test(c)))
+      .toEqual([expect.stringMatching(/^w-b-\d+$/)]);
     // `getAttribute('style')` rather than `.style.getPropertyValue`: it is the idiom this file
-    // already proves works for a custom property under this jsdom.
-    expect(tinted.getAttribute('style')).toContain('--a:');
-    expect(tinted.getAttribute('style')).not.toContain('--p:');
+    // already proves works for a custom property under this jsdom. Writing one of these per cell
+    // per frame is exactly what the class replaced.
+    const style = tinted.getAttribute('style') ?? '';
+    expect(style).not.toContain('--a:');
+    expect(style).not.toContain('--w:');
+    expect(style).not.toContain('--p:');
   });
   // The set is the parent's now, so a row opened before the component remounts is still open after
   // — which is what makes a rendering swap stop dropping every panel.
@@ -108,8 +115,11 @@ describe('ShoeTable', () => {
     const cells = [...container.querySelectorAll('tbody tr:first-child td')];
     const heel = cells[2]!; // name, score, heel-stack, plate
     expect(heel.className).toContain('tinted');
-    expect(heel.getAttribute('style')).toContain('--a:');
+    // Heel stack has no better end, so it is the neutral ramp's own class rather than the ranked
+    // one's — the grammar carries which ramp as well as how much (docs/app.md §Theming).
+    expect(heel.className).toMatch(/\bw-g-\d+\b/);
     expect(cells[3]!.className).not.toContain('tinted'); // plate is not numeric
+    expect(cells[3]!.className).not.toMatch(/\bw-[bmg]-\d+\b/);
   });
   it('does not print the brand, which every shoe name already starts with', () => {
     setup();

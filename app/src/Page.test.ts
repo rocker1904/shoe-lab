@@ -9,7 +9,7 @@ import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { zoneOfKey } from './lib/lineage';
 import { applyPreset } from './lib/presets';
 import { defaultColumns, parseView, serializeView } from './lib/urlstate';
-import { DISPLAY_DEFAULTS, washAlpha, WASH_PEAK, WASH_STEPS } from './lib/wash';
+import { DEFAULT_PAINT, DISPLAY_DEFAULTS, washAlpha, washBucketValue, WASH_PEAK, WASH_STEPS } from './lib/wash';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 
 const data: ShoesFile = { builtAt: '2026-07-20T00:00:00Z', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
@@ -463,12 +463,24 @@ describe('Page', () => {
    * document to make that true (docs/app.md §The display preferences).
    */
   describe('the display preferences', () => {
-    const alphas = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('td.num.tinted.blue')]
-      .map((td) => td.style.getPropertyValue('--a'));
+    /**
+     * The bucket each painted cell names, which is now the whole of what a cell says about its
+     * colour — and it has to be a class the generated stylesheet declares, or the cell paints
+     * nothing at all. `wash.ts` owns what an index is worth and `display.test.ts` holds the sheet
+     * to that same function, so reading the index here is reading what the table painted
+     * (docs/app.md §Theming).
+     */
+    const buckets = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('td.num.tinted.blue')]
+      .map((td) => {
+        const cls = [...td.classList].find((k) => /^w-b-\d+$/.test(k));
+        expect(cls, td.className).toBeDefined();
+        expect(document.getElementById('wash-buckets')!.textContent).toContain(`.${cls}{`);
+        return Number(cls!.slice('w-b-'.length));
+      });
 
     it('paints the shipped ramp and writes nothing until the menu is touched', () => {
       const { container } = render(Page, { props: { data } });
-      const before = alphas(container).map(Number);
+      const before = buckets(container).map((i) => washBucketValue('blue', i, DEFAULT_PAINT));
       expect(before.length).toBeGreaterThan(0);
       // The five-shoe fixture ranks at p = 0.875, 0.625, 0.375 and 0.125, the last of which is
       // under the floor and bare. Compared against `washAlpha` — the frozen closed form, which the
@@ -479,18 +491,22 @@ describe('Page', () => {
       const step = WASH_PEAK / WASH_STEPS;
       expect(new Set(before)).toEqual(new Set([0.875, 0.625, 0.375, 0.125]
         .map((p) => Math.round(washAlpha(p) / step) * step)));
+      // No token override, so `app.css`'s own `--wash-blue` is what the bucket rules tint — and the
+      // single-colour rule is the one that paints, which is what the two-colour ramp's absence says.
       expect(document.getElementById('wash-prefs')).toBeNull();
-      expect(document.documentElement.dataset['wash']).toBeUndefined();
+      expect(document.getElementById('wash-buckets')!.textContent).not.toContain('--wash-base');
       expect(localStorage.getItem('display')).toBeNull();
     });
 
     it('repaints the table live as a grip moves, and stores the choice off the URL', async () => {
       const { container } = render(Page, { props: { data } });
-      const before = alphas(container).map(Number);
+      const before = buckets(container).map((i) => washBucketValue('blue', i, DEFAULT_PAINT));
       await fireEvent.click(screen.getByRole('button', { name: 'Display' }));
       await fireEvent.input(screen.getByLabelText('Strength'), { target: { value: '0.3' } });
 
-      const after = alphas(container).map(Number);
+      // The bucket is a fraction of the ramp's own top, so what a weaker strength moves is the
+      // value each index is worth rather than the index itself.
+      const after = buckets(container).map((i) => washBucketValue('blue', i, { ...DEFAULT_PAINT, peak: 0.3 }));
       expect(after).not.toEqual(before);
       // Every cell that is still painted moved by the same ratio: the strength scales the ramp, it
       // does not reshape it. A cell whose scaled alpha falls under `WASH_MIN_PAINT` goes bare
@@ -515,7 +531,7 @@ describe('Page', () => {
       const { container } = render(Page, { props: { data } });
       // The colour is an override on the document; the alphas are untouched by a hue change.
       expect(document.getElementById('wash-prefs')?.textContent).toContain('--wash-blue');
-      expect(alphas(container).some((a) => Number(a) > 0)).toBe(true);
+      expect(buckets(container).some((i) => i > 0)).toBe(true);
     });
   });
 

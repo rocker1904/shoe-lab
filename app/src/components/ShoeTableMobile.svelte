@@ -3,7 +3,7 @@
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
-  import { DEFAULT_PAINT, greyAlpha, rankedAlpha, rankedMix, type WashPaint } from '../lib/wash';
+  import { DEFAULT_PAINT, washCellClass, type WashPaint } from '../lib/wash';
   import { categoricalValue, isNegativeReading, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { chipLabel, columnLabel, shortLabel } from '../lib/labels';
@@ -208,9 +208,10 @@
             {@const p = percentiles.get(col)?.get(s.slug)}
             {@const blue = washOf(col) === 'blue'}
             <td>
-              <span class="chip" class:tinted={p !== undefined}
-                    style:--a={p === undefined ? 0 : blue ? rankedAlpha(p, paint) : greyAlpha(p)}
-                    style:--w={p !== undefined && blue && paint.dual ? rankedMix(p, paint) : undefined}
+              <!-- The desktop table's grammar exactly: one bucket class, no value at all
+                   (docs/app.md §Theming). -->
+              <span class="chip {p === undefined ? '' : washCellClass(blue, p, paint)}"
+                    class:tinted={p !== undefined}
                     class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</span>
             </td>
           {/each}
@@ -336,17 +337,9 @@
   .chip { display: block; margin: 0 var(--s1); padding: var(--s1) 0; border-radius: var(--r-sm);
           text-align: center; font-family: var(--font-mono); font-size: var(--t-xs);
           letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-  .chip.tinted.blue { background-color: color-mix(in oklab, var(--wash-blue) calc(var(--a) * 100%), transparent); }
-  .chip.tinted.grey { background-color: color-mix(in oklab, var(--wash-grey) calc(var(--a) * 100%), transparent); }
-  /* Base colour on: alpha is flat, so the COLOUR carries the magnitude and the cell mixes
-     base → better by `--w` before it is composited. A SECOND rule rather than a parameterised
-     first one — the single-colour declaration has to stay untouched for a runner who never opened
-     the menu to get exactly what they always got (docs/app.md §The display preferences). */
-  :global(:root[data-wash='dual']) span.chip.tinted.blue {
-    background-color: color-mix(in oklab,
-      color-mix(in oklab, var(--wash-blue) calc(var(--w) * 100%), var(--wash-base))
-      calc(var(--a) * 100%), transparent);
-  }
+  /* No chip rule here: the wash is one class per chip, declared in the generated bucket stylesheet
+     (`lib/display.ts`), which is the same grammar the desktop table paints from
+     (docs/app.md §Theming). */
   /* The name's size, not the metadata's: it is the affordance for the whole shoe. */
   .chev { display: inline-block; color: var(--text-dim); }
   @media (prefers-reduced-motion: no-preference) {

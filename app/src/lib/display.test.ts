@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyDisplay, coerceDisplay, readDisplay, washCss, writeDisplay } from './display';
-import { DISPLAY_DEFAULTS, resolveWash, type DisplayPrefs } from './wash';
+import { applyDisplay, coerceDisplay, installWash, readDisplay, washCss, writeDisplay } from './display';
+import {
+  DISPLAY_DEFAULTS, resolveWash, washBucketValue, washClass, WASH_STEPS,
+  type DisplayPrefs, type WashRamp,
+} from './wash';
 
 beforeEach(() => {
   localStorage.clear();
   document.getElementById('wash-prefs')?.remove();
-  delete document.documentElement.dataset['wash'];
+  document.getElementById('wash-buckets')?.remove();
 });
 
 /**
@@ -71,7 +74,6 @@ describe('the override stylesheet', () => {
     expect(washCss(resolveWash(DISPLAY_DEFAULTS))).toBe('');
     applyDisplay(DISPLAY_DEFAULTS);
     expect(document.getElementById('wash-prefs')).toBeNull();
-    expect(document.documentElement.dataset['wash']).toBeUndefined();
   });
 
   it('gives the dark tint to both ways of asking for dark', () => {
@@ -123,10 +125,96 @@ describe('the override stylesheet', () => {
     expect(document.getElementById('wash-prefs')).toBeNull();
   });
 
-  it('marks the document only while the two-colour rule is the one that paints', () => {
-    applyDisplay({ ...DISPLAY_DEFAULTS, baseOn: true });
-    expect(document.documentElement.dataset['wash']).toBe('dual');
-    applyDisplay({ ...DISPLAY_DEFAULTS, primaryHue: 145 });
-    expect(document.documentElement.dataset['wash']).toBeUndefined();
+});
+
+/**
+ * The bucket stylesheet: one `background-color` per bucket per ramp, so a painted cell names a
+ * class and carries no value at all (docs/app.md §Theming).
+ *
+ * It is a SEPARATE sheet from the override above and always present, which is what lets the
+ * override stay absent at the default colour: these rules apply an alpha to whatever `--wash-blue`
+ * currently resolves to, so `app.css`'s own token still reaches the screen untouched.
+ */
+describe('the bucket stylesheet', () => {
+  const sheet = () => document.getElementById('wash-buckets')?.textContent ?? '';
+
+  /** Every rule in the sheet, keyed by its one class selector, with a duplicate declared a failure. */
+  function rules(css: string): Map<string, string> {
+    const found = new Map<string, string>();
+    for (const [, cls, body] of css.matchAll(/\.([\w-]+)\{([^}]*)\}/g)) {
+      expect(found.has(cls!), `${cls} declared twice`).toBe(false);
+      found.set(cls!, body!);
+    }
+    return found;
+  }
+  /** What a rule composites the named token at, as a fraction — the value the cell used to carry. */
+  function tokenPct(body: string, token: string): number {
+    return Number(new RegExp(`var\\(${token}\\) ([\\d.]+)%`).exec(body)![1]) / 100;
+  }
+  function classesFor(ramps: readonly WashRamp[]): Set<string> {
+    const want = new Set<string>();
+    for (const ramp of ramps) for (let i = 0; i <= WASH_STEPS; i++) want.add(washClass(ramp, i));
+    return want;
+  }
+
+  it('declares one rule per bucket, on each ramp the paint uses', () => {
+    const r = resolveWash(DISPLAY_DEFAULTS);
+    installWash(r);
+    const declared = rules(sheet());
+    expect(new Set(declared.keys())).toEqual(classesFor(['blue', 'grey']));
+    for (const [ramp, token] of [['blue', '--wash-blue'], ['grey', '--wash-grey']] as const) {
+      for (let i = 0; i <= WASH_STEPS; i++) {
+        expect(tokenPct(declared.get(washClass(ramp, i))!, token), `${ramp} ${i}`)
+          .toBeCloseTo(washBucketValue(ramp, i, r.paint), 8);
+      }
+    }
+  });
+
+  /** Present where the override sheet is not — the whole point of keeping them two sheets. */
+  it('paints from the stylesheet\'s own tokens at the default preferences', () => {
+    applyDisplay(DISPLAY_DEFAULTS);
+    expect(document.getElementById('wash-prefs')).toBeNull();
+    expect(sheet()).toContain('var(--wash-blue)');
+    expect(sheet()).toContain('var(--wash-grey)');
+  });
+
+  it('re-texts one element per preference change, and leaves the neutral ramp alone', () => {
+    applyDisplay(DISPLAY_DEFAULTS);
+    const first = document.getElementById('wash-buckets');
+    const before = rules(sheet());
+
+    applyDisplay({ ...DISPLAY_DEFAULTS, strength: 0.5 });
+    expect(document.querySelectorAll('#wash-buckets')).toHaveLength(1);
+    expect(document.getElementById('wash-buckets')).toBe(first);
+    const after = rules(sheet());
+    // The strength scales the ranked ramp's own top, so the top bucket now paints at it…
+    expect(tokenPct(after.get(washClass('blue', WASH_STEPS))!, '--wash-blue')).toBeCloseTo(0.5, 8);
+    expect(after.get(washClass('blue', 64))).not.toBe(before.get(washClass('blue', 64)));
+    // …and the neutral ramp takes no preference at all (docs/app.md §The display preferences).
+    expect(after.get(washClass('grey', 64))).toBe(before.get(washClass('grey', 64)));
+  });
+
+  /**
+   * Base on: alpha is flat at the peak and the COLOUR carries the magnitude, so the ranked cells
+   * move to a ramp of their own rather than the blue class name meaning a second thing.
+   */
+  it('declares the two-colour rules only while the base is on', () => {
+    applyDisplay(DISPLAY_DEFAULTS);
+    expect(sheet()).not.toContain('--wash-base');
+
+    const r = resolveWash({ ...DISPLAY_DEFAULTS, baseOn: true });
+    installWash(r);
+    const declared = rules(sheet());
+    expect(new Set(declared.keys())).toEqual(classesFor(['mix', 'grey']));
+    const outer = new Set<string>();
+    for (let i = 0; i <= WASH_STEPS; i++) {
+      const body = declared.get(washClass('mix', i))!;
+      expect(tokenPct(body, '--wash-blue'), `mix ${i}`).toBeCloseTo(washBucketValue('mix', i, r.paint), 8);
+      expect(body).toContain('var(--wash-base)');
+      outer.add(/\) ([\d.]+)%,transparent\)$/.exec(body)![1]!);
+    }
+    // One flat strength across every bucket: with the base on, only the inner mix moves.
+    expect([...outer]).toHaveLength(1);
+    expect(Number([...outer][0]) / 100).toBeCloseTo(r.paint.peak, 8);
   });
 });

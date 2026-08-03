@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mixLab, oklabToRgb, rgb255, rgbToOklab, toGamutLab } from './oklab';
 import {
   DEFAULT_PAINT, DISPLAY_DEFAULTS, greyAlpha, rankedAlpha, rankedMix, resolveWash, washAlpha,
+  washBucket, washBucketValue, washCellClass, washClass, washRamp,
   WASH_FLOOR, WASH_MIN_PAINT, WASH_PEAK, WASH_STEPS, WASH_THEMES,
   type DisplayPrefs, type ThemeName, type WashPaint,
 } from './wash';
@@ -624,5 +625,75 @@ describe('every painted ramp is stepped in its own range', () => {
     const dual: WashPaint = { ...DEFAULT_PAINT, dual: true };
     expect(rankedAlpha(0, dual)).toBe(DEFAULT_PAINT.peak);
     expect(rankedAlpha(1, dual)).toBe(DEFAULT_PAINT.peak);
+  });
+});
+
+/**
+ * **A bucket is the quantisation above read as whole steps, and nothing else.** A painted cell now
+ * carries one class naming its bucket and no value at all; the generated stylesheet declares that
+ * bucket's colour once (docs/app.md §Theming). Index and value therefore have to be a single fact
+ * owned here, or the sheet paints a value no ramp ever produced.
+ */
+describe('wash buckets', () => {
+  const DUAL: WashPaint = { ...DEFAULT_PAINT, dual: true };
+  const RAMPS = [
+    { ramp: 'blue' as const, w: DEFAULT_PAINT, of: (p: number) => rankedAlpha(p, DEFAULT_PAINT) },
+    { ramp: 'grey' as const, w: DEFAULT_PAINT, of: greyAlpha },
+    { ramp: 'mix' as const, w: DUAL, of: (p: number) => rankedMix(p, DUAL) },
+  ];
+  /** Far more samples than steps, so a bucket that disagreed with its ramp would show it. */
+  const SAMPLES = 4000;
+
+  for (const { ramp, w, of } of RAMPS) {
+    it(`${ramp}: every value the ramp paints maps back to its own index`, () => {
+      for (let i = 0; i <= SAMPLES; i++) {
+        const p = i / SAMPLES;
+        const b = washBucket(ramp, p, w);
+        expect(Number.isInteger(b), `p=${p} gave ${b}`).toBe(true);
+        expect(b, `p=${p}`).toBeGreaterThanOrEqual(0);
+        expect(b, `p=${p}`).toBeLessThanOrEqual(WASH_STEPS);
+        expect(washBucketValue(ramp, b, w), `p=${p}`).toBe(of(p));
+      }
+    });
+
+    it(`${ramp}: every index is that many whole steps of the ramp's own top`, () => {
+      const top = of(1);
+      for (let i = 0; i <= WASH_STEPS; i++) {
+        expect(washBucketValue(ramp, i, w), `bucket ${i}`).toBe(i * (top / WASH_STEPS));
+      }
+      // The top bucket is the capped peak itself, which is what carries the contrast guard through
+      // the class mechanism unchanged: no rule can name a value above the ramp's own top.
+      expect(washBucket(ramp, 1, w)).toBe(WASH_STEPS);
+      expect(washBucketValue(ramp, WASH_STEPS, w)).toBe(top);
+    });
+  }
+
+  /**
+   * With the base on the blue ramp holds alpha flat at the peak and the MIX carries the magnitude,
+   * so a base-on ranked cell is on a ramp of its own rather than one class name meaning two
+   * different quantities (docs/app.md §The display preferences).
+   */
+  it('puts a ranked column on the mix ramp only while the base is on', () => {
+    expect(washRamp(true, DEFAULT_PAINT)).toBe('blue');
+    expect(washRamp(true, DUAL)).toBe('mix');
+    expect(washRamp(false, DEFAULT_PAINT)).toBe('grey');
+    expect(washRamp(false, DUAL)).toBe('grey');
+  });
+
+  it('names one class per ramp and bucket', () => {
+    expect(washClass('blue', 0)).toBe('w-b-0');
+    expect(washClass('grey', WASH_STEPS)).toBe(`w-g-${WASH_STEPS}`);
+    expect(washClass('mix', 7)).toBe('w-m-7');
+  });
+
+  /** The one call a cell makes. Both renderings make it, which is why it lives here. */
+  it('gives a cell exactly one class, and it is its own ramp and bucket', () => {
+    for (const [blue, w] of [[true, DEFAULT_PAINT], [true, DUAL], [false, DEFAULT_PAINT]] as const) {
+      for (let i = 0; i <= 200; i++) {
+        const p = i / 200;
+        const ramp = washRamp(blue, w);
+        expect(washCellClass(blue, p, w), `p=${p}`).toBe(washClass(ramp, washBucket(ramp, p, w)));
+      }
+    }
   });
 });

@@ -171,9 +171,15 @@ it('narrows the column minimum the shorter face pays for', () => {
   expect(src).not.toContain('57px');
 });
 
-it('hands the chip a resolved alpha rather than a raw percentile', () => {
+/** The same class grammar the desktop table uses, which is why it lives in `wash.ts` and not in a
+ *  component (docs/app.md §Theming). */
+it('names the bucket its ramp puts the chip in, and carries no value at all', () => {
   const { rendered } = setup();
-  const chip = rendered.container.querySelector('.chip.tinted')!;
-  expect(chip.getAttribute('style')).toContain('--a:');
-  expect(chip.getAttribute('style')).not.toContain('--p:');
+  const chip = rendered.container.querySelector('.chip.tinted.blue')!;
+  expect([...chip.classList].filter((c) => /^w-[bmg]-\d+$/.test(c)))
+    .toEqual([expect.stringMatching(/^w-b-\d+$/)]);
+  const style = chip.getAttribute('style') ?? '';
+  expect(style).not.toContain('--a:');
+  expect(style).not.toContain('--w:');
+  expect(style).not.toContain('--p:');
 });

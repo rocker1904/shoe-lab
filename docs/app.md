@@ -206,9 +206,10 @@ one ranking per rendered column (`percentileMap` defers to `rankMap`, one walk
 of the sorted run rather than one per shoe), and the table's DOM. The DOM is
 still the larger half, which is a row-count problem rather than a reactivity
 one — BACKLOG.md holds it. A measured piece of it has already been taken back
-without touching the row count: the wash writes a **stepped** value, so most
-cells' alpha is the one they already carried and the style recalculation that
-would have followed never happens (§Theming owns the before and after).
+without touching the row count: the wash reaches a cell as one **class** naming
+a stepped bucket, so most cells' class is the one they already carried and
+neither the write nor the style recalculation that would have followed happens
+(§Theming owns the before and after).
 
 ## Sanitised-HTML boundary
 
@@ -3112,36 +3113,55 @@ as tinted, which is what a ranking wants; a neutral metric gets `--wash-grey`
 **linear**, because a scale must read as a gradient rather than a podium.
 Row hover paints as a translucent layer so the wash underneath survives it.
 
-**Alpha is resolved in `app/src/lib/wash.ts`, not in CSS.** The cell binds
-`--a` and the stylesheet only composites it. The ramp lives in a module for two
-reasons: the ranked curve needs a power, which `calc()` cannot express, and the
-contrast rule has to be asserted across the **whole** of both ramps rather than
-at an endpoint. `wash.test.ts` sweeps `p` over `[0, 1]`, composites the fill
-over the surface at `a(p)` and holds the theme's own ink to 4.5:1 in both
-themes and on both ramps. The neutral ramp clears by a wide margin, which is
-why it needs the assertion rather than a reason to skip it: an unasserted rule
-is one a retune deletes in silence.
+**Alpha is resolved in `app/src/lib/wash.ts`, not in CSS.** The ramp lives in a
+module for two reasons: the ranked curve needs a power, which `calc()` cannot
+express, and the contrast rule has to be asserted across the **whole** of both
+ramps rather than at an endpoint. `wash.test.ts` sweeps `p` over `[0, 1]`,
+composites the fill over the surface at `a(p)` and holds the theme's own ink to
+4.5:1 in both themes and on both ramps. The neutral ramp clears by a wide
+margin, which is why it needs the assertion rather than a reason to skip it: an
+unasserted rule is one a retune deletes in silence.
 
-**The painted ramp is stepped, and that is a performance change rather than a
-visual one.** `rankedAlpha`, `greyAlpha` and `rankedMix` round their result onto
+**The painted ramp is stepped, and a cell NAMES its step rather than carrying
+it.** `rankedAlpha`, `greyAlpha` and `rankedMix` round their result onto
 `WASH_STEPS` steps of **each ramp's own** range — the neutral ramp tops out far
 below the ranked one, so an absolute step would be several times coarser there
-for nothing. What that buys is frames: a dragged range grip rewrites every
-tinted cell's inline `--a`, and a property whose value has not changed is a
-style recalculation the browser skips. Measured on the real fleet at 1440px over
-a 60-move grip drag, style recalculation falls from about 5.4ms to about 2.2ms a
-frame and the whole frame from about 22ms to about 16ms, against a 16.7ms
-budget (§What a drag may recompute).
+for nothing. That makes the set of painted values small and enumerable, and
+`lib/display.ts` enumerates it: a generated stylesheet declaring one
+`background-color` per bucket per painted ramp, and a painted cell carrying
+**one class** naming its bucket and no value at all. `wash.ts` owns the
+index↔value relationship — `washBucket` and `washBucketValue` are one private
+pair apart — so the generator and the cell cannot disagree about what a class
+paints, and a cell never computes a colour. Three ramps carry a class each:
+ranked, neutral, and the base-on mix, whose index means a base → better position
+rather than an alpha (§The display preferences). The grammar is global rather
+than component-scoped because **both** renderings paint from it, which is also
+why it lives in `wash.ts` and not in a component
+(§Two renderings, and only one of them mounted).
 
-It buys **nothing** on screen, and that is the claim to keep true: against the
-continuous ramp the stepped render differs by at most **one 8-bit channel
-level**, with no pixel differing by more than that — desktop and phone, both
-themes, base ramp off and on. What is stepped is the rendered **quantity**, not
-the rank: `percentileMap` and `rankMap` are untouched, and stepping there would
-change which shoes lead rather than how they are painted. And the steps sample
-the **guarded** ramp rather than replacing it: the largest value is exactly the
-capped peak and rounding can only land at or below it, so the contrast cap
-survives by construction and the sweeps above still bound what is painted.
+Both halves are **performance** rather than appearance, and the frame budget is
+16.7ms (§What a drag may recompute). Measured on the real fleet at 1440px over a
+60-move range-grip drag: style recalculation falls from about 5.4ms a frame with
+a continuous inline `--a`, to about 2.2ms once the value is stepped — a property
+whose value has not changed is a recalculation the browser skips — to about
+0.7ms once the value is a class, an unchanged class being no write at all and a
+class match being far cheaper than a custom-property invalidation. The frame
+itself goes from about 22ms to about 16ms to about 13.5ms. The other drag pays
+nothing for it: a Display grip re-texts the generated sheet sixty times a second,
+and that is about 0.2ms a frame more style recalculation against about 0.6ms a
+frame less script.
+
+It buys **nothing** on screen, and that is the claim to keep true at both steps.
+Against the continuous ramp the stepped render differs by at most **one 8-bit
+channel level**, with no pixel differing by more than that; against the stepped
+inline render the class render is **pixel-identical** — desktop and phone, both
+themes, base ramp off and on, in every case. What is stepped is the rendered
+**quantity**, not the rank: `percentileMap` and `rankMap` are untouched, and
+stepping there would change which shoes lead rather than how they are painted.
+And the steps sample the **guarded** ramp rather than replacing it: the top
+bucket *is* the capped peak and rounding can only land at or below it, so the
+contrast cap survives by construction and the sweeps above still bound what is
+painted.
 
 **One ink at every step.** A ramp that switched to white numerals cannot
 satisfy 4.5:1 anywhere near the switch: it must pass through a crossover
@@ -3532,13 +3552,18 @@ The shape is at **v2** — the colour's two fields were renamed when it became t
 primary colour, and the emphasis and floor defaults moved under them, so a v1
 record is neither readable by name nor trustworthy by value.
 
-**At the default state nothing is written at all.** `resolveWash` reports
+**At the default state no colour is written at all.** `resolveWash` reports
 `tokenFill` there and no override stylesheet exists, so `app.css`'s own
 `--wash-blue` **and its own accent family** reach the screen exactly as they
 always have, in both themes, byte for byte — asserted from both ends in
 `wash.test.ts` (the alpha of all 401 steps against the frozen closed form,
 stepped the way the painted ramp is — §Theming) and
-`display.test.ts` (the empty stylesheet). It is one predicate for both, because
+`display.test.ts` (the empty stylesheet). The bucket stylesheet is a
+**separate** sheet and always present, which is exactly what lets this one stay
+absent: its rules only ever apply an alpha to whatever `--wash-blue` currently
+resolves to, so they state no colour of their own and there is nothing in them
+to re-state the token with. Folding the two together would spend the property.
+It is one predicate for the two colours, because
 it is one preference: either the stylesheet's colours paint or the engine's do.
 This is why the defaults are stated at the sliders' own steps — 235° / 0.2 —
 rather than at some rounder or more familiar pair: they are a colour someone
@@ -3565,12 +3590,14 @@ the wash, and `display.test.ts` holds every block to carrying both — a
 `prefers-color-scheme` rule that moved the tint and left the accent behind is a
 half-repaint. `--hover-wash` is deliberately absent: it is a `color-mix` of
 `--accent` in `app.css`, so it follows by construction and a declaration here
-would be a second home for the 6%. Base-on switches a **rule** rather than a
-value — `data-wash="dual"` on the root selects the two-colour cell rule in both
-tables — because the single-colour rule has to stay literally untouched at the
-default state for the byte-identical claim to mean anything, and a `var()`
-fallback resolving to the same colour does not give that: it round-trips the
-token through OKLab first.
+would be a second home for the 6%. Base-on emits a different **set** of bucket
+rules rather than switching a value: a ranked cell moves to the mix ramp, whose
+index is a base → better position rather than an alpha, so it names a class of
+its own and the single-colour rules are simply not generated. One class name
+therefore never means two quantities, and the single-colour rules stay literally
+what they were for a runner who never opened the menu — which the byte-identical
+claim needs, and which a `var()` fallback resolving to the same colour would not
+give: it round-trips the token through OKLab first.
 
 **`wash.test.ts` asserts the property, not the constants.** It sweeps a grid of
 252 preference states — hues, chromas, strengths, emphases from 1 to 6, base on

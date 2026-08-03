@@ -33,15 +33,28 @@ export const WASH_MIN_PAINT = 0.015;
  * Steps the painted ramp is quantised to, in each ramp's OWN range rather than in an absolute
  * fraction — the neutral ramp tops out far below the ranked one, so an absolute step would be
  * several times coarser there for nothing. It is a **performance** number that buys nothing
- * visually: a dragged grip rewrites every tinted cell's `--a`, and a value that has not changed is
- * a style recalculation the browser skips (docs/app.md §Theming owns the measured before and
+ * visually: it makes the painted values a small enumerable set, and a painted cell then names one
+ * of them as a class rather than carrying it (docs/app.md §Theming owns the measured before and
  * after, on both counts).
  */
 export const WASH_STEPS = 128;
 
 /**
- * Round onto the ramp's own steps. It samples the value the GUARDED ramp already produced, which is
- * what keeps the contrast cap true through quantisation (docs/app.md §Theming).
+ * A stepped value and its bucket index are ONE relationship, and this pair is its only home: the
+ * generated stylesheet declares a rule per index and a cell names one, so anything that computed
+ * either half a second way could paint a value no ramp produced (docs/app.md §Theming).
+ */
+function bucketOf(a: number, top: number): number {
+  return Math.round(a / (top / WASH_STEPS));
+}
+function valueOf(bucket: number, top: number): number {
+  return bucket * (top / WASH_STEPS);
+}
+
+/**
+ * Round onto the ramp's own steps — which is to say, onto a bucket. It samples the value the
+ * GUARDED ramp already produced, which is what keeps the contrast cap true through quantisation
+ * (docs/app.md §Theming).
  *
  * Called after the `WASH_MIN_PAINT` cutoff and never before it, so the cutoff keeps deciding what
  * is bare on the ramp's own value. Half a step can then carry the first painted tint a hair BELOW
@@ -49,8 +62,7 @@ export const WASH_STEPS = 128;
  * cell that paints goes on painting and the ramp stays monotone.
  */
 function stepped(a: number, top: number): number {
-  const step = top / WASH_STEPS;
-  return Math.round(a / step) * step;
+  return valueOf(bucketOf(a, top), top);
 }
 
 /**
@@ -164,6 +176,59 @@ export function rankedAlpha(p: number, w: WashPaint): number {
 export function rankedMix(p: number, w: WashPaint): number {
   return stepped(Math.pow(p, w.curve), 1);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Buckets: what a cell tells the document
+
+/**
+ * The three painted ramps. `mix` is the base-on ranked ramp and a ramp of its OWN rather than
+ * `blue` under a flag: with the base on, alpha is flat at the peak and the COLOUR carries the
+ * magnitude, so the index means a mix rather than an alpha and one class name would be carrying
+ * two different quantities (docs/app.md §The display preferences).
+ */
+export type WashRamp = 'blue' | 'mix' | 'grey';
+
+/** Each ramp's own range, which its `WASH_STEPS` steps are a fraction of. */
+function rampTop(ramp: WashRamp, w: WashPaint): number {
+  return ramp === 'grey' ? GREY_PEAK : ramp === 'mix' ? 1 : w.peak;
+}
+
+/** Which ramp a column's cells are painted from. `blue` is `washOf(col) === 'blue'`. */
+export function washRamp(blue: boolean, w: WashPaint): WashRamp {
+  return !blue ? 'grey' : w.dual ? 'mix' : 'blue';
+}
+
+/** The bucket a cell falls in: its stepped value, as a whole number of that ramp's own steps. */
+export function washBucket(ramp: WashRamp, p: number, w: WashPaint): number {
+  const v = ramp === 'grey' ? greyAlpha(p) : ramp === 'mix' ? rankedMix(p, w) : rankedAlpha(p, w);
+  return bucketOf(v, rampTop(ramp, w));
+}
+
+/** What that bucket is worth — the alpha, or on the mix ramp the base → better position. */
+export function washBucketValue(ramp: WashRamp, bucket: number, w: WashPaint): number {
+  return valueOf(bucket, rampTop(ramp, w));
+}
+
+const RAMP_TAG: Record<WashRamp, string> = { blue: 'b', mix: 'm', grey: 'g' };
+
+/**
+ * The class a bucket is declared under. Global by construction — `lib/display.ts` writes the rules
+ * into the document rather than into a component's scoped block, because both renderings paint
+ * from the same grammar and a scoped selector would only reach one of them.
+ */
+export function washClass(ramp: WashRamp, bucket: number): string {
+  return `w-${RAMP_TAG[ramp]}-${bucket}`;
+}
+
+/** The one thing a painted cell says about its colour. The cell computes nothing else. */
+export function washCellClass(blue: boolean, p: number, w: WashPaint): string {
+  const ramp = washRamp(blue, w);
+  return washClass(ramp, washBucket(ramp, p, w));
+}
+
+/** Every bucket, in order — what the stylesheet generator iterates. */
+export const WASH_BUCKETS: readonly number[] =
+  Array.from({ length: WASH_STEPS + 1 }, (_, i) => i);
 
 // ---------------------------------------------------------------------------------------------
 // The guarded engine

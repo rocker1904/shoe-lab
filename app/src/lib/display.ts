@@ -10,7 +10,10 @@
  * theme has one.
  */
 
-import { DISPLAY_DEFAULTS, resolveWash, type DisplayPrefs, type ResolvedWash } from './wash';
+import {
+  DISPLAY_DEFAULTS, resolveWash, washBucketValue, washClass, WASH_BUCKETS,
+  type DisplayPrefs, type ResolvedWash, type WashRamp,
+} from './wash';
 
 const KEY = 'display';
 /**
@@ -116,33 +119,82 @@ export function washCss(r: ResolvedWash): string {
 }
 
 const STYLE_ID = 'wash-prefs';
+const BUCKET_STYLE_ID = 'wash-buckets';
 
 /**
- * Push a resolved wash at the document: the override rule, and the flag that selects which cell
- * rule paints.
- *
- * `data-wash="dual"` is an attribute rather than a third custom property because it switches a
- * *rule*, not a value: the single-colour rule has to stay literally untouched at the default state
- * for the byte-identical claim above to mean anything, and a `var()` fallback resolving to the same
- * colour does not give that — it round-trips the token through OKLab first.
+ * A percentage, to six places. Beyond an 8-bit channel by four orders of magnitude — 1e-8 of alpha
+ * is 3e-6 of a channel level — and short enough that a whole ramp of rules is still a small string
+ * to re-parse per preference change.
  */
-export function installWash(resolved: ResolvedWash): void {
-  const root = document.documentElement;
-  if (resolved.paint.dual) root.dataset['wash'] = 'dual';
-  else delete root.dataset['wash'];
+function pct(v: number): string {
+  // `toFixed(6)` always writes the point, so the trailing-zero run can never reach the integer part.
+  return (v * 100).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+}
 
-  const css = washCss(resolved);
-  let style = document.getElementById(STYLE_ID);
+/**
+ * The bucket stylesheet: one `background-color` per bucket per painted ramp, declared once, so a
+ * cell names its bucket as a class and carries no value at all (docs/app.md §Theming). This is
+ * where the ramp's arithmetic stops being per-cell-per-frame work: the quantisation makes the set
+ * of painted values small and enumerable, and this enumerates it.
+ *
+ * **It is a separate, always-present sheet from `washCss` above, and that is what keeps that
+ * function's empty case load-bearing.** These rules only ever apply an alpha to whatever
+ * `--wash-blue` and `--wash-grey` currently resolve to, so a runner who never opens the menu still
+ * gets **no token override at all** and `app.css`'s own colours reach the screen untouched. Fold
+ * the two sheets together and that property is gone.
+ *
+ * The selectors are global and must stay so: both renderings paint from this grammar, and a
+ * Svelte-scoped selector would reach exactly one of them.
+ */
+export function washBucketCss(r: ResolvedWash): string {
+  const ranked: WashRamp = r.paint.dual ? 'mix' : 'blue';
+  const rule = (ramp: WashRamp, i: number, fill: string) =>
+    `.${washClass(ramp, i)}{background-color:${fill}}`;
+  const lines = WASH_BUCKETS.map((i) =>
+    // Base on: the flat peak composites a base → better mix, so only the INNER percentage moves.
+    ranked === 'mix'
+      ? rule('mix', i, `color-mix(in oklab,color-mix(in oklab,var(--wash-blue) `
+          + `${pct(washBucketValue('mix', i, r.paint))}%,var(--wash-base)) ${pct(r.paint.peak)}%,transparent)`)
+      : rule('blue', i, `color-mix(in oklab,var(--wash-blue) `
+          + `${pct(washBucketValue('blue', i, r.paint))}%,transparent)`));
+  // The neutral ramp takes no preference at all, so these rules are the same bytes every time
+  // (docs/app.md §The display preferences). They ride in the same sheet rather than a second one
+  // because a cell's ramp is not a preference either: one sheet is the whole cell vocabulary.
+  for (const i of WASH_BUCKETS) {
+    lines.push(rule('grey', i,
+      `color-mix(in oklab,var(--wash-grey) ${pct(washBucketValue('grey', i, r.paint))}%,transparent)`));
+  }
+  return lines.join('\n');
+}
+
+/** Create-or-retext one `<style>`, or drop it where there is nothing to say. */
+function putStyle(id: string, css: string): void {
+  let style = document.getElementById(id);
   if (!css) {
     style?.remove();
     return;
   }
   if (!style) {
     style = document.createElement('style');
-    style.id = STYLE_ID;
+    style.id = id;
     document.head.append(style);
   }
-  style.textContent = css;
+  // Guarded: a preference change that leaves a sheet identical — every neutral-ramp change does —
+  // must not make the browser re-parse and re-match it.
+  if (style.textContent !== css) style.textContent = css;
+}
+
+/**
+ * Push a resolved wash at the document: the token override, and the bucket rules the cells name.
+ *
+ * Base-on is a different SET of rules rather than a flag on the document, because with the base on
+ * a ranked cell is on the mix ramp and names a `w-m-` class of its own. The single-colour rules
+ * therefore stay literally what they were for a runner who never opened the menu, which is what
+ * the byte-identical claim above needs.
+ */
+export function installWash(resolved: ResolvedWash): void {
+  putStyle(STYLE_ID, washCss(resolved));
+  putStyle(BUCKET_STYLE_ID, washBucketCss(resolved));
 }
 
 /**
