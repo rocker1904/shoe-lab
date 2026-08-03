@@ -323,7 +323,7 @@ name carries heading **and** zone, because two rows both called "Forefoot"
 would be indistinguishable to anyone not looking at the screen.
 
 The order is fixed: search, released after, plate, brand, discontinued, features,
-then the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
+then metrics — the range rows, which come from one declared list, `CURATED_RANGE_KEYS` —
 price, then the measurements a runner narrows on most, then the rest curated,
 then anything added by hand. Price leads because it is the bound almost every
 search has.
@@ -615,7 +615,15 @@ Search, Brand, Plate — and is an uppercase micro-label at the same size and
 tracking as the setup strip's group labels, which do the same job. `h4` names one
 *control* under a section and is sentence case, because uppercasing "Toebox width
 — widest part" makes a data label shout and costs the reading of the units in
-brackets after it. Two components draw one and they are not the same face:
+brackets after it. **The range rows are a section too, `Metrics`**, and that
+heading is what keeps the outline honest: without it every row's `h4` follows
+`Features` with no `h3` between, so an outline reads every measurement as a facet
+of that section. The noun is not decided here — the Add-filter dialog, which is
+how a row arrives, already calls them metrics to the runner's face, and one home
+per name is docs/policies.md §Vocabulary. The section holds the rows and the
+direction legend over them, and stops there: the two foot buttons act on the
+whole surface rather than on the measurements, so they sit outside it. Two
+components draw an `h4` and they are not the same face:
 `MetricRow`'s measurement leads its row and takes the row's own emphasis, while a
 facet noun inside Features is smaller and dim, because the `Features` heading
 above it has to keep leading.

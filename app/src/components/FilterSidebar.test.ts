@@ -599,6 +599,9 @@ const HEADINGS = [
   // Each facet in the section carries a heading of its own, one level under it — the bool's
   // tri-state included, which is a radiogroup rather than one of the groups listed below.
   'Gusset', 'Heel tab', 'Removable insole',
+  // The run of rows gets a section of its own, or every measurement below reads as a child of
+  // Features (docs/app.md §Filters). The word is the Add-filter dialog's own noun for them.
+  'Metrics',
   'Price (£)↓', 'Stack', 'Energy return↑', 'Weight (g)↓',
   'Shock absorption↑', 'Outsole durability (mm)↓', 'Midsole width', 'Width / Fit',
 ];
@@ -644,6 +647,21 @@ describe('FilterSidebar order', () => {
         expect(orderOf(container).headings, `${zone} ${JSON.stringify(view.sort)}`).toEqual(HEADINGS);
         expect(orderOf(container).groups, `${zone} ${JSON.stringify(view.sort)}`).toEqual(GROUPS);
       }
+    }
+  });
+  /**
+   * The heading is only honest if it scopes the rows and stops there: the foot's two buttons act on
+   * the whole surface rather than on the measurements, so a Metrics section that swallowed them
+   * would name them too (docs/app.md §Filters).
+   */
+  it('scopes the metrics heading to the rows, and not to the whole-surface buttons', () => {
+    const { container } = render(FilterSidebar, { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+    const metrics = [...container.querySelectorAll('section')]
+      .find((s) => s.querySelector('h3')?.textContent === 'Metrics')!;
+    expect(metrics.querySelectorAll('section.metric'))
+      .toHaveLength(container.querySelectorAll('section.metric').length);
+    for (const name of ['Add filter', 'Clear filters']) {
+      expect(metrics.contains(within(container).getByRole('button', { name })), name).toBe(false);
     }
   });
   it('renders both halves of a zone pair under one heading, forefoot first', () => {

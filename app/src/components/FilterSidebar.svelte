@@ -292,27 +292,36 @@
                     })} />
   </section>
 
-  <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the sections
-       above carry no direction mark, so a legend over them would read as a claim about
-       Search and Brand. It is the one legend of the three that cannot sit outside its scrollport —
-       the sidebar IS the scrollport — so it scrolls with the rows rather than above them; what
-       makes that survivable here is that these rows state their own units where the pickers' do
-       not (docs/app.md §Table presentation). -->
-  <DirectionLegend />
+  <!-- The rows are a section like the six above, and the heading is what makes them one: without it
+       every `MetricRow` `h4` follows `Features` with no `h3` between, so a heading outline reads
+       every measurement as a facet of that section. The word is not chosen here — the Add-filter
+       dialog, which is how a row arrives, already calls them metrics to the runner's face, and one
+       home per name is docs/policies.md §Vocabulary. The foot stays OUTSIDE: its two buttons act on
+       the whole surface, not on the measurements (docs/app.md §Filters). -->
+  <section>
+    <h3>Metrics</h3>
+    <!-- At the head of the run of rows it explains, and NOT at the top of the sidebar: the sections
+         above carry no direction mark, so a legend over them would read as a claim about
+         Search and Brand. It is the one legend of the three that cannot sit outside its scrollport —
+         the sidebar IS the scrollport — so it scrolls with the rows rather than above them; what
+         makes that survivable here is that these rows state their own units where the pickers' do
+         not (docs/app.md §Table presentation). -->
+    <DirectionLegend />
 
-  {#each shown as e (keysOf(e)[0])}
-    <section class="metric">
-      <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)}
-                 coverage={(k) => coverageOf(population, k, idx)}
-                 bounded={(k) => k in view.filters.ranges} />
-      {#each rowKeysOf(e) as key (key)}
-        <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} values={valuesFor(key)}
-                     bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
-                     excluded={excludedFor(key)}
-                     onremove={removable(key) ? () => removeRow(key) : undefined} />
-      {/each}
-    </section>
-  {/each}
+    {#each shown as e (keysOf(e)[0])}
+      <section class="metric">
+        <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)}
+                   coverage={(k) => coverageOf(population, k, idx)}
+                   bounded={(k) => k in view.filters.ranges} />
+        {#each rowKeysOf(e) as key (key)}
+          <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} values={valuesFor(key)}
+                       bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
+                       excluded={excludedFor(key)}
+                       onremove={removable(key) ? () => removeRow(key) : undefined} />
+        {/each}
+      </section>
+    {/each}
+  </section>
 
   <!-- One row, because they are the sidebar's two whole-surface actions and a column of two lone
        buttons reads as two unrelated afterthoughts. Add leads: it grows the surface, and Clear
@@ -375,7 +384,11 @@
      from shuffling sideways as the choice moves along them (docs/app.md §The toolbar). */
   .chips button::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden;
                          visibility: hidden; pointer-events: none; }
-  .metric { display: flex; flex-direction: column; gap: var(--s1); }
+  /* The rows used to be children of the flex `aside` and took their 12px from its `gap`. Wrapped in
+     a section so the heading scopes them, they are outside that gap, so each row states the same
+     12px as its own top margin — which also leaves the heading paying only its own `margin-bottom`,
+     the 8px every other section's `h3` pays above its first control. */
+  .metric { display: flex; flex-direction: column; gap: var(--s1); margin-top: var(--s3); }
   /* Wrapping, not shrinking: the drawer is 88vw at 360px and the pair measure their labels, so a
      no-wrap row would overflow the sidebar's own scrollport rather than take a second line. */
   .foot { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s1); }
