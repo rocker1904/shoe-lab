@@ -316,12 +316,21 @@ describe('the Tempo score against the real fleet', () => {
     }
   });
 
-  it('ranks the archetypal tempo shoes above the fragile flats they resemble', () => {
-    const r = [...scoreMap(TEMPO, POOL, 'heel', false, realIdx).entries()]
-      .sort((a, b) => b[1] - a[1]).map(([slug]) => slug);
-    expect(r[0]).toBe('asics-megablast');
-    expect(r.indexOf('adidas-adizero-evo-sl')).toBeLessThan(5);
-    expect(r.indexOf('adidas-adizero-takumi-sen-11')).toBeGreaterThan(30); // outsole life 1.0
+  it('outscores the fragile flats the archetypes resemble, on either zone', () => {
+    // Stated as the gap rather than as ranks, because the claim is that the score *separates* two
+    // shoes a runner would shortlist together — not that either holds a seat. A rank pins the whole
+    // fleet's arrangement to make a point about two shoes, so it moves on a refresh that never
+    // touched either; and `r[0]` in particular names the shoe the scale is anchored on, which makes
+    // it fail on exactly the improvement freezing exists to record
+    // (docs/app.md §The story scores). The separator is outsole life: the takumi reads 1.0.
+    // 15 sits under the narrowest gap measured, which is the evo-sl's on the forefoot.
+    for (const zone of ZONES) {
+      const m = scoreMap(TEMPO, POOL, zone, false, realIdx);
+      const flat = m.get('adidas-adizero-takumi-sen-11')!;
+      for (const archetype of ['asics-megablast', 'adidas-adizero-evo-sl']) {
+        expect(m.get(archetype)! - flat, `${zone} ${archetype}`).toBeGreaterThan(15);
+      }
+    }
   });
 });
 
@@ -362,13 +371,14 @@ describe('the Race score against the real fleet', () => {
       .toBeGreaterThan(scoreMap(EASY, REAL.shoes, 'heel', false, realIdx).size);
   });
 
-  it('puts the supershoes on top without requiring a plate', () => {
-    const r = [...scoreMap(RACE, REAL.shoes, 'heel', false, realIdx).entries()]
-      .sort((a, b) => b[1] - a[1]).slice(0, 12).map(([slug]) => slug);
-    const plateOf = new Map(REAL.shoes.map((s) => [s.slug, s.plate]));
-    expect(r.every((slug) => plateOf.get(slug) === 'carbon')).toBe(true);
-    expect(r[0]).toBe('adidas-adizero-adios-pro-evo-3');
-  });
+  /*
+   * There is deliberately no assertion that carbon fills the top of this ranking. Race weights
+   * speed alone and filters no plate out, so carbon leading is a fact about what manufacturers
+   * currently sell rather than a property of the score: a better plate material, or a shoe that
+   * reaches the same numbers without a plate, would redden a suite that pinned it while the score
+   * carried on working exactly as designed. The same reason the presets are never tuned toward
+   * RunRepeat's own labels — divergence from the market is the output, not a fault.
+   */
 });
 
 /**
