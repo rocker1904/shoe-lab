@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -78,6 +78,20 @@ describe('scrapeMetrics', () => {
   });
 });
 
+/**
+ * No page in the corpus carries the shape the catalogue gate exists for, so one is doctored here.
+ * `__NUXT_DATA__` is a flat node list of devalue pointers, which makes "declared twice" literally
+ * that: the same option node listed twice inside one test's options.
+ */
+function withRepeatedOption(html: string, testSlug: string): string {
+  const flat = JSON.parse(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html)![1]!) as any[];
+  const slugNode = flat.indexOf(testSlug);
+  const test = flat.find((n) => n && !Array.isArray(n) && typeof n === 'object' && n.slug === slugNode);
+  const options = flat[flat[test.config].options] as number[];
+  options.push(options[0]!);
+  return `<script id="__NUXT_DATA__">${JSON.stringify(flat)}</script>`;
+}
+
 // Catalogue-only, offline: the readings live behind the API and cannot be replayed from disk,
 // so metrics.json must come through untouched (docs/scraping.md §Re-extracting from a corpus).
 describe('scrapeMetrics from a corpus', () => {
@@ -107,6 +121,17 @@ describe('scrapeMetrics from a corpus', () => {
     const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
     dir.write('metrics.json', { scrapedAt: '2026-01-01T00:00:00Z', shoes: { a: { name: 'A', url: 'u', values: { '99999': 1 } } } });
     await expect(scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: corpus })).rejects.toThrow(/unknown test 99999/);
+    expect(dir.read('tests.json')).toBeNull();
+  });
+
+  // The catalogue is checked whether or not there are readings to check it against, because this
+  // path writes tests.json either way and `data/` is the database
+  // (docs/scraping.md §A duplicate option value fails the run).
+  it('refuses a catalogue that declares one option value twice with no metrics.json at all', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const doctored = mkdtempSync(join(tmpdir(), 'shoe-lab-corpus-'));
+    writeFileSync(join(doctored, 'azura.html'), withRepeatedOption(azuraHtml, 'tongue-gusset-type'));
+    await expect(scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: doctored })).rejects.toThrow(/tongue-gusset-type/);
     expect(dir.read('tests.json')).toBeNull();
   });
 

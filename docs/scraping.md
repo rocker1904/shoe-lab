@@ -476,17 +476,21 @@ usable is §Empty values are skipped before duplicates are resolved. A duplicate
 ### A duplicate option value fails the run
 A `value` declared twice inside one test's `options` is fatal on every path that
 writes a catalogue, rather than deduped on the way in or defended in the app.
-The app keys its option rows by that value, and a keyed `{#each}` over a
-repeated key throws `each_key_duplicate`, which blanks the page rather than the
-row (docs/app.md §Categorical columns). No downstream reading of the payload is
-both faithful and renderable: drop the second value and the app labels shoes
-against a vocabulary the catalogue never declared, keep it and the sidebar dies.
-So the run fails and `data/` goes untouched — the only outcome that leaves
-someone a payload to look at. This is stricter than
-§First occurrence wins in lab-test-list, where the endpoint's own ordering picks
-the winner; here there is nothing to pick from. Do not soften it into a dedupe,
-and do not add a component-side guard instead — a guard can only paper over a
-catalogue that is already wrong.
+Published as-is it takes the app down: the Features section keys its rows by
+option value (docs/app.md §Filters) and a keyed `{#each}` over a repeated key
+throws `each_key_duplicate`, which blanks the page rather than the row.
+Deduping would render — `facetLabel` resolves a value first-wins, so dropping
+the later entry keeps the label the app would have shown anyway — but it is a
+guess at what changed upstream. Two entries under one value are either one
+choice listed twice, which is harmless, or two distinct choices whose values
+have collided, in which case a dedupe silently labels every reading of one as
+the other. Nothing in the payload says which, so the run fails and `data/` is
+left untouched: the only outcome that leaves a person the payload to read. That
+is also the difference from §First occurrence wins in lab-test-list — a
+duplicate row there is a known upstream shape with a known resolution, and this
+is an unknown shape. Do not soften it into a dedupe, and do not add a
+component-side guard instead — a guard can only paper over a catalogue that is
+already wrong.
 
 ### A test declared twice fails the run
 Same gate, same call: a catalogue that repeats a test **id** or a test **slug**
