@@ -1,4 +1,4 @@
-// Serves the built app with the REAL 450-shoe dataset — the inverse of app/scripts/prepare-e2e.mjs,
+// Serves the built app with the REAL dataset — the inverse of app/scripts/prepare-e2e.mjs,
 // which swaps the real data out for a 5-shoe fixture. Every real-data-only defect the suite cannot
 // see (the 1200px overflow being the known one) is only reachable from here.
 import { createServer } from 'node:http';

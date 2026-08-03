@@ -1,8 +1,9 @@
 /**
  * The LAYOUT width, and the one way to keep an answer to it live.
  *
- * `documentElement.clientWidth`, not `innerWidth`: it excludes a classic scrollbar, and with 450
- * shoes there is always one — counting its 12–15px as room for the table is how a model comes to
+ * `documentElement.clientWidth`, not `innerWidth`: it excludes a classic scrollbar, and the fleet
+ * never fits on one screen, so there is always one — counting its 12–15px as room for the table is
+ * how a model comes to
  * mount a table that then overflows (docs/app.md §Two renderings, and only one of them mounted).
  * jsdom lays nothing out and reports 0, so `innerWidth` is the fallback and the suite's window is a
  * real number.

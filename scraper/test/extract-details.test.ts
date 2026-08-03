@@ -214,7 +214,7 @@ describe('categorical readings taken from the page', () => {
   });
 
   // The lab-test-list endpoint only ever returns the shoes that have the feature, so a `false`
-  // exists nowhere but the page: 219 of 450 shoes have no reflective elements and the API says
+  // exists nowhere but the page: roughly half the fleet has no reflective elements and the API says
   // nothing about any of them (docs/scraping.md §Readings taken from the page).
   it('keeps a false reading, which the metrics API can never express', () => {
     const rec = extractDetails({

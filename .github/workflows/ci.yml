@@ -69,7 +69,7 @@ jobs:
       # WebKit alone. It is the engine macOS draws natively, and the other two already run both
       # regimes on a developer's machine through `hunt/fit-boundary.mjs`.
       - run: npx playwright install webkit
-      # The real 450-shoe fleet, and before `e2e` swaps the five-shoe fixture into `dist/`: the fit
+      # The real fleet, and before `e2e` swaps the five-shoe fixture into `dist/`: the fit
       # boundary is a claim only the fleet can make, and its classic half has never run anywhere
       # (`.hunt/fixlog-f14.md`).
       - run: node hunt/fit-boundary.mjs webkit

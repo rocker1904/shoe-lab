@@ -22,7 +22,7 @@ const FIXTURE: ShoesFile = JSON.parse(readFileSync(
 
 /**
  * Widest measured disagreement between the model and a rendered table is 2.0px, over eight column
- * sets on the real 450-shoe fleet in Chromium and Firefox. Four is that with
+ * sets on the real fleet in Chromium and Firefox. Four is that with
  * room, and small enough that a regenerated font table or a changed padding fails here rather than
  * quietly moving the width at which the rendering switches.
  */

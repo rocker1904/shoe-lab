@@ -3,8 +3,9 @@ import type { TestIndex } from './dataset';
 
 /**
  * The three words a human ever sees for the plate field, in one place because they were in three
- * and drifted: the filter said `None`, the desktop cell said `—`, and 344 of 450 rows therefore
- * claimed no reading for one the scraper derives on purpose (docs/scraping.md §Data quirks). The
+ * and drifted: the filter said `None`, the desktop cell said `—`, and most rows in the table
+ * therefore claimed no reading for one the scraper derives on purpose
+ * (docs/scraping.md §Data quirks). The
  * em dash is this app's glyph for an *absent* reading, and spending it here made it mean two
  * things one click apart — plate ascending put its em dashes first because `none` is a value,
  * width ascending puts its last because those are absences. The phone's name line still drops
@@ -24,7 +25,7 @@ export const CATEGORICAL_TEST_TYPES: ReadonlySet<string> = new Set(['option', 'b
 
 /**
  * Slugs a shoe field already owns as a column. Only `plate`: the catalogue has a `bool` test of
- * that slug, read on two shoes of 450, while the field of that name is derived from the whole page
+ * that slug, read on two shoes, while the field of that name is derived from the whole page
  * and reads Carbon / Non-carbon (docs/app.md §Categorical columns). One column cannot have
  * two sources, and the field is the better one, so the reading is not offered and never answers
  * for a cell.

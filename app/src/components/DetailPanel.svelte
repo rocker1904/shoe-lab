@@ -34,8 +34,8 @@
       ? [{ key, label: columnLabel(key, undefined), terms: contributions(def, shoe, zone, stability, idx) }]
       : [];
   }));
-  // A ratio shows what it was divided from: 206 of 283 shoes saturate the outsole term, so the
-  // mapped 1.0 alone says nothing about which reading put them there
+  // A ratio shows what it was divided from: most shoes carrying both outsole readings saturate that
+  // term, so the mapped 1.0 alone says nothing about which reading put them there
   // (docs/app.md §The story scores).
   const readingText = (r: Reading) => (r.over
     ? `${displayNumber(r.value)} = ${displayNumber(r.over[0])} / ${displayNumber(r.over[1])}`
@@ -93,7 +93,7 @@
     <div class="a-body">
       {#if shoe.details}
         {#if shoe.details.intro}<p class="intro">{shoe.details.intro}</p>{/if}
-        <!-- Keyed by index, not by value: 85 of 450 shoes repeat a pro and 27 repeat a con, and a
+        <!-- Keyed by index, not by value: dozens of shoes repeat a pro and some repeat a con, and a
              duplicate key is a runtime error. These lists are positional and hold no per-item
              state, so the index is the honest key. Do not "improve" this to `(p)`. -->
         <div class="a-lists">

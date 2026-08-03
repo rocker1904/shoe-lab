@@ -144,7 +144,7 @@ describe('ShoeTable', () => {
     expect(cells[1]!.className).toContain('blue'); // score — higher is better
     expect(cells[2]!.className).toContain('grey'); // heel stack — a preference, not a quality
   });
-  // `none` is a reading the scraper derives deliberately and 344 of 450 shoes carry it, so the cell
+  // `none` is a reading the scraper derives deliberately and most of the fleet carries it, so the cell
   // names it the way the filter beside it does. The em dash is this app's glyph for *no* reading,
   // and a column that spent it on a value made one glyph mean two things in one table: plate
   // ascending sent its em dashes to the top as a value, width ascending sent its to the bottom as
@@ -201,7 +201,7 @@ describe('ShoeTable', () => {
       view: { columns: ['releasedAt'] },
     });
     expect(screen.getByText('2024')).toBeInTheDocument();
-    // The day is deliberately dropped: only 24 of 450 shoes could ever supply one.
+    // The day is deliberately dropped; `lib/release-date.ts` owns why.
     expect(screen.getByText('March 2025')).toBeInTheDocument();
   });
 });
@@ -224,7 +224,7 @@ describe('ShoeTable and the Easy score', () => {
 });
 
 /**
- * `SORT_FIELDS` accepts `name` and `brand`, so a link could reorder 450 rows alphabetically while
+ * `SORT_FIELDS` accepts `name` and `brand`, so a link could reorder every row alphabetically while
  * the Shoe header was a plain `<th>` — no button, no caret, and the table's ONLY `aria-sort` gone
  * with the score column that no longer held it (docs/app.md §Columns and sorting).
  */

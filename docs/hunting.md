@@ -110,7 +110,7 @@ those are the inputs that move the boundary, and each moves it silently.
 **It has no tests and will rot silently. Run `node hunt/smoke.mjs` before trusting it**, and again
 after any UI change — the selectors move.
 
-Serving the **real 450-shoe dataset** is the point: `app/scripts/prepare-e2e.mjs` deliberately swaps
+Serving the **real dataset** is the point: `app/scripts/prepare-e2e.mjs` deliberately swaps
 it for a 5-shoe fixture — which is why the 1200px overflow survived a long run of green CI before
 anyone traced it.
 
@@ -195,8 +195,8 @@ from a hunt where more than one thing varied at a time, and should be held loose
 - **Tell each agent what is already proved clean.** Coverage compounds; later agents started
   further along and stopped re-walking arithmetic.
 - **Hand over a spec's claims as a list to falsify**, not as background reading. Every number in
-  the visual-polish spec was measured against a mockup; the phone agent checked them against 450
-  real shoes and most held, which is itself worth knowing.
+  the visual-polish spec was measured against a mockup; the phone agent checked them against the
+  real fleet and most held, which is itself worth knowing.
 - **Assign orphaned findings explicitly.** The 700–844px band was measured by one agent that
   declined to file it as out of remit. Findings that fall between two briefs are exactly how a real
   defect goes unowned; give it to someone.

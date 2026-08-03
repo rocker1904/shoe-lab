@@ -5,9 +5,10 @@ export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
 
 /**
  * Month precision for every source but `listing`, which only ever knew a year
- * (docs/scraping.md §Release-date provenance). The day is deliberately never shown: only 24 of
- * 450 shoes could supply one, and a column that is day-precise for 5% of rows implies a
- * resolution the dataset does not have. `releasedAt` keeps the day, so sorting stays exact and
+ * (docs/scraping.md §Release-date provenance). The day is deliberately never shown: only the
+ * `page` shoes could supply a trustworthy one, a twentieth of the fleet, and a column that is
+ * day-precise for a twentieth of its rows implies a resolution the dataset does not have.
+ * `releasedAt` keeps the day, so sorting stays exact and
  * the CSV still exports it (docs/app.md §Number display).
  */
 export function displayReleaseDate(releasedAt: string | null, source: ReleaseDateSource | null): string {

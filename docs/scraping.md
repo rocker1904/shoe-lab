@@ -415,7 +415,7 @@ fails the run.
 
 The other `option` and `text` tests really are empty: `length`,
 `leather-suede-quality`, `tested-size` and `outsole-design` return nothing on any
-of the 450 shoes, so they stay dropped. The catalogue's third `bool`, `plate`,
+shoe in the fleet, so they stay dropped. The catalogue's third `bool`, `plate`,
 is read on two shoes and so survives the drop — but the app never shows it,
 because the shoe field of that name owns the column
 (docs/app.md §Categorical columns).

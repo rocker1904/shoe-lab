@@ -1,7 +1,7 @@
 // The five claims about this app that ONLY the real fleet can make.
 //
-// 1. **1191px of LAYOUT is where the sidebar fits beside the default table.** With 450 shoes and the
-//    default columns the table's own min-content is 903px, and the floor under the sidebar's
+// 1. **1191px of LAYOUT is where the sidebar fits beside the default table.** With the whole fleet
+//    and the default columns the table's own min-content is 903px, and the floor under the sidebar's
 //    boundary is that plus the fit rule's slack, the page's leading gutter and the 260px track — so
 //    a permanent sidebar any narrower buys a column of filters by taking the table off the screen
 //    (docs/app.md §Filters). A LAYOUT width: where the browser draws a classic scrollbar the WINDOW
@@ -132,7 +132,7 @@ const READ = () => {
 const SHORT_QUERY = 'vaporfly';
 
 /**
- * Claim 5, once: load short at `width`, then clear the search and let 450 rows back in. The
+ * Claim 5, once: load short at `width`, then clear the search and let the whole fleet back in. The
  * document goes tall, a classic scrollbar appears, and the layout loses its width — with no resize
  * event anywhere. The page is never resized, so a fresh context per width is the only way to ask.
  */

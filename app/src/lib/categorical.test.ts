@@ -35,7 +35,7 @@ describe('categoricalValue', () => {
     expect(categoricalValue(shoe({ slug: 'a' }), 'not-a-test', idx)).toBeUndefined();
   });
 
-  // The catalogue carries a `bool` test slugged `plate`, on two shoes of 450. The column of that
+  // The catalogue carries a `bool` test slugged `plate`, read on two shoes. The column of that
   // name is the derived field, so the reading must not answer for it.
   it('is undefined for plate, which the shoe field owns', () => {
     expect(categoricalValue(shoe({ slug: 'a', values: { '69': true } }), 'plate', idx)).toBeUndefined();

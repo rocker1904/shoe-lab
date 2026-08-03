@@ -191,7 +191,7 @@ that reads the population reads it through `population.ts`, which keys its
 answer on the filters *without* their ranges and hands back the array it already
 built: the sidebar's dozen coverage headings, the brand facet's figure per brand
 and each feature checklist's figure per value then cost nothing while a grip is
-held. Measured on the 450-shoe fleet at 1440px, before the feature checklists
+held. Measured at 1440px on a fleet of 450, before the feature checklists
 existed, a drag step went from about 20,600 shoe-visits to about 1,200, and the
 main thread from about 9.4ms to about 6.9ms of the frame. Each call site holds
 its own reader — the sidebar's population and the brand facet's differ by one
@@ -372,12 +372,15 @@ below.
 
 **The search box matches a case-insensitive substring of the name *or* the
 brand.** The brand half is not redundant: almost every name already begins with
-its brand (§Table presentation), and the handful that shorten it — Topo, Hylo,
-On — were exactly where the box and the brand facet one control below it
-disagreed. `On` returned 29 shoes in the facet and 124 in the box, because "on"
-sits inside Cushion, Wilson and Carbon; `Topo Athletic` returned 7 and 0. Two
-controls a row apart cannot answer the same brand name with different fleets
-with nothing on screen saying why. The substring stays a substring — `Nike
+its brand (§Table presentation), and the handful that shorten it — Topo
+Athletic, Hylo Athletics — were where the box and the brand facet one control
+below it disagreed. `Topo Athletic` returned a brand's worth of shoes in the
+facet and none at all in a box reading `name` alone, because no name spells the
+brand out. Two controls a row apart cannot answer the same brand name with
+different fleets with nothing on screen saying why. The disagreement the other
+way is accepted and stays: `On` still returns far more in the box than in the
+facet, because "on" sits inside Cushion, Wilson and Carbon. The substring stays
+a substring — `Nike
 Pegasus` still matches by name, and no tokenising is implied.
 
 A query with no non-whitespace character in it is **the empty query**, and it is
@@ -665,7 +668,8 @@ coverage is incomplete. The counts **overlap** — a shoe failing two bounds is
 counted by both — so they must never be totalled, and this is deliberately not
 the receipt's "outside your bounds", whose word is not reused here for that
 reason. It is the first thing in the app whose cost grows with filter count,
-which is worth stating: six passes over 450 shoes is well inside a frame.
+which is worth stating: six passes over a few hundred shoes is well inside a
+frame.
 
 `applyFilters` accounts for every shoe it drops: `considered` is the
 population surviving the non-range filters alone, and
@@ -898,7 +902,7 @@ but never columns.
 desktop's `Shoe` header is a real sort button — the same button, the same
 `SortCaret`, the same `aria-sort` on the `th` as every figure header — because
 `name` is a sort key the parser accepts and for a while nothing on screen or in
-the accessibility tree could say so: `?sort=name` reordered 450 rows
+the accessibility tree could say so: `?sort=name` reordered every row
 alphabetically, the table carried **zero** `aria-sort` attributes (the score
 header having lost the one it holds on every other view), and there was no
 control anywhere that could reverse it. That is the untrue-claim species rather
@@ -1332,9 +1336,13 @@ container is a silent no-op, and `scroll-margin-top: var(--thead-top)`, because
 the top of the scrollport is behind the pinned chrome: without it the jump
 lands the anchor at y=0 and the runner arrives looking at the third row.
 
-**No brand line under the name.** 442 of 450 names already begin with their
-brand and the remaining 8 shorten it ("Topo", "Hylo") rather than drop it, so
-the line was duplication on every row. `brand` stays in the data: it is still
+**No brand line under the name.** Almost every name already begins with its
+brand, and the handful that do not shorten it ("Topo", "Hylo") rather than drop
+it, so the line was duplication on every row. That is a fact about strings
+upstream owns, so it is a gate rather than a sentence: `lib/filters.test.ts`
+asserts it over the committed fleet, and a name that dropped its brand would
+fail the build rather than leave a row with no brand on it.
+`brand` stays in the data: it is still
 filtered and sorted on. There is no dimming of discontinued rows either — the
 `disc-tag` chip says it in text, for the reason the chip's own treatment is
 neutral (above).
@@ -1599,7 +1607,7 @@ maximum over three: the maximum sums disagreements that never co-occur in one
 engine and measured 8–15px wide. `cross-browser.spec.ts` then walks a width
 ladder across the threshold the model computes for the fixture, asserting which
 rendering mounts on each side and that the mounted one does not scroll sideways;
-`hunt/fit-boundary.mjs` walks the same ladder against the real 450-shoe fleet,
+`hunt/fit-boundary.mjs` walks the same ladder against the real fleet,
 which is the only place the overflow ever existed.
 
 **The list can still page-scroll sideways past six columns**, which is the
@@ -1638,7 +1646,8 @@ back; `hunt/fit-boundary.mjs` walks the real fleet in two engines and both
 scrollbar regimes.
 
 **The width the decision reads is the LAYOUT width**, `documentElement.clientWidth`,
-which excludes a classic scrollbar. With 450 shoes there is always one, and
+which excludes a classic scrollbar. The fleet never fits on one screen, so there
+is always one, and
 counting its 12–15px as room for the table is how a model comes to mount a table
 that then overflows. This is also why the sidebar's boundary is no longer a media
 query: a media query answers about the window, so the two differed by exactly a
@@ -1651,8 +1660,8 @@ subscription. A `resize` event says the *window* moved; the layout width also
 moves when it did not, because clearing a filter or opening a row makes the
 document tall enough for a classic scrollbar and that takes its 12–15px with no
 event of any kind. Read off window events the width went stale exactly there:
-measured headed at a 931px window on the real fleet, a search cleared back to 450
-rows left the desktop table up and the document scrolling sideways by 1px until
+measured headed at a 931px window on the real fleet, a search cleared back to the
+whole fleet left the desktop table up and the document scrolling sideways by 1px until
 something moved the window. Observing the element the width is *about* answers
 both causes with one subscription, and it cannot oscillate — the taller rendering
 is the one chosen at the narrower width, so a scrollbar the swap brings in never
@@ -1856,7 +1865,7 @@ filter box; §Table presentation owns what the shorter string buys.
 
 **All three words have one home**, `PLATE_LABELS` in `lib/categorical.ts`. They
 were spelled in three files and drifted: the filter said `None` while the
-desktop cell printed an em dash for the same value, on 344 of 450 rows. `none`
+desktop cell printed an em dash for the same value, on most rows in the table. `none`
 is a reading the scraper derives deliberately (docs/scraping.md §Data quirks),
 so the cell names it — the em dash is reserved for an absent reading, and
 spending it on a value made one glyph mean two things one click apart (plate
@@ -1888,7 +1897,7 @@ for the same reason plate and the release date do: the value row stays uniformly
 numeric (§Columns and sorting).
 
 **`plate` is the shoe field's, not the catalogue's.** The catalogue also has a
-`bool` test slugged `plate`, read on two shoes of 450, and one column cannot
+`bool` test slugged `plate`, read on two shoes, and one column cannot
 have two sources. `isCategorical` excludes the slug, so the derived field —
 which reads the whole page and says None / Non-carbon / Carbon — answers for the
 cell, the picker offers the column once, and the test's own reading is simply
@@ -3661,11 +3670,11 @@ bounded metric would read 100% every time, because a bound already excludes
 every shoe lacking a reading. The number would become a tautology exactly when
 it was being used.
 
-It is stated as **counts, not a percentage**: `378 / 450 measured` on the
-heading line, and **only below complete coverage**, so most rows on a default
-view fall silent. "84%" of an unstated pool is the complaint; both numbers on
-screen state the denominator instead of assuming it. Filter to last year and it
-reads `120 / 180`, where both numbers visibly moved. It is set in `--font-mono`
+It is stated as **counts, not a percentage** — `«with a reading» / «considered»
+measured` on the heading line — and **only below complete coverage**, so most
+rows on a default view fall silent. "84%" of an unstated pool is the complaint;
+both numbers on screen state the denominator instead of assuming it. Filter to
+last year and it reads `120 / 180`, where both numbers visibly moved. It is set in `--font-mono`
 with `tabular-nums`, so every figure in the sidebar shares a grid with every
 figure in the table.
 
@@ -3785,8 +3794,8 @@ row's click target is the expander. Do not remove or defer-load either link
 (docs/decisions.md §Be a good citizen toward RunRepeat).
 
 ### The header names the catalogue, the receipt owns the count
-The header states a fact about the **catalogue** — `450 shoes · updated 27 Jul
-2026` — which does not move under filtering. Everything that responds to a
+The header states a fact about the **catalogue** — the fleet's size and the date
+it was built — which does not move under filtering. Everything that responds to a
 filter belongs to the receipt, whose wording is unchanged. Two counts a
 centimetre apart with different denominators read as the app contradicting
 itself, even though both were correct: the header answered "how big is this
@@ -4038,7 +4047,7 @@ that is the receipt's, and every filter is therefore exempt by construction
 |---|---|---|
 | zone | `radio "Forefoot" [checked]` — the choice | **announces** `Measured at the forefoot: columns and scores updated`. The radio is named `Forefoot`; the columns it renames are `Forefoot stack mm` and `Energy return forefoot %`, and every value in them moves. Different facts |
 | stability | `button "Stability" [pressed]` — the preference | **announces** `Stability on: story scores updated`. The button's state is not the score definition changing under every number |
-| sort header | `button "Weight g"`; the `aria-sort` lands on the `th`, the button's **parent** | **announces** `Sorted by Weight, lowest first`. An ancestor's attribute changing is not reliably re-spoken, and 450 rows reordering is not the button's state |
+| sort header | `button "Weight g"`; the `aria-sort` lands on the `th`, the button's **parent** | **announces** `Sorted by Weight, lowest first`. An ancestor's attribute changing is not reliably re-spoken, and the whole table reordering is not the button's state |
 | add filter | dialog closes, focus returns to `Add filter` | **announces** `Filter added: Stiffness`. The row lands two thousand pixels down a drawer that is closed at 360px |
 | remove filter | the control is **destroyed by its own press** | **announces** `Filter removed: Stiffness` |
 | Export CSV | `button "Export CSV"` — nothing in the DOM changes | **announces** `CSV exported`. The case that has no other signal at all |

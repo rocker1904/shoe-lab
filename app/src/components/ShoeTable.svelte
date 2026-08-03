@@ -138,7 +138,7 @@
   <thead bind:clientHeight={headHeight}>
     <tr>
       <!-- A real sort control, not a label. `name` is a sort key the parser accepts, so a link
-           carrying it reordered 450 rows with no `aria-sort` anywhere in the table and nothing that
+           carrying it reordered every row with no `aria-sort` anywhere in the table and nothing that
            could reverse it — the untrue-claim species rather than a nicety
            (docs/app.md §Columns and sorting). Same button, same caret, same contract as every
            figure header; the units line stays empty, because the reserve is what keeps every
@@ -188,8 +188,9 @@
         <td class="name">
           <div class="name-row">
             <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
-            <!-- No brand line: 442 of 450 names already begin with their brand, and the other 8
-                 shorten it rather than drop it (docs/app.md §Columns and sorting). -->
+            <!-- No brand line: almost every name already begins with its brand, and the handful
+                 that do not shorten it rather than drop it — asserted over the committed fleet in
+                 `lib/filters.test.ts` (docs/app.md §Columns and sorting). -->
             <div><strong>{s.name}</strong>{#if s.discontinued}<DiscontinuedTag />{/if}</div>
           </div>
         </td>

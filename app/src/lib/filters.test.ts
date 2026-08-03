@@ -1,7 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { applyFilters, EMPTY_FILTERS, narrowingNames, type FilterState } from './filters';
 import { FLEET, TESTS, shoe } from './test-fixtures';
+import type { Shoe } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
 const slugs = (r: { visible: { slug: string }[] }) => r.visible.map((s) => s.slug);
@@ -308,5 +312,34 @@ describe('narrowingNames', () => {
   it('names the feature selection between the discontinued filter and the bounds', () => {
     expect(narrowingNames({ ranges: { weight: { max: 1 } }, discontinued: 'hide', categorical: { 'heel-tab': ['pull-tab'] } }))
       .toEqual(['the discontinued filter', 'the feature selection', 'the bounds']);
+  });
+});
+
+/**
+ * The **committed fleet**, not `test-fixtures.ts`: a hand-written fixture can never fail on a name
+ * that arrives upstream, which is the whole point of the guard below (labels.test.ts says the same).
+ * Resolved through `fileURLToPath` because the jsdom environment replaces the global `URL` with one
+ * `readFileSync` rejects.
+ */
+const fleet = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8'),
+) as { shoes: Shoe[] };
+
+/**
+ * Two designs rest on this and neither would say so if it stopped holding: the search reads brand as
+ * well as name, and a table row prints no brand line under the shoe name
+ * (docs/app.md §Filters, §Table presentation). Upstream owns these strings, so the claim is a gate
+ * rather than a sentence — a name that dropped its brand instead of shortening it would leave the
+ * row with no brand on it at all, and nothing else in the suite would notice.
+ */
+describe('every name in the fleet carries its brand', () => {
+  it('begins with the brand, or with a word the brand begins with', () => {
+    const dropped = fleet.shoes.filter((s) => {
+      const brand = (s.brand ?? '').toLowerCase();
+      const name = s.name.toLowerCase();
+      // `Topo Atmos` under `Topo Athletic` shortens the brand; `Cloudmonster` under `On` would drop it.
+      return !name.startsWith(brand) && !brand.startsWith(name.split(' ')[0] ?? name);
+    });
+    expect(dropped.map((s) => `${s.brand} | ${s.name}`)).toEqual([]);
   });
 });

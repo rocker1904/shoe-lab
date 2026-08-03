@@ -75,9 +75,10 @@ export function applyFilters(shoes: Shoe[], f: FilterState, idx: TestIndex): Fil
   }
   outer: for (const s of shoes) {
     if (f.discontinued && s.discontinued !== (f.discontinued === 'only')) continue;
-    // Name OR brand. The brand half is not redundant with the name: 442 of 450 names already begin
-    // with their brand, and it is the eight that shorten it — Topo, Hylo, On — where a box reading
-    // `name` alone disagreed with the facet one control below it, by 4x on `On`
+    // Name OR brand. The brand half is not redundant with the name: almost every name already
+    // begins with its brand (asserted in `filters.test.ts`), and it is the handful that shorten it
+    // — Topo Athletic, Hylo Athletics — that a box reading `name` alone could not reach at all,
+    // while the facet one control below it answered the full brand name
     // (docs/app.md §Filters).
     if (search && !s.name.toLowerCase().includes(search)
       && !(s.brand ?? '').toLowerCase().includes(search)) continue;

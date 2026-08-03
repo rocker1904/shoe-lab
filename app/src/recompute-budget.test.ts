@@ -11,7 +11,7 @@ import { FLEET, TESTS } from './lib/test-fixtures';
  * not the bound it reads moved (docs/app.md §What a drag may recompute). These spies are the rig
  * for that: they count fleet-wide passes per update, which is what actually costs frames. The
  * counts below are per **one** bound change and are independent of fleet size, so they hold on the
- * 450-shoe dataset exactly as they do on this five-shoe fixture.
+ * real dataset exactly as they do on this five-shoe fixture.
  */
 vi.mock('./lib/coverage', async (orig) => {
   const actual = await orig<typeof import('./lib/coverage')>();
