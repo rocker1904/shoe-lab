@@ -28,10 +28,20 @@ in docs/policies.md (dated in docs/decisions.md). Cross-cutting gaps are
 where this project's predecessors bled — a feature spec never quietly
 invents link semantics, focus behaviour, vocabulary, or validation rules.
 
+Then the registry sweep: list every registry, allowlist, exemption
+table, token grammar, and counted claim that quantifies over things like
+the feature — each one found is a file-map entry; each one missed is a
+finding someone else pays to make. The categorical-filters delivery hit
+this class four times, including its only Critical (a URL token that
+never joined the arrival registry), and all four were findable at design
+time by asking this one question.
+
 ## Interview
 
 - One question at a time: purpose, constraints, success criteria,
   explicit non-goals. Multiple choice where it helps. Wait for the answer.
+  Ask in plain text — prose attached to a question tool is not surfaced
+  to the user, and options truncate; the reasoning belongs in the message.
 - Scope check early: several independent subsystems → decompose into
   separate specs before refining any of them.
 - Propose 2–3 approaches with trade-offs, recommendation first. YAGNI
@@ -55,7 +65,11 @@ Contents: the decisions made and why; bounds as testable numbers, each
 naming the assertion's home; interfaces; failure behaviour; non-goals;
 the policies cited. Not contents: restated code, step-by-step
 instructions, invented measurements, copy authored for surfaces that do
-not exist yet.
+not exist yet. Where the spec invokes an existing rule ("the brand
+facet's counting rule, generalised"), point at the owning doc section
+and state only the deltas — a paraphrase is where mechanisms fall out;
+the fleet seed dropped from exactly such a paraphrase and cost two
+review rounds to restore.
 
 ## The build sheet (tail of the same file)
 
@@ -94,13 +108,14 @@ instead of prose.
 ## Bedding in
 
 These skills are new. Note every place this skill was unclear, silent,
-or wrong as you work — including interview mechanics that failed (prose
-attached to a question tool is not surfaced; ask in plain text) — and
-report the list to the user unprompted at the end of the engagement,
-with what the skill should say instead. This section retires when the
-skills do.
+or wrong as you work, and report the list to the user unprompted at the
+end of the engagement, with what the skill should say instead. This
+section retires when the skills do.
 
 ## Terminal state
 
-Invoke `delivering`. When a later spec supersedes this one, this one is
-frozen history; docs/ wins every disagreement.
+Invoke `delivering`. The spec leaves this skill reading
+`status: approved, in delivery`; `delivering`'s finish step flips it to
+delivered-and-frozen — a live spec outliving its delivery is how a
+build sheet gets re-run against a world it no longer describes. Once
+frozen (or superseded), it is history; docs/ wins every disagreement.
