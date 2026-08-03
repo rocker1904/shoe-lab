@@ -1,7 +1,7 @@
 # A `zone=` and `story=` shorthand in the URL
 
 *2026-08-03 · from BACKLOG's "A `zone=` shorthand in the URL", widened to carry
-the story too · status: **drafted, awaiting review**.*
+the story too · status: **approved, in delivery**.*
 
 Give the address bar a short spelling for the two things a shared link is most
 often about — which half of the shoe the table measures, and which story it is
