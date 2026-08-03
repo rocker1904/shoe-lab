@@ -488,6 +488,17 @@ the winner; here there is nothing to pick from. Do not soften it into a dedupe,
 and do not add a component-side guard instead — a guard can only paper over a
 catalogue that is already wrong.
 
+### A test declared twice fails the run
+Same gate, same call: a catalogue that repeats a test **id** or a test **slug**
+fails every path that writes one. The slug is the app's key for a facet group, a
+column offer and an Add-filter offer, so a repeat blanks the page exactly as a
+repeated option value does (§A duplicate option value fails the run). The
+repeated id is the quieter fault and the reason both are checked here rather
+than left to the app: every index over the catalogue — the gates' own, and
+`indexTests` in the app — is last-wins, so nothing throws and one test's
+readings are simply checked and labelled against another test's declared type
+and vocabulary. Wrong data that renders is worse than a red run.
+
 ### Non-running shoes
 A `lab-test-list` response is the whole lab-tested catalogue rather than one
 category, so RunRepeat's hiking footwear rides in with the running shoes, as

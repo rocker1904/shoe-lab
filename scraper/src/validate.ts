@@ -14,12 +14,19 @@ interface CatalogueEntry { type: LabTest['type']; choices: Set<string> | null }
 /**
  * The by-test-id index every value gate needs, built so that a catalogue no index can represent
  * fails the run on the way in: a value declared twice inside one `option` test has no downstream
- * resolution (docs/scraping.md §A duplicate option value fails the run). Every path that writes a
- * catalogue goes through here, because a test nothing reads yet still reaches `data/`.
+ * resolution (docs/scraping.md §A duplicate option value fails the run), and a test declared twice
+ * under one id or one slug has none either (docs/scraping.md §A test declared twice fails the run).
+ * Every path that writes a catalogue goes through here: a test nothing reads yet still reaches
+ * `data/`.
  */
 function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
   const index = new Map<string, CatalogueEntry>();
+  const slugs = new Set<string>();
   for (const t of tests) {
+    // The repeated id is the fault nothing downstream reports (docs/scraping.md §A test declared twice fails the run).
+    if (index.has(String(t.id))) throw new ValidationError(`test id ${t.id} declared twice (${t.slug})`);
+    if (slugs.has(t.slug)) throw new ValidationError(`test slug ${t.slug} declared twice (id ${t.id})`);
+    slugs.add(t.slug);
     let choices: Set<string> | null = null;
     if (t.options) {
       choices = new Set();

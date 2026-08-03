@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ValidationError, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile, validateValuesAgainstCatalogue } from '../src/validate.js';
 import type { DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
@@ -101,13 +102,13 @@ describe('duplicate option values in the catalogue', () => {
   const gusset = (...values: string[]): TestsFile => ({
     ...tests,
     tests: [...tests.tests, labTest({
-      id: 39, slug: 'tongue-gusset-type', type: 'option',
+      id: 139, slug: 'tongue-gusset-type', type: 'option',
       options: values.map((value, i) => ({ value, name: `Choice ${i}` })),
     })],
   });
 
   it('fails the metrics crawl on a test no shoe has a reading for', () => {
-    // makeMetrics reads tests 5 and 6 only, so nothing points at 39 — the catalogue alone is wrong.
+    // makeMetrics reads tests 5 and 6 only, so nothing points at 139 — the catalogue alone is wrong.
     expect(() => validateMetrics(makeMetrics(400), null, gusset('both-sides-semi', 'both-sides-semi')))
       .toThrow(ValidationError);
     expect(() => validateMetrics(makeMetrics(400), null, gusset('both-sides-semi', 'none'))).not.toThrow();
@@ -121,6 +122,40 @@ describe('duplicate option values in the catalogue', () => {
   it('names the test by slug and shows the duplicated value', () => {
     expect(() => validateValuesAgainstCatalogue({}, gusset('both-sides-semi', 'both-sides-semi')))
       .toThrow(/tongue-gusset-type.*"both-sides-semi"/);
+  });
+});
+
+// A test repeated under one id or one slug fails the same gate, and the id case is the one nothing
+// downstream reports (docs/scraping.md §A test declared twice fails the run).
+describe('duplicate tests in the catalogue', () => {
+  const plus = (...extra: Parameters<typeof labTest>[0][]): TestsFile => ({ ...tests, tests: [...tests.tests, ...extra.map(labTest)] });
+
+  it('rejects two tests sharing an id', () => {
+    expect(() => validateValuesAgainstCatalogue({}, plus({ id: 5, slug: 'heel-stack-clone' }))).toThrow(/\b5\b/);
+  });
+
+  it('rejects two tests sharing a slug', () => {
+    expect(() => validateValuesAgainstCatalogue({}, plus({ id: 900, slug: 't5' }))).toThrow(/t5/);
+  });
+
+  it('accepts a catalogue whose ids and slugs are all distinct', () => {
+    expect(() => validateValuesAgainstCatalogue({}, plus({ id: 900, slug: 't900' }))).not.toThrow();
+  });
+
+  it('rejects both at the join too', () => {
+    const good: ShoesFile = {
+      builtAt: '2026-07-26T00:00:00Z', source: 'RunRepeat', groups: {}, tests: tests.tests,
+      shoes: [shoe({ slug: 'a', values: { '5': 1 } })],
+    };
+    expect(() => validateShoesFile({ ...good, tests: [...tests.tests, labTest({ id: 5, slug: 'clone' })] })).toThrow(ValidationError);
+    expect(() => validateShoesFile({ ...good, tests: [...tests.tests, labTest({ id: 900, slug: 't5' })] })).toThrow(ValidationError);
+  });
+
+  // A gate has to hold on the catalogue we actually ship, or it reddens the weekly refresh instead
+  // of the payload change that deserves it.
+  it('accepts the committed catalogue', () => {
+    const real = JSON.parse(readFileSync(new URL('../../data/tests.json', import.meta.url), 'utf8')) as TestsFile;
+    expect(() => validateValuesAgainstCatalogue({}, real)).not.toThrow();
   });
 });
 
