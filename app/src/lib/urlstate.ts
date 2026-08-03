@@ -114,8 +114,11 @@ function candidatesFor(v: ViewState): [Candidate, ...Candidate[]] {
     rest.push({ view: { ...defaultView(), columns: defaultColumns(z) }, tokens: zoneTokens(z) });
   }
   for (const key of v.columns) {
-    // Looked up in the same vocabulary `baselineFrom` validates `story=` against, rather than taken
-    // straight off the score: the encoder must not write a value the parse would then drop.
+    // `story` is looked up in the same vocabulary `baselineFrom` validates `story=` against, rather
+    // than taken straight off the score: the encoder must not write a value the parse would drop.
+    // `zone` is a `Zone | null` narrowing rather than a second guard — a key `defForKey` resolves is
+    // half of a derived zone pair, so `zoneOfKey` always answers for it — and `applyPreset` needs a
+    // `Zone`.
     const story = PRESETS.find((preset) => preset.id === defForKey(key)?.id);
     const zone = zoneOfKey(key);
     if (!story || !zone) continue;

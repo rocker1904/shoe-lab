@@ -61,7 +61,7 @@ and whatever they did last week; `isBareArrival()` in `lib/arrival.ts` is that
 predicate, and the setup strip and the loading placeholder both read it so the
 room reserved and the room used are one answer (§The setup strip, §Decisions).
 
-**Init also writes the address bar once, and that write is a scrub.** `parseView`
+**Init also writes the address bar once: a scrub, and a canonicalisation.** `parseView`
 drops what it cannot vouch for (§URL encoding) — but only from the *view*, so a
 link shared through a newsletter or a chat app kept its `utm_source` and `fbclid`
 in the bar for the whole session, and the runner's own `Copy link` then forwarded
@@ -69,6 +69,15 @@ someone else's analytics along with their filters. The first `replaceState`
 therefore writes the parsed, composed address, so what is on screen and what is in
 the bar agree from the first frame. It is the same composition every later write
 uses, so there is no second spelling of "the address of this view".
+
+That composition is the shortest spelling (§URL encoding), so the same write also
+**canonicalises**: a link that spells Easy out as a gate, a sort and eight columns
+is re-spelled `?story=easy` in the recipient's bar. Both parse to the same view,
+and every mark in the app is derived from the view rather than from the string, so
+nothing on screen can tell the two apart — what changes is that the address a
+recipient copies is not always byte-for-byte the one they were sent. That is the
+cost of having one canonical spelling on screen, and it is why the two spellings
+meet nowhere else.
 
 **A token this app does not own changes nothing at all.** A link wearing only
 `utm_source` and its kin is a **bare arrival**: same table, same setup strip, same
@@ -308,17 +317,24 @@ the way out, so a view holding a story's columns in another order spells them
 out and is the longer link for it: that is the cost of `cols` round-tripping
 exactly, and it is accepted rather than fixed.
 
+**`story=` names what a view was built from; the toolbar mark answers a
+different question.** The mark is a `sameValue` comparison of whole views
+(§Presets), so Easy's table with carbon admitted is not Easy and its pill stays
+unlit — while the address for it is `story=easy&plate=carbon`, because naming
+Easy's baseline and overriding one field is the shortest way to write that view.
+A Race table the runner has gated is `story=race&plate=…` for the same reason.
+So an address can name a story no pill marks, deliberately: the token is an
+encoding of a view, and making it mean "is this story" would cost either a longer
+address for every near-story view or a second definition of what a story is.
+
 **An old link is resolved against the build that opens it.** `zone=forefoot`
 means whatever `defaultColumns('forefoot')` returns *now*, and `story=easy`
-whatever `applyPreset` builds *now*, so the promise §Sharing is copying the
-address bar makes is narrowed by one clause: sender and recipient see the same
-table **on the same build of the app**, which is the promise a continuously
-deployed static site can actually keep (docs/policies.md §Identity and sharing).
-A link kept across a change to a story's columns, gate or sort — or to the
-default columns — opens on the newer table, with nothing saying so. That is
-accepted deliberately, and it is why a tie goes to the longhand: a link that
-spells its columns out is unaffected, and so is every link this app emitted
-before the shorthand existed.
+whatever `applyPreset` builds *now*, so a link kept across a change to a story's
+columns, gate or sort — or to the default columns — opens on the newer table,
+with nothing saying so. A link that spells its columns out is unaffected, and so
+is every link this app emitted before the shorthand existed. Why that is accepted,
+and what it narrows in the promise this app makes about a shared address, is
+§A shared address is faithful on one build.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, never throwing: range and sort keys must name a numeric test
@@ -3948,16 +3964,20 @@ sort fields the table renders itself, and that pair is derived as
 
 Two consequences, both accepted. An unknown column's header still offers a sort
 the parser will not carry — but every value in it is missing, so the tie-break
-decides the whole order, and that tie-break is RunRepeat score descending. Where
-the link is longhand that is `DEFAULT_SORT`, the baseline the refused token falls
-back to, so the rows a recipient opens on are the rows that were shared and only
-the `aria-sort` mark differs. Where the address names a story it is that story's
-own score key instead, since a refused `sort` now falls back to the baseline the
-shorthand chose (§URL encoding) — so Easy's table sorted by a slug the catalogue
-has since dropped reopens in Easy's order rather than in the tie-break's. That is
-the narrower case of an already narrow one: the link had lost a column before it
-lost the order, and the alternative is refusing to name the story a link plainly
-is. And the column picker does not offer the
+decides the whole order, and that tie-break is RunRepeat score descending.
+A refused `sort` token leaves the sort its baseline held (§URL encoding), so what
+the recipient opens on follows from which baseline the address named. On a
+longhand link that baseline is `DEFAULT_SORT` — the same RunRepeat score
+descending — so the rows opened on are the rows that were shared and only the
+`aria-sort` mark differs. On a link naming a story the baseline is that story's
+own view, so Easy's table sorted by a slug the catalogue has since dropped
+reopens in Easy's order: the order the story ranks by, rather than the tie-break
+the sender's dead column fell through to. One rule produces both, and it is the
+rule `plate` and `cols` already follow — a token this parse refuses does not
+layer, so the baseline stands. A slug the catalogue has dropped is itself a
+change to the fleet the link was written against, so this is an instance of
+§A shared address is faithful on one build rather than a separate case. And the
+column picker does not offer the
 column, so it cannot be unticked there; `All` and any story rebuild the column
 set and clear it.
 
@@ -4158,3 +4178,13 @@ copied.
 The page carries a `<title>` and an SVG favicon
 so a shared link previews as something; Open Graph tags need an image and a
 decision, and are their own BACKLOG.md item.
+
+### A shared address is faithful on one build (2026-08-03)
+`zone=` and `story=` **name** a view where every other token spells one out, so
+they are resolved against the build that opens them: a link kept across a change
+to what a story means, or to a zone's plain table, shows the newer table with
+nothing saying so. Sender and recipient see the same table on the same build of
+the app, which is the promise a continuously deployed static site can keep
+(docs/policies.md §Identity and sharing). It is why an exact tie between two
+spellings goes to the longhand one — that link spells its columns out, so it
+cannot drift. §URL encoding owns the mechanism.

@@ -1262,7 +1262,7 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
   await heel.focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toBeFocused();
-  await expect(page).toHaveURL(/zone=forefoot/);
+  await expect(page).toHaveURL('/?zone=forefoot');
   await expect(heel).toHaveAttribute('tabindex', '-1');
 });
 
