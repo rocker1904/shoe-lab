@@ -7,10 +7,15 @@ import { displayReleaseDate } from './release-date';
 import { headerUnits } from './units';
 
 /**
- * How wide the desktop table would have to be, in pixels, computed rather than measured — the whole
- * point being that it can be asked BEFORE the table is mounted, so `Page.svelte` picks the rendering
- * that fits instead of mounting one and watching it overflow
+ * How wide the desktop table's columns are, in pixels, computed rather than measured — the whole
+ * point being that they can be asked BEFORE the table is mounted, so `Page.svelte` picks the
+ * rendering that fits instead of mounting one and watching it overflow
  * (docs/app.md §Two renderings, and only one of them mounted).
+ *
+ * Two widths per column, and they answer different questions. The **min-content** half is what the
+ * table has to have, and it decides which rendering mounts. The **max-content** half is what a
+ * column would take if nothing in it had to wrap; it decides nothing on its own, and exists for a
+ * rule that shares a declared track between columns.
  *
  * Nothing here touches the DOM. A model that measured a mounted table could only ever answer for the
  * rendering already on screen, and switching on that answer is a feedback loop: mount the desktop
@@ -157,13 +162,21 @@ const PHRASE_PX: Record<string, number> = {
  * either neighbour scaled, for the reason `PHRASE_PX` gives: the face is variable, and 700 is not
  * 600 widened any more than 600 is 400 widened.
  *
- * **This is the one table whose engine spread is worth a warning.** Chromium reports whole-pixel
- * advances at this size where Firefox and WebKit report fractional ones, so the disagreement is
- * about 0.14px a character in one direction — and a shoe name is up to 40 characters where a header
- * label is half that. Measured against the real fleet's widest name, the column this feeds comes out
- * 5.6px WIDE of what Firefox and WebKit render and 1.0px wide of Chromium. That is one-sided by
- * construction and it is the harmless side: it is a max-content, so it can only move where a shared
- * track's slack lands, never what a cell is floored at.
+ * **This is the one table whose engine spread is worth a warning, and the warning is about NAMES
+ * rather than about the column they feed.** Chromium reports whole-pixel advances at this size where
+ * Firefox and WebKit report fractional ones, and a shoe name runs to 40 characters where a header
+ * label is half that. Measured per name over all 455 the real fleet carries: Chromium is within 2px
+ * of every one of them, while Firefox and WebKit reach **8.73px** and exceed `FIT_TOLERANCE_PX` on
+ * 96 and 93 names respectively. Nor is it one-sided — the model comes out NARROWER than the engine
+ * on two names, by up to 0.63px. That is the same trade `FIT_SLACK_PX` already absorbs (one engine's
+ * table plus slack, rather than a per-character maximum that sums disagreements never seen together
+ * — `app/scripts/measure-label-widths.mjs` owns the reasoning), seen on strings twice as long.
+ *
+ * **`columnMaxPx` is insulated from all of that, and a second consumer will not be.** It takes the
+ * widest name in the fleet and hands it to a rule that shares a track, so the error can only move
+ * where slack lands — it floors nothing, and nothing clips from it. Anything that reads a SINGLE
+ * name's width, a greedy line-break simulation above all, inherits the figures above in both
+ * directions and has to state its own tolerance rather than borrow this paragraph's conclusion.
  */
 const NAME_PX: Record<string, number> = {
   '0': 10, '1': 6, '2': 9, '3': 9, '4': 10, '5': 9, '6': 9, '7': 8, '8': 9, '9': 9,

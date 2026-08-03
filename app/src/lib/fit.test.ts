@@ -99,8 +99,13 @@ describe('the desktop table\'s min-content model', () => {
  * The other half of the same arithmetic, and it exists for a different consumer: the min-content is
  * what decides which rendering mounts, and the max-content is what decides how a fixed table shares
  * the width it has been given (docs/app.md §Table presentation). These assert the SHAPE too — which
- * columns have two widths and which have one, and what the second one is made of — while
- * `.hunt/max-content.ts` is what holds the numbers to the engine's own max-content on the real fleet.
+ * columns have two widths and which have one, and what the second one is made of.
+ *
+ * **Nothing committed yet holds these numbers to a browser, and that is the one place the two halves
+ * differ.** `fit-support.ts`'s `measureFit` asks a mounted table for `min-content` alone, so
+ * `cross-browser.spec.ts` guards the minimum in three engines and says nothing about the maximum.
+ * Giving it a measurement path of its own belongs with the declared widths that will consume it;
+ * until then this file is the whole of the committed guard.
  */
 describe('the desktop table\'s max-content model', () => {
   it('takes a header\'s whole label where the minimum takes its longest word', () => {
