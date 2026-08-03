@@ -116,6 +116,17 @@ describe('FeaturesFilter', () => {
     }
   });
 
+  // A deliberate decision with no other guard: ticking both boxes of a bool would be a near-no-op
+  // whose only effect is excluding the unread shoes, so a tri-state is not a distribution to browse
+  // and carries no figures — Discontinued's rule (docs/app.md §Filters).
+  it('puts no count on a tri-state, whatever the counts map holds for it', () => {
+    mount();
+    expect(COUNTS['removable-insole']!.get('true')).toBe(9);   // the figures exist and are not drawn
+    for (const name of ['Any', 'Yes', 'No']) {
+      expect(triGroup('Removable insole').getByRole('radio', { name }).textContent, name).not.toMatch(/\d/);
+    }
+  });
+
   it('draws a restored selection as ticked, so a narrowed fleet never shows empty boxes', () => {
     // The untickable state: a link filters the table and every control reads as unset.
     mount({ 'tongue-gusset-type': ['none'] });

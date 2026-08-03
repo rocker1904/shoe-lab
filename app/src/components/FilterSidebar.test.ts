@@ -671,4 +671,14 @@ describe('FilterSidebar direction legend', () => {
     const search = container.querySelector('.search')!;
     expect(search.compareDocumentPosition(legend) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+  // The legend renders no heading and no group, so the `HEADINGS` and `GROUPS` order pins are blind
+  // to it: a Features section that drifted BELOW the legend satisfies both. The legend's whole
+  // placement argument is that everything above it carries no direction mark, so this is the half of
+  // "between Discontinued and the legend" those lists cannot state.
+  it('stands below the features section, which carries no direction mark either', () => {
+    const { container } = render(FilterSidebar, { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
+    const legend = container.querySelector('.legend')!;
+    const features = container.querySelector('details[aria-label="Features"]')!;
+    expect(features.compareDocumentPosition(legend) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });
