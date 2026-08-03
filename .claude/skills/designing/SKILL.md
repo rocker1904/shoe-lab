@@ -61,6 +61,12 @@ encouraged; spec only what survived them.
 Save to `docs/specs/YYYY-MM-DD-<topic>.md`. Present it section by
 section, scaled to complexity, getting approval as you go.
 
+The file is born **`status: drafted, awaiting review`** and stays that
+way until the user says otherwise. A status line is a claim about what
+the user has done, not a label for how finished the document feels —
+writing `approved` before they have read it asserts something untrue
+about them, and the next skill takes the line at its word.
+
 Contents: the decisions made and why; bounds as testable numbers, each
 naming the assertion's home; interfaces; failure behaviour; non-goals;
 the policies cited. Not contents: restated code, step-by-step
@@ -99,7 +105,11 @@ before execution, and eat review rounds that belong to implementation
    consistency (names and signatures agree across sections), ambiguity
    (anything readable two ways gets one reading), placeholder scan. Fix
    inline.
-2. The user reads the file, once. Fold their changes.
+2. The user reads the file, once. Fold their changes, then **ask for
+   approval in plain words and wait for it**. Their yes is the only
+   thing that rewrites the status line to `approved, in delivery`.
+   Silence is not a yes, folding their changes is not a yes, and "no
+   further comments" on one section is not a yes to the file.
 
 Then stop. No further review rounds on the document — from here,
 findings come from implementation review, where they attach to real code
@@ -114,8 +124,11 @@ section retires when the skills do.
 
 ## Terminal state
 
-Invoke `delivering`. The spec leaves this skill reading
-`status: approved, in delivery`; `delivering`'s finish step flips it to
+Invoke `delivering` **only once the status line reads
+`approved, in delivery`**, which the review pass above is the only way
+to reach. A spec still reading `drafted, awaiting review` is not a
+terminal state: stop there and wait for the user, however finished the
+document looks to you. `delivering`'s finish step then flips the line to
 delivered-and-frozen — a live spec outliving its delivery is how a
 build sheet gets re-run against a world it no longer describes. Once
 frozen (or superseded), it is history; docs/ wins every disagreement.

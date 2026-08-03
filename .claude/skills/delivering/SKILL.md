@@ -14,6 +14,11 @@ reasons to stop are BLOCKED, a DISCOVERY that moves behaviour, or done.
 
 ## Setup
 
+- **Read the spec's status line before anything else.** It must read
+  `approved, in delivery`. Anything else — `drafted, awaiting review`
+  above all — means the user has not signed off yet: stop and say so,
+  before a worktree exists. Being handed a spec, or having written it
+  yourself, is not approval; the line is, and only the user can write it.
 - Isolated worktree via superpowers:using-git-worktrees. Never on main
   without explicit consent.
 - Commit the approved spec as the branch's first commit — worktrees do
