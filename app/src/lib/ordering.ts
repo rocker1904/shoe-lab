@@ -53,8 +53,9 @@ function markableKeys(view: ViewState, phone: boolean, idx: TestIndex): string[]
 /**
  * What the ordering line says, or `null` when a header already says it. Derived display and
  * nothing else: it reads the view and serialises nothing, so a shared link is unchanged by it.
- * Silent on the default sort even where the score column has been unticked — a link to the
- * default order carries no `sort` at all, so there is nothing a recipient could be surprised by.
+ * Silent on the default sort even where the score column has been unticked — a recipient opens on
+ * the default order however the link spelled it, `sort=-score` being written only to override a
+ * baseline that named another (docs/app.md §URL encoding), so there is nothing to be surprised by.
  */
 export function orderingNote(view: ViewState, phone: boolean, idx: TestIndex): string | null {
   if (view.sort.key === DEFAULT_SORT.key && view.sort.dir === DEFAULT_SORT.dir) return null;

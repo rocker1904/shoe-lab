@@ -246,7 +246,9 @@ Compact and default-omitting, so a shared link carries only what was changed:
 `sort` (`-` prefix means descending), `cols` (comma-joined), and
 `gen.<currentSlug>=<chosenSlug>` per superseded pair. A value equal to the
 default is not written at all — a generation choice naming its own key is the
-default and never appears.
+default and never appears. The one exception is a field a shorthand baseline
+sets differently, which has to be spelled out even where it holds the default:
+`sort=-score` beside a `story=` token is the whole of that case (below).
 
 `stab=1` is written only when the stability preference is on
 (docs/app.md §The story scores), so a shared link carries the sender's own
@@ -284,9 +286,39 @@ is Easy's table sorted by weight, and `?zone=forefoot&cols=score` is
 one column — with one exception: `plate` has no spelling for absent, so
 `story=easy&plate=` leaves Easy's own gate standing rather than clearing it;
 a token can only override a baseline's gate by naming a different one; it
-cannot unset it. `serializeView` does not emit either token yet; the zone
-and the story both still ride in `cols` (and, for a story, in `plate` and
-`sort` too) alone on the way out.
+cannot unset it.
+
+**On the way out, `serializeView` writes whichever spelling is shortest.** It
+encodes the view against every baseline a link could name — `defaultView()`
+always, the plain table of the zone that is not `DEFAULT_ZONE`, and
+`applyPreset(story, zone, …)` for each story score column the view holds —
+writing each field that differs from *that* baseline rather than from the
+default, and keeps the shortest string. So Easy at heel is `story=easy`, Easy at
+forefoot is `zone=forefoot&story=easy` where both used to spell out a gate, a
+sort key and eight columns, and the plain forefoot table is `zone=forefoot`.
+Nothing diffs columns or asks whether a shorthand "applies": a candidate is
+proposed from a score column and then wins or loses on length, so a stray
+`race-score-heel` on an otherwise unrelated view is simply written longhand.
+The default baseline is always in the running and can never be dropped, so
+**the shorthand never makes a link longer**, and an exact tie goes to the
+longhand. One rule drops a candidate — a baseline that sets a plate gate the
+view does not hold, `plate` having no spelling for absent; differing on the gate
+is fine, since `plate=carbon` overrides it. Column order is not normalised on
+the way out, so a view holding a story's columns in another order spells them
+out and is the longer link for it: that is the cost of `cols` round-tripping
+exactly, and it is accepted rather than fixed.
+
+**An old link is resolved against the build that opens it.** `zone=forefoot`
+means whatever `defaultColumns('forefoot')` returns *now*, and `story=easy`
+whatever `applyPreset` builds *now*, so the promise §Sharing is copying the
+address bar makes is narrowed by one clause: sender and recipient see the same
+table **on the same build of the app**, which is the promise a continuously
+deployed static site can actually keep (docs/policies.md §Identity and sharing).
+A link kept across a change to a story's columns, gate or sort — or to the
+default columns — opens on the newer table, with nothing saying so. That is
+accepted deliberately, and it is why a tie goes to the longhand: a link that
+spells its columns out is unaffected, and so is every link this app emitted
+before the shorthand existed.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, never throwing: range and sort keys must name a numeric test
@@ -970,9 +1002,10 @@ This is a product change rather than a phone workaround, because **columns
 never vary by viewport**: `cols` serialises into the URL, so a
 viewport-dependent default would mean a link shared from a phone carried fewer
 columns than the sender saw and the URL would stop describing the view
-(docs/app.md §View and URL ownership). Shared links carry explicit `cols` and are
-unaffected: a link written before the change still names the seven columns its
-sender saw.
+(docs/app.md §View and URL ownership). A link that spells its columns out is
+unaffected: one written before the change still names the seven columns its
+sender saw. A link carrying `zone=` instead spells nothing out, and is resolved
+against the build that opens it (§URL encoding).
 
 The picker is a `<details>`, and it closes on an outside press and on Escape
 like every other floating panel — neither of which a native disclosure gives
@@ -1062,8 +1095,9 @@ runner presses is announced where every other action is, and a sort that arrived
 in a link changed nothing while they were reading.
 
 **It is silent on the default sort even when the score column is unticked.** A
-link to the default order carries no `sort` at all, so there is nothing a
-recipient can be surprised by; the line exists for the orders a URL can impose.
+recipient opens on the default order however the link spelled it — `sort=-score`
+is written only to override a baseline holding another (§URL encoding) — so there
+is nothing to be surprised by; the line exists for the orders a URL can impose.
 
 The words are `sortPhrase`'s, one home shared with the announcement a header
 press makes. Common nouns where the app has one — `release date`, `price`,
@@ -3914,9 +3948,16 @@ sort fields the table renders itself, and that pair is derived as
 
 Two consequences, both accepted. An unknown column's header still offers a sort
 the parser will not carry — but every value in it is missing, so the tie-break
-decides the whole order and that tie-break is RunRepeat score descending, which
-is `DEFAULT_SORT`: the rows a recipient opens on are the rows that were shared,
-and only the `aria-sort` mark differs. And the column picker does not offer the
+decides the whole order, and that tie-break is RunRepeat score descending. Where
+the link is longhand that is `DEFAULT_SORT`, the baseline the refused token falls
+back to, so the rows a recipient opens on are the rows that were shared and only
+the `aria-sort` mark differs. Where the address names a story it is that story's
+own score key instead, since a refused `sort` now falls back to the baseline the
+shorthand chose (§URL encoding) — so Easy's table sorted by a slug the catalogue
+has since dropped reopens in Easy's order rather than in the tie-break's. That is
+the narrower case of an already narrow one: the link had lost a column before it
+lost the order, and the alternative is refusing to name the story a link plainly
+is. And the column picker does not offer the
 column, so it cannot be unticked there; `All` and any story rebuild the column
 set and clear it.
 
@@ -4096,7 +4137,9 @@ take several rows and every bound with them; both are left to the receipt.
 ### Sharing is copying the address bar
 `Copy link` **flushes the pending view write and then** writes
 `location.href` to the clipboard, which is the whole feature: the URL already *is*
-the view (§View and URL ownership). The flush is the feature working at all rather
+the view (§View and URL ownership) — on the build that opens it, where the
+address carries a `zone=` or `story=` token (§URL encoding). The flush is the
+feature working at all rather
 than a refinement — the write path is debounced (§View and URL ownership), so a
 runner who changes a filter and reaches straight for the button copied the
 *previous* view while the new one was on screen, well inside the interval and with

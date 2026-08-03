@@ -284,8 +284,9 @@ describe('preset determinism', () => {
     }
   });
   it('survives a URL round trip under either zone', () => {
-    // the only place asserting that Easy's plate set survives parseView's allowlist, that each
-    // preset's columns survive the column allowlist, and that a forefoot story reloads forefoot
+    // A story is now written as its shorthand, so this is the round trip through `story=`/`zone=`
+    // rather than through `plate` and `cols`: that a story reloads as itself, at the zone it was
+    // built for. The member rules those tokens no longer exercise are urlstate.test.ts's.
     for (const zone of ZONES) {
       for (const p of PRESETS) {
         const v = applyPreset(p.id, zone, false);

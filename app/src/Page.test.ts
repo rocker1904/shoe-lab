@@ -140,8 +140,9 @@ describe('Page', () => {
     // ranking is what the story now does (docs/app.md §Presets).
     expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 4 of the 4 shoes');
     settle();
-    expect(location.search).toContain('plate=none%2Cplated-other');
-    expect(location.search).toContain('sort=-easy-score-heel');
+    // One token for the whole preset: the gate and the sort it just set are what `story=easy`
+    // names, so neither is spelled out beside it (docs/app.md §URL encoding).
+    expect(location.search).toBe('?story=easy');
   });
   it('changing a filter updates the URL; resetting clears it', async () => {
     render(Page, { props: { data } });
@@ -908,9 +909,10 @@ describe('Page zone toggle', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'Forefoot' }));
     expect(markedStory()).toEqual(['Easy']);
     settle();
-    // Easy bounds nothing, so the re-derivation shows in its columns rather than in a bound.
-    expect(location.search).toContain('energy-return-forefoot');
-    expect(location.search).not.toContain('energy-return-heel');
+    // Easy bounds nothing, so the re-derivation is a change of columns — and the address names the
+    // story at its new zone rather than listing them (docs/app.md §URL encoding). The mark above is
+    // what says the view really is Easy; this says the address agrees.
+    expect(location.search).toBe('?zone=forefoot&story=easy');
 
     await fireEvent.click(screen.getByRole('radio', { name: 'Heel' }));
     settle();
@@ -1286,7 +1288,7 @@ describe('history is row-based', () => {
     await fireEvent.click(rowFor('cushy'));
     settle();
     expect(location.search).toContain('open=cushy');
-    expect(location.search).toContain('sort=');
+    expect(location.search).toContain('story=race');
   });
 
   it('Back closes the row and keeps a filter changed while it was open', async () => {
@@ -1301,7 +1303,7 @@ describe('history is row-based', () => {
     window.dispatchEvent(new PopStateEvent('popstate'));
     await tick();
     expect(location.search).not.toContain('open=');
-    expect(location.search).toContain('sort=');
+    expect(location.search).toContain('story=race');
     expect(screen.queryByText(/Full review on RunRepeat/)).not.toBeInTheDocument();
   });
 

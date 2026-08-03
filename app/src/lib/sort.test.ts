@@ -104,8 +104,10 @@ describe('the synthetic Easy score', () => {
  * that `parseView` will not carry
  * (docs/app.md §Columns are permissive, ranges and sorts are strict).
  * It costs nothing because every value is missing, so the tie-break — RunRepeat score,
- * descending — decides the whole order, which is exactly the order `DEFAULT_SORT` produces when
- * the link drops the key. The rows a shared link reopens on are the rows that were shared.
+ * descending — decides the whole order, which is exactly the order `DEFAULT_SORT` produces. That
+ * is what a longhand link falls back to when the key is dropped, so the rows a shared link reopens
+ * on are the rows that were shared; an address naming a story falls back to that story's own sort
+ * instead, which docs/app.md §Columns are permissive, ranges and sorts are strict accounts for.
  */
 describe('sorting by a column with no readings at all', () => {
   it('lands on the same order the default sort produces, either direction', () => {

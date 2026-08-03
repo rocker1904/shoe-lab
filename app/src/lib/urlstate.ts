@@ -1,10 +1,11 @@
 import type { Plate } from '../../../shared/types.js';
 import { isCategorical } from './categorical';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, ZONES, type Zone } from './lineage';
+import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, ZONES, zoneOfKey, type Zone } from './lineage';
 import { applyPreset, PRESETS } from './presets';
 import { startOfMonth } from './release-date';
-import { DEFAULT_SORT, DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
+import { defForKey } from './score-defs';
+import { DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
 
 /**
  * Every value a shoe's `plate` can hold, in the order a selection is written. Both the filter UI
@@ -80,14 +81,68 @@ function parseBound(s: string): number | undefined | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function serializeView(v: ViewState): string {
-  const p = new URLSearchParams();
+/**
+ * One way of writing a view: the baseline its fields are read against, and the tokens naming that
+ * baseline — written before every other token, because `parseView` reads them in a pre-pass.
+ */
+interface Candidate { view: ViewState; tokens: [string, string][] }
+
+/**
+ * Every baseline a link could name this view against, the default first — which is what gives a tie
+ * to the longhand in `serializeView` below. There is no column diff and no second definition of what
+ * makes a view Easy anywhere here: a candidate is proposed cheaply and then wins or loses on the
+ * length of what it saves (docs/app.md §URL encoding).
+ *
+ * A score column is the thing that says which story a table is, and it names its own zone rather
+ * than taking the derived one (docs/app.md §The story scores), so the columns are where the story
+ * candidates come from — two score keys give two candidates rather than an ambiguity. The story ids
+ * come from `PRESETS` and the zones from `ZONES`, neither restated here
+ * (docs/policies.md §Vocabulary).
+ *
+ * Each candidate carries the view's own stability preference, so that a story the view matches is
+ * the view exactly. `stab` is its own default-omitting token either way — it is never read against
+ * a baseline, because the parse-side baseline is built with `stability: false` and the token layers
+ * over it (docs/app.md §The story scores).
+ */
+function candidatesFor(v: ViewState): [Candidate, ...Candidate[]] {
+  // `DEFAULT_ZONE` contributes no token: `zone=heel` parses, but writing it would be a second
+  // spelling of a view that already has one.
+  const zoneTokens = (z: Zone): [string, string][] => (z === DEFAULT_ZONE ? [] : [['zone', z]]);
+  const rest: Candidate[] = [];
+  for (const z of ZONES) {
+    if (z === DEFAULT_ZONE) continue;
+    rest.push({ view: { ...defaultView(), columns: defaultColumns(z) }, tokens: zoneTokens(z) });
+  }
+  for (const key of v.columns) {
+    // Looked up in the same vocabulary `baselineFrom` validates `story=` against, rather than taken
+    // straight off the score: the encoder must not write a value the parse would then drop.
+    const story = PRESETS.find((preset) => preset.id === defForKey(key)?.id);
+    const zone = zoneOfKey(key);
+    if (!story || !zone) continue;
+    rest.push({ view: applyPreset(story.id, zone, v.stability), tokens: [...zoneTokens(zone), ['story', story.id]] });
+  }
+  return [{ view: defaultView(), tokens: [] }, ...rest];
+}
+
+/**
+ * The view written against one candidate: every field that differs from *that* baseline, after the
+ * tokens naming it. Three fields are read against the baseline — the plate gate, the sort and the
+ * columns — because those are the only ones any baseline sets away from the default, which is
+ * asserted rather than read off `presets.ts` here (urlstate.test.ts, "has no baseline that sets a
+ * field outside the three the encoding reads against it"). Everything else is default-omitting
+ * exactly as it always was, which is what keeps a view carrying no shorthand byte-identical to the
+ * address this app has already handed out.
+ */
+function encodeAgainst(v: ViewState, c: Candidate): string {
+  const p = new URLSearchParams(c.tokens);
   for (const [key, b] of Object.entries(v.filters.ranges)) {
     if (b.min === undefined && b.max === undefined) continue;
     if (!finite(b.min) || !finite(b.max)) continue;
     p.set(`r.${key}`, `${b.min ?? ''}~${b.max ?? ''}`);
   }
-  if (v.filters.plate?.length) p.set('plate', v.filters.plate.join(','));
+  if (v.filters.plate?.length && v.filters.plate.join(',') !== c.view.filters.plate?.join(',')) {
+    p.set('plate', v.filters.plate.join(','));
+  }
   // Month granularity: the bound is always the first of a month, so the day carries no meaning.
   if (v.filters.releasedAfter) p.set('after', v.filters.releasedAfter.slice(0, 7));
   if (v.filters.brands?.length) p.set('brands', v.filters.brands.join(','));
@@ -100,16 +155,39 @@ export function serializeView(v: ViewState): string {
   }
   if (v.filters.showMissing) p.set('missing', '1');
   if (v.stability) p.set('stab', '1');
-  if (v.sort.key !== DEFAULT_SORT.key || v.sort.dir !== DEFAULT_SORT.dir) {
+  if (v.sort.key !== c.view.sort.key || v.sort.dir !== c.view.sort.dir) {
     p.set('sort', v.sort.dir === 'desc' ? `-${v.sort.key}` : v.sort.key);
   }
   if (v.rows.length) p.set('rows', v.rows.join(','));
-  // No zone token: the columns already say which half the view is about (docs/app.md §URL encoding).
-  if (v.columns.join(',') !== defaultColumns(DEFAULT_ZONE).join(',')) p.set('cols', v.columns.join(','));
+  // Order-sensitive, unlike the marks: `upToColumnOrder` decides whether a control is lit, where
+  // this decides what a recipient sees, and a permutation of a story's columns is a column order the
+  // runner chose (docs/app.md §URL encoding).
+  if (v.columns.join(',') !== c.view.columns.join(',')) p.set('cols', v.columns.join(','));
   for (const [key, chosen] of Object.entries(v.generations)) {
     if (chosen !== key) p.set(`gen.${key}`, chosen);
   }
   return p.toString();
+}
+
+/**
+ * The shortest of the ways this view can be written (docs/app.md §URL encoding). The default
+ * baseline is always in the running and can never be inadmissible, so the result is never longer
+ * than the address this app wrote before the shorthand existed.
+ */
+export function serializeView(v: ViewState): string {
+  const [plain, ...shorthand] = candidatesFor(v);
+  let best = encodeAgainst(v, plain);
+  for (const c of shorthand) {
+    // The one rule that drops a baseline: `plate` is default-omitting with no spelling for *absent*,
+    // so a gate the view does not hold could never be cleared by a token below it. Merely differing
+    // on the gate is fine — `plate=carbon` overrides it.
+    if (c.view.filters.plate?.length && !v.filters.plate?.length) continue;
+    const qs = encodeAgainst(v, c);
+    // Strictly shorter, so a tie goes to the longhand: a tie means the shorthand bought nothing, and
+    // a link that spells its columns out is the one that does not drift when a story is redefined.
+    if (qs.length < best.length) best = qs;
+  }
+  return best;
 }
 
 /**

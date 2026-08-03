@@ -25,6 +25,12 @@ that carries only such tokens as a bare arrival
 (docs/app.md §View and URL ownership,
 docs/app.md §Sharing is copying the address bar).
 
+**A shared address is faithful on one build.** The `zone=` and `story=`
+shorthand names a view rather than spelling it out, so a link kept across a
+change to what a story or a zone's plain table means opens on the newer
+table — the promise a continuously deployed static site can keep
+(docs/app.md §URL encoding).
+
 **Back is a row-level gesture.** Only the open-row set pushes history;
 filters, sort and columns stay on the `replaceState` path, and a popped
 entry restores its open set while keeping the live view

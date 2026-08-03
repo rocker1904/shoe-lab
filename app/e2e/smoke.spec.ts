@@ -22,7 +22,8 @@ test('loads, filters via preset, expands details, exports csv, restores url stat
   await expect(page.getByTestId('setup-strip')).toBeVisible();
   await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
-  await expect(page).toHaveURL(/plate=none%2Cplated-other/);
+  // the gate it just set is part of what `story=easy` names (docs/app.md §URL encoding)
+  await expect(page).toHaveURL('/?story=easy');
   // the strip hands over to the toolbar, which is where the mark and the counts live from here
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
@@ -61,7 +62,7 @@ test('opens on the setup strip, and the address is the only thing that keeps a v
   await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('receipt')).toContainText('Showing 4 of the 4 shoes');
   await expect(strip).toHaveCount(0);
-  await expect(page).toHaveURL(/plate=none%2Cplated-other/);
+  await expect(page).toHaveURL('/?story=easy');
 
   // A bookmark of that address is the persistence mechanism, and only a real page load proves it.
   const bookmark = page.url();
@@ -98,8 +99,9 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
   // the strip's own card: while it is up the bar draws no second copy of either group
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Forefoot', exact: true }).click();
-  // no zone token: the columns are the only record of which half the view is about
-  await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
+  // one token for the whole plain table, the columns it names left unspelled
+  // (docs/app.md §URL encoding)
+  await expect(page).toHaveURL('/?zone=forefoot');
   await expect(page.getByTestId('setup-strip')).toBeVisible();         // the zone is the strip's own question
   await expect(page.getByRole('columnheader', { name: /Forefoot stack/ })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Heel stack/ })).toHaveCount(0);
@@ -108,13 +110,13 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
   await page.getByRole('button', { name: /^Easy/ }).click();
   await expect(page.getByTestId('setup-strip')).toHaveCount(0);
   await expect(page.getByRole('radio', { name: /Easy/, checked: true })).toBeVisible();
-  // Easy bounds nothing, so its zone rides in the columns alone — the terms it scores on, stack
-  // not among them.
-  await expect(page).toHaveURL(/cols=[^&]*energy-return-forefoot/);
+  // Easy bounds nothing, so the whole of it — its gate, its sort and the terms it scores on — is
+  // two tokens, the zone before the story (docs/app.md §URL encoding).
+  await expect(page).toHaveURL('/?zone=forefoot&story=easy');
 
   await page.getByRole('radio', { name: /All/ }).click();
-  // written out in full: the zone rides in `cols`, so a plain forefoot table is a verbose link
-  await expect(page).toHaveURL('/?cols=releasedAt%2Cscore%2CmsrpGbp%2Cforefoot-stack%2Cplate%2Cenergy-return-forefoot%2Ctoebox-width-widest-part%2Cweight');
+  // back to the zone's own plain table, and back to the address it arrived at above
+  await expect(page).toHaveURL('/?zone=forefoot');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /All/, checked: true })).toBeVisible();
   await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
@@ -1260,7 +1262,7 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
   await heel.focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('radio', { name: 'Forefoot' })).toBeFocused();
-  await expect(page).toHaveURL(/cols=[^&]*forefoot-stack/);
+  await expect(page).toHaveURL(/zone=forefoot/);
   await expect(heel).toHaveAttribute('tabindex', '-1');
 });
 

@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { isBareArrival } from './arrival';
 import { indexTests } from './dataset';
-import type { Zone } from './lineage';
+import { ZONES } from './lineage';
 import { applyPreset, PRESETS } from './presets';
 import { SCORE_DEFS } from './score-defs';
 import { parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder } from './urlstate';
 import { DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
 import type { FilterState } from './filters';
 import { FLEET, TESTS, labTest } from './test-fixtures';
-
-const ZONES: Zone[] = ['heel', 'forefoot'];
 
 const idx = indexTests(TESTS);
 
@@ -509,16 +507,6 @@ describe('every key the app emits is a key it owns', () => {
 });
 
 describe('the zone the view is about', () => {
-  it('never writes a zone key', () => {
-    // The shorthand is deferred, not built (BACKLOG.md), and one encoding of the zone is the
-    // property this asserts (docs/app.md §URL encoding).
-    const qs = serializeView({ ...defaultView(), columns: defaultColumns('forefoot') });
-    expect(qs).not.toContain('zone=');
-  });
-  it('carries the zone in the columns instead', () => {
-    const v = { ...defaultView(), columns: defaultColumns('forefoot') };
-    expect(parseView(serializeView(v), idx).columns).toEqual(defaultColumns('forefoot'));
-  });
   it('round-trips a mixed-zone view losslessly', () => {
     // Both halves must exist in the fixture, or parseView drops the column and the round trip is
     // not the thing under test.
@@ -541,14 +529,6 @@ describe('the zone the view is about', () => {
     expect(cols).not.toContain('midsole-softness-22');
     expect(cols.filter((c) => c !== 'releasedAt' && c !== 'plate')).toHaveLength(6);
   });
-  // The columns are the only record of the zone now, so a forefoot plain table rides in `cols` and
-  // is emphatically not the baseline.
-  it('carries a forefoot plain table through a URL round trip, as columns', () => {
-    const v = { ...defaultView(), columns: defaultColumns('forefoot') };
-    expect(serializeView(v)).toContain('cols=');
-    expect(parseView(serializeView(v), idx)).toEqual(v);
-    expect(sameValue(parseView(serializeView(v), idx), defaultView())).toBe(false);
-  });
   it('still writes columns that differ from the baseline', () => {
     const v = { ...defaultView(), columns: ['score'] };
     expect(serializeView(v)).toContain('cols=score');
@@ -557,10 +537,10 @@ describe('the zone the view is about', () => {
 });
 
 /**
- * The pre-pass (spec docs/specs/2026-08-03-url-zone-story-shorthand.md §Decisions): `zone=` and
- * `story=` choose the view `parseView` starts from, in place of `defaultView()`, and every other
- * token still layers over it unchanged. `serializeView` does not emit either token yet — that is a
- * later change — so this section is parse-only.
+ * The pre-pass: `zone=` and `story=` choose the view `parseView` starts from, in place of
+ * `defaultView()`, and every other token still layers over it unchanged
+ * (docs/app.md §URL encoding). This section is the way in; `the shortest spelling of a view`
+ * below is the way out.
  */
 describe('the zone= and story= baseline', () => {
   it('parses story=<id> to that story\'s heel view', () => {
@@ -611,6 +591,231 @@ describe('the zone= and story= baseline', () => {
   it('an address carrying neither token still parses to exactly defaultView()', () => {
     expect(parseView('', idx)).toEqual(defaultView());
     expect(parseView('sort=-weight', idx).columns).toEqual(defaultColumns(DEFAULT_ZONE));
+  });
+});
+
+const edit = (v: ViewState, f: (v: ViewState) => void): ViewState => { f(v); return v; };
+
+/**
+ * Enough views to carry the two bounds that are about *every* view rather than one. `longhand` is
+ * the string the encoder produced for that view before it had candidates, recorded rather than
+ * recomputed: a second encoder in this file would be a second home for the encoding, and these are
+ * exactly what "never lengthens" and "byte-identical" are measured against.
+ */
+const CORPUS: { label: string; view: ViewState; longhand: string }[] = [
+  { label: 'the default table', view: defaultView(), longhand: '' },
+  {
+    label: 'Easy at heel',
+    view: applyPreset('easy', 'heel', false),
+    longhand: 'plate=none%2Cplated-other&sort=-easy-score-heel&cols=releasedAt%2Ceasy-score-heel%2Cscore%2CmsrpGbp%2Cshock-absorption-heel%2Cenergy-return-heel%2Cweight%2Cplate',
+  },
+  {
+    label: 'Easy at forefoot',
+    view: applyPreset('easy', 'forefoot', false),
+    longhand: 'plate=none%2Cplated-other&sort=-easy-score-forefoot&cols=releasedAt%2Ceasy-score-forefoot%2Cscore%2CmsrpGbp%2Cshock-absorption-forefoot%2Cenergy-return-forefoot%2Cweight%2Cplate',
+  },
+  {
+    label: 'Tempo at forefoot with stability on',
+    view: { ...applyPreset('tempo', 'forefoot', false), stability: true },
+    longhand: 'plate=none%2Cplated-other&stab=1&sort=-tempo-score-forefoot&cols=releasedAt%2Ctempo-score-forefoot%2Cscore%2CmsrpGbp%2Cenergy-return-forefoot%2Cweight%2Coutsole-durability%2Cplate',
+  },
+  {
+    label: 'Race at heel',
+    view: applyPreset('race', 'heel', false),
+    longhand: 'sort=-race-score-heel&cols=releasedAt%2Crace-score-heel%2Cscore%2CmsrpGbp%2Cenergy-return-heel%2Cweight%2Cshock-absorption-heel%2Cplate',
+  },
+  {
+    label: 'Race at forefoot, filtered',
+    view: edit(applyPreset('race', 'forefoot', false), (v) => {
+      v.filters.search = 'peg';
+      v.filters.brands = ['Nike'];
+      v.filters.ranges['weight'] = { max: 250 };
+      v.filters.discontinued = 'hide';
+    }),
+    longhand: 'r.weight=%7E250&brands=Nike&q=peg&disc=hide&sort=-race-score-forefoot&cols=releasedAt%2Crace-score-forefoot%2Cscore%2CmsrpGbp%2Cenergy-return-forefoot%2Cweight%2Cshock-absorption-forefoot%2Cplate',
+  },
+  {
+    label: 'the plain forefoot table',
+    view: { ...defaultView(), columns: defaultColumns('forefoot') },
+    longhand: 'cols=releasedAt%2Cscore%2CmsrpGbp%2Cforefoot-stack%2Cplate%2Cenergy-return-forefoot%2Ctoebox-width-widest-part%2Cweight',
+  },
+  {
+    label: 'the plain heel table, filtered',
+    view: edit(defaultView(), (v) => {
+      v.filters.ranges['heel-stack'] = { min: 36 };
+      v.filters.search = 'peg';
+      v.filters.showMissing = true;
+    }),
+    longhand: 'r.heel-stack=36%7E&q=peg&missing=1',
+  },
+  {
+    label: 'Easy at heel with the gate cleared',
+    view: edit(applyPreset('easy', 'heel', false), (v) => { delete v.filters.plate; }),
+    longhand: 'sort=-easy-score-heel&cols=releasedAt%2Ceasy-score-heel%2Cscore%2CmsrpGbp%2Cshock-absorption-heel%2Cenergy-return-heel%2Cweight%2Cplate',
+  },
+  {
+    label: 'Easy at heel with carbon admitted',
+    view: edit(applyPreset('easy', 'heel', false), (v) => { v.filters.plate = ['carbon']; }),
+    longhand: 'plate=carbon&sort=-easy-score-heel&cols=releasedAt%2Ceasy-score-heel%2Cscore%2CmsrpGbp%2Cshock-absorption-heel%2Cenergy-return-heel%2Cweight%2Cplate',
+  },
+  {
+    label: 'Easy at heel with its columns reordered',
+    view: edit(applyPreset('easy', 'heel', false), (v) => { v.columns = [...v.columns].sort(); }),
+    longhand: 'plate=none%2Cplated-other&sort=-easy-score-heel&cols=easy-score-heel%2Cenergy-return-heel%2CmsrpGbp%2Cplate%2CreleasedAt%2Cscore%2Cshock-absorption-heel%2Cweight',
+  },
+  {
+    label: 'a hand-edited table',
+    view: { ...defaultView(), columns: ['score'], sort: { key: 'weight', dir: 'asc' }, rows: ['stiffness'] },
+    longhand: 'sort=weight&rows=stiffness&cols=score',
+  },
+  {
+    label: 'a stray score column on the default table',
+    view: { ...defaultView(), columns: [...defaultColumns('heel'), 'race-score-heel'] },
+    longhand: 'cols=releasedAt%2Cscore%2CmsrpGbp%2Cheel-stack%2Cplate%2Cenergy-return-heel%2Ctoebox-width-widest-part%2Cweight%2Crace-score-heel',
+  },
+];
+
+/**
+ * The way out. `serializeView` encodes the view against every baseline a link could name — the
+ * default always, the plain table of the zone that is not `DEFAULT_ZONE`, and the story each score
+ * column in the view resolves to — writing each field that differs from *that* baseline rather than
+ * from the default, and keeps the shortest string (docs/app.md §URL encoding).
+ */
+describe('the shortest spelling of a view', () => {
+  it('writes a story at the default zone as one token', () => {
+    expect(serializeView(applyPreset('easy', 'heel', false))).toBe('story=easy');
+  });
+  it('writes a story at the other zone as two, the zone first', () => {
+    expect(serializeView(applyPreset('easy', 'forefoot', false))).toBe('zone=forefoot&story=easy');
+  });
+  it('writes the other zone\'s plain table as one token', () => {
+    expect(serializeView({ ...defaultView(), columns: defaultColumns('forefoot') })).toBe('zone=forefoot');
+  });
+  // `DEFAULT_ZONE` contributes no token at all: `zone=heel` parses, being an owned token, but
+  // writing it would be a second spelling of a view that already has one.
+  it('never writes the default zone', () => {
+    expect(serializeView(defaultView())).toBe('');
+    for (const p of PRESETS) {
+      expect(serializeView(applyPreset(p.id, DEFAULT_ZONE, false)), p.id).not.toContain('zone=');
+    }
+  });
+  // Against the default, never against the baseline: the parse-side baseline is built with
+  // `stability: false` and `stab=1` layers over it (presets.test.ts), so the token has to survive
+  // a story it agrees with.
+  it('leaves the stability preference its own token', () => {
+    expect(serializeView(applyPreset('easy', 'heel', true))).toBe('story=easy&stab=1');
+  });
+  /**
+   * The one rule that drops a baseline. `plate` is default-omitting with no spelling for *absent*,
+   * so `story=easy` on a view holding no gate would hand a recipient Easy's gate with no token able
+   * to clear it. What that costs is the round trip, so the round trip is asserted beside the
+   * missing token.
+   */
+  it('drops a baseline that sets a plate gate the view does not hold', () => {
+    const v = edit(applyPreset('easy', 'heel', false), (x) => { delete x.filters.plate; });
+    expect(serializeView(v)).not.toContain('story=');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  // The one field a link spells out at its own default value: `sort` has a spelling for the default
+  // order, so a baseline naming another sort is overridden rather than dropped (ordering.ts leans
+  // on this being the whole of that case).
+  it('writes the default sort where the baseline it chose holds another', () => {
+    const v = edit(applyPreset('easy', 'heel', false), (x) => { x.sort = defaultView().sort; });
+    expect(serializeView(v)).toBe('story=easy&sort=-score');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  // Differing on the gate is not lacking one — `plate=carbon` overrides the baseline's.
+  it('keeps a baseline whose gate the view merely differs on', () => {
+    const v = edit(applyPreset('easy', 'heel', false), (x) => { x.filters.plate = ['carbon']; });
+    expect(serializeView(v)).toBe('story=easy&plate=carbon');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  // Two score columns are two candidates rather than an ambiguity: the one that explains the view
+  // more cheaply wins on length, and neither is a second definition of what makes a view Easy.
+  it('picks the story that explains the view when the columns name two', () => {
+    const v = edit(applyPreset('easy', 'heel', false), (x) => { x.columns = [...x.columns, 'race-score-heel']; });
+    expect(serializeView(v)).toContain('story=easy');
+    expect(serializeView(v)).not.toContain('story=race');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  // A stray score column is not a claim about the table: its candidate simply loses on length,
+  // which is what stands in for every heuristic about when a shorthand "applies".
+  it('writes a stray score column longhand', () => {
+    const v = { ...defaultView(), columns: [...defaultColumns('heel'), 'race-score-heel'] };
+    expect(serializeView(v)).not.toContain('story=');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  /**
+   * Column order round-trips exactly, so a view whose columns are a permutation of a story's spells
+   * them out — `upToColumnOrder` is a rule about *marks*, and reordering on the way out would hand a
+   * recipient a column order nobody chose. The story still wins, because the gate and the sort it
+   * explains cost more than the token and the list together. The longer link is the accepted cost.
+   */
+  it('spells out columns that are a permutation of the story\'s, and still names the story', () => {
+    const v = edit(applyPreset('easy', 'heel', false), (x) => { x.columns = [...x.columns].sort(); });
+    const qs = serializeView(v);
+    expect(qs).toContain('story=easy');
+    expect(qs).toContain('cols=');
+    expect(qs.length).toBeGreaterThan(serializeView(applyPreset('easy', 'heel', false)).length);
+    expect(parseView(qs, idx)).toEqual(v);
+  });
+  /**
+   * A tie is reachable rather than theoretical: at forefoot, `zone=forefoot&story=tempo&` costs
+   * exactly the 26 characters the gate it explains would have taken to spell. It goes to the
+   * longhand, which is the spelling that still shows this table after a story's columns, gate or
+   * sort are next changed (docs/app.md §URL encoding).
+   */
+  it('gives an exact tie to the longhand', () => {
+    const v = edit(defaultView(), (x) => {
+      x.filters.plate = ['none', 'plated-other'];
+      x.columns = ['tempo-score-forefoot'];
+      x.sort = { key: 'weight', dir: 'asc' };
+    });
+    // The alternative the encoder weighed, written out so the tie is visible rather than claimed.
+    expect(serializeView(v).length).toBe('zone=forefoot&story=tempo&sort=weight&cols=tempo-score-forefoot'.length);
+    expect(serializeView(v)).toBe('plate=none%2Cplated-other&sort=weight&cols=tempo-score-forefoot');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  /**
+   * `serializeView` reads exactly three fields against the baseline it chose — the plate gate, the
+   * sort and the columns — and every other field against the default, which is what keeps a view
+   * carrying no shorthand byte-identical to the string it has always written. That holds only while
+   * no baseline sets anything else. presets.test.ts asserts the individual fields a story leaves
+   * alone for the story's own reasons; this asserts the closure, so a story or a zone that starts
+   * setting a fourth field fails here rather than serialising to a link that drops it.
+   */
+  it('has no baseline that sets a field outside the three the encoding reads against it', () => {
+    const outsideTheThree = (v: ViewState): ViewState =>
+      ({ ...v, columns: [], sort: { key: '', dir: 'asc' }, stability: false, filters: { ...v.filters, plate: undefined } });
+    const plain = outsideTheThree(defaultView());
+    for (const zone of ZONES) {
+      expect(outsideTheThree({ ...defaultView(), columns: defaultColumns(zone) }), zone).toEqual(plain);
+      for (const p of PRESETS) {
+        expect(outsideTheThree(applyPreset(p.id, zone, true)), `${p.id}/${zone}`).toEqual(plain);
+      }
+    }
+  });
+
+  // The default baseline is always in the running and can never be dropped, so the string chosen is
+  // never longer than the one it alone would have written — the property that makes the shorthand
+  // free to adopt (docs/app.md §URL encoding).
+  it.each(CORPUS)('never lengthens: $label', ({ view, longhand }) => {
+    expect(serializeView(view).length).toBeLessThanOrEqual(longhand.length);
+  });
+  // The sweep below would pass vacuously if the encoder wrote a shorthand token onto everything,
+  // so which views no baseline explains is named rather than counted.
+  const longhandOnly = CORPUS.filter(({ view }) => !/(^|&)(zone|story)=/.test(serializeView(view)));
+  it('leaves a view no baseline explains entirely alone', () => {
+    expect(longhandOnly.map((e) => e.label)).toEqual([
+      'the default table',
+      'the plain heel table, filtered',
+      'Easy at heel with the gate cleared',
+      'a hand-edited table',
+      'a stray score column on the default table',
+    ]);
+  });
+  it.each(longhandOnly)('is byte-identical to the encoding before the shorthand: $label', ({ view, longhand }) => {
+    expect(serializeView(view)).toBe(longhand);
   });
 });
 
