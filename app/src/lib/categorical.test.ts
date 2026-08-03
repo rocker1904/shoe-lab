@@ -88,8 +88,16 @@ describe('facetLabel', () => {
   it('falls back to the value itself for a choice the catalogue does not declare', () => {
     expect(facetLabel(gusset, 'bootie')).toBe('bootie');
   });
-  it('falls back for a test that declares no choices at all', () => {
-    expect(facetLabel(idx.bySlug.get('removable-insole')!, 'true')).toBe('true');
+  // A bool declares no options, so a naive find-and-fallback answers `true` where the cell says
+  // Yes — two homes for one value's word, selected by the caller knowing the test type. The next
+  // consumer that trusts the docblock (a receipt line naming what is narrowing, the editorial-facts
+  // facet class) would render `Removable insole: true`.
+  it('gives a bool value the word a cell gives it, not the raw value', () => {
+    expect(facetLabel(idx.bySlug.get('removable-insole')!, 'true')).toBe('Yes');
+    expect(facetLabel(idx.bySlug.get('removable-insole')!, 'false')).toBe('No');
+  });
+  it('falls back to the value itself for a bool value that is neither', () => {
+    expect(facetLabel(idx.bySlug.get('removable-insole')!, 'maybe')).toBe('maybe');
   });
   it('is the same word the cell shows, because the cell reads it from here', () => {
     const s = shoe({ slug: 'a', values: { '39': 'both-sides-semi' } });

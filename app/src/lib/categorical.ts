@@ -48,15 +48,21 @@ export function isCategorical(test: LabTest | undefined): boolean {
 export const BOOL_LABELS = { true: 'Yes', false: 'No' } as const;
 
 /**
- * The word for one raw value of one test: the catalogue's declared name for it, or the value itself
- * when the catalogue declares no such choice. Keyed on the test and the value rather than on a shoe,
- * because the values that most need a word are the ones no shoe carries — a link-borne choice the
- * catalogue has since dropped has no reading anywhere to take it from.
+ * The word for one raw value of one test — every kind of test, which is the whole point: the
+ * catalogue's declared name for an option, `BOOL_LABELS` for a bool, and the value itself when
+ * neither declares it. Keyed on the test and the value rather than on a shoe, because the values
+ * that most need a word are the ones no shoe carries — a link-borne choice the catalogue has since
+ * dropped has no reading anywhere to take it from.
+ *
+ * The bool branch is not a special case but the claim being true: without it this answers `true`
+ * where every cell says Yes, and a value's word has two homes selected by whether the caller
+ * happened to know the test's type (docs/policies.md §Vocabulary).
  *
  * The fallback is the cell's, for the cell's reason: an upstream addition should read as an
  * unfamiliar word rather than as a blank (docs/app.md §Categorical columns).
  */
 export function facetLabel(test: LabTest, value: string): string {
+  if (test.type === 'bool') return BOOL_LABELS[value as keyof typeof BOOL_LABELS] ?? value;
   return test.options?.find((o) => o.value === value)?.name ?? value;
 }
 
@@ -70,7 +76,7 @@ export function categoricalValue(shoe: Shoe, key: string, idx: TestIndex): strin
   if (!isCategorical(test)) return undefined;
   const raw = shoe.values[String(test!.id)];
   if (raw === undefined) return undefined;
-  if (test!.type === 'bool') return raw === true ? BOOL_LABELS['true'] : BOOL_LABELS['false'];
+  // One call for every type now that `facetLabel` owns the bool words too.
   return facetLabel(test!, String(raw));
 }
 
