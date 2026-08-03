@@ -7,7 +7,6 @@ import { defForPreset, EASY, RACE, TEMPO } from './score-defs';
 import { zoneOf } from './zone';
 import { applyFilters } from './filters';
 import { FLEET, TESTS, shoe } from './test-fixtures';
-import { parseView, serializeView } from './urlstate';
 import { defaultColumns, defaultView, type ViewState } from './view';
 import type { Shoe } from '../../../shared/types.js';
 
@@ -160,13 +159,6 @@ describe('easy', () => {
     }
   });
 
-  it('round-trips through the URL, so the story mark survives a link', () => {
-    for (const zone of ZONES) {
-      const v = applyPreset('easy', zone, false);
-      expect(parseView(serializeView(v), idx)).toEqual(v);
-    }
-  });
-
   it('shows the terms it scores on rather than a metric it does not read', () => {
     // Energy return is a scoring term and was hidden; stack is not one and was shown. The sixth
     // numeric slot belongs to the term (docs/app.md §Columns and sorting).
@@ -283,17 +275,6 @@ describe('preset determinism', () => {
       expect(applyPreset(p.id, 'heel', false)).toEqual(b);
     }
   });
-  it('survives a URL round trip under either zone', () => {
-    // A story is now written as its shorthand, so this is the round trip through `story=`/`zone=`
-    // rather than through `plate` and `cols`: that a story reloads as itself, at the zone it was
-    // built for. The member rules those tokens no longer exercise are urlstate.test.ts's.
-    for (const zone of ZONES) {
-      for (const p of PRESETS) {
-        const v = applyPreset(p.id, zone, false);
-        expect(parseView(serializeView(v), idx)).toEqual(v);
-      }
-    }
-  });
 });
 
 describe('no preset bounds a metric its own coverage warning would flag', () => {
@@ -347,11 +328,12 @@ describe('every story ranks by its own score rather than by bounds', () => {
     }
   });
 
-  it('every story still round-trips and still names a zone', () => {
+  // That a story survives the URL is urlstate.test.ts's matrix, which covers these six views under
+  // both stability states and beside every kind of filter. What is asserted here is the half that
+  // is about the story rather than the encoding: it commits to the zone it was built for.
+  it('every story names the zone it was built for', () => {
     for (const p of PRESETS) for (const zone of ZONES) {
-      const v = applyPreset(p.id, zone, false);
-      expect(parseView(serializeView(v), idx)).toEqual(v);
-      expect(zoneOf(v), `${p.id}/${zone}`).toBe(zone);
+      expect(zoneOf(applyPreset(p.id, zone, false)), `${p.id}/${zone}`).toBe(zone);
     }
   });
 });

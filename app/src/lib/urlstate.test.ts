@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isBareArrival } from './arrival';
 import { indexTests } from './dataset';
-import { ZONES } from './lineage';
+import { ZONES, zoneKey, type Zone } from './lineage';
 import { applyPreset, PRESETS } from './presets';
 import { SCORE_DEFS } from './score-defs';
 import { parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder } from './urlstate';
@@ -816,6 +816,57 @@ describe('the shortest spelling of a view', () => {
   });
   it.each(longhandOnly)('is byte-identical to the encoding before the shorthand: $label', ({ view, longhand }) => {
     expect(serializeView(view)).toBe(longhand);
+  });
+});
+
+/**
+ * Every table the toolbar can reach, each carrying one filter of every kind the encoding writes.
+ * Derived from `PRESETS` and `ZONES` rather than listed, so a fourth story or a third zone is
+ * covered without an edit here (docs/policies.md §Vocabulary). Stability is a dimension of the plain
+ * tables too: `stab` layers over whichever baseline was chosen, and a zone baseline is a baseline.
+ */
+const REACHABLE_VIEWS = ZONES.flatMap((zone) => [false, true].flatMap((stability) => {
+  const suffix = stability ? ' with stability on' : '';
+  return [
+    { label: `the plain ${zone} table${suffix}`, zone, build: () => ({ ...defaultView(), columns: defaultColumns(zone), stability }) },
+    ...PRESETS.map((p) => ({ label: `${p.label} at ${zone}${suffix}`, zone, build: () => applyPreset(p.id, zone, stability) })),
+  ];
+}));
+
+/** One of each kind of filter the encoding has a token for, over the view it is added to. The range
+ *  bound is the zone's own half, so a forefoot table is bounded on `forefoot-stack` — both halves
+ *  are in the fixture, or `parseView` would drop the key and this would assert nothing. Curated
+ *  either way, so no `rows` entry is seeded and the case stays about what it says it is. */
+const CARRYING: { label: string; add: (v: ViewState, zone: Zone) => void }[] = [
+  { label: 'bare', add: () => {} },
+  { label: 'carrying a search', add: (v) => { v.filters.search = 'peg'; } },
+  { label: 'carrying a range bound', add: (v, zone) => { v.filters.ranges[zoneKey('Stack', zone)] = { min: 30, max: 40 }; } },
+  { label: 'carrying a brand set', add: (v) => { v.filters.brands = ['Nike', 'New Balance']; } },
+  { label: 'carrying a discontinued rule', add: (v) => { v.filters.discontinued = 'only'; } },
+  { label: 'carrying a feature selection', add: (v) => { v.filters.categorical['tongue-gusset-type'] = ['both-sides-semi']; } },
+];
+
+/**
+ * docs/app.md §View and URL ownership states this as a correctness requirement rather than a
+ * nicety: the view is never re-derived from the URL, so a field that does not serialise is a field
+ * silently dropped on the round trip. The shorthand is exactly the mechanism that could do it — a
+ * field equal to the baseline's is not written at all, so an encoder and a parser that disagreed
+ * about a baseline would lose that field with nothing else failing.
+ *
+ * The whole view is compared, so **column order is part of the assertion**: `toEqual` on the array
+ * is order-sensitive, and `upToColumnOrder` has no part in the encoding — it decides whether a
+ * control is lit, not what a recipient sees.
+ *
+ * Per-token round trips stay where they are, one describe per token; what is new here is the
+ * combination, and it is the only home for it.
+ */
+describe('every table the toolbar can reach survives a round trip', () => {
+  const cases = REACHABLE_VIEWS.flatMap(({ label, zone, build }) => CARRYING.map((c) => ({
+    label: `${label}, ${c.label}`,
+    view: edit(build(), (v) => c.add(v, zone)),
+  })));
+  it.each(cases)('$label', ({ view }) => {
+    expect(parseView(serializeView(view), idx)).toEqual(view);
   });
 });
 
