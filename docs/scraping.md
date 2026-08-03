@@ -309,7 +309,7 @@ entry plus a rebuild.
   needs that distinction made, or it reads as a contradiction.
 
 Do not treat any of these as ground truth for a filter preset — they are one
-editor's classification, not a lab reading (BACKLOG.md).
+editor's classification, not a lab reading.
 
 ## Test lineage
 
@@ -476,9 +476,8 @@ usable is §Empty values are skipped before duplicates are resolved. A duplicate
 ### A duplicate option value fails the run
 A `value` declared twice inside one test's `options` is fatal on every path that
 writes a catalogue, rather than deduped on the way in or defended in the app.
-Published as-is it takes the app down: the Features section keys its rows by
-option value (docs/app.md §Filters) and a keyed `{#each}` over a repeated key
-throws `each_key_duplicate`, which blanks the page rather than the row.
+Published as-is it takes the app down, because the Features section keys its
+rows by option value (docs/app.md §Filters owns what that costs).
 Deduping would render — `facetLabel` resolves a value first-wins, so dropping
 the later entry keeps the label the app would have shown anyway — but it is a
 guess at what changed upstream. Two entries under one value are either one

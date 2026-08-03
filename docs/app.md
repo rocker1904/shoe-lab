@@ -345,10 +345,11 @@ appearing and vanishing as another filter moves the pool; the selection's so a
 link carrying a value the catalogue has since dropped keeps a control to untick
 it with. **Those rows are keyed by the option value**: a keyed `{#each}` over a
 value that appears twice throws `each_key_duplicate`, which blanks the whole
-page rather than drawing one wrong row. The fleet's and the selection's values
-are filtered against the declared ones, so the only way two rows can carry one
-value is a catalogue that declares it twice — refused upstream rather than
-defended here (docs/scraping.md §Decisions).
+page rather than drawing one wrong row. The extras the fleet and the selection
+contribute are screened against the declared values before a row is drawn, so the
+only way two rows can carry one value is a catalogue that declares it twice —
+refused upstream rather than defended here
+(docs/scraping.md §A duplicate option value fails the run).
 A `bool` test is an Any/Yes/No tri-state built the way
 Discontinued is, and carries no counts: ticking both boxes would be a near-no-op
 whose only effect is excluding the handful of unread shoes, which is not a state
@@ -619,11 +620,12 @@ brackets after it. Two components draw one and they are not the same face:
 facet noun inside Features is smaller and dim, because the `Features` heading
 above it has to keep leading.
 
-Those two are the column's **only real headings**, so heading navigation stops at
-the metric rows and the facets and nowhere else in it — a range row is named by
-its fieldset, and the search box, the month picker and the foot buttons by their
-own labels. A facet's group takes its accessible name from its heading by id
-rather than repeating the noun in an `aria-label`, which is `DisplayMenu`'s
+Besides the section labels above them, those two are the **only headings the
+column carries**, so heading navigation reaches the sections, the metric rows and
+the facets and nothing else in it — a range row is named by its fieldset, and the
+search box, the month picker and the foot buttons by their own labels. A facet's
+group takes its accessible name from its heading by id rather than repeating the
+noun in an `aria-label`, which is `DisplayMenu`'s
 pattern; the id is keyed by the test's slug. What makes a key safe to build an id
 from is that **the sidebar mounts once** — the drawer is that same element moved
 off-canvas by a class, never a second copy, which is the opposite of the table's
