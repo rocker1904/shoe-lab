@@ -7,7 +7,8 @@ import { defForPreset, EASY, RACE, TEMPO } from './score-defs';
 import { zoneOf } from './zone';
 import { applyFilters } from './filters';
 import { FLEET, TESTS, shoe } from './test-fixtures';
-import { defaultColumns, defaultView, parseView, serializeView, type ViewState } from './urlstate';
+import { parseView, serializeView } from './urlstate';
+import { defaultColumns, defaultView, type ViewState } from './view';
 import type { Shoe } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);

@@ -3,7 +3,7 @@ import type { TestIndex } from './dataset';
 import { columnLabel } from './labels';
 import type { SortState } from './sort';
 import { isFigure } from './units';
-import { DEFAULT_SORT, type ViewState } from './urlstate';
+import { DEFAULT_SORT, type ViewState } from './view';
 
 /**
  * How the app *words* an ordering — one home, because two surfaces state it: the line under the

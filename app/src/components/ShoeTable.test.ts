@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
 import { type ScoreColumns } from '../lib/score';
 import { EASY } from '../lib/score-defs';
-import { defaultView, type ViewState } from '../lib/urlstate';
+import { defaultView, type ViewState } from '../lib/view';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
 

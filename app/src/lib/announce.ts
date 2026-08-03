@@ -1,7 +1,8 @@
 import type { TestIndex } from './dataset';
 import { columnLabel } from './labels';
 import { sortPhrase } from './ordering';
-import { sameValue, type ViewState } from './urlstate';
+import { sameValue } from './urlstate';
+import type { ViewState } from './view';
 import { zoneOf } from './zone';
 
 /**

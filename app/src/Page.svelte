@@ -47,7 +47,8 @@
   import DisplayMenu from './components/DisplayMenu.svelte';
   import { installWash, readDisplay, writeDisplay } from './lib/display';
   import { resolveWash, type DisplayPrefs } from './lib/wash';
-  import { DEFAULT_ZONE, defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder, type ViewState } from './lib/urlstate';
+  import { parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder } from './lib/urlstate';
+  import { DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './lib/view';
 
   let { data }: { data: ShoesFile } = $props();
 

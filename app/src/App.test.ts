@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { tick } from 'svelte';
 import { afterEach, expect, it, vi } from 'vitest';
 import App, { SKELETON_AFTER_MS } from './App.svelte';
-import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
+import { DEFAULT_ZONE, defaultColumns } from './lib/view';
 
 /** `readFileSync(new URL(...))` does not resolve under jsdom, so the path is built the long way. */
 const appDir = join(dirname(fileURLToPath(import.meta.url)), '..');

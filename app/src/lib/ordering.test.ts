@@ -3,7 +3,7 @@ import { indexTests } from './dataset';
 import { orderingNote, sortPhrase } from './ordering';
 import { EASY } from './score-defs';
 import { TESTS, labTest } from './test-fixtures';
-import { defaultColumns, defaultView, type ViewState } from './urlstate';
+import { defaultColumns, defaultView, type ViewState } from './view';
 
 const idx = indexTests([...TESTS, labTest({ id: 40, slug: 'heel-tab', name: 'Heel tab', type: 'option' })]);
 const view = (over: Partial<ViewState> = {}): ViewState => ({ ...defaultView(), ...over });

@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
-import { defaultView, type ViewState } from '../lib/urlstate';
+import { defaultView, type ViewState } from '../lib/view';
 import { FLEET, TESTS, labTest, shoe } from '../lib/test-fixtures';
 import type { ScoreColumns } from '../lib/score';
 import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';

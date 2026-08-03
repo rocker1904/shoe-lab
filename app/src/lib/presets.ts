@@ -1,6 +1,6 @@
 import { zoneKey, type Zone } from './lineage';
 import { EASY, RACE, TEMPO } from './score-defs';
-import { defaultView, type ViewState } from './urlstate';
+import { defaultView, type ViewState } from './view';
 
 /**
  * A story is a pool and a ranking, and nothing else — no story bounds a metric any more

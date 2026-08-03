@@ -17,7 +17,7 @@
   import { isBareArrival } from './lib/arrival';
   import { SIDEBAR_PERMANENT_PX } from './lib/fit';
   import { layoutWidth, observeLayoutWidth } from './lib/layout-width';
-  import { DEFAULT_ZONE, defaultColumns } from './lib/urlstate';
+  import { DEFAULT_ZONE, defaultColumns } from './lib/view';
   import Page from './Page.svelte';
 
   /** Derived from the view the table will open on, never written out: the placeholder's job is to

@@ -1,5 +1,5 @@
 import { zoneOfKey, swapZone, type Zone } from './lineage';
-import { defaultColumns, type ViewState } from './urlstate';
+import { defaultColumns, type ViewState } from './view';
 
 /**
  * The zone a view is *about*, or null when it does not commit to one. Derived rather than stored,

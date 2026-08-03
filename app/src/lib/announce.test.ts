@@ -4,7 +4,7 @@ import { indexTests } from './dataset';
 import { applyPreset } from './presets';
 import { EASY } from './score-defs';
 import { TESTS, labTest } from './test-fixtures';
-import { defaultColumns, defaultView, type ViewState } from './urlstate';
+import { defaultColumns, defaultView, type ViewState } from './view';
 import { projectZone } from './zone';
 
 const idx = indexTests([...TESTS, labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units: 'N' })]);

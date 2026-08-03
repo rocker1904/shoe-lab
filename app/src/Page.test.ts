@@ -8,7 +8,8 @@ import { indexTests } from './lib/dataset';
 import { FLEET, TESTS, labTest } from './lib/test-fixtures';
 import { zoneOfKey } from './lib/lineage';
 import { applyPreset } from './lib/presets';
-import { defaultColumns, parseView, serializeView } from './lib/urlstate';
+import { parseView, serializeView } from './lib/urlstate';
+import { defaultColumns } from './lib/view';
 import { DEFAULT_PAINT, DISPLAY_DEFAULTS, washAlpha, washBucketValue, WASH_PEAK, WASH_STEPS } from './lib/wash';
 import type { LabTest, ShoesFile } from '../../shared/types.js';
 

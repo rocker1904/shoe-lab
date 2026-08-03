@@ -11,7 +11,7 @@
   import { nextSort } from '../lib/sort';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
-  import type { ViewState } from '../lib/urlstate';
+  import type { ViewState } from '../lib/view';
   import DetailPanel from './DetailPanel.svelte';
   import DiscontinuedTag from './DiscontinuedTag.svelte';
   import SortCaret from './SortCaret.svelte';

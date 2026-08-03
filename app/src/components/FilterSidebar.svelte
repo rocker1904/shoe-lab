@@ -9,7 +9,7 @@
   import { stableBrandCounts, stableFacetCounts } from '../lib/population';
   import { excludedBy } from '../lib/relax';
   import { roving } from '../lib/roving';
-  import type { ViewState } from '../lib/urlstate';
+  import type { ViewState } from '../lib/view';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
   import DirectionLegend from './DirectionLegend.svelte';

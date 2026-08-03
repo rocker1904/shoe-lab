@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { projectZone, zoneOf } from './zone';
-import { defaultColumns, defaultView, type ViewState } from './urlstate';
+import { defaultColumns, defaultView, type ViewState } from './view';
 import type { Zone } from './lineage';
 import { EASY } from './score-defs';
 

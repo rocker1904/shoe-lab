@@ -3,7 +3,8 @@ import { isBareArrival } from './arrival';
 import { indexTests } from './dataset';
 import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
-import { defaultColumns, defaultView, parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder, type ViewState } from './urlstate';
+import { parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder } from './urlstate';
+import { defaultColumns, defaultView, type ViewState } from './view';
 import type { FilterState } from './filters';
 import { FLEET, TESTS, labTest } from './test-fixtures';
 
