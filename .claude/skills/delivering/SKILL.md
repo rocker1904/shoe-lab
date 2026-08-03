@@ -16,6 +16,8 @@ reasons to stop are BLOCKED, a DISCOVERY that moves behaviour, or done.
 
 - Isolated worktree via superpowers:using-git-worktrees. Never on main
   without explicit consent.
+- Commit the approved spec as the branch's first commit — worktrees do
+  not share untracked files, and the crew reads the spec from the repo.
 - Ledger at `.delivery/<spec-basename>/progress.md`, gitignored (add
   `.delivery/` to .gitignore if absent), first line naming the spec. The
   ledger is what survives compaction: after one, trust it and `git log`
@@ -49,12 +51,21 @@ mode switches in the ledger.
   the outgoing agent's learnings into a ledger note, and seed the fresh
   agent's first brief with it. Rotate early if a reused implementer's
   tasks start needing more fix rounds than its earlier ones did — that
-  is degradation, and riding it to the budget line buys nothing.
+  is degradation, and riding it to the budget line buys nothing. Its
+  earliest signature is subtler than failed tasks: an implementer
+  certifying a check it did not fully run ("all nine pointers resolve"
+  after checking only that they named the file) is degrading, whatever
+  its test results.
 - **Parallel worktree agents** — only for genuinely independent tasks
   with frozen interfaces, with the merge cost priced in. Sequential is
   the default.
 - Mechanical sweeps (renames, applying a settled pattern) go to a cheap
   model in any mode.
+- Name agents by FUNCTION ("crew implementer A", "reviewer 3"), never by
+  task — spawn labels do not update on resume, and task attribution
+  lives in the ledger. When comparing agents, blind the subjects: assign
+  the task, never name the experiment — an agent that knows it is being
+  evaluated works differently.
 
 **Model floor:** implementation from a build sheet is judgment work —
 implementers and reviewers take the strong model by default. In this
@@ -95,23 +106,42 @@ DISCOVERY (see below).
    `git diff -U10 BASE..HEAD`. Always BASE..HEAD — `HEAD~1` silently
    drops all but the last commit of a multi-commit task.
 4. Dispatch a fresh reviewer — never skipped, never the implementer,
-   identical in both modes; the diff does not care who wrote it. It
-   gets the task's build-sheet lines, the spec §, docs/policies.md, and
-   the package path. Two required verdicts: spec compliance AND quality.
+   never a reused one, identical in both modes; the diff does not care
+   who wrote it. Freshness is the feature, not a cost: a fresh agent
+   does not assume it already holds the context, so it hunts beyond the
+   diff's own files — which is where a warm/fresh comparison found the
+   one Critical of the skill's first delivery (a registry in a file the
+   diff never touched) after the warm arm reviewed the same package
+   clean. Reviews were never ceremony in that data: every task,
+   including the smallest, produced real findings. The reviewer reads
+   its material itself — no delegating reading to subagents; delegated
+   reading is context the verdict then does not have. It gets the
+   task's build-sheet lines, the spec §, docs/policies.md, and the
+   package path. Two required verdicts: spec compliance AND quality.
    Never pre-judge findings for it ("don't flag X" is you sparing
-   yourself a loop).
+   yourself a loop). Do not mutate the worktree — commits, suite runs,
+   doc edits — while a dispatched agent is verifying in it; a moving
+   tree voids its evidence and yours.
 5. Fix loop, on spec ❌ or Critical/Important findings. Crew: resume the
    implementer for rounds 1–3; rounds 4–5 dispatch a fresh implementer
    on a stronger model (this rotation replaces any planned reuse —
    trouble is the natural rotation point). Inline: the controller fixes.
    Either way every round ends with a scoped re-review of the fix diff —
-   an unreviewed fix is how regressions land. Cap: 5 rounds. At the cap,
+   an unreviewed fix is how regressions land — with the executor scaled
+   to the fix's blast radius: behaviour or shared-surface changes get an
+   agent; prose, comment, or test-only fixes get the controller reading
+   the diff. Someone who did not write the fix always reads it; measured
+   basis: five agent re-review rounds caught nothing on small fixes,
+   and the two controller-run rounds lost nothing. Cap: 5 rounds. At the cap,
    adjudicate each open finding yourself: park it with a written ruling
    in the ledger, or STOP and surface it if anything downstream builds
    on it. Minors go straight to the ledger for final-review triage and
    never extend a loop. Silent discards are forbidden.
 6. Ledger: `Task <N>: complete (commits <base7>..<head7>, <review
-   outcome>)`. Then the next task.
+   outcome>)`. Findings travel forward: any review finding that names a
+   later task's ground rides in that task's brief verbatim — a warning
+   the reviewer wrote for task N+2 is worthless in a file task N+2's
+   implementer never reads. Then the next task.
 
 ## Discovery — the spec was wrong and implementation found out
 
@@ -135,6 +165,14 @@ enforce the wrong document.
 - Gates before landing: suites green; owning docs moved wherever
   behaviour did; deliberately deferred items in BACKLOG.md with
   provenance.
+- Flip the spec's status to delivered-and-frozen, and make sure nothing
+  live names a backlog item by list position — titles survive
+  renumbering, numbers do not; a still-live build sheet once pointed
+  "remove item 5" at the wrong feature.
+- Sweep the ledger and reviews for anything routed "record" or "next
+  touch" and move it to its real home — a backlog line or a doc clause —
+  BEFORE deletion; a note that lives only in `.delivery/` is already
+  lost.
 - Then superpowers:finishing-a-development-branch. After landing, delete
   `.delivery/<spec>/` — git history is the record now.
 
