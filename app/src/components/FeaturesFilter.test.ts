@@ -145,6 +145,31 @@ describe('FeaturesFilter', () => {
     expect(screen.getByRole('group', { name: 'Gusset' })).toBeInTheDocument();
   });
 
+  // The sidebar's own convention, one level down: `h3` names a section and `h4` a named control
+  // under it (docs/app.md §Filters), so heading navigation stops at each facet rather than stepping
+  // from Features straight past all of them.
+  it('titles every facet with a heading, one level under the section that holds them', () => {
+    mount();
+    for (const noun of ['Gusset', 'Removable insole', 'Reflective elements']) {
+      expect(screen.getByRole('heading', { level: 4, name: noun }), noun).toBeInTheDocument();
+    }
+  });
+
+  // Named by the visible heading rather than by a second copy of the noun. The name-based query is
+  // the whole check: an id that collided between two facets would resolve both groups to the first
+  // heading, so this fails on the axis that can actually collide — one group per test.
+  it('names each group from its own heading, not from a duplicated string', () => {
+    mount();
+    const groups: [string, string][] = [['group', 'Gusset'], ['radiogroup', 'Removable insole'],
+                                        ['radiogroup', 'Reflective elements']];
+    for (const [role, noun] of groups) {
+      const group = screen.getByRole(role, { name: noun });
+      expect(group, noun).not.toHaveAttribute('aria-label');
+      expect(group.getAttribute('aria-labelledby'), noun)
+        .toBe(screen.getByRole('heading', { level: 4, name: noun }).id);
+    }
+  });
+
   it('adds no text input, so the drawer\'s iOS zoom guard still enumerates them all', () => {
     const { container } = mount();
     expect(container.querySelectorAll('input:not([type=checkbox])')).toHaveLength(0);

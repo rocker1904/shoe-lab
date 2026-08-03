@@ -596,6 +596,9 @@ describe('FilterSidebar metric entries', () => {
  *  rows claim a better end and which stay neutral, `Outsole durability (mm)↓` being one that does. */
 const HEADINGS = [
   'Search', 'Released after', 'Plate', 'Brand', 'Discontinued', 'Features',
+  // Each facet in the section carries a heading of its own, one level under it — the bool's
+  // tri-state included, which is a radiogroup rather than one of the groups listed below.
+  'Gusset', 'Heel tab', 'Removable insole',
   'Price (£)↓', 'Stack', 'Energy return↑', 'Weight (g)↓',
   'Shock absorption↑', 'Outsole durability (mm)↓', 'Midsole width', 'Width / Fit',
 ];
@@ -613,9 +616,15 @@ const GROUPS = [
   'Width / Fit — current method',
 ];
 
+/** However the name is given: a facet group takes it from its own visible heading. */
+const nameOf = (el: Element) =>
+  el.getAttribute('aria-label')
+  ?? el.ownerDocument.getElementById(el.getAttribute('aria-labelledby') ?? '')?.textContent?.trim()
+  ?? null;
+
 const orderOf = (container: HTMLElement) => ({
   headings: within(container).getAllByRole('heading').map((h) => h.textContent),
-  groups: within(container).getAllByRole('group').map((g) => g.getAttribute('aria-label')),
+  groups: within(container).getAllByRole('group').map(nameOf),
 });
 
 describe('FilterSidebar order', () => {

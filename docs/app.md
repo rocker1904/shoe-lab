@@ -605,10 +605,13 @@ choice, so each one added obeys it too.
 
 The sidebar carries **two heading styles on purpose**. `h3` names a *section* —
 Search, Brand, Plate — and is an uppercase micro-label at the same size and
-tracking as the setup strip's group labels, which do the same job. `MetricRow`'s
-`h4` names a *measurement* and is sentence case, because uppercasing "Toebox
-width — widest part" makes a data label shout and costs the reading of the units
-in brackets after it.
+tracking as the setup strip's group labels, which do the same job. `h4` names one
+*control* under a section — `MetricRow`'s measurement, a facet noun inside
+Features — and is sentence case, because uppercasing "Toebox width — widest part"
+makes a data label shout and costs the reading of the units in brackets after it.
+Both are real headings rather than styled paragraphs, so heading navigation stops
+at every control the sidebar names; a facet's group takes its accessible name
+from its own heading by id, rather than repeating the noun in an `aria-label`.
 
 **Every bounded row states what it is costing**: `N excluded`, from
 `lib/relax.ts`, is the number of shoes that would return if *that one bound*
