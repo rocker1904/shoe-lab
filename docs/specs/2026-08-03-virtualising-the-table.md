@@ -131,7 +131,7 @@ implementation* have no honest value until the thing exists.
 
 | Bound | Home |
 |---|---|
-| No cell's content is wider than its declared column, in all three engines | `app/e2e/cross-browser.spec.ts`, `app/e2e/smoke.spec.ts` |
+| No cell's content exceeds its declared column by more than the model's cross-engine spread, over every column and every mounting width, in all three engines. The spread is *measured at implementation* (~0.8px at the readings taken so far) and must be justified against the cell padding that absorbs it, never asserted as a bare number | `app/e2e/cross-browser.spec.ts`, `app/e2e/smoke.spec.ts` |
 | The model's min-content still agrees with the engine's, measured with the override off, within `FIT_TOLERANCE_PX` | `app/e2e/fit-support.ts` (unchanged claim, new measurement path) |
 | Derived row height equals rendered row height for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
 | With no measured viewport, every item renders and no spacer is emitted | `app/src/lib/virtual.test.ts` |
@@ -190,14 +190,42 @@ affordance: it is the honest answer whenever the app cannot measure, and it
 matches how `fit.ts` already falls back under jsdom
 (docs/app.md §Two renderings, and only one of them mounted).
 
-**A width model that under-measures clips content.** Under `table-layout: auto`
-a model error only nudged the width at which the phone rendering takes over;
-under declared widths it overflows a cell. The risk is one-sided and the safe
-side is the proven one: every declared width is `min + share`, so a column can
-never fall below its modelled min-content, and that half of the model is exact
-on six of the eight default columns and errs 1px *high* on the seventh. The
-max-content half is new arithmetic but can only misplace a boundary by a few
-pixels; nothing clips from it.
+**A width model that under-measures overflows a cell — and the risk is not
+one-sided.** Under `table-layout: auto` a model error only nudged the width at
+which the phone rendering takes over; under declared widths the content leaves
+its box. Every declared width is `min + share`, so a column can never fall below
+its *modelled* min-content — but the model is Chromium's, and the engines
+disagree.
+
+*Amended 2026-08-03, during delivery.* This section originally claimed the
+min-content half "errs 1px high", making the risk one-sided. **That was true of
+Chromium only and is false in direction elsewhere.** Measured against each
+engine's own min-content on the real fleet: Chromium is exact on seven of the
+eight default columns and 1px high on the eighth; Firefox and WebKit have the
+model *low* on three of the eight (`score` −0.72px, `msrpGbp` −0.60px,
+`energy-return-heel` −0.52px) and on five of the eleven in the wide set. The
+column count at which the margin goes negative is reachable: eighteen columns
+mounts the desktop table from 1920px up.
+
+What survives is the consequence rather than the direction, and for a reason
+worth stating because it is structural rather than lucky. **Every figure
+column's min-content is set by its header, not its cells** — `score`'s header
+needs 84px against 17px of cells, `msrpGbp`'s 45px against 26px — and the only
+cell-bound columns are the three that carry upstream phrases (`releasedAt`,
+`plate`, `tongue-gusset-type`). So a sub-pixel shortfall puts a header's longest
+word, or a phrase, that far past its box, into the `--s2` padding the cell
+already carries on each side. The excursion is bounded by the model's
+cross-engine spread and absorbed an order of magnitude over: nothing clips,
+nothing wraps differently, nothing shifts.
+
+**So the no-overflow bound is a tolerance, and the tolerance has to be a bound
+over every column at every mounting width** — not an exception for the column
+that happened to surface it. Task 3 measures it. The case to check hardest is
+the three cell-bound phrase columns, where the thing leaving the box is a
+runner's data rather than a header we authored.
+
+The max-content half is new arithmetic but can only misplace a distribution
+boundary; nothing clips from it.
 
 **A height model that is wrong drifts the scrollbar, then heals.** Measurement
 on render replaces the derived value, so error is bounded by how far the runner
@@ -251,7 +279,7 @@ owes it.
 
 | Registry | Owed |
 |---|---|
-| `FIT_SETS`, `FIT_TOLERANCE_PX` in `app/e2e/fit-support.ts` | the same four column sets guard the new max-content model and the no-overflow bound |
+| `FIT_SETS`, `FIT_TOLERANCE_PX` in `app/e2e/fit-support.ts` | the same four column sets guard the new max-content model and the no-overflow bound. **Unpaid as of task 2**: `measureFit` still asks only for `min-content`, so nothing committed holds the max-content half or the no-overflow bound to any engine, and the evidence for both lives in gitignored one-shot scratch. Task 3 pays it; until then this row is a promise, not a fact |
 | `SCORE_COLUMN_KEYS`, `SCORE_CELL_CHARS` in `fit.ts` | `columnMaxPx` must answer for score columns, which have no cells in the dataset |
 | `PLATE_LABELS` (`categorical.ts`) | feeds `cellMaxPx`, and therefore feeds `columnMaxPx` |
 | `MAX_LABEL_PX`, `MAX_UNITS_PX`, `MAX_UNITS_CLEAR_PX` in `labels.ts` | `headerMaxPx` is new arithmetic over the same labels and must not restate their bounds |
