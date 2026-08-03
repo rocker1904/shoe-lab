@@ -103,11 +103,13 @@ describe('presets', () => {
 
 /**
  * A guard, not a behaviour test: nothing in `applyPreset` should read `stability` for anything but
- * the field it assigns, because task 4's parse-side baseline is built with `stability: false` and
- * relies on `stab=1` layering over it exactly as every other token does — which is only correct if
- * no story's pool, sort or columns can vary with the preference (docs/app.md §The story scores,
- * spec docs/specs/2026-08-03-url-zone-story-shorthand.md §Decisions). `PRESETS` rather than a
- * hardcoded id list, so a fourth story is covered without an edit here.
+ * the field it assigns. `parseView`'s shorthand baseline is built with `stability: false` and relies
+ * on the `stab` token layering over it exactly as every other token does, which only holds if no
+ * story's pool, sort or columns can vary with the preference (docs/app.md §Presets). Carrying the
+ * preference through rather than rebuilding it also keeps the derived story mark lit: reset it and
+ * the mark would vanish the moment the preference is set, and clicking the story again would
+ * silently turn it back off. `PRESETS` rather than a hardcoded id list, so a fourth story is covered
+ * without an edit here.
  */
 describe('applyPreset\'s stability argument changes nothing but stability', () => {
   it('applyPreset(id, z, true) differs from applyPreset(id, z, false) only in stability', () => {
@@ -118,8 +120,12 @@ describe('applyPreset\'s stability argument changes nothing but stability', () =
         expect(stable.stability, `${p.id}/${zone}`).toBe(true);
         expect(unstable.stability, `${p.id}/${zone}`).toBe(false);
         // Compare whole views rather than an enumerated field list, so a field added later is
-        // still caught by this guard without an edit here.
-        expect({ ...stable, stability: unstable.stability }, `${p.id}/${zone}`).toEqual(unstable);
+        // still caught by this guard without an edit here. `toStrictEqual` rather than `toEqual` —
+        // deliberately stricter than `sameValue`, which treats an explicit `undefined` as absent:
+        // this guard protects an assumption another function is built on, so a false positive is
+        // cheap (look, confirm it's benign, relax it) and a false negative silently corrupts a
+        // shorthand baseline, so it errs toward catching too much rather than too little.
+        expect({ ...stable, stability: unstable.stability }, `${p.id}/${zone}`).toStrictEqual(unstable);
       }
     }
   });
@@ -163,15 +169,6 @@ describe('easy', () => {
       expect(zoneOf(applyPreset('easy', zone, false))).toBe(zone);
     }
   });
-});
-
-it('carries the runner stability preference through every story', () => {
-  // Otherwise the derived story mark vanishes the moment the preference is set, and clicking the
-  // story again silently turns it back off.
-  for (const p of PRESETS) {
-    expect(applyPreset(p.id, 'heel', true).stability).toBe(true);
-    expect(applyPreset(p.id, 'heel', false).stability).toBe(false);
-  }
 });
 
 describe('the runner layer', () => {

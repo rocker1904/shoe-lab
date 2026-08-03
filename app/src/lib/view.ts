@@ -17,7 +17,7 @@ export interface ViewState {
    *  Deriving this from the bound keys is what would make clearing and removing the same action
    *  however they were labelled (docs/app.md §Filters). */
   rows: string[];
-  /** Whether the Easy score counts its two stability terms. A property of the runner rather than of
+  /** Whether Easy and Tempo count their two stability terms. A property of the runner rather than of
    *  the search, so it survives a story click and a Clear, exactly as the zone does — which is why
    *  `applyPreset` and `allView` carry it through rather than rebuilding it (docs/app.md §Presets). */
   stability: boolean;
