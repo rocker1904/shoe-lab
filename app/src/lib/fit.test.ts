@@ -3,8 +3,8 @@ import type { ShoesFile } from '../../../shared/types.js';
 import { indexTests } from './dataset';
 import {
   availableForTable, cellMaxPx, DESKTOP_FLOOR_PX, desktopMinWidth, FIT_SLACK_PX, fitModel,
-  fitsDesktop, headerMinPx, rendersPhone, sidebarPermanent, sidebarPermanentAt,
-  SIDEBAR_PERMANENT_PX,
+  fitsDesktop, headerMaxPx, headerMinPx, nameCellMaxPx, rendersPhone, sidebarPermanent,
+  sidebarPermanentAt, SIDEBAR_PERMANENT_PX,
 } from './fit';
 import { FLEET, labTest, shoe, TESTS } from './test-fixtures';
 
@@ -92,6 +92,100 @@ describe('the desktop table\'s min-content model', () => {
   it('answers the same width twice without recomputing the fleet', () => {
     const m = model();
     expect(m.columnPx('plate')).toBe(m.columnPx('plate'));
+  });
+});
+
+/**
+ * The other half of the same arithmetic, and it exists for a different consumer: the min-content is
+ * what decides which rendering mounts, and the max-content is what decides how a fixed table shares
+ * the width it has been given (docs/app.md §Table presentation). These assert the SHAPE too — which
+ * columns have two widths and which have one, and what the second one is made of — while
+ * `.hunt/max-content.ts` is what holds the numbers to the engine's own max-content on the real fleet.
+ */
+describe('the desktop table\'s max-content model', () => {
+  it('takes a header\'s whole label where the minimum takes its longest word', () => {
+    const long = labTest({ id: 900, slug: 'x', name: 'Shock absorption in the heel of the shoe' });
+    expect(headerMaxPx('x', long)).toBeGreaterThan(headerMinPx('x', long));
+  });
+
+  it('reserves the caret once, exactly as the minimum does', () => {
+    // `Plate` is one word carrying no units, so its whole label IS its longest word — which makes
+    // the two widths equal, and equal only if both count the mark the same way.
+    expect(headerMaxPx('plate', undefined)).toBe(headerMinPx('plate', undefined));
+  });
+
+  it('lets the units line win where it is wider than the whole label', () => {
+    // The units line cannot wrap at all, so it is the same term in both widths rather than a
+    // second measurement (docs/app.md §Table presentation).
+    const wordy = labTest({ id: 901, slug: 'u', name: 'A', units: 'mmmmmm' });
+    expect(headerMaxPx('u', wordy)).toBe(headerMinPx('u', wordy));
+    expect(headerMaxPx('u', wordy)).toBe(6 * 7);
+  });
+
+  it('gives a column of nowrap phrases one width rather than two', () => {
+    // The premise the distribution rule is built on: `Released` and `Plate` carry unbreakable
+    // phrases under one-word headers, so extra width buys them nothing at all.
+    const m = model();
+    expect(m.columnMaxPx('releasedAt')).toBe(m.columnPx('releasedAt'));
+    expect(m.columnMaxPx('plate')).toBe(m.columnPx('plate'));
+  });
+
+  it('separates the two widths exactly where the header wraps', () => {
+    const m = model();
+    expect(m.columnMaxPx('score')).toBeGreaterThan(m.columnPx('score'));
+  });
+
+  it('shares the cell measurement with the minimum rather than taking it twice', () => {
+    // A wider phrase in the fleet moves both widths by the same amount, which it can only do if
+    // `cellMaxPx` is the one term under both.
+    const narrow = model({ shoes: FLEET.map((s) => ({ ...s, plate: 'none' as const })) });
+    const wide = model({ shoes: FLEET.map((s) => ({ ...s, plate: 'plated-other' as const })) });
+    expect(wide.columnMaxPx('plate') - narrow.columnMaxPx('plate'))
+      .toBe(wide.columnPx('plate') - narrow.columnPx('plate'));
+  });
+
+  it('bounds a score column, which has no cells in any dataset', () => {
+    const m = model();
+    expect(m.columnMaxPx('easy-score-heel'))
+      .toBe(16 + headerMaxPx('easy-score-heel', undefined));
+    expect(m.columnMaxPx('easy-score-heel')).toBeGreaterThan(m.columnPx('easy-score-heel'));
+  });
+
+  it('answers for the name column, which no column set ever names', () => {
+    // `columnMaxPx` is total where `columnPx` is not asked for the name: the name column is the
+    // table's first, so the rule that shares a track has to be able to ask about it.
+    const m = model();
+    expect(m.columnMaxPx('name')).toBe(16 + nameCellMaxPx(FLEET));
+  });
+
+  it('measures the name cell as the chevron, the widest name and the gap between them', () => {
+    const long = shoe({ slug: 'a', name: 'mmmmmmmmmm' });
+    const short = shoe({ slug: 'b', name: 'm' });
+    expect(nameCellMaxPx([long, short])).toBe(nameCellMaxPx([long]));
+    // The name is set in the bold face, which is a table of its own: `m` is 13px there against the
+    // phrase face's 12.
+    expect(nameCellMaxPx([long]) - nameCellMaxPx([short])).toBe(9 * 13);
+  });
+
+  it('counts the discontinued chip only on the shoes that carry one', () => {
+    const plain = shoe({ slug: 'a', name: 'Racer' });
+    const gone = shoe({ slug: 'b', name: 'Racer', discontinued: true });
+    expect(nameCellMaxPx([plain])).toBeLessThan(nameCellMaxPx([gone]));
+    // The chip is a fixed string in a fixed box, so it is one measured token rather than a fourth
+    // font table (`DiscontinuedTag.svelte`).
+    expect(nameCellMaxPx([gone]) - nameCellMaxPx([plain])).toBeCloseTo(110.64, 2);
+  });
+
+  it('keeps the name column\'s MINIMUM a declared floor rather than its content', () => {
+    // `min-width: 14rem` is what the engine floors that column at, and it is wider than the widest
+    // word any shoe name carries — so the name is the one column whose two widths come from two
+    // different kinds of fact, and only the max one moves with the fleet.
+    const short = model();
+    const long = model({ shoes: [shoe({ slug: 'a', name: 'New Balance FuelCell SuperComp Elite' })] });
+    expect(short.columnPx('name')).toBe(224 + 16);
+    expect(long.columnPx('name')).toBe(short.columnPx('name'));
+    expect(long.columnMaxPx('name')).toBeGreaterThan(short.columnMaxPx('name'));
+    expect(long.columnMaxPx('name')).toBeGreaterThan(long.columnPx('name'));
   });
 });
 

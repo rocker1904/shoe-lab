@@ -69,6 +69,12 @@ const FACES = [
     chars: DESKTOP_CHARS, take: 'chromium',
   },
   {
+    name: 'NAME_PX (app/src/lib/fit.ts)',
+    css: "font-family:M,system-ui;font-size:14.72px;font-weight:700;letter-spacing:normal",
+    note: 'desktop shoe name — Inter Tight 700 at 14.72px, no tracking (ShoeTable.svelte td.name strong, whose weight is the UA default for <strong> against a 400 parent and is read back, not assumed, by .hunt/max-content.ts)',
+    chars: DESKTOP_CHARS, take: 'chromium',
+  },
+  {
     name: 'PHRASE_PX (app/src/lib/fit.ts)',
     css: "font-family:M,system-ui;font-size:14.72px;font-weight:400;letter-spacing:normal",
     note: 'desktop phrase cell — Inter Tight 400 at 14.72px, no tracking (ShoeTable.svelte td.num:not(.fig))',
@@ -128,6 +134,55 @@ for (const engine of engines) {
       return table;
     });
   }, { ui, mono, faces: FACES });
+  await browser.close();
+}
+
+/**
+ * The desktop name cell's fixed FURNITURE — the chevron and the whole discontinued chip — which is
+ * everything in that cell other than the shoe's own name. Both are single, fixed strings rather than
+ * alphabets, so `fit.ts` states each as one measured token; a per-character table for either would
+ * have a single row of interest.
+ *
+ * The chip's markup and its rule are read out of `DiscontinuedTag.svelte` rather than copied, so the
+ * word and the box cannot drift from the component. Only the TOKENS the rule names are transcribed
+ * (`--s1`, `--s2`, `--t-xs`, `--r-sm` from `app.css`), because a `var()` this page cannot resolve
+ * would drop the whole declaration and silently measure a chip with no border. What is reported is
+ * the chip's OUTER width, its left margin included: that margin is the gap between the name and the
+ * chip and belongs to the same token (docs/app.md §Table presentation).
+ */
+const DISC_TAG = readFileSync(join(here, '../src/components/DiscontinuedTag.svelte'), 'utf8');
+const DISC_WORD = DISC_TAG.match(/<span class="disc-tag">([^<]*)<\/span>/)[1];
+const DISC_RULE = DISC_TAG.match(/\.disc-tag \{([\s\S]*?)\}/)[1]
+  .replace(/var\(--s1\)/g, '4px').replace(/var\(--s2\)/g, '8px')
+  .replace(/var\(--t-xs\)/g, '12px').replace(/var\(--r-sm\)/g, '4px')
+  // Colour tokens do not move a width, but an unresolved `var()` invalidates the declaration that
+  // carries it — and `border` is one of them, which is 2px of chip.
+  .replace(/var\(--text-dim\)/g, '#000').replace(/var\(--border\)/g, '#000');
+
+const furniture = {};
+for (const engine of engines) {
+  const browser = await ENGINES[engine].launch();
+  const page = await browser.newPage();
+  await page.setContent('<body></body>');
+  furniture[engine] = await page.evaluate(async ({ ui, word, rule }) => {
+    const face = new FontFace('M', `url(data:font/woff2;base64,${ui}) format('woff2-variations')`,
+      { weight: '400 700' });
+    await face.load();
+    document.fonts.add(face);
+    // The cell's own face and size (`ShoeTable.svelte`, `table { font-size: var(--t-md) }` against
+    // `--font-ui`), which both the chevron and the chip inherit.
+    document.body.style.cssText = 'margin:0;font-family:M,system-ui;font-size:14.72px';
+    document.body.innerHTML = `<span id="c" style="display:inline-block">›</span>`
+      + `<span id="t" style="${rule}">${word}</span>`;
+    const outer = (el) => {
+      const s = getComputedStyle(el);
+      return el.getBoundingClientRect().width + parseFloat(s.marginLeft) + parseFloat(s.marginRight);
+    };
+    return {
+      chevPx: +document.getElementById('c').getBoundingClientRect().width.toFixed(2),
+      discTagPx: +outer(document.getElementById('t')).toFixed(2),
+    };
+  }, { ui, word: DISC_WORD, rule: DISC_RULE });
   await browser.close();
 }
 
@@ -218,6 +273,12 @@ FACES.forEach((face, i) => {
     console.log(`UNIFORM ADVANCE = ${uniform}  (every character but Δ measures the same)`);
   }
 });
+
+console.log(`\n/* CHEV_PX and DISC_TAG_PX (app/src/lib/fit.ts)   [take: ${engines[0]}, engines: ${engines.join('+')}]`);
+console.log(`   desktop name cell — the chevron's advance and the whole \`${DISC_WORD}\` chip, its left margin included */`);
+for (const engine of engines) {
+  console.log(`   ${engine}: chevron ${furniture[engine].chevPx}px, chip ${furniture[engine].discTagPx}px`);
+}
 
 const advance = measured[engines[0]][FACES.findIndex((f) => f.name.startsWith('UNITS_CHAR_PX'))].m;
 console.log(`\n/* MAX_UNITS_CLEAR_PX (app/src/lib/labels.ts)   [engines: ${engines.join('+')}]`);
