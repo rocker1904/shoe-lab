@@ -153,13 +153,22 @@
   const readBrandCounts = stableBrandCounts();
   const brandCounts = $derived(readBrandCounts(data.shoes, view.filters, idx));
   /** The facets the catalogue describes, by the same rule that decides which of these can be a
-   *  column: an upstream categorical test arrives with a control the way it arrives with a cell. */
+   *  column: an upstream categorical test arrives with a control the way it arrives with a cell.
+   *  `isCategorical` is that rule and the shared door — `categoricalEntries` is the picker's
+   *  projection of it (`{key,label,groupId}`), not the rule itself, which is why this filters the
+   *  tests directly rather than calling it. */
   const featureTests = $derived(data.tests.filter((t) => isCategorical(t)));
   /** One reader per facet, made once and kept: each figure is a walk of the population, and a reader
    *  rebuilt per render would hold nothing and re-walk on every frame of a drag
    *  (docs/app.md §What a drag may recompute). `recompute-budget.test.ts` is what holds this, not
    *  review: rebuilding the reader per call takes the fleet passes per bound change from 3 to 5 and
-   *  fails its bound, so this map is asserted rather than merely intended. */
+   *  fails its bound, so this map is asserted rather than merely intended.
+   *
+   *  A plain function where `brandCounts` is a `$derived`, which is deliberate: this is per-slug and
+   *  lazy, and a `$derived` cannot be either without a map of deriveds. What makes it fresh is that
+   *  `patch` hands the child a structuredCloned view, so `selections` changes identity on every view
+   *  change and the template calls this again — load-bearing, and stated here because it is the only
+   *  place it is written. */
   const facetReaders = new Map<string, ReturnType<typeof stableFacetCounts>>();
   function countsFor(slug: string): Map<string, number> {
     let read = facetReaders.get(slug);

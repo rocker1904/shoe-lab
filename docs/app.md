@@ -349,8 +349,15 @@ whose only effect is excluding the handful of unread shoes, which is not a state
 a runner means. A selection is set membership on the population side, so it moves
 the coverage denominator exactly as a brand tick does (§Coverage), and a shoe
 with no reading fails an active selection as a brandless shoe fails a brand one.
-The Add-filter dialog stays numeric-only: it adds *range* rows, and a range over
-a categorical test empties the fleet in one click.
+`showMissing` does not reach a facet: it admits shoes with no reading for an
+active **range**, and a shoe with no reading for a selected feature stays hidden
+whatever it is set to — the flag widens a bound, and a facet is not one. The
+Add-filter dialog stays numeric-only for the same division: it adds *range* rows,
+and a range over a categorical test empties the fleet in one click. The accepted
+cost of that is a real dead end — typing "gusset" into Add filter answers
+`No metrics match`, the same answer `stack` already gets for being on screen
+already, except that here the control is one section up rather than in the list
+below.
 
 **The search box matches a case-insensitive substring of the name *or* the
 brand.** The brand half is not redundant: almost every name already begins with
@@ -2169,7 +2176,8 @@ where the toolbar caption it replaced derived them, and `AboutDialog.test.ts` ca
 derivation as a guard instead (§The About panel). Why Race is
 excluded, measured rather than assumed, is docs/shoe-stories.md §Race. **One named
 preference is a deliberate decision rather than an unfinished generalisation**: a general
-metric picker for the score is rejected, not deferred (BACKLOG.md).
+metric picker for the score is rejected, not deferred — so BACKLOG.md deliberately
+carries no item for it, and the absence is the record.
 
 `Page.svelte` iterates `SCORE_DEFS`, resolves one map per key and hands the whole lookup
 — column key to slug to score — to `sortShoes`, both tables, the CSV export and the

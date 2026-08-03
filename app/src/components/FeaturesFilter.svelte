@@ -12,7 +12,10 @@
   } = $props();
 
   // Counted over the facets on screen rather than over the whole record, so the summary reports
-  // what this section is doing and nothing else.
+  // what this section is doing and nothing else. It sums raw lengths where `triOf` below refuses to
+  // display a bool holding both values, so a record `parseView` cannot produce — `['true','false']`
+  // — would read "2 selected" with nothing lit. The asymmetry is deliberate: the summary is a count
+  // of what is held, and the tri-state is a picture of what can be shown.
   const selectedCount = $derived(tests.reduce((n, t) => n + (selections[t.slug]?.length ?? 0), 0));
 
   /**

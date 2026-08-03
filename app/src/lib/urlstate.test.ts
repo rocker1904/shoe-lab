@@ -387,9 +387,12 @@ describe('the feature selection token', () => {
     }
   });
 
+  // The value is one no catalogue would declare, on purpose: `bootie` is a real gusset option
+  // upstream, so a fixture that ever gained the real list would make this test vacuous while still
+  // passing.
   it('keeps an enum value the catalogue no longer declares, verbatim', () => {
-    expect(parseView('c.tongue-gusset-type=bootie', idx).filters.categorical)
-      .toEqual({ 'tongue-gusset-type': ['bootie'] });
+    expect(parseView('c.tongue-gusset-type=retired-choice', idx).filters.categorical)
+      .toEqual({ 'tongue-gusset-type': ['retired-choice'] });
   });
 
   it('takes only true or false for a bool test', () => {

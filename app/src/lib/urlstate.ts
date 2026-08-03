@@ -237,6 +237,13 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     const test = idx.bySlug.get(slug);
     if (!test || !isCategorical(test)) continue;
     const values = [...new Set(arrived)];
+    // Arrival order is kept rather than normalised into display order, unlike `plate` two screens
+    // up: a facet's display order is the catalogue's declared order, which lives in `categorical.ts`
+    // and is not `parseView`'s to know. The cost is that a hand-built link can hold one selection in
+    // an order clicking would not produce, so it is not `sameValue`-equal to the clicked one — no
+    // preset or story binds a facet, and the first click re-emits in display order, which is why
+    // this is a divergence rather than a defect.
+    //
     // `true`/`false` are this app's words rather than the catalogue's, so a refresh cannot rename
     // them and they stay allowlisted. Both values collapse the key to absent: the tri-state has no
     // state that shows both, and a state no control can display is what this parse refuses.
