@@ -96,6 +96,15 @@ describe('viewAnnouncement is silent for', () => {
       filters: { categorical: {}, ranges: { stiffness: { min: 3 }, weight: { max: 250 } } } };
     expect(say((v) => { v.rows = []; v.filters = { categorical: {}, ranges: {} }; }, from)).toBeNull();
   });
+  // The reachable composition rather than a contrived one: `Clear filters` over a SINGLE hand-added
+  // row takes that row, its own bound and a held feature selection in one press — the shape where
+  // `rowNote` is otherwise happy to report the row alone, which would be a partial account of a
+  // whole-surface action. The facet going with it is what makes "nothing else changed" false.
+  it('Clear filters over one row while a feature selection is held', () => {
+    const from: ViewState = { ...base(), rows: ['stiffness'],
+      filters: { categorical: { 'tongue-gusset-type': ['none'] }, ranges: { stiffness: { min: 3 } } } };
+    expect(say((v) => { v.rows = []; v.filters = { ranges: {}, categorical: {} }; }, from)).toBeNull();
+  });
   it('a view that did not change at all', () => {
     expect(viewAnnouncement(base(), base(), idx)).toBeNull();
   });

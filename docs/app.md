@@ -3874,7 +3874,9 @@ that is the receipt's, and every filter is therefore exempt by construction
 | Copy link | `button "Copy link"` | **announces** `Copied`, through the one region rather than a second one |
 | column picker | `checkbox "Drop" [checked]` inside the `Columns` group | **exempt.** The checkbox *is* the column: its own state on the control the runner is standing on already says "Drop is a column". `Column added: Drop` beside `Drop, checked` is the double-speak these rules exist to prevent |
 | expand a row | `row [expanded]` on the focused row itself | **exempt**, for the same reason and more plainly |
-| story, `All`, search, brand, plate, date, a bound, `Clear filters` | — | **exempt.** Every one moves the row count, and the receipt is the row count's home |
+| feature checklist | `checkbox "Both sides (semi) (176)" [checked]` inside the `Gusset` group | **exempt.** The column picker's argument with a different noun: the checkbox's own state says the value is selected, and the only other thing that moved is the row count. The figure in its label is the facet's own, not the table's, so it says nothing the receipt is saying |
+| feature tri-state | `radio "Yes" [checked]` inside `Removable insole` | **exempt**, exactly as Discontinued's is: the radio names the state now chosen, and what it did to the fleet is a count |
+| story, `All`, search, brand, plate, date, a bound, a feature selection, `Clear filters` | — | **exempt.** Every one moves the row count, and the receipt is the row count's home |
 
 **Precedence, not sequence:** one action produces one sentence, so the most
 specific true thing wins. A story rewrites the sort **and** the columns together,
