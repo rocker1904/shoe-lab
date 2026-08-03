@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isBareArrival } from './arrival';
 import { indexTests } from './dataset';
 import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
@@ -285,6 +286,19 @@ describe('generation choice', () => {
   });
 });
 
+// Keyed by field name, not an array: a new FilterState field then fails typecheck —
+// which runs in verify — instead of silently going untested.
+const setters: Record<keyof FilterState, (f: FilterState) => void> = {
+  ranges: (f) => { f.ranges['weight'] = {}; },
+  categorical: (f) => { f.categorical['heel-tab'] = ['pull-tab']; },
+  plate: (f) => { f.plate = ['carbon']; },
+  search: (f) => { f.search = 'nike'; },
+  brands: (f) => { f.brands = ['ASICS']; },
+  releasedAfter: (f) => { f.releasedAfter = '2024-01-01'; },
+  discontinued: (f) => { f.discontinued = 'only'; },
+  showMissing: (f) => { f.showMissing = true; },
+};
+
 describe('equality against the baseline', () => {
   it('is true for a freshly built default', () => {
     expect(sameValue(defaultView(), defaultView())).toBe(true);
@@ -301,19 +315,6 @@ describe('equality against the baseline', () => {
     const gen = defaultView(); gen.generations['midsole-softness-22'] = 'midsole-softness';
     for (const v of [sort, cols, gen]) expect(sameValue(v, defaultView())).toBe(false);
   });
-  // Keyed by field name, not an array: a new FilterState field then fails typecheck —
-  // which runs in verify — instead of silently going untested.
-  const setters: Record<keyof FilterState, (f: FilterState) => void> = {
-    ranges: (f) => { f.ranges['weight'] = {}; },
-    categorical: (f) => { f.categorical['heel-tab'] = ['pull-tab']; },
-    plate: (f) => { f.plate = ['carbon']; },
-    search: (f) => { f.search = 'nike'; },
-    brands: (f) => { f.brands = ['ASICS']; },
-    releasedAfter: (f) => { f.releasedAfter = '2024-01-01'; },
-    discontinued: (f) => { f.discontinued = 'only'; },
-    showMissing: (f) => { f.showMissing = true; },
-  };
-
   it('is false for every filter field, not just the ones someone remembered', () => {
     for (const mutate of Object.values(setters)) {
       const v = defaultView();
@@ -438,6 +439,62 @@ describe('the feature selection token', () => {
     v.filters.ranges['heel-stack'] = { min: 36 };
     v.filters.discontinued = 'hide';
     expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+});
+
+/**
+ * The URL grammar has two homes — `serializeView` writes the keys, `arrival.ts`'s `OWNED` decides
+ * which keys mean "something was sent" — and they drifted once already: `c.` was emitted before it
+ * was owned, so a link carrying only a feature selection opened on the setup strip with its token
+ * scrubbed and the fleet filtered. A comment naming the second home cannot hold that. This can.
+ */
+describe('every key the app emits is a key it owns', () => {
+  const eachKeyOwned = (qs: string, label: string) => {
+    for (const key of new URLSearchParams(qs).keys()) {
+      expect(isBareArrival(`${key}=x`), `${label} → ${key}`).toBe(false);
+    }
+  };
+
+  // Driven off the same exhaustive `setters` map the baseline tripwire uses, so a field added to
+  // `FilterState` cannot reach the address without passing through here. That is the half of this
+  // guard that cannot rot.
+  it('for every filter field, whatever that field serialises to', () => {
+    for (const [field, mutate] of Object.entries(setters)) {
+      const v = defaultView();
+      mutate(v.filters);
+      eachKeyOwned(serializeView(v), field);
+    }
+  });
+
+  it('for the view fields beside the filters, and for all of them at once', () => {
+    const v = defaultView();
+    for (const mutate of Object.values(setters)) mutate(v.filters);
+    v.filters.ranges['weight'] = { max: 250 };   // `setters.ranges` writes a key that serialises to nothing
+    v.sort = { key: 'weight', dir: 'asc' };
+    v.columns = ['score'];
+    v.rows = ['stiffness'];
+    v.generations['midsole-softness-22'] = 'midsole-softness';
+    v.stability = true;
+    const qs = serializeView(v);
+    expect(qs.split('&').length).toBeGreaterThan(8);   // or the sweep below is vacuous
+    eachKeyOwned(qs, 'everything at once');
+  });
+
+  /**
+   * The one state where the two doors disagree, asserted as KNOWN rather than fixed. `serializeView`
+   * writes any non-empty selection; `parseView` refuses a bool holding both values, because no
+   * tri-state can show it. What keeps them in agreement is neither of them: it is
+   * `FeaturesFilter`'s frozen `TRI` tuple, which is structurally incapable of emitting two values.
+   * The component is therefore the sole guard, and a *second* writer of `filters.categorical` — a
+   * preset seeding a facet, an "either" affordance, a clear-one-facet control that spreads — would
+   * craft a link whose recipient silently loses the filter. If one is ever added, this test is where
+   * the guard was recorded, and it is what should fail.
+   */
+  it('writes a two-value bool selection that its own parse then refuses', () => {
+    const v = defaultView();
+    v.filters.categorical = { 'removable-insole': ['true', 'false'] };
+    expect(serializeView(v)).toContain('c.removable-insole=true');
+    expect(parseView(serializeView(v), idx).filters.categorical).toEqual({});
   });
 });
 
