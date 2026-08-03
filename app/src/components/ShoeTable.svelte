@@ -146,8 +146,8 @@
       <th class="name"
           aria-sort={view.sort.key === 'name' ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
         <button type="button" onclick={() => setSort('name')}>
-          <span class="h-name">{columnLabel('name', undefined)}<SortCaret
-            dir={view.sort.key === 'name' ? view.sort.dir : null} /></span>
+          <span class="h-name"><span class="h-line">{columnLabel('name', undefined)}<SortCaret
+            dir={view.sort.key === 'name' ? view.sort.dir : null} /></span></span>
           <span class="h-units"></span>
         </button>
       </th>
@@ -156,14 +156,13 @@
         <th class:fig
             aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
           <button type="button" onclick={() => setSort(col)}>
-            <!-- The mark leaves the flow in a FIGURE column only. Its name and unit lines are
-                 right-aligned to the edge the figures keep, so inline it ends the text a
-                 `--caret-w` short of the numbers below and the header stops lining up with its own
-                 column. A phrase column is left-aligned, where a trailing mark is exactly where a
-                 mark belongs and costs that edge nothing (docs/app.md §Table presentation). -->
-            <span class="h-name">{columnLabel(col, idx.bySlug.get(col))}<SortCaret
-              dir={view.sort.key === col ? view.sort.dir : null}
-              placement={fig ? 'corner-start' : 'inline'} /></span>
+            <!-- The mark LEADS the name in a figure column and trails it in a phrase one, which is
+                 the same rule stated from the column's own alignment: it goes at the end the text is
+                 not aligned to, so the label keeps the edge its figures keep. `.h-line` reverses in
+                 CSS rather than here — the mark is `aria-hidden` decoration with no text, so visual
+                 order is the only order it has (docs/app.md §Table presentation). -->
+            <span class="h-name"><span class="h-line">{columnLabel(col, idx.bySlug.get(col))}<SortCaret
+              dir={view.sort.key === col ? view.sort.dir : null} /></span></span>
             <!-- Always rendered, empty or not: vertical is the axis we have spare, and a missing
                  second line would make the header rows different heights. -->
             <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
@@ -258,6 +257,21 @@
      one-line name reads as extra air above the header rather than as a hole between the name and
      the units under it — and every column's name and unit line then land on a common baseline. */
   .h-name { display: flex; align-items: flex-end; min-height: 2lh; }
+  /* The name's own box, and the reason there are two: `.h-name` is the 2lh RESERVE and bottom-aligns
+     what is in it, so centring the mark against THAT box would centre it against the reserve —
+     which for a one-line name in a two-line box lands the mark a whole line above the text it marks.
+     `.h-line` hugs the text instead, so `align-items: center` here means centred on the name, at one
+     line or three.
+     A FLEX box and not a block with the mark in the text's own flow, which was tried: the mark is an
+     atomic inline, UAX #14 gives a break opportunity either side of one, and at min-content all
+     three engines took it — `Price` laid out on two lines with the mark alone on the first, in a
+     header that is pinned and therefore paid by every screenful. A U+2060 word joiner beside it did
+     not prohibit that break in any engine. Flex items cannot break apart at all, which also keeps
+     `fit.ts`'s arithmetic additive: a header's minimum is its longest word PLUS the mark. The price
+     is that a WRAPPED name's box fills the cell, so the mark stands off the right-aligned ink by
+     whatever slack is left — about 25px at 1440px, and nothing at the widths where the name fits one
+     line (docs/app.md §Table presentation). */
+  .h-line { display: flex; align-items: center; }
   /* `1lh`, not `1em`: the reserve has to be the LINE BOX a unit string would occupy, and at
      `--t-xs` JetBrains Mono renders a 16px line box against a 12px em. A 12px reserve leaves the
      columns that carry no unit — `Released` and `Plate` are both in the default set — 4px short, so
@@ -266,16 +280,13 @@
   .h-units { font-family: var(--font-mono); font-size: var(--t-xs); font-weight: 400; color: var(--text-dim); min-height: 1lh; }
   th.fig, td.fig { text-align: right; }
   th.fig button { align-items: flex-end; }
-  /* The reserve the out-of-flow mark is owed, and it is on the LEFT because that is the corner
-     `corner-start` puts it in — the one a right-aligned header grows away from. In flow rather than
-     bounded by a constant: the browser then sizes the column to keep it, so a long unit string
-     widens its column instead of sliding under the mark, and `fit.ts` states the same 12px as
-     `CARET_PX` on the units term of `headerMinPx`.
-     It used to be `margin-right`, reserving a gutter the mark sat in inline. That kept the name and
-     unit lines on one edge — which they still are, and `smoke.spec.ts` still asserts — but it put
-     that shared edge a `--caret-w` inside the figures' own, so the header lined up with itself and
-     with nothing else (docs/app.md §Table presentation). */
-  th.fig .h-units { margin-left: var(--caret-w); }
+  /* The mark LEADS the name here, which is the whole of what a figure column does differently.
+     `row-reverse` and not a reordered template: main-start becomes the right edge, so the name — the
+     first child — keeps that edge and the mark falls to its left, which is exactly the pair of facts
+     this column needs. The unit line then reserves NOTHING, because nothing sits at the end either
+     line is aligned to, and both run flush to the edge the figures keep
+     (docs/app.md §Table presentation). */
+  th.fig .h-line { flex-direction: row-reverse; }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
   /* THE PANEL IS THE RECESSED SURFACE, so nothing may be drawn around it. This cell took the
      figures' own `--s2` and paints nothing itself, which framed the `--well` panel in 8px of the

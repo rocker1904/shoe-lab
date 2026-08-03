@@ -169,17 +169,17 @@
                              min-height: 2lh; }
   /* The header's `2lh` floor (`ShoeTable.svelte`, `.h-name`) is only a floor: a name wraps to a
      third line once its column is short enough, and at the default set `Energy return heel` does so
-     while the table track is 956px or under. The placeholder cannot read that from the labels —
+     while the table track is 1028px or under. The placeholder cannot read that from the labels —
      they arrive in the dataset it is waiting for — so it keys off the one input that does drive it,
      the width of the track the header wraps in, which is this element's own. A container query
      rather than a media query because the relation is to the track, not the viewport: the sidebar
      and the gutters can move without this number meaning something different.
-     It was 1025px while the sort caret sat inline in the name line; taking the caret out of flow in
-     a figure column handed that line `--caret-w` back, so the same label now holds two lines 69px
-     further in. MEASURED, not adjusted by 12: the threshold is where a particular label breaks, and
-     a break point does not move by the width you gave it. `e2e/smoke.spec.ts` measures the reserve
-     against the real band on both sides of it. */
-  @container (max-width: 956px) {
+     MEASURED every time it moves, and never adjusted by arithmetic: it is the width at which one
+     particular label takes a third line, so it does not travel by the same distance as the width
+     that pushed it. It has read 1025px and 956px before this, across two changes to where a figure
+     column's sort mark sits. `e2e/smoke.spec.ts` measures the reserve against the real band on both
+     sides of it. */
+  @container (max-width: 1028px) {
     .skeleton .head .h-names { min-height: 3lh; }
   }
   .skeleton .head .h-units { font-family: var(--font-mono); font-size: var(--t-xs); min-height: 1lh; }

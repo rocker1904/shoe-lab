@@ -1125,22 +1125,48 @@ no text. `SortCaret.svelte` owns it and **both** renderings mount it, so one
 header cannot mean the same thing two ways; only its placement differs, and the
 component argues that difference where it makes it.
 
-Its footprint is `--caret-w`, and **which line pays it is the column's kind**.
-The mark is drawn in every sortable column, sorted or not, so wherever it sits
-it sits permanently.
+Its footprint is `--caret-w`, and **which end of the name it takes is the
+column's kind**. The mark is drawn in every sortable column, sorted or not, so
+wherever it sits it sits permanently. It is always on the **name line**, in that
+line's own flow, and the unit line reserves nothing.
 
-- A **phrase** column is left-aligned, so the mark stays inline after the name,
-  which is where a trailing mark belongs and costs that column's edge nothing.
-- A **figure** column is right-aligned to the edge its numbers keep, and an
-  inline mark ends the header text a `--caret-w` short of them. So it goes out
-  of flow into the *leading* corner — `corner-start` — and the reserve moves to
-  the **left of the unit line**, which is the line that grows towards it.
+- A **phrase** column is left-aligned, so the mark **trails** the name, which is
+  where a trailing mark belongs and costs that column's edge nothing.
+- A **figure** column is right-aligned to the edge its numbers keep, so the mark
+  **leads** the name instead. A trailing mark would end the header text a
+  `--caret-w` short of the figures under it; a leading one falls at the end
+  nothing is aligned to and the label keeps the edge.
 
-The reserve is in flow rather than bounded by a constant: the browser then sizes
-the column to keep it, so a long unit string widens its column instead of
-sliding under the mark. `headerMinPx` in `lib/fit.ts` states the same 12px, on
-whichever term carries it. The width is a token rather than a number in each
-file precisely because three files now measure against it.
+`headerMinPx` in `lib/fit.ts` states the same 12px, on the name term, whichever
+end it is — added to the longest word, because the mark and the name are flex
+items and a flex line cannot break. The width is a token rather than a number in
+each file precisely because two files measure against it.
+
+**It is a flex item beside the name, not inline content of it**, and that is
+forced rather than chosen. The mark is an atomic inline; UAX #14 gives a break
+opportunity either side of one, and in flow all three engines take it at
+min-content — `Price` lays out on two lines with the mark alone on the first, in
+a header that is pinned and therefore paid by every screenful. A U+2060 word
+joiner beside it prohibits that break in no engine tested. Flex items cannot
+break apart, which settles it, and it is also what keeps `headerMinPx` additive:
+the line's minimum is the longest word **plus** the whole mark.
+
+The price is paid only by a **wrapped** name. Its box fills the cell, so the
+mark stands off the right-aligned ink by whatever slack is left — about 25px at
+1440px on `RunRepeat Score`, and nothing at any width where the name fits one
+line. CSS cannot shrink a wrapped block to its longest line, so this is the floor
+rather than a shortcut.
+
+`align-items: center` on `.h-line` centres the mark on the name, at one line or
+three. That is why there are two boxes: `.h-name` is the 2lh reserve and
+bottom-aligns what sits in it, so centring against *that* would centre against
+the reserve, and a one-line name in a two-line box would take its mark a whole
+line above itself.
+
+Two placements were tried before this one and both are instructive. An
+out-of-flow **corner** mark aligned perfectly and read as unrelated to its label
+once a column was wide. An **in-flow** mark hugged the label at every width and
+orphaned onto its own line.
 
 **Right-aligning a header is not `text-align` alone.** `th button` is
 `display: flex`, which blockifies it — but a `<button>`'s auto width still
@@ -1795,18 +1821,16 @@ chosen:
   two different things on two screens" a fact rather than a comment. The `·` that
   separates the metadata run stops before it: the run is prose and the chip is a
   bordered box carrying its own margin.
-- **The sort mark is `SortCaret.svelte`, the desktop's**, and only which corner
-  it takes differs. It is out of flow in **both** renderings now, and each puts it
-  in the corner its own header text is not aligned to: `corner-end`, the
-  bottom-right, here, where the names are centred; `corner-start` in a desktop
-  figure column, where they are right-aligned to the figures. What each rendering
-  cannot afford differs too. Here it is the WIDTH — the mark is rendered in every
-  column whether or not that column is the sorted one, so inline it would spend
-  its whole `--caret-w` of the 49px text budget permanently, enough to put
-  `Weight` on a second line and grow a header that is pinned and therefore paid by
-  every screen. Any inline mark costs the same, a text glyph joined by a space
-  most of all, because the space is a wrap opportunity. On the desktop it is the
-  EDGE, argued above.
+- **The sort mark is `SortCaret.svelte`, the desktop's**, and only its placement
+  differs. It sits in the header cell's bottom-right corner here, out of flow,
+  because it is rendered in every column whether or not that column is the sorted
+  one — inline it would spend its whole `--caret-w` of the 49px text budget
+  permanently, enough to put `Weight` on a second line and grow a header that is
+  pinned and therefore paid by every screen. Any inline mark costs the same, a
+  text glyph joined by a space most of all, because the space is a wrap
+  opportunity. The desktop keeps its mark in flow instead and pays that width
+  gladly, because what IT cannot afford is the edge (§Table presentation) — the
+  two renderings are short of different things.
 
 Rows are double height in this rendering, so roughly half as many shoes fit a
 screen. That is the direct price of keeping the numbers in columns, and it is

@@ -4,7 +4,7 @@ import { displayNumber, indexTests, numericValue, type TestIndex } from './datas
 import { columnLabel } from './labels';
 import { DERIVED_ZONE_PAIRS } from './lineage';
 import { displayReleaseDate } from './release-date';
-import { headerUnits, isFigure } from './units';
+import { headerUnits } from './units';
 
 /**
  * How wide the desktop table would have to be, in pixels, computed rather than measured — the whole
@@ -34,8 +34,7 @@ const NAME_COL_PX = 224;
 /** `--s2` either side, the `th`/`td` padding. */
 const CELL_PAD_PX = 16;
 /** `--caret-w`. Drawn in every sortable header, sorted or not, so it is in every column's minimum —
- *  once, on whichever of the two header lines carries it: inline after the name in a phrase column,
- *  reserved beside the units line in a figure column, where the mark is out of flow. */
+ *  once, on the name line, whichever end of the name it takes. */
 const CARET_PX = 12;
 /** `.tblwrap`'s two 1px side borders. The model answers for the panel, because the panel is what has
  *  to fit the content track. */
@@ -177,26 +176,23 @@ const widestWordPx = (s: string, table: Record<string, number>): number =>
   Math.max(0, ...s.split(/\s+/).flatMap((w) => w.split(/(?<=-)/)).map((w) => textPx(w, table)));
 
 /**
- * A header's min-content: the name line and the units line, whichever is wider, plus the caret —
- * which exactly ONE of the two lines carries, and which one is the column's kind
- * (docs/app.md §Table presentation).
+ * A header's min-content: the name line and the units line, whichever is wider. The caret sits on
+ * the NAME line in every column — trailing it in a phrase column, LEADING it in a figure one, so
+ * the label can keep the edge its figures keep — so it is counted once, there, and the units line
+ * reserves nothing beside it (docs/app.md §Table presentation).
  *
- * A phrase column keeps the mark inline after the name, so the name line's minimum is its longest
- * word plus the mark, and its units line is empty. A figure column takes the mark out of flow into
- * the leading corner, so the name line pays nothing and the units line reserves the width beside it
- * — the reserve being what stops the browser sizing the column so tight that a unit string runs
- * under the mark.
+ * ADDITIVE, and that is a fact about the box rather than about the text: the mark and the name are
+ * flex items of `.h-line`, and flex items cannot break apart, so the line's minimum is the longest
+ * word plus the whole mark. It would not be additive if the mark sat in the text's own flow — the
+ * engines break either side of an atomic inline — but that layout was tried and rejected for
+ * putting the mark on a line of its own (`ShoeTable.svelte`, `.h-line`).
  */
 export function headerMinPx(key: string, test: LabTest | undefined): number {
   // The units line is mono and cannot wrap — no unit string carries a space now that `size-rating`
   // reads `3=TTS`, and `MAX_UNITS_CLEAR_PX` in `labels.ts` is what keeps it that short — so its width is
   // a character count over the whole line (docs/app.md §Table presentation).
   const unitsPx = headerUnits(key, test).length * UNITS_ADVANCE_PX;
-  const fig = isFigure(key, test);
-  return Math.max(
-    widestWordPx(columnLabel(key, test), HEADER_PX) + (fig ? 0 : CARET_PX),
-    unitsPx + (fig ? CARET_PX : 0),
-  );
+  return Math.max(widestWordPx(columnLabel(key, test), HEADER_PX) + CARET_PX, unitsPx);
 }
 
 /**

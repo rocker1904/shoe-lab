@@ -140,14 +140,13 @@ test('picks a zone, keeps the strip open through it, and returns to that zone\'s
 // The strip is the biggest term above the table and only a BARE ARRIVAL draws it, so both loads
 // are measured: a query string is what makes the second one not bare, which is exactly the
 // predicate `isBareArrival()` answers for the placeholder and for the strip alike.
-// 880px and not 1200px for the three-line side: the threshold moved to a 956px track when the sort
-// mark left the name line (§Table presentation), and 1200px puts a 908px track BETWEEN the fixture's
-// own flip at 884px and the catalogue's — the one place the two disagree, so the reserve was right
-// for the shipped labels and wrong for the ones under test. 880px is a 848px track, inside the
-// three-line band under both, and still 40px clear of the width where this rendering hands over.
+// 1200px is a 908px track: inside the three-line band for the fixture, whose own flip is between
+// 948 and 968, and for the catalogue, whose reserve turns at 1028. Both numbers move whenever the
+// sort mark does — this probe briefly had to be 880px while a placement put the two flips either
+// side of 908 — so what is asserted is the reserve and never the fixture's wording.
 for (const { width, path, strip } of [
   { width: 1440, path: '/', strip: true },
-  { width: 880, path: '/', strip: true },
+  { width: 1200, path: '/', strip: true },
   { width: 1440, path: '/?plate=carbon', strip: false },
 ]) {
   const who = strip ? 'a bare arrival' : 'a link that carries filters';
@@ -1103,10 +1102,9 @@ for (const width of [360, 390]) {
  * the sweep below owns; this test is the other half of it, that the two header lines agree with
  * each other and that the mark stays out of both.
  *
- * The mark is out of flow in the leading corner, so what it has to clear is the LEFT end of the
- * unit line, which is the line that grows towards it — `th.fig .h-units` reserves `--caret-w` there
- * for exactly this. It used to be asserted the other way round, against the name's right edge, back
- * when the mark sat inline in a gutter at that end.
+ * The mark LEADS the name here, so what it has to clear is the name's box rather than sit over it,
+ * and it is centred on that box's full height — at one line or three. This 1440px view is the
+ * wrapped case, where both of those say something: two of the default figure columns take two lines.
  */
 test('lines a figure header up with its own unit line at 1440px', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -1114,22 +1112,29 @@ test('lines a figure header up with its own unit line at 1440px', async ({ page 
   await awaitFacesLoaded(page);
 
   const cols = await page.evaluate(() => [...document.querySelectorAll('table thead th.fig')].map((th) => {
-    const name = th.querySelector('.h-name')!;
+    // `.h-line`, not `.h-name`: the name's text nodes live in the inner box that carries the mark
+    // in flow beside them, and `.h-name` is only the two-line reserve around it.
+    const name = th.querySelector('.h-line')!;
     const text = [...name.childNodes].filter((n) => n.nodeType === 3 && n.textContent!.trim());
     const range = document.createRange();
     range.setStart(text[0]!, 0);
     range.setEnd(text.at(-1)!, text.at(-1)!.textContent!.length);
+    const ink = range.getBoundingClientRect();
     const units = th.querySelector('.h-units')!.getBoundingClientRect();
     const caret = th.querySelector('.caret')!.getBoundingClientRect();
     return { col: (th as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
-             drift: Math.round(units.right - range.getBoundingClientRect().right),
-             caretClear: Math.round(units.left - caret.right) };
+             drift: Math.round(units.right - ink.right),
+             caretClear: Math.round(ink.left - caret.right),
+             caretOffCentre: Math.round(Math.abs((caret.top + caret.bottom) / 2
+               - (ink.top + ink.bottom) / 2)) };
   }));
   expect(cols.length).toBeGreaterThan(2);
   for (const c of cols) {
     expect(c.drift, `${c.col}: unit line off the name's right edge`).toBe(0);
-    // And the mark is beside the unit line rather than under it, in its own reserved width.
-    expect(c.caretClear, `${c.col}: caret does not clear the unit line`).toBeGreaterThanOrEqual(0);
+    // Beside the name and not over it, at the end the figures do not keep.
+    expect(c.caretClear, `${c.col}: caret does not clear the name`).toBeGreaterThanOrEqual(0);
+    // And on the middle of the whole name, which is what a wrapped header makes visible.
+    expect(c.caretOffCentre, `${c.col}: caret is off the name's centre`).toBeLessThanOrEqual(2);
   }
 });
 
@@ -1161,7 +1166,9 @@ for (const width of [1440, 1920, 2560]) {
       const cells = [...document.querySelector('table tbody tr.shoe')!.children];
       return heads.flatMap((th) => {
         if (!th.classList.contains('fig')) return [];
-        const name = th.querySelector('.h-name')!;
+        // `.h-line`, not `.h-name`: the name's text nodes live in the inner box that carries the
+        // mark in flow beside them, and `.h-name` is only the two-line reserve around it.
+        const name = th.querySelector('.h-line')!;
         const text = [...name.childNodes].filter((n) => n.nodeType === 3 && n.textContent!.trim());
         const range = document.createRange();
         range.setStart(text[0]!, 0);

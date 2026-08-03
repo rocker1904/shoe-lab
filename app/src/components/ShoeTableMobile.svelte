@@ -177,7 +177,7 @@
           <th aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
             <button type="button" onclick={() => setSort(col)}>
               <span class="h-name">{shortLabel(col, columnLabel(col, idx.bySlug.get(col)))}</span><SortCaret
-                dir={view.sort.key === col ? view.sort.dir : null} placement="corner-end" />
+                dir={view.sort.key === col ? view.sort.dir : null} placement="corner" />
               <span class="h-units">{headerUnits(col, idx.bySlug.get(col))}</span>
             </button>
           </th>
