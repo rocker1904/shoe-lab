@@ -853,19 +853,28 @@ const CARRYING: { label: string; add: (v: ViewState, zone: Zone) => void }[] = [
  * field equal to the baseline's is not written at all, so an encoder and a parser that disagreed
  * about a baseline would lose that field with nothing else failing.
  *
- * The whole view is compared, so **column order is part of the assertion**: `toEqual` on the array
- * is order-sensitive, and `upToColumnOrder` has no part in the encoding — it decides whether a
- * control is lit, not what a recipient sees.
+ * **What this guarantees, exactly:** that the baseline the encoder names is the baseline the parser
+ * rebuilds, and that every default-omitting field survives beside a shorthand token. The mutations
+ * it alone catches are a shorthand candidate that swallows `disc` or a `c.` selection: dropping a
+ * token only shortens the string, so the corpus above — which measures length and byte-identity —
+ * structurally cannot see it, and each reddens 14 of these cases and nothing else in the suite.
+ *
+ * **What it does not guarantee**, and the boundary matters to anyone deciding whether it covers
+ * their change: `plate`, `sort` and `cols` are never written for any view here, because every view
+ * here holds exactly its baseline's gate, sort and columns. Column order included — a mutation that
+ * sorts columns on the way out leaves all 96 of these green. Those three are guarded by the
+ * shortest-spelling tests above, which is where a view that *differs* from its baseline lives.
  *
  * Per-token round trips stay where they are, one describe per token; what is new here is the
  * combination, and it is the only home for it.
  */
 describe('every table the toolbar can reach survives a round trip', () => {
-  const cases = REACHABLE_VIEWS.flatMap(({ label, zone, build }) => CARRYING.map((c) => ({
-    label: `${label}, ${c.label}`,
-    view: edit(build(), (v) => c.add(v, zone)),
-  })));
-  it.each(cases)('$label', ({ view }) => {
+  // Tuples with `%s` rather than objects with `$label`: the object form truncates a title at 38
+  // characters, which is inside the shared prefix of five of these cases — a matrix that cannot
+  // name the case that failed is no use at the moment it fails.
+  const cases: [string, ViewState][] = REACHABLE_VIEWS.flatMap(({ label, zone, build }) =>
+    CARRYING.map((c): [string, ViewState] => [`${label}, ${c.label}`, edit(build(), (v) => c.add(v, zone))]));
+  it.each(cases)('%s', (_label, view) => {
     expect(parseView(serializeView(view), idx)).toEqual(view);
   });
 });
