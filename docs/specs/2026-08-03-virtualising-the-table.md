@@ -1,8 +1,7 @@
 # Virtualising the table body
 
 *2026-08-03 · from BACKLOG's "Cut what a drag re-renders, not just what it
-recomputes", item 4 · status: **drafted** — not approved, and nothing is built
-from it yet.*
+recomputes", item 4 · status: **approved, in delivery**.*
 
 Both renderings put every visible shoe in the DOM, up to the whole fleet. That
 is the larger half of a held grip's per-frame cost, and it is a row-count
@@ -11,7 +10,7 @@ This renders only what is on screen, plus what the runner has claimed.
 
 **It is no longer urgent, and the spec should be read knowing that.** The wash
 ramp now steps, so a drag costs about 13.5ms a frame against a 16.7ms budget at
-1440px on the 450-shoe fleet — inside budget, where it used to be at 22ms. What
+1440px on a fleet of 450 — inside budget, where it used to be at 22ms. What
 remains is the rows themselves. This is worth doing for the DOM it removes and
 the headroom it buys on hardware slower than the machine these numbers came
 from; it is not worth doing badly to hit a deadline that no longer exists.
