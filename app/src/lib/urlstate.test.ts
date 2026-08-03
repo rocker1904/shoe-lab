@@ -191,17 +191,26 @@ describe('urlstate hostile input', () => {
   it('ignores the retired nodisc key', () => {
     expect(parseView('nodisc=1', idx)).toEqual(defaultView());
   });
-  it('dedupes and falls back on column lists', () => {
+  it('dedupes column lists', () => {
     // non-numeric tests are legitimate columns even though they are not rangeable
     expect(parseView('cols=score,score,tongue-gusset-type,plate', idx).columns)
       .toEqual(['score', 'tongue-gusset-type', 'plate']);
-    const fallback = parseView('cols=name,brand', idx).columns;
-    fallback.push('leaked'); // the fallback must be a fresh array, so mutating it cannot corrupt the next default
-    expect(parseView('cols=name,brand', idx).columns).toEqual(['releasedAt', 'score', 'msrpGbp', 'heel-stack',
-      'plate', 'energy-return-heel', 'toebox-width-widest-part', 'weight']);
     expect(serializeView(parseView(`cols=${defaultColumns('heel').join(',')}`, indexTests([...TESTS,
       labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', units: 'mm' })]))))
       .toBe('');
+  });
+  /**
+   * What survives the member rules *is* the column list, empty or not — `cols` is the one
+   * list-valued token that does not fall back to the default when nothing survives, because empty
+   * and absent name different tables here (docs/app.md §URL encoding).
+   */
+  it.each(['cols=', 'cols=,,,', 'cols=name'])('names the empty column list literally: %s', (qs) => {
+    expect(parseView(qs, idx)).toEqual({ ...defaultView(), columns: [] });
+  });
+  it('round-trips the zero-column view', () => {
+    const v = { ...defaultView(), columns: [] };
+    expect(serializeView(v)).toBe('cols=');
+    expect(parseView(serializeView(v), idx)).toEqual(v);
   });
   it('rejects name and brand as columns — they are sort fields, and the table renders them itself', () => {
     expect(parseView('cols=name,brand,score', idx).columns).toEqual(['score']);
@@ -232,7 +241,7 @@ describe('urlstate hostile input', () => {
     'cols=../../etc/passwd',
     `cols=${'x'.repeat(65)}`,
   ])('drops a col that could never be a slug: %s', (qs) => {
-    expect(parseView(qs, idx)).toEqual(defaultView());
+    expect(parseView(qs, idx)).toEqual({ ...defaultView(), columns: [] });
   });
   it('keeps a slug right on the length bound and drops the one past it', () => {
     expect(parseView(`cols=${'x'.repeat(64)}`, idx).columns).toEqual(['x'.repeat(64)]);

@@ -176,13 +176,14 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       const dir = raw.startsWith('-') ? 'desc' : 'asc';
       const k = raw.replace(/^-/, '');
       if (validSortKey(k)) v.sort = { key: k, dir };
-    } else if (key === 'cols' && raw) {
+    } else if (key === 'cols') {
       // `SORT_FIELDS` minus `COLUMN_FIELDS` is exactly `name` and `brand` — sortable, but rendered
       // by the table itself, so there is no cell for either to become. Derived rather than listed,
-      // so a further sort-only field cannot arrive as a column by omission.
-      const cols = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c)
+      // so a further sort-only field cannot arrive as a column by omission. What survives *is* the
+      // list, unlike every other list-valued token: empty and absent name different tables here, so
+      // there is no default to fall back to when nothing does (docs/app.md §URL encoding).
+      v.columns = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c)
         || (!SORT_FIELDS.has(c) && c.length <= MAX_SLUG_LEN && TEST_SLUG_RE.test(c)));
-      if (cols.length) v.columns = cols;
     } else if (key === 'rows' && raw) {
       // A curated key is on screen anyway and offers no remove, so listing one would be a row that
       // could never be dropped — and a view that could never be default again.

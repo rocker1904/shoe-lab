@@ -274,19 +274,26 @@ malformed bound voids that whole range (dropping one side would silently widen
 it), `after` and `disc` are pattern-checked, a `q` of nothing but whitespace is
 the empty query (§Filters), `plate` keeps only allowlisted members and is
 deduped into declared order, **a list-valued token left holding nothing — an
-all-separator value, or one whose every member was refused — stays absent rather
-than becoming an empty array**, which is the rule for every such token including
-one added later, because an empty array would keep `isDefaultView` false forever
-and never let `All` light again. A `c.` key survives only when its slug names a
-**categorical** test in the current catalogue — a numeric test and the slug the
-`plate` field owns are refused there as they are refused *as categoricals*
-everywhere else, the numeric one being exactly what `r.`, `sort` and `cols` do
-accept — its values are deduped and kept in arrival order, and every occurrence
-of one slug is merged before any rule is applied, so a selection means the same
-thing spelled as one key or as two. `rows` keeps only rangeable non-curated keys,
-and `cols` is deduped and kept unless it is a sort-only field or could never be a
-slug — the one permissive key, and §Columns are permissive, ranges and sorts are
-strict owns why. A `gen.` choice survives only when its key names
+all-separator value, or one whose every member was refused — stays absent
+rather than becoming an empty array**, for `brands`, `plate`, `rows` and `c.`:
+an empty selection there means exactly what an absent one means, filtering
+nothing, so `[]` would be a second spelling of the default that `sameValue`
+can never equal, which would keep `isDefaultView` false forever and never let
+`All` light again. **`cols` is the one list-valued token this does not
+bind:** empty and absent name **different tables** — a table with no columns
+is a real view, not the default eight — so what survives its member rules
+*is* the column list, empty included, with nothing to fall back to. A `c.`
+key survives only when its slug names a **categorical** test in the current
+catalogue — a numeric test and the slug the `plate` field owns are refused
+there as they are refused *as categoricals* everywhere else, the numeric one
+being exactly what `r.`, `sort` and `cols` do accept — its values are deduped
+and kept in arrival order, and every occurrence of one slug is merged before
+any rule is applied, so a selection means the same thing spelled as one key
+or as two. `rows` keeps only rangeable non-curated keys, and `cols` is
+deduped and kept as the list it becomes, empty included, unless a member is a
+sort-only field or could never be a slug — the one permissive key, and
+§Columns are permissive, ranges and sorts are strict owns why. A `gen.`
+choice survives only when its key names
 the current generation of a resolved pair and its value names that pair's
 retired generation. Bound serialisation accepts everything `String(number)`
 emits, exponent form included, so round-trips are lossless.
