@@ -26,7 +26,7 @@
  * `serializeView`: a token the app emits but does not list here makes its own links read as bare
  * arrivals, which opens the setup strip on a link that plainly sent something.
  */
-const OWNED = /^(?:r\.|c\.|gen\.)|^(?:plate|after|brands|q|disc|missing|stab|sort|rows|cols|open)$/;
+const OWNED = /^(?:r\.|c\.|gen\.)|^(?:plate|after|brands|q|disc|missing|stab|sort|rows|cols|open|zone|story)$/;
 
 /**
  * `address` is a query string with no leading `?`. `Page.svelte` passes the **canonical** one it has

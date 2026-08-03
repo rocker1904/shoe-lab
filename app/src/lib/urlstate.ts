@@ -1,7 +1,8 @@
 import type { Plate } from '../../../shared/types.js';
 import { isCategorical } from './categorical';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries } from './lineage';
+import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, type Zone } from './lineage';
+import { applyPreset, PRESETS } from './presets';
 import { startOfMonth } from './release-date';
 import { DEFAULT_SORT, DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
 
@@ -111,9 +112,39 @@ export function serializeView(v: ViewState): string {
   return p.toString();
 }
 
+/**
+ * The view a link's `zone=`/`story=` shorthand names, before any longhand token layers over it —
+ * `parseView`'s pre-pass, run once ahead of its own loop (docs/app.md §URL encoding). With neither
+ * token present this is `defaultView()` exactly: `zone` falls back to `DEFAULT_ZONE`, which is the
+ * same zone `defaultColumns` builds inside `defaultView` itself, so an address carrying no shorthand
+ * still parses down to the byte it does today.
+ *
+ * Last occurrence wins for a duplicated key, matching every token below it: this loop assigns as it
+ * iterates, so a `p.get()` read (first-wins) would disagree with the rest of `parseView`. Strict
+ * rather than permissive, unlike `cols`: an unrecognised `zone` or `story` value drops that token —
+ * leaving whichever valid occurrence, if any, came before it — rather than carrying it inert, because
+ * a bad baseline rewrites the whole table where a bad column costs one cell
+ * (docs/policies.md §State ownership and validation). Story ids come from `PRESETS` rather than a
+ * list restated here (docs/policies.md §Vocabulary).
+ *
+ * `stability: false` here is only equivalent to omitting the argument because `applyPreset` reads it
+ * for nothing but the field it assigns — asserted in presets.test.ts
+ * ("applyPreset's stability argument changes nothing but stability"), not re-derived here — so the
+ * `stab=1` token layering afterwards, in the loop below, reaches the same view either way.
+ */
+function baselineFrom(p: URLSearchParams): ViewState {
+  let zone: Zone = DEFAULT_ZONE;
+  let story: string | undefined;
+  for (const [key, raw] of p.entries()) {
+    if (key === 'zone' && (raw === 'heel' || raw === 'forefoot')) zone = raw;
+    else if (key === 'story' && PRESETS.some((preset) => preset.id === raw)) story = raw;
+  }
+  return story ? applyPreset(story, zone, false) : { ...defaultView(), columns: defaultColumns(zone) };
+}
+
 export function parseView(qs: string, idx: TestIndex): ViewState {
   const p = new URLSearchParams(qs);
-  const v = defaultView();
+  const v = baselineFrom(p);
   // Ranges take numeric keys only and sorts take every key that has an order, while columns stay
   // permissive (docs/app.md §Columns are permissive, ranges and sorts are strict). A categorical
   // column sorts by its label, and its header offers that sort, so a link has to survive it.

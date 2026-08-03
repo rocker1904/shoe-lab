@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { isBareArrival } from './arrival';
 import { indexTests } from './dataset';
 import type { Zone } from './lineage';
+import { applyPreset, PRESETS } from './presets';
 import { SCORE_DEFS } from './score-defs';
 import { parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder } from './urlstate';
-import { defaultColumns, defaultView, type ViewState } from './view';
+import { DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
 import type { FilterState } from './filters';
 import { FLEET, TESTS, labTest } from './test-fixtures';
 
@@ -552,6 +553,64 @@ describe('the zone the view is about', () => {
     const v = { ...defaultView(), columns: ['score'] };
     expect(serializeView(v)).toContain('cols=score');
     expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+});
+
+/**
+ * The pre-pass (spec docs/specs/2026-08-03-url-zone-story-shorthand.md §Decisions): `zone=` and
+ * `story=` choose the view `parseView` starts from, in place of `defaultView()`, and every other
+ * token still layers over it unchanged. `serializeView` does not emit either token yet — that is a
+ * later change — so this section is parse-only.
+ */
+describe('the zone= and story= baseline', () => {
+  it('parses story=<id> to that story\'s heel view', () => {
+    for (const p of PRESETS) {
+      expect(parseView(`story=${p.id}`, idx), p.id).toEqual(applyPreset(p.id, 'heel', false));
+    }
+  });
+  it('layers a longhand token over the zone baseline', () => {
+    const v = parseView('zone=forefoot&sort=-weight', idx);
+    expect(v.columns).toEqual(defaultColumns('forefoot'));
+    expect(v.sort).toEqual({ key: 'weight', dir: 'desc' });
+  });
+  it('drops an unrecognised story and falls back to the default view', () => {
+    expect(parseView('story=banana', idx)).toEqual(defaultView());
+  });
+  it('drops an unrecognised zone and falls back to DEFAULT_ZONE', () => {
+    expect(parseView('zone=banana', idx)).toEqual(defaultView());
+  });
+  // Each is an owned token (arrival.test.ts), but a value with nothing to say about the view still
+  // parses to exactly the default — the same posture `plate=xyz` already has.
+  it('parses zone=heel and an empty story to exactly the default view', () => {
+    expect(parseView('zone=heel', idx)).toEqual(defaultView());
+    expect(parseView('story=', idx)).toEqual(defaultView());
+  });
+  it('combines story and zone into that story\'s other-zone view', () => {
+    expect(parseView('story=easy&zone=forefoot', idx)).toEqual(applyPreset('easy', 'forefoot', false));
+  });
+  it('takes the last occurrence of a duplicated shorthand token', () => {
+    expect(parseView('story=easy&story=race', idx)).toEqual(applyPreset('race', 'heel', false));
+    expect(parseView('zone=forefoot&zone=heel', idx)).toEqual(defaultView());
+  });
+  // Matches `sort`'s own rule two describes up: a later *invalid* value leaves the earlier valid
+  // one standing, because this loop assigns as it iterates rather than resetting to a fallback.
+  it('an invalid later occurrence leaves the earlier valid one standing', () => {
+    expect(parseView('story=easy&story=banana', idx)).toEqual(applyPreset('easy', 'heel', false));
+    expect(parseView('zone=forefoot&zone=banana', idx).columns).toEqual(defaultColumns('forefoot'));
+  });
+  it('a longhand token beats the story baseline it overlaps', () => {
+    expect(parseView('story=easy&cols=score', idx).columns).toEqual(['score']);
+    expect(parseView('story=easy&sort=weight', idx).sort).toEqual({ key: 'weight', dir: 'asc' });
+    expect(parseView('story=easy&plate=carbon', idx).filters.plate).toEqual(['carbon']);
+  });
+  // The guard in presets.test.ts paying out: `stability: false` in the baseline is equivalent to
+  // omitting it only because `applyPreset` reads that argument for nothing else.
+  it('layers stab=1 over the story baseline', () => {
+    expect(parseView('story=easy&stab=1', idx)).toEqual(applyPreset('easy', 'heel', true));
+  });
+  it('an address carrying neither token still parses to exactly defaultView()', () => {
+    expect(parseView('', idx)).toEqual(defaultView());
+    expect(parseView('sort=-weight', idx).columns).toEqual(defaultColumns(DEFAULT_ZONE));
   });
 });
 

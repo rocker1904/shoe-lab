@@ -43,13 +43,15 @@ current**: `pagehide`, and `Copy link` before it reads `location.href`
 a promise about copying — that promise was made here once and measured false at
 52ms.
 
-`ViewState` carries **no zone**. Which half of each zone pair a view is about is
-read back out of it by `zoneOf` (§The zone is a preset too), so the baseline is a
-constant: `defaultView()` takes no argument and `DEFAULT_ZONE` is the one place
-`'heel'` is written. `defaultColumns` still *requires* a zone, which is what
-stops a second call site defaulting by accident. `parseView` has nothing to
-resolve before it builds that baseline — the columns a link carries are the
-zone it carries.
+`ViewState` carries **no zone**. Which half of each zone pair a view is
+about is read back out of it by `zoneOf` (§The zone is a preset too), so the
+baseline is a constant: `defaultView()` takes no argument and `DEFAULT_ZONE`
+is the one place `'heel'` is written. `defaultColumns` still *requires* a zone,
+which is what stops a second call site defaulting by accident. `parseView`
+reads `zone=` and `story=` first, in a pre-pass that picks which baseline
+the rest of the function starts from (§URL encoding); past that pre-pass
+nothing else resolves before it, and the columns the resulting view carries
+are still the zone it carries.
 
 Init takes a query string or the defaults, and nothing else can speak. **An
 address that carries nothing this app owns is a fresh start**, whoever is arriving
@@ -260,12 +262,26 @@ the same rule `brands`, `plate` and `rows` follow. The two encodings compose int
 address and neither writes the other's token, so `serializeView` stays free of the
 reading (§View and URL ownership).
 
-**There is no zone token.** The zone rides in `cols`, which is the only thing
-that records it (§The zone is a preset too), so a plain forefoot table is a verbose
-link: eight column slugs where `zone=forefoot` would be one. That is the
-accepted cost of having one encoding of the zone rather than two that can
-disagree. A `zone=` shorthand expanding to `defaultColumns(zone)` is the remedy
-if the length ever becomes annoying in practice (BACKLOG.md).
+**`zone=` and `story=` are read before every other token, and choose the
+baseline `parseView` starts from.** `zone` is `heel` or `forefoot`; any
+other value, or no `zone` token at all, is `DEFAULT_ZONE`. `story` is one
+of the ids `PRESETS` declares; any other value, or no `story` token, leaves
+no story. With a story present the baseline is `applyPreset(story, zone,
+false)` — the whole preset, not just its columns, because a `story=easy`
+that reproduced only the columns would be a link claiming Easy while showing
+a table with no plate gate. Without one it is `defaultColumns(zone)` on
+an otherwise-default view, which is `defaultView()` exactly when `zone` is
+`DEFAULT_ZONE` — one code path, not a special case, so an address carrying
+neither token still parses down to the byte it always has. Both are strict
+rather than permissive, like `plate` and unlike `cols`: an unrecognised
+value drops the token rather than carrying it inert, because a bad baseline
+rewrites the whole table where a bad column costs one cell (docs/policies.md
+§State ownership and validation). Every other token in this section still
+layers over whichever baseline resulted — `?story=easy&sort=-weight`
+is Easy's table sorted by weight, and `?zone=forefoot&cols=score` is one
+column. `serializeView` does not emit either token yet; the zone and the
+story both still ride in `cols` (and, for a story, in `plate` and `sort`
+too) alone on the way out.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, never throwing: range and sort keys must name a numeric test
