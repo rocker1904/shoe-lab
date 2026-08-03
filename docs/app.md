@@ -268,35 +268,34 @@ disagree. A `zone=` shorthand expanding to `defaultColumns(zone)` is the remedy
 if the length ever becomes annoying in practice (BACKLOG.md).
 
 `parseView` treats the query string as hostile input and drops anything it
-cannot vouch for, always falling back to the default rather than throwing:
-range and sort keys must name a numeric test or a numeric shoe field, a
-malformed bound voids that whole range (dropping one side would silently widen
-it), `after` and `disc` are pattern-checked, a `q` of nothing but whitespace is
-the empty query (§Filters), `plate` keeps only allowlisted members and is
-deduped into declared order, **a list-valued token left holding nothing — an
-all-separator value, or one whose every member was refused — stays absent
-rather than becoming an empty array**, for `brands`, `plate`, `rows` and `c.`:
-an empty selection there means exactly what an absent one means, filtering
-nothing, so `[]` would be a second spelling of the default that `sameValue`
-can never equal, which would keep `isDefaultView` false forever and never let
-`All` light again. **`cols` is the one list-valued token this does not
-bind:** empty and absent name **different tables** — a table with no columns
-is a real view, not the default eight — so what survives its member rules
-*is* the column list, empty included, with nothing to fall back to. A `c.`
-key survives only when its slug names a **categorical** test in the current
+cannot vouch for, never throwing: range and sort keys must name a numeric test
+or a numeric shoe field, a malformed bound voids that whole range (dropping
+one side would silently widen it), `after` and `disc` are pattern-checked, a
+`q` of nothing but whitespace is the empty query (§Filters), `plate` keeps
+only allowlisted members and is deduped into declared order. **A list-valued
+token left holding nothing — an all-separator value, or one whose every
+member was refused — stays absent rather than becoming an empty array,
+for any token whose empty value would mean what its absent value means:**
+for a filter, both empty and absent filter nothing, so `[]` would be a
+second spelling of the default that `sameValue` can never equal, keeping
+`isDefaultView` false forever and never letting `All` light again. `brands`,
+`plate`, `rows` and `c.` are today's members of that class. **`columns`
+is not**, and by the property itself rather than by name: empty and absent
+name **different tables**, so what survives `cols`'s member rules *is*
+the column list, empty included, with nothing to fall back to. A `c.` key
+survives only when its slug names a **categorical** test in the current
 catalogue — a numeric test and the slug the `plate` field owns are refused
-there as they are refused *as categoricals* everywhere else, the numeric one
-being exactly what `r.`, `sort` and `cols` do accept — its values are deduped
-and kept in arrival order, and every occurrence of one slug is merged before
-any rule is applied, so a selection means the same thing spelled as one key
-or as two. `rows` keeps only rangeable non-curated keys, and `cols` is
-deduped and kept as the list it becomes, empty included, unless a member is a
-sort-only field or could never be a slug — the one permissive key, and
-§Columns are permissive, ranges and sorts are strict owns why. A `gen.`
-choice survives only when its key names
-the current generation of a resolved pair and its value names that pair's
-retired generation. Bound serialisation accepts everything `String(number)`
-emits, exponent form included, so round-trips are lossless.
+there as they are refused *as categoricals* everywhere else, the numeric
+one being exactly what `r.`, `sort` and `cols` do accept — its values
+are deduped and kept in arrival order, and every occurrence of one slug
+is merged before any rule is applied, so a selection means the same thing
+spelled as one key or as two. `rows` keeps only rangeable non-curated keys,
+and `cols` is deduped and kept unless a member is a sort-only field or could
+never be a slug — the one permissive key, and §Columns are permissive,
+ranges and sorts are strict owns why. A `gen.` choice survives only when
+its key names the current generation of a resolved pair and its value names
+that pair's retired generation. Bound serialisation accepts everything
+`String(number)` emits, exponent form included, so round-trips are lossless.
 
 **`brands` is the deliberate exception, and it is not an oversight.** The names
 are kept verbatim rather than filtered against the current catalogue, because
@@ -3882,9 +3881,8 @@ hands out a URL that reopens on a different view than the one that was shared.
 
 **Permissive means permissive about whether the slug still exists**, not only
 about the type of test behind it. Filtering `cols` against the live catalogue
-instead drops the unknown column silently, and a link naming only unknown slugs
-falls through to the default set — the exact opposite of what it asked for, with
-nothing on screen saying so.
+instead drops the unknown column silently — the exact opposite of what it
+asked for, with nothing on screen saying so.
 
 Permissive about the slug is not permissive about the **shape**: an unknown key
 is rendered verbatim as a header, so what survives has to look like a slug —

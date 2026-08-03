@@ -22,10 +22,9 @@ const COLUMN_FIELDS = new Set(['releasedAt', 'score', 'msrpGbp', 'plate', ...SCO
 const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 /**
  * What a catalogue test slug looks like. `cols` is permissive about whether the slug still exists
- * — a column the catalogue has dropped prints nothing, where filtering it out silently rebuilt a
- * two-column link as the default eight — but not about the shape, because a header renders an
- * unknown key verbatim. Lowercase hyphen-joined alphanumerics, and no longer than a slug could
- * plausibly be: the longest the catalogue has ever carried is 38 characters
+ * — a column the catalogue has dropped prints nothing — but not about the shape, because a header
+ * renders an unknown key verbatim. Lowercase hyphen-joined alphanumerics, and no longer than a
+ * slug could plausibly be: the longest the catalogue has ever carried is 38 characters
  * (`difference-in-midsole-softness-in-cold`).
  * docs/app.md §Columns are permissive, ranges and sorts are strict
  */
@@ -179,9 +178,8 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     } else if (key === 'cols') {
       // `SORT_FIELDS` minus `COLUMN_FIELDS` is exactly `name` and `brand` — sortable, but rendered
       // by the table itself, so there is no cell for either to become. Derived rather than listed,
-      // so a further sort-only field cannot arrive as a column by omission. What survives *is* the
-      // list, unlike every other list-valued token: empty and absent name different tables here, so
-      // there is no default to fall back to when nothing does (docs/app.md §URL encoding).
+      // so a further sort-only field cannot arrive as a column by omission. Unlike every other
+      // list-valued token, `cols` has no fallback when nothing survives (docs/app.md §URL encoding).
       v.columns = [...new Set(raw.split(','))].filter((c) => COLUMN_FIELDS.has(c) || idx.bySlug.has(c)
         || (!SORT_FIELDS.has(c) && c.length <= MAX_SLUG_LEN && TEST_SLUG_RE.test(c)));
     } else if (key === 'rows' && raw) {

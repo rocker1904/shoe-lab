@@ -199,11 +199,7 @@ describe('urlstate hostile input', () => {
       labTest({ id: 900, slug: 'toebox-width-widest-part', name: 'Toebox', units: 'mm' })]))))
       .toBe('');
   });
-  /**
-   * What survives the member rules *is* the column list, empty or not — `cols` is the one
-   * list-valued token that does not fall back to the default when nothing survives, because empty
-   * and absent name different tables here (docs/app.md §URL encoding).
-   */
+  // `cols` has no fallback when nothing survives the member rules (docs/app.md §URL encoding).
   it.each(['cols=', 'cols=,,,', 'cols=name'])('names the empty column list literally: %s', (qs) => {
     expect(parseView(qs, idx)).toEqual({ ...defaultView(), columns: [] });
   });
@@ -219,8 +215,8 @@ describe('urlstate hostile input', () => {
    * The decided contract: `cols` is permissive about the *type* of test and about whether the slug
    * still exists, because a column the catalogue has dropped costs one blank cell where a bad range
    * hides the whole fleet (§Columns are permissive, ranges and sorts are strict). Filtering against
-   * the live catalogue was the opposite — it silently rebuilt a two-column link as the default
-   * eight, which is the one outcome the link's sender did not ask for.
+   * the live catalogue was the opposite — it silently dropped the unknown slug, which is not what
+   * the link's sender asked for.
    */
   it('keeps a slug the catalogue no longer holds, rather than rebuilding the default table', () => {
     expect(parseView('cols=releasedAt,score,gone-metric-slug', idx).columns)
