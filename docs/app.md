@@ -2138,14 +2138,34 @@ means upstream coverage has genuinely collapsed — drop the term, or the story 
 weights it. Do not lower the threshold, which is owned elsewhere and shared with the
 presets. The live margin is the test's to report, not this doc's to restate.
 
+**A story's scoreable list is floored as a share of the pool it ranks, and neither share
+is adjustable.** `score.test.ts` floors Tempo at 0.65 of the plate-filtered pool and Race
+at 0.75 of the fleet. A count fails on growth, which is not a regression; a share fails
+when a term's coverage collapses under a fleet that never changed size — which the
+scraper's fleet gates cannot see, no shoe having vanished
+(docs/scraping.md §Validation gates). The floors come from history rather than from
+taste: replayed through today's scoring code, every `data/` commit puts Tempo between
+0.7219 and 0.7520 and Race between 0.8147 and 0.8418, leaving 7.2 and 6.5 points of
+headroom under the historical minimum — about 2.4x the whole range either share has
+covered, and 2.7x its widest single step.
+**Do not lower a floor to make a red refresh pass**: under it the story is ranking a list
+that has quietly shortened, and the fix is upstream. Two limits of that evidence, both
+live: the history is two scrape refreshes deep, and its widest single move came from a
+**curation** edit — dropping the non-running shoes — rather than from a scrape. And the
+floor is immune to *proportional* growth only. Hold the scoreable counts where they are
+today and Tempo trips at a pool of 444, Race at a fleet of 511, so a catch-up batch of
+untested new models trips one with no coverage regression behind it.
+
 **Every constant is frozen** — derived once from the fleet at `data/` commit `baed23b`
 and never recomputed from the loaded catalogue: the two references, the outsole cap, the
 per-zone width caps, the sd divisors per zone, and the anchors. Why, and what an
 agent must not "fix", is docs/decisions.md §Frozen scores and live thresholds.
 Consequences, all intended: a shoe's score never
 moves because the catalogue grew, and **a future score may exceed 100**, which is why
-the column's header carries no `/100`. `score.test.ts` pins every constant, so an
-accidental recompute fails the build rather than silently moving every score.
+the column's header carries no `/100` — and why the suite checks the endpoints
+**one-sided**, failing when the scale falls short of an anchor and never when a better
+shoe runs past one. `score.test.ts` pins every constant, so an accidental recompute fails
+the build rather than silently moving every score.
 
 **A divisor belongs to a pool, never to a story.** It is a property of
 `(metric, mapping, pool)`, so Easy and Tempo — which rank the same plate-filtered pool —

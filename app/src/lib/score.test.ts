@@ -210,6 +210,19 @@ const sd = (xs: number[]) => {
   return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length);
 };
 
+/**
+ * How far an endpoint may fall *inside* 0–100 before the anchors are wrong. The checks below are
+ * one-sided on purpose: a refresh that scrapes a shoe better than the anchor holder must read above
+ * 100, and that is the design rather than a fault (docs/app.md §The story scores) — a two-sided
+ * check reddens `main` on exactly the improvement freezing exists to record. Only an endpoint
+ * falling short of its anchor is a fault, which is the one this catches: replay the anchors derived
+ * from unrounded sds against the published divisors and four of the ten story/zone/toggle
+ * combinations land short of 100 — by 0.44 and 0.49 on the two Race zones — while a fifth lifts the
+ * bottom to 0.019. 0.01 sits under those and roughly 7x above the ±0.0015 the published anchors
+ * leave at four decimal places.
+ */
+const ANCHOR_EPS = 0.01;
+
 describe('the Easy score against the real fleet', () => {
   it('delivers the nominal weights as effective influence, on either zone and either toggle', () => {
     // Stage 2 exists for exactly this. Without it a term's influence is its sd on the mapped scale,
@@ -244,16 +257,15 @@ describe('the Easy score against the real fleet', () => {
   });
 
   it('anchors the scale at the fleet it was derived from', () => {
-    // r0 and r100 were taken from this fleet through the *published* divisors, so today the
-    // best scoreable shoe reads exactly 100 and the worst exactly 0. Freezing only takes effect on
-    // future refreshes. Anchors derived from unrounded sds miss the endpoints by enough for this
-    // to fail, which is the mistake it exists to catch.
+    // r0 and r100 were taken from this fleet through the *published* divisors, so the best scoreable
+    // shoe reaches 100 and the worst reaches 0. Freezing only takes effect on future refreshes, and
+    // the check is one-sided for that reason (`ANCHOR_EPS`).
     for (const zone of ZONES) {
       for (const stability of [false, true]) {
         const vs = [...scoreMap(EASY, POOL, zone, stability, realIdx).values()];
         const label = `${zone}/${stability ? 'on' : 'off'}`;
-        expect(Math.max(...vs), label).toBeCloseTo(100, 1);
-        expect(Math.min(...vs), label).toBeCloseTo(0, 1);
+        expect(Math.max(...vs), label).toBeGreaterThan(100 - ANCHOR_EPS);
+        expect(Math.min(...vs), label).toBeLessThan(ANCHOR_EPS);
       }
     }
   });
@@ -266,17 +278,19 @@ describe('the Tempo score against the real fleet', () => {
 
   it('scores the plate-filtered pool and anchors on it', () => {
     for (const zone of ZONES) {
+      // Easy's eligibility invariant holds for Tempo too, and the share bound cannot see it: both
+      // toggle states can sit inside one bound while differing by a shoe, which on screen is a
+      // runner turning stability on and silently losing one from the list.
+      const eligible = scoreMap(TEMPO, POOL, zone, false, realIdx).size;
       for (const stability of [false, true]) {
         const vs = [...scoreMap(TEMPO, POOL, zone, stability, realIdx).values()];
         const label = `${zone}/${stability ? 'on' : 'off'}`;
-        // A share of the pool rather than a count of it: the fleet grows on every refresh, so a
-        // literal here fails on growth — which is not the regression worth catching. What is worth
-        // catching is a term's coverage collapsing, which leaves the fleet its size and quietly
-        // shortens the list a story can rank; the scraper's fleet gates do not see that, because
-        // no shoe vanished (docs/scraping.md §Validation gates).
+        expect(vs.length, label).toBe(eligible);
+        // A share of the pool, not a count of it, and 0.65 is not adjustable
+        // (docs/app.md §The story scores).
         expect(vs.length / POOL.length, label).toBeGreaterThan(0.65);
-        expect(Math.max(...vs), label).toBeCloseTo(100, 1);
-        expect(Math.min(...vs), label).toBeCloseTo(0, 1);
+        expect(Math.max(...vs), label).toBeGreaterThan(100 - ANCHOR_EPS);
+        expect(Math.min(...vs), label).toBeLessThan(ANCHOR_EPS);
       }
     }
   });
@@ -319,12 +333,11 @@ describe('the Race score against the real fleet', () => {
   it('scores the whole fleet and anchors on it', () => {
     for (const zone of ZONES) {
       const vs = [...scoreMap(RACE, REAL.shoes, zone, false, realIdx).values()];
-      // A share of the fleet rather than a count of it, for the reason Tempo's bound states: a
-      // literal fails on the growth every refresh brings, where the regression worth catching is a
-      // term's coverage collapsing under a fleet that never changed size.
+      // A share of the fleet, not a count of it, and 0.75 is not adjustable
+      // (docs/app.md §The story scores).
       expect(vs.length / REAL.shoes.length, zone).toBeGreaterThan(0.75);
-      expect(Math.max(...vs), zone).toBeCloseTo(100, 1);
-      expect(Math.min(...vs), zone).toBeCloseTo(0, 1);
+      expect(Math.max(...vs), zone).toBeGreaterThan(100 - ANCHOR_EPS);
+      expect(Math.min(...vs), zone).toBeLessThan(ANCHOR_EPS);
     }
   });
 

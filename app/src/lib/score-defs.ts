@@ -25,9 +25,9 @@ const PLATED_POOL_SD: Record<Zone, Partial<Record<TermKey, number>>> = Object.fr
   }),
 });
 
-/** Divisors over the whole fleet — 450 shoes. Carbon widens every spread, so Race cannot use the
- *  table above: its energy-return divisor is 0.0902 against 0.0758. Keyed by pool, not globally by
- *  term — do not collapse the two (docs/app.md §The story scores). */
+/** Divisors over the whole fleet — 450 shoes at `data/` commit baed23b. Carbon widens every
+ *  spread, so Race cannot use the table above: its energy-return divisor is 0.0902 against 0.0758.
+ *  Keyed by pool, not globally by term — do not collapse the two (docs/app.md §The story scores). */
 const WHOLE_FLEET_SD: Record<Zone, Partial<Record<TermKey, number>>> = Object.freeze({
   heel: Object.freeze({ energyReturn: 0.0902, weight: 0.0904, shockAbsorption: 0.0902 }),
   forefoot: Object.freeze({ energyReturn: 0.0900, weight: 0.0904, shockAbsorption: 0.0930 }),

@@ -128,9 +128,11 @@ means a red workflow and untouched `data/` — never a partial write.
   see a fleet-wide payload drift: `extractDetails` degrades field by field on
   purpose, so a renamed or moved block arrives as an empty field on every shoe
   rather than as an error, and the join publishes it. Only the comparison with
-  what shipped last time can. Six weeks of `git log -- data/shoes.json` say a
-  refresh moves these aggregates by 0.0 % and the fleet has never gained a shoe,
-  so each bound is far wider than a real week and still narrower than a blanking:
+  what shipped last time can. All of `git log -- data/shoes.json` is two
+  refreshes deep, and both moved these aggregates by 0.0 %; the fleet gained
+  five shoes on one of them and has only ever *lost* shoes to a curation edit,
+  never to a scrape. So each bound is far wider than a real week and still
+  narrower than a blanking:
   - **fleet size ≥ 95 % of the previous run**;
   - **no readmission** — a shoe absent from the previous fleet may not join it on
     a details record already on disk at the previous `builtAt`. That is the

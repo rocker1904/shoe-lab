@@ -204,6 +204,19 @@ names: it fails when a metric a story's score *weights* drops below
 this fires only on a real collapse upstream. What to do about one is
 docs/app.md §The story scores — and it is not lowering the threshold.
 
+The same file carries a **second, tighter coverage guard** with a different
+remedy: Tempo's and Race's scoreable lists are floored as a share of the pool
+each ranks, well above `SPARSE_BELOW`, so a partial collapse that leaves a term
+usable still turns it red. Two ways in: a term's coverage genuinely fell, which
+is the case above and is fixed upstream; or the pool grew while the scoreable
+count did not — a catch-up batch of new models with no lab tests yet — which is
+not a regression and clears itself on the refresh that tests them. Neither is
+fixed here: **do not lower a floor**, and do not swap one back for a count,
+which is what the growing fleet already broke
+(docs/app.md §The story scores). The same file's anchor checks are one-sided
+for the same reason: a shoe better than the anchor holder reads above 100 by
+design, and only a scale falling *short* of an anchor is a fault.
+
 ## Resuming release-date curation
 
 Curation is author-side work: it spends the author's Claude Code budget and
