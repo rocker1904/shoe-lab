@@ -170,6 +170,21 @@ describe('validateShoesFile', () => {
     }
   });
 
+  // The app keys its facet rows by option value, so a value declared twice is a duplicate
+  // `{#each}` key: Svelte throws and the sidebar goes down rather than showing a wrong row.
+  it('rejects an option test that declares the same value twice', () => {
+    const duplicated: ShoesFile = {
+      ...good,
+      tests: [labTest({
+        id: 39, slug: 'tongue-gusset-type', type: 'option',
+        options: [{ value: 'both-sides-semi', name: 'Both sides (semi)' }, { value: 'both-sides-semi', name: 'Both sides, semi' }],
+      })],
+      shoes: [shoe({ slug: 'a', values: { '39': 'both-sides-semi' } })],
+    };
+    expect(() => validateShoesFile(duplicated)).toThrow(ValidationError);
+    expect(() => validateShoesFile(duplicated)).toThrow(/both-sides-semi/);
+  });
+
   it('leaves an option test that declares no choices unchecked', () => {
     const noVocab: ShoesFile = {
       ...good,

@@ -118,7 +118,11 @@ means a red workflow and untouched `data/` — never a partial write.
 - **Post-join:** `build:dataset` re-validates the assembled `shoes.json`
   (builtAt present, arrays, slug/name present, plate within the enum, and every
   `option` reading naming one of its test's declared choices) before
-  writing, so a bad join cannot reach the app either. The absolute shoe floor is
+  writing, so a bad join cannot reach the app either. An `option` test declaring
+  the same value twice is fatal here rather than defended downstream: the facet
+  rows key a Svelte `{#each}` by option value (docs/app.md §Filters), so a
+  duplicate takes the sidebar down rather than rendering a wrong row, and only a
+  gate can decline to publish it. The absolute shoe floor is
   re-applied after the category exclusion (§Non-running shoes), so a renamed
   category fails the run instead of quietly emptying the dataset.
 - **Fleet gates, against the last published `shoes.json`.** No absolute gate can

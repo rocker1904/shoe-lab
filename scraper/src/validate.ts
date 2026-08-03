@@ -65,7 +65,18 @@ export function validateShoesFile(f: ShoesFile): void {
   if (!Array.isArray(f.tests) || !Array.isArray(f.shoes)) throw new ValidationError('tests/shoes must be arrays');
   // A published `option` reading has to name one of the choices its test declares, or the app
   // prints a value it cannot label and offers it as a filter beside the vocabulary it is not in.
-  const vocabulary = new Map(f.tests.filter((t) => t.options).map((t) => [String(t.id), new Set(t.options!.map((o) => o.value))]));
+  const vocabulary = new Map<string, Set<string>>();
+  for (const t of f.tests) {
+    if (!t.options) continue;
+    const choices = new Set<string>();
+    for (const o of t.options) {
+      // The app's facet rows key an `{#each}` by option value, so a value declared twice is a
+      // duplicate key: Svelte throws and the sidebar goes down rather than rendering a wrong row.
+      if (choices.has(o.value)) throw new ValidationError(`test ${t.id} declares option ${JSON.stringify(o.value)} twice`);
+      choices.add(o.value);
+    }
+    vocabulary.set(String(t.id), choices);
+  }
   const published = new Set(f.tests.map((t) => String(t.id)));
   for (const s of f.shoes) {
     if (!s.slug || !s.name) throw new ValidationError(`shoe missing slug/name: ${JSON.stringify(s.slug)}`);
