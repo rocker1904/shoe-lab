@@ -17,8 +17,8 @@ export const PLATE_LABELS: Record<Plate, string> = {
 /**
  * Readings that name a choice rather than measure a quantity. They are excluded from ranges and
  * scores for the same reason — nothing can bound or average them (docs/app.md §Filters) — but they
- * are readable, comparable side by side, and were invisible until this existed
- * (docs/scraping.md §Readings taken from the page).
+ * are readable, comparable side by side, filterable by set membership rather than by bound, and
+ * were invisible until this existed (docs/scraping.md §Readings taken from the page).
  */
 export const CATEGORICAL_TEST_TYPES: ReadonlySet<string> = new Set(['option', 'bool']);
 
