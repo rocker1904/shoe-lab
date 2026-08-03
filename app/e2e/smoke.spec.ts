@@ -1106,6 +1106,46 @@ for (const width of [360, 390]) {
  * and it is centred on that box's full height — at one line or three. This 1440px view is the
  * wrapped case, where both of those say something: two of the default figure columns take two lines.
  */
+/**
+ * The mark stands off its label by the same air whichever end of the name it is at. The mark's box
+ * is `--caret-w` and its glyph is narrower, so the slack inside that box has to fall on the side the
+ * NAME is on — and it did not: a trailing mark left 3px between glyph and label while a leading one
+ * left 0 and touched the first letter, because the glyph was packed to the box's end in both
+ * (docs/app.md §Table presentation).
+ *
+ * Measured glyph to ink, not box to ink, because the box abuts the label in both kinds by
+ * construction and would report 0 either way — the defect is entirely inside it.
+ */
+test('gives the sort mark the same air whichever end of the name it takes', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+
+  const cols = await page.evaluate(() => [...document.querySelectorAll('table thead th')].flatMap((th) => {
+    const line = th.querySelector('.h-line');
+    const text = line ? [...line.childNodes].filter((n) => n.nodeType === 3 && n.textContent!.trim()) : [];
+    if (!text.length) return [];
+    const range = document.createRange();
+    range.setStart(text[0]!, 0);
+    range.setEnd(text.at(-1)!, text.at(-1)!.textContent!.length);
+    const ink = range.getBoundingClientRect();
+    const glyph = th.querySelector('.caret svg')!.getBoundingClientRect();
+    // A figure column's mark leads, so its air is to the glyph's right; a phrase column's trails.
+    const leads = th.classList.contains('fig');
+    return [{ col: (th as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+              leads,
+              air: Math.round(leads ? ink.left - glyph.right : glyph.left - ink.right) }];
+  }));
+
+  // Both kinds are on screen in the default view, or this proves nothing.
+  expect(cols.some((c) => c.leads), 'no figure column in the default view').toBe(true);
+  expect(cols.some((c) => !c.leads), 'no phrase column in the default view').toBe(true);
+  const airs = [...new Set(cols.map((c) => c.air))];
+  expect(airs, `air differs by column kind: ${JSON.stringify(cols)}`).toHaveLength(1);
+  // And it is air, not a join: the mark reads as beside the name rather than part of it.
+  expect(airs[0]).toBeGreaterThan(0);
+});
+
 test('lines a figure header up with its own unit line at 1440px', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');

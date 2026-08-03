@@ -287,6 +287,15 @@
      line is aligned to, and both run flush to the edge the figures keep
      (docs/app.md §Table presentation). */
   th.fig .h-line { flex-direction: row-reverse; }
+  /* And the air inside the mark's box follows it to that end. The box is `--caret-w` against a 9px
+     glyph, and `SortCaret` packs the glyph to the box's END — which puts the 3px of slack between
+     glyph and name where the mark TRAILS, and on the far side where it leads, so a figure column's
+     mark touched its first letter while a phrase column's stood 3px off. Reversing the packing with
+     the direction keeps the slack on the name's side in both, which is the only place it reads as
+     air rather than as a gap in the header (docs/app.md §Table presentation).
+     Written here beside the rule it belongs to rather than in `SortCaret`: which end the mark takes
+     is this table's decision, and the air is the same decision seen from inside the box. */
+  th.fig .h-line :global(.caret) { justify-content: flex-start; }
   td { border-bottom: 1px solid var(--border-soft); padding: var(--s2); }
   /* THE PANEL IS THE RECESSED SURFACE, so nothing may be drawn around it. This cell took the
      figures' own `--s2` and paints nothing itself, which framed the `--well` panel in 8px of the

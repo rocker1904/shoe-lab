@@ -1163,6 +1163,14 @@ bottom-aligns what sits in it, so centring against *that* would centre against
 the reserve, and a one-line name in a two-line box would take its mark a whole
 line above itself.
 
+**The air inside the mark's box follows the mark's end.** The box is `--caret-w`
+against a 9px glyph, so 3px of it is slack, and that slack has to fall on the
+side the name is on or it is not air at all. Packing the glyph one way for both
+ends left a figure column's mark touching its first letter while a phrase
+column's stood 3px off — `justify-content` therefore reverses with
+`flex-direction`, and `smoke.spec.ts` holds every column, both kinds, to one
+glyph-to-ink number.
+
 Two placements were tried before this one and both are instructive. An
 out-of-flow **corner** mark aligned perfectly and read as unrelated to its label
 once a column was wide. An **in-flow** mark hugged the label at every width and
