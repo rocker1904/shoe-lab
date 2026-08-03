@@ -3329,6 +3329,85 @@
       "whoShouldBuy": "<p>The adidas Supernova Prima 2 stands out to us as a solid option for:</p>\n<ul>\n<li>Neutral runners looking for a daily trainer that blends good energy return, cushioning, and all-day comfort.</li>\n<li>Runners who prefer an average-width platform instead of ultra-wide designs but still want a decent amount of foam underfoot.</li>\n<li>Heel strikers who benefit from an aggressive heel bevel and want a running shoe for daily mileage.</li>\n<li>Fans of the first version who want a similar experience with small refinements and a lighter build.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think that runners looking for a truly do-it-all, fast-paced trainer may find this shoe a bit limited. In our testing, it lacks the agile feel needed for tempo runs, so we believe there are better choices like the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a>—both more dynamic and cheaper.</p>\n\n    \n    \n\n<p>We also believe outsole durability is a concern. From our lab results, wear can appear sooner than expected, making it less appealing for long-term use. We recommend the <a href=\"https://runrepeat.com/uk/mizuno-neo-vista-2\" rel=\"noopener\" target=\"_blank\">Mizuno Neo Vista 2</a> or <a href=\"https://runrepeat.com/uk/brooks-ghost-max-3\" rel=\"noopener\" target=\"_blank\">Brooks Ghost Max 3</a> as more durable alternatives.</p>\n<p></p>"
     },
+    "adidas-supernova-prima-3": {
+      "brand": "adidas",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Needs to lose a bit of weight",
+        "Outsole durability could be better",
+        "Not for narrow feet",
+        "Low toebox height limits orthotic options"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41391/adidas-supernova-prima-3-25309851-720.jpg",
+      "intro": "The adidas Supernova Prima 3 is a clear step forward for the series. We found in the lab that the new foam delivers excellent energy return, while the redesigned tongue, roomy fit, and smoother rocker create a more comfortable and enjoyable ride than before. We were also impressed by how adidas achieved good stability without resorting to an extra-wide platform, preserving the agile feel that sets the Supernova series apart from many rivals. The added weight is the biggest compromise and reduces its versatility, but we still believe it's a very good daily trainer.",
+      "latestVersion": null,
+      "msrpGbp": 160,
+      "name": "adidas Supernova Prima 3",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "adidas Supernova Prima 2",
+        "slug": "adidas-supernova-prima-2"
+      },
+      "productId": 41391,
+      "pros": [
+        "First-class energy return",
+        "Amazing for easy miles",
+        "Stable ride without oversized platform",
+        "Roomy fit suits many foot shapes",
+        "Ideal for heel strikers",
+        "Durable upper resists wear",
+        "Excellent for cold weather",
+        "Great value for premium cushioning tech",
+        "Good option for beginners",
+        "More cushioning than v2"
+      ],
+      "releasedAt": "2026-07-15",
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-supernova-prima-3",
+      "score": 89,
+      "scrapedAt": "2026-08-03T09:54:20.757Z",
+      "whoShouldBuy": "<p>After our tests, we can recommend the adidas Supernova Prima 3 for:</p>\n<ul>\n<li>Runners looking for a reliable daily trainer with an energetic midsole and excellent comfort for everyday mileage.</li>\n<li>Heel strikers who prefer a high-drop shoe with generous cushioning and smooth impact protection.</li>\n<li>Those who want a well-cushioned ride without the bulky feel of today's extra-wide midsoles, preserving agility through corners and turns.</li>\n<li>Fans of previous Supernova models with Dreamstrike+ who want to try adidas' latest cushioning technology.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>Despite packing a premium midsole foam, the Supernova Prima 3 also comes with a high weight too. That makes it less appealing for faster-paced runs, and we believe runners focused on speed or wanting more versatility will be better served by shoes like the <a href=\"https://runrepeat.com/uk/asics-novablast-6\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 6</a> or the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a>.</p>\n\n    \n    \n\n<p>We also think that the high stack height of the heel may feel excessive for lighter runners. If that sounds like you, the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-3\" rel=\"noopener\" target=\"_blank\">Supernova Rise 3</a> is worth considering, offering less stack and a more affordable price.</p>\n<p></p>"
+    },
     "adidas-supernova-rise": {
       "brand": "adidas",
       "categorySlug": "running-shoes",
@@ -8393,6 +8472,85 @@
       "scrapedAt": "2026-07-26T21:57:11.446Z",
       "whoShouldBuy": "<p>Based on our lab tests and run sessions, the ASICS Gel Pulse 16 is a solid option for:</p>\n<ul>\n<li>Beginners who want a stable ride and an outsole that holds up well over time.</li>\n<li>Heel strikers looking for a dependable daily trainer for easy and steady mileage at a fair price.</li>\n<li>Budget-focused runners who want a lightweight feel underfoot.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We believe that runners chasing energy return should skip the Gel Pulse 16 and spend a bit more. In our experience, the midsole feels flat and lacks spark, which is reasonable at this price. Shoes like the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> or the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> deliver a more energetic, lively-feeling ride.</p>\n\n    \n    \n\n<p>We also think the tapered toebox limits comfort for some foot shapes and may bother wider-footed runners. Instead, the <a href=\"https://runrepeat.com/uk/asics-noosa-tri-16\" rel=\"noopener\" target=\"_blank\">ASICS Noosa Tri 16</a> or the <a href=\"https://runrepeat.com/uk/adidas-galaxy-6\" rel=\"noopener\" target=\"_blank\">adidas Galaxy 6</a> offer a more accommodating, comfort-driven fit.</p>\n<p></p>"
+    },
+    "asics-gel-pulse-17": {
+      "brand": "ASICS",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Narrow forefoot",
+        "Ride still far from bouncy",
+        "Noticeable weight increase",
+        "Lacks flexibility"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41209/asics-gel-pulse-17-25294715-720.jpg",
+      "intro": "The ASICS Gel Pulse 17 continues to impress in the budget running shoe category. We found in the lab that ASICS upgraded it with a better foam, more cushioning, and an even more premium-feeling upper while preserving its impressively stable ride. The added weight and snug forefoot won't suit every runner, but we think those are reasonable trade-offs for what is still one of the easiest budget-friendly daily trainers to recommend.",
+      "latestVersion": null,
+      "msrpGbp": 100,
+      "name": "ASICS Gel Pulse 17",
+      "pageValues": {
+        "39": "none",
+        "40": "finger-loop",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "ASICS Gel Pulse 16",
+        "slug": "asics-gel-pulse-16"
+      },
+      "productId": 41209,
+      "pros": [
+        "Incredible value for money",
+        "Stable as a table",
+        "Premium-feeling upper",
+        "Good impact protection",
+        "Near maximalist stack height",
+        "Durable AHARPLUS rubber",
+        "Ortholite insole",
+        "Great choice for beginners",
+        "Improved energy return from new foam",
+        "Keeps the same price"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/asics-gel-pulse-17",
+      "score": 85,
+      "scrapedAt": "2026-08-03T09:54:21.675Z",
+      "whoShouldBuy": "<p>In our view, the ASICS Gel Pulse 17 is ideal for:</p>\n<ul>\n<li>Heel strikers looking for a stable daily trainer with plenty of cushioning at an affordable price.</li>\n<li>Fans of previous Gel Pulse models who want a touch more bounce without changing the familiar ride.</li>\n<li>Budget-conscious runners who appreciate a high-quality upper.</li>\n<li>Beginners seeking a protective, well-cushioned shoe that's easy to enjoy from the very first run.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>We found in the lab that the Gel Pulse 17 has a fairly snug forefoot, so it won't be the best match for everyone. If you prefer more room around your toes without spending more, we recommend the <a href=\"https://runrepeat.com/uk/adidas-galaxy-7\" rel=\"noopener\" target=\"_blank\">Adidas Galaxy 7</a> instead.</p>\n\n    \n    \n\n<p>We also think runners looking for a softer, plusher ride may want to explore other options. In that case, the <a href=\"https://runrepeat.com/uk/nike-winflo-12\" rel=\"noopener\" target=\"_blank\">Nike Winflo 12</a> and <a href=\"https://runrepeat.com/uk/new-balance-fresh-foam-680-v9\" rel=\"noopener\" target=\"_blank\">New Balance 680 v9</a> are two excellent alternatives.</p>\n<p></p>"
     },
     "asics-glideride-max": {
       "brand": "ASICS",
@@ -18700,6 +18858,118 @@
       "scrapedAt": "2026-07-26T21:59:18.988Z",
       "whoShouldBuy": "<p>We think the KURU Triple Max Ion is a good match for:</p>\n<ul>\n<li>Casual runners who log one or two easy runs a week and put comfort first.</li>\n<li>Heel strikers who benefit from a super-high heel-to-toe drop and aren’t bothered by extra weight.</li>\n<li>Anyone seeking strong arch support for everyday wear with the option for some jogging.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the KURU Triple Max Ion is simply too heavy for serious running. In our lab tests, we found the massive weight limits its usability, making it a poor choice beyond short, easy efforts. Instead, we suggest the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a>, or the <a href=\"https://runrepeat.com/uk/mizuno-wave-rider-28\" rel=\"noopener\" target=\"_blank\">Mizuno Wave Rider 28</a> for those who still want a higher drop.</p>\n\n    \n    \n\n<p>Additionally, our analysis indicates that the low energy return makes it unsuitable for runners seeking performance. If you enjoy an energetic ride, the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or the <a href=\"https://runrepeat.com/uk/nike-vomero-plus\" rel=\"noopener\" target=\"_blank\">Nike Vomero Plus</a> are far better options.</p>\n<p></p>"
+    },
+    "la-sportiva-ultra-raptor-3": {
+      "brand": "La Sportiva",
+      "categorySlug": "hiking-shoes",
+      "cons": [
+        "Poor breathability for warm weather",
+        "Upper materials lack durability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Lightweight",
+        "Removable insole",
+        "Heel brake",
+        "Orthotic friendly"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41245/la-sportiva-ultra-raptor-3-lab-test-and-review-25301010-720.jpg",
+      "intro": "Our lab tests confirmed that the La Sportiva Ultra Raptor 3 continues to bridge the gap between rugged stability and freedom of movement with its light and agile build. And that's exactly what makes it a perfect package for traversing technical and obstacle-laden routes. Although this La Sportiva shoe offers little comfort for long, slow hauls, we can always trust it on a steep and demanding slope. Even better, the Ultra Raptor 3 broadens its target audience by finally offering a much more accommodating fit!",
+      "latestVersion": null,
+      "msrpGbp": 169,
+      "name": "La Sportiva Ultra Raptor 3",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "finger-loop",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "La Sportiva Ultra Raptor II",
+        "slug": "la-sportiva-ultra-raptor-ii"
+      },
+      "productId": 41245,
+      "pros": [
+        "Fantastic stability on technical terrain",
+        "Excellent grip on varied surfaces",
+        "Lighter than average",
+        "True to width (roomier than v2)",
+        "Good forefoot flexibility",
+        "Secure foot lockdown",
+        "Great protection from rocks and debris"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/la-sportiva-ultra-raptor-3",
+      "score": 88,
+      "scrapedAt": "2026-08-03T09:54:22.587Z",
+      "whoShouldBuy": "<p>We believe that the La Sportiva Ultra Raptor 3 is a must to consider if you:</p>\n<ul>\n<li>need a highly stable yet agile beast for technical terrain</li>\n<li>prefer lighter shoes for fast-paced hikes</li>\n<li>found the Ultra Raptor 2's fit too snug</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>La Sportiva positions the non-GTX version of the Ultra Raptor 3 as a perfect summer-ready hiking shoe, but our own breathability tests contradict that statement. If you want to keep your feet fresh and dry while tackling rocky trails in summer heat, try the <a href=\"https://runrepeat.com/uk/la-sportiva-prodigio-max\" rel=\"noopener\" target=\"_blank\">La Sportiva Prodigio Max</a> instead.</p>\n\n    \n    \n\n<p>Another reason to look away from the Ultra Raptor 3 is if your outdoor adventures involve less challenging trails and you could use more comfort and cushioning for longer distances. In that case, you might prefer shoes like the <a href=\"https://runrepeat.com/uk/danner-trail-2650\" rel=\"noopener\" target=\"_blank\">Danner Trail 2650</a> or the cheaper <a href=\"https://runrepeat.com/uk/merrell-moab-speed-2\" rel=\"noopener\" target=\"_blank\">Merrell Moab Speed 2</a>.</p>\n<p></p>"
+    },
+    "merrell-speed-strike-2": {
+      "brand": "Merrell",
+      "categorySlug": "hiking-shoes",
+      "cons": [
+        "Poor breathability",
+        "Upper lacks durability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Lightweight",
+        "Removable insole",
+        "Orthotic friendly"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/40704/merrell-speed-strike-2-lab-test-and-review-25297949-720.jpg",
+      "intro": "As a takedown model of the Merrell Moab Speed 2, the Speed Strike 2 looks nearly identical to its more expensive counterpart. However, our lab tests quickly revealed the tradeoffs made to keep the Speed Strike 2's costs down. The best way to describe the shoe would be 'just enough.' With no standout characteristics, it offers just enough comfort and support for more relaxed, less technical hikes. And it completes a great gorpcore outfit!",
+      "latestVersion": null,
+      "msrpGbp": 100,
+      "name": "Merrell Speed Strike 2",
+      "pageValues": {
+        "39": "none",
+        "40": "finger-loop",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 40704,
+      "pros": [
+        "Comfortable for long hikes/walks",
+        "Lighter than average",
+        "Great grip on light-to-moderate terrain",
+        "True medium width (+ wide avaialble)",
+        "Reliable support for easier hikes",
+        "Warm for spring and fall",
+        "Durable rubber outsole"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/merrell-speed-strike-2",
+      "score": 77,
+      "scrapedAt": "2026-08-03T09:54:24.189Z",
+      "whoShouldBuy": "<p>We think that the Speed Strike 2 can be an excellent choice for people who:</p>\n<ul>\n<li>need a door-to-trail shoe that fits both in the city and on the trail</li>\n<li>go on less challenging hikes on light and moderate terrain</li>\n<li>want a rugged-looking yet lightweight outdoor shoe</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>If you expect to embark on a more demanding hike, we highly recommend stretching the budget and getting the <a href=\"https://runrepeat.com/uk/merrell-moab-speed-2\" rel=\"noopener\" target=\"_blank\">Merrell Moab Speed 2</a> instead. This shoe provides much better shock absorption, upper durability, and breathability at an even lighter weight!</p>\n\n    \n    \n\n<p>And if you anticipate some rocky, technical terrain on your future adventures, the <a href=\"https://runrepeat.com/uk/merrell-moab-3\" rel=\"noopener\" target=\"_blank\">Merrell Moab 3</a> would be a more suitable choice.</p>\n<p></p>"
     },
     "merrell-vapor-glove-6": {
       "brand": "Merrell",
@@ -31625,6 +31895,67 @@
       "whoShouldBuy": "<p>Consider the X Ultra 360 Edge if you recognise yourself in the following:</p>\n<ul>\n<li>you need a sturdy shoe for shorter hikes on mixed terrain (from rocks to mud)</li>\n<li>you prefer trail awareness over max-cushioned platforms</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The rigid nature of this Salomon shoe might be a turn-off for people who value pure comfort and cushioning on the trail. That's the realm of HOKA shoes like the <a href=\"https://runrepeat.com/uk/hoka-anacapa-2-low-gtx\" rel=\"noopener\" target=\"_blank\">Anacapa 2 Low GTX</a>.</p>\n\n    \n    \n\n<p>Another dealbreaker could be the shoe's snug toebox, and in that case, the <a href=\"https://runrepeat.com/uk/merrell-moab-speed-2\" rel=\"noopener\" target=\"_blank\">Merrell Moab Speed 2</a> is likely to be more suitable.</p>\n<p></p>\n<p>You might as well want to know the differences between the X Ultra 360 Edge variations themselves to figure out which one matches you neds the most:</p>\n<ul>\n<li>X Ultra 360 Edge GTX: the shoe's waterproof Gore-Tex version</li>\n<li><a href=\"https://runrepeat.com/uk/salomon-x-ultra-360\" rel=\"noopener\" target=\"_blank\">X Ultra 360</a>: the cheapest version in the series with no recycled materials</li>\n<li>X Ultra 360 Leather GTX: like the X Ultra 360 but with Gore-Tex waterproofing and genuine leather in the upper</li>\n</ul>"
     },
+    "salomon-x-ultra-5-gtx": {
+      "brand": "Salomon",
+      "categorySlug": "hiking-shoes",
+      "cons": [
+        "Minimal cushioning",
+        "Poor breathability",
+        "Narrow fit"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Lightweight",
+        "Removable insole",
+        "Heel brake",
+        "Orthotic friendly"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/40722/salomon-x-ultra-5-gtx-lab-test-and-review-25284827-720.jpg",
+      "intro": "Having scrutinized every aspect of the Salomon X Ultra 5 GTX in our lab, we can confirm that this shoe will keep you stable and in control even when the trail gets wild. Sure, it's not the cushiest or most comfortable trail option but its all-terrain performance is hard to beat! It's a confidence-inspiring machine that protects the foot from debris and elements while staying unscathed itself.",
+      "latestVersion": null,
+      "msrpGbp": 175,
+      "name": "Salomon X Ultra 5 GTX",
+      "pageValues": {
+        "39": "none",
+        "40": "finger-loop",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Salomon X Ultra 4 GTX",
+        "slug": "salomon-x-ultra-4-gtx"
+      },
+      "productId": 40722,
+      "pros": [
+        "Exceptionally stable for technical terrain",
+        "Feels connected to the trail",
+        "Excellent grip on mixed terrain",
+        "Great balance of stability and agility",
+        "Solid GTX waterproofing",
+        "Reliable durability",
+        "Secure lockdown"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/salomon-x-ultra-5-gtx",
+      "score": 86,
+      "scrapedAt": "2026-08-03T09:54:25.038Z",
+      "whoShouldBuy": "<p>In our opinion, you won't be disappointed in the Salomon X Ultra 5 GTX if you expect the following:</p>\n<ul>\n<li>a high level of stability and surefootedness on challenging trails</li>\n<li>a durable and protective shoe with moderate weight</li>\n<li>a highly secure one-to-one fit</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>A complete opposite of plush and cosy, this Salomon shoe can feel too firm and unforgiving to some hikers, especially if they stick to moderate, less rocky, and more hard-packed trails. In that case, the <a href=\"https://runrepeat.com/uk/hoka-anacapa-2-low-gtx\" rel=\"noopener\" target=\"_blank\">HOKA Anacapa 2 Low GTX</a> or the <a href=\"https://runrepeat.com/uk/danner-trail-2650-gtx\" rel=\"noopener\" target=\"_blank\">Danner Trail 2650 GTX</a> can feel more at home.</p>\n\n    \n    \n\n<p>The <a href=\"https://runrepeat.com/uk/merrell-moab-3-gtx\" rel=\"noopener\" target=\"_blank\">Merrell Moab 3 GTX</a> is another highly regarded and versatile option, especially if you need a roomier fit or even a wide width.</p>\n<p></p>"
+    },
     "salomon-x-ultra-5-mid-gtx": {
       "brand": "Salomon",
       "categorySlug": "hiking-boots",
@@ -35610,6 +35941,166 @@
       "whoShouldBuy": "<p>After running in it and testing it in the lab, we can recommend the Topo Spectre 2 for:</p>\n<ul>\n<li>Runners looking for a versatile and lightweight shoe that feels super quick and offers a very roomy toebox for natural toe movement. That's quite a rare combination!</li>\n<li>Midfoot and forefoot strikers who want one shoe that can handle easy runs, tempo sessions, and long distances.</li>\n<li>Those who prefer non-mainstream brands and need a shoe that works especially well for high-volume feet.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We do not recommend the Topo Spectre 2 for runners who want a plush, cloud-like feel underfoot. We found in the lab that its firm Pebax foam feels responsive but clearly dense, so if you want soft cushioning, the <a href=\"https://runrepeat.com/uk/nike-vomero-18\" rel=\"noopener\" target=\"_blank\">Nike Vomero 18</a> or <a href=\"https://runrepeat.com/uk/new-balance-fuel-cell-rebel-v-5\" rel=\"noopener\" target=\"_blank\">New Balance FuelCell Rebel v5</a> make more sense.</p>\n\n    \n    \n\n<p>We also think the ultra-wide toebox can be a deal-breaker for some runners. For similar performance and price with a more average fit, we believe the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> are better choices.</p>\n<p></p>"
     },
+    "topo-atmos-2": {
+      "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Slight weight gain",
+        "Less stable than v1",
+        "Too roomy for slim feet",
+        "Lacks energy return"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41119/topo-atmos-2-25304847-720.jpg",
+      "intro": "The Atmos 2 is Topo's most cushioned road shoe yet, and we believe the updates make it a real improvement over the original. The softer foam and increased flexibility create a smoother, comfort-focused ride that performs wonderfully on easy runs and long days on your feet. However, we found in the lab that the midsole still lacks the bounce expected at this price. In our opinion, runners who value comfort over speed will appreciate it most, especially if they have wide or high-volume feet.",
+      "latestVersion": null,
+      "msrpGbp": 165,
+      "name": "Topo Atmos 2",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Topo Atmos",
+        "slug": "topo-athletic-atmos"
+      },
+      "productId": 41119,
+      "pros": [
+        "Softer, more comfortable midsole",
+        "Exceptionally roomy anatomical toebox",
+        "Deep cushioning for easy miles",
+        "Reasonably flexible despite high stack",
+        "Good outsole durability",
+        "Comfortable upper",
+        "Performs well in cold weather",
+        "Smooth, predictable ride",
+        "Good option for all-day wear too"
+      ],
+      "releasedAt": "2025-12-01",
+      "runrepeatUrl": "https://runrepeat.com/uk/topo-atmos-2",
+      "score": 83,
+      "scrapedAt": "2026-08-03T09:54:25.514Z",
+      "whoShouldBuy": "<p>We analysed the Topo Atmos 2 and concluded that:</p>\n<ul>\n<li>It's a great upgrade over the original Atmos, especially if you wanted a softer and more comfortable ride.</li>\n<li>The roomy, anatomical toebox is an excellent match for runners with high-volume feet.</li>\n<li>Midfoot strikers with wide feet will enjoy this shoe for easy daily miles.</li>\n<li>It's also a great choice for anyone looking for a mid-drop running shoe that works well for all-day wear.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The extremely spacious toebox of the Atmos 2 may feel overly roomy for runners with narrow feet, making it harder to achieve a secure lockdown. Instead, we recommend the <a href=\"https://runrepeat.com/uk/asics-novablast-6\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 6</a> and the <a href=\"https://runrepeat.com/uk/saucony-triumph-23\" rel=\"noopener\" target=\"_blank\">Saucony Triumph 23</a>.</p>\n\n    \n    \n\n<p>We also found that the Atmos 2 lacks the energy return needed for a truly versatile ride, which could be a deal-breaker for some runners. Instead, the <a href=\"https://runrepeat.com/uk/adidas-ultraboost-5\" rel=\"noopener\" target=\"_blank\">Adidas Ultraboost 5</a> combines a wide-foot-friendly fit with a noticeably more energetic and responsive underfoot feel.</p>\n<p></p>"
+    },
+    "topo-cyclone-3": {
+      "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Not for low-volume feet",
+        "Poor upper durability",
+        "Lacks stability",
+        "Minor price bump"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/40763/topo-cyclone-3-25301056-720.jpg",
+      "intro": "The Topo Cyclone 3 stays true to what made the previous version such a fun and fast trainer. The refined upper brings meaningful improvements, while the lightweight Pebax midsole continues to deliver an energetic, natural ride that shines during tempo runs. We also loved how the roomy foot-shaped toebox gave our toes plenty of space without taking away from the shoe's agile feel. However, the limited stability and disappointing upper durability make it harder for us to recommend it to a wider range of runners.",
+      "latestVersion": null,
+      "msrpGbp": 155,
+      "name": "Topo Cyclone 3",
+      "pageValues": {
+        "39": "none",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Topo Cyclone 2",
+        "slug": "topo-athletic-cyclone-2"
+      },
+      "productId": 40763,
+      "pros": [
+        "Exceptionally lightweight and agile",
+        "Ideal for tempo runs",
+        "Pebax midsole delivers good bounce",
+        "Amazing ground feel and natural ride",
+        "Spacious, foot-shaped toebox",
+        "Works well for high-volume feet",
+        "Smooth, quick transitions",
+        "Perfect stepping stone towards zero drop",
+        "Improved upper design from v2",
+        "Promotes feet strength"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/topo-cyclone-3",
+      "score": 83,
+      "scrapedAt": "2026-08-03T09:54:26.716Z",
+      "whoShouldBuy": "<p>We think the Topo Cyclone 3 is an excellent choice for:</p>\n<ul>\n<li>Runners looking for a low-stack, low-drop shoe as a stepping stone toward zero-drop designs.</li>\n<li>Anyone who wants a lightweight, energetic tempo trainer with a natural ride.</li>\n<li>Those with wide feet or anyone needing extra room for natural toe splay in a fast shoe.</li>\n<li>Cyclone 2 fans who hated the oversized midsole Topo logo.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The Topo Cyclone 3 isn't the right choice for runners who want maximum shock absorption. Instead, we recommend the Saucony Endorphin Azura, which delivers a similar Pebax-based foam while offering substantially more cushioning underfoot.</p>\n\n    \n    \n\n<p>We also think that runners with narrow feet may struggle to achieve a secure fit in the Cyclone 3. Instead, the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-9\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios 9</a> offers a much more snug, race-ready fit that's better suited to slimmer foot shapes.</p>\n<p></p>"
+    },
     "topo-phantom-4": {
       "brand": "Topo Athletic",
       "categorySlug": "running-shoes",
@@ -35837,6 +36328,88 @@
       "scrapedAt": "2026-07-26T22:02:55.503Z",
       "whoShouldBuy": "<p>In our opinion, the Topo Ultrafly 5 is a good buy for those who:</p>\n<ul>\n<li>Have wide feet and want a stable daily trainer that feels secure without being stiff.</li>\n<li>Are looking for a rare mix of a wide toebox, low drop, and a moderate stack height.</li>\n<li>Need one shoe that works for easy runs and everyday use, with light support built in.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We do not recommend the Ultrafly 5 for runners with narrow feet. We found in the lab that its extra-roomy fit feels overly spacious, and that can be a problem for some of you. Check the <a href=\"https://runrepeat.com/uk/asics-gt-2000-14\" rel=\"noopener\" target=\"_blank\">ASICS GT 2000 14</a> or the <a href=\"https://runrepeat.com/uk/on-cloudflyer-5\" rel=\"noopener\" target=\"_blank\">On Cloudflyer 5</a> instead!</p>\n\n    \n    \n\n<p>We also think it’s not the best choice for runners chasing maximum cushioning. During testing, we noted the midsole feels clearly thinner and less protective than expected. We believe there are better choices for those seeking top-tier shock absorption in a stability shoe, such as the <a href=\"https://runrepeat.com/uk/nike-structure-26\" rel=\"noopener\" target=\"_blank\">Nike Structure 26</a> or the <a href=\"https://runrepeat.com/uk/hoka-arahi-8\" rel=\"noopener\" target=\"_blank\">HOKA Arahi 8</a>.</p>\n<p></p>"
+    },
+    "topo-ultrafly-6": {
+      "brand": "Topo Athletic",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Outdated midsole tech",
+        "Low shock absorption",
+        "Limited to easy runs",
+        "High torsional rigidity may bother some"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "stability",
+            "text": "Stability"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Sustainable"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41249/topo-ultrafly-6-25321067-720.jpg",
+      "intro": "The Topo Ultrafly 6 is an update that focuses on refining the details instead of changing its personality. During our testing, we really liked the lighter upper, improved outsole, and excellent support, all while keeping the familiar fit and feel that longtime fans expect. However, we found that the ageing ZipFoam midsole continues to hold this shoe back, delivering a dull ride with limited energy return. From our perspective, it remains a dependable stability trainer that performs reliably every day, but it won't inspire you to run faster or farther.",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "Topo Ultrafly 6",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Topo Ultrafly 5",
+        "slug": "topo-ultrafly-5"
+      },
+      "productId": 41249,
+      "pros": [
+        "Anatomical toebox allows for toe splay",
+        "Stable ride with updated support",
+        "Secure fit despite roomy forefoot",
+        "Ideal option for custom orthotics",
+        "Outstanding outsole durability",
+        "Comfortable upper",
+        "Looks a bit better than previous models",
+        "Doubles as a walking shoe",
+        "Interesting pick for beginners﻿"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/topo-ultrafly-6",
+      "score": 82,
+      "scrapedAt": "2026-08-03T09:54:28.203Z",
+      "whoShouldBuy": "<p>The Topo Ultrafly 6 is a solid choice for runners who:</p>\n<ul>\n<li>Need an anatomical fit with plenty of room for natural toe splay without sacrificing a secure midfoot lockdown.</li>\n<li>Prefer a firm, stable ride over the ultra-soft feel found in many modern daily trainers.</li>\n<li>Land on the midfoot or forefoot and want a stability shoe with a moderate heel-to-toe drop.</li>\n<li>Prioritise long-lasting durability and reliable support for everyday training.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>Heavier runners, or anyone seeking maximum shock absorption, should probably skip the Ultrafly 6, as it simply doesn't offer enough cushioning. Instead, we recommend the <a href=\"https://runrepeat.com/uk/saucony-hurricane-25\" rel=\"noopener\" target=\"_blank\">Saucony Hurricane 25</a> or the <a href=\"https://runrepeat.com/uk/nike-structure-plus\" rel=\"noopener\" target=\"_blank\">Nike Structure Plus</a>.</p>\n\n    \n    \n\n<p>We also believe that neutral runners should 100% skip this shoe. The <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> or <a href=\"https://runrepeat.com/uk/topo-athletic-specter-2\" rel=\"noopener\" target=\"_blank\">Topo Spectre 2</a> both deliver a noticeably more lively and fun ride thanks to their Pebax midsole.</p>\n<p></p>"
     },
     "tyr-maverick-v-1-runner": {
       "brand": "TYR",
