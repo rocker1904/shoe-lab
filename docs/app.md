@@ -44,14 +44,16 @@ a promise about copying — that promise was made here once and measured false a
 52ms.
 
 `ViewState` carries **no zone**. Which half of each zone pair a view is
-about is read back out of it by `zoneOf` (§The zone is a preset too), so the
-baseline is a constant: `defaultView()` takes no argument and `DEFAULT_ZONE`
-is the one place `'heel'` is written. `defaultColumns` still *requires* a zone,
-which is what stops a second call site defaulting by accident. `parseView`
-reads `zone=` and `story=` first, in a pre-pass that picks which baseline
-the rest of the function starts from (§URL encoding); past that pre-pass
-nothing else resolves before it, and the columns the resulting view carries
-are still the zone it carries.
+about is read back out of it by `zoneOf` (§The zone is a preset too).
+`defaultView()` itself stays a constant — it takes no argument, and
+`DEFAULT_ZONE` is the one place `'heel'` is written as the default.
+`defaultColumns` still *requires* a zone, which is what stops a second call
+site defaulting by accident. `parseView`'s own baseline is no longer always
+`defaultView()`: it reads `zone=` and `story=` first, in a pre-pass that
+picks which baseline the rest of the function starts from (§URL encoding),
+and that baseline reduces back to `defaultView()` exactly only when neither
+token is present. Past the pre-pass nothing else resolves, and the columns
+the resulting view carries are still the zone it carries.
 
 Init takes a query string or the defaults, and nothing else can speak. **An
 address that carries nothing this app owns is a fresh start**, whoever is arriving
@@ -278,10 +280,13 @@ value drops the token rather than carrying it inert, because a bad baseline
 rewrites the whole table where a bad column costs one cell (docs/policies.md
 §State ownership and validation). Every other token in this section still
 layers over whichever baseline resulted — `?story=easy&sort=-weight`
-is Easy's table sorted by weight, and `?zone=forefoot&cols=score` is one
-column. `serializeView` does not emit either token yet; the zone and the
-story both still ride in `cols` (and, for a story, in `plate` and `sort`
-too) alone on the way out.
+is Easy's table sorted by weight, and `?zone=forefoot&cols=score` is
+one column — with one exception: `plate` has no spelling for absent, so
+`story=easy&plate=` leaves Easy's own gate standing rather than clearing it;
+a token can only override a baseline's gate by naming a different one; it
+cannot unset it. `serializeView` does not emit either token yet; the zone
+and the story both still ride in `cols` (and, for a story, in `plate` and
+`sort` too) alone on the way out.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, never throwing: range and sort keys must name a numeric test

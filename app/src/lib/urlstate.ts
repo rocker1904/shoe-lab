@@ -1,7 +1,7 @@
 import type { Plate } from '../../../shared/types.js';
 import { isCategorical } from './categorical';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, type Zone } from './lineage';
+import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, ZONES, type Zone } from './lineage';
 import { applyPreset, PRESETS } from './presets';
 import { startOfMonth } from './release-date';
 import { DEFAULT_SORT, DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
@@ -124,8 +124,9 @@ export function serializeView(v: ViewState): string {
  * rather than permissive, unlike `cols`: an unrecognised `zone` or `story` value drops that token —
  * leaving whichever valid occurrence, if any, came before it — rather than carrying it inert, because
  * a bad baseline rewrites the whole table where a bad column costs one cell
- * (docs/policies.md §State ownership and validation). Story ids come from `PRESETS` rather than a
- * list restated here (docs/policies.md §Vocabulary).
+ * (docs/policies.md §State ownership and validation). The accepted values are both derived rather
+ * than restated — zones from `ZONES`, story ids from `PRESETS` — for the same reason
+ * (docs/policies.md §Vocabulary).
  *
  * `stability: false` here is only equivalent to omitting the argument because `applyPreset` reads it
  * for nothing but the field it assigns — asserted in presets.test.ts
@@ -136,8 +137,12 @@ function baselineFrom(p: URLSearchParams): ViewState {
   let zone: Zone = DEFAULT_ZONE;
   let story: string | undefined;
   for (const [key, raw] of p.entries()) {
-    if (key === 'zone' && (raw === 'heel' || raw === 'forefoot')) zone = raw;
-    else if (key === 'story' && PRESETS.some((preset) => preset.id === raw)) story = raw;
+    if (key === 'zone') {
+      const z = ZONES.find((candidate) => candidate === raw);
+      if (z) zone = z;
+    } else if (key === 'story' && PRESETS.some((preset) => preset.id === raw)) {
+      story = raw;
+    }
   }
   return story ? applyPreset(story, zone, false) : { ...defaultView(), columns: defaultColumns(zone) };
 }

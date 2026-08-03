@@ -22,6 +22,10 @@ export type ResolvedMetric =
 
 /** Which end of the shoe a reading describes, and which end the runner lands on. */
 export type Zone = 'heel' | 'forefoot';
+/** The two zones, in the order a runtime list of them is built — the type above has no runtime
+ *  form of its own, and a second literal pair naming the same two values is a second home for one
+ *  fact (docs/policies.md §Vocabulary). */
+export const ZONES: readonly Zone[] = ['heel', 'forefoot'];
 
 /**
  * Heel/forefoot pairs and the zone of each half. The catalogue links only two of these four and

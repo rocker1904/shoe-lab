@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { coverageOf, isSparse } from './coverage';
 import { indexTests, type TestIndex } from './dataset';
-import { ZONE_PAIRS, zoneKey, type Zone } from './lineage';
+import { ZONE_PAIRS, ZONES, zoneKey, type Zone } from './lineage';
 import { applyPreset, PRESETS } from './presets';
 import { defForPreset, EASY, RACE, TEMPO } from './score-defs';
 import { zoneOf } from './zone';
@@ -12,7 +12,6 @@ import { defaultColumns, defaultView, type ViewState } from './view';
 import type { Shoe } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
-const ZONES: Zone[] = ['heel', 'forefoot'];
 /**
  * Acceptance criterion 9 as a function rather than an inline loop, so it can be pointed at a
  * counter-example as well as at the presets. Uses `isSparse` rather than open-coding the
@@ -43,6 +42,21 @@ describe('presets', () => {
   });
   it('throws on an unknown id', () => {
     expect(() => applyPreset('nope', 'heel', false)).toThrow();
+  });
+  /**
+   * `urlstate.ts`'s `baselineFrom` trusts `PRESETS` to enumerate every id `applyPreset` can build,
+   * because it validates `story=` against `PRESETS` and then calls `applyPreset` with whatever
+   * passed. A `PRESETS` entry with no matching `switch` case would throw inside that call — a blank
+   * page on init rather than the dropped-token fallback `parseView` promises for hostile input
+   * (docs/policies.md §State ownership and validation) — so this is asserted on its own rather than
+   * left to a test that happens to loop the same pairs for an unrelated reason.
+   */
+  it('builds without throwing for every PRESETS id, under either zone', () => {
+    for (const zone of ZONES) {
+      for (const p of PRESETS) {
+        expect(() => applyPreset(p.id, zone, false), `${p.id}/${zone}`).not.toThrow();
+      }
+    }
   });
   // Recency is a strategy, not a story: buying last season's model cheap and buying the newest
   // thing are both valid, and neither is implied by the session (docs/shoe-stories.md).

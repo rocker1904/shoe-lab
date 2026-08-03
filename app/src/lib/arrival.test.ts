@@ -43,6 +43,15 @@ describe('isBareArrival', () => {
       expect(isBareArrival(), qs).toBe(true);
     }
   });
+  // A key merely *containing* `zone` or `story` is not the token — `OWNED` anchors each name with
+  // `^…$`, not a prefix match, and this is the guard that would catch a future edit loosening it.
+  // `zonezone` also rules out a naive `.repeat`-style match on the alternation.
+  it('is true for a key that merely contains zone or story, not names it', () => {
+    for (const qs of ['zonelike=x', 'storyboard=x', 'zonezone=x', 'myzone=x', 'story_id=x']) {
+      history.replaceState(null, '', `/?${qs}`);
+      expect(isBareArrival(), qs).toBe(true);
+    }
+  });
   /** The canonical address is what `Page.svelte` asks about, and it only ever holds owned keys —
    *  so a link whose every token parsing dropped canonicalises to nothing and reads as bare. */
   it('reads a composed address as bare exactly when it is empty', () => {
