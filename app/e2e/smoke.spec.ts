@@ -1725,13 +1725,17 @@ test('keeps a dropped column\'s header inside its declared column', async ({ pag
  * measured in. The measurement is the app's own function, handed to the page — the sweep and the
  * reason it looks like this live in `fit-support.ts`.
  *
- * The default set only, here and in `cross-browser.spec.ts`: a row's height is a function of its
- * NAME and the width the name wraps at, and the ladder inside the sweep already walks that width
- * from the narrowest mounting to 2560px. A second column set would re-ask the same question with
- * the same answer.
+ * **Two column sets, here and in `cross-browser.spec.ts`, and the second is not a repetition.** A
+ * row's height is a function of its NAME and the width that name wraps at, so the width is the only
+ * variable — but the default set never takes the name column much past 500px at any width in the
+ * ladder, and `minimal` is one numeric column, which leaves the name almost the whole table. That
+ * is the regime where a measurement built to out-run the column stops running: whatever a name is
+ * laid out against has to hold at every width the app can produce, not only the ones an
+ * eight-column view reaches (`app/src/lib/row-height.ts`).
  */
 test('renders every row at the height it measured', async ({ page }) => {
   await sweepRowHeights(page, FIT_SETS['default']!);
+  await sweepRowHeights(page, FIT_SETS['minimal']!);
 });
 
 /**

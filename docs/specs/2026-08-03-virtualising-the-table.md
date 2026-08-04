@@ -160,6 +160,22 @@ And **a line count is not a height**: a one-line row is not set by the name at
 all, so there is no base and no line step to multiply by — the height is read off
 a replica of the whole row, one per distinct line count.
 
+*Amended 2026-08-04, at review.* Two more sentences here were wrong, both found
+by measuring. **A line count is not what is read back either** — the name's own
+box is. A count has to be turned back into a height by a rule about what a line
+is worth, and that rule is face-dependent as well as engine-dependent, so a
+two-line Japanese name counts as three in Firefox and over-reserves. A row is
+now the taller of a measured floor — the row the table draws when the name is
+not what sets it — and the name's box plus what the row adds to it; the replica
+is two rows, one forced line and two, rather than one per distinct count. And
+**nothing may be measured off a live node**: a row's open state is drawn with a
+`transform`, a rect reports the transformed box, and a transform moves no
+layout — so an expanded row rendered exactly as before while every name in the
+fleet was laid out against a width 13px short. That is the plausible-but-wrong
+answer the `null` contract exists to prevent, reached by the most ordinary
+action there is, so every geometry now comes off a clone with that state
+stripped before it is attached.
+
 **The cache is keyed on width, and width is the fragile part — not row count.**
 Anything that changes how a name breaks invalidates every measured height at
 once: a resize, a browser zoom, a ticked column, and **the face swapping in
@@ -273,7 +289,7 @@ implementation* have no honest value until the thing exists.
 | A focused row and an open row are in the plan at any scroll position | `app/src/lib/virtual.test.ts` |
 | Spacer height equals the summed height of exactly the items it stands for | `app/src/lib/virtual.test.ts` |
 | Per-drag fleet-wide pass counts stay independent of fleet size | `app/src/recompute-budget.test.ts` (existing, must not regress) |
-| ~~Desktop row base and line step, in px~~ — **withdrawn at implementation: there is no such pair.** A row is 36px at one line and 53 at two, and every line after that adds 18, so the first step is not the step: one line is set by the rest of the row rather than by the name. Any base-and-step constant is therefore wrong at 445 of the fleet's 455 rows. Heights are read off a replica row per distinct line count instead, and the bound above holds them | `app/e2e/fit-support.ts` |
+| ~~Desktop row base and line step, in px~~ — **withdrawn at implementation: there is no such pair.** A row is 36px at one line and 53 at two, and every line after that adds 18, so the first step is not the step: one line is set by the rest of the row rather than by the name. Any base-and-step constant is therefore wrong at 445 of the fleet's 455 rows. A height is the taller of a measured floor and the name's own measured box instead, and the bound above holds it | `app/e2e/fit-support.ts` |
 | Phone shoe base and line step, in px | *measured at implementation*; `app/e2e/smoke.spec.ts` |
 | Overscan, in px | *measured at implementation*; asserted as behaviour in `virtual.test.ts` |
 
@@ -314,7 +330,9 @@ export interface RowHeights {
   heights(names: readonly NameEntry[]): number[] | null;   // null: cannot measure, render everything
   destroy(): void;
 }
-export function createRowHeights(onInvalidate: () => void): RowHeights;
+export function createRowHeights(
+  onInvalidate: () => void, measure?: typeof measureDesktopRowHeights,
+): RowHeights;    // `measure` is the seam the cache's own rules are tested through
 
 // Task 8's, unbuilt: the phone's ident cell wraps the name AND the metadata run, which varies with
 // the column set, so it is a different measurement and gets its own evidence.
@@ -457,7 +475,8 @@ owes it.
 | `FIT_DROPPED_COLS` in `app/e2e/fit-support.ts` | the raw-slug headers held to three engines. **Two claims, and only one of them is separate.** The min-content claim is one-sided where `FIT_SETS` carries a ±4px tolerance, which is why the array stands apart. The no-overflow claim is not separate at all: as of task 3 both names are passed to `sweepDeclaredColumns` and get an identical assertion, so a guard added to that sweep reaches the slug headers too and one added to only one caller is a bug |
 | `FIT_OVERFLOW_PX` and `measureExcursions` in `app/e2e/fit-support.ts` | **Paid by task 3 and owed again by tasks 4–6.** `measureExcursions` walks `thead th, tbody tr.shoe > *` — the rows in the DOM. Today that is the whole fleet, so "no cell's ink leaves its column" quantifies over every shoe. **Windowing the body silently narrows it to a windowful**, with no assertion failing and nothing in the bound to say its population changed: the widest cell in a column would simply stop being measured. Whoever lands the window either measures excursions with the window scrolled across the fleet, or states in the sweep's docblock what the bound now quantifies over. `FIT_OVERFLOW_PX`'s own size is justified against `--s2` where it is declared and does not move with this |
 | the slug length `urlstate.ts` accepts | bounds the worst raw-slug header the model can be asked for, and therefore the over-reserve's true ceiling |
-| `measureDesktopRowHeights` in `app/src/lib/row-height.ts` | **Quantifies over the whole fleet but reads the DOM for its prototypes, and tasks 5-6 change what is in the DOM.** It clones a live `tr.shoe` for the replica and copies a discontinued chip's markup from a rendered instance, because both carry Svelte-scoped classes that cannot be reconstructed. Windowing the body means the window may contain **no discontinued row**, and then there is no chip to copy: the function returns `null` — cannot measure — rather than a set of heights short by a chip, and the caller renders everything, which puts an instance back on the page and heals it. That is correct but it is a loop, so whoever lands the window must check it settles rather than alternating. The same applies to the row clone itself: with an empty window there is no row to clone at all |
+| `measureDesktopRowHeights` in `app/src/lib/row-height.ts` | **Quantifies over the whole fleet but reads the DOM for its prototypes, and tasks 5-6 change what is in the DOM.** It clones a live `tr.shoe` for the replica and copies a discontinued chip's markup from a rendered instance, because both carry Svelte-scoped classes that cannot be reconstructed. Windowing the body means the window may contain **no discontinued row**, and then there is no chip to copy: the function returns `null` — cannot measure — rather than a set of heights short by a chip, and the caller renders everything, which puts an instance back on the page and heals it. That is correct but it is a loop, so whoever lands the window must check it settles rather than alternating. The same applies to the row clone itself: with an empty window there is no row to clone at all. **The prototype is the FIRST `tr.shoe` in the DOM**, so under a window it is whichever row you have scrolled to rather than the first in the fleet — which is what made an expanded row's rotated chevron a live wrong answer, and windowing makes "is the prototype expanded" a far likelier state than it was. And `heights()` compares `names` by **identity**, so a caller that windows the filtered list and passes a per-render `map` misses the cache every time and pays the whole measurement per keystroke |
+| `renderedForNames` and `sweepRowHeights` in `app/e2e/fit-support.ts` | **The EVIDENCE narrows the same way the code does, and this is the row for it.** Ground truth is read from prototype rows found with `rows.find(…)` over `tbody tr.shoe`, so what the sweep quantifies over is whatever is in the DOM. A missing prototype now throws rather than skipping — losing the discontinued one silently dropped the chipped half of the bound while every assertion over the combined array still passed — but a windowed body would hand the sweep a different population without saying so, exactly as `FIT_OVERFLOW_PX` above |
 | `recompute-budget.test.ts`'s per-drag counts | must stay fleet-size-independent |
 
 ---
@@ -510,7 +529,7 @@ where to read first.
    overflow. Read spec §Decisions' width-guards paragraph. Independent of
    task 3 and may land before it.
 4. **Bulk height measurement.** One hidden container per name-column width,
-   line counts read back; no font table, no derivation. The `discontinued` chip
+   each name's own box read back; no font table, no derivation. The `discontinued` chip
    is an inline nowrap token after the name and is part of what gets laid out.
    Evidence: the measured-equals-rendered bound over the whole fleet in three
    engines, and the cost bound. Not unit-testable under jsdom, which lays

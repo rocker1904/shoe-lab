@@ -963,6 +963,7 @@ test('keeps a dropped column\'s header inside its declared column', async ({ pag
  */
 test('renders every row at the height it measured', async ({ page }) => {
   await sweepRowHeights(page, FIT_SETS['default']!);
+  await sweepRowHeights(page, FIT_SETS['minimal']!);
 });
 
 /**

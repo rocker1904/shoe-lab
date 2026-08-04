@@ -10,19 +10,22 @@
  * (docs/specs/2026-08-03-virtualising-the-table.md §Decisions).
  *
  * So every name is laid out once, in one hidden container at the width the name actually wraps at,
- * and the line counts are read back. Exact by construction, in whatever engine is running, with no
- * font table involved — and the engines really do disagree: on the committed fleet at 1440px with
- * the wide column set, Chromium wraps 35 names onto a second line where Firefox wraps 27 and
- * WebKit 28 (`.hunt/task4/rig.ts`).
+ * and its BOX is read back — not a line count, which would have to be turned into a height by a
+ * rule about what a line is worth, and that rule is engine- and face-dependent too. Exact by
+ * construction, in whatever engine is running, with no font table involved — and the engines really
+ * do disagree: on the committed fleet at 1440px with the wide column set, Chromium wraps 35 names
+ * onto a second line where Firefox wraps 27 and WebKit 28 (`.hunt/task4/rig.ts`).
  *
  * **What it costs, and why that is affordable.** Measured through this function on the committed
  * fleet of 455 names, medians of nine runs in the Playwright image: **5.2ms in Chromium, 7.0ms in
  * Firefox and WebKit**. Linear with a fixed overhead — 910 names cost 8.6 / 11 / 12ms and 1820 cost
  * 16.3 / 18 / 22 — so twice the fleet costs about 1.6x rather than twice, and a marginal name is
- * under 10us. Nearly all of it is the engine laying out 455 boxes: building the markup is free, the
- * reads are ~0.2ms and the replica rows ~0.4-1.0ms (`.hunt/task4/probe7-cost.mjs`). That is over
- * the 2.0-2.3ms estimated before implementation, and it is not reducible without giving up laying
- * every name out, which is the design.
+ * under 10us. Nearly all of it is the engine laying out 455 boxes: building the markup is free and
+ * the reads are ~0.2ms (`.hunt/task4/probe7-cost.mjs`). The two things around that container are
+ * fixed rather than fleet-shaped — one clone to read the geometry off and a replica of two rows,
+ * whatever the fleet looks like — and re-measured after both were changed the figures did not move
+ * (`.hunt/task4/rig.ts`). That is over the 2.0-2.3ms estimated before implementation, and it is not
+ * reducible without giving up laying every name out, which is the design.
  *
  * What makes it affordable is WHEN it is paid, not how long it takes: once per name-column width,
  * and that width moves only when the viewport or the column set does. A filter drag pays nothing,
@@ -68,21 +71,43 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   const liveRow = table.querySelector<HTMLTableRowElement>('tbody tr.shoe');
   const liveCell = liveRow?.querySelector<HTMLTableCellElement>('td.name');
   const nameRow = liveCell?.querySelector<HTMLElement>('.name-row');
-  const block = nameRow?.querySelector<HTMLElement>(':scope > div');
-  const chev = nameRow?.querySelector<HTMLElement>('.chev');
-  if (!liveRow || !liveCell || !nameRow || !block || !chev) return null;
+  if (!liveRow || !liveCell || !nameRow) return null;
+
+  // **Nothing is measured off a live node, because a row carries STATE and state here is drawn with
+  // a transform.** An expanded row's chevron is `rotate(90deg)`, and `getBoundingClientRect()`
+  // reports the TRANSFORMED box — 18px for a glyph whose advance is 5 — so the width a name wraps
+  // at came out 13px short the moment any row was open, and the function returned plausible wrong
+  // numbers rather than `null`. A transform moves no layout, so the row on screen is unaffected and
+  // only the measurement is wrong: nothing but this can notice it (docs/app.md §Table presentation).
+  //
+  // The class comes off BEFORE the clone is attached, so the chevron never holds the rotation and
+  // the 120ms transition out of it never runs either — a clone de-opened after attaching would be
+  // measured somewhere between the two.
+  const protoRow = nameRow.cloneNode(true) as HTMLElement;
+  const protoChev = protoRow.querySelector<HTMLElement>('.chev');
+  const block = protoRow.querySelector<HTMLElement>(':scope > div');
+  if (!protoChev || !block) return null;
+  protoChev.classList.remove('open');
+  protoRow.setAttribute('aria-hidden', 'true');
+  protoRow.style.cssText = 'position: absolute; top: 0; left: 0;'
+    + 'visibility: hidden; pointer-events: none;';
+  liveCell.append(protoRow);
+  // The chevron's advance is not the same in every engine — 5.00px in Chromium against 4.58px in
+  // Firefox — which is one more reason this is measured in the engine that will render it. Read as
+  // a rect and never as `offsetWidth`, which is integer-rounded and would throw Firefox's fraction
+  // away.
+  const chevPx = protoChev.getBoundingClientRect().width;
+  const gapPx = parseFloat(getComputedStyle(protoRow).columnGap) || 0;
+  protoRow.remove();
 
   // What the name wraps at, derived from the DECLARED column rather than read off the block: the
   // block is a flex item and shrinks to its content whenever the name is short, so its own width is
-  // an answer about that name rather than about the column. The chevron's advance is part of this
-  // and it is not the same in every engine (5.00px in Chromium against 4.58px in Firefox), which is
-  // one more reason this is measured in the engine that will render it.
+  // an answer about that name rather than about the column.
   const cellCs = getComputedStyle(liveCell);
   const avail = widths[0]!
     - parseFloat(cellCs.paddingLeft) - parseFloat(cellCs.paddingRight)
     - parseFloat(cellCs.borderLeftWidth) - parseFloat(cellCs.borderRightWidth)
-    - chev.getBoundingClientRect().width
-    - (parseFloat(getComputedStyle(nameRow).columnGap) || 0);
+    - chevPx - gapPx;
   if (!(avail > 0)) return null;
 
   // A sentinel substituted into the prototype's serialised form, so ONE parse builds the whole
@@ -109,11 +134,16 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // instance back on the page (spec §Failure behaviour).
   if (!chipHtml && names.some((n) => n.discontinued)) return null;
 
-  const proto = block.cloneNode(true) as HTMLElement;
-  proto.querySelector(':scope > span')?.remove();
-  proto.querySelector('strong')!.textContent = SENTINEL;
-  proto.removeAttribute('style');
-  const plain = proto.outerHTML;
+  // `block` is already the de-stated clone's own node, so no second clone is needed and no live
+  // node is reached into.
+  block.querySelector(':scope > span')?.remove();
+  const protoStrong = block.querySelector('strong');
+  // Declining rather than throwing, like every other reach into the markup here: a renamed element
+  // means this cannot be measured, and an exception inside a Svelte effect is not that answer.
+  if (!protoStrong) return null;
+  protoStrong.textContent = SENTINEL;
+  block.removeAttribute('style');
+  const plain = block.outerHTML;
   const tagged = plain.replace('</strong>', `</strong>${chipHtml ?? ''}`);
 
   const host = document.createElement('div');
@@ -126,29 +156,25 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   host.setAttribute('aria-hidden', 'true');
   host.innerHTML = names
     .map((n) => (n.discontinued ? tagged : plain).replace(SENTINEL, () => escape(n.name)))
-    .join('')
-    // The ruler, last: one line in the same box as everything above it.
-    + plain.replace(SENTINEL, () => 'M');
+    .join('');
   liveCell.append(host);
-
   const kids = host.children;
-  // The last child is the ruler: one line, in the same box as everything above it. `line-height`
-  // computes to the keyword `normal` here, so it has no length to read — a line is what a line
-  // measures, and that is engine- and face-dependent by nature.
-  const lineH = kids[kids.length - 1]!.getBoundingClientRect().height;
-  if (!(lineH > 0)) { host.remove(); return null; }
-  const counts: number[] = [];
-  for (let i = 0; i < names.length; i++) {
-    counts.push(Math.max(1, Math.round(kids[i]!.getBoundingClientRect().height / lineH)));
-  }
+  // The name's own box, whole. Not a line count: a count would have to be turned back into a height
+  // by a rule about what a line is worth, and the engines disagree about that per name — which is
+  // the same reason there is no font table in this file.
+  const boxes: number[] = [];
+  for (let i = 0; i < names.length; i++) boxes.push(kids[i]!.getBoundingClientRect().height);
   host.remove();
 
-  // A line count is not a height, and the arithmetic that would turn it into one is wrong at the
-  // most common row in the fleet. Measured: 1 line is 36px, 2 is 53, and every line after that adds
-  // 18 — so the first step is not the step. A one-line row is not set by the NAME at all but by the
-  // rest of the row, which is why the replica below is a whole row rather than a name cell, and why
-  // there is no base and no step constant anywhere in this file.
-  const distinct = [...new Set(counts)].sort((a, b) => a - b);
+  // **A row height is two measured facts and no arithmetic between them.** The FLOOR is what the
+  // table draws when the name is not what sets the height — every other cell is one `nowrap` line,
+  // so that is the same row for every shoe in a column set — and `rowPx` is what the row adds to
+  // whatever the name's own box is. There is no base, no step and no line count here: measured,
+  // 1 line is 36px and 2 is 53, so a step would already be wrong at the most common row in the
+  // fleet, and a per-line-count lookup is wrong again wherever a line box is not the face's own —
+  // it over-reserves 8px on a two-line Japanese name in Firefox, which counts as three
+  // (`.hunt/task4-fix1/probe4.ts`). Both facts come off a clone of the component's own row, because
+  // markup built from scratch carries no `svelte-xxxxxx` class and would get none of its styles.
   const replica = document.createElement('table');
   const ts = getComputedStyle(table);
   replica.className = table.className;
@@ -165,31 +191,49 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   }
   const tb = document.createElement('tbody');
   replica.append(cg, tb);
-  // One long word per line: n words that each fill most of the column wrap to exactly n lines,
-  // whatever the engine's break rules are, so this needs no agreement with them.
-  const WORD = 'Mmmmmmmmmmmmmmmmmmmm';
-  for (const n of distinct) {
+  const boxIn = (tr: HTMLElement) => tr.querySelector<HTMLElement>('td.name .name-row > div');
+  for (const lines of [1, 2]) {
     const tr = liveRow.cloneNode(true) as HTMLTableRowElement;
-    // A cloned row carries the original's focusability and its slug; hidden or not, a second node
-    // answering to `[data-slug=…]` is what `revealRow` walks.
+    // A cloned row carries the original's slug, its focusability and its open state. Nothing can
+    // observe any of it today — the replica is built, read and removed without yielding, so no
+    // second node answering to `[data-slug=…]` is ever there for `revealRow` to walk, and no suite
+    // can hold this. It is defence for the first caller that keeps a replica between calls, which
+    // is what windowing would want (spec §Registry sweep).
     tr.removeAttribute('data-slug');
     tr.removeAttribute('tabindex');
     tr.removeAttribute('aria-controls');
+    tr.querySelector<HTMLElement>('.chev')?.classList.remove('open');
     // The chip comes OFF the replica. Its own line is the name's last one, so it adds no height —
-    // but left on, it is `n` words plus a chip, which is what makes an n-line name n + 1 lines.
-    tr.querySelector('td.name .name-row > div > span')?.remove();
-    tr.querySelector('td.name strong')!.textContent =
-      Array.from({ length: n }, () => WORD).join(' ');
+    // but left on, it is the line plus a chip, which is what makes a one-line name two.
+    boxIn(tr)?.querySelector(':scope > span')?.remove();
+    const cellStrong = tr.querySelector('td.name strong');
+    if (!cellStrong) return null;
+    // **Two line boxes at every width there is, because the break is explicit.** What this replaced
+    // was one twenty-character word per line, which wrapped to n lines only while two of those
+    // words could not share a line — an unwritten precondition that failed once the name column
+    // passed about 520px, which the DEFAULT column set reaches at a 1920px layout, and then
+    // reported a two-line name as a one-line row. A forced break has no precondition to state.
+    cellStrong.textContent = '';
+    for (let i = 0; i < lines; i++) {
+      if (i) cellStrong.append(document.createElement('br'));
+      cellStrong.append('M');
+    }
     tb.append(tr);
   }
   wrap.append(replica);
-  const perCount = new Map<number, number>();
-  for (let i = 0; i < distinct.length; i++) {
-    perCount.set(distinct[i]!, (tb.children[i] as HTMLElement).getBoundingClientRect().height);
-  }
+  const twoLine = tb.children[1] as HTMLElement;
+  const twoBox = boxIn(twoLine);
+  const floorPx = (tb.children[0] as HTMLElement).getBoundingClientRect().height;
+  // Read at TWO lines rather than one, because at one the row is the floor and the name cell is not
+  // what sets it — the difference there would be the row's slack rather than what it adds.
+  const rowPx = twoBox
+    ? twoLine.getBoundingClientRect().height - twoBox.getBoundingClientRect().height : 0;
   replica.remove();
+  // jsdom lays nothing out and this app has not laid the table out before it mounts: a floor of
+  // zero is "cannot measure", never "every row is 0px tall" (spec §Failure behaviour).
+  if (!twoBox || !(floorPx > 0)) return null;
 
-  return counts.map((n) => perCount.get(n)!);
+  return boxes.map((b) => Math.max(floorPx, b + rowPx));
 }
 
 /**
@@ -211,6 +255,14 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
  *
  * A filter change moves neither the width nor the fleet, so it is a cache hit — which is the whole
  * of why this is affordable (docs/app.md §What a drag may recompute).
+ *
+ * **`names` is compared by IDENTITY, so a caller must pass the same array and not an equal one.**
+ * Comparing 455 entries element by element on every call would cost more than the hit saves, and a
+ * caller that already holds the fleet has one array to hand over. A caller that rebuilds it per
+ * render — `filtered.map(…)` inside a reactive block — misses every time and pays the whole
+ * measurement per keystroke, which is exactly the cost this cache is here to remove. That is a
+ * precondition on the caller, not a detail: `row-height.test.ts` holds it, and a windowing caller
+ * is the one likeliest to break it (spec §Registry sweep).
  */
 export interface RowHeights {
   /** Heights for `names` in order, or `null` while nothing can be measured. */

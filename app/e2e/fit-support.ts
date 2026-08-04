@@ -390,6 +390,14 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
  * Both rows are used on purpose — one carrying a discontinued chip and one not — so the chipped
  * half of the claim is asked of a row that really has one rather than of a chip stitched on for the
  * measurement.
+ *
+ * **Two families, because a step is a blind spot.** Four-letter words step about 57px at a time, so
+ * an error in the width a name is laid out against only shows if it happens to be bigger than the
+ * slack left on some name's last line — a 13px one lands between the steps three times in four, and
+ * the sweep passes. The second family finds the break point itself, by growing a run of
+ * single-letter words until the live row gains a line, and hands back the names either side of it.
+ * Those are the only names where the claim is decidable, and there any error over one word's width
+ * moves one of them.
  */
 function renderedForNames(words: number): { names: string[]; disc: boolean[]; rendered: number[] } {
   const rows = [...document.querySelectorAll<HTMLTableRowElement>('.tblwrap table tbody tr.shoe')];
@@ -400,7 +408,11 @@ function renderedForNames(words: number): { names: string[]; disc: boolean[]; re
   const disc: boolean[] = [];
   const rendered: number[] = [];
   for (const [row, isDisc] of [[plainRow, false], [chipRow, true]] as const) {
-    if (!row) continue;
+    // Loudly, because the alternative was silent: skipping a missing prototype dropped the CHIPPED
+    // half of the sweep the moment the fixture had no discontinued shoe, and every assertion over
+    // the combined array still passed. The claim this sweep exists for is that a chip is part of
+    // what gets laid out, so losing the row that carries one has to redden.
+    if (!row) throw new Error(`no ${isDisc ? 'discontinued' : 'plain'} row to read ground truth from`);
     const strong = row.querySelector('td.name strong')!;
     const was = strong.textContent;
     // Four-letter words in one-word steps, not long ones: the claim is about WHERE a line breaks,
@@ -409,6 +421,31 @@ function renderedForNames(words: number): { names: string[]; disc: boolean[]; re
     // reading still agreed, because no name ever sat close enough to a boundary for it to matter.
     for (let n = 1; n <= words; n++) {
       const name = Array.from({ length: n }, () => 'Mmmm').join(' ');
+      strong.textContent = name;
+      names.push(name);
+      disc.push(isDisc);
+      rendered.push(row.getBoundingClientRect().height);
+    }
+
+    // Where the second line starts, found by doubling and then halving rather than by counting:
+    // the name column is nearly the whole table under a one-column view, so walking up to it a
+    // letter at a time is thousands of forced layouts and this is a dozen.
+    const spaced = (n: number) => Array.from({ length: n }, () => 'i').join(' ');
+    strong.textContent = spaced(1);
+    const oneLine = row.getBoundingClientRect().height;
+    const twoLines = (n: number) => {
+      strong.textContent = spaced(n);
+      return row.getBoundingClientRect().height > oneLine;
+    };
+    let lo = 1;
+    let hi = 2;
+    while (!twoLines(hi) && hi < 8192) { lo = hi; hi *= 2; }
+    while (lo + 1 < hi) {
+      const mid = (lo + hi) >> 1;
+      if (twoLines(mid)) hi = mid; else lo = mid;
+    }
+    for (let n = Math.max(1, hi - 3); n <= hi + 1; n++) {
+      const name = spaced(n);
       strong.textContent = name;
       names.push(name);
       disc.push(isDisc);
@@ -434,11 +471,48 @@ function renderedForNames(words: number): { names: string[]; disc: boolean[]; re
  * claim. The synthetic half asks the same question of names built to wrap. Their rendered heights
  * are asserted to take more than one value, or the sweep would pass vacuously on a fixture whose
  * names all fit.
+ *
+ * **And both are asked again with a row expanded**, which is not a variation on the same question.
+ * A row's state is drawn with a `transform` — the open chevron is `rotate(90deg)` — and a transform
+ * moves no layout, so an expanded row renders exactly as it did while the measurement it feeds
+ * reads a box 13px wider than the advance it stands for. Nothing on screen says so, which is why
+ * the sweep has to ask rather than the eye (`app/src/lib/row-height.ts`).
  */
 export async function sweepRowHeights(page: Page, cols: readonly string[]): Promise<void> {
   await page.goto(`/?cols=${cols.join(',')}`);
   await awaitFacesLoaded(page, { required: APP_FACES });
   const fleet = FIXTURE.shoes.map((s) => ({ name: s.name, discontinued: !!s.discontinued }));
+
+  const compare = async (at: string): Promise<void> => {
+    const measured = await page.evaluate(measureDesktopRowHeights, fleet);
+    expect(measured, `nothing could be measured ${at}`).not.toBeNull();
+    const rendered = await page.evaluate(() => {
+      const out: Record<string, number> = {};
+      for (const tr of document.querySelectorAll<HTMLElement>('.tblwrap table tbody tr.shoe')) {
+        out[tr.dataset['slug']!] = tr.getBoundingClientRect().height;
+      }
+      return out;
+    });
+    FIXTURE.shoes.forEach((s, i) => {
+      expect(measured![i], `${s.name} ${at}`).toBe(rendered[s.slug]);
+    });
+
+    const truth = await page.evaluate(renderedForNames, 40);
+    // Both prototypes were found, stated here as well as thrown in the page: an assertion over the
+    // COMBINED array survives losing the chipped half of it entirely.
+    expect(new Set(truth.disc).size,
+      `only one kind of row carried ground truth ${at}`).toBe(2);
+    const names = truth.names.map((name, i) => ({ name, discontinued: truth.disc[i]! }));
+    const heights = await page.evaluate(measureDesktopRowHeights, names);
+    expect(heights, `nothing could be measured for synthetic names ${at}`).not.toBeNull();
+    expect(new Set(truth.rendered).size,
+      `every synthetic name rendered one height ${at}, so this proves nothing`)
+      .toBeGreaterThan(1);
+    names.forEach((n, i) => {
+      expect(heights![i], `${n.discontinued ? '[disc] ' : ''}${n.name.length} chars ${at}`)
+        .toBe(truth.rendered[i]);
+    });
+  };
 
   for (const width of mountWidths(cols)) {
     expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
@@ -451,29 +525,14 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
     }, { message: `the table is not laid out by its declared widths at ${width}px` })
       .toBeLessThanOrEqual(1);
 
-    const measured = await page.evaluate(measureDesktopRowHeights, fleet);
-    expect(measured, `nothing could be measured at ${width}px`).not.toBeNull();
-    const rendered = await page.evaluate(() => {
-      const out: Record<string, number> = {};
-      for (const tr of document.querySelectorAll<HTMLElement>('.tblwrap table tbody tr.shoe')) {
-        out[tr.dataset['slug']!] = tr.getBoundingClientRect().height;
-      }
-      return out;
-    });
-    FIXTURE.shoes.forEach((s, i) => {
-      expect(measured![i], `${s.name} at ${width}px`).toBe(rendered[s.slug]);
-    });
+    await compare(`at ${width}px on [${cols.join(',')}]`);
 
-    const truth = await page.evaluate(renderedForNames, 40);
-    const names = truth.names.map((name, i) => ({ name, discontinued: truth.disc[i]! }));
-    const heights = await page.evaluate(measureDesktopRowHeights, names);
-    expect(heights, `nothing could be measured for synthetic names at ${width}px`).not.toBeNull();
-    expect(new Set(truth.rendered).size,
-      `every synthetic name rendered one height at ${width}px, so this proves nothing`)
-      .toBeGreaterThan(1);
-    names.forEach((n, i) => {
-      expect(heights![i], `${n.discontinued ? '[disc] ' : ''}${n.name.length} chars at ${width}px`)
-        .toBe(truth.rendered[i]);
-    });
+    const first = page.locator('.tblwrap table tbody tr.shoe').first();
+    await first.click();
+    await expect(page.locator('.tblwrap table tbody tr.expand'),
+      `the first row did not expand at ${width}px`).toHaveCount(1);
+    await compare(`at ${width}px on [${cols.join(',')}] with the first row expanded`);
+    await first.click();
+    await expect(page.locator('.tblwrap table tbody tr.expand')).toHaveCount(0);
   }
 }

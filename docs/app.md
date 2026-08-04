@@ -1379,19 +1379,27 @@ alone — every other cell is a nowrap phrase or an unbreakable figure and is
 always one line — but *where* a name breaks is the engine's answer rather than
 ours, and the three disagree on the real fleet at the same declared width. No
 tolerance repairs that, so nothing models it: every name is laid out once in one
-hidden container at the width it wraps at, and the line counts are read back. The
-container is **cloned from a live cell**, which is what stops it drifting from
-the table — the component's CSS is Svelte-scoped, so markup composed here would
-get none of it.
+hidden container at the width it wraps at, and its own **box** is read back —
+never a line count, which would have to be turned back into a height by a rule
+about what a line is worth, and that rule is face-dependent as well as
+engine-dependent. The container is **cloned from a live cell**, which is what
+stops it drifting from the table — the component's CSS is Svelte-scoped, so
+markup composed here would get none of it.
 
-Two consequences are easy to get wrong, and both are held in all three engines by
-`app/e2e/fit-support.ts`'s height sweep, which hands the module's own function to
-the page rather than a copy. **The one-line row is not set by the name**: a name
-cell on its own measures a pixel under what the table renders, and that is the
-most common row in the fleet — so a height is read off a replica of the whole row
-and no base-and-step arithmetic appears in the file. And **the discontinued chip
-is part of what gets laid out** — inline, `nowrap`, glued to the name — so it can
-put a name onto a second line by itself.
+Three consequences are easy to get wrong, and all three are held in all three
+engines by `app/e2e/fit-support.ts`'s height sweep, which hands the module's own
+function to the page rather than a copy. **The one-line row is not set by the
+name**: a name cell on its own measures a pixel under what the table renders, and
+that is the most common row in the fleet — so a row is the taller of a measured
+floor and the name's own box, and no base-and-step arithmetic appears in the
+file. **The discontinued chip is part of what gets laid out** — inline, `nowrap`,
+glued to the name — so it can put a name onto a second line by itself. And
+**nothing is measured off a live node**, because a row carries state that is
+drawn with a `transform`: an open row's chevron is rotated, a rect reports the
+transformed box, and a transform moves no layout — so the row on screen is
+unaffected while the width every name is laid out against silently loses the
+difference. Every geometry comes off a clone with that state stripped before it
+is attached, so no transition is caught in flight either.
 
 **Three things in the width model are guarded rather than assumed, because each
 quantifies over data nobody here controls** — `lib/fit.ts` computes them and

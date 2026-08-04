@@ -14,9 +14,9 @@ import { createRowHeights, measureDesktopRowHeights, type NameEntry } from './ro
  *
  * `padded` is the difference between the two fallbacks jsdom can reach. Without it jsdom resolves
  * `padding-left` to the empty string — it computes no used values — so the width a name would wrap
- * at is `NaN` and the measurement stops there. With it the width resolves, the container is built
- * for real, and the stop is the one that matters more: every box jsdom lays out is zero, so the
- * ruler has no height and a line count would be a division by nothing.
+ * at is `NaN` and the measurement stops there. With it the width resolves, the container and the
+ * replica are both built for real, and the stop is the one that matters more: every box jsdom lays
+ * out is zero, so the row the rest of the table sets has no height to be a floor.
  */
 function mountTable({ discontinued = true, nameColPx = '300px', padded = false } = {}): void {
   const pad = padded ? 'padding: 8px; border: 0 solid;' : '';
@@ -78,24 +78,32 @@ describe('measureDesktopRowHeights', () => {
   it('puts a name into the container as text, whatever upstream called the shoe', () => {
     // The container is built with `innerHTML`, and the names in it are a scraper's rather than
     // ours — so a name is escaped on the way in, and one carrying `$&` must not be read as a
-    // backreference by the substitution that puts it there.
+    // backreference by the substitution that puts it there. The elements say the escaping held;
+    // only the TEXT says the substitution did, because a backreference expansion adds no element —
+    // it splices the sentinel, or with `` $` `` and `$'` the surrounding markup, into the name.
     mountTable({ padded: true });
-    const added: string[] = [];
-    const observer = new MutationObserver((records) => {
-      for (const r of records) {
-        for (const node of r.addedNodes) {
-          if (node instanceof Element) added.push(...[node, ...node.querySelectorAll('*')].map((e) => e.tagName));
-        }
-      }
-    });
+    const NAME = '<img src=x onerror=alert(1)> & $& $` $\' <b>bold</b>';
+    const added: Element[] = [];
+    // Drained rather than observed: a `MutationObserver` callback is a microtask and this test is
+    // synchronous, so reading a list the callback fills leaves it empty and every assertion over it
+    // passes without seeing anything.
+    const observer = new MutationObserver(() => {});
     observer.observe(document.body, { childList: true, subtree: true });
-    expect(measureDesktopRowHeights([
-      { name: '<img src=x onerror=alert(1)> & $& <b>bold</b>', discontinued: true },
-    ])).toBeNull();
-    observer.takeRecords();
+    expect(measureDesktopRowHeights([{ name: NAME, discontinued: true }])).toBeNull();
+    for (const record of observer.takeRecords()) {
+      for (const node of record.addedNodes) {
+        if (node instanceof Element) added.push(node, ...node.querySelectorAll('*'));
+      }
+    }
     observer.disconnect();
-    expect(added).not.toContain('IMG');
-    expect(added).not.toContain('B');
+    expect(added.map((e) => e.tagName)).not.toContain('IMG');
+    expect(added.map((e) => e.tagName)).not.toContain('B');
+    // The container is removed before the call returns, so what it held is read off the node the
+    // records caught rather than off the document.
+    const container = added.find((e) => e.getAttribute('aria-hidden') === 'true'
+      && e.textContent?.includes('bold'));
+    expect(container, 'no measured container was ever added').toBeDefined();
+    expect(container!.textContent).toContain(NAME);
   });
 
   it('leaves nothing behind in the document when it gives up', () => {
@@ -116,11 +124,18 @@ describe('measureDesktopRowHeights', () => {
 
   it('has no free variables, so it survives being handed to page.evaluate', () => {
     // The browser evidence hands this function whole to `page.evaluate`, which serialises its
-    // source. A reference to anything outside the body — an imported helper, a module constant —
-    // is `undefined` in the page, and the failure is silent. Nothing but the globals a document
-    // provides may appear here.
-    const src = measureDesktopRowHeights.toString();
-    expect(src).not.toMatch(/\bimport\b|\brequire\(/);
+    // source and rebuilds it in the page — where a reference to anything outside the body, an
+    // imported helper or a module constant, is silently `undefined`. Rebuilt the same way here it
+    // is a `ReferenceError` instead, so the property is asserted rather than described. A regex
+    // over the source cannot do this job: a compiled ESM import appears in the body as a bare
+    // identifier and never as the word `import`.
+    //
+    // Total, because of where the padded mount stops it: every line of the body runs before the
+    // floor it cannot measure sends `null` back, so there is no path a free variable can hide on.
+    mountTable({ padded: true });
+    const rebuilt = new Function(`return (${measureDesktopRowHeights.toString()})`)() as
+      typeof measureDesktopRowHeights;
+    expect(rebuilt(NAMES)).toBeNull();
   });
 });
 
@@ -146,7 +161,11 @@ describe('createRowHeights', () => {
     expect(measure).toHaveBeenCalledTimes(2);
   });
 
-  it('re-measures for a different fleet at the same width', () => {
+  it('re-measures for an equal fleet that is not the SAME array, which is the caller contract', () => {
+    // Identity, not contents, and `RowHeights` says so: a caller that rebuilds its names per
+    // render — `filtered.map(...)` in a reactive block — misses on every keystroke and pays the
+    // whole measurement each time, which is the cost the cache exists to remove. Nothing else
+    // states this, and a windowing caller is exactly the one that would get it wrong.
     mountTable();
     const measure = fake([36, 53]);
     const rh = createRowHeights(() => {}, measure);
