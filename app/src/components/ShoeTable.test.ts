@@ -184,7 +184,10 @@ describe('ShoeTable', () => {
     const { container } = setup({ view: { columns: ['score', 'gone-metric-slug'] } }).rendered;
     const head = screen.getByRole('columnheader', { name: /gone-metric-slug/ });
     expect(head.querySelector('.h-units')!.textContent).toBe('');
-    const cells = [...container.querySelectorAll('tbody tr')].map((r) => r.querySelectorAll('td')[2]!.textContent);
+    // `table:not(.proto)`: the hidden prototype row beside the table carries a cell per column too,
+    // and its figures are placeholders rather than this fleet's (`lib/row-height.ts`).
+    const cells = [...container.querySelectorAll('table:not(.proto) tbody tr')]
+      .map((r) => r.querySelectorAll('td')[2]!.textContent);
     expect(new Set(cells)).toEqual(new Set(['—']));
     // neutral, because `directionOf` has no entry for it — never blue, which would claim a better end
     expect(container.querySelector('tbody td:nth-child(3)')!.className).toContain('grey');
@@ -266,6 +269,55 @@ describe('ShoeTable sorts by shoe name', () => {
 });
 
 /**
+ * The body renders a plan, and this is the half jsdom can hold: the **render-everything fallback**.
+ *
+ * jsdom lays nothing out, so `measureDesktopRowHeights` declines — which is the same answer the app
+ * gives before its first measured frame — and a caller that cannot measure renders every shoe with
+ * no spacer at all (spec §Failure behaviour). The windowed half is a browser fact and lives in
+ * `app/e2e/smoke.spec.ts`, `app/e2e/cross-browser.spec.ts` and `.hunt/task6/rig.ts`.
+ */
+describe('ShoeTable renders a plan', () => {
+  it('renders every shoe and no spacer where nothing can be measured', () => {
+    const { container } = setup().rendered;
+    expect(container.querySelectorAll('table:not(.proto) tbody tr.shoe')).toHaveLength(FLEET.length);
+    expect(container.querySelectorAll('tr.spacer')).toHaveLength(0);
+  });
+
+  it('numbers the rows the table would have, panels included', async () => {
+    const { container } = setup().rendered;
+    const table = container.querySelector('table:not(.proto)')!;
+    expect(table.getAttribute('aria-rowcount')).toBe(String(1 + FLEET.length));
+    expect(table.querySelector('thead tr')!.getAttribute('aria-rowindex')).toBe('1');
+    const indices = () => [...table.querySelectorAll('tbody tr.shoe')]
+      .map((r) => r.getAttribute('aria-rowindex'));
+    expect(indices()).toEqual(FLEET.map((_, i) => String(i + 2)));
+
+    // An open panel is a row of the table, so it takes a number and everything below it moves down.
+    await fireEvent.click(screen.getByText('cushy').closest('tr')!);
+    expect(table.getAttribute('aria-rowcount')).toBe(String(2 + FLEET.length));
+    expect(table.querySelector('tr.expand')!.getAttribute('aria-rowindex'))
+      .toBe(String(Number(indices()[0]) + 1));
+  });
+
+  /**
+   * The prototype the height measurement is cloned from, which exists so that the measurement never
+   * depends on which shoes are on screen (`lib/row-height.ts`). One row, always carrying a chip,
+   * a cell per rendered column, and out of the accessibility tree.
+   */
+  it('renders a prototype row the window can never take away', () => {
+    const { container } = setup().rendered;
+    const proto = container.querySelector('table.proto')!;
+    expect(proto.getAttribute('aria-hidden')).toBe('true');
+    expect(proto.querySelectorAll('tbody tr')).toHaveLength(1);
+    expect(proto.querySelectorAll('tbody tr td')).toHaveLength(1 + 3);
+    expect(proto.querySelector('td.name .name-row > div > span')).not.toBeNull();
+    // And it is not a shoe: nothing that quantifies over the runner's rows may pick it up.
+    expect(container.querySelectorAll('tr.shoe')).toHaveLength(FLEET.length);
+    expect(screen.getAllByRole('row')).toHaveLength(1 + FLEET.length);
+  });
+});
+
+/**
  * Where the model and the markup meet: `columnWidths` decides and the `<colgroup>` declares, so a
  * column's width stops being a function of which rows happen to be in the DOM
  * (docs/app.md §Table presentation).
@@ -277,8 +329,12 @@ describe('ShoeTable sorts by shoe name', () => {
  */
 describe('ShoeTable declares its column widths', () => {
   const cols = ['score', 'heel-stack', 'plate'];
+  // `:not(.proto)`, because the wrapper holds two tables: the one the runner reads and the hidden
+  // one-row prototype the height measurement is taken off, which declares the same columns so that
+  // it is a copy of the table rather than a second model of it (`lib/row-height.ts`).
   const declared = (container: HTMLElement) =>
-    [...container.querySelectorAll<HTMLElement>('colgroup col')].map((c) => parseFloat(c.style.width));
+    [...container.querySelectorAll<HTMLElement>('table:not(.proto) colgroup col')]
+      .map((c) => parseFloat(c.style.width));
 
   it('emits one col per rendered column, the name column first', () => {
     const { container } = setup().rendered;

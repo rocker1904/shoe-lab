@@ -119,10 +119,17 @@
   /**
    * The same landing a tap gets, for a row this component did not open. Back and Forward are the
    * only other way one opens, and `Page.svelte` owns which row that is
-   * (docs/app.md §View and URL ownership) — it holds a slug off the address and no element, so the
-   * row is looked up here rather than passed in.
+   * (docs/app.md §View and URL ownership) — it holds a position in the list it handed over and no
+   * element, so the row is looked up here rather than passed in.
+   *
+   * **A fleet position rather than a slug**, because the desktop rendering's body is a window over
+   * that list and only the table can say whether a position is mounted yet. This list is not
+   * windowed until task 8, so here the position is simply resolved to the shoe and looked up; the
+   * two renderings answer one ask, which is what stops `Page.svelte` needing to know which is up.
    */
-  export async function revealRow(slug: string): Promise<void> {
+  export async function revealRow(index: number): Promise<void> {
+    const slug = shoes[index]?.slug;
+    if (!slug) return;
     await tick();
     reveal(body?.querySelector<HTMLElement>(`tr.shoe[data-slug="${CSS.escape(slug)}"]`) ?? null);
   }

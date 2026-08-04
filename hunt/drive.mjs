@@ -26,7 +26,11 @@ const FINGERPRINT = /* js */ `() => {
     // more reports 'no state carried' whatever the app is storing
     // (docs/app.md §View and URL ownership).
     stored: Object.keys(localStorage).sort(),
-    rowCount: rows.length,
+    // The count the table WOULD have, not the count in the DOM. The desktop body renders a window of
+    // the filtered list, so a DOM count fingerprints the viewport height and the scroll position
+    // rather than the view (docs/app.md §Table presentation). The stacked list is not windowed and
+    // answers with its own rows.
+    rowCount: Number(q('.tblwrap table:not(.proto)')?.getAttribute('aria-rowcount')) || rows.length,
     firstRows: [...rows].slice(0, 3).map((r) => txt(r).slice(0, 60)),
     heads: [...document.querySelectorAll('thead th')].map((th) => ({ label: txt(th).slice(0, 40), sort: th.getAttribute('aria-sort') || null })),
     receipt: txt(q('[data-testid="receipt"]') || q('.receipt')),

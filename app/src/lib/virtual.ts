@@ -28,6 +28,28 @@
  */
 export interface VirtualItem { readonly key: string; readonly height: number }
 
+/**
+ * How far past the viewport the window reaches, at **each** end.
+ *
+ * **It is a scroll distance, not a row count**, and it is measured against the one thing that can
+ * make the body go blank: how far the page can travel between the frame a plan was computed for and
+ * the frame it is painted in. A plan is computed from a `scroll` event, so the answer is bounded by
+ * what one frame of scrolling moves — measured on the real fleet at 1440px with a wheel fling, a
+ * `Page Down`, an `End` and a scrollbar drag, in Chromium, Firefox and WebKit
+ * (`.hunt/task6/overscan.ts`). The worst travel between consecutive plans is 1,229px, on a WebKit
+ * `End`; ordinary wheel and scrollbar work stays under 400px in every engine.
+ *
+ * **1280, because a jump is not a scroll.** A keyed jump moves the page by an amount no overscan can
+ * cover in general — `End` on this fleet is 24,000px — so what the number buys is that everything a
+ * runner *reads* through is already mounted, and the jump is repaired by the next frame's plan
+ * rather than prevented. 1280 covers every measured travel including the worst jump, and it is ~35
+ * rows at the fleet's 36px modal height against a viewport that holds ~24: the DOM it costs is under
+ * three screenfuls where the alternative is 455 rows.
+ *
+ * Symmetric, because scrolling up has to be as cheap as scrolling down.
+ */
+export const OVERSCAN_PX = 1280;
+
 /** A spacer standing for one or more shoes, or a shoe to render, by index into `items`. */
 export type VirtualEntry =
   | { readonly kind: 'gap'; readonly px: number }

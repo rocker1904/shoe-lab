@@ -957,6 +957,69 @@ test('keeps a dropped column\'s header inside its declared column', async ({ pag
 });
 
 /**
+ * **The row model the window makes necessary, in the two engines that draw it differently.**
+ * `overflow-anchor` is the reason this is here rather than only in `smoke.spec.ts`: the engines
+ * disagree about whether it exists at all — WebKit implements no scroll anchoring and resolves the
+ * property to the empty string — so the claim has to be that no engine is left free to re-anchor
+ * over rows the plan adds and removes, not that a particular keyword is computed
+ * (spec §Failure behaviour).
+ *
+ * The rest is the same arrangement `smoke.spec.ts` holds in Chromium, and the same caveat applies:
+ * five shoes fit in one window, so nothing here is windowed and the fleet-wide half is
+ * `.hunt/task6/rig.ts`'s.
+ */
+test('numbers the rows the table would have, and lets no engine re-anchor over them', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  const model = await page.evaluate(() => {
+    const table = document.querySelector('.tblwrap table:not(.proto)')!;
+    const rows = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')];
+    return {
+      rowcount: Number(table.getAttribute('aria-rowcount')),
+      head: table.querySelector('thead tr')!.getAttribute('aria-rowindex'),
+      shoes: rows.map((r) => Number(r.getAttribute('aria-rowindex'))),
+      anchor: getComputedStyle(table.querySelector('tbody')!).overflowAnchor,
+      protoRows: document.querySelectorAll('.tblwrap table.proto tbody tr').length,
+      protoChips: document.querySelectorAll('.tblwrap table.proto .disc-tag').length,
+    };
+  });
+  expect(model.head).toBe('1');
+  expect(model.shoes).toEqual(model.shoes.map((_, i) => i + 2));
+  expect(model.rowcount).toBe(model.shoes.length + 1);
+  expect(model.anchor, 'this engine is free to re-anchor over the rows the plan moves')
+    .not.toBe('auto');
+  expect(model.protoRows, 'the height measurement has no prototype to clone here').toBe(1);
+  expect(model.protoChips, 'the prototype carries no discontinued chip to copy').toBe(1);
+  // The prototype adds nothing to the accessibility tree, which is the other half of keeping a real
+  // table worth having.
+  await expect(page.getByRole('row')).toHaveCount(model.shoes.length + 1);
+});
+
+/**
+ * **A focused row is never unmounted, wherever the page has scrolled to** — dropping it puts
+ * `activeElement` on `<body>`, and the next Tab restarts from the top of the document past every
+ * filter (docs/policies.md §Interaction chrome). Here because focus and scrolling are exactly where
+ * the three engines differ (`lib/focus-scroll.ts`). The fixture cannot scroll a row out of the
+ * window; `.hunt/task6/rig.ts` does that on the committed fleet in all three.
+ */
+test('keeps focus on the row that has it while the page scrolls away from it', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 400 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  const row = page.locator('tr.shoe').nth(1);
+  await row.evaluate((el) => el.focus());
+  const slug = await row.getAttribute('data-slug');
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(120);
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement).dataset['slug']),
+    'the scroll took focus off the row').toBe(slug);
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement === document.body),
+    'Tab restarted from the top of the document').toBe(false);
+});
+
+/**
  * The same height bound in the two engines whose line breaking the model is NOT built from — which
  * is the whole reason heights are measured rather than derived: `Under Armour Charged Pursuit 3` is
  * two lines in Chromium and one here (spec §Decisions).

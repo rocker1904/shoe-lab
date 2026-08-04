@@ -96,8 +96,10 @@
    */
   /** Whichever rendering is mounted, and only one ever is — so a row Back or Forward opened can be
    *  landed on the way a tap's is. Each table owns HOW its own rendering scrolls; this is only the
-   *  ask (docs/app.md §View and URL ownership). */
-  let table = $state<{ revealRow: (slug: string) => Promise<void> } | undefined>();
+   *  ask (docs/app.md §View and URL ownership). By POSITION in the list handed over, not by slug:
+   *  the desktop body renders a window of that list, so only the table can say whether the row
+   *  exists yet — and it is the table that has to put it there before landing on it. */
+  let table = $state<{ revealRow: (index: number) => Promise<void> } | undefined>();
   let stripOpen = $state(initial.bare);
   let stripEl = $state<HTMLElement>();
   /** A JS transition cannot be wrapped in an `@media` block, so the query is asked here instead.
@@ -485,8 +487,8 @@
     // Document order, which is the SORTED row order and not the order the address lists them in:
     // the one to land on is whichever the runner meets first coming down the table. A slug the
     // filters have hidden has no row to land on and falls out here, being absent from the rendering.
-    const target = visibleSorted.find((s) => opened.has(s.slug));
-    if (target) void table?.revealRow(target.slug);
+    const target = visibleSorted.findIndex((s) => opened.has(s.slug));
+    if (target >= 0) void table?.revealRow(target);
   }
 
   /**

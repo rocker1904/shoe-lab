@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRowHeights, measureDesktopRowHeights, type NameEntry } from './row-height';
+import { fireResizeObservers } from '../test-setup';
 
 /**
  * Half of this module cannot be tested here and is not meant to be: jsdom lays nothing out, so the
@@ -10,7 +11,13 @@ import { createRowHeights, measureDesktopRowHeights, type NameEntry } from './ro
  */
 
 /**
- * The desktop table's name cell, to the depth the measurement reaches into it.
+ * The desktop table's name cell to the depth the measurement reaches into it — **and the hidden
+ * prototype table beside it**, which is where every clone and the chip's markup now come from.
+ *
+ * The shoe row keeps the state a real row carries — open, focusable, answering to a slug — and the
+ * prototype carries none of it. That is the point rather than a detail: "no row state reaches
+ * anything laid out" is a claim about which node is cloned, and a fixture whose only row was already
+ * clean could not tell the two apart.
  *
  * `padded` is the difference between the two fallbacks jsdom can reach. Without it jsdom resolves
  * `padding-left` to the empty string — it computes no used values — so the width a name would wrap
@@ -19,25 +26,38 @@ import { createRowHeights, measureDesktopRowHeights, type NameEntry } from './ro
  * out is zero, so the row the rest of the table sets has no height to be a floor.
  */
 function mountTable(
-  { discontinued = true, nameColPx = '300px', otherColPx = '100px', padded = false } = {},
+  { discontinued = true, nameColPx = '300px', otherColPx = '100px', padded = false,
+    proto = true } = {},
 ): void {
   const pad = padded ? 'padding: 8px; border: 0 solid;' : '';
-  document.body.innerHTML = `
-    <div class="tblwrap">
-      <table>
-        <colgroup><col style="width: ${nameColPx}" /><col style="width: ${otherColPx}" /></colgroup>
-        <tbody>
-          <tr class="shoe" data-slug="a" tabindex="0" aria-expanded="true" aria-controls="detail-a">
+  const nameCell = (name: string, chip: boolean) => `
             <td class="name" style="${pad}">
               <div class="name-row">
                 <span class="chev">&rsaquo;</span>
-                <div><strong>A Shoe</strong>${discontinued ? '<span class="disc-tag">discontinued</span>' : ''}</div>
+                <div><strong>${name}</strong>${chip ? '<span class="disc-tag">discontinued</span>' : ''}</div>
               </div>
-            </td>
+            </td>`;
+  const cols = `<colgroup><col style="width: ${nameColPx}" /><col style="width: ${otherColPx}" /></colgroup>`;
+  document.body.innerHTML = `
+    <div class="tblwrap">
+      <table>
+        ${cols}
+        <tbody>
+          <tr class="shoe" data-slug="a" tabindex="0" aria-expanded="true" aria-controls="detail-a">
+            ${nameCell('A Shoe', true)}
             <td class="num">1</td>
           </tr>
         </tbody>
       </table>
+      ${proto ? `<table class="proto" aria-hidden="true">
+        ${cols}
+        <tbody>
+          <tr>
+            ${nameCell('M', discontinued)}
+            <td class="num">0</td>
+          </tr>
+        </tbody>
+      </table>` : ''}
     </div>`;
 }
 
@@ -128,12 +148,42 @@ describe('measureDesktopRowHeights', () => {
     expect(container!.textContent).toContain(NAME);
   });
 
+  it('clones the hidden prototype rather than whichever shoe is in the body', () => {
+    // **The whole of what the window changed here.** The clone source used to be the first
+    // `tr.shoe` in the DOM, which under a windowed body is whichever row the runner has scrolled to
+    // — and can be no row at all. The fixture's two rows differ in one readable way, their figure
+    // cell, so this says which one was copied rather than that something was.
+    mountTable({ padded: true });
+    const added: Element[] = [];
+    const observer = new MutationObserver(() => {});
+    observer.observe(document.body, { childList: true, subtree: true });
+    measureDesktopRowHeights(NAMES);
+    for (const record of observer.takeRecords()) {
+      for (const node of record.addedNodes) {
+        if (node instanceof Element) added.push(node, ...node.querySelectorAll('*'));
+      }
+    }
+    observer.disconnect();
+    const figures = added.filter((e) => e.classList.contains('num')).map((e) => e.textContent);
+    expect(figures.length, 'no replica row was built, so this proves nothing').toBeGreaterThan(0);
+    expect(figures, 'the replica was cloned from a shoe row rather than from the prototype')
+      .toEqual(figures.map(() => '0'));
+  });
+
+  it('declines rather than reaching for a shoe row when there is no prototype', () => {
+    // The honest answer where the markup this depends on is gone: `null`, which the caller already
+    // handles by rendering everything. Never a fall back to a live row — that is the arrangement
+    // the window made unsound in the first place.
+    mountTable({ padded: true, proto: false });
+    expect(measureDesktopRowHeights(NAMES)).toBeNull();
+  });
+
   it('carries no row state onto anything it lays out', () => {
     // *A clone is a shape, never a state.* The rule is stated in the module and this is what holds
-    // it: every prototype here is a copy of a row the app owns, and the app draws an OPEN row's
-    // state on that row. `aria-expanded` is inert where `.chev.open` was a wrong answer, but the
-    // exception has to be paid rather than described — a clone that keeps one state attribute is
-    // how the next one gets kept.
+    // it: the fixture's shoe row is open, focusable and answers to a slug, and none of that may
+    // reach anything laid out. The prototype carries none of it today, so this is a guard rather
+    // than a repair — and it is kept whole because `.chev.open` was a real wrong answer once, and a
+    // guard deleted for being satisfied is a guard the next source does not get.
     //
     // The answer cannot discriminate under jsdom, which lays nothing out, so what is asserted is
     // what was BUILT, drained from the records rather than read off the document: every container
@@ -161,7 +211,9 @@ describe('measureDesktopRowHeights', () => {
     const before = document.querySelector('.tblwrap')!.innerHTML;
     measureDesktopRowHeights(NAMES);
     expect(document.querySelector('.tblwrap')!.innerHTML).toBe(before);
-    expect(document.querySelectorAll('[aria-hidden="true"]')).toHaveLength(0);
+    // Every hidden node this builds is `aria-hidden`, so the count is the check — less the one the
+    // component itself renders and this function never touches, which is the prototype table.
+    expect(document.querySelectorAll('[aria-hidden="true"]:not(.proto)')).toHaveLength(0);
   });
 
   it('refuses rather than measuring a discontinued name short, with no chip to copy', () => {
@@ -261,6 +313,67 @@ describe('createRowHeights', () => {
     rh.destroy();
     expect(rh.heights(NAMES)).toBeNull();
     expect(measure).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * jsdom lays nothing out, so the prototype's width is stood up by hand here. That is the whole
+   * mechanism rather than a stand-in for it: what invalidates is the WIDTH having moved, never the
+   * observer having fired, and the two tests below are the two halves of that.
+   */
+  function protoWidth(): (px: number) => void {
+    const block = document.querySelector('.tblwrap table.proto td.name .name-row > div')!;
+    let px = 100;
+    vi.spyOn(block, 'getBoundingClientRect')
+      .mockImplementation(() => ({ width: px }) as DOMRect);
+    return (next: number) => { px = next; };
+  }
+
+  it('drops every height when the prototype changes width, which is what a face swap does', () => {
+    // **The half that does not depend on an engine sending an event.** WebKit dispatches no
+    // `loadingdone` at all — `loading` and then silence, with `document.fonts.status` reading
+    // `loaded` — so a table that mounted before its faces landed would hold the fallback's heights
+    // there for the life of the page, with the spacers standing for shoes that are not that tall.
+    mountTable();
+    const setWidth = protoWidth();
+    const measure = fake([36, 53]);
+    const onInvalidate = vi.fn();
+    const rh = createRowHeights(onInvalidate, measure);
+    rh.heights(NAMES);
+    setWidth(140);
+    fireResizeObservers();
+    expect(onInvalidate).toHaveBeenCalledTimes(1);
+    rh.heights(NAMES);
+    expect(measure).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the cache when the observer fires and the prototype has not moved', () => {
+    // The delivery is not the signal, and this is the case that says so. The first shape of this
+    // swallowed the observer's first callback as a baseline, which is a rule about WHEN a callback
+    // lands — and an engine free to deliver that one after a face swap would have had the only
+    // delivery there ever was eaten by it. Two widths either differ or they do not.
+    mountTable();
+    protoWidth();
+    const measure = fake([36, 53]);
+    const onInvalidate = vi.fn();
+    const rh = createRowHeights(onInvalidate, measure);
+    rh.heights(NAMES);
+    fireResizeObservers();
+    fireResizeObservers();
+    expect(onInvalidate).not.toHaveBeenCalled();
+    rh.heights(NAMES);
+    expect(measure).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops watching the prototype when it is destroyed', () => {
+    mountTable();
+    const setWidth = protoWidth();
+    const onInvalidate = vi.fn();
+    const rh = createRowHeights(onInvalidate, fake([36, 53]));
+    rh.heights(NAMES);
+    rh.destroy();
+    setWidth(140);
+    fireResizeObservers();
+    expect(onInvalidate).not.toHaveBeenCalled();
   });
 
   it('stops listening when it is destroyed', () => {

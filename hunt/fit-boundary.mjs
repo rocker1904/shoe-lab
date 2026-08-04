@@ -150,7 +150,17 @@ async function afterContentGrows(browser, url, width) {
   await p.getByRole('button', { name: 'Filters' }).click();
   await p.fill('input[type="search"]', '');
   await p.keyboard.press('Escape');
-  await p.waitForFunction(() => document.querySelectorAll('tbody tr').length > 100);
+  // The whole fleet is back — a claim about the row MODEL rather than about the DOM. The desktop
+  // body renders a window of the filtered list, so counting the rows in it answers "how tall is the
+  // viewport" and has stopped answering "did the filter clear"; `aria-rowcount` is the count the
+  // table would have (docs/app.md §Table presentation). The stacked list is not windowed yet, so it
+  // still answers the old way.
+  await p.waitForFunction(() => {
+    const table = document.querySelector('.tblwrap table:not(.proto)');
+    return table
+      ? Number(table.getAttribute('aria-rowcount')) > 100
+      : document.querySelectorAll('tbody tr').length > 100;
+  });
   await p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   const after = await p.evaluate(READ);
   await context.close();

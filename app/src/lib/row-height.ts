@@ -57,7 +57,11 @@ export interface NameEntry {
  */
 export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] | null {
   const wrap = document.querySelector<HTMLElement>('.tblwrap');
-  const table = wrap?.querySelector<HTMLTableElement>('table');
+  // `:not(.proto)`, because there are two tables in the wrapper now and only one of them is the
+  // table: the declared widths, the class and the collapse mode all have to come from the one the
+  // runner is looking at. Positional selection — "the first table" — would have been right today
+  // and silently wrong the moment the two swapped order.
+  const table = wrap?.querySelector<HTMLTableElement>('table:not(.proto)');
   if (!wrap || !table) return null;
 
   const widths = [...table.querySelectorAll<HTMLTableColElement>('colgroup col')]
@@ -67,17 +71,35 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // asked for — silently, and in the direction that under-reserves.
   if (!widths.length || !widths.every((w) => w > 0)) return null;
 
-  // The row every measurement is cloned from. Cloning rather than composing is the whole of why
-  // this cannot drift from the table: the component's CSS is Svelte-scoped, so markup built from
-  // scratch carries no `svelte-xxxxxx` class and gets none of its styles, while a clone is the
-  // component's own node and answers to the same rules it does.
-  const liveRow = table.querySelector<HTMLTableRowElement>('tbody tr.shoe');
+  // The row every measurement is cloned from, and it is **the table's permanent prototype rather
+  // than whichever shoe is on screen**. Cloning rather than composing is still the whole of why this
+  // cannot drift from the table — the component's CSS is Svelte-scoped, so markup built from scratch
+  // carries no `svelte-xxxxxx` class and gets none of its styles — but the SOURCE had to move once
+  // the body started rendering a window of the fleet instead of all of it. `ShoeTable.svelte` emits
+  // `table.proto`: one row, out of flow, out of the accessibility tree, carrying a cell per rendered
+  // column and a `DiscontinuedTag`, and never in the plan.
+  //
+  // Three things the old source could not promise, each of which ends the measurement or corrupts
+  // it. **The window can be empty** — scroll past either end of the fleet and the body is one spacer
+  // — so there was no row to clone at all. **The window may hold no discontinued shoe**, and the chip
+  // cannot be reconstructed, only copied. And **the first row in the DOM became a function of where
+  // the runner had scrolled**, which is how an expanded row's rotated chevron got measured as a
+  // width. Each of those made the answer `null`, the caller render everything, the prototype
+  // reappear and the answer come back — self-healing, but a loop, and one that a resize drag
+  // (which misses the cache on every frame) runs without limit
+  // (docs/specs/2026-08-03-virtualising-the-table.md §Registry sweep).
+  const liveRow = wrap.querySelector<HTMLTableRowElement>('table.proto tbody tr');
   const liveCell = liveRow?.querySelector<HTMLTableCellElement>('td.name');
   const nameRow = liveCell?.querySelector<HTMLElement>('.name-row');
   if (!liveRow || !liveCell || !nameRow) return null;
 
-  // **A clone is a shape, never a state**, and this is the one place that makes it one. Everything
-  // below is measured off a copy of a node the app owns, and the app draws state on those nodes: an
+  // **A clone is a shape, never a state**, and this is the one place that makes it one. The
+  // prototype above carries none of the states below — it is never open, never focused and answers
+  // to no slug — so every line here is now a guard rather than a repair. It stays whole, and the
+  // chevron's is the reason: the same de-stating on a live row was the fix for a measurement that
+  // came out 13px short with any row expanded, and a guard deleted because today's source is clean
+  // is a guard the next source does not get. Everything below is measured off a copy of a node the
+  // app owns, and the app draws state on those nodes: an
   // expanded row's chevron is `rotate(90deg)`, `getBoundingClientRect()` reports the TRANSFORMED
   // box — 18px for a glyph whose advance is 5 — so the width every name was laid out against came
   // out 13px short the moment any row was open, and the function returned plausible wrong numbers
@@ -154,9 +176,10 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   //
   // **It has to be a real one.** `DiscontinuedTag` is its own component with its own scoped class,
   // so it cannot be reconstructed from anything the row carries — the only faithful copy is an
-  // instance the app rendered. Sought across the document rather than inside the cloned row, since
-  // whether row one happens to be discontinued is not a fact worth depending on.
-  const chipHtml = document.querySelector('td.name .name-row > div > span')?.outerHTML;
+  // instance the app rendered. Read off the PROTOTYPE, which always carries one, rather than off
+  // whichever shoe is on screen: under a window "is there a discontinued row in the DOM" is a fact
+  // about the scroll position, and this measurement is not allowed to be.
+  const chipHtml = liveRow.querySelector('td.name .name-row > div > span')?.outerHTML;
   // Refusing to guess: with discontinued names to measure and no instance on the page to copy, the
   // honest answer is that this cannot be measured yet — not a set of heights short by a chip. It
   // heals itself, because a caller told `null` renders everything, and rendering everything puts an
@@ -276,6 +299,21 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
  * is the fallback face's. That is the same hazard `Page.svelte` documents for the pinned chrome's
  * height, and it is why that one is `ResizeObserver`-backed.
  *
+ * **The event is not enough on its own, because one engine never sends it.** Measured on the real
+ * fleet, WebKit dispatches `loading` and then nothing at all — no `loadingdone`, no `loadingerror`,
+ * with `document.fonts.status` reading `loaded` all the same (`.hunt/task6/probe3-stale.ts`). So a
+ * table that mounted before its faces landed would hold the fallback's heights there for the life of
+ * the page, and nothing on screen would say so: the spacers stand for shoes that are not that tall,
+ * and the scrollbar is wrong by the difference.
+ *
+ * The second half is therefore a **ruler rather than an event**: the prototype's own name block,
+ * whose width is its content laid out in the name face, is part of the key and is watched for
+ * changes. Measured across the swap, a string in this face moves 5.4px and the same string in the
+ * mono face moves 41px (`.hunt/task6/probe7-ruler.ts`), so any change at all is the face moving
+ * under it. The prototype is the one node this module can rely on being in the document, which is
+ * the second job it does — `ShoeTable.svelte` renders it so that the measurement never depends on
+ * which shoes are on screen.
+ *
  * **Keyed on the declared width read back from the DOM, not on one passed in.** The declaration
  * reaches the DOM through a `ResizeObserver`, so for one frame after a resize a caller's width and
  * the table's differ; keying on what the table is actually laid out at cannot measure one width and
@@ -310,17 +348,60 @@ export function createRowHeights(
   onInvalidate: () => void, measure = measureDesktopRowHeights,
 ): RowHeights {
   let key: string | null = null;
+  /** The prototype's name-block width the cached answer was measured beside; see `watchProto`. */
+  let faceKey: number | null = null;
   let cachedFor: readonly NameEntry[] | null = null;
   let cached: number[] | null = null;
   let destroyed = false;
 
-  const invalidate = () => { key = null; cachedFor = null; cached = null; onInvalidate(); };
+  const invalidate = () => {
+    key = null;
+    faceKey = null;
+    cachedFor = null;
+    cached = null;
+    onInvalidate();
+  };
   // `loadingdone` rather than the `fonts.ready` promise: that promise settles against the loads
   // pending when it is asked, and this app asks before the table that requests the faces has
   // mounted (`app/e2e/fit-support.ts`, `awaitFacesLoaded`). The event fires on each settling,
-  // including the replacement face the retry adds.
+  // including the replacement face the retry adds — in the two engines that send it.
   const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
   fonts?.addEventListener?.('loadingdone', invalidate);
+
+  /**
+   * The half that does not depend on an engine sending an event: **the prototype's own name block
+   * is part of the key, and a `ResizeObserver` on it is what makes anything ask.**
+   *
+   * Its width is its content's, so it moves when the face under it does and stays put when nothing
+   * has. Being in the KEY is what makes this correct — a call that arrives for any other reason
+   * re-measures if the face has moved under it — and the observer is only the push that makes a call
+   * happen at all, since nothing else on the page changes when a face swaps.
+   *
+   * **Compared, never counted.** The first shape of this swallowed the observer's first delivery as
+   * a baseline, on the reasoning that an observer reports the size it starts with. That is a rule
+   * about WHEN a callback lands, and it is not safe to hold one: an engine free to deliver that
+   * first callback after the swap would have the only delivery there ever was eaten by it. Two
+   * widths either differ or they do not, whenever the callback arrives.
+   *
+   * Attached on the first call rather than in the constructor, because the prototype is markup the
+   * component renders and this is built while its script is still running.
+   */
+  const protoBlock = () =>
+    document.querySelector('.tblwrap table.proto td.name .name-row > div');
+  const protoWidth = () => protoBlock()?.getBoundingClientRect().width ?? null;
+  let watcher: ResizeObserver | null = null;
+  let watched: Element | null = null;
+  const watchProto = () => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const block = protoBlock();
+    if (!block || block === watched) return;
+    watcher ??= new ResizeObserver(() => {
+      if (faceKey !== null && protoWidth() !== faceKey) invalidate();
+    });
+    watcher.disconnect();
+    watched = block;
+    watcher.observe(block);
+  };
 
   return {
     heights(names) {
@@ -329,23 +410,33 @@ export function createRowHeights(
       // it — and `null`, which the caller already handles by rendering everything, is the honest
       // reply from a thing that has been torn down.
       if (destroyed) return null;
+      watchProto();
       // The name column's own declaration, which is the whole of what a name breaks against. It
       // does not move when a filter does — a declared width is `min + share` over the COLUMNS and
       // the track, never over the rows in the DOM, which is what task 3 bought
       // (docs/app.md §Table presentation). So a filter change is a hit and costs nothing.
-      const declared = document.querySelector<HTMLElement>('.tblwrap table colgroup col')?.style.width;
-      if (declared === key && cachedFor === names && cached) return cached;
+      const declared = document.querySelector<HTMLElement>(
+        '.tblwrap table:not(.proto) colgroup col')?.style.width;
+      const face = protoWidth();
+      if (declared === key && face === faceKey && cachedFor === names && cached) return cached;
       const measured = measure(names);
-      // A failure is never cached. It means the table is not up yet — or has no discontinued row to
-      // copy a chip from — and the next call is the one that can succeed.
+      // A failure is never cached. It means the table is not up yet, and the next call is the one
+      // that can succeed. It no longer means "the window happens to hold no discontinued shoe":
+      // that was a fact about the scroll position, and the prototype row above is what removed it.
       if (!measured) return null;
       key = declared ?? null;
+      // Read AFTER the measurement rather than before it, so what the answer is filed under is the
+      // prototype as it stood while the names were laid out beside it.
+      faceKey = protoWidth();
       cachedFor = names;
       cached = measured;
       return measured;
     },
     destroy() {
       fonts?.removeEventListener?.('loadingdone', invalidate);
+      watcher?.disconnect();
+      watcher = null;
+      watched = null;
       destroyed = true;
       key = null;
       cachedFor = null;

@@ -10,6 +10,8 @@ for (const engine of ['firefox', 'chromium', 'webkit']) {
   const t0 = Date.now();
   try {
     const rig = await session(server.url, { engine, width: 1440, height: 900 });
+    // In the DOM, which on the desktop is a windowful rather than the fleet — the line it prints
+    // says so (docs/app.md §Table presentation).
     const rows = await rig.page.locator('tbody tr').count();
     const overflow = await rig.overflows();
     const cells = await rig.contrastAll('tbody td');
@@ -18,7 +20,7 @@ for (const engine of ['firefox', 'chromium', 'webkit']) {
     const ring = await rig.focusRing('button');
 
     console.error(`${engine}  ${Date.now() - t0}ms`);
-    console.error(`  rows rendered      ${rows}`);
+    console.error(`  rows in the DOM    ${rows} (a window of the fleet on the desktop)`);
     console.error(`  document overflow  ${overflow.scrollWidth} vs ${overflow.clientWidth} (by ${overflow.overflowsBy})`);
     console.error(`  contrast samples   ${cells.length}, worst ${worst?.ratio} on ${worst?.background}`);
     console.error(`  tab stops          ${tabs.map((t) => t.name).slice(0, 4).join(' → ')}`);

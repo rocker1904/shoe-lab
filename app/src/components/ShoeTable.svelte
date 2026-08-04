@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
@@ -8,11 +8,13 @@
   import { displayReleaseDate } from '../lib/release-date';
   import { columnWidths, fitModel } from '../lib/fit';
   import { columnLabel } from '../lib/labels';
+  import { createRowHeights, type NameEntry } from '../lib/row-height';
   import type { ScoreColumns } from '../lib/score';
   import { nextSort } from '../lib/sort';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/view';
+  import { OVERSCAN_PX, virtualPlan, type VirtualEntry, type VirtualItem } from '../lib/virtual';
   import DetailPanel from './DetailPanel.svelte';
   import DiscontinuedTag from './DiscontinuedTag.svelte';
   import SortCaret from './SortCaret.svelte';
@@ -66,8 +68,222 @@
   const fit = $derived(fitModel(data));
   const widths = $derived(columnWidths(view.columns, trackPx, fit));
 
-  // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
-  // mean something different from its neighbours' in the same row.
+  /* ---------------------------------------------------------------------------------------------
+   * The window: what is on screen, plus what the runner has claimed.
+   * docs/app.md §Table presentation owns the design; `lib/virtual.ts` owns the plan and
+   * `lib/row-height.ts` owns the heights. This is the seam between the three and the DOM.
+   * ------------------------------------------------------------------------------------------- */
+
+  /** The `<tbody>`, which is both what the plan fills and the box every offset below is read off. */
+  let body = $state<HTMLElement | null>(null);
+
+  /**
+   * The whole fleet's names, and **one array for the life of the dataset**.
+   *
+   * `RowHeights.heights` compares `names` by IDENTITY, so a caller that rebuilds the array per
+   * render misses the cache every time and pays the whole 455-name measurement per keystroke — the
+   * exact cost the cache exists to remove (`lib/row-height.ts`). `data` is a prop that changes once,
+   * where `shoes` is a new array on every frame of a drag, so the fleet is what is measured and the
+   * filtered list is what is looked up out of it.
+   */
+  const fleetNames = $derived<NameEntry[]>(
+    data.shoes.map((s) => ({ name: s.name, discontinued: !!s.discontinued })));
+
+  /** A face settling invalidates every height without moving any width, so it cannot be a key. */
+  let facesEpoch = $state(0);
+  const rowHeights = createRowHeights(() => facesEpoch++);
+  onDestroy(() => rowHeights.destroy());
+
+  /**
+   * The measured row heights, **held rather than dropped when the measurement declines**.
+   *
+   * `null` means *cannot measure*, and the caller's honest answer to it is to render everything —
+   * which is what happens before the first successful measurement and under jsdom for ever. But
+   * after one has succeeded, falling back to the whole fleet on a later `null` is an oscillation
+   * rather than a fallback: a resize drag keys on the declared width and so misses the cache on
+   * every frame, and a body that alternated between a windowful and 455 rows would re-render the
+   * fleet every other frame for the length of the gesture. Holding the last measurement is stale by
+   * at most the width that has just moved, and the next frame that can measure replaces it.
+   */
+  let measured = $state<number[] | null>(null);
+  $effect(() => {
+    // Named dependencies rather than incidental ones: the declared widths, and a face settling.
+    void widths;
+    void facesEpoch;
+    let live = true;
+    // **Awaited, and that is the whole of what makes the measurement current.** The cache keys on
+    // the width read back off the DOM rather than on the one in hand, because a measurement lays
+    // names out inside the live cell and what it is filed under has to be what that cell was
+    // actually laid out at (`lib/row-height.ts`). But an effect can run with the model already moved
+    // and the `<colgroup>` not yet rewritten: measured on arrival, the model said 372.76px while the
+    // `<col>` still said 240px, so every name was laid out 133px narrow, the answer was filed under
+    // `240px` — correctly — and nothing asked again, because the model's width never moved after
+    // that. That is a table 3,000px taller than the shoes in it, in every engine, healed only where
+    // an unrelated `loadingdone` happened to fire afterwards (`.hunt/task6/probe8-when.ts`). `tick`
+    // puts this after the DOM has caught up, so the two widths are one width.
+    void tick().then(() => {
+      if (!live) return;
+      const next = rowHeights.heights(fleetNames);
+      if (next) measured = next;
+    });
+    return () => { live = false; };
+  });
+
+  /** Keyed by slug, because the measurement is over the FLEET and the plan is over what is shown. */
+  const heightBySlug = $derived.by(() => {
+    const out = new Map<string, number>();
+    if (measured) data.shoes.forEach((s, i) => out.set(s.slug, measured![i] ?? 0));
+    return out;
+  });
+
+  /**
+   * What an open shoe's panel is actually rendering at, read off the DOM because nothing models it.
+   *
+   * A shoe is one item, and an open one is a row PLUS a panel — 843–1005px of it. Left out of the
+   * item's height every row below an open one would sit that far from where the plan believes it is,
+   * and the window computed for a scroll position past it would select rows that are nowhere near
+   * the screen: a blank body rather than a subtle error. It never reaches a spacer, because an open
+   * shoe is always rendered and a spacer stands only for shoes that are not — so this is measured
+   * rather than estimated, and it is measured for exactly the rows that are on the page.
+   */
+  let panelPx = $state<Record<string, number>>({});
+  $effect(() => {
+    // The open set is the dependency, spread rather than counted so that swapping one open shoe for
+    // another re-observes rather than looking unchanged.
+    const openSlugs = [...open];
+    if (!body || !openSlugs.length) return;
+    const ro = new ResizeObserver((entries) => {
+      let next: Record<string, number> | null = null;
+      for (const entry of entries) {
+        const el = entry.target as HTMLElement;
+        const slug = el.dataset['slug'];
+        const px = el.getBoundingClientRect().height;
+        if (!slug || panelPx[slug] === px) continue;
+        next ??= { ...panelPx };
+        next[slug] = px;
+      }
+      if (next) panelPx = next;
+    });
+    for (const el of body.querySelectorAll<HTMLElement>('tr.expand[data-slug]')) ro.observe(el);
+    return () => ro.disconnect();
+  });
+
+  /**
+   * Where the viewport is **in the items' own space**, where 0 is the top of the first shoe.
+   *
+   * Not the page's `scrollY`, which counts the chrome, the receipt, the ordering note and the header
+   * row as well. The body's own offset is exactly `-rect.top` — one subtraction, in one place, so
+   * there is no second spelling of it anywhere in the component. A NEGATIVE value is the ordinary
+   * desktop resting state, the table starting below the fold, and it is taken literally rather than
+   * clamped: a wrong offset then shows up as a blank body rather than as rows quietly a screenful
+   * out of place (`lib/virtual.ts`).
+   */
+  let scrollTopPx = $state(0);
+  let viewportPx = $state(0);
+  function readWindow(): void {
+    const rect = body?.getBoundingClientRect();
+    if (!rect) return;
+    scrollTopPx = -rect.top;
+    viewportPx = window.innerHeight;
+  }
+  $effect(() => {
+    readWindow();
+    const onMove = () => readWindow();
+    // Passive: this only reads, and a non-passive scroll listener on the window blocks the
+    // compositor for the length of the gesture.
+    window.addEventListener('scroll', onMove, { passive: true });
+    window.addEventListener('resize', onMove);
+    return () => {
+      window.removeEventListener('scroll', onMove);
+      window.removeEventListener('resize', onMove);
+    };
+  });
+
+  /**
+   * The shoe the keyboard is on, kept in the plan wherever it is.
+   *
+   * Unmounting a focused row drops `activeElement` to `<body>`: no ring anywhere, and the next Tab
+   * restarts from the top of the document past every filter. Moving focus to the nearest row still
+   * on screen was rejected — it changes what Enter would expand without saying so
+   * (docs/policies.md §Interaction chrome). Cleared only when focus leaves the body entirely, so the
+   * hand-off from one row to the next never has a frame with neither in the plan.
+   */
+  let focusedSlug = $state<string | null>(null);
+  /** The row a reveal has been asked for, pinned so the ask can land on a shoe outside the window. */
+  let pinnedSlug = $state<string | null>(null);
+
+  const kept = $derived.by(() => {
+    const out = new Set<string>(open);
+    if (focusedSlug) out.add(focusedSlug);
+    if (pinnedSlug) out.add(pinnedSlug);
+    return out;
+  });
+
+  const items = $derived.by<VirtualItem[]>(() => shoes.map((s) => ({
+    key: s.slug,
+    height: (heightBySlug.get(s.slug) ?? 0) + (open.has(s.slug) ? (panelPx[s.slug] ?? 0) : 0),
+  })));
+
+  /**
+   * **The one place the plan's three adjacent numbers are matched to their meanings.**
+   * `virtualPlan(items, scrollTop, viewportPx, overscanPx, kept)` takes three unlabelled `number`s
+   * in a row, so a transposed viewport and overscan type-checks and passes every case in
+   * `virtual.test.ts` — the window is symmetric about the viewport, so only a rendered table could
+   * tell them apart. Named fields here make the mapping something read rather than counted.
+   */
+  function planFor(list: VirtualItem[], w: {
+    scrollTopPx: number; viewportPx: number; overscanPx: number; kept: ReadonlySet<string>;
+  }): VirtualEntry[] {
+    return virtualPlan(list, w.scrollTopPx, w.viewportPx, w.overscanPx, w.kept);
+  }
+
+  const plan = $derived(planFor(items, {
+    scrollTopPx,
+    // **Cannot measure the rows is the same answer as cannot measure the viewport**, and
+    // `virtualPlan` already owns it: a non-positive viewport renders every item with no spacers.
+    // Stating it here rather than branching keeps one owner for "render everything"
+    // (spec §Failure behaviour).
+    viewportPx: measured === null ? 0 : viewportPx,
+    overscanPx: OVERSCAN_PX,
+    kept,
+  }));
+
+  /**
+   * The plan with the two things the DOM needs and the plan does not carry: a key per entry, and
+   * the real row numbers.
+   *
+   * **A spacer is keyed by the run it stands for, never by its position.** The plan gains and loses
+   * spacers as kept shoes split them, so an array index is a gap in one frame and an item in the
+   * next, and Svelte would reuse the wrong node. The stable identity is the index of the next item
+   * entry — `items.length` for a trailing gap — and it is namespaced away from slugs, or a shoe
+   * slugged `3` and the spacer above item 3 would be one key.
+   *
+   * **`aria-rowindex` counts the rows the table WOULD have**, panels included, which is the whole
+   * point of it: the rendered rows are a window and their DOM positions say nothing about where in
+   * the fleet they sit. `aria-rowcount` is the same arithmetic totalled, and the header row is 1.
+   */
+  const planned = $derived.by(() => {
+    const rowIndex: number[] = [];
+    let n = 2;
+    for (const s of shoes) {
+      rowIndex.push(n);
+      n += open.has(s.slug) ? 2 : 1;
+    }
+    const out = plan.map((entry, i) => {
+      if (entry.kind === 'item') {
+        return { key: `s:${shoes[entry.index]!.slug}`, entry, rowIndex: rowIndex[entry.index]! };
+      }
+      // Two gaps never adjoin — `virtualPlan` emits one per run — so the next entry is the item the
+      // run ends at, or nothing at all where the gap trails the fleet.
+      const next = plan[i + 1];
+      return { key: `g:${next?.kind === 'item' ? next.index : items.length}`, entry, rowIndex: 0 };
+    });
+    return { entries: out, rowCount: n - 1 };
+  });
+
+  // The wash ranks over the **whole filtered set** — `shoes`, never `plan` — like every other
+  // column's, or its tint would mean something different from its neighbours' in the same row and
+  // something different again at every scroll position (spec §Non-goals).
   const percentiles = $derived(new Map(view.columns.map((c) => [c,
     scores.has(c)
       ? rankMap(new Map(shoes.flatMap((s) => {
@@ -106,16 +322,26 @@
     reveal(row);
   }
 
-  let body = $state<HTMLElement | null>(null);
   /**
    * The same landing a click-expand gets, for a row this component did not open. Back and Forward
    * are the only other way one opens, and `Page.svelte` owns which row that is
-   * (docs/app.md §View and URL ownership) — it has a slug off the address and no element, so the
-   * row is looked up here rather than passed in.
+   * (docs/app.md §View and URL ownership).
+   *
+   * **By fleet position, not by slug**, and the window is why. `Page.svelte` knows a row's position
+   * in the list it handed over; this component knows whether that position is in the plan. Asked for
+   * a slug it could only look for a row in the DOM, and a row outside the window is not in the DOM —
+   * a `querySelector` that finds nothing scrolls nowhere and says nothing. Given the index it can
+   * put the shoe in the plan first and then land on it. The pin outlives the call by design: the
+   * revealed row is one row, and dropping it the moment the scroll finished would unmount the thing
+   * that was just scrolled to.
    */
-  export async function revealRow(slug: string): Promise<void> {
+  export async function revealRow(index: number): Promise<void> {
+    pinnedSlug = shoes[index]?.slug ?? null;
+    if (!pinnedSlug) return;
     await tick();
-    reveal(body?.querySelector<HTMLElement>(`tr.shoe[data-slug="${CSS.escape(slug)}"]`) ?? null);
+    // By slug once the row is known to exist: `data-slug` is the row's own identity in the DOM,
+    // where the index is the caller's vocabulary for the same shoe.
+    reveal(body?.querySelector<HTMLElement>(`tr.shoe[data-slug="${CSS.escape(pinnedSlug)}"]`) ?? null);
   }
 
   /** jsdom implements no layout and defines neither `scrollIntoView` nor `matchMedia`, hence the
@@ -159,7 +385,7 @@
      face that has loaded, and a constant is right at one width only. It is what a row's
      `scroll-margin-top` adds to `--thead-top` (docs/app.md §Table presentation). -->
 <div class="tblwrap" style:--head-h="{headHeight}px" bind:clientWidth={trackPx}>
-<table>
+<table aria-rowcount={planned.rowCount}>
   <!-- The widths are DECLARED, and the model declares them. Under `table-layout: auto` every
        column was a function of the rows in the DOM, which is a property this table cannot keep:
        rendering a window of the fleet instead of all of it moves the name column by up to 72px
@@ -170,7 +396,8 @@
     {#each widths as w, i (i)}<col style:width="{w}px" />{/each}
   </colgroup>
   <thead bind:clientHeight={headHeight}>
-    <tr>
+    <!-- Row 1 of `aria-rowcount`, and the reason the shoe rows start at 2. -->
+    <tr aria-rowindex="1">
       <!-- A real sort control, not a label. `name` is a sort key the parser accepts, so a link
            carrying it reordered every row with no `aria-sort` anywhere in the table and nothing that
            could reverse it — the untrue-claim species rather than a nicety
@@ -205,44 +432,105 @@
       {/each}
     </tr>
   </thead>
-  <!-- `data-slug` is how `revealRow` finds a row Back or Forward opened, which arrives as a slug
-       off the address rather than as an element. -->
-  <tbody bind:this={body}>
-    {#each shoes as s (s.slug)}
-      <!-- `aria-expanded` says the row controls something; `aria-controls` is the only thing that
-           says what, and the panel is a sibling row rather than a child of the control. Emitted only
-           while it is open: the panel exists only then, and an IDREF naming a node that is not in
-           the document is an unresolvable reference rather than a promise of one. -->
-      <tr class="shoe" tabindex="0" data-slug={s.slug} aria-expanded={open.has(s.slug)}
-          aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
-          onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
-        <!-- The flex lives on a wrapper, not on the cell: `display: flex` on a `td` takes it out of
-             the table-cell box, so it stops stretching to the row and leaves a half-height block the
-             numeric cells scroll through under the sticky column. -->
-        <td class="name">
-          <div class="name-row">
-            <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
-            <!-- No brand line: almost every name already begins with its brand, and the handful
-                 that do not shorten it rather than drop it — asserted over the committed fleet in
-                 `lib/filters.test.ts` (docs/app.md §Columns and sorting). -->
-            <div><strong>{s.name}</strong>{#if s.discontinued}<DiscontinuedTag />{/if}</div>
-          </div>
-        </td>
-        {#each view.columns as col (col)}
-          {@const p = percentiles.get(col)?.get(s.slug)}
-          {@const blue = washOf(col) === 'blue'}
-          <!-- One class and no value at all: `lib/display.ts` declares what each bucket paints, so
-               a dragged grip never writes a custom property per cell (docs/app.md §Theming). -->
-          <td class="num {p === undefined ? '' : washCellClass(blue, p, paint)}"
-              class:fig={isFigure(col, idx.bySlug.get(col))}
-              class:tinted={p !== undefined}
-              class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
-        {/each}
-      </tr>
-      {#if open.has(s.slug)}
-        <tr class="expand" id="detail-{s.slug}"><td colspan={1 + view.columns.length}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
+  <!-- The body holds a PLAN, not one entry per shoe: the shoes on screen, the ones the runner has
+       claimed, and spacer rows standing for everything left out
+       (docs/specs/2026-08-03-virtualising-the-table.md).
+       `data-slug` is how `revealRow` finds the row it has just put in the plan.
+       The focus listeners are here rather than on the row so that the last row to hold focus stays
+       in the plan wherever it has scrolled to: `focusout` fires before the next `focusin`, so
+       clearing only on the way OUT OF THE BODY is what stops a hand-off from one row to the next
+       having a frame with neither of them mounted. -->
+  <tbody bind:this={body}
+         onfocusin={(e) => {
+           const row = (e.target as HTMLElement | null)?.closest?.('tr.shoe');
+           if (row) focusedSlug = (row as HTMLElement).dataset['slug'] ?? null;
+         }}
+         onfocusout={(e) => {
+           if (!body?.contains(e.relatedTarget as Node | null)) focusedSlug = null;
+         }}>
+    {#each planned.entries as p (p.key)}
+      {#if p.entry.kind === 'gap'}
+        <!-- The spacer, standing for exactly the shoes it replaces and for nothing else.
+             `aria-hidden`, because a row that stands for rows is not one: without it the
+             accessibility argument for keeping a real table partly defeats itself, and the real
+             positions are carried by `aria-rowindex` instead.
+             The height goes on the CELL and the cell gives back everything a `td` is given: the
+             `--s2` padding and the 1px bottom border below would stand every spacer 17px above the
+             run it replaces — every spacer, not only a 0px one — which puts every scroll position
+             under it wrong and drifts the scrollbar this design exists to keep honest. -->
+        <tr class="spacer" aria-hidden="true"><td colspan={1 + view.columns.length}
+          style:height="{p.entry.px}px"></td></tr>
+      {:else}
+        {@const s = shoes[p.entry.index]!}
+        <!-- `aria-expanded` says the row controls something; `aria-controls` is the only thing that
+             says what, and the panel is a sibling row rather than a child of the control. Emitted
+             only while it is open: the panel exists only then, and an IDREF naming a node that is
+             not in the document is an unresolvable reference rather than a promise of one. -->
+        <tr class="shoe" tabindex="0" data-slug={s.slug} aria-rowindex={p.rowIndex}
+            aria-expanded={open.has(s.slug)}
+            aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
+            onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
+          <!-- The flex lives on a wrapper, not on the cell: `display: flex` on a `td` takes it out
+               of the table-cell box, so it stops stretching to the row and leaves a half-height
+               block the numeric cells scroll through under the sticky column. -->
+          <td class="name">
+            <div class="name-row">
+              <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
+              <!-- No brand line: almost every name already begins with its brand, and the handful
+                   that do not shorten it rather than drop it — asserted over the committed fleet in
+                   `lib/filters.test.ts` (docs/app.md §Columns and sorting). -->
+              <div><strong>{s.name}</strong>{#if s.discontinued}<DiscontinuedTag />{/if}</div>
+            </div>
+          </td>
+          {#each view.columns as col (col)}
+            {@const p2 = percentiles.get(col)?.get(s.slug)}
+            {@const blue = washOf(col) === 'blue'}
+            <!-- One class and no value at all: `lib/display.ts` declares what each bucket paints, so
+                 a dragged grip never writes a custom property per cell (docs/app.md §Theming). -->
+            <td class="num {p2 === undefined ? '' : washCellClass(blue, p2, paint)}"
+                class:fig={isFigure(col, idx.bySlug.get(col))}
+                class:tinted={p2 !== undefined}
+                class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</td>
+          {/each}
+        </tr>
+        {#if open.has(s.slug)}
+          <!-- `data-slug` here as well as on the row: the panel's own height is part of what the
+               shoe occupies, and it is read off this node rather than modelled. -->
+          <tr class="expand" id="detail-{s.slug}" data-slug={s.slug} aria-rowindex={p.rowIndex + 1}><td colspan={1 + view.columns.length}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
+        {/if}
       {/if}
     {/each}
+  </tbody>
+</table>
+<!-- **The prototype the measurement is taken off, and the whole reason it is here is that the plan
+     can never take it away.** `measureDesktopRowHeights` clones a row for its replica and copies a
+     `DiscontinuedTag`'s markup, and both used to come from whichever shoe happened to be in the DOM
+     — which under a window is a fact about the scroll position: the window can hold no discontinued
+     shoe, and past either end of the fleet it holds no shoe at all. Each of those made the
+     measurement decline, the caller render everything, the prototype reappear and the measurement
+     succeed, which is a loop rather than a fallback (`lib/row-height.ts`).
+     One row, a cell per rendered column so the row's floor is the one the table really draws — the
+     figure cells are set in the mono face and a taller line box there is what sets a row — and the
+     same `<colgroup>` and width as the table beside it, so nothing about it is a second model of
+     the first. Out of flow and off to the left, which is not scrollable in either direction;
+     `visibility: hidden` keeps it laid out, which is the whole point, while taking it out of the
+     accessibility tree and out of the tab order. -->
+<table class="proto" aria-hidden="true" style:width="{trackPx}px">
+  <colgroup>
+    {#each widths as w, i (i)}<col style:width="{w}px" />{/each}
+  </colgroup>
+  <tbody>
+    <tr>
+      <td class="name">
+        <div class="name-row">
+          <span class="chev" aria-hidden="true">›</span>
+          <div><strong>M</strong><DiscontinuedTag /></div>
+        </div>
+      </td>
+      {#each view.columns as col (col)}
+        <td class="num" class:fig={isFigure(col, idx.bySlug.get(col))}>0</td>
+      {/each}
+    </tr>
   </tbody>
 </table>
 </div>
@@ -349,6 +637,27 @@
      phone rendering answers the same question by painting its cell `--well` instead, because there
      the panel does not span it. */
   tr.expand td { padding: 0; }
+  /* **A spacer is its height and nothing else.** Every `td` above takes `--s2` of padding and a 1px
+     bottom border, so a spacer that inherited them would stand 17px taller than the run of shoes it
+     replaces — on EVERY spacer, not only a 0px one — and every scroll position below it would be
+     that much out, per spacer, which is exactly the scrollbar drift measured heights were chosen to
+     avoid (docs/app.md §Table presentation). */
+  tr.spacer td { padding: 0; border: 0; }
+  /* **Scroll anchoring off, over the rows.** Both engines pick an anchor node and hold it still when
+     content is added or removed above the viewport — which is what a windowed body does on every
+     scroll frame, so the engine would fight the plan for the scroll position all the way down the
+     table. Declared on the `tbody`, which is the subtree that changes; anchoring elsewhere on the
+     page is left alone, and WebKit implements none of it either way. */
+  tbody { overflow-anchor: none; }
+  /* The measurement's prototype row (see the markup). Out of flow so it costs the table no height,
+     and to the LEFT because content overflowing the inline start is not scrollable — the same trick
+     `row-height.ts`'s own replica uses, and the reason neither shows up in `scrollWidth`.
+     `visibility: hidden` rather than `display: none`: the row has to be LAID OUT, because what is
+     measured off it is geometry — a `display: none` prototype reports a chevron 5px wide as 0 and
+     lays every name out against a container of nothing. It is out of the accessibility tree and out
+     of the tab order for the same declaration, with `aria-hidden` stating it as well. */
+  table.proto { position: absolute; top: 0; left: -10000px; visibility: hidden;
+                pointer-events: none; }
   td.fig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   /* No `overflow` here, deliberately: it would make the wrapper a scrollport and detach the sticky
      `thead`, which is the failure `.content` already documents.

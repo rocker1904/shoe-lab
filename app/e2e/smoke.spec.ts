@@ -411,6 +411,105 @@ test('keeps an expanded row below the chrome that opening it scrolls under', asy
 });
 
 /**
+ * **The desktop body renders a plan**, and this is the row model that goes with it
+ * (docs/app.md §Table presentation).
+ *
+ * **What this fixture can and cannot say.** Five shoes fit inside one window at every width, so the
+ * body here is never actually windowed: no spacer is emitted, and the assertions below are about the
+ * arrangement that makes windowing safe rather than about the windowing itself. The window is
+ * exercised on the committed fleet by `.hunt/task6/rig.ts`, in three engines, which is the only
+ * place 455 shoes exist — a fixture wide enough to window would be a different fixture and every
+ * count in this file would move with it.
+ *
+ * The four claims that are the fixture's to make: the header row is row 1 and the shoes count on
+ * from it, `aria-rowcount` is the rows the table WOULD have rather than the rows it has, an expanded
+ * panel takes a row number of its own and pushes the rows below it, and the prototype the height
+ * measurement is cloned from is in the document and out of the accessibility tree.
+ */
+test('numbers the rows the table would have, and keeps the prototype out of the tree', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  await settledDeclared(page, 'before reading the row model');
+
+  const model = () => page.evaluate(() => {
+    const table = document.querySelector('.tblwrap table:not(.proto)')!;
+    const rows = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')];
+    return {
+      rowcount: Number(table.getAttribute('aria-rowcount')),
+      head: table.querySelector('thead tr')!.getAttribute('aria-rowindex'),
+      shoes: rows.map((r) => Number(r.getAttribute('aria-rowindex'))),
+      panels: [...table.querySelectorAll('tbody tr.expand')]
+        .map((r) => Number(r.getAttribute('aria-rowindex'))),
+      spacers: table.querySelectorAll('tbody tr.spacer').length,
+      // WebKit implements no scroll anchoring and resolves the property to the empty string, so the
+      // claim is that it is not `auto` rather than that it is `none` (spec §Failure behaviour).
+      anchor: getComputedStyle(table.querySelector('tbody')!).overflowAnchor,
+      protoRows: document.querySelectorAll('.tblwrap table.proto tbody tr').length,
+      protoHidden: document.querySelector('.tblwrap table.proto')!.getAttribute('aria-hidden'),
+      protoChips: document.querySelectorAll('.tblwrap table.proto .disc-tag').length,
+    };
+  });
+
+  const shut = await model();
+  expect(shut.head, 'the header row is not row 1').toBe('1');
+  expect(shut.shoes, 'the shoe rows do not count on from the header')
+    .toEqual(shut.shoes.map((_, i) => i + 2));
+  expect(shut.rowcount, 'aria-rowcount is not the header plus every shoe')
+    .toBe(shut.shoes.length + 1);
+  expect(shut.spacers, 'this fixture fits in one window, so nothing should be spaced for').toBe(0);
+  expect(shut.anchor, 'the engine is free to re-anchor over rows the plan adds and removes')
+    .not.toBe('auto');
+  // The prototype is what makes the measurement independent of which shoes are on screen: one row,
+  // always carrying a chip, never in the accessibility tree (`app/src/lib/row-height.ts`).
+  expect(shut.protoRows).toBe(1);
+  expect(shut.protoHidden).toBe('true');
+  expect(shut.protoChips, 'the prototype carries no discontinued chip to copy').toBe(1);
+  // And the a11y tree agrees: the prototype adds no row to it.
+  await expect(page.getByRole('row')).toHaveCount(shut.shoes.length + 1);
+
+  await page.locator('tr.shoe').first().click();
+  await expect(page.locator('tr.expand')).toHaveCount(1);
+  const open = await model();
+  expect(open.panels, 'the panel does not take the row number after the row it belongs to')
+    .toEqual([open.shoes[0]! + 1]);
+  expect(open.shoes.slice(1), 'the rows below an open one did not move down a row')
+    .toEqual(shut.shoes.slice(1).map((n) => n + 1));
+  expect(open.rowcount, 'aria-rowcount does not count the panel').toBe(shut.rowcount + 1);
+});
+
+/**
+ * **A focused row is never unmounted, wherever it has scrolled to.** Unmounting it drops
+ * `activeElement` to `<body>`: no ring anywhere, and the next Tab restarts from the top of the
+ * document past every filter (docs/policies.md §Interaction chrome).
+ *
+ * On this fixture the row cannot leave the window, so what this holds is the half a small fleet can:
+ * focus survives a scroll to the far end of the document and Tab continues from the row rather than
+ * from the top. The half that needs a window — the row kept in the plan 12,000px away, and Tab
+ * landing on a shoe rather than on `<body>` — is measured on the committed fleet in three engines by
+ * `.hunt/task6/rig.ts`.
+ */
+test('keeps focus on the row that has it while the page scrolls away from it', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 400 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  const row = page.locator('tr.shoe').nth(1);
+  await row.evaluate((el) => el.focus());
+  const slug = await row.getAttribute('data-slug');
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(120);
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement).dataset['slug']),
+    'the scroll took focus off the row').toBe(slug);
+  expect(await page.evaluate(() => document.activeElement === document.body),
+    'focus fell to the body').toBe(false);
+
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement === document.body),
+    'Tab restarted from the top of the document').toBe(false);
+});
+
+/**
  * The same failure on the phone, where the occluding band is not the same two boxes: `--thead-top`
  * plus the stacked list's own sticky header measured 148px at 390x844, and the panel is 1600px in a
  * 844px window — so `block: 'nearest'` aligned its top with the top of the document scrollport and
@@ -1599,7 +1698,9 @@ test('Tempo ranks by its own score and keeps carbon out', async ({ page }) => {
   const rows = page.locator('tbody tr.shoe');
   // The carbon racer is the shoe the plate gate removes, and the one a speed ranking would promote.
   await expect(rows).toHaveCount(4);
-  await expect(page.locator('tbody')).not.toContainText('racer');
+  // `table:not(.proto)`: the wrapper holds a second, hidden one-row table the height measurement is
+  // cloned from, and it is not a shoe (docs/app.md §Table presentation).
+  await expect(page.locator('table:not(.proto) tbody')).not.toContainText('racer');
   const score = (row: number) => rows.nth(row).locator('td').nth(2);
   await expect(rows.first()).toContainText('cushy');
   await expect(score(0)).toHaveText('92.7');

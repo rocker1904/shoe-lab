@@ -195,7 +195,7 @@ export async function measureFit(
   // Tight and the figure columns' is JetBrains Mono, so a fallback in either moves this number.
   await awaitFacesLoaded(page, { required: APP_FACES, timeout: fontsTimeoutMs });
   const rendered = await page.evaluate((floorPx: number) => {
-    const table = document.querySelector<HTMLTableElement>('.tblwrap table');
+    const table = document.querySelector<HTMLTableElement>('.tblwrap table:not(.proto)');
     if (!table) throw new Error('the desktop table is not mounted — widen the window');
     const declared = [...table.querySelectorAll<HTMLTableColElement>('colgroup col')]
       .map((col) => [col, col.style.width] as const);
@@ -301,7 +301,7 @@ async function declaredInPage(
 ): Promise<Declared> {
   const read = (): Declared => {
     const wrap = document.querySelector<HTMLElement>('.tblwrap');
-    const table = wrap?.querySelector<HTMLTableElement>('table');
+    const table = wrap?.querySelector<HTMLTableElement>('table:not(.proto)');
     if (!wrap || !table) throw new Error('the desktop table is not mounted — widen the window');
     const declared = [...table.querySelectorAll<HTMLTableColElement>('colgroup col')]
       .map((col) => parseFloat(col.style.width));
@@ -415,10 +415,27 @@ export interface Excursion { column: string; text: string; px: number }
  *
  * `tr.expand` is excluded: its cell spans the whole table and constrains no column
  * (docs/app.md §The expanded row).
+ *
+ * **What it quantifies over is the rows in the DOM, and the body is a window now.** This walks
+ * `thead th, tbody tr.shoe > *`, so "no cell's ink leaves its column" is a claim about the shoes
+ * rendered at the moment it runs — and once a body renders a window of its fleet instead of all of
+ * it, the widest cell in a column can simply stop being measured, with no assertion failing and
+ * nothing in the reading to say its population changed
+ * (docs/specs/2026-08-03-virtualising-the-table.md §Registry sweep).
+ *
+ * Two things hold it honest rather than one. **The sweep asserts the population**, below: on the
+ * five-shoe fixture every shoe is in the window at every width, so the bound is over the whole
+ * fixture fleet exactly as it was, and the day that stops being true this reddens rather than
+ * quietly narrowing. And the real fleet's excursions are swept with the window **scrolled across
+ * it** in `.hunt/task6/no-overflow.ts`, which is where a 455-shoe population can be reached at all.
+ *
+ * `:not(.proto)` on the table: the wrapper also holds the hidden one-row prototype the height
+ * measurement is taken off (`app/src/lib/row-height.ts`), which is out of flow, invisible, and not
+ * a claim about any column.
  */
 export async function measureExcursions(page: Page): Promise<Excursion[]> {
   return page.evaluate(() => {
-    const table = document.querySelector('.tblwrap table');
+    const table = document.querySelector('.tblwrap table:not(.proto)');
     if (!table) throw new Error('the desktop table is not mounted — widen the window');
     const heads = [...table.querySelectorAll('thead th')]
       .map((th) => (th.textContent ?? '').replace(/\s+/g, ' ').trim());
@@ -487,6 +504,19 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
     expect(declared.tableWidth, `the table is narrower than its track at ${width}px`)
       .toBeGreaterThanOrEqual(declared.trackWidth - 1);
 
+    // **What the bound was measured over, asserted rather than assumed.** `measureExcursions` walks
+    // the rows in the DOM, and the body renders a WINDOW of its fleet now — so the population this
+    // quantifies over is a thing that can shrink without any assertion failing. On this fixture
+    // every shoe is in the window at every width, which is what makes the bound a claim about the
+    // whole fixture fleet; a fixture or an overscan that stopped making it true has to redden here
+    // and send the next reader to scroll the sweep across the fleet, not pass while guarding less.
+    const shown = await page.locator('.tblwrap table:not(.proto) tbody tr.shoe').count();
+    const planned = await page.evaluate(() =>
+      Number(document.querySelector('.tblwrap table:not(.proto)')!.getAttribute('aria-rowcount'))
+      - 1 - document.querySelectorAll('.tblwrap tbody tr.expand').length);
+    expect(shown, `the body is windowed at ${width}px, so this bound no longer quantifies over `
+      + 'the fleet — scroll the window across it or say so here').toBe(planned);
+
     const over = await measureExcursions(page);
     expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
       .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
@@ -515,7 +545,7 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
  * column set, so changing the face, the columns or the width changes what they ask.
  */
 function renderedForNames(words: number): { names: string[]; disc: boolean[]; rendered: number[] } {
-  const rows = [...document.querySelectorAll<HTMLTableRowElement>('.tblwrap table tbody tr.shoe')];
+  const rows = [...document.querySelectorAll<HTMLTableRowElement>('.tblwrap table:not(.proto) tbody tr.shoe')];
   const chipOf = (r: HTMLElement) => r.querySelector('td.name .name-row > div > span');
   const plainRow = rows.find((r) => !chipOf(r));
   const chipRow = rows.find((r) => chipOf(r));
@@ -617,7 +647,7 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
     expect(measured, `nothing could be measured ${at}`).not.toBeNull();
     const rendered = await page.evaluate(() => {
       const out: Record<string, number> = {};
-      for (const tr of document.querySelectorAll<HTMLElement>('.tblwrap table tbody tr.shoe')) {
+      for (const tr of document.querySelectorAll<HTMLElement>('.tblwrap table:not(.proto) tbody tr.shoe')) {
         out[tr.dataset['slug']!] = tr.getBoundingClientRect().height;
       }
       return out;
@@ -659,12 +689,12 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
 
     await compare(`at ${width}px on [${cols.join(',')}]`);
 
-    const first = page.locator('.tblwrap table tbody tr.shoe').first();
+    const first = page.locator('.tblwrap table:not(.proto) tbody tr.shoe').first();
     await first.click();
-    await expect(page.locator('.tblwrap table tbody tr.expand'),
+    await expect(page.locator('.tblwrap table:not(.proto) tbody tr.expand'),
       `the first row did not expand at ${width}px`).toHaveCount(1);
     await compare(`at ${width}px on [${cols.join(',')}] with the first row expanded`);
     await first.click();
-    await expect(page.locator('.tblwrap table tbody tr.expand')).toHaveCount(0);
+    await expect(page.locator('.tblwrap table:not(.proto) tbody tr.expand')).toHaveCount(0);
   }
 }

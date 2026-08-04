@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { virtualPlan, type VirtualEntry, type VirtualItem } from './virtual';
+import { OVERSCAN_PX, virtualPlan, type VirtualEntry, type VirtualItem } from './virtual';
 
 /**
  * **Asserted entry by entry, in order, and never by a total.** This branch has been bitten four
@@ -230,6 +230,28 @@ describe('virtualPlan', () => {
     expect(virtualPlan(flat, 0, 600, 0, none)).toEqual([item(0), item(1), item(2)]);
     // Past the end of a fleet with no extent: every item is at 0 and the window is not.
     expect(virtualPlan(flat, 600, 600, 0, none)).toEqual([gap(0)]);
+  });
+
+  /**
+   * The overscan's own bound, in the units the constant is written in. §Bounds asks for it here, and
+   * the number's derivation — what it was measured against and why a jump is not covered by it —
+   * lives in `virtual.ts` beside the constant, which is its one home.
+   *
+   * **A fleet of 1px shoes, so a rendered INDEX is a distance in px.** Anything taller makes the
+   * assertion a row count that happens to agree with the constant at one height, which is the shape
+   * of claim this branch has been wrong about before.
+   */
+  it('reaches the measured overscan past the window, at both ends and no further', () => {
+    const fine: VirtualItem[] = Array.from({ length: 4000 }, (_, i) => ({ key: `p${i}`, height: 1 }));
+    const rendered = virtualPlan(fine, 2000, 100, OVERSCAN_PX, none)
+      .flatMap((e) => (e.kind === 'item' ? [e.index] : []));
+    // The window is [2000 − overscan, 2000 + 100 + overscan]. The first rendered shoe is the one
+    // whose BOTTOM touches the window's top — index n spans n..n+1 — which is one lower than the
+    // edge itself; the last is the one whose top touches the bottom, which is the edge exactly.
+    expect(rendered[0]).toBe(2000 - OVERSCAN_PX - 1);
+    expect(rendered.at(-1)).toBe(2000 + 100 + OVERSCAN_PX);
+    // And nothing outside that run, so this is the window rather than a lower bound on it.
+    expect(rendered).toHaveLength(2 * OVERSCAN_PX + 102);
   });
 
   it('accounts for every item exactly once, across every combination there is', () => {

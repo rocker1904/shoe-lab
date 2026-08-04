@@ -151,6 +151,12 @@ filters have hidden has no row to land on and is skipped. `Page.svelte` decides 
 row; each rendering owns *how* it scrolls, which is why the two tables export the reveal
 rather than sharing one.
 
+**The ask is a position in the list handed over, not a slug**, and the desktop window is why: a row
+outside it is not in the DOM, so a table asked for a slug could only fail to find it and scroll
+nowhere, silently. Given the position the table can put the shoe in its plan first and then land on
+it — and it keeps it there, because the revealed row is one row and dropping it the moment the
+scroll finished would unmount the thing that was just scrolled to (§Table presentation).
+
 The two halves that still do not scroll are the ones that reasoning was actually about. A
 **close** does not, because a click-close does not either, and Back is the one gesture
 whose point is to leave where you were. A **cold link-borne `open=`** does not, because
@@ -218,9 +224,16 @@ What remains per update is what genuinely moved: one filter pass, two more per
 **bounded** row for its `excluded` count — a leave-one-out is conditioned on the
 rest of the set, so moving any bound moves every other row's figure — one sort,
 one ranking per rendered column (`percentileMap` defers to `rankMap`, one walk
-of the sorted run rather than one per shoe), and the table's DOM. The DOM is
-still the larger half, which is a row-count problem rather than a reactivity
-one — BACKLOG.md holds it. A measured piece of it has already been taken back
+of the sorted run rather than one per shoe), and the table's DOM. The DOM was
+the larger half, and it is a row-count problem rather than a reactivity one: the
+**desktop** body renders a window of the filtered list rather than all of it
+(§Table presentation), which takes a drag step on the real fleet at 1440px from
+6.4ms to 4.6ms in Chromium and from 10.0ms to 5.0ms in Firefox, worst step 23.0ms
+to 13.0ms and 38.0ms to 15.0ms. The stacked list still renders every shoe and
+BACKLOG.md holds the rest. The ranking above stays over the whole filtered set
+and never over the window — a wash ranked over what is on screen would mean
+something different at every scroll position.
+A measured piece of it has already been taken back
 without touching the row count: the wash reaches a cell as one **class** naming
 a stepped bucket, so most cells' class is the one they already carried and
 neither the write nor the style recalculation that would have followed happens
@@ -1373,6 +1386,65 @@ applies to a browser
 whose default font size is not 16px, since the model's tables are in px while
 `--t-*` and `--s*` are rem: pre-existing, and newly consequential.
 
+**The desktop body renders a plan, not one row per shoe.** `virtualPlan` in
+`lib/virtual.ts` decides it and `ShoeTable.svelte` renders it: the shoes on
+screen, every shoe the runner has claimed, and **spacer rows** standing for the
+runs left out. A spacer's height is the summed height of exactly the shoes it
+replaces — never a count times an average — so every row is where the scrollbar
+says it is. Measured on the real fleet at 1440×900, the panel is **16,623px**
+whether it is drawn from 51 rows and a spacer or from all 455, to the pixel in
+all three engines, and the body holds **45–97 rows** against the fleet's 455
+(`.hunt/task6/rig.ts`).
+
+Six things follow, and each is a failure mode rather than a detail.
+
+- **A spacer gives back everything a `td` is given.** Cells carry `--s2` of
+  padding and a 1px bottom border, so an unreset spacer stands 17px above the run
+  it replaces — every spacer, not only a 0px one — and every scroll position
+  below it is that much out, per spacer.
+- **Spacers are out of the accessibility tree** and the real positions ride on
+  `aria-rowcount` and `aria-rowindex` instead. Without both, keeping a semantic
+  `<table>` — which is what forces every hard part of this — partly defeats
+  itself. The count is the rows the table *would* have, panels included; the
+  header is row 1.
+- **Scroll anchoring is off over the body.** Both engines hold an anchor node
+  still when content is added or removed above the viewport, which is what a
+  windowed body does on every scroll frame. WebKit implements none of it, so the
+  assertion is that no engine is left on `auto` rather than that a keyword
+  computes.
+- **The scroll offset is in the items' own space**, where 0 is the top of the
+  first shoe rather than the top of the document. The body's offset is derived
+  once, as `-tbody.getBoundingClientRect().top`, and a negative value is the
+  ordinary resting state — the table starts below the fold — so it is taken
+  literally rather than clamped. A wrong subtraction then shows as a blank body
+  rather than as rows a screenful out of place.
+- **The overscan is 1,280px at each end**, and `lib/virtual.ts` owns the number
+  and its derivation. It is a stall budget rather than a catch-up distance: the
+  plan is applied in the same frame as the scroll in every engine and gesture a
+  rig can drive, so what it buys is that a main thread busy while the compositor
+  keeps scrolling has rows already mounted. Measured rates on the real fleet: a
+  wheel delivers its own notch per frame (120px, or 600px at a fling, coalescing
+  nothing), a held Page Down coalesces to 2,436–4,053px per frame, and `End` is a
+  jump no overscan covers — that one is repaired by the next frame's plan.
+- **The window's cost, and what it buys.** The scroll path is new work — 0.7ms a
+  frame in Chromium and 1.0ms in Firefox, worst 1.1 and 2.0, against a 16.7ms
+  budget — and the drag it pays for goes from 6.4ms to 4.6ms a step in Chromium
+  and from 10.0ms to 5.0ms in Firefox, with the worst step halving in both. The
+  panel's node count goes from 6,643 to 842 (`.hunt/task6/cost.ts`).
+
+**The measurement's prototypes never come from the plan.** `row-height.ts` clones
+a row for its replica and copies a `DiscontinuedTag`'s markup, and both used to
+come from whichever shoe was in the DOM — which under a window is a fact about
+the scroll position: the window may hold no discontinued shoe, and past either
+end of the fleet it holds no shoe at all. Each of those made the measurement
+decline, the caller render everything, the prototype reappear and the measurement
+succeed, which is a loop rather than a fallback. `ShoeTable.svelte` therefore
+renders a permanent hidden one-row prototype table — a cell per rendered column,
+so the row's floor is the one the table really draws, the same `<colgroup>` and
+width so it is a copy rather than a second model, out of flow, `visibility:
+hidden` so it is still laid out, and out of the accessibility tree. Everything
+that reads the real table selects `table:not(.proto)`.
+
 **Row heights are measured, never derived**, and `lib/row-height.ts` is the one
 home for how and for what it costs. A row's height is a function of its **name**
 alone — every other cell is a nowrap phrase or an unbreakable figure and is
@@ -1408,6 +1480,23 @@ sits in is a flex item, so a name whose longest unbroken token is wider than the
 column lays out wider than the cell and the rest of it wraps against that, which
 is why the measured container declares the same `min-width: min-content` the flex
 item has rather than trusting the arithmetic.
+
+**Two things about *when* it is measured, both of which put a wrong answer on
+screen rather than a `null`, and neither of which was visible until a spacer was
+sized from the result.** The cache keys on the declared width read back off the
+DOM, because the names are laid out inside the live cell and the answer has to be
+filed under the width that cell was actually laid out at. But an effect can run
+with the model's width already moved and the `<colgroup>` not yet rewritten: on
+arrival the model said 372.76px while the `<col>` still said 240px, so every name
+was laid out 133px narrow, the answer was filed under `240px` — correctly — and
+nothing asked again, because the model's width never moved after that. That is a
+table 3,000px taller than the shoes in it, in every engine. The measurement is
+therefore taken after a `tick`, so the two widths are one width. And the face
+swap **cannot be listened for**: WebKit dispatches `loading` and then nothing —
+no `loadingdone`, no `loadingerror`, with `document.fonts.status` reading
+`loaded` — so the prototype's own name block is part of the cache key and is
+watched for a change of width, the event staying subscribed beside it where it
+works.
 
 **Three things in the width model are guarded rather than assumed, because each
 quantifies over data nobody here controls** — `lib/fit.ts` computes them and
