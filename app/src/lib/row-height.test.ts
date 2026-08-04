@@ -14,10 +14,13 @@ import { fireResizeObservers } from '../test-setup';
  * The desktop table's name cell to the depth the measurement reaches into it — **and the hidden
  * prototype table beside it**, which is where every clone and the chip's markup now come from.
  *
- * The shoe row keeps the state a real row carries — open, focusable, answering to a slug — and the
- * prototype carries none of it. That is the point rather than a detail: "no row state reaches
- * anything laid out" is a claim about which node is cloned, and a fixture whose only row was already
- * clean could not tell the two apart.
+ * **BOTH rows carry the state a real row carries** — open, focusable, answering to a slug — where
+ * the app's own prototype carries none of it. That difference is deliberate and it is the opposite
+ * of what it looks like. The de-stating rule is a claim about the node that is CLONED, and once the
+ * clone source moved from the shoe row to the prototype, a clean prototype made every strip in
+ * `deState` deletable with the suite green: the guard was asserting the absence of something nothing
+ * had put there. The fixture is the half that has to be dirty. The two rows still differ in their
+ * figure cell, which is what says WHICH one was cloned.
  *
  * `padded` is the difference between the two fallbacks jsdom can reach. Without it jsdom resolves
  * `padding-left` to the empty string — it computes no used values — so the width a name would wrap
@@ -33,7 +36,7 @@ function mountTable(
   const nameCell = (name: string, chip: boolean) => `
             <td class="name" style="${pad}">
               <div class="name-row">
-                <span class="chev">&rsaquo;</span>
+                <span class="chev open">&rsaquo;</span>
                 <div><strong>${name}</strong>${chip ? '<span class="disc-tag">discontinued</span>' : ''}</div>
               </div>
             </td>`;
@@ -52,7 +55,7 @@ function mountTable(
       ${proto ? `<table class="proto" aria-hidden="true">
         ${cols}
         <tbody>
-          <tr>
+          <tr data-slug="p" tabindex="0" aria-expanded="true" aria-controls="detail-p">
             ${nameCell('M', discontinued)}
             <td class="num">0</td>
           </tr>
@@ -180,10 +183,14 @@ describe('measureDesktopRowHeights', () => {
 
   it('carries no row state onto anything it lays out', () => {
     // *A clone is a shape, never a state.* The rule is stated in the module and this is what holds
-    // it: the fixture's shoe row is open, focusable and answers to a slug, and none of that may
-    // reach anything laid out. The prototype carries none of it today, so this is a guard rather
-    // than a repair — and it is kept whole because `.chev.open` was a real wrong answer once, and a
-    // guard deleted for being satisfied is a guard the next source does not get.
+    // it: BOTH of the fixture's rows are open, focusable and answer to a slug, and none of that may
+    // reach anything laid out. `.chev.open` was a real wrong answer once — a rotated chevron's
+    // transformed box read 18px for a 5px glyph, so every name was laid out 13px narrow — and the
+    // module keeps all three strips whether or not the app's own prototype needs them.
+    //
+    // **One assertion per strip, because they are deletable one at a time.** The attribute loop, the
+    // chevron declass and the chip removal each have their own line here; with only the attributes
+    // held, the other two came out of `row-height.ts` with the suite green.
     //
     // The answer cannot discriminate under jsdom, which lays nothing out, so what is asserted is
     // what was BUILT, drained from the records rather than read off the document: every container
@@ -200,10 +207,20 @@ describe('measureDesktopRowHeights', () => {
     }
     observer.disconnect();
     expect(added.length, 'nothing was built, so this proves nothing').toBeGreaterThan(0);
-    for (const attr of ['aria-expanded', 'aria-controls', 'tabindex']) {
+    for (const attr of ['data-slug', 'aria-expanded', 'aria-controls', 'tabindex']) {
       expect(added.filter((e) => e.hasAttribute(attr)).map((e) => e.outerHTML),
         `a clone carried ${attr}`).toEqual([]);
     }
+    expect(added.filter((e) => e.matches('.chev.open')).map((e) => e.outerHTML),
+      'a clone kept the rotated chevron of an open row').toEqual([]);
+    // The chip is a strip AND a deliberate addition, which is why the claim is a count rather than
+    // an absence: the container carries one for each discontinued name it is asked to measure, and
+    // none for anything else. Leaving the source's own chip on the block would glue a second one to
+    // every name — the cloned chip plus the one `chipHtml` splices in — and measure every continued
+    // shoe against a line it does not render.
+    expect(added.filter((e) => e.matches('.disc-tag')).length,
+      'a chip reached a name that carries none, or a discontinued name lost the one it carries')
+      .toBe(NAMES.filter((n) => n.discontinued).length);
   });
 
   it('leaves nothing behind in the document when it gives up', () => {

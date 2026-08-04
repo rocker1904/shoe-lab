@@ -240,18 +240,28 @@ describe('virtualPlan', () => {
    * **A fleet of 1px shoes, so a rendered INDEX is a distance in px.** Anything taller makes the
    * assertion a row count that happens to agree with the constant at one height, which is the shape
    * of claim this branch has been wrong about before.
+   *
+   * **And the distance is spelled out here rather than read from `OVERSCAN_PX`.** The first shape of
+   * this wrote every edge in terms of the constant it was bounding, which is not a bound at all:
+   * `OVERSCAN_PX` 1280 → 640 left it green, and the §Bounds row's number was held by nothing. The
+   * local below is a SECOND, independent spelling of that row. If the constant ever moves, this is
+   * re-derived from `.hunt/task6/overscan.ts` and the derivation in `virtual.ts` rewritten with it —
+   * never edited to agree.
    */
-  it('reaches the measured overscan past the window, at both ends and no further', () => {
+  it('reaches 1,280px past the window, at both ends and no further', () => {
+    const BOUND_PX = 1280;
     const fine: VirtualItem[] = Array.from({ length: 4000 }, (_, i) => ({ key: `p${i}`, height: 1 }));
     const rendered = virtualPlan(fine, 2000, 100, OVERSCAN_PX, none)
       .flatMap((e) => (e.kind === 'item' ? [e.index] : []));
-    // The window is [2000 − overscan, 2000 + 100 + overscan]. The first rendered shoe is the one
-    // whose BOTTOM touches the window's top — index n spans n..n+1 — which is one lower than the
-    // edge itself; the last is the one whose top touches the bottom, which is the edge exactly.
-    expect(rendered[0]).toBe(2000 - OVERSCAN_PX - 1);
-    expect(rendered.at(-1)).toBe(2000 + 100 + OVERSCAN_PX);
+    // The window is [2000 − 1280, 2000 + 100 + 1280]. The first rendered shoe is the one whose
+    // BOTTOM touches the window's top — index n spans n..n+1 — which is one lower than the edge
+    // itself; the last is the one whose top touches the bottom, which is the edge exactly.
+    expect(rendered[0], 'the window does not reach 1,280px above the viewport')
+      .toBe(2000 - BOUND_PX - 1);
+    expect(rendered.at(-1), 'the window does not reach 1,280px below the viewport')
+      .toBe(2000 + 100 + BOUND_PX);
     // And nothing outside that run, so this is the window rather than a lower bound on it.
-    expect(rendered).toHaveLength(2 * OVERSCAN_PX + 102);
+    expect(rendered).toHaveLength(2 * BOUND_PX + 102);
   });
 
   it('accounts for every item exactly once, across every combination there is', () => {

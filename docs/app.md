@@ -1424,13 +1424,33 @@ Six things follow, and each is a failure mode rather than a detail.
   rig can drive, so what it buys is that a main thread busy while the compositor
   keeps scrolling has rows already mounted. Measured rates on the real fleet: a
   wheel delivers its own notch per frame (120px, or 600px at a fling, coalescing
-  nothing), a held Page Down coalesces to 2,436–4,053px per frame, and `End` is a
-  jump no overscan covers — that one is repaired by the next frame's plan.
+  nothing; WebKit's notch is 535px), a held Page Down coalesces to 2,436–3,945px
+  per frame, and `End` jumps 3,010–8,440px. So it covers wheel and scrollbar work
+  and nothing else: **a held Page Down outruns it too**, and both that and `End`
+  are repaired by the next frame's plan rather than prevented. What the uncovered
+  half costs was measured against the un-windowed build as a control, which
+  paints blank frames of its own — a wheel fling is the same on both, `End` is
+  inside the run-to-run spread, and a held Page Down goes from 1 blank painted
+  frame of a burst to 2–4.
 - **The window's cost, and what it buys.** The scroll path is new work — 0.7ms a
   frame in Chromium and 1.0ms in Firefox, worst 1.1 and 2.0, against a 16.7ms
   budget — and the drag it pays for goes from 6.4ms to 4.6ms a step in Chromium
   and from 10.0ms to 5.0ms in Firefox, with the worst step halving in both. The
   panel's node count goes from 6,643 to 842 (`.hunt/task6/cost.ts`).
+- **What holds the window, and where.** Nothing committed could run against a
+  windowed body at first: the e2e fixture is five shoes against 1,280px of
+  overscan at each end, so it cannot window whatever the viewport does, and
+  jsdom lays nothing out. `app/e2e/virtual.spec.ts` routes a 400-shoe fleet for
+  its own tests only — every other file's counts and its `spacers === 0`
+  assertions stay true, because they are true of five shoes — and holds the body
+  to one height however the plan is cut, the spacers out of Chromium's own
+  accessibility tree, the focused row in the plan across the length of the
+  fleet, and a shoe's tint invariant to where the window is.
+  `ShoeTable.test.ts` holds the half jsdom can reach, with the row measurement
+  stubbed and no geometry invented: the spacers summing to exactly the shoes
+  left out, a revealed row kept at its own place in the fleet, a declined
+  measurement holding the last one rather than falling back, and the wash ranked
+  over the filtered set.
 
 **The measurement's prototypes never come from the plan.** `row-height.ts` clones
 a row for its replica and copies a `DiscontinuedTag`'s markup, and both used to

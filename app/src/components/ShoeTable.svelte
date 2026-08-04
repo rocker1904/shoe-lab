@@ -145,6 +145,11 @@
    * the screen: a blank body rather than a subtle error. It never reaches a spacer, because an open
    * shoe is always rendered and a spacer stands only for shoes that are not — so this is measured
    * rather than estimated, and it is measured for exactly the rows that are on the page.
+   *
+   * **A closed shoe's entry is kept, and that is the one thing here that accumulates.** It is
+   * bounded by the fleet and inert while it sits there — `items` reads this only under `open.has` —
+   * and what keeping it buys is the frame after a reopen: the shoe is planned at the height it was
+   * last measured at rather than as a bare row waiting for a `ResizeObserver` delivery.
    */
   let panelPx = $state<Record<string, number>>({});
   $effect(() => {

@@ -1,25 +1,68 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
+import { indexTests } from '../lib/dataset';
+import { washOf } from '../lib/direction';
 import { columnWidths, fitModel } from '../lib/fit';
 import { type ScoreColumns } from '../lib/score';
 import { EASY } from '../lib/score-defs';
+import { percentileMap } from '../lib/stats';
 import { defaultView, type ViewState } from '../lib/view';
+import { DEFAULT_PAINT, washCellClass } from '../lib/wash';
 import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
 
+/**
+ * **The row measurement is stubbed, and its default is exactly what the real module already does
+ * here.** jsdom lays nothing out, so `measureDesktopRowHeights` can only ever decline — which meant
+ * this file could reach the plan in one state only, the *cannot measure* one that renders every
+ * shoe. The whole windowed half of the component was therefore unreachable from any committed
+ * suite, and ten mutations at the seam between the plan and the DOM survived it
+ * (`.delivery/2026-08-03-virtualising-the-table/task-6-review.md`, F1).
+ *
+ * The stub answers `null` until a test says otherwise, which is the real module's answer under
+ * jsdom, so nothing above changes behaviour. It replaces `createRowHeights` rather than adding a
+ * seam to the component: the cache's own rules are held against the real thing in
+ * `row-height.test.ts`, and what a browser actually measures is held in `app/e2e/`.
+ */
+const rig = vi.hoisted(() => ({
+  /** What `heights` answers. `null` — cannot measure — until a test hands over a fleet's worth. */
+  measure: null as ((names: readonly unknown[]) => number[] | null) | null,
+  /** Every array `heights` was handed, in call order: the caller's identity contract lives here. */
+  seen: [] as readonly (readonly unknown[])[],
+  /** The component's own invalidation callback, so a test can make a settled face re-measure. */
+  invalidate: (() => {}) as () => void,
+}));
+vi.mock('../lib/row-height', () => ({
+  measureDesktopRowHeights: () => null,
+  createRowHeights: (onInvalidate: () => void) => {
+    rig.invalidate = onInvalidate;
+    return {
+      heights: (names: readonly unknown[]) => {
+        rig.seen = [...rig.seen, names];
+        return rig.measure?.(names) ?? null;
+      },
+      destroy: () => {},
+    };
+  },
+}));
+beforeEach(() => { rig.measure = null; rig.seen = []; });
+
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns; open?: string[] } = {}) {
+function setup(over: { shoes?: Shoe[]; data?: ShoesFile; view?: Partial<ViewState>;
+  scores?: ScoreColumns; open?: string[] } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['score', 'heel-stack', 'plate'];
+  const file = over.data ?? data;
   // The set lives in Page.svelte now, so this helper plays the parent. A `SvelteSet` mutated in
   // place is what the component actually receives, so no re-render plumbing is needed here either.
   const open = new SvelteSet<string>(over.open ?? []);
-  const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? FLEET, data, view, onchange,
-    scores: over.scores ?? new Map(), stability: false, open,
+  const rendered = render(ShoeTable, { props: { shoes: over.shoes ?? file.shoes, data: file, view,
+    onchange, scores: over.scores ?? new Map(), stability: false, open,
     ontoggle: (slug: string) => { if (!open.delete(slug)) open.add(slug); } } });
   return Object.assign(onchange, { rendered });
 }
@@ -269,12 +312,14 @@ describe('ShoeTable sorts by shoe name', () => {
 });
 
 /**
- * The body renders a plan, and this is the half jsdom can hold: the **render-everything fallback**.
+ * The body renders a plan, and this is the half that needs no measurement at all: the
+ * **render-everything fallback**.
  *
- * jsdom lays nothing out, so `measureDesktopRowHeights` declines — which is the same answer the app
- * gives before its first measured frame — and a caller that cannot measure renders every shoe with
- * no spacer at all (spec §Failure behaviour). The windowed half is a browser fact and lives in
- * `app/e2e/smoke.spec.ts`, `app/e2e/cross-browser.spec.ts` and `.hunt/task6/rig.ts`.
+ * jsdom lays nothing out, so the real `measureDesktopRowHeights` declines — which is the same answer
+ * the app gives before its first measured frame — and a caller that cannot measure renders every
+ * shoe with no spacer at all (spec §Failure behaviour). The stub at the top of this file answers the
+ * same `null` unless a test hands it a fleet, so every case here is the untouched one; the windowed
+ * cases are the describe below.
  */
 describe('ShoeTable renders a plan', () => {
   it('renders every shoe and no spacer where nothing can be measured', () => {
@@ -314,6 +359,162 @@ describe('ShoeTable renders a plan', () => {
     // And it is not a shoe: nothing that quantifies over the runner's rows may pick it up.
     expect(container.querySelectorAll('tr.shoe')).toHaveLength(FLEET.length);
     expect(screen.getAllByRole('row')).toHaveLength(1 + FLEET.length);
+  });
+});
+
+/**
+ * **The other half: a body that really is windowed.** Nothing committed had ever run against one —
+ * the e2e fixture is five shoes against 1,280px of overscan at each end, so no viewport and no
+ * arrangement of open panels can window it, and this file could not measure at all. Ten mutations at
+ * the seam between the plan and the DOM survived the whole suite as a result
+ * (`.delivery/2026-08-03-virtualising-the-table/task-6-review.md`, F1).
+ *
+ * What is stubbed is the row measurement and nothing else. The plan's own arithmetic is `virtual.ts`
+ * and is asserted entry by entry in `virtual.test.ts`; what these hold is the seam — that the plan
+ * reaches the DOM as spacers of the right height, out of the accessibility tree, with the fleet's own
+ * row numbers on rows the DOM no longer counts, and that the three things which survive scrolling
+ * past them do. The real engine's half — a spacer's own box, a real focus ring surviving a real
+ * scroll, the tint under a real repaint — is `app/e2e/virtual.spec.ts`.
+ *
+ * **No geometry is faked.** jsdom's viewport is a number a test can plant (`window.innerHeight`),
+ * so the window has a size; the body's scroll offset is a rect, so it is zero and stays zero, and
+ * the plan's window therefore always starts at the top of the fleet. That is why the shoe kept from
+ * the far end is reached through `revealRow` rather than by scrolling to it (`src/test-setup.ts`
+ * says why nothing here reports a size it does not have).
+ */
+describe('ShoeTable windows the body', () => {
+  /** A row height a fleet can be measured at. Nothing in jsdom lays out, so this is the stub's
+   *  answer rather than a reading — the number matters only in that it is uniform, which is what
+   *  makes a spacer's px readable as a count of shoes. */
+  const ROW_PX = 36;
+  /** Big enough to window: 768px of viewport plus 1,280px of overscan at each end reaches about 57
+   *  rows of 36px, so the great majority of these are spaced for rather than rendered. */
+  const BIG: Shoe[] = Array.from({ length: 400 }, (_, i) =>
+    shoe({ slug: `w${i}`, name: `Windowed shoe ${i}`, score: i }));
+  const bigData: ShoesFile = { ...data, shoes: BIG };
+
+  async function windowed(over: Parameters<typeof setup>[0] = {}) {
+    rig.measure = () => BIG.map(() => ROW_PX);
+    const rendered = setup({ data: bigData, shoes: BIG, ...over }).rendered;
+    const table = rendered.container.querySelector<HTMLElement>('table:not(.proto)')!;
+    // The measurement lands after a `tick`, so the first plan is the unmeasured one.
+    await waitFor(() => expect(table.querySelectorAll('tr.spacer').length).toBeGreaterThan(0));
+    return { rendered, table };
+  }
+  const shoeRows = (table: HTMLElement) => [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')];
+  const spacerPx = (table: HTMLElement) =>
+    [...table.querySelectorAll<HTMLElement>('tr.spacer > td')]
+      .reduce((total, td) => total + parseFloat(td.style.height), 0);
+
+  it('renders the shoes on screen and spaces for exactly the ones it left out', async () => {
+    const { table } = await windowed();
+    const rows = shoeRows(table);
+    expect(rows.length, 'the body is not windowed, so nothing below is a claim about a window')
+      .toBeLessThan(BIG.length);
+    expect(rows.length).toBeGreaterThan(0);
+    // **The whole contract of a spacer in one line**: it stands for the shoes that are not there and
+    // for nothing else, so the scrollbar means the same thing windowed as it did rendering all 400.
+    expect(spacerPx(table), 'the spacers do not add up to the shoes they replace')
+      .toBe((BIG.length - rows.length) * ROW_PX);
+  });
+
+  it('keeps the spacers out of the accessibility tree and the fleet in aria-rowcount', async () => {
+    const { table } = await windowed();
+    const rows = shoeRows(table);
+    expect(table.querySelectorAll('tr.spacer').length,
+      'no spacer exists, so its absence from the tree proves nothing').toBeGreaterThan(0);
+    // A row that stands for rows is not one. Without `aria-hidden` the tree gains a row per spacer,
+    // and the accessibility argument for keeping a real `<table>` partly defeats itself.
+    expect(screen.getAllByRole('row'), 'a spacer reached the accessibility tree')
+      .toHaveLength(1 + rows.length);
+    // And the positions the tree lost with them ride here instead: the count is the rows the table
+    // WOULD have, which is a fleet the DOM no longer holds.
+    expect(table.getAttribute('aria-rowcount')).toBe(String(1 + BIG.length));
+  });
+
+  it('keeps a revealed row in the plan, at its own place in the fleet', async () => {
+    // `revealRow` is asked for a fleet POSITION rather than a slug precisely because the row may not
+    // be in the DOM to be found — the ask has to put it there first (`ShoeTable.svelte`). The one
+    // asked for here is 390 of 400, hundreds of rows past the end of the window.
+    const { table, rendered } = await windowed();
+    const revealed = rendered.component as { revealRow: (i: number) => Promise<void> };
+    await revealed.revealRow(390);
+    await tick();
+    const row = table.querySelector<HTMLElement>('tbody tr.shoe[data-slug="w390"]');
+    expect(row, 'the row a reveal was asked for is not in the plan').not.toBeNull();
+    // In document order between two spacers rather than hoisted to the end of the window, and
+    // carrying the fleet's own row number: a `<tr>` cannot be taken out of flow, so where a row sits
+    // is what the spacer above it says, and its DOM position says nothing about its fleet position.
+    expect(row!.getAttribute('aria-rowindex')).toBe('392');
+    expect(row!.previousElementSibling?.className).toContain('spacer');
+    expect(spacerPx(table), 'the spacers stopped adding up once one of them was split')
+      .toBe((BIG.length - shoeRows(table).length) * ROW_PX);
+  });
+
+  it('holds the last measurement rather than falling back when one declines', async () => {
+    // *Cannot measure* is render-everything on the way up and a held answer after that. A resize
+    // drag misses the cache on every frame, so a body that dropped back to all 400 rows on a decline
+    // would re-render the fleet every other frame for the length of the gesture — an oscillation
+    // rather than a fallback.
+    const { table } = await windowed();
+    const windowedRows = shoeRows(table).length;
+    const calls = rig.seen.length;
+    rig.measure = null;
+    rig.invalidate();
+    await waitFor(() => expect(rig.seen.length).toBeGreaterThan(calls));
+    await tick();
+    expect(shoeRows(table), 'a declined measurement dropped the last one and re-rendered the fleet')
+      .toHaveLength(windowedRows);
+  });
+
+  it('hands the measurement the fleet, as one array for the life of the dataset', async () => {
+    // `RowHeights.heights` compares `names` by IDENTITY, so a caller that rebuilds the array per
+    // render misses the cache every time and pays the whole fleet's measurement per keystroke — the
+    // exact cost the cache exists to remove (`lib/row-height.ts`). It is a precondition on the
+    // caller and this is the only place that can hold it: the answer cannot discriminate under
+    // jsdom, so what is asserted is the ARGUMENT.
+    //
+    // **Two claims, because there are two ways to break it.** What is measured is the FLEET and not
+    // the filtered list — so the fixture mounts with a filter already on, and the array handed over
+    // is still 400 long. And it is the SAME array on the next call, so a `names` rebuilt per effect
+    // run rather than derived once from the dataset misses the cache for ever.
+    //
+    // The filter is applied at mount rather than driven through `rerender`, and that is the
+    // harness's doing rather than a gap: `rerender` replaces the whole props object
+    // (`@testing-library/svelte-core`), so `data` reads as changed too and every `$derived` over it
+    // recomputes whatever the component does. What a real filter drag costs is measured in the
+    // engine instead — 0 measurements over six steps that empty and refill the fleet, both engines
+    // (`.hunt/review12/probe-g.ts`).
+    await windowed({ shoes: BIG.filter((_, i) => i % 2 === 0) });
+    expect(rig.seen[0], 'the filtered list was measured rather than the fleet')
+      .toHaveLength(BIG.length);
+    rig.invalidate();
+    await waitFor(() => expect(rig.seen.length).toBeGreaterThan(1));
+    expect(rig.seen.at(-1), 'a second array was built, so every later call is a cache miss')
+      .toBe(rig.seen[0]);
+  });
+
+  it('ranks the wash over the whole filtered set, never over the plan', async () => {
+    // The tint has to mean the same thing as its neighbours' in the same row and the same thing at
+    // every scroll position (spec §Non-goals). These 400 shoes score 0…399 in order, so the window
+    // is the fleet's lowest-scoring ~14% — ranked over the plan they would be painted across the
+    // whole ramp, with the last row on screen coming out as the best shoe there is.
+    const { table } = await windowed();
+    const overFleet = percentileMap(BIG, 'score', indexTests(bigData.tests));
+    const blue = washOf('score') === 'blue';
+    const classes = shoeRows(table).map((row) => {
+      const cell = row.querySelectorAll<HTMLElement>('td.num')[0]!;
+      return { slug: row.dataset['slug']!, cls: [...cell.classList] };
+    });
+    expect(classes.length).toBeGreaterThan(1);
+    for (const { slug, cls } of classes) {
+      expect(cls, `${slug} is not painted at its place in the fleet`)
+        .toContain(washCellClass(blue, overFleet.get(slug)!, DEFAULT_PAINT));
+    }
+    // Independently of the arithmetic above: nothing on screen is the fleet's best shoe, so nothing
+    // on screen may wear the top of the ramp.
+    expect(classes.flatMap((c) => c.cls), 'a shoe on screen is painted as the best in the fleet')
+      .not.toContain(washCellClass(blue, 1, DEFAULT_PAINT));
   });
 });
 
