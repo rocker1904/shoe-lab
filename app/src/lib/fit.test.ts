@@ -17,6 +17,7 @@ import {
 import { DERIVED_ZONE_PAIRS } from './lineage';
 import { FLEET, labTest, shoe, TESTS } from './test-fixtures';
 import { isFigure } from './units';
+import { parseView } from './urlstate';
 
 const data = (over: Partial<ShoesFile> = {}): ShoesFile => ({
   builtAt: '2026-01-01T00:00:00.000Z', source: 'test', groups: [], tests: TESTS, shoes: FLEET,
@@ -65,6 +66,28 @@ describe('the desktop table\'s min-content model', () => {
       'breathability-26', 'stack-height-heel']) {
       expect(headerMinPx(slug, undefined), slug).toBe(headerMaxPx(slug, undefined));
     }
+  });
+
+  it('prices the worst slug a link can name, so neither input can move unnoticed', () => {
+    // What the raw-slug price costs is stated as 691px in `FIT_DROPPED_COLS`
+    // (`app/e2e/fit-support.ts`), and it is arithmetic over two constants that move on their own
+    // schedules — `HEADER_PX` here, `MAX_SLUG_LEN` in `urlstate.ts`. Stated in prose it was a
+    // promise. This is a PIN and not a bound: either input moving has to be re-derived and re-read
+    // by a human, which is why the numbers are written out rather than computed here.
+    //
+    // The witness is the worst chunking `TEST_SLUG_RE` admits at that length — eleven chunks, ten
+    // of five letters and one of four, which is 64 exactly where eleven FIVE-letter chunks would be
+    // 65 and rejected. `fit-support.ts` owns the maximisation; this holds its result.
+    const worst = [...Array<string>(10).fill('mmmmm'), 'mmmm'].join('-');
+    // Both sides of the length door, so a `MAX_SLUG_LEN` that moved either way lands here: the
+    // witness is a column a shared link can still name, and one character more is not.
+    const idx = indexTests(TESTS);
+    expect(parseView(`cols=${worst}`, idx).columns).toEqual([worst]);
+    expect(parseView(`cols=${worst}m`, idx).columns).toEqual([]);
+    // The model reserves the whole token; an engine that breaks at every hyphen needs only the
+    // widest chunk and the hyphen behind it. The caret is in both terms and cancels.
+    expect(headerMinPx(worst, undefined)).toBe(774);
+    expect(headerMinPx(worst, undefined) - headerMinPx('mmmmm-', undefined)).toBe(691);
   });
 
   it('breaks at whitespace, which is the whole of the rule', () => {

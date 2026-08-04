@@ -122,9 +122,11 @@ export const FIT_SETS: Record<string, string[]> = {
  * engine breaking at every hyphen needs: **691px**. Today's widest catalogue stem is 208px of that,
  * and quoting it would read as a ceiling when it is a sample.
  *
- * **This is the one home for that figure, and nothing asserts it.** It is arithmetic over
- * `HEADER_PX` and `MAX_SLUG_LEN`, each of which moves on its own schedule, so either moving leaves
- * the number stale with no suite to say so; its only witness is a gitignored rig.
+ * **This is the one home for that figure, and `app/src/lib/fit.test.ts` holds it** — *prices the
+ * worst slug a link can name*. It is arithmetic over `HEADER_PX` and `MAX_SLUG_LEN`, each of which
+ * moves on its own schedule, so either moving would otherwise leave the number stale with nothing to
+ * say so; that test pins the witness at both sides of the length door and both widths, so either
+ * input moving reddens rather than quietly restating a new truth.
  *
  * What has to hold here is only that the model never goes under by more than `FIT_TOLERANCE_PX` —
  * `10-12` is the case with no over-reservation at all, because Firefox leaves `-<digits>` whole and

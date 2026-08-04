@@ -1368,7 +1368,7 @@ rather than a fixture, the first in all three engines through
   upstream has published. `FIT_DROPPED_COLS` in `app/e2e/fit-support.ts` is the
   one home for that figure, its witness slug and its arithmetic; it is derived
   from `HEADER_PX` and `MAX_SLUG_LEN`, both of which move on their own schedules,
-  and no assertion holds it.
+  and `lib/fit.test.ts` pins it so that either of them moving reddens the build.
 - The **name column's floor** is the wider of the declared `min-width: 14rem` and
   the fleet's own longest unbreakable token. The `discontinued` chip counts with
   the name's **last** word, because the markup leaves no break opportunity

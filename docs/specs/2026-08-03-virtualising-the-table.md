@@ -225,8 +225,9 @@ rather than a rounding error:
   today's catalogue: `urlstate.ts` accepts 64 characters, and over every chunking
   that length admits the worst models a 762px header against the 71px an engine
   that breaks at hyphens needs — **691px of over-reservation**, whose one home is
-  `app/e2e/fit-support.ts`: the witness slug, the arithmetic, and the caveat that
-  nothing asserts any of it. A
+  `app/e2e/fit-support.ts` for the witness slug and the arithmetic, and whose pin
+  is `app/src/lib/fit.test.ts`, where either input moving reddens the build rather
+  than restating a new truth. A
   dropped slug is already a degraded rendering, so the remedy is to render one
   breakable and model it that way rather than to reason about break rules again;
   that lands with the declared widths, because model and render have to agree.
@@ -256,6 +257,7 @@ implementation* have no honest value until the thing exists.
 | Bulk-measured row heights equal the heights the table renders, for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
 | The bulk measurement costs under 5ms for the committed fleet, and is paid per name-column change rather than per filter change | *measured at implementation*; `app/e2e/smoke.spec.ts` |
 | The model is never narrower than any engine's own min-content — the over-reserve rule's whole justification. Held for **raw-slug headers**, in three engines. Over every catalogue label and every name in the fleet it is a **rig reading rather than an assertion**: no committed suite quantifies over either, `fit.test.ts` having no engine in it and `FIT_SETS` running on the five-shoe e2e fixture | `app/e2e/fit-support.ts` (`FIT_DROPPED_COLS`, three engines); the fleet-wide half is unheld, and its sweep is gitignored |
+| What that over-reservation costs at the worst slug a link can name — pinned against both of its inputs, so a longer `MAX_SLUG_LEN` or a regenerated `HEADER_PX` reddens rather than silently restating it | `app/src/lib/fit.test.ts`; the figure and its derivation live in `app/e2e/fit-support.ts` |
 | The word split happens on break opportunities only — never on non-breaking whitespace | `app/src/lib/labels.test.ts` |
 | The name column's floor clears the fleet's longest unbreakable token | `app/src/lib/fit.test.ts` |
 | Every figure column's header exceeds its widest cell, and by how much — the margin is the assertion, not the ordering | `app/src/lib/fit.test.ts` |
