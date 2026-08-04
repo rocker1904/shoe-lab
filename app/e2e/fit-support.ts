@@ -46,8 +46,10 @@ export const FIT_TOLERANCE_PX = 4;
  *
  * **Two, because of what absorbs it.** Every cell carries `--s2` — 8px — of padding on each side,
  * so ink 2px past its content box is still 6px inside the cell's own edge and 14px from the nearest
- * ink in the next column. That is the justification for the number; 2 is also nearly 3× the worst
- * reading, which is what keeps a regenerated font table failing here rather than clipping.
+ * ink in the next column. The two facts do different jobs and neither implies the other: 2 is
+ * ~2.8× the worst reading, so the bound does not flake on sub-pixel variation between engines and
+ * fixtures, and it is a quarter of the padding that absorbs it, so drift reddens here long before
+ * anything is visible on screen.
  */
 export const FIT_OVERFLOW_PX = 2;
 

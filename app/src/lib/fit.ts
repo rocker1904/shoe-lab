@@ -42,12 +42,18 @@ import { headerUnits } from './units';
  * a `<col>` under `table-layout: fixed` beats every `min-width` on the cells in its column —
  * measured in all three engines, a column asking 60px renders 60px — so the CSS floor was inert and
  * was removed rather than left reading as a guarantee. It reaches the column through `columnPx`
- * below, which is the only route left (docs/app.md §Columns and sorting).
+ * below, which is the only route left (docs/app.md §Table presentation).
  *
- * **Exported because two things outside this file declare the same floor and neither can read a
- * CSS rule that no longer exists**: the loading placeholder reserves a `14rem` name track
- * (`App.svelte`), and `e2e/fit-support.ts` has to hand an engine this floor before asking it for a
- * min-content the model can be compared with. Both are held to this number in `smoke.spec.ts`.
+ * **Exported because two things outside this file need the floor and neither can read a CSS rule
+ * that no longer exists**: the loading placeholder reserves a `14rem` name track (`App.svelte`),
+ * and `e2e/fit-support.ts` has to hand an engine this floor before asking it for a min-content the
+ * model can be compared with.
+ *
+ * **Where it is still pinned, now that the CSS home is gone.** `smoke.spec.ts` holds the
+ * placeholder's own `14rem` track to this number, which is what stops the two declarations of one
+ * design fact drifting apart; and `fit.test.ts` pins `columnPx('name')` at `224 + 16` against the
+ * committed fleet. The min-content comparison in `fit-support.ts` is NOT one of them — it consumes
+ * this constant on both sides, so the floor is an identity term there and cannot be seen to move.
  */
 export const NAME_COL_PX = 224;
 /** `--s2` either side, the `th`/`td` padding. */
@@ -375,7 +381,31 @@ export interface FitModel {
 const SCORE_COLUMN_KEYS: ReadonlySet<string> = new Set(
   DERIVED_ZONE_PAIRS.flatMap((p) => [p.heel, p.forefoot]));
 
+/**
+ * One model per dataset, wherever it is asked for. The memo is what makes the model cheap — a
+ * column's width is a walk of the whole fleet's strings — and two callers building their own
+ * instances would each pay for it: `Page.svelte` asks which rendering fits, and `ShoeTable.svelte`
+ * asks how to share its track, off the same `data` object.
+ *
+ * Keyed on the dataset alone, which is sound because `index` is a pure function of `data.tests`
+ * (`indexTests`) and every caller derives it that way — the argument exists to avoid recomputing
+ * it, never to model a different catalogue over the same shoes. A caller with an index built from
+ * anything else must not use this function.
+ *
+ * A `WeakMap`, so a dataset that goes out of scope takes its widths with it: the suite builds a
+ * fresh `ShoesFile` per case and nothing here should outlive one.
+ */
+const MODELS = new WeakMap<ShoesFile, FitModel>();
+
 export function fitModel(data: ShoesFile, index?: TestIndex): FitModel {
+  const cached = MODELS.get(data);
+  if (cached) return cached;
+  const model = buildFitModel(data, index);
+  MODELS.set(data, model);
+  return model;
+}
+
+function buildFitModel(data: ShoesFile, index?: TestIndex): FitModel {
   const idx = index ?? indexTests(data.tests);
   const mins = new Map<string, number>();
   const maxes = new Map<string, number>();

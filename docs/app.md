@@ -1341,15 +1341,27 @@ under jsdom for ever, every column takes its own minimum, which is the same
 fallback the fit decision already makes where it cannot measure
 (§Two renderings, and only one of them mounted).
 
-Two things follow, and both are new failure modes rather than refinements.
+Three things follow, and all three are new failure modes rather than refinements.
 **A cell's own `min-width` is inert**: a `<col>` asking 60px renders 60px in all
 three engines, so the name column's `14rem` moved out of `td.name` and into
 `NAME_COL_PX`, which the loading placeholder's own reserve is held to as well.
-And **a column that is modelled too narrow overflows** where it used to widen: the
+**A column that is modelled too narrow overflows** where it used to widen: the
 bound is `FIT_OVERFLOW_PX` in `app/e2e/fit-support.ts`, held over every column at
 every mounting width in all three engines, and its size is justified there against
 the `--s2` each cell carries either side. The worst reading on the real fleet is
 0.72px, in Firefox, on a header we wrote rather than on a runner's data.
+
+And **a fallback face is now ink outside a box rather than a wider column.** The
+declared widths are arithmetic over the *real* faces' committed tables, so any
+frame that paints before those faces arrive — `font-display: swap` (§Theming),
+and permanently for a face whose load never succeeds — lays a face nobody
+measured inside columns sized for one that was. Auto layout used to absorb that
+by widening the column. It is bounded rather than fixed: the faces are preloaded,
+the placeholder holds the table back for its own delay, and the fallback is
+narrower than Inter Tight in the hosts measured — but it is the third consequence
+and it belongs beside the other two. The same reasoning applies to a browser
+whose default font size is not 16px, since the model's tables are in px while
+`--t-*` and `--s*` are rem: pre-existing, and newly consequential.
 
 **Three things in the width model are guarded rather than assumed, because each
 quantifies over data nobody here controls** — `lib/fit.ts` computes them and
@@ -4179,10 +4191,14 @@ instead would be the same error pointing the other way.
 
 **The inner tracks are not part of the contract, and must not be "fixed" to
 match.** The placeholder lays out `14rem repeat(n, 1fr)`; the real name column is
-`min-width: 14rem` under `table-layout: auto`, so what it *takes* — 370px at
-1440px — is set by the shoe names in the dataset the placeholder is waiting for.
-The test asserts the half that is knowable: the placeholder's name track is the
-table's own declared minimum, read off the cell rather than restated.
+declared at `columnPx('name')` plus its share of the table's track
+(§Table presentation), so what it *takes* — 372.8px at 1440px, in Chromium and
+Firefox alike — is set by the shoe names in the dataset the placeholder is still
+waiting for and by a track width the page does not have yet. The test asserts the
+half that is knowable: the placeholder's name track is the model's own floor,
+read off `NAME_COL_PX`, which is the only place that floor still exists — a
+declared column width makes a cell's `min-width` inert, so `td.name` no longer
+carries one to read it off.
 
 **Wherever the stacked list is the rendering that fits, the placeholder is still
 the desktop table's chassis**, which the list is not (§Two renderings, and only

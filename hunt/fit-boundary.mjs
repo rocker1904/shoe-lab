@@ -117,8 +117,10 @@ const READ = () => {
     tableOver: box ? Math.max(0, Math.round(box.right) - d.clientWidth) : 0,
     rendering: document.querySelector('.tblwrap') ? 'desktop' : 'phone',
     permanent: getComputedStyle(document.querySelector('.sidebar')).position === 'sticky',
-    // The name column's `min-width: 14rem` is a floor in the model, and only the fleet can say
-    // whether a real shoe name overruns it.
+    // The name column's 14rem is a floor in the model — `NAME_COL_PX`, and nowhere in the CSS
+    // since the column's width became a `<col>` — and only the fleet can say whether a real shoe
+    // name overruns it. Under a declared width that overrun is ink outside the box rather than a
+    // widened column, so this reading now catches something rather than nothing.
     nameOver: Math.max(0, ...[...document.querySelectorAll('td.name')]
       .map((td) => td.scrollWidth - td.clientWidth)),
   };

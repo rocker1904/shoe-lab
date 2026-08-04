@@ -59,9 +59,10 @@
    * (docs/app.md §Two renderings, and only one of them mounted).
    */
   let trackPx = $state(0);
-  /** Its own `$derived`, not an argument built in place: the model memoises per column over the
-   *  whole fleet, and rebuilding it inside the line below would throw that cache away on every
-   *  frame of a window drag. It depends on the dataset alone, which changes once. */
+  /** Its own `$derived`, not an argument built in place: it depends on the dataset alone, which
+   *  changes once, where the line below re-runs on every frame of a window drag. `fitModel` hands
+   *  back the ONE model per dataset, so this is the same object `Page.svelte` decides the rendering
+   *  with rather than a second copy of the same arithmetic over the same fleet. */
   const fit = $derived(fitModel(data, idx));
   const widths = $derived(columnWidths(view.columns, trackPx, fit));
 

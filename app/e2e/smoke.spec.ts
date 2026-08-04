@@ -1697,51 +1697,59 @@ test('never models a dropped column\'s header narrower than Chromium renders it'
 });
 
 /**
+ * The sweep both declared-width tests below run: every width this column set is ever mounted at,
+ * and at each one the excursion bound plus the three guards that stop it passing vacuously — the
+ * table is laid out `fixed`, by these declared widths, filling its track. Under `auto` layout
+ * nothing can overflow a column, so the bound on its own is not a test of anything.
+ *
+ * **One function rather than a paste in each test**, because the guards are exactly the part that
+ * went missing: written out twice, the dropped-column test carried the bound and none of the guards
+ * and survived a `fixed` → `auto` mutation that reddened every other test in the sweep.
+ */
+async function sweepDeclaredColumns(page: Page, cols: readonly string[]): Promise<void> {
+  await page.goto(`/?cols=${cols.join(',')}`);
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  for (const width of mountWidths(cols)) {
+    expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
+      .toBe(width);
+    await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
+      .toHaveCount(1);
+
+    // Polled, not read once: the declaration reaches the DOM through a `ResizeObserver`, so for one
+    // frame after a resize the widths are the previous track's and fixed layout is spreading the
+    // difference. Read once, this measures the frame before the one the test asked for.
+    await expect.poll(async () => {
+      const now = await measureDeclared(page);
+      return Math.abs(now.declaredSum - now.tableWidth);
+    }, { message: `the table is not laid out by its declared widths at ${width}px` })
+      .toBeLessThanOrEqual(1);
+
+    const declared = await measureDeclared(page);
+    expect(declared.layout, `at ${width}px`).toBe('fixed');
+    expect(declared.cols, `at ${width}px`).toBe(1 + cols.length);
+    // And it fills its track, which is one-sided: a track under the columns' own minimums must
+    // overrun the panel rather than clip a cell (spec §Failure behaviour).
+    expect(declared.tableWidth, `the table is narrower than its track at ${width}px`)
+      .toBeGreaterThanOrEqual(declared.trackWidth - 1);
+
+    const over = await measureExcursions(page);
+    expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
+      .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
+  }
+}
+
+/**
  * The other half of what a declared width buys and costs. The min-content guard above says the
  * model agrees with the engine about the table; this says nothing hangs out of a COLUMN — the
  * failure a declared width creates and `table-layout: auto` did not have, because a cell that
  * outgrew its column used to widen it (spec §Failure behaviour).
- *
- * Every set at every width it is ever mounted at, and the assertion is three claims at once: the
- * declared widths are what the engine is laying out by, they fill the track the table was given,
- * and no cell's ink is more than `FIT_OVERFLOW_PX` outside its own box. The first two are what stop
- * the third passing vacuously — under `auto` nothing can overflow, so a table that quietly stopped
- * being `fixed` would look clean here.
  *
  * `cross-browser.spec.ts` runs the same sweep in the two engines whose min-content the model is not
  * built from, which is where the excursion is non-zero at all.
  */
 for (const [name, cols] of Object.entries(FIT_SETS)) {
   test(`keeps every cell inside its declared column, ${name} columns`, async ({ page }) => {
-    await page.goto(`/?cols=${cols.join(',')}`);
-    await awaitFacesLoaded(page, { required: APP_FACES });
-    for (const width of mountWidths(cols)) {
-      expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
-        .toBe(width);
-      await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
-        .toHaveCount(1);
-
-      // Polled, not read once: the declaration reaches the DOM through a `ResizeObserver`, so for
-      // one frame after a resize the widths are the previous track's and fixed layout is spreading
-      // the difference. Read once, this measures the frame before the one the test asked for.
-      await expect.poll(async () => {
-        const now = await measureDeclared(page);
-        return Math.abs(now.declaredSum - now.tableWidth);
-      }, { message: `the table is not laid out by its declared widths at ${width}px` })
-        .toBeLessThanOrEqual(1);
-
-      const declared = await measureDeclared(page);
-      expect(declared.layout, `at ${width}px`).toBe('fixed');
-      expect(declared.cols, `at ${width}px`).toBe(1 + cols.length);
-      // And it fills its track, which is one-sided: a track under the columns' own minimums must
-      // overrun the panel rather than clip a cell (spec §Failure behaviour).
-      expect(declared.tableWidth, `the table is narrower than its track at ${width}px`)
-        .toBeGreaterThanOrEqual(declared.trackWidth - 1);
-
-      const over = await measureExcursions(page);
-      expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
-        .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
-    }
+    await sweepDeclaredColumns(page, cols);
   });
 }
 
@@ -1751,15 +1759,7 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
  * that way in the one engine the tables were measured in.
  */
 test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
-  await page.goto(`/?cols=${FIT_DROPPED_COLS.join(',')}`);
-  await awaitFacesLoaded(page, { required: APP_FACES });
-  for (const width of mountWidths(FIT_DROPPED_COLS)) {
-    expect(await setLayoutWidth(page, width)).toBe(width);
-    await expect(page.locator('.tblwrap'), `at ${width}px`).toHaveCount(1);
-    const over = await measureExcursions(page);
-    expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
-      .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
-  }
+  await sweepDeclaredColumns(page, FIT_DROPPED_COLS);
 });
 
 /**
