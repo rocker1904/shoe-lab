@@ -177,9 +177,30 @@ cannot do, so `fit.ts` stays as it is — its errors are sub-pixel and land in t
 places where that is not enough, each of which is a dataset nobody here controls
 rather than a rounding error:
 
-- `widestWordPx` must implement **UAX #14's numeric context** — no break at a
-  hyphen between digits — or a URL naming an unknown column renders its raw slug
-  as a header that overflows by up to 34.87px in Firefox.
+- **The model never models a browser's break rules; it over-reserves.** First
+  written as "implement UAX #14's numeric context", which delivery proved wrong:
+  Firefox refuses to break after *any* hyphen followed by a digit, `-<digits>`
+  is upstream's remethod convention with five such slugs already in the
+  catalogue, and the model came out 17.30px **narrow** — the clipping direction.
+  Chasing a browser's line-breaking is the same losing game this spec already
+  abandoned for row heights. So a hyphen is never a break opportunity and the
+  widest whitespace-delimited token is the answer.
+
+  **That is an upper bound only if the split is on genuine break
+  opportunities**, which is where it was got wrong a second time: JS `\s`
+  matches U+00A0, U+2007, U+202F and U+FEFF, whose purpose is to *forbid* a
+  break, so splitting there put the model **193.47px narrow** on a real
+  catalogue label. `data/shoes.json` already carries 302 U+00A0 and 77 U+FEFF in
+  prose fields. The rule is therefore: split on break opportunities, never on
+  "whitespace", and never on anything else.
+
+  The price is paid entirely by raw-slug headers — no rendered label carries an
+  intra-word hyphen, so no real view and no mount boundary moves. Its bound is
+  **not** the worst slug in today's catalogue: `urlstate.ts` accepts 64
+  characters, which models a 748px header against a ~58px rendered one. A
+  dropped slug is already a degraded rendering, so the remedy is to render one
+  breakable and model it that way rather than to reason about break rules again;
+  that lands with the declared widths, because model and render have to agree.
 - The name column's floor is **the fleet's longest unbreakable token**, not a
   bare `14rem`. A 34-character single token measures 223.7–231px and crosses
   224px; under declared widths that is an overflowing cell rather than a
@@ -205,7 +226,8 @@ implementation* have no honest value until the thing exists.
 | The model's min-content still agrees with the engine's, measured with the override off, within `FIT_TOLERANCE_PX` | `app/e2e/fit-support.ts` (unchanged claim, new measurement path) |
 | Bulk-measured row heights equal the heights the table renders, for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
 | The bulk measurement costs under 5ms for the committed fleet, and is paid per name-column change rather than per filter change | *measured at implementation*; `app/e2e/smoke.spec.ts` |
-| `widestWordPx` does not break a hyphen between digits | `app/src/lib/fit.test.ts` |
+| The model is never narrower than any engine's own min-content, for every catalogue label, every slug rendered as a dropped column, and every name in the fleet — the over-reserve rule's whole justification | `app/src/lib/fit.test.ts`, `app/e2e/fit-support.ts` (`FIT_DROPPED_COLS`, three engines) |
+| The word split happens on break opportunities only — never on non-breaking whitespace | `app/src/lib/labels.test.ts` |
 | The name column's floor clears the fleet's longest unbreakable token | `app/src/lib/fit.test.ts` |
 | Every figure column's header exceeds its widest cell, and by how much — the margin is the assertion, not the ordering | `app/src/lib/fit.test.ts` |
 | With no measured viewport, every item renders and no spacer is emitted | `app/src/lib/virtual.test.ts` |
@@ -284,9 +306,16 @@ mounts the desktop table from 1920px up.
 What survives is the consequence rather than the direction, and for a reason
 worth stating because it is structural rather than lucky. **Every figure
 column's min-content is set by its header, not its cells** — `score`'s header
-needs 84px against 17px of cells, `msrpGbp`'s 45px against 26px — and the only
-cell-bound columns are the three that carry upstream phrases (`releasedAt`,
-`plate`, `tongue-gusset-type`). So a sub-pixel shortfall puts a header's longest
+needs 84px against 17px of cells, `msrpGbp`'s 45px against 26px. *Amended
+during delivery, twice:* the cell-bound columns are **four** phrase columns, not
+three — `heel-tab` was missed, and at **−87.00px** it is the widest excursion in
+the table, so a tolerance measured without it would have been measured against
+everything but the worst case. And two heel story scores are cell-bound as well,
+by 3.26px, safely, because `SCORE_CELL_CHARS` over-reserves by declaration. The
+margin is now asserted per column with its size rather than as an ordering: the
+tightest is `size-rating` at 5.16px, not `Width / Fit` at 8.45px as this section
+first claimed, and with one mono advance at 8.71px **two** columns sit within a
+single character of flipping. So a sub-pixel shortfall puts a header's longest
 word, or a phrase, that far past its box, into the `--s2` padding the cell
 already carries on each side. The excursion is bounded by the model's
 cross-engine spread and absorbed an order of magnitude over: nothing clips,
@@ -374,6 +403,9 @@ owes it.
 | the `.scrollport` class walked by `focus-scroll.ts` | nothing joins it — the page scrolls the table, and making the body a scrollport would detach the sticky `thead` |
 | `TABLE_ANCHOR_ID` and `#shoe-table`'s `scroll-margin-top` | unchanged; the skip link still lands on the anchor, not on a row |
 | `parseOpen` in `urlstate.ts` | no cap added; the always-rendered rule inherits its ceiling |
+| `wordsOf` in `labels.ts` | the one home for where a string may break; four consumers across two files, and every one of them must want the conservative rule |
+| `FIT_DROPPED_COLS` in `app/e2e/fit-support.ts` | the raw-slug headers held to three engines. Separate from `FIT_SETS` deliberately — the claim is one-sided where `FIT_SETS` carries a ±4px tolerance, so it is a different assertion shape, not a second home for one name |
+| the slug length `urlstate.ts` accepts | bounds the worst raw-slug header the model can be asked for, and therefore the over-reserve's true ceiling |
 | `recompute-budget.test.ts`'s per-drag counts | must stay fleet-size-independent |
 
 ---
@@ -419,7 +451,7 @@ where to read first.
    bound in all three engines, and `fit-support.ts` measuring with the override
    off. This task must land green on its own — it is the prerequisite and it is
    independently defensible. Read docs/app.md §Columns and sorting.
-3b. **The three width guards.** UAX #14 numeric context in `widestWordPx`; the
+3b. **The three width guards.** The over-reserve rule in `wordsOf` — split on break opportunities, never on "whitespace", never at a hyphen; the
    name column floored at the fleet's longest unbreakable token; the
    header-exceeds-cell margin asserted with its size. Evidence: `fit.test.ts`,
    plus a three-engine check that a slug-named column's header does not
