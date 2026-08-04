@@ -54,18 +54,17 @@ describe('ShoeTableMobile', () => {
    * names its column list literally, empty included (docs/app.md §URL encoding). This is the phone
    * rendering of it; the desktop one is proved in Page.test.ts, from the link.
    *
-   * The `colspan` line is **not** a rendering claim. `span`'s floor turns out to be unobservable,
-   * and the comment over `span` in the component holds that measurement — one home for it. This
-   * pins the single attribute the floor writes and nothing more, so that removing the floor is a
-   * deliberate act rather than a silent one while the question is open.
+   * Asserted as what a runner sees — a card per shoe, named, and not one value cell — rather than
+   * through `span`'s floor, which is measured to be unobservable (the comment over `span` holds the
+   * measurement, and BACKLOG.md holds its deletion). A test on that attribute would fire for a
+   * change that breaks nothing, which teaches a reader to distrust the suite.
    */
   it('renders with no columns at all', () => {
-    setup({ view: { columns: [] } });
+    const { rendered } = setup({ view: { columns: [] } });
     expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
-    // A card and a value row for every shoe, so the table is still a table rather than a blank strip
-    expect(screen.getAllByRole('row').length).toBeGreaterThan(FLEET.length);
-    expect(screen.getByText('cushy')).toBeInTheDocument();
-    expect(screen.getByText('cushy').closest('td')!.getAttribute('colspan')).toBe('1');
+    const idents = [...rendered.container.querySelectorAll('td.ident')];
+    expect(idents.map((td) => td.querySelector('strong')!.textContent)).toEqual(FLEET.map((s) => s.name));
+    expect(rendered.container.querySelectorAll('.chip')).toHaveLength(0);
   });
 
   it('sorts from a header, and flips an already-descending column', async () => {

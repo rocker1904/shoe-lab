@@ -56,8 +56,10 @@
    * bleed, panel, table, identity cell — is identical to the pixel with the floor and without.
    *
    * So this is a candidate for deletion rather than a guard, recorded here because the reason it
-   * was believed to be load-bearing was wrong rather than merely stale. ShoeTableMobile.test.ts
-   * pins the attribute it writes, so removing it is a deliberate act and not an accident.
+   * was believed to be load-bearing was wrong rather than merely stale. BACKLOG.md holds the
+   * deletion and the one gap in the measurement: WebKit, which could not be launched to read.
+   * Nothing asserts this line — deliberately, since a test on an inert attribute would fire for a
+   * change that breaks nothing.
    */
   const span = $derived(Math.max(cols.length, 1));
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
