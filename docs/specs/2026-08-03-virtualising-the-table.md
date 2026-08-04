@@ -122,6 +122,15 @@ construction, in whatever engine is running, with no font table involved —
 one cell wraps and the others cannot: every other cell is a nowrap phrase or an
 unbreakable mono figure, so a row's height is a function of its name alone.
 
+**The cache is keyed on width, and width is the fragile part — not row count.**
+Anything that changes how a name breaks invalidates every measured height at
+once: a resize, a browser zoom, a ticked column, and **the face swapping in
+after first paint**, which this app does by self-hosting its own (docs/app.md
+§Theming). The measurement therefore re-runs on `document.fonts` settling as
+well as on a width change, or every height is the fallback face's. That is the
+same hazard `Page.svelte` already documents for the pinned chrome's height,
+which is `ResizeObserver`-backed for exactly this reason.
+
 **It is affordable because of what it is keyed on.** The measurement is per
 fleet per name-column width, and that width changes only when the viewport or
 the column set changes — never when a filter moves. So a drag pays nothing and a
@@ -287,6 +296,19 @@ twice.
   a cheap alternative and left out deliberately: it is a behaviour change of
   its own and belongs in its own decision.
 - **Horizontal windowing.** There are at most a dozen columns.
+- **`content-visibility: auto`, the browser-managed alternative.** It would keep
+  every row focusable, tabbable and findable by Ctrl+F for no code at all, and
+  it is Baseline. It does not apply to `tr` or `tbody` in Chromium or Firefox,
+  because containment does not apply to internal table elements — this is not a
+  support gap and will not arrive. Proven with a discriminating test, because an
+  earlier attempt was not one: asked with the `auto` keyword the engine may
+  reuse a remembered size, so nothing moves whether or not it applied. Asked
+  with a **fixed** `contain-intrinsic-size: 500px` the document stays at
+  16,940px where containment would have made it about 228,000px, `tbody` has
+  the value coerced to `visible` outright, and the control — the same
+  declaration on `.tblwrap`, a plain `div` — collapses the document to 1,057px
+  in both engines. Anyone reopening this should re-run `.hunt/cv-retest.mjs`
+  rather than reason about support tables.
 
 ## Policies cited
 
