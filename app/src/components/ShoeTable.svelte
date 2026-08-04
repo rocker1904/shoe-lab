@@ -6,6 +6,7 @@
   import { DEFAULT_PAINT, washCellClass, type WashPaint } from '../lib/wash';
   import { categoricalValue, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
+  import { columnWidths, fitModel } from '../lib/fit';
   import { columnLabel } from '../lib/labels';
   import type { ScoreColumns } from '../lib/score';
   import { nextSort } from '../lib/sort';
@@ -40,6 +41,29 @@
   } = $props();
 
   const idx = $derived(indexTests(data.tests));
+
+  /**
+   * The track the columns are shared out over, read off the PANEL rather than computed from the
+   * window. `fit.ts` answers what the panel has to be *given* — a question about the whole page,
+   * gutters and sidebar included, and one it must answer before anything is mounted — while this is
+   * the box the table was actually handed, and only the box knows. The two must not be confused:
+   * the widths declared below have to sum to what `width: 100%` resolves to, or fixed layout
+   * redistributes the difference and the rule that shared them stops being the one on screen.
+   *
+   * `.tblwrap` is a block in a `minmax(0, 1fr)` grid track (`Page.svelte`), so its width is the
+   * page's decision and never the table's — no feedback loop, whatever the columns do.
+   *
+   * Zero until the first measurement, and under jsdom for ever. `columnWidths` reads that as no
+   * slack and hands every column its own minimum, which is the honest answer wherever the app
+   * cannot measure — the same fallback `fit.ts` already takes
+   * (docs/app.md §Two renderings, and only one of them mounted).
+   */
+  let trackPx = $state(0);
+  /** Its own `$derived`, not an argument built in place: the model memoises per column over the
+   *  whole fleet, and rebuilding it inside the line below would throw that cache away on every
+   *  frame of a window drag. It depends on the dataset alone, which changes once. */
+  const fit = $derived(fitModel(data, idx));
+  const widths = $derived(columnWidths(view.columns, trackPx, fit));
 
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
   // mean something different from its neighbours' in the same row.
@@ -133,8 +157,17 @@
      chrome and for the same reason: the headers wrap, so it is a function of the width and of the
      face that has loaded, and a constant is right at one width only. It is what a row's
      `scroll-margin-top` adds to `--thead-top` (docs/app.md §Table presentation). -->
-<div class="tblwrap" style:--head-h="{headHeight}px">
+<div class="tblwrap" style:--head-h="{headHeight}px" bind:clientWidth={trackPx}>
 <table>
+  <!-- The widths are DECLARED, and the model declares them. Under `table-layout: auto` every
+       column was a function of the rows in the DOM, which is a property this table cannot keep:
+       rendering a window of the fleet instead of all of it moves the name column by up to 72px
+       (docs/specs/2026-08-03-virtualising-the-table.md §Decisions). One `<col>` per rendered
+       column with the name column first, which is the order `columnWidths` returns and the order
+       the header row emits. -->
+  <colgroup>
+    {#each widths as w, i (i)}<col style:width="{w}px" />{/each}
+  </colgroup>
   <thead bind:clientHeight={headHeight}>
     <tr>
       <!-- A real sort control, not a label. `name` is a sort key the parser accepts, so a link
@@ -215,8 +248,16 @@
 
 <style>
   /* Separate rather than collapsed: a collapsed border belongs to the table, not the cell, so it
-     does not travel with a sticky header and vanishes the moment the head detaches. */
-  table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: var(--t-md); }
+     does not travel with a sticky header and vanishes the moment the head detaches.
+     `fixed`, so the `<colgroup>` above is the whole of the answer and no cell can widen a column.
+     Its price is stated here because it is easy to walk into: a declared column width BEATS every
+     `min-width` on the cells in it — a `<col>` asking 60px renders 60px in all three engines, the
+     floor ignored — so the name column's `14rem` moved into `fit.ts`, which is the only place left
+     that can honour it (`NAME_COL_PX`). The `<col>` width is the cell's BORDER box, padding
+     included, which is measured in all three engines and is what makes `columnPx`'s own
+     padding-inclusive number the right thing to declare. */
+  table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: 100%;
+          font-size: var(--t-md); }
   /* Header names wrap rather than holding their line: `nowrap` made every column's minimum its
      longest header, which summed to 950px and pushed the whole document 26px sideways at 1200px.
      Wrapping only bites once the width is genuinely short, so a wide viewport looks unchanged
@@ -352,8 +393,12 @@
     box-shadow: inset 2px 0 0 var(--accent), inset 0 2px 0 var(--accent), inset 0 -1px 0 var(--accent);
   }
   /* The cell keeps its own opaque background as well as the row's: it is sticky, and the numeric
-     cells scroll underneath it rather than behind the row. */
-  td.name { min-width: 14rem; background: var(--surface); }
+     cells scroll underneath it rather than behind the row.
+     No `min-width` here any more, and its absence is not an oversight: under the declared widths
+     above a cell's own floor is inert in every engine, so `14rem` would have read as a guarantee
+     nothing honours. `fit.ts`'s `NAME_COL_PX` is the one home for that floor now, and it reaches
+     the column through the `<col>` like every other width. */
+  td.name { background: var(--surface); }
   .name-row { display: flex; gap: var(--s2); align-items: center; }
   /* The plate read "Non-carbon plate", which wrapped to three lines in an auto-sized column and
      made the row heights ragged; the label is now "Non-carbon" and the rule stays anyway, because

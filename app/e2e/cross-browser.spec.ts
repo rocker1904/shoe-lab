@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
-  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
+  APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_OVERFLOW_PX, FIT_SETS, FIT_TOLERANCE_PX,
+  measureDeclared, measureExcursions, measureFit, mountWidths, setLayoutWidth,
 } from './fit-support';
 
 /**
@@ -933,6 +934,68 @@ test('never models a dropped column\'s header narrower than this engine renders 
   expect(rendered - model,
     `the fit model says ${model.toFixed(1)}px and this engine renders ${rendered.toFixed(1)}px`)
     .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
+});
+
+/**
+ * **The engines that can actually fail this one.** A declared width is `min + share` and the min is
+ * Chromium's, so where Firefox or WebKit needs a fraction more for a header's longest word, that
+ * fraction lands outside the column's box — measured on the real fleet, 0.72px in Firefox and
+ * 0.70px in WebKit against Chromium's 0, and `FIT_OVERFLOW_PX` states what absorbs it
+ * (spec §Failure behaviour). Chromium runs the same sweep in `smoke.spec.ts`, where it is a
+ * regression detector rather than the risk.
+ *
+ * The declared-widths half of the assertion is what stops the overflow half passing vacuously: a
+ * table that quietly went back to `auto` cannot overflow a column at all.
+ */
+for (const [name, cols] of Object.entries(FIT_SETS)) {
+  test(`keeps every cell inside its declared column, ${name} columns`, async ({ page }) => {
+    await page.goto(`/?cols=${cols.join(',')}`);
+    await awaitFacesLoaded(page, { required: APP_FACES });
+    for (const width of mountWidths(cols)) {
+      expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
+        .toBe(width);
+      // Retried rather than read once: a resize reaches the decision through an event and the DOM
+      // through Svelte's next flush, and WebKit has reported the previous rendering to a single
+      // evaluate — the artefact the ladder below documents.
+      await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
+        .toHaveCount(1);
+
+      // Polled, not read once: the declaration reaches the DOM through a `ResizeObserver`, so for
+      // one frame after a resize the widths are the previous track's and fixed layout is spreading
+      // the difference. Read once, this measures the frame before the one the test asked for.
+      await expect.poll(async () => {
+        const now = await measureDeclared(page);
+        return Math.abs(now.declaredSum - now.tableWidth);
+      }, { message: `the table is not laid out by its declared widths at ${width}px` })
+        .toBeLessThanOrEqual(1);
+
+      const declared = await measureDeclared(page);
+      expect(declared.layout, `at ${width}px`).toBe('fixed');
+      expect(declared.cols, `at ${width}px`).toBe(1 + cols.length);
+      // And it fills its track, which is one-sided: a track under the columns' own minimums must
+      // overrun the panel rather than clip a cell (spec §Failure behaviour).
+      expect(declared.tableWidth, `the table is narrower than its track at ${width}px`)
+        .toBeGreaterThanOrEqual(declared.trackWidth - 1);
+
+      const over = await measureExcursions(page);
+      expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
+        .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
+    }
+  });
+}
+
+/** The same bound on a header the model deliberately over-reserves for, including in the engine
+ *  whose hyphen rule that over-reservation exists for (`FIT_DROPPED_COLS`). */
+test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
+  await page.goto(`/?cols=${FIT_DROPPED_COLS.join(',')}`);
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  for (const width of mountWidths(FIT_DROPPED_COLS)) {
+    expect(await setLayoutWidth(page, width)).toBe(width);
+    await expect(page.locator('.tblwrap'), `at ${width}px`).toHaveCount(1);
+    const over = await measureExcursions(page);
+    expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
+      .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
+  }
 });
 
 /**

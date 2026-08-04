@@ -229,7 +229,7 @@ describe('the desktop table\'s max-content model', () => {
   });
 
   it('keeps the name column\'s MINIMUM the DECLARED floor while the fleet fits inside it', () => {
-    // `min-width: 14rem` is what the engine floors that column at, and every word in this fleet is
+    // `NAME_COL_PX` is the 14rem this column is declared at, and every word in this fleet is
     // narrower — so the name is the one column whose two widths come from two different kinds of
     // fact, and while the floor binds only the max one moves with the fleet.
     const short = model();
@@ -432,7 +432,7 @@ describe('sharing a declared track between the columns', () => {
   it('holds the name column at its declared floor where the fleet\'s names are narrower', () => {
     // The fixture's names are one short word, so the name column is the case where max-content
     // sits UNDER min-content — and a share taken in proportion to a max that small would hand the
-    // column less than the `14rem` the engine floors it at.
+    // column less than the `14rem` it is declared at.
     const m = model();
     expect(m.columnMaxPx('name')).toBeLessThan(m.columnPx('name'));
     const w = columnWidths(['msrpGbp', 'weight', 'plate'], 1146, m);

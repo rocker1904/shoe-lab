@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
+import { indexTests } from '../lib/dataset';
+import { columnWidths, fitModel } from '../lib/fit';
 import { type ScoreColumns } from '../lib/score';
 import { EASY } from '../lib/score-defs';
 import { defaultView, type ViewState } from '../lib/view';
@@ -261,5 +263,36 @@ describe('ShoeTable sorts by shoe name', () => {
     const onchange = setup();
     await fireEvent.click(screen.getByRole('columnheader', { name: /Shoe/ }).querySelector('button')!);
     expect(onchange.mock.lastCall![0].columns).toEqual(['score', 'heel-stack', 'plate']);
+  });
+});
+
+/**
+ * Where the model and the markup meet: `columnWidths` decides and the `<colgroup>` declares, so a
+ * column's width stops being a function of which rows happen to be in the DOM
+ * (docs/app.md §Table presentation).
+ *
+ * jsdom lays nothing out, so the track reads 0 here — which is the fallback itself rather than a
+ * test affordance: with no measurable track every column takes its own minimum, the same posture
+ * `fit.ts` already falls back to under jsdom. What a real browser is handed is held by
+ * `smoke.spec.ts` and `cross-browser.spec.ts`, a track being a thing only an engine can measure.
+ */
+describe('ShoeTable declares its column widths', () => {
+  const cols = ['score', 'heel-stack', 'plate'];
+  const declared = (container: HTMLElement) =>
+    [...container.querySelectorAll<HTMLElement>('colgroup col')].map((c) => parseFloat(c.style.width));
+
+  it('emits one col per rendered column, the name column first', () => {
+    const { container } = setup().rendered;
+    const widths = declared(container);
+    expect(widths).toHaveLength(1 + cols.length);
+    expect(widths[0]).toBeCloseTo(fitModel(data, indexTests(TESTS)).columnPx('name'), 6);
+  });
+
+  it('falls back to every column\'s own minimum where no track can be measured', () => {
+    const { container } = setup().rendered;
+    const want = columnWidths(cols, 0, fitModel(data, indexTests(TESTS)));
+    const got = declared(container);
+    expect(got).toHaveLength(want.length);
+    got.forEach((w, i) => expect(w).toBeCloseTo(want[i]!, 6));
   });
 });

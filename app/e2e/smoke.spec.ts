@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
+import { FIT_SLACK_PX, NAME_COL_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
-  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
+  APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_OVERFLOW_PX, FIT_SETS, FIT_TOLERANCE_PX,
+  measureDeclared, measureExcursions, measureFit, mountWidths, setLayoutWidth,
 } from './fit-support';
 
 /**
@@ -204,13 +205,14 @@ for (const { width, path, strip } of [
       `head band ${skeleton.headH}px against the table's ${table.headH}px`).toBeLessThanOrEqual(2);
     expect(Math.abs(skeleton.rowH - table.rowH),
       `row ${skeleton.rowH}px against the table's ${table.rowH}px`).toBeLessThanOrEqual(1);
-    // The name track is the table's own MINIMUM, which is all the placeholder can know: what the
-    // column actually takes is set by the names in the dataset it is waiting for
-    // (docs/app.md §Decisions owns why the inner tracks are not part of the contract).
-    const nameMin = await page.locator('td.name').first()
-      .evaluate((el) => parseFloat(getComputedStyle(el).minWidth));
+    // The name track is the table's own FLOOR, which is all the placeholder can know: what the
+    // column actually takes is `columnPx('name')` over the names in the dataset it is still waiting
+    // for (docs/app.md §Decisions owns why the inner tracks are not part of the contract).
+    // Read off `NAME_COL_PX` rather than off `td.name`'s own `min-width`, which is where this
+    // number used to be checked: a declared column width makes a cell floor inert, so the model is
+    // the only place that still states it (docs/app.md §Table presentation).
     expect(skeleton.nameW, 'the placeholder reserves a name column the table would not accept')
-      .toBe(Math.round(nameMin));
+      .toBe(NAME_COL_PX);
   });
 }
 
@@ -1692,6 +1694,72 @@ test('never models a dropped column\'s header narrower than Chromium renders it'
   expect(rendered - model,
     `the fit model says ${model.toFixed(1)}px and Chromium renders ${rendered.toFixed(1)}px`)
     .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
+});
+
+/**
+ * The other half of what a declared width buys and costs. The min-content guard above says the
+ * model agrees with the engine about the table; this says nothing hangs out of a COLUMN — the
+ * failure a declared width creates and `table-layout: auto` did not have, because a cell that
+ * outgrew its column used to widen it (spec §Failure behaviour).
+ *
+ * Every set at every width it is ever mounted at, and the assertion is three claims at once: the
+ * declared widths are what the engine is laying out by, they fill the track the table was given,
+ * and no cell's ink is more than `FIT_OVERFLOW_PX` outside its own box. The first two are what stop
+ * the third passing vacuously — under `auto` nothing can overflow, so a table that quietly stopped
+ * being `fixed` would look clean here.
+ *
+ * `cross-browser.spec.ts` runs the same sweep in the two engines whose min-content the model is not
+ * built from, which is where the excursion is non-zero at all.
+ */
+for (const [name, cols] of Object.entries(FIT_SETS)) {
+  test(`keeps every cell inside its declared column, ${name} columns`, async ({ page }) => {
+    await page.goto(`/?cols=${cols.join(',')}`);
+    await awaitFacesLoaded(page, { required: APP_FACES });
+    for (const width of mountWidths(cols)) {
+      expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
+        .toBe(width);
+      await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
+        .toHaveCount(1);
+
+      // Polled, not read once: the declaration reaches the DOM through a `ResizeObserver`, so for
+      // one frame after a resize the widths are the previous track's and fixed layout is spreading
+      // the difference. Read once, this measures the frame before the one the test asked for.
+      await expect.poll(async () => {
+        const now = await measureDeclared(page);
+        return Math.abs(now.declaredSum - now.tableWidth);
+      }, { message: `the table is not laid out by its declared widths at ${width}px` })
+        .toBeLessThanOrEqual(1);
+
+      const declared = await measureDeclared(page);
+      expect(declared.layout, `at ${width}px`).toBe('fixed');
+      expect(declared.cols, `at ${width}px`).toBe(1 + cols.length);
+      // And it fills its track, which is one-sided: a track under the columns' own minimums must
+      // overrun the panel rather than clip a cell (spec §Failure behaviour).
+      expect(declared.tableWidth, `the table is narrower than its track at ${width}px`)
+        .toBeGreaterThanOrEqual(declared.trackWidth - 1);
+
+      const over = await measureExcursions(page);
+      expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
+        .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
+    }
+  });
+}
+
+/**
+ * The same bound where the header is a raw slug the model deliberately over-reserves for
+ * (`FIT_DROPPED_COLS`). Over-reservation is the safe direction and this is the check that it stayed
+ * that way in the one engine the tables were measured in.
+ */
+test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
+  await page.goto(`/?cols=${FIT_DROPPED_COLS.join(',')}`);
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  for (const width of mountWidths(FIT_DROPPED_COLS)) {
+    expect(await setLayoutWidth(page, width)).toBe(width);
+    await expect(page.locator('.tblwrap'), `at ${width}px`).toHaveCount(1);
+    const over = await measureExcursions(page);
+    expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
+      .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
+  }
 });
 
 /**

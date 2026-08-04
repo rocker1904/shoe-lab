@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import type { ShoesFile } from '../../shared/types.js';
 import { indexTests } from '../src/lib/dataset';
-import { desktopMinWidth, fitModel } from '../src/lib/fit';
+import {
+  DESKTOP_FLOOR_PX, desktopMinWidth, fitModel, NAME_COL_PX, rendersPhone, SIDEBAR_PERMANENT_PX,
+} from '../src/lib/fit';
 
 /**
  * The one thing that stops the fit model rotting: it is arithmetic over committed font tables, and
@@ -27,6 +29,27 @@ const FIXTURE: ShoesFile = JSON.parse(readFileSync(
  * quietly moving the width at which the rendering switches.
  */
 export const FIT_TOLERANCE_PX = 4;
+
+/**
+ * The no-overflow bound: how far any ink in the table may lie outside the content box of the cell
+ * it is in, now that a column's width is declared rather than negotiated with the engine
+ * (docs/app.md §Table presentation).
+ *
+ * **A tolerance over every column at every mounting width, not an allowance for one column.** Every
+ * declared width is `min + share` and the min is Chromium's, so a column whose header needs a
+ * fraction more in another engine puts that much of its longest word past the box. Measured on the
+ * real fleet across the four `FIT_SETS`, `FIT_DROPPED_COLS` and eight widths each — the narrowest
+ * width every set mounts at, both sides of the sidebar's boundary, and out to 2560px — the worst
+ * reading anywhere is **0.72px**, on `RunRepeat Score`'s header in Firefox, with WebKit at 0.70px
+ * and Chromium at 0 (`.hunt/no-overflow.mjs`). The widest a runner's own data reaches is **0.13px**,
+ * on `Both sides (semi)` in the cell-bound `tongue-gusset-type` column.
+ *
+ * **Two, because of what absorbs it.** Every cell carries `--s2` — 8px — of padding on each side,
+ * so ink 2px past its content box is still 6px inside the cell's own edge and 14px from the nearest
+ * ink in the next column. That is the justification for the number; 2 is also nearly 3× the worst
+ * reading, which is what keeps a regenerated font table failing here rather than clipping.
+ */
+export const FIT_OVERFLOW_PX = 2;
 
 /**
  * Wait until the self-hosted faces have actually loaded, and fail loudly if they never do.
@@ -140,6 +163,22 @@ export const FIT_DROPPED_COLS = ['breathability-26', 'energy-return-heel-24', '1
  * for `width: min-content` — the same question the model answers — and restoring it, so nothing the
  * page does afterwards is measured through a table that has been resized.
  *
+ * **The override comes OFF first, and that is the whole of what keeps this claim a claim.** The
+ * table now declares its widths and lays itself out `fixed`, so a mounted table asked for
+ * `min-content` answers with the model's own arithmetic played back — the assertion would compare
+ * the model to itself and pass whatever either did. Clearing every `<col>` width and restoring
+ * `table-layout: auto` puts the question back to the engine: *given these strings, how wide does
+ * this table have to be*. Inline rather than structural, so Svelte's next update finds the DOM it
+ * left; the values are put back immediately either way.
+ *
+ * **`NAME_COL_PX` goes back on the name cells for the measurement, and that is not a fudge.** The
+ * model's name column is `max(floor, longest token)` and the floor is a DECLARED design minimum —
+ * a thing no engine can infer from the strings, and one the table used to state as
+ * `td.name { min-width: 14rem }` until a declared width made cell floors inert
+ * (`fit.ts`, `NAME_COL_PX`). Handing the engine that one constant is what makes the two sides
+ * answer the same question; everything else in the comparison — the strings, the faces, the
+ * paddings, the wrapping — stays the engine's.
+ *
  * The window is wide enough that the desktop rendering is up for every set here; the point is to
  * compare the two widths, not to test the switch, which the ladder beside it does.
  *
@@ -153,15 +192,138 @@ export async function measureFit(
   // Both faces, not just the header's: the phrase columns' width is the fleet's strings in Inter
   // Tight and the figure columns' is JetBrains Mono, so a fallback in either moves this number.
   await awaitFacesLoaded(page, { required: APP_FACES, timeout: fontsTimeoutMs });
-  const rendered = await page.evaluate(() => {
+  const rendered = await page.evaluate((floorPx: number) => {
     const table = document.querySelector<HTMLTableElement>('.tblwrap table');
     if (!table) throw new Error('the desktop table is not mounted — widen the window');
-    const before = table.style.width;
+    const declared = [...table.querySelectorAll<HTMLTableColElement>('colgroup col')]
+      .map((col) => [col, col.style.width] as const);
+    for (const [col] of declared) col.style.width = '';
+    const names = [...table.querySelectorAll<HTMLElement>('.name')];
+    for (const cell of names) cell.style.minWidth = `${floorPx}px`;
+    const before = { width: table.style.width, layout: table.style.tableLayout };
+    table.style.tableLayout = 'auto';
     table.style.width = 'min-content';
     const w = table.getBoundingClientRect().width;
-    table.style.width = before;
+    table.style.width = before.width;
+    table.style.tableLayout = before.layout;
+    for (const cell of names) cell.style.minWidth = '';
+    for (const [col, width] of declared) col.style.width = width;
     // The panel's two 1px side borders, which `desktopMinWidth` includes and the table does not.
     return w + 2;
-  });
+  }, NAME_COL_PX);
   return { model: desktopMinWidth(cols, fitModel(FIXTURE, indexTests(FIXTURE.tests))), rendered };
+}
+
+/**
+ * The widths a column set is checked at: the narrowest the desktop rendering is ever mounted at,
+ * one just above it, both sides of the sidebar's boundary — where the track drops by the sidebar's
+ * whole 260px track and the columns go back to their minimums — and two wide ones, where the
+ * distribution rule rather than the minimum is what is on screen.
+ *
+ * The narrowest is found by walking `rendersPhone` itself rather than by restating its arithmetic:
+ * the predicate is monotone in the width (`fit.ts`), so the first width it accepts is the boundary,
+ * and a rule that moved would move this ladder with it.
+ */
+export function mountWidths(cols: readonly string[]): number[] {
+  const model = fitModel(FIXTURE, indexTests(FIXTURE.tests));
+  let narrowest = DESKTOP_FLOOR_PX;
+  while (narrowest <= 4000 && rendersPhone(cols, narrowest, model)) narrowest++;
+  if (narrowest > 4000) throw new Error(`no width mounts the desktop table for [${cols.join(',')}]`);
+  return [...new Set([narrowest, narrowest + 40, SIDEBAR_PERMANENT_PX - 1, SIDEBAR_PERMANENT_PX,
+    1600, 2560])].filter((w) => w >= narrowest);
+}
+
+/**
+ * Sizes the viewport so the LAYOUT width — what the fit model and every width in `mountWidths` are
+ * expressed in — is the number asked for. They differ by the classic scrollbar this fleet is always
+ * long enough to draw, and the difference is the whole of the sideways-overflow class this model
+ * exists to remove (`fit.ts`, `SIDEBAR_PERMANENT_PX`): a viewport set to the narrowest mounting
+ * width would lay out 15px under it and mount the stacked list instead.
+ */
+export async function setLayoutWidth(page: Page, layoutPx: number, height = 900): Promise<number> {
+  await page.setViewportSize({ width: layoutPx, height });
+  const bar = await page.evaluate(() => window.innerWidth - document.documentElement.clientWidth);
+  if (bar > 0) await page.setViewportSize({ width: layoutPx + bar, height });
+  return page.evaluate(() => document.documentElement.clientWidth);
+}
+
+/**
+ * What the table is actually laying itself out by: the declared widths, what they sum to, and the
+ * two boxes they have to answer to — the table's own width and the panel's track.
+ *
+ * Callers compare with a pixel of slop rather than exactly, and both directions of it are real. The
+ * track is read through `clientWidth`, which every engine rounds to an integer, while the table's
+ * `width: 100%` resolves fractionally (`ShoeTable.svelte`); and a resize reaches the declaration
+ * through a `ResizeObserver`, so for one frame after it the widths are the previous track's — poll
+ * rather than read once, or the reading is a frame behind the viewport.
+ */
+export async function measureDeclared(page: Page): Promise<{
+  layout: string; tableWidth: number; trackWidth: number; declaredSum: number; cols: number;
+}> {
+  return page.evaluate(() => {
+    const wrap = document.querySelector<HTMLElement>('.tblwrap');
+    const table = wrap?.querySelector<HTMLTableElement>('table');
+    if (!wrap || !table) throw new Error('the desktop table is not mounted — widen the window');
+    const declared = [...table.querySelectorAll<HTMLTableColElement>('colgroup col')]
+      .map((col) => parseFloat(col.style.width));
+    return {
+      layout: getComputedStyle(table).tableLayout,
+      tableWidth: table.getBoundingClientRect().width,
+      trackWidth: wrap.clientWidth,
+      declaredSum: declared.reduce((a, b) => a + b, 0),
+      cols: declared.length,
+    };
+  });
+}
+
+/** One reading: a cell, and how far its content lies outside that cell's content box. */
+export interface Excursion { column: string; text: string; px: number }
+
+/**
+ * Every place the table's ink leaves the box its column declares, worst first.
+ *
+ * **Ink against box, not `scrollWidth` against `clientWidth`.** The overflow being bounded is
+ * sub-pixel — a fraction of a header's longest word — and those two are integers. So each cell's
+ * content box is computed from its own padding and every rect inside it is compared with both
+ * edges: the client rects of every descendant element, which is what catches a box like the
+ * discontinued chip, and a `Range` over every text node, which is what catches a word that has
+ * overflowed a box that fits. **Both edges**, because a figure column's header is `row-reverse` and
+ * a phrase column's is not, so the two overflow in opposite directions.
+ *
+ * `tr.expand` is excluded: its cell spans the whole table and constrains no column
+ * (docs/app.md §The expanded row).
+ */
+export async function measureExcursions(page: Page): Promise<Excursion[]> {
+  return page.evaluate(() => {
+    const table = document.querySelector('.tblwrap table');
+    if (!table) throw new Error('the desktop table is not mounted — widen the window');
+    const heads = [...table.querySelectorAll('thead th')]
+      .map((th) => (th.textContent ?? '').replace(/\s+/g, ' ').trim());
+    const range = document.createRange();
+    const out: { column: string; text: string; px: number }[] = [];
+    for (const cell of table.querySelectorAll<HTMLTableCellElement>('thead th, tbody tr.shoe > *')) {
+      const cs = getComputedStyle(cell);
+      const box = cell.getBoundingClientRect();
+      const left = box.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft);
+      const right = box.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight);
+      const rects: DOMRect[] = [];
+      for (const el of cell.querySelectorAll('*')) rects.push(...el.getClientRects());
+      const walk = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        if (!(n as Text).data.trim()) continue;
+        range.selectNode(n);
+        rects.push(...range.getClientRects());
+      }
+      let worst = 0;
+      for (const r of rects) if (r.width) worst = Math.max(worst, left - r.left, r.right - right);
+      if (worst > 0.01) {
+        out.push({
+          column: heads[cell.cellIndex] ?? '?',
+          text: (cell.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40),
+          px: Math.round(worst * 100) / 100,
+        });
+      }
+    }
+    return out.sort((a, b) => b.px - a.px);
+  });
 }
