@@ -103,26 +103,57 @@ on the desktop, two or three plus a panel on the phone. Splitting the work
 would leave one rendering windowed and one not, which is the drift
 docs/app.md §Two renderings, and only one of them mounted exists to prevent.
 
-**Heights are derived, then corrected by measurement.** A desktop row's height
-is a pure function of how many line boxes its name occupies: measured across
-the desktop band, 36px maps to one line and 53px to two with no exceptions at
-any width, and no cell other than the name can wrap at all — every other one is
-a nowrap phrase or an unbreakable mono figure. The predictor has to be a real
-greedy line-break at pixel widths, not a heuristic: at 1440px a 39-character
-name wraps where a 41-character one does not. That is what `fit.ts`'s committed
-per-character tables already do, and it is only possible because the widths
-above are declared — the derivation needs an exact name-column width, which
-does not exist while the engine is deriving widths from whichever rows are
-present. When an item is actually rendered its measured height replaces the
-derived one, so a modelling error is transient and self-healing rather than
-permanent, and the scrollbar never creeps for content already visited.
+**Heights are measured in bulk, never derived.** *Amended 2026-08-04, before
+implementation — this originally specified a greedy line-break simulation over
+`fit.ts`'s committed per-character tables, corrected by measurement on render.*
+Investigation killed that: **line breaking is engine-dependent, so no
+single-engine model can be right in three.** `Under Armour Charged Pursuit 3` is
+two lines in Chromium and one in Firefox and WebKit at a 224px name column, and
+Firefox implements UAX #14's numeric context where the others do not — the
+model's word-splitter is 14.62px and 34.87px short of Firefox's own min-content
+on `10-12` and `2024-2025`. There is no tolerance that repairs this, because the
+thing being modelled genuinely has three answers.
 
-**The scroll extent is exact, and it is affordable because of what it is keyed
-on.** The line-break simulation is per shoe per name-column width, and that
-width changes only when the viewport or the column set changes — never when a
-filter moves. So the cache survives a drag untouched and a frame is a sum over
-cached integers, not a walk of the fleet's strings
-(docs/app.md §What a drag may recompute).
+So the app measures instead: **every name laid out in one hidden container at
+the current name-column width, and the line counts read back.** 2.0–2.3ms for
+455 names in all three engines, linear at about 4.8µs a name. Exact by
+construction, in whatever engine is running, with no font table involved —
+`nameLines` needs none. What remains true from the original reasoning is that
+one cell wraps and the others cannot: every other cell is a nowrap phrase or an
+unbreakable mono figure, so a row's height is a function of its name alone.
+
+**It is affordable because of what it is keyed on.** The measurement is per
+fleet per name-column width, and that width changes only when the viewport or
+the column set changes — never when a filter moves. So a drag pays nothing and a
+frame is a sum over measured integers, not a walk of the fleet's strings
+(docs/app.md §What a drag may recompute). Canvas `measureText` was considered
+and rejected: it is 14× sharper than the tables (0.62px worst, in Firefox) but
+it answers width and not where a line may break, which is the half that
+actually differs between engines.
+
+**The width model keeps its tables, and gets three guards.** Widths must be
+answerable *before* the table mounts, which is the one thing bulk measurement
+cannot do, so `fit.ts` stays as it is — its errors are sub-pixel and land in the
+`--s2` padding each cell already carries. But the same investigation found three
+places where that is not enough, each of which is a dataset nobody here controls
+rather than a rounding error:
+
+- `widestWordPx` must implement **UAX #14's numeric context** — no break at a
+  hyphen between digits — or a URL naming an unknown column renders its raw slug
+  as a header that overflows by up to 34.87px in Firefox.
+- The name column's floor is **the fleet's longest unbreakable token**, not a
+  bare `14rem`. A 34-character single token measures 223.7–231px and crosses
+  224px; under declared widths that is an overflowing cell rather than a
+  widening column.
+- "Every figure column is header-bound" is **a margin, not a law**. It
+  reproduces to the pixel today, but `Width / Fit` has only 8.47px of it — one
+  more rendered character flips the column cell-bound — so it is asserted with
+  its margin rather than stated as structure.
+
+An unseen character is safe without a guard: `FALLBACK_PX` is 15px, the maximum
+across all three tables, so unknown input makes the model pessimistic. Emoji
+(3.0–3.36px short each) and kana (0.37px) are the exceptions, bounded per
+character and unbounded only in count.
 
 ## Bounds
 
@@ -133,7 +164,11 @@ implementation* have no honest value until the thing exists.
 |---|---|
 | No cell's content exceeds its declared column by more than the model's cross-engine spread, over every column and every mounting width, in all three engines. The spread is *measured at implementation* (~0.8px at the readings taken so far) and must be justified against the cell padding that absorbs it, never asserted as a bare number | `app/e2e/cross-browser.spec.ts`, `app/e2e/smoke.spec.ts` |
 | The model's min-content still agrees with the engine's, measured with the override off, within `FIT_TOLERANCE_PX` | `app/e2e/fit-support.ts` (unchanged claim, new measurement path) |
-| Derived row height equals rendered row height for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
+| Bulk-measured row heights equal the heights the table renders, for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
+| The bulk measurement costs under 5ms for the committed fleet, and is paid per name-column change rather than per filter change | *measured at implementation*; `app/e2e/smoke.spec.ts` |
+| `widestWordPx` does not break a hyphen between digits | `app/src/lib/fit.test.ts` |
+| The name column's floor clears the fleet's longest unbreakable token | `app/src/lib/fit.test.ts` |
+| Every figure column's header exceeds its widest cell, and by how much — the margin is the assertion, not the ordering | `app/src/lib/fit.test.ts` |
 | With no measured viewport, every item renders and no spacer is emitted | `app/src/lib/virtual.test.ts` |
 | A focused row and an open row are in the plan at any scroll position | `app/src/lib/virtual.test.ts` |
 | Spacer height equals the summed height of exactly the items it stands for | `app/src/lib/virtual.test.ts` |
@@ -332,10 +367,18 @@ where to read first.
    bound in all three engines, and `fit-support.ts` measuring with the override
    off. This task must land green on its own — it is the prerequisite and it is
    independently defensible. Read docs/app.md §Columns and sorting.
-4. **`nameLines` and `desktopRowPx`.** Evidence: `row-height.test.ts`, plus the
-   derived-vs-rendered bound over the whole fleet in three engines. The
-   `discontinued` chip is an inline nowrap token after the name and is part of
-   the simulation. Read docs/app.md §Table presentation.
+3b. **The three width guards.** UAX #14 numeric context in `widestWordPx`; the
+   name column floored at the fleet's longest unbreakable token; the
+   header-exceeds-cell margin asserted with its size. Evidence: `fit.test.ts`,
+   plus a three-engine check that a slug-named column's header does not
+   overflow. Read spec §Decisions' width-guards paragraph. Independent of
+   task 3 and may land before it.
+4. **Bulk height measurement.** One hidden container per name-column width,
+   line counts read back; no font table, no derivation. The `discontinued` chip
+   is an inline nowrap token after the name and is part of what gets laid out.
+   Evidence: the measured-equals-rendered bound over the whole fleet in three
+   engines, and the cost bound. Not unit-testable under jsdom, which lays
+   nothing out — its test is the browser's. Read docs/app.md §Table presentation.
 5. **`virtualPlan`.** Pure, no DOM. Evidence: `virtual.test.ts` covering the
    render-everything fallback, kept items above and below the window, and
    spacer arithmetic. Read spec §Interfaces.
