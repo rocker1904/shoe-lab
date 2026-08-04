@@ -92,16 +92,19 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // style and nothing is caught, so moving this line alone changes no reading — the ORDER is what
   // makes the advance independent of whatever else comes to touch layout here.
   //
-  // The other two are inert today and kept anyway, which is the honest way to hold defence: nothing
-  // observes `data-slug` while the clone is built, read and removed without yielding — it is what
-  // `revealRow` walks, and windowing may want to keep a replica — and the chip's line box is
-  // shorter than a name's, so leaving it on the replica reads the same floor in all three engines
-  // at every width the sweep walks. Both are facts about today's markup, not about the design.
+  // The rest are inert today and stripped anyway, which is the honest way to hold a rule: an open
+  // row's `aria-expanded` names a relationship a hidden copy of it does not have, `data-slug` is
+  // what `revealRow` walks and windowing may want to keep a replica, and the chip's line box is
+  // shorter than a name's, so leaving it on would read the same floor in all three engines at every
+  // width the sweep walks. Each of those is a fact about today's markup, not about the design, so
+  // a state kept for one of them is a state the next reader keeps for none.
   const blockIn = (el: Element) => (el.matches('.name-row')
     ? el.querySelector<HTMLElement>(':scope > div')
     : el.querySelector<HTMLElement>('td.name .name-row > div'));
   const deState = (el: Element) => {
-    for (const attr of ['data-slug', 'tabindex', 'aria-controls', 'style']) el.removeAttribute(attr);
+    for (const attr of ['data-slug', 'tabindex', 'aria-controls', 'aria-expanded', 'style']) {
+      el.removeAttribute(attr);
+    }
     el.querySelector<HTMLElement>('.chev')?.classList.remove('open');
     const inner = blockIn(el);
     inner?.removeAttribute('style');
@@ -209,9 +212,9 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // most common row in the fleet — the figures and the bound they withdrew live in the spec's
   // §Bounds row, which is their one home — and a per-line-count lookup is wrong again wherever a
   // line box is not the face's own, over-reserving 8px on a two-line Japanese name in Firefox,
-  // which counts as three (`.hunt/task4-fix1/probe4.ts`). Both facts come off a clone of the row
-  // the component itself renders, because
-  // markup built from scratch carries no `svelte-xxxxxx` class and would get none of its styles.
+  // which counts as three (`.hunt/task4-fix1/probe4.ts`). Both facts come off a clone of the row the
+  // component itself renders, because markup built from scratch carries no `svelte-xxxxxx` class and
+  // would get none of its styles.
   const replica = document.createElement('table');
   const ts = getComputedStyle(table);
   replica.className = table.className;

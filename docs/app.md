@@ -1398,8 +1398,10 @@ glued to the name — so it can put a name onto a second line by itself.
 drawn with a `transform`: an open row's chevron is rotated, a rect reports the
 transformed box, and a transform moves no layout — so the row on screen is
 unaffected while the width every name is laid out against silently loses the
-difference. Every geometry comes off a clone with that state stripped before it
-is attached, and that order is load-bearing: de-opened after anything has flushed
+difference. Every geometry comes off a clone with the row's state stripped — all
+of it, not only the part that moves layout, or the next state kept for being
+inert is one that is not — before it is attached, and that order is
+load-bearing: de-opened after anything has flushed
 layout, the chevron transitions back over 120ms and is measured somewhere along
 the way. And **the column is not always the width a name gets**: the block a name
 sits in is a flex item, so a name whose longest unbroken token is wider than the

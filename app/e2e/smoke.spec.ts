@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, NAME_COL_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
-  APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureDeclared,
-  measureFit, setLayoutWidth, sweepDeclaredColumns, sweepRowHeights,
+  APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
+  setLayoutWidth, settledDeclared, sweepDeclaredColumns, sweepRowHeights,
 } from './fit-support';
 
 /**
@@ -1747,18 +1747,20 @@ test('renders every row at the height it measured', async ({ page }) => {
  */
 test('does not move a declared column width when a filter does', async ({ page }) => {
   const rows = page.locator('.tblwrap table tbody tr.shoe');
-  // The layout width is re-established after each load and the reading is polled, for the two
-  // reasons the height sweep polls: the declaration reaches the DOM through a `ResizeObserver`, so
+  // The layout width is re-established after each load and the reading is waited for, for the two
+  // reasons the height sweep waits: the declaration reaches the DOM through a `ResizeObserver`, so
   // a reading taken straight after a resize is the previous track's — and a filter that empties the
   // page takes the classic scrollbar with it, which moves the LAYOUT width by its own 15px and
   // would be read here as the filter having moved a column.
+  //
+  // `settledDeclared` rather than a wait of its own, and the wait it replaced was this test's own
+  // assertion in reverse: it waited on `|Σwidths − tableWidth| ≤ 1` and then compared PER COLUMN,
+  // with the note below saying the sum is exactly the wrong thing to compare. That wait was blind
+  // wherever a pending change is decided in JS and has not reached the DOM yet — which is what the
+  // sidebar boundary is and what a windowed body will be (`app/e2e/fit-support.ts`).
   const settled = async () => {
     expect(await setLayoutWidth(page, 1440)).toBe(1440);
-    await expect.poll(async () => {
-      const now = await measureDeclared(page);
-      return Math.abs(now.declaredSum - now.tableWidth);
-    }).toBeLessThanOrEqual(1);
-    return measureDeclared(page);
+    return settledDeclared(page, 'after the filter changed');
   };
 
   await page.goto('/');

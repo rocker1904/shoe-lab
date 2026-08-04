@@ -27,7 +27,7 @@ function mountTable(
       <table>
         <colgroup><col style="width: ${nameColPx}" /><col style="width: ${otherColPx}" /></colgroup>
         <tbody>
-          <tr class="shoe" data-slug="a" tabindex="0">
+          <tr class="shoe" data-slug="a" tabindex="0" aria-expanded="true" aria-controls="detail-a">
             <td class="name" style="${pad}">
               <div class="name-row">
                 <span class="chev">&rsaquo;</span>
@@ -126,6 +126,34 @@ describe('measureDesktopRowHeights', () => {
       && e.textContent?.includes('bold'));
     expect(container, 'no measured container was ever added').toBeDefined();
     expect(container!.textContent).toContain(NAME);
+  });
+
+  it('carries no row state onto anything it lays out', () => {
+    // *A clone is a shape, never a state.* The rule is stated in the module and this is what holds
+    // it: every prototype here is a copy of a row the app owns, and the app draws an OPEN row's
+    // state on that row. `aria-expanded` is inert where `.chev.open` was a wrong answer, but the
+    // exception has to be paid rather than described — a clone that keeps one state attribute is
+    // how the next one gets kept.
+    //
+    // The answer cannot discriminate under jsdom, which lays nothing out, so what is asserted is
+    // what was BUILT, drained from the records rather than read off the document: every container
+    // is removed before the call returns.
+    mountTable({ padded: true });
+    const added: Element[] = [];
+    const observer = new MutationObserver(() => {});
+    observer.observe(document.body, { childList: true, subtree: true });
+    measureDesktopRowHeights(NAMES);
+    for (const record of observer.takeRecords()) {
+      for (const node of record.addedNodes) {
+        if (node instanceof Element) added.push(node, ...node.querySelectorAll('*'));
+      }
+    }
+    observer.disconnect();
+    expect(added.length, 'nothing was built, so this proves nothing').toBeGreaterThan(0);
+    for (const attr of ['aria-expanded', 'aria-controls', 'tabindex']) {
+      expect(added.filter((e) => e.hasAttribute(attr)).map((e) => e.outerHTML),
+        `a clone carried ${attr}`).toEqual([]);
+    }
   });
 
   it('leaves nothing behind in the document when it gives up', () => {

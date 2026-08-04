@@ -255,15 +255,51 @@ export async function setLayoutWidth(page: Page, layoutPx: number, height = 900)
  *
  * Callers compare with a pixel of slop rather than exactly, and both directions of it are real. The
  * track is read through `clientWidth`, which every engine rounds to an integer, while the table's
- * `width: 100%` resolves fractionally (`ShoeTable.svelte`); and a resize reaches the declaration
- * through a `ResizeObserver`, so for one frame after it the widths are the previous track's — poll
- * rather than read once, or the reading is a frame behind the viewport.
+ * `width: 100%` resolves fractionally (`ShoeTable.svelte`).
  */
-export async function measureDeclared(page: Page): Promise<{
-  layout: string; tableWidth: number; trackWidth: number; declaredSum: number; cols: number;
+export interface Declared {
+  layout: string;
+  tableWidth: number;
+  trackWidth: number;
+  declaredSum: number;
+  cols: number;
+  // Per column as well as summed, because the sum is the TRACK: `columnWidths` shares every spare
+  // pixel out, so two different sharings of the same track sum identically. A claim about what a
+  // width is a function of has to read the widths.
   widths: number[];
-}> {
-  return page.evaluate(() => {
+  /** False when the wait below ran out with the widths still moving; always true for one read. */
+  settled: boolean;
+  /** How many times the widths moved while waiting — for the failure message, not for a caller. */
+  changes: number;
+}
+
+/**
+ * One reading of the declaration, or a reading taken once the declaration has stopped moving.
+ *
+ * **Run in the page, per animation FRAME, rather than polled from the test process.** The old wait
+ * was `expect.poll`, which samples on a 100/250/500ms ladder — and a sample is not an observation:
+ * it says nothing moved between two readings, and everything in between is invisible to it. A frame
+ * is the unit the thing being waited for actually happens in — a `ResizeObserver` callback is
+ * delivered inside the rendering steps and Svelte's flush follows it in a microtask — so a loop over
+ * `requestAnimationFrame` sees every state the table is ever laid out in, and cannot be handed a
+ * layout it never saw.
+ *
+ * **The quiet period is kept, and that is measured rather than inherited.** Two consecutive agreeing
+ * frames — the cheap version, ~12ms against this wait's ~110 — settles on the PREVIOUS sharing
+ * 10 times out of 10 in both engines against a redistribution deferred by only 60ms, which today's
+ * poll survives (`.hunt/task4-fix3/probe-settle.mjs`). A quiet period of one frame is a quiet period
+ * of nothing: the whole class this guard exists for is a change that has been decided in JS and has
+ * not reached the DOM yet. So the wait is per frame and the WINDOW is wall-clock, which also means
+ * it degrades the right way — where frames are scarce, `stableSince` still has to be
+ * `SETTLE_QUIET_MS` old, so a stalled compositor makes this stronger rather than weaker.
+ *
+ * `quietMs <= 0` is the single reading, so the read and the wait are one function and cannot drift
+ * apart: everything a caller asserts about the declaration is asked of the same code either way.
+ */
+async function declaredInPage(
+  { quietMs, timeoutMs }: { quietMs: number; timeoutMs: number },
+): Promise<Declared> {
+  const read = (): Declared => {
     const wrap = document.querySelector<HTMLElement>('.tblwrap');
     const table = wrap?.querySelector<HTMLTableElement>('table');
     if (!wrap || !table) throw new Error('the desktop table is not mounted — widen the window');
@@ -275,12 +311,92 @@ export async function measureDeclared(page: Page): Promise<{
       trackWidth: wrap.clientWidth,
       declaredSum: declared.reduce((a, b) => a + b, 0),
       cols: declared.length,
-      // Per column as well as summed, because the sum is the TRACK: `columnWidths` shares every
-      // spare pixel out, so two different sharings of the same track sum identically. A claim about
-      // what a width is a function of has to read the widths.
       widths: declared,
+      settled: true,
+      changes: 0,
     };
-  });
+  };
+
+  let previous = read();
+  if (quietMs <= 0) return previous;
+  const deadline = performance.now() + timeoutMs;
+  let stableSince = performance.now();
+  let changes = 0;
+  for (;;) {
+    // The deadline is enforced from OUTSIDE the frame as well as inside it: a page the compositor
+    // considers hidden is served no animation frames at all, and a bare `await rAF` there hangs
+    // until Playwright's own timeout with nothing to say. This fails with the reading in hand.
+    const drew = await new Promise<boolean>((resolve) => {
+      const timer = setTimeout(() => {
+        cancelAnimationFrame(frame);
+        resolve(false);
+      }, Math.max(0, deadline - performance.now()));
+      const frame = requestAnimationFrame(() => {
+        clearTimeout(timer);
+        resolve(true);
+      });
+    });
+    const now = read();
+    if (now.widths.join(',') !== previous.widths.join(',')) {
+      previous = now;
+      stableSince = performance.now();
+      changes++;
+    } else if (performance.now() - stableSince >= quietMs) {
+      return { ...now, changes };
+    }
+    if (!drew) return { ...now, settled: false, changes };
+  }
+}
+
+/** One reading, taken now: what the table is laid out by at this instant. */
+export async function measureDeclared(page: Page): Promise<Declared> {
+  return page.evaluate(declaredInPage, { quietMs: 0, timeoutMs: 0 });
+}
+
+/**
+ * How long the widths must hold still. Kept at the poll's own 100ms rather than shortened to a
+ * frame, because that is where the measured edge is: this survives a redistribution deferred by
+ * 60ms and does not survive one deferred by 250ms, and neither does anything else that has ever
+ * guarded these sweeps (`.hunt/task4-fix3/probe-settle.mjs`). Today's app has no such path — the
+ * redistribution lands 21-37ms after a resize, loaded — so what this buys over the poll is that it
+ * observes every frame in the window instead of its two ends, and it costs the same: 122ms mean per
+ * width over the four column sets in two engines against the poll's 126, the difference being the
+ * poll's own 250ms rung wherever the widths did move.
+ */
+const SETTLE_QUIET_MS = 100;
+
+/**
+ * Wait until the declared widths have stopped moving, and answer with the reading that settled.
+ *
+ * **A sum survives a redistribution, so nothing here settles on one.** The widths always sum to the
+ * track — `columnWidths` shares every spare pixel out — so `|Σwidths − tableWidth| ≤ 1` is satisfied
+ * by the PREVIOUS sharing exactly as readily as by the new one. At `SIDEBAR_PERMANENT_PX` the
+ * sidebar becomes permanent and the columns are re-shared: the name column moves 163px on `[score]`
+ * while the sum moves by a pixel, so that poll passed on the frame before the one the test asked
+ * for and Svelte's `ResizeObserver` flush landed in the middle of a measurement — handing the two
+ * halves of a bound two different layouts, and reddening the suite in two runs out of three.
+ *
+ * That is the FOURTH time on this branch that an assertion over an AGGREGATE has survived a
+ * REDISTRIBUTION: a vacuous `declaredSum` comparison in task 3, the note `measureDeclared` carries
+ * about why it returns `widths` at all, this wait, and the same sum standing as a wait in
+ * `smoke.spec.ts`'s filter test — which is not a live flake only because the resize it guards moves
+ * the track first, and becomes one the moment a windowed body makes the pending change a JS decision
+ * with nothing in the DOM behind it yet.
+ *
+ * **Anything that has to be true of the columns is asked of the columns**, and this is now the only
+ * place in the suite that waits on a declared width — swept for, rather than claimed. The waits that
+ * remain are over other geometry and carry their own reasons where they stand: two frames for the
+ * utilities to land in the host a width gives them, and a sleep past a smooth scroll's tail.
+ *
+ * **The reading returned is the one that settled**, not a fresh read afterwards — a third read is a
+ * third chance to catch a different layout, which is the same defect in miniature.
+ */
+export async function settledDeclared(page: Page, at: string): Promise<Declared> {
+  const now = await page.evaluate(declaredInPage,
+    { quietMs: SETTLE_QUIET_MS, timeoutMs: 5_000 });
+  expect(now.settled, `the declared column widths are still moving ${at} — `
+    + `${now.changes} changes seen, last [${now.widths.join(', ')}]`).toBe(true);
+  return now;
 }
 
 /** One reading: a cell, and how far its content lies outside that cell's content box. */
@@ -336,37 +452,6 @@ export async function measureExcursions(page: Page): Promise<Excursion[]> {
 }
 
 /**
- * Wait until the declared widths have stopped moving, and answer with them.
- *
- * **A sum survives a redistribution, so nothing here settles on one.** The widths always sum to the
- * track — `columnWidths` shares every spare pixel out — so `|Σwidths − tableWidth| ≤ 1` is satisfied
- * by the PREVIOUS sharing exactly as readily as by the new one. At `SIDEBAR_PERMANENT_PX` the
- * sidebar becomes permanent and the columns are re-shared: the name column moves 163px on `[score]`
- * while the sum moves by a pixel, so that poll passed on the frame before the one the test asked
- * for and Svelte's `ResizeObserver` flush landed in the middle of a measurement — handing the two
- * halves of a bound two different layouts, and reddening the suite in two runs out of three.
- *
- * This is the third time on this branch that an assertion over an AGGREGATE has survived a
- * REDISTRIBUTION: a vacuous `declaredSum` comparison in task 3, the note `measureDeclared` carries
- * about why it returns `widths` at all, and this. **Anything that has to be true of the columns is
- * asked of the columns** — here, two consecutive readings that agree column by column.
- *
- * Polled rather than read once for the older reason too: the declaration reaches the DOM through a
- * `ResizeObserver`, so for one frame after a resize the widths are the previous track's and fixed
- * layout is spreading the difference.
- */
-async function settledWidths(page: Page, at: string): Promise<number[]> {
-  let previous = '';
-  await expect.poll(async () => {
-    const now = (await measureDeclared(page)).widths.join(',');
-    const settled = now !== '' && now === previous;
-    previous = now;
-    return settled;
-  }, { message: `the declared column widths are still moving ${at}` }).toBe(true);
-  return (await measureDeclared(page)).widths;
-}
-
-/**
  * The sweep every declared-width test runs: every width a column set is ever mounted at, and at
  * each one the excursion bound plus the three guards that stop it passing vacuously — the table is
  * laid out `fixed`, by these declared widths, filling its track. Under `auto` layout nothing can
@@ -390,9 +475,7 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
     await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
       .toHaveCount(1);
 
-    await settledWidths(page, `at ${width}px`);
-
-    const declared = await measureDeclared(page);
+    const declared = await settledDeclared(page, `at ${width}px`);
     // Once the sharing has settled, that the table is laid out BY those declarations is an
     // assertion rather than a thing to wait for.
     expect(Math.abs(declared.declaredSum - declared.tableWidth),
@@ -539,10 +622,6 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
       }
       return out;
     });
-    FIXTURE.shoes.forEach((s, i) => {
-      expect(measured![i], `${s.name} ${at}`).toBe(rendered[s.slug]);
-    });
-
     const truth = await page.evaluate(renderedForNames, 40);
     // Both prototypes were found, stated here as well as thrown in the page: an assertion over the
     // COMBINED array survives losing the chipped half of it entirely.
@@ -551,11 +630,16 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
     const names = truth.names.map((name, i) => ({ name, discontinued: truth.disc[i]! }));
     const heights = await page.evaluate(measureDesktopRowHeights, names);
 
-    // Asserted BEFORE the heights, and this is why: everything above reads ground truth off a live
-    // row and then measures, so a re-sharing landing between the two compares two layouts and every
-    // symptom of it is a wrong height. This says which it was.
+    // Asserted before EITHER set of heights, and this is why: every measurement above reads ground
+    // truth off a live row and then measures, so a re-sharing landing between the two compares two
+    // layouts and every symptom of it is a wrong height. This says which it was. The fixture half is
+    // below this line for the same reason the synthetic half is — it reads the rendered rows after
+    // measuring them, so a straddle there produced a mystery height too.
     expect((await measureDeclared(page)).widths,
       `the declared column widths moved under this measurement ${at}`).toEqual(before);
+    FIXTURE.shoes.forEach((s, i) => {
+      expect(measured![i], `${s.name} ${at}`).toBe(rendered[s.slug]);
+    });
     expect(heights, `nothing could be measured for synthetic names ${at}`).not.toBeNull();
     expect(new Set(truth.rendered).size,
       `every synthetic name rendered one height ${at}, so this proves nothing`)
@@ -571,7 +655,7 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
       .toBe(width);
     await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
       .toHaveCount(1);
-    await settledWidths(page, `at ${width}px`);
+    await settledDeclared(page, `at ${width}px`);
 
     await compare(`at ${width}px on [${cols.join(',')}]`);
 
