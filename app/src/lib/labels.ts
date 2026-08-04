@@ -122,8 +122,9 @@ const textPx = (s: string): number =>
  * rather than named.** Not splitting only ever costs width. Splitting where an engine will not
  * break, or where it breaks but keeps the separator's own advance on the line, models a fragment of
  * a string the engine renders whole — unbounded in that string's length. So a character is in this
- * set only where all three engines both break at it and drop it, and `labels.test.ts` names every
- * one that is out and why.
+ * set only where all three engines both break at it and drop it, and `labels.test.ts` pins one of
+ * each class that is out — the closure argument runs over about fifty characters and those ten are
+ * what a regression would trip over first.
  *
  * Two definitions were tried and both are wrong here. JS's `\s` matches U+00A0, U+2007, U+202F and
  * U+FEFF, whose whole purpose is to forbid the break — it put a real catalogue label 193px narrow,
@@ -133,11 +134,22 @@ const textPx = (s: string): number =>
  * normalisation never runs on them.
  *
  * **What it still does not cover is a break that ADDS ink, and that is the residual rather than a
- * hole.** An engine may put on the widest line something no token carries: Firefox draws the hyphen
- * for a break at a U+00AD (6.30px at the desktop header face) and keeps a space's own advance when a
- * combining mark clings to it (3.10px). Both are one glyph on one line however long the string is,
- * so the shortfall is bounded by a character rather than by a token and lands in the `--s2` padding
- * the cell already carries.
+ * hole.** An engine may put on the widest line something no token carries, and the two mechanisms
+ * belong to different engines. Firefox draws the hyphen for a break at a U+00AD — 6.42px at the name
+ * face, the worst reading taken anywhere — and it needs no separator in the string at all, so that
+ * one is a property of U+00AD rather than of this split. **Chromium** is the engine that keeps a
+ * space's own advance when a combining mark clings to it, at 4.08px; Firefox does the same for
+ * 6.20px behind a run of four spaces. Neither accumulates, because min-content is the widest LINE
+ * and a line carries at most one retained advance and one drawn hyphen — sixteen soft hyphens in one
+ * token measure +567px, not sixteen times anything. The shortfall is therefore bounded by a
+ * character rather than by a token's distance from its string, which is the whole difference from
+ * the `\s` defect above.
+ *
+ * **It is not inside `FIT_TOLERANCE_PX`, and that is worth saying rather than rounding away**:
+ * 4.08px is over the 4px the rest of this model is held to. Two things make it survivable and
+ * neither makes it guarded — it lands in the `--s2` padding the cell already carries, and nothing
+ * upstream publishes carries a combining mark or a soft hyphen in a name or a label, so reaching it
+ * takes a string written to reach it.
  */
 export const wordsOf = (s: string): string[] => s.split(/[ \t\n]+/);
 

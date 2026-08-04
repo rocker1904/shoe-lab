@@ -115,10 +115,16 @@ export const FIT_SETS: Record<string, string[]> = {
  * engine that breaks at one — far outside `FIT_TOLERANCE_PX`, and on purpose.
  *
  * **The bound is what `urlstate.ts` accepts, not what the catalogue has published.** §Columns are
- * permissive renders any accepted slug raw, and `MAX_SLUG_LEN` takes 64 characters: the worst of
- * those is eleven five-letter chunks, which the model reserves **691px** more header for than an
- * engine breaking at every hyphen needs. Today's widest catalogue stem is 208px of that, and
- * quoting it would read as a ceiling when it is a sample.
+ * permissive renders any accepted slug raw, and `MAX_SLUG_LEN` takes 64 characters. Maximised over
+ * every chunking `TEST_SLUG_RE` admits at that length, the worst is eleven chunks — ten of five
+ * letters and one of four, `mmmmm-…-mmmmm-mmmm` — which is 64 exactly, where eleven FIVE-letter
+ * chunks would be 65 and rejected. The model reserves a 762px header for it against the 71px an
+ * engine breaking at every hyphen needs: **691px**. Today's widest catalogue stem is 208px of that,
+ * and quoting it would read as a ceiling when it is a sample.
+ *
+ * **This is the one home for that figure, and nothing asserts it.** It is arithmetic over
+ * `HEADER_PX` and `MAX_SLUG_LEN`, each of which moves on its own schedule, so either moving leaves
+ * the number stale with no suite to say so; its only witness is a gitignored rig.
  *
  * What has to hold here is only that the model never goes under by more than `FIT_TOLERANCE_PX` —
  * `10-12` is the case with no over-reservation at all, because Firefox leaves `-<digits>` whole and

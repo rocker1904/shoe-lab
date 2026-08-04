@@ -1342,12 +1342,21 @@ rather than a fixture, the first in all three engines through
   lone carriage return, and these strings reach the DOM as JS text nodes rather
   than through the parser that would have normalised them. So the rule splits at
   a **space, a tab or a line feed** and nowhere else, and the set is measured in
-  the three engines rather than named — `lib/labels.test.ts` lists every
-  separator that is out and why. What it cannot cover is a break that *adds* ink:
-  Firefox draws the hyphen for a U+00AD break and keeps a space's own advance when
-  a combining mark clings to it, each one glyph on one line however long the
-  string (6.30px and 3.10px measured), which lands in the padding the cell already
-  carries.
+  the three engines rather than named — `lib/labels.test.ts` pins one of each
+  class that is out, over the fifty-odd characters the closure argument runs
+  through.
+
+  What it cannot cover is a break that *adds* ink, and the two mechanisms belong
+  to different engines. **Firefox** draws the hyphen for a U+00AD break —
+  **6.42px** at the name face, the worst reading taken anywhere, and it needs no
+  separator in the string at all, so it is a property of the soft hyphen rather
+  than of the split. **Chromium** keeps a space's own advance when a combining
+  mark clings to it, at **4.08px**. Each is one glyph on one line however long
+  the string, so neither accumulates, and both land in the padding the cell
+  already carries. **4.08px is over `FIT_TOLERANCE_PX`**, which is where the rest
+  of this model is held — it takes a string written to reach it, since nothing
+  upstream publishes a combining mark or a soft hyphen in a name or a label, but
+  the residual sits outside the tolerance rather than inside it.
 
   **The price falls on raw-slug headers alone** (§Columns are permissive, ranges
   and sorts are strict): the one rendered label with an intra-word hyphen is
@@ -1356,8 +1365,10 @@ rather than a fixture, the first in all three engines through
   naming a dropped column is handed a column far wider than any engine needs, and
   can take the stacked list at a width the desktop table would have fitted —
   bounded by the 64 characters `lib/urlstate.ts` accepts rather than by anything
-  upstream has published, which is **691px** of phantom header at the worst of
-  them.
+  upstream has published. `FIT_DROPPED_COLS` in `app/e2e/fit-support.ts` is the
+  one home for that figure, its witness slug and its arithmetic; it is derived
+  from `HEADER_PX` and `MAX_SLUG_LEN`, both of which move on their own schedules,
+  and no assertion holds it.
 - The **name column's floor** is the wider of the declared `min-width: 14rem` and
   the fleet's own longest unbreakable token. The `discontinued` chip counts with
   the name's **last** word, because the markup leaves no break opportunity

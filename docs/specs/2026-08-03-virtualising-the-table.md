@@ -205,18 +205,28 @@ rather than a rounding error:
   the measurement was right first time.
 
   The model can then only come out wide, **except where a break adds ink no
-  token carries** — Firefox draws the hyphen at a U+00AD (6.30px), and a space
-  keeps its advance under a combining mark (3.10px). Each is bounded by one
-  glyph on one line however long the string, so it lands in the cell's own
-  padding; that is the difference from the `\s` defect, which grew with the
-  string.
+  token carries** — and the two mechanisms belong to different engines, which this
+  paragraph first got wrong in both directions. **Firefox** draws the hyphen at a
+  U+00AD, 6.42px at the name face and the worst reading taken anywhere; it needs
+  no separator in the string at all, so it is the soft hyphen's property rather
+  than the split's. **Chromium** keeps a space's advance under a combining mark,
+  at 4.08px. Each is bounded by one glyph on one line however long the string and
+  neither accumulates, so it lands in the cell's own padding; that is the
+  difference from the `\s` defect, which grew with the string. **4.08px is
+  nevertheless outside `FIT_TOLERANCE_PX`** — reachable only by a string written
+  to reach it, since nothing upstream publishes either character in a name or a
+  label, but outside the tolerance rather than inside it.
 
-  The price is paid entirely by raw-slug headers — no rendered label carries an
-  intra-word hyphen, so no real view and no mount boundary moves. Its bound is
-  **not** the worst slug in today's catalogue: `urlstate.ts` accepts 64
-  characters, and over every chunking that length admits the worst models a
-  762px header against the 71px an engine that breaks at hyphens needs —
-  **691px of over-reservation**. A
+  The price is paid entirely by raw-slug headers. One rendered label carries an
+  intra-word hyphen — `Hi-vis`, 29.56px against the phone's 48px bound and one
+  line either way — and it is the only one across every catalogue name, the
+  hand-written names, the derived score labels and every `SHORT_LABELS` value, so
+  no real view and no mount boundary moves. The bound is **not** the worst slug in
+  today's catalogue: `urlstate.ts` accepts 64 characters, and over every chunking
+  that length admits the worst models a 762px header against the 71px an engine
+  that breaks at hyphens needs — **691px of over-reservation**, whose one home is
+  `app/e2e/fit-support.ts`: the witness slug, the arithmetic, and the caveat that
+  nothing asserts any of it. A
   dropped slug is already a degraded rendering, so the remedy is to render one
   breakable and model it that way rather than to reason about break rules again;
   that lands with the declared widths, because model and render have to agree.
@@ -245,7 +255,7 @@ implementation* have no honest value until the thing exists.
 | The model's min-content still agrees with the engine's, measured with the override off, within `FIT_TOLERANCE_PX` | `app/e2e/fit-support.ts` (unchanged claim, new measurement path) |
 | Bulk-measured row heights equal the heights the table renders, for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
 | The bulk measurement costs under 5ms for the committed fleet, and is paid per name-column change rather than per filter change | *measured at implementation*; `app/e2e/smoke.spec.ts` |
-| The model is never narrower than any engine's own min-content, for every catalogue label, every slug rendered as a dropped column, and every name in the fleet — the over-reserve rule's whole justification | `app/src/lib/fit.test.ts`, `app/e2e/fit-support.ts` (`FIT_DROPPED_COLS`, three engines) |
+| The model is never narrower than any engine's own min-content — the over-reserve rule's whole justification. Held for **raw-slug headers**, in three engines. Over every catalogue label and every name in the fleet it is a **rig reading rather than an assertion**: no committed suite quantifies over either, `fit.test.ts` having no engine in it and `FIT_SETS` running on the five-shoe e2e fixture | `app/e2e/fit-support.ts` (`FIT_DROPPED_COLS`, three engines); the fleet-wide half is unheld, and its sweep is gitignored |
 | The word split happens on break opportunities only — never on non-breaking whitespace | `app/src/lib/labels.test.ts` |
 | The name column's floor clears the fleet's longest unbreakable token | `app/src/lib/fit.test.ts` |
 | Every figure column's header exceeds its widest cell, and by how much — the margin is the assertion, not the ordering | `app/src/lib/fit.test.ts` |
@@ -343,8 +353,8 @@ nothing wraps differently, nothing shifts.
 **So the no-overflow bound is a tolerance, and the tolerance has to be a bound
 over every column at every mounting width** — not an exception for the column
 that happened to surface it. Task 3 measures it. The case to check hardest is
-the three cell-bound phrase columns, where the thing leaving the box is a
-runner's data rather than a header we authored.
+the **four** cell-bound phrase columns above, where the thing leaving the box is
+a runner's data rather than a header we authored.
 
 The max-content half is new arithmetic but can only misplace a distribution
 boundary; nothing clips from it.
@@ -414,7 +424,7 @@ owes it.
 
 | Registry | Owed |
 |---|---|
-| `FIT_SETS`, `FIT_TOLERANCE_PX` in `app/e2e/fit-support.ts` | the same four column sets guard the new max-content model and the no-overflow bound. **Unpaid as of task 2**: `measureFit` still asks only for `min-content`, so nothing committed holds the max-content half or the no-overflow bound to any engine, and the evidence for both lives in gitignored one-shot scratch. Task 3 pays it; until then this row is a promise, not a fact |
+| `FIT_SETS`, `FIT_TOLERANCE_PX` in `app/e2e/fit-support.ts` | the same four column sets guard the new max-content model and the no-overflow bound. **Unpaid as of task 2**: `measureFit` still asks only for `min-content`, so nothing committed holds the max-content half or the no-overflow bound to any engine, and the evidence for both lives in gitignored one-shot scratch. Task 3 pays it; until then this row is a promise, not a fact. **Third consuming file as of task 3b**: `app/src/lib/fit.test.ts` imports `FIT_SETS` and pins `phrases` against the committed fleet, so the array now carries a second kind of claim — an edit to it has to answer to the unit suite as well as to the three engines |
 | `SCORE_COLUMN_KEYS`, `SCORE_CELL_CHARS` in `fit.ts` | `columnMaxPx` must answer for score columns, which have no cells in the dataset |
 | `PLATE_LABELS` (`categorical.ts`) | feeds `cellMaxPx`, and therefore feeds `columnMaxPx` |
 | `MAX_LABEL_PX`, `MAX_UNITS_PX`, `MAX_UNITS_CLEAR_PX` in `labels.ts` | `headerMaxPx` is new arithmetic over the same labels and must not restate their bounds |
