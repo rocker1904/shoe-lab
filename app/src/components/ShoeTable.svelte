@@ -63,7 +63,7 @@
    *  changes once, where the line below re-runs on every frame of a window drag. `fitModel` hands
    *  back the ONE model per dataset, so this is the same object `Page.svelte` decides the rendering
    *  with rather than a second copy of the same arithmetic over the same fleet. */
-  const fit = $derived(fitModel(data, idx));
+  const fit = $derived(fitModel(data));
   const widths = $derived(columnWidths(view.columns, trackPx, fit));
 
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would

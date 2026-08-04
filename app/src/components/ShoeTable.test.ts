@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import { describe, expect, it, vi } from 'vitest';
 import ShoeTable from './ShoeTable.svelte';
-import { indexTests } from '../lib/dataset';
 import { columnWidths, fitModel } from '../lib/fit';
 import { type ScoreColumns } from '../lib/score';
 import { EASY } from '../lib/score-defs';
@@ -285,12 +284,12 @@ describe('ShoeTable declares its column widths', () => {
     const { container } = setup().rendered;
     const widths = declared(container);
     expect(widths).toHaveLength(1 + cols.length);
-    expect(widths[0]).toBeCloseTo(fitModel(data, indexTests(TESTS)).columnPx('name'), 6);
+    expect(widths[0]).toBeCloseTo(fitModel(data).columnPx('name'), 6);
   });
 
   it('falls back to every column\'s own minimum where no track can be measured', () => {
     const { container } = setup().rendered;
-    const want = columnWidths(cols, 0, fitModel(data, indexTests(TESTS)));
+    const want = columnWidths(cols, 0, fitModel(data));
     const got = declared(container);
     expect(got).toHaveLength(want.length);
     got.forEach((w, i) => expect(w).toBeCloseTo(want[i]!, 6));

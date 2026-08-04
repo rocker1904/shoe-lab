@@ -180,7 +180,7 @@
   $effect(() => observeLayoutWidth((px) => (layoutPx = px)));
   /** Per dataset, because the widest phrase in a column is a fact about the fleet; the sum over the
    *  columns on screen is per view, which is what makes a ticked column able to change the answer. */
-  const fit = $derived(fitModel(data, idx));
+  const fit = $derived(fitModel(data));
   const phone = $derived(rendersPhone(view.columns, layoutPx, fit));
 
   /**

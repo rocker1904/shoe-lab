@@ -1356,10 +1356,20 @@ declared widths are arithmetic over the *real* faces' committed tables, so any
 frame that paints before those faces arrive — `font-display: swap` (§Theming),
 and permanently for a face whose load never succeeds — lays a face nobody
 measured inside columns sized for one that was. Auto layout used to absorb that
-by widening the column. It is bounded rather than fixed: the faces are preloaded,
-the placeholder holds the table back for its own delay, and the fallback is
-narrower than Inter Tight in the hosts measured — but it is the third consequence
-and it belongs beside the other two. The same reasoning applies to a browser
+by widening the column. **What bounds it is timing, and only timing.** The faces
+are preloaded from the document head, so they are requested before the module
+that fetches the dataset and normally resolve ahead of it; nothing else holds the
+table back, because the table paints the moment that payload lands and the
+placeholder's delay gates the *skeleton* rather than the page (§Decisions).
+Geometry bounds nothing, because whether a fallback is narrower or wider than
+Inter Tight is the HOST's choice and the two hosts measured disagree in the
+direction that matters — `awaitFacesLoaded`'s docblock in
+`app/e2e/fit-support.ts` owns both readings, including the runner where the
+fallback is the wider face and a measurement taken against it ran far past the
+model. So the swap window is short rather than safe, and the permanent regime — a
+face still errored after the last retry (§Theming) — is not bounded at all. It is
+the third consequence and it belongs beside the other two. The same reasoning
+applies to a browser
 whose default font size is not 16px, since the model's tables are in px while
 `--t-*` and `--s*` are rem: pre-existing, and newly consequential.
 

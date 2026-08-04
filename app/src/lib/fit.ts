@@ -387,26 +387,26 @@ const SCORE_COLUMN_KEYS: ReadonlySet<string> = new Set(
  * instances would each pay for it: `Page.svelte` asks which rendering fits, and `ShoeTable.svelte`
  * asks how to share its track, off the same `data` object.
  *
- * Keyed on the dataset alone, which is sound because `index` is a pure function of `data.tests`
- * (`indexTests`) and every caller derives it that way — the argument exists to avoid recomputing
- * it, never to model a different catalogue over the same shoes. A caller with an index built from
- * anything else must not use this function.
+ * Keyed on the dataset alone, and the index is built HERE rather than passed in. It is a pure
+ * function of `data.tests`, so an argument could only agree with the key or be a trap — on a cache
+ * hit it would be ignored without a word, handing the second caller the first one's model. The memo
+ * also removes the saving it existed for: `indexTests` runs once per dataset either way.
  *
  * A `WeakMap`, so a dataset that goes out of scope takes its widths with it: the suite builds a
  * fresh `ShoesFile` per case and nothing here should outlive one.
  */
 const MODELS = new WeakMap<ShoesFile, FitModel>();
 
-export function fitModel(data: ShoesFile, index?: TestIndex): FitModel {
+export function fitModel(data: ShoesFile): FitModel {
   const cached = MODELS.get(data);
   if (cached) return cached;
-  const model = buildFitModel(data, index);
+  const model = buildFitModel(data);
   MODELS.set(data, model);
   return model;
 }
 
-function buildFitModel(data: ShoesFile, index?: TestIndex): FitModel {
-  const idx = index ?? indexTests(data.tests);
+function buildFitModel(data: ShoesFile): FitModel {
+  const idx = indexTests(data.tests);
   const mins = new Map<string, number>();
   const maxes = new Map<string, number>();
   const memo = (cache: Map<string, number>, key: string, compute: () => number): number => {

@@ -26,7 +26,7 @@ const data = (over: Partial<ShoesFile> = {}): ShoesFile => ({
 
 const model = (over: Partial<ShoesFile> = {}) => {
   const d = data(over);
-  return fitModel(d, indexTests(d.tests));
+  return fitModel(d);
 };
 
 /**
@@ -466,7 +466,7 @@ describe('the width guards against the fleet that is actually shipped', () => {
     // min-content the model is exact in Chromium and 3.1–3.2px wide of Firefox and WebKit, which
     // is the `NAME_PX` table being one engine's (`fit.ts`).
     expect(nameCellMinPx(fleet.shoes)).toBeCloseTo(223.64, 2);
-    expect(fitModel(fleet, fleetIdx).columnPx('name')).toBe(224 + 16);
+    expect(fitModel(fleet).columnPx('name')).toBe(224 + 16);
   });
 
   it('keeps every figure column header-bound, and states the tightest margin', () => {

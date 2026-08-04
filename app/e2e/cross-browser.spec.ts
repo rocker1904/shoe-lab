@@ -1,8 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
-  APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_OVERFLOW_PX, FIT_SETS, FIT_TOLERANCE_PX,
-  measureDeclared, measureExcursions, measureFit, mountWidths, setLayoutWidth,
+  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, sweepDeclaredColumns,
 } from './fit-support';
 
 /**
@@ -935,51 +934,6 @@ test('never models a dropped column\'s header narrower than this engine renders 
     `the fit model says ${model.toFixed(1)}px and this engine renders ${rendered.toFixed(1)}px`)
     .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
 });
-
-/**
- * The sweep both declared-width tests below run: every width this column set is ever mounted at,
- * and at each one the excursion bound plus the three guards that stop it passing vacuously — the
- * table is laid out `fixed`, by these declared widths, filling its track. Under `auto` layout
- * nothing can overflow a column, so the bound on its own is not a test of anything.
- *
- * **One function rather than a paste in each test**, because the guards are exactly the part that
- * went missing: written out twice, the dropped-column test carried the bound and none of the guards
- * and survived a `fixed` → `auto` mutation that reddened every other test in the sweep.
- */
-async function sweepDeclaredColumns(page: Page, cols: readonly string[]): Promise<void> {
-  await page.goto(`/?cols=${cols.join(',')}`);
-  await awaitFacesLoaded(page, { required: APP_FACES });
-  for (const width of mountWidths(cols)) {
-    expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
-      .toBe(width);
-    // Retried rather than read once: a resize reaches the decision through an event and the DOM
-    // through Svelte's next flush, and WebKit has reported the previous rendering to a single
-    // evaluate — the artefact the ladder below documents.
-    await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
-      .toHaveCount(1);
-
-    // Polled, not read once: the declaration reaches the DOM through a `ResizeObserver`, so for one
-    // frame after a resize the widths are the previous track's and fixed layout is spreading the
-    // difference. Read once, this measures the frame before the one the test asked for.
-    await expect.poll(async () => {
-      const now = await measureDeclared(page);
-      return Math.abs(now.declaredSum - now.tableWidth);
-    }, { message: `the table is not laid out by its declared widths at ${width}px` })
-      .toBeLessThanOrEqual(1);
-
-    const declared = await measureDeclared(page);
-    expect(declared.layout, `at ${width}px`).toBe('fixed');
-    expect(declared.cols, `at ${width}px`).toBe(1 + cols.length);
-    // And it fills its track, which is one-sided: a track under the columns' own minimums must
-    // overrun the panel rather than clip a cell (spec §Failure behaviour).
-    expect(declared.tableWidth, `the table is narrower than its track at ${width}px`)
-      .toBeGreaterThanOrEqual(declared.trackWidth - 1);
-
-    const over = await measureExcursions(page);
-    expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
-      .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
-  }
-}
 
 /**
  * **The engines that can actually fail this one.** A declared width is `min + share` and the min is
