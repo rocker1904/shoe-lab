@@ -67,9 +67,11 @@ function stubClipboard(writeText = vi.fn(async () => {})) {
 let restoreClipboard: (() => void) | null = null;
 
 /**
- * The URL and storage write is trailing-debounced, so every assertion about `location.search` or
- * `localStorage` here is 200ms late (docs/app.md §View and URL ownership). Only the two timer
- * functions are faked: the transition stubs in `test-setup.ts` finish on a microtask and jsdom's
+ * The URL and storage write is trailing-debounced, so every assertion about a `location.search` or
+ * a `localStorage` that a control just changed is 200ms late (docs/app.md §View and URL ownership),
+ * and this is what pays it. Init's own write is the exception: it runs synchronously inside
+ * `untrack` at mount, so a test asserting the address a *link* arrived on needs no flush and the
+ * arrival tests below call none. Only the two timer functions are faked: the transition stubs in `test-setup.ts` finish on a microtask and jsdom's
  * `FileReader` schedules its own work, both of which a blanket `useFakeTimers()` would freeze.
  */
 const settle = () => vi.advanceTimersByTime(VIEW_WRITE_MS);
@@ -752,8 +754,9 @@ describe('Page story selection', () => {
     render(Page, { props: { data } });
     expect(markedStory()).toEqual(['Easy']);
     expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
-    settle();
-    // It arrived canonical, so the one init write has nothing to change about it.
+    // It arrived canonical, so the init write has nothing to change about it — which is also why
+    // this case alone cannot tell whether that write happened at all. The one below can: delete the
+    // write and it is the longhand test that reddens. The two guard the bound together.
     expect(location.search).toBe('?zone=forefoot&story=easy');
   });
   /**
@@ -766,13 +769,14 @@ describe('Page story selection', () => {
     const easy = applyPreset('easy', 'heel', false);
     const longhand = new URLSearchParams([
       ['plate', easy.filters.plate!.join(',')],
-      ['sort', `-${easy.sort.key}`],
+      // The direction prefix is derived too, by the rule `serializeView` writes it with: pasting the
+      // `-` would leave one token able to rot into the longhand spelling of a different sort.
+      ['sort', easy.sort.dir === 'desc' ? `-${easy.sort.key}` : easy.sort.key],
       ['cols', easy.columns.join(',')],
     ]);
     history.replaceState(null, '', `/?${longhand}`);
     render(Page, { props: { data } });
     expect(markedStory()).toEqual(['Easy']);
-    settle();
     expect(location.search).toBe('?story=easy');
   });
   /**
@@ -787,22 +791,24 @@ describe('Page story selection', () => {
     render(Page, { props: { data } });
     expect(markedStory()).toEqual([]);
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
-    settle();
     expect(location.search).toBe('?story=easy&plate=carbon');
   });
   /**
    * The zero-column table became link-reachable when `cols` learned to name its list literally
-   * (docs/app.md §URL encoding), and nothing asserted that it renders — only that it parses. This is
-   * the desktop rendering, mounted at this suite's 1024px; the phone's own floor is asserted in
-   * ShoeTableMobile.test.ts, where the guard that needs it lives.
+   * (docs/app.md §URL encoding), and nothing asserted that it renders — only that it parses. Which
+   * rendering this is, is asserted rather than assumed: the split with ShoeTableMobile.test.ts is
+   * only worth anything if this case is the desktop one, and at zero columns the fit rule mounts
+   * that at every width above the phone floor
+   * (docs/app.md §Two renderings, and only one of them mounted).
    */
-  it('renders the zero-column table a link can now ask for', () => {
+  it('renders the zero-column table a link can now ask for, on the desktop rendering', () => {
     history.replaceState(null, '', '/?cols=');
     render(Page, { props: { data } });
+    expect(screen.getByRole('button', { name: 'Shoe' })).toBeInTheDocument();
+    expect(screen.queryByTestId('shoe-table-mobile')).toBeNull();
     expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 5 of the 5 shoes');
     expect(screen.getAllByRole('row').length).toBeGreaterThan(FLEET.length);
     expect(screen.queryByRole('columnheader', { name: /Heel stack/ })).toBeNull();
-    settle();
     expect(location.search).toBe('?cols=');
   });
 

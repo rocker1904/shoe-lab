@@ -51,18 +51,21 @@ describe('ShoeTableMobile', () => {
 
   /**
    * A table of shoes and no measurements is a real view, and a link can ask for it now that `cols`
-   * names its column list literally, empty included (docs/app.md §URL encoding). This rendering is
-   * the one that needs a floor for it: the identity row spans the value row's cells, and a `colspan`
-   * of 0 is not "one cell" but "every remaining cell", so `Math.max(cols.length, 1)` in the
-   * component is what keeps the card a card. Nothing else asserts that guard — the parse is proved
-   * in urlstate.test.ts and the desktop render in Page.test.ts, and neither reaches this.
+   * names its column list literally, empty included (docs/app.md §URL encoding). This is the phone
+   * rendering of it; the desktop one is proved in Page.test.ts, from the link.
+   *
+   * The `colspan` line is **not** a rendering claim. `span`'s floor turns out to be unobservable,
+   * and the comment over `span` in the component holds that measurement — one home for it. This
+   * pins the single attribute the floor writes and nothing more, so that removing the floor is a
+   * deliberate act rather than a silent one while the question is open.
    */
-  it('renders with no columns at all, the identity row still spanning one cell', () => {
+  it('renders with no columns at all', () => {
     setup({ view: { columns: [] } });
     expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
-    expect(screen.getByText('cushy').closest('td')!.getAttribute('colspan')).toBe('1');
     // A card and a value row for every shoe, so the table is still a table rather than a blank strip
     expect(screen.getAllByRole('row').length).toBeGreaterThan(FLEET.length);
+    expect(screen.getByText('cushy')).toBeInTheDocument();
+    expect(screen.getByText('cushy').closest('td')!.getAttribute('colspan')).toBe('1');
   });
 
   it('sorts from a header, and flips an already-descending column', async () => {

@@ -44,7 +44,21 @@
   /** The value row is only ever numeric: it is what keeps every chip the same box under a header
    *  that labels it (docs/app.md §Columns and sorting). */
   const cols = $derived(view.columns.filter((c) => isFigure(c, idx.bySlug.get(c))));
-  // A shoe whose value row holds nothing still needs a cell to span, so the colspan never hits 0.
+  /**
+   * The floor over a zero-column view, and it is **unobservable** — measured in Chromium and
+   * Firefox at 360px and 375px rather than argued. It changes two things and neither reaches the
+   * screen: the `colspan` attribute from `"0"` to `"1"`, which both engines clamp to 1 either way
+   * (`colSpan` reflects 1 on both, HTML5 having dropped HTML4's "every remaining cell" meaning for
+   * `colspan`, keeping it only for `rowspan`); and the table's `min-width` from the bare
+   * border-spacing to one column's worth, which never binds, because the table is `width: 100%`
+   * inside a bleed 336px wide at the narrowest supported layout
+   * (docs/app.md §The narrowest supported width is 360px). Every rendered box —
+   * bleed, panel, table, identity cell — is identical to the pixel with the floor and without.
+   *
+   * So this is a candidate for deletion rather than a guard, recorded here because the reason it
+   * was believed to be load-bearing was wrong rather than merely stale. ShoeTableMobile.test.ts
+   * pins the attribute it writes, so removing it is a deliberate act and not an accident.
+   */
   const span = $derived(Math.max(cols.length, 1));
   // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
   // mean something different from its neighbours' in the same row.
