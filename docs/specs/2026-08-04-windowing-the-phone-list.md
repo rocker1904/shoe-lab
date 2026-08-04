@@ -38,6 +38,23 @@ instrument, never as a target: the run-to-run spread on one quiet machine is a
 tenth of the median and a fifth of the worst step, which is the whole reason the
 desktop half asserts a row count and records the milliseconds.
 
+**Know in advance which half of that a window can take, because it is not all of
+it.** A parked experiment held the phone's rows still while the filter drawer was
+open — the same rows, unchanged, for a whole drag — and measured what that did
+and did not buy. Style recalculation and layout fell to about a tenth and the DOM
+writes went with them; **script barely moved**. The filter pass, the sort, and one
+ranking per rendered column all recompute every frame *whatever the table
+renders*, because `setView` replaces the whole `ViewState` and every update
+clones its column list, so no `$derived` over the columns can hold
+(docs/app.md §What a drag may recompute).
+
+Windowing removes the same half that experiment removed — the paint — and leaves
+the same half standing. So the figure to predict against is not the drag total
+but its paint share, and the ranking is fleet-wide by necessity rather than by
+oversight: the wash must rank over every filtered shoe or a tint would mean
+something different at each scroll position. If the remainder still matters after
+this lands, the thing to attack is the cloned column list, not the window.
+
 ## What is already built for this
 
 The desktop delivery deliberately cut the seams rather than leaving a
