@@ -19,7 +19,13 @@
  * viewport and scroll offset from the component, and none of the three is read here.
  */
 
-/** One shoe: what it is keyed by, and what the table will render it at. */
+/**
+ * One shoe: what it is keyed by, and what the table will render it at.
+ *
+ * **`height` must be non-negative.** Nothing here enforces it — a negative one would make a spacer's
+ * px negative, which is a `<tr>` nobody can express — and no height source in the tree can produce
+ * one. It is stated because the next one to join, task 8's phone measurement, inherits the contract.
+ */
 export interface VirtualItem { readonly key: string; readonly height: number }
 
 /** A spacer standing for one or more shoes, or a shoe to render, by index into `items`. */
@@ -41,12 +47,13 @@ export type VirtualEntry =
  * which is a blank table wherever the measurement has not happened yet — the same fallback
  * `fit.ts` and `row-height.ts` already take where they cannot measure (spec §Failure behaviour).
  *
- * **An item renders when its box TOUCHES the window**, not when it strictly overlaps. The difference
- * is one row at each edge, which the overscan already pays for many times over, and it is what makes
- * a zero-height item — a shoe measured at nothing, which `row-height.ts` can answer during a face
- * swap — behave like the position it occupies rather than falling through every comparison. The
- * window itself is the viewport grown by `overscanPx` at BOTH ends, because scrolling up has to be
- * as cheap as scrolling down.
+ * **An item renders when its box TOUCHES the window**, not when it strictly overlaps. What that buys
+ * is totality over every non-negative height: a degenerate box passes through a strict overlap test
+ * at every position there is, so a zero-height item would be in no part of the plan rather than at
+ * the position it occupies. No height source in this tree produces one today — `row-height.ts`
+ * declines rather than answering zero — so this is defence, and it costs at most one row per edge
+ * against an overscan that already pays for many. The window itself is the viewport grown by
+ * `overscanPx` at BOTH ends, because scrolling up has to be as cheap as scrolling down.
  *
  * **A gap is emitted for every run of skipped items and for no empty run**, so the plan accounts for
  * every item exactly once: a kept shoe next to the window produces no gap at all rather than a 0px
@@ -57,6 +64,28 @@ export type VirtualEntry =
  * Linear in the fleet, deliberately: 455 additions on a scroll frame is nothing, and the prefix-sum
  * array that would make it logarithmic is a second copy of the heights to invalidate — and a stale
  * one puts rows where the scrollbar does not say they are.
+ *
+ * ---
+ *
+ * Three things a caller owes this plan, none of which it can check for itself.
+ *
+ * **A gap's `px` is the WHOLE of what its row may occupy.** The desktop table gives every `td` a
+ * `--s2` padding and a 1px bottom border (`ShoeTable.svelte`), so a spacer that inherits them stands
+ * 17px taller than the run it replaces — on every spacer, not only a 0px one, which puts every
+ * scroll position below it wrong and drifts the scrollbar the design exists to keep honest. The
+ * expanded row already takes that reset for its own reasons; a spacer needs it and the border too.
+ *
+ * **A plan can contain no items at all.** Scroll past either end of the fleet and it is one spacer
+ * the height of everything. That is the empty-window state the spec's registry sweep warns about:
+ * with no `tr.shoe` in the body there is no prototype to clone, so `measureDesktopRowHeights`
+ * declines, so the caller renders everything, which puts a row back and re-measures. The loop is
+ * self-healing by design but it is a loop, and the caller is what has to be shown to settle.
+ *
+ * **A gap needs a key, and its position in the plan is the wrong one.** The plan gains and loses
+ * spacers as kept shoes split them, so an array index is a gap in one frame and an item in the next.
+ * The run a spacer stands for is the stable identity, and it is already derivable: the index of the
+ * next item entry, or `items.length` for a trailing gap. Whatever is chosen has to be namespaced
+ * away from slugs, or a shoe slugged `3` collides with a spacer.
  */
 export function virtualPlan(
   items: readonly VirtualItem[],

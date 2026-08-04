@@ -16,6 +16,22 @@ const FLEET: VirtualItem[] = HEIGHTS.map((height, i) => ({ key: `k${i}`, height 
 // Tops: 0, 50, 110, 180, 260, 350, 450, 560, 680, 810. Bottom of the fleet: 950.
 const TOTAL = 950;
 
+/**
+ * The other fleets the audit sweep runs over, each carrying what `FLEET` cannot ask.
+ *
+ * `RAGGED` is zeros in the middle of the list, two of them adjacent, heights that repeat — so a
+ * spacer's px stops naming exactly one run and the audit has to re-derive the run rather than
+ * recognise the number — and a total of 142px, which is shorter than most of the viewports swept, so
+ * the whole fleet sits inside the window at every scroll offset near it.
+ */
+const RAGGED: VirtualItem[] = [40, 0, 0, 40, 25, 25, 0, 12]
+  .map((height, i) => ({ key: `r${i}`, height }));
+const SOLO: VirtualItem[] = [{ key: 'only', height: 60 }];
+const FLEETS: readonly (readonly [string, VirtualItem[]])[] = [
+  ['ten distinct heights', FLEET], ['zeros, repeats and short', RAGGED], ['one shoe', SOLO],
+  ['no shoes', []],
+];
+
 const item = (index: number): VirtualEntry => ({ kind: 'item', index });
 const gap = (px: number): VirtualEntry => ({ kind: 'gap', px });
 const sum = (from: number, to: number) => HEIGHTS.slice(from, to + 1).reduce((a, b) => a + b, 0);
@@ -100,10 +116,27 @@ describe('virtualPlan', () => {
     expect(plan).toEqual(FLEET.map((_, i) => item(i)));
   });
 
+  it('renders an item whose bottom edge just touches the top of the window', () => {
+    // Item 3 spans 180-260 and the window starts at exactly 260: it touches without overlapping,
+    // which is the rule the module states. This is the only NON-DEGENERATE case of it — a
+    // zero-height item exercises the same comparison with a box that has no extent to overlap with.
+    const plan = virtualPlan(FLEET, 260, 200, 0, none);
+    expect(plan).toEqual([gap(sum(0, 2)), item(3), item(4), item(5), item(6), gap(sum(7, 9))]);
+    auditPlan(FLEET, plan, 'bottom edge on the window top');
+  });
+
+  it('renders an item whose top edge just touches the bottom of the window', () => {
+    // The other half of the same rule: item 2 starts at exactly 110 and the window is [0, 110].
+    const plan = virtualPlan(FLEET, 0, 110, 0, none);
+    expect(plan).toEqual([item(0), item(1), item(2), gap(sum(3, 9))]);
+    auditPlan(FLEET, plan, 'top edge on the window bottom');
+  });
+
   it('keeps a claimed item next to the window without a zero-height spacer', () => {
-    // Item 3 ends exactly where the window starts and is the runner's — expanded or focused. The
-    // hazard is a spacer emitted for the empty run between it and item 4: a `<tr>` standing for no
-    // shoes, which nothing downstream can distinguish from one that does.
+    // Item 3 is the shoe immediately above the window — 40px clear of it, so it is not on screen —
+    // and it is the runner's, expanded or focused. The hazard is a spacer emitted for the empty run
+    // between it and item 4: a `<tr>` standing for no shoes, which nothing downstream can tell from
+    // one that does.
     const plan = virtualPlan(FLEET, 300, 200, 0, new Set(['k3']));
     expect(plan).toEqual([gap(sum(0, 2)), item(3), item(4), item(5), item(6), gap(sum(7, 9))]);
     auditPlan(FLEET, plan, 'kept adjacent');
@@ -178,10 +211,11 @@ describe('virtualPlan', () => {
   });
 
   it('places zero-height items by where they sit, and still accounts for them', () => {
-    // A shoe can measure zero — `row-height.ts` answers for a fleet mid-face-swap — and a zero-height
-    // box passes through a strict overlap test at every position. Window [0, 50]: the two at the top
-    // and the 100px one render; the two sitting at 100 do not, and the spacer standing for them is
-    // 0px rather than absent, or they would be in no part of the plan at all.
+    // A degenerate box passes through a strict overlap test at every position, so without the
+    // touching rule a zero-height item would be in no part of the plan. No height source in the tree
+    // produces one today — this is what makes the function total over the contract rather than over
+    // today's callers. Window [0, 50]: the two at the top and the 100px one render; the two sitting
+    // at 100 do not, and the spacer standing for them is 0px rather than absent.
     const flat: VirtualItem[] = [
       { key: 'z0', height: 0 }, { key: 'z1', height: 0 }, { key: 'z2', height: 100 },
       { key: 'z3', height: 0 }, { key: 'z4', height: 0 },
@@ -201,13 +235,29 @@ describe('virtualPlan', () => {
   it('accounts for every item exactly once, across every combination there is', () => {
     // The supplement, and the only place a sweep appears: the cases above pin what the window
     // decides, this holds the grouping and the arithmetic against whatever it decided.
-    const kepts = [none, new Set(['k0']), new Set(['k4', 'k5']), new Set(FLEET.map((s) => s.key))];
-    for (const scrollTop of [-5_000, -40, 0, 137, 300, 949, 10_000]) {
-      for (const viewportPx of [1, 200, 100_000]) {
-        for (const overscanPx of [0, 25, 100_000]) {
-          for (const kept of kepts) {
-            const at = `${scrollTop}/${viewportPx}/${overscanPx}/${[...kept].join('+') || '-'}`;
-            auditPlan(FLEET, virtualPlan(FLEET, scrollTop, viewportPx, overscanPx, kept), at);
+    //
+    // **Over more than one FLEET, and that is the whole strength of it.** Swept over the ten
+    // distinct positive heights alone, this missed a mutation that loses items outright — flushing
+    // the spacer on its px rather than on whether it stands for anything, which reads like the same
+    // sentence and is not. The plan it produced dropped a run of zero-height shoes into no part of
+    // the plan at all. It escaped because the sweep varied the scroll offset, the viewport, the
+    // overscan and the kept set and held the fleet fixed: the one axis the audit is strongest on was
+    // the one never varied. So the fleets vary too, and they are chosen for what the first cannot
+    // ask — interior zeros, a run of two of them, repeated heights so a spacer's px no longer names
+    // exactly one run, a fleet shorter than the viewport, one of a single shoe, and one of none.
+    for (const [fleetName, fleet] of FLEETS) {
+      const keys = fleet.map((s) => s.key);
+      // Derived from the fleet rather than written out, or a second fleet would be swept with a kept
+      // set naming nothing in it — which is the sweep looking wider while asking less.
+      const kepts = [none, new Set(keys.slice(0, 1)), new Set(keys.slice(3, 5)), new Set(keys)];
+      for (const scrollTop of [-5_000, -40, 0, 41, 137, 300, 949, 10_000]) {
+        for (const viewportPx of [1, 200, 100_000]) {
+          for (const overscanPx of [0, 25, 100_000]) {
+            for (const kept of kepts) {
+              const at = `${fleetName} @ ${scrollTop}/${viewportPx}/${overscanPx}/`
+                + `${[...kept].join('+') || '-'}`;
+              auditPlan(fleet, virtualPlan(fleet, scrollTop, viewportPx, overscanPx, kept), at);
+            }
           }
         }
       }
