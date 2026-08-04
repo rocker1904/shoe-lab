@@ -1386,20 +1386,26 @@ engine-dependent. The container is **cloned from a live cell**, which is what
 stops it drifting from the table — the component's CSS is Svelte-scoped, so
 markup composed here would get none of it.
 
-Three consequences are easy to get wrong, and all three are held in all three
+Four consequences are easy to get wrong, and all four are held in all three
 engines by `app/e2e/fit-support.ts`'s height sweep, which hands the module's own
 function to the page rather than a copy. **The one-line row is not set by the
 name**: a name cell on its own measures a pixel under what the table renders, and
 that is the most common row in the fleet — so a row is the taller of a measured
 floor and the name's own box, and no base-and-step arithmetic appears in the
 file. **The discontinued chip is part of what gets laid out** — inline, `nowrap`,
-glued to the name — so it can put a name onto a second line by itself. And
-**nothing is measured off a live node**, because a row carries state that is
+glued to the name — so it can put a name onto a second line by itself.
+**Nothing is measured off a live node**, because a row carries state that is
 drawn with a `transform`: an open row's chevron is rotated, a rect reports the
 transformed box, and a transform moves no layout — so the row on screen is
 unaffected while the width every name is laid out against silently loses the
 difference. Every geometry comes off a clone with that state stripped before it
-is attached, so no transition is caught in flight either.
+is attached, and that order is load-bearing: de-opened after anything has flushed
+layout, the chevron transitions back over 120ms and is measured somewhere along
+the way. And **the column is not always the width a name gets**: the block a name
+sits in is a flex item, so a name whose longest unbroken token is wider than the
+column lays out wider than the cell and the rest of it wraps against that, which
+is why the measured container declares the same `min-width: min-content` the flex
+item has rather than trusting the arithmetic.
 
 **Three things in the width model are guarded rather than assumed, because each
 quantifies over data nobody here controls** — `lib/fit.ts` computes them and

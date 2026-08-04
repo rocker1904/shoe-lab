@@ -62,7 +62,10 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
 
   const widths = [...table.querySelectorAll<HTMLTableColElement>('colgroup col')]
     .map((c) => parseFloat(c.style.width));
-  if (!widths.length || !(widths[0]! > 0)) return null;
+  // EVERY column, not just the name's: a `NaN` anywhere reaches the replica's `<col>` declarations
+  // below, where an invalid value is simply dropped and the replica then lays out at a width nobody
+  // asked for — silently, and in the direction that under-reserves.
+  if (!widths.length || !widths.every((w) => w > 0)) return null;
 
   // The row every measurement is cloned from. Cloning rather than composing is the whole of why
   // this cannot drift from the table: the component's CSS is Svelte-scoped, so markup built from
@@ -73,21 +76,43 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   const nameRow = liveCell?.querySelector<HTMLElement>('.name-row');
   if (!liveRow || !liveCell || !nameRow) return null;
 
-  // **Nothing is measured off a live node, because a row carries STATE and state here is drawn with
-  // a transform.** An expanded row's chevron is `rotate(90deg)`, and `getBoundingClientRect()`
-  // reports the TRANSFORMED box — 18px for a glyph whose advance is 5 — so the width a name wraps
-  // at came out 13px short the moment any row was open, and the function returned plausible wrong
-  // numbers rather than `null`. A transform moves no layout, so the row on screen is unaffected and
-  // only the measurement is wrong: nothing but this can notice it (docs/app.md §Table presentation).
+  // **A clone is a shape, never a state**, and this is the one place that makes it one. Everything
+  // below is measured off a copy of a node the app owns, and the app draws state on those nodes: an
+  // expanded row's chevron is `rotate(90deg)`, `getBoundingClientRect()` reports the TRANSFORMED
+  // box — 18px for a glyph whose advance is 5 — so the width every name was laid out against came
+  // out 13px short the moment any row was open, and the function returned plausible wrong numbers
+  // rather than `null`. A transform moves no layout, so the row on screen is unaffected and only
+  // the measurement is wrong: nothing but this can notice it (docs/app.md §Table presentation).
   //
-  // The class comes off BEFORE the clone is attached, so the chevron never holds the rotation and
-  // the 120ms transition out of it never runs either — a clone de-opened after attaching would be
-  // measured somewhere between the two.
+  // **It has to run before the clone is attached**, and that is measured rather than assumed:
+  // attach a clone open, read anything that flushes layout, then de-open, and the 120ms `transform`
+  // transition starts — the advance reads 18.00, 18.63, 17.34, 14.80 … over the following frames
+  // instead of 5.00, and only `prefers-reduced-motion: reduce` snaps it
+  // (`.hunt/task4-fix2/probe2.ts`). With nothing flushing in between there is no before-change
+  // style and nothing is caught, so moving this line alone changes no reading — the ORDER is what
+  // makes the advance independent of whatever else comes to touch layout here.
+  //
+  // The other two are inert today and kept anyway, which is the honest way to hold defence: nothing
+  // observes `data-slug` while the clone is built, read and removed without yielding — it is what
+  // `revealRow` walks, and windowing may want to keep a replica — and the chip's line box is
+  // shorter than a name's, so leaving it on the replica reads the same floor in all three engines
+  // at every width the sweep walks. Both are facts about today's markup, not about the design.
+  const blockIn = (el: Element) => (el.matches('.name-row')
+    ? el.querySelector<HTMLElement>(':scope > div')
+    : el.querySelector<HTMLElement>('td.name .name-row > div'));
+  const deState = (el: Element) => {
+    for (const attr of ['data-slug', 'tabindex', 'aria-controls', 'style']) el.removeAttribute(attr);
+    el.querySelector<HTMLElement>('.chev')?.classList.remove('open');
+    const inner = blockIn(el);
+    inner?.removeAttribute('style');
+    inner?.querySelector(':scope > span')?.remove();
+    return inner;
+  };
+
   const protoRow = nameRow.cloneNode(true) as HTMLElement;
   const protoChev = protoRow.querySelector<HTMLElement>('.chev');
-  const block = protoRow.querySelector<HTMLElement>(':scope > div');
+  const block = deState(protoRow);
   if (!protoChev || !block) return null;
-  protoChev.classList.remove('open');
   protoRow.setAttribute('aria-hidden', 'true');
   protoRow.style.cssText = 'position: absolute; top: 0; left: 0;'
     + 'visibility: hidden; pointer-events: none;';
@@ -102,7 +127,8 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
 
   // What the name wraps at, derived from the DECLARED column rather than read off the block: the
   // block is a flex item and shrinks to its content whenever the name is short, so its own width is
-  // an answer about that name rather than about the column.
+  // an answer about that name rather than about the column. It can also be WIDER than this, which
+  // no arithmetic over the column can see — the container declares the same floor it does, below.
   const cellCs = getComputedStyle(liveCell);
   const avail = widths[0]!
     - parseFloat(cellCs.paddingLeft) - parseFloat(cellCs.paddingRight)
@@ -136,13 +162,22 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
 
   // `block` is already the de-stated clone's own node, so no second clone is needed and no live
   // node is reached into.
-  block.querySelector(':scope > span')?.remove();
   const protoStrong = block.querySelector('strong');
   // Declining rather than throwing, like every other reach into the markup here: a renamed element
   // means this cannot be measured, and an exception inside a Svelte effect is not that answer.
   if (!protoStrong) return null;
   protoStrong.textContent = SENTINEL;
-  block.removeAttribute('style');
+  // **`avail` is not always what the name gets, and this is what closes the gap.** The block is a
+  // flex item with `min-width: auto`, so its automatic minimum size is its min-content width: a
+  // name carrying one unbroken token wider than the column lays out in a block WIDER than the cell,
+  // and the rest of the name then wraps against that wider box rather than against `avail`.
+  // Measured, an unbroken run of about 28 characters is enough and the error is a whole line — a
+  // row reserved at 71 rendering at 53, identically in all three engines — and it OVER-reserves,
+  // which the `null` contract cannot catch because the function returns numbers
+  // (`.hunt/task4-fix2/probe1.ts`). Hyphens do not trigger it: every engine breaks at them and so
+  // does min-content. Declared on the container rather than corrected afterwards, so the thing
+  // being measured is subject to the same floor the flex item is.
+  block.style.minWidth = 'min-content';
   const plain = block.outerHTML;
   const tagged = plain.replace('</strong>', `</strong>${chipHtml ?? ''}`);
 
@@ -169,11 +204,13 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // **A row height is two measured facts and no arithmetic between them.** The FLOOR is what the
   // table draws when the name is not what sets the height — every other cell is one `nowrap` line,
   // so that is the same row for every shoe in a column set — and `rowPx` is what the row adds to
-  // whatever the name's own box is. There is no base, no step and no line count here: measured,
-  // 1 line is 36px and 2 is 53, so a step would already be wrong at the most common row in the
-  // fleet, and a per-line-count lookup is wrong again wherever a line box is not the face's own —
-  // it over-reserves 8px on a two-line Japanese name in Firefox, which counts as three
-  // (`.hunt/task4-fix1/probe4.ts`). Both facts come off a clone of the component's own row, because
+  // whatever the name's own box is. There is no base, no step and no line count here: the step from
+  // one line to two is not the step from two to three, so a base-and-step constant is wrong at the
+  // most common row in the fleet — the figures and the bound they withdrew live in the spec's
+  // §Bounds row, which is their one home — and a per-line-count lookup is wrong again wherever a
+  // line box is not the face's own, over-reserving 8px on a two-line Japanese name in Firefox,
+  // which counts as three (`.hunt/task4-fix1/probe4.ts`). Both facts come off a clone of the row
+  // the component itself renders, because
   // markup built from scratch carries no `svelte-xxxxxx` class and would get none of its styles.
   const replica = document.createElement('table');
   const ts = getComputedStyle(table);
@@ -191,23 +228,13 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   }
   const tb = document.createElement('tbody');
   replica.append(cg, tb);
-  const boxIn = (tr: HTMLElement) => tr.querySelector<HTMLElement>('td.name .name-row > div');
+  const replicaBoxes: HTMLElement[] = [];
   for (const lines of [1, 2]) {
     const tr = liveRow.cloneNode(true) as HTMLTableRowElement;
-    // A cloned row carries the original's slug, its focusability and its open state. Nothing can
-    // observe any of it today — the replica is built, read and removed without yielding, so no
-    // second node answering to `[data-slug=…]` is ever there for `revealRow` to walk, and no suite
-    // can hold this. It is defence for the first caller that keeps a replica between calls, which
-    // is what windowing would want (spec §Registry sweep).
-    tr.removeAttribute('data-slug');
-    tr.removeAttribute('tabindex');
-    tr.removeAttribute('aria-controls');
-    tr.querySelector<HTMLElement>('.chev')?.classList.remove('open');
-    // The chip comes OFF the replica. Its own line is the name's last one, so it adds no height —
-    // but left on, it is the line plus a chip, which is what makes a one-line name two.
-    boxIn(tr)?.querySelector(':scope > span')?.remove();
+    const box = deState(tr);
     const cellStrong = tr.querySelector('td.name strong');
-    if (!cellStrong) return null;
+    if (!box || !cellStrong) return null;
+    replicaBoxes.push(box);
     // **Two line boxes at every width there is, because the break is explicit.** What this replaced
     // was one twenty-character word per line, which wrapped to n lines only while two of those
     // words could not share a line — an unwritten precondition that failed once the name column
@@ -221,17 +248,15 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
     tb.append(tr);
   }
   wrap.append(replica);
-  const twoLine = tb.children[1] as HTMLElement;
-  const twoBox = boxIn(twoLine);
   const floorPx = (tb.children[0] as HTMLElement).getBoundingClientRect().height;
   // Read at TWO lines rather than one, because at one the row is the floor and the name cell is not
   // what sets it — the difference there would be the row's slack rather than what it adds.
-  const rowPx = twoBox
-    ? twoLine.getBoundingClientRect().height - twoBox.getBoundingClientRect().height : 0;
+  const rowPx = (tb.children[1] as HTMLElement).getBoundingClientRect().height
+    - replicaBoxes[1]!.getBoundingClientRect().height;
   replica.remove();
   // jsdom lays nothing out and this app has not laid the table out before it mounts: a floor of
   // zero is "cannot measure", never "every row is 0px tall" (spec §Failure behaviour).
-  if (!twoBox || !(floorPx > 0)) return null;
+  if (!(floorPx > 0)) return null;
 
   return boxes.map((b) => Math.max(floorPx, b + rowPx));
 }
@@ -267,6 +292,7 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
 export interface RowHeights {
   /** Heights for `names` in order, or `null` while nothing can be measured. */
   heights(names: readonly NameEntry[]): number[] | null;
+  /** Unsubscribes and empties the cache; `heights` declines from then on. */
   destroy(): void;
 }
 
@@ -283,6 +309,7 @@ export function createRowHeights(
   let key: string | null = null;
   let cachedFor: readonly NameEntry[] | null = null;
   let cached: number[] | null = null;
+  let destroyed = false;
 
   const invalidate = () => { key = null; cachedFor = null; cached = null; onInvalidate(); };
   // `loadingdone` rather than the `fonts.ready` promise: that promise settles against the loads
@@ -294,6 +321,11 @@ export function createRowHeights(
 
   return {
     heights(names) {
+      // Nothing is measured or answered after `destroy()`. The subscription is what would notice a
+      // face settling, so an answer given after it is unsealed from the one thing that invalidates
+      // it — and `null`, which the caller already handles by rendering everything, is the honest
+      // reply from a thing that has been torn down.
+      if (destroyed) return null;
       // The name column's own declaration, which is the whole of what a name breaks against. It
       // does not move when a filter does — a declared width is `min + share` over the COLUMNS and
       // the track, never over the rows in the DOM, which is what task 3 bought
@@ -311,6 +343,10 @@ export function createRowHeights(
     },
     destroy() {
       fonts?.removeEventListener?.('loadingdone', invalidate);
+      destroyed = true;
+      key = null;
+      cachedFor = null;
+      cached = null;
     },
   };
 }

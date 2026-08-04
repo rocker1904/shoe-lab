@@ -336,6 +336,37 @@ export async function measureExcursions(page: Page): Promise<Excursion[]> {
 }
 
 /**
+ * Wait until the declared widths have stopped moving, and answer with them.
+ *
+ * **A sum survives a redistribution, so nothing here settles on one.** The widths always sum to the
+ * track — `columnWidths` shares every spare pixel out — so `|Σwidths − tableWidth| ≤ 1` is satisfied
+ * by the PREVIOUS sharing exactly as readily as by the new one. At `SIDEBAR_PERMANENT_PX` the
+ * sidebar becomes permanent and the columns are re-shared: the name column moves 163px on `[score]`
+ * while the sum moves by a pixel, so that poll passed on the frame before the one the test asked
+ * for and Svelte's `ResizeObserver` flush landed in the middle of a measurement — handing the two
+ * halves of a bound two different layouts, and reddening the suite in two runs out of three.
+ *
+ * This is the third time on this branch that an assertion over an AGGREGATE has survived a
+ * REDISTRIBUTION: a vacuous `declaredSum` comparison in task 3, the note `measureDeclared` carries
+ * about why it returns `widths` at all, and this. **Anything that has to be true of the columns is
+ * asked of the columns** — here, two consecutive readings that agree column by column.
+ *
+ * Polled rather than read once for the older reason too: the declaration reaches the DOM through a
+ * `ResizeObserver`, so for one frame after a resize the widths are the previous track's and fixed
+ * layout is spreading the difference.
+ */
+async function settledWidths(page: Page, at: string): Promise<number[]> {
+  let previous = '';
+  await expect.poll(async () => {
+    const now = (await measureDeclared(page)).widths.join(',');
+    const settled = now !== '' && now === previous;
+    previous = now;
+    return settled;
+  }, { message: `the declared column widths are still moving ${at}` }).toBe(true);
+  return (await measureDeclared(page)).widths;
+}
+
+/**
  * The sweep every declared-width test runs: every width a column set is ever mounted at, and at
  * each one the excursion bound plus the three guards that stop it passing vacuously — the table is
  * laid out `fixed`, by these declared widths, filling its track. Under `auto` layout nothing can
@@ -359,16 +390,13 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
     await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
       .toHaveCount(1);
 
-    // Polled, not read once: the declaration reaches the DOM through a `ResizeObserver`, so for one
-    // frame after a resize the widths are the previous track's and fixed layout is spreading the
-    // difference. Read once, this measures the frame before the one the test asked for.
-    await expect.poll(async () => {
-      const now = await measureDeclared(page);
-      return Math.abs(now.declaredSum - now.tableWidth);
-    }, { message: `the table is not laid out by its declared widths at ${width}px` })
-      .toBeLessThanOrEqual(1);
+    await settledWidths(page, `at ${width}px`);
 
     const declared = await measureDeclared(page);
+    // Once the sharing has settled, that the table is laid out BY those declarations is an
+    // assertion rather than a thing to wait for.
+    expect(Math.abs(declared.declaredSum - declared.tableWidth),
+      `the table is not laid out by its declared widths at ${width}px`).toBeLessThanOrEqual(1);
     expect(declared.layout, `at ${width}px`).toBe('fixed');
     expect(declared.cols, `at ${width}px`).toBe(1 + cols.length);
     // And it fills its track, which is one-sided: a track under the columns' own minimums must
@@ -391,13 +419,17 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
  * half of the claim is asked of a row that really has one rather than of a chip stitched on for the
  * measurement.
  *
- * **Two families, because a step is a blind spot.** Four-letter words step about 57px at a time, so
- * an error in the width a name is laid out against only shows if it happens to be bigger than the
- * slack left on some name's last line — a 13px one lands between the steps three times in four, and
- * the sweep passes. The second family finds the break point itself, by growing a run of
- * single-letter words until the live row gains a line, and hands back the names either side of it.
- * Those are the only names where the claim is decidable, and there any error over one word's width
- * moves one of them.
+ * **Three families, because a step is a blind spot and a space is an assumption.** Four-letter words
+ * step about 57px at a time, so an error in the width a name is laid out against only shows if it
+ * happens to be bigger than the slack left on some name's last line — a 13px one lands between the
+ * steps three times in four, and the sweep passes. The second finds the break point itself, by
+ * growing a run of single-letter words until the live row gains a line, and hands back the names
+ * either side of it: there any error over one word's width moves one of them. The third is the case
+ * the other two share an assumption about — that a name breaks where the column ends, which stops
+ * being true once a single token is wider than the column.
+ *
+ * None of the three contains a name. All are built against the LIVE row at the current width and
+ * column set, so changing the face, the columns or the width changes what they ask.
  */
 function renderedForNames(words: number): { names: string[]; disc: boolean[]; rendered: number[] } {
   const rows = [...document.querySelectorAll<HTMLTableRowElement>('.tblwrap table tbody tr.shoe')];
@@ -440,16 +472,29 @@ function renderedForNames(words: number): { names: string[]; disc: boolean[]; re
     let lo = 1;
     let hi = 2;
     while (!twoLines(hi) && hi < 8192) { lo = hi; hi *= 2; }
+    // Rather than exiting at the guard and then asserting over eight-thousand-word names, which is
+    // a slow and puzzling failure instead of a stated one. No column set is this wide today.
+    if (hi >= 8192) throw new Error('no break point below 8192 words — the name column is absurd');
     while (lo + 1 < hi) {
       const mid = (lo + hi) >> 1;
       if (twoLines(mid)) hi = mid; else lo = mid;
     }
-    for (let n = Math.max(1, hi - 3); n <= hi + 1; n++) {
-      const name = spaced(n);
+    const push = (name: string) => {
       strong.textContent = name;
       names.push(name);
       disc.push(isDisc);
       rendered.push(row.getBoundingClientRect().height);
+    };
+    for (let n = Math.max(1, hi - 3); n <= hi + 1; n++) push(spaced(n));
+
+    // A third family, for the width a name is laid out against rather than the point it breaks at.
+    // The block a name lands in is a FLEX ITEM with `min-width: auto`, so a name carrying one
+    // unbroken token wider than the column lays out wider than the cell and the rest of it wraps
+    // against that wider box — an over-reservation of a whole line, and invisible to both families
+    // above because every name in them breaks at a space. The token is built from the break point
+    // just found, so it is over the column at whatever width and column set this is.
+    for (const tail of [1, 1.2, 1.5]) {
+      push(`${'i'.repeat(3 * hi)} ${spaced(Math.max(1, Math.round(tail * hi)))}`);
     }
     strong.textContent = was;
   }
@@ -484,6 +529,7 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
   const fleet = FIXTURE.shoes.map((s) => ({ name: s.name, discontinued: !!s.discontinued }));
 
   const compare = async (at: string): Promise<void> => {
+    const before = (await measureDeclared(page)).widths;
     const measured = await page.evaluate(measureDesktopRowHeights, fleet);
     expect(measured, `nothing could be measured ${at}`).not.toBeNull();
     const rendered = await page.evaluate(() => {
@@ -504,6 +550,12 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
       `only one kind of row carried ground truth ${at}`).toBe(2);
     const names = truth.names.map((name, i) => ({ name, discontinued: truth.disc[i]! }));
     const heights = await page.evaluate(measureDesktopRowHeights, names);
+
+    // Asserted BEFORE the heights, and this is why: everything above reads ground truth off a live
+    // row and then measures, so a re-sharing landing between the two compares two layouts and every
+    // symptom of it is a wrong height. This says which it was.
+    expect((await measureDeclared(page)).widths,
+      `the declared column widths moved under this measurement ${at}`).toEqual(before);
     expect(heights, `nothing could be measured for synthetic names ${at}`).not.toBeNull();
     expect(new Set(truth.rendered).size,
       `every synthetic name rendered one height ${at}, so this proves nothing`)
@@ -519,11 +571,7 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
       .toBe(width);
     await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
       .toHaveCount(1);
-    await expect.poll(async () => {
-      const now = await measureDeclared(page);
-      return Math.abs(now.declaredSum - now.tableWidth);
-    }, { message: `the table is not laid out by its declared widths at ${width}px` })
-      .toBeLessThanOrEqual(1);
+    await settledWidths(page, `at ${width}px`);
 
     await compare(`at ${width}px on [${cols.join(',')}]`);
 

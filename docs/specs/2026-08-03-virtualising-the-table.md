@@ -153,9 +153,9 @@ row's height is a function of its name alone.
 
 *Amended 2026-08-04, at implementation.* Two things this paragraph asserted
 before the thing existed are wrong and were replaced by measurement, both
-recorded in `app/src/lib/row-height.ts`. **The cost is 5.2ms in Chromium and
-7.0ms in Firefox and WebKit**, not 2.0–2.3ms, and it is the engine laying out 455
-boxes rather than anything reducible; it stays affordable on WHEN it is paid.
+recorded in `app/src/lib/row-height.ts`, which owns both figures. **The cost came
+in over the 2.0–2.3ms estimated here**, and it is the engine laying out 455 boxes
+rather than anything reducible; it stays affordable on WHEN it is paid.
 And **a line count is not a height**: a one-line row is not set by the name at
 all, so there is no base and no line step to multiply by — the height is read off
 a replica of the whole row, one per distinct line count.
@@ -175,6 +175,18 @@ fleet was laid out against a width 13px short. That is the plausible-but-wrong
 answer the `null` contract exists to prevent, reached by the most ordinary
 action there is, so every geometry now comes off a clone with that state
 stripped before it is attached.
+
+*Amended 2026-08-04, at review again.* **The width a name is laid out against is
+not always the column either.** The block a name lands in is a flex item with
+`min-width: auto`, so its automatic minimum size is its min-content width: a
+name carrying one unbroken token wider than the column lays out in a block wider
+than the cell, and the rest of the name then wraps against that wider box. About
+28 unbroken characters is enough, hyphens do not count because every engine
+breaks at them, and the error is a whole line in the over-reserving direction —
+which the `null` contract cannot catch, because the function returns numbers.
+The measured container now carries the same `min-width: min-content` the flex
+item has. That was the last derived width in a file whose thesis is that derived
+widths are wrong.
 
 **The cache is keyed on width, and width is the fragile part — not row count.**
 Anything that changes how a name breaks invalidates every measured height at
@@ -279,7 +291,7 @@ implementation* have no honest value until the thing exists.
 | No cell's content exceeds its declared column by more than the model's cross-engine spread, over every column and every mounting width, in all three engines. The spread is *measured at implementation* (~0.8px at the readings taken so far) and must be justified against the cell padding that absorbs it, never asserted as a bare number | `app/e2e/cross-browser.spec.ts`, `app/e2e/smoke.spec.ts` |
 | The model's min-content still agrees with the engine's, measured with the override off, within `FIT_TOLERANCE_PX` | `app/e2e/fit-support.ts` (unchanged claim, new measurement path) |
 | Bulk-measured row heights equal the heights the table renders, for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
-| The bulk measurement is paid per name-column change rather than per filter change | `app/e2e/smoke.spec.ts` asserts the load-bearing half without timing anything — a filter moves no declared width, so the cache key does not move. The **milliseconds are a rig reading, not an assertion**: the e2e fixture is five shoes, so a cost measured there would be a cost for five names, and a wall-clock bound on CI hardware is a flake rather than a guard. `.hunt/task4/rig.ts` measures it on the committed fleet in three engines and `app/src/lib/row-height.ts` owns the figures. It came in **over the 5ms this row asked for** — 5.2ms Chromium, 7.0ms Firefox and WebKit — and the paragraph above says why that is the wrong thing to hold it to |
+| The bulk measurement is paid per name-column change rather than per filter change | `app/e2e/smoke.spec.ts` asserts the load-bearing half without timing anything — a filter moves no declared width, so the cache key does not move. The **milliseconds are a rig reading, not an assertion**: the e2e fixture is five shoes, so a cost measured there would be a cost for five names, and a wall-clock bound on CI hardware is a flake rather than a guard. `.hunt/task4/rig.ts` measures it on the committed fleet in three engines and `app/src/lib/row-height.ts` owns the figures — restating them here is how they go stale, so this row points and does not quote. It came in **over the 5ms this row asked for**, and the paragraph above says why that is the wrong thing to hold it to |
 | The model is never narrower than any engine's own min-content — the over-reserve rule's whole justification. Held for **raw-slug headers**, in three engines. Over every catalogue label and every name in the fleet it is a **rig reading rather than an assertion**: no committed suite quantifies over either, `fit.test.ts` having no engine in it and `FIT_SETS` running on the five-shoe e2e fixture | `app/e2e/fit-support.ts` (`FIT_DROPPED_COLS`, three engines); the fleet-wide half is unheld, and its sweep is gitignored |
 | What that over-reservation costs at the worst slug a link can name — pinned against both of its inputs, so a longer `MAX_SLUG_LEN` or a regenerated `HEADER_PX` reddens rather than silently restating it | `app/src/lib/fit.test.ts`; the figure and its derivation live in `app/e2e/fit-support.ts` |
 | The word split happens on break opportunities only — never on non-breaking whitespace | `app/src/lib/labels.test.ts` |
@@ -476,7 +488,7 @@ owes it.
 | `FIT_OVERFLOW_PX` and `measureExcursions` in `app/e2e/fit-support.ts` | **Paid by task 3 and owed again by tasks 4–6.** `measureExcursions` walks `thead th, tbody tr.shoe > *` — the rows in the DOM. Today that is the whole fleet, so "no cell's ink leaves its column" quantifies over every shoe. **Windowing the body silently narrows it to a windowful**, with no assertion failing and nothing in the bound to say its population changed: the widest cell in a column would simply stop being measured. Whoever lands the window either measures excursions with the window scrolled across the fleet, or states in the sweep's docblock what the bound now quantifies over. `FIT_OVERFLOW_PX`'s own size is justified against `--s2` where it is declared and does not move with this |
 | the slug length `urlstate.ts` accepts | bounds the worst raw-slug header the model can be asked for, and therefore the over-reserve's true ceiling |
 | `measureDesktopRowHeights` in `app/src/lib/row-height.ts` | **Quantifies over the whole fleet but reads the DOM for its prototypes, and tasks 5-6 change what is in the DOM.** It clones a live `tr.shoe` for the replica and copies a discontinued chip's markup from a rendered instance, because both carry Svelte-scoped classes that cannot be reconstructed. Windowing the body means the window may contain **no discontinued row**, and then there is no chip to copy: the function returns `null` — cannot measure — rather than a set of heights short by a chip, and the caller renders everything, which puts an instance back on the page and heals it. That is correct but it is a loop, so whoever lands the window must check it settles rather than alternating. The same applies to the row clone itself: with an empty window there is no row to clone at all. **The prototype is the FIRST `tr.shoe` in the DOM**, so under a window it is whichever row you have scrolled to rather than the first in the fleet — which is what made an expanded row's rotated chevron a live wrong answer, and windowing makes "is the prototype expanded" a far likelier state than it was. And `heights()` compares `names` by **identity**, so a caller that windows the filtered list and passes a per-render `map` misses the cache every time and pays the whole measurement per keystroke |
-| `renderedForNames` and `sweepRowHeights` in `app/e2e/fit-support.ts` | **The EVIDENCE narrows the same way the code does, and this is the row for it.** Ground truth is read from prototype rows found with `rows.find(…)` over `tbody tr.shoe`, so what the sweep quantifies over is whatever is in the DOM. A missing prototype now throws rather than skipping — losing the discontinued one silently dropped the chipped half of the bound while every assertion over the combined array still passed — but a windowed body would hand the sweep a different population without saying so, exactly as `FIT_OVERFLOW_PX` above |
+| `renderedForNames` and `sweepRowHeights` in `app/e2e/fit-support.ts` | **The EVIDENCE narrows the same way the code does, and this is the row for it.** Ground truth is read from prototype rows found with `rows.find(…)` over `tbody tr.shoe`, so what the sweep quantifies over is whatever is in the DOM. A missing prototype now throws rather than skipping — losing the discontinued one silently dropped the chipped half of the bound while every assertion over the combined array still passed — but a windowed body would hand the sweep a different population without saying so, exactly as `FIT_OVERFLOW_PX` above. **And what the sweep waits for is the SHARING, not the sum**: the declared widths always sum to the track, so a redistribution — the sidebar becoming permanent, a windowed body tomorrow — satisfies a sum guard in both states and lands a re-layout between the half that reads ground truth and the half that measures. `settledWidths` polls two consecutive readings that agree column by column, and `compare` fails by name if they move under it |
 | `recompute-budget.test.ts`'s per-drag counts | must stay fleet-size-independent |
 
 ---

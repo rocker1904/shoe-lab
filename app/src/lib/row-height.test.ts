@@ -18,12 +18,14 @@ import { createRowHeights, measureDesktopRowHeights, type NameEntry } from './ro
  * replica are both built for real, and the stop is the one that matters more: every box jsdom lays
  * out is zero, so the row the rest of the table sets has no height to be a floor.
  */
-function mountTable({ discontinued = true, nameColPx = '300px', padded = false } = {}): void {
+function mountTable(
+  { discontinued = true, nameColPx = '300px', otherColPx = '100px', padded = false } = {},
+): void {
   const pad = padded ? 'padding: 8px; border: 0 solid;' : '';
   document.body.innerHTML = `
     <div class="tblwrap">
       <table>
-        <colgroup><col style="width: ${nameColPx}" /><col style="width: 100px" /></colgroup>
+        <colgroup><col style="width: ${nameColPx}" /><col style="width: ${otherColPx}" /></colgroup>
         <tbody>
           <tr class="shoe" data-slug="a" tabindex="0">
             <td class="name" style="${pad}">
@@ -65,6 +67,26 @@ describe('measureDesktopRowHeights', () => {
   it('says it cannot measure where no width can be resolved', () => {
     mountTable();
     expect(measureDesktopRowHeights(NAMES)).toBeNull();
+  });
+
+  it('stops at a width past the name column that will not resolve, before laying anything out', () => {
+    // Only the NAME column's width lays a name out, but every column is declared on the replica the
+    // row height is read from — and an invalid `<col>` width is dropped rather than refused, so the
+    // replica would quietly lay out at a width nobody asked for.
+    //
+    // The ANSWER cannot discriminate here, because jsdom lays nothing out and so returns `null`
+    // whatever the guard does. What discriminates is that nothing was built to be laid out.
+    mountTable({ padded: true, otherColPx: 'auto' });
+    const added: Element[] = [];
+    const observer = new MutationObserver(() => {});
+    observer.observe(document.body, { childList: true, subtree: true });
+    expect(measureDesktopRowHeights(NAMES)).toBeNull();
+    for (const record of observer.takeRecords()) {
+      for (const node of record.addedNodes) if (node instanceof Element) added.push(node);
+    }
+    observer.disconnect();
+    expect(added.map((e) => e.tagName), 'an unresolved column width reached the measurement')
+      .toEqual([]);
   });
 
   it('says it cannot measure where a width resolves but nothing is laid out', () => {
@@ -198,6 +220,19 @@ describe('createRowHeights', () => {
     expect(onInvalidate).toHaveBeenCalledTimes(1);
     rh.heights(NAMES);
     expect(measure).toHaveBeenCalledTimes(2);
+  });
+
+  it('declines once destroyed, rather than answering from a cache nothing can drop', () => {
+    // The subscription is the only thing that would notice a face settling, so an answer given
+    // after it is gone is sealed off from the one event that invalidates it. `null` is what the
+    // caller already handles, by rendering everything.
+    mountTable();
+    const measure = fake([36, 53]);
+    const rh = createRowHeights(() => {}, measure);
+    expect(rh.heights(NAMES)).toEqual([36, 53]);
+    rh.destroy();
+    expect(rh.heights(NAMES)).toBeNull();
+    expect(measure).toHaveBeenCalledTimes(1);
   });
 
   it('stops listening when it is destroyed', () => {
