@@ -120,18 +120,27 @@ with 36,782 nodes and scrolling unaffected, the panel images being
 `loading="lazy"`. There is no cap on the `open` token and this change does not
 add one; it inherits the existing ceiling rather than creating one.
 
-**Both renderings, one change, and the unit is a shoe.** The stacked list is
-the worse case, not the safer one: measured at 390px it costs 26.1ms a frame
-against the desktop's 20.9, on a desktop CPU — real phone silicon is worse
-again. It is also the cheaper half, because it needs none of the width work
-above. Its complications are different rather than larger: a shoe there is two
-rows plus a rule row, its focus ring spans the name row and the chips row
-through an adjacent-sibling selector, and `revealRow` walks two siblings to
-find the panel. All three want the group emitted intact, which it is when the
-virtualiser's unit is **a shoe** rather than **a row** — one row plus a panel
-on the desktop, two or three plus a panel on the phone. Splitting the work
-would leave one rendering windowed and one not, which is the drift
-docs/app.md §Two renderings, and only one of them mounted exists to prevent.
+**The desktop rendering only. The phone list is deferred, and its own spec is
+`docs/specs/2026-08-04-windowing-the-phone-list.md`.** *Amended 2026-08-04, at
+the user's decision, after the desktop half was built.*
+
+This originally said both renderings in one change, on the grounds that the
+stacked list is the worse case — 26.1ms a frame at 390px against the desktop's
+20.9. **That figure did not survive the wash ramp being quantised**: the same
+unchanged probe afterwards reads 12.7ms phone against 13.0 desktop, so the phone
+is the ordinary case rather than the urgent one, and the argument for bundling it
+went with the number. What is left there is the DOM — 1,364 rows and 9,431 nodes
+for 455 shoes — worth removing on the hardware least able to carry it, and not
+worth rushing.
+
+Splitting the work would ordinarily risk exactly the drift
+docs/app.md §Two renderings, and only one of them mounted exists to prevent, so
+this delivery cut the seams rather than leaving a phone-shaped hole:
+`lib/virtual.ts` is rendering-agnostic, `createRowHeights` takes the measurement
+as a parameter and keeps every hard part generic, and `revealRow` speaks in fleet
+positions on **both** renderings so `Page.svelte` need not know which is mounted.
+The unit is still **a shoe** rather than a row — one row plus a panel here, two
+or three plus a panel there — and the phone spec inherits that.
 
 **Heights are measured in bulk, never derived.** *Amended 2026-08-04, before
 implementation — this originally specified a greedy line-break simulation over
