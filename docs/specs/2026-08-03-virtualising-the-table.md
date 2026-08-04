@@ -15,6 +15,36 @@ remains is the rows themselves. This is worth doing for the DOM it removes and
 the headroom it buys on hardware slower than the machine these numbers came
 from; it is not worth doing badly to hit a deadline that no longer exists.
 
+## Why a real table at all — re-tested from first principles
+
+Everything hard here follows from keeping semantic `<table>` markup: declared
+column widths, a height model, spacer rows. The alternative is a CSS grid
+carrying `role="table"`, which unlocks `content-visibility: auto` — the browser
+skipping off-screen work for no virtualisation code at all, with rows still
+focusable, tabbable and findable by Ctrl+F. That is the most attractive answer
+to "the upstream data is not ours", because there is no model of ours to rot.
+
+**It was measured and it loses.** Same synthetic 455×9 grid, same drag — every
+cell's tint class rewritten sixty times — four renderings (`.hunt/grid-vs-table.mjs`):
+
+| rendering | Chromium | Firefox |
+|---|---|---|
+| real table, every row | 5.17 ms/frame | 4.98 |
+| **real table + spacer rows, ~30 rows in the DOM** | **0.43** | **0.40** |
+| CSS grid, every row | 4.70 | 6.22 |
+| grid + `content-visibility: auto` | 0.83 | **5.95** |
+
+Two things settle it. **The browser-managed option optimises one engine** — 5.7×
+in Chromium, about 4% in Firefox. And **it does not remove the height problem**:
+`contain-intrinsic-size` is itself an estimate, and a wrong one made the
+document 33,067px against a true 16,137px. Content-visibility is
+estimate-and-correct implemented by the browser, not an escape from it — which
+is the strategy whose users report scrollbar drift and mis-landed scrolls.
+
+The windowed real table is fastest in **both** engines by an order of magnitude,
+keeps the semantics, and — with heights measured rather than estimated — is
+strictly more robust to data nobody here controls than an intrinsic-size guess.
+
 ## What this changes, in one line
 
 The `<tbody>` stops holding one entry per shoe and starts holding a *plan*: a
