@@ -191,13 +191,32 @@ rather than a rounding error:
   matches U+00A0, U+2007, U+202F and U+FEFF, whose purpose is to *forbid* a
   break, so splitting there put the model **193.47px narrow** on a real
   catalogue label. `data/shoes.json` already carries 302 U+00A0 and 77 U+FEFF in
-  prose fields. The rule is therefore: split on break opportunities, never on
-  "whitespace", and never on anything else.
+  prose fields.
+
+  **And a third time, which is the one worth remembering.** The obvious repair —
+  HTML's ASCII whitespace, what `white-space: normal` collapses — is *also*
+  narrow: Chromium and WebKit offer no break at U+000C, and WebKit none at a
+  lone U+000D, for −247.58px, −182.65px and −155.78px on a real catalogue label.
+  These strings arrive as JS text nodes, so the parser's newline normalisation
+  never runs on them, and JSON turns `\f` and `\r` into the real control
+  characters. So the separator set is **space, tab and line feed**, and it is
+  closed **by measurement in three engines rather than by any definition of
+  whitespace**. Three attempts to name this set from a standard were all wrong;
+  the measurement was right first time.
+
+  The model can then only come out wide, **except where a break adds ink no
+  token carries** — Firefox draws the hyphen at a U+00AD (6.30px), and a space
+  keeps its advance under a combining mark (3.10px). Each is bounded by one
+  glyph on one line however long the string, so it lands in the cell's own
+  padding; that is the difference from the `\s` defect, which grew with the
+  string.
 
   The price is paid entirely by raw-slug headers — no rendered label carries an
   intra-word hyphen, so no real view and no mount boundary moves. Its bound is
   **not** the worst slug in today's catalogue: `urlstate.ts` accepts 64
-  characters, which models a 748px header against a ~58px rendered one. A
+  characters, and over every chunking that length admits the worst models a
+  762px header against the 71px an engine that breaks at hyphens needs —
+  **691px of over-reservation**. A
   dropped slug is already a degraded rendering, so the remedy is to render one
   breakable and model it that way rather than to reason about break rules again;
   that lands with the declared widths, because model and render have to agree.
