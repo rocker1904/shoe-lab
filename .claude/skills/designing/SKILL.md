@@ -34,7 +34,12 @@ the feature — each one found is a file-map entry; each one missed is a
 finding someone else pays to make. The categorical-filters delivery hit
 this class four times, including its only Critical (a URL token that
 never joined the arrival registry), and all four were findable at design
-time by asking this one question.
+time by asking this one question. **A doc list that claims completeness
+is a registry too** — a section enumerating "every token", "every field",
+"every key this app owns" goes stale exactly like an allowlist, and
+nothing fails when it does. The URL-shorthand delivery shipped its two
+new tokens absent from the one doc paragraph promising to name them all,
+and only the whole-branch review caught it.
 
 ## Interview
 
@@ -81,7 +86,12 @@ review rounds to restore.
 
 The replacement for a separate plan:
 
-- **File map** — create/modify, per task.
+- **File map** — create/modify, per task, the owning doc included: docs
+  ride the behaviour commit that changes them, so **there is no trailing
+  documentation task**. What genuinely belongs to no single task — a
+  dated decision entry, a policy line, a backlog closure — is all a final
+  one may carry. A file map is a hypothesis, not a checklist; expect the
+  first task to disprove part of it.
 - **Interfaces** — exact signatures wherever one task's output is
   another's input. This block is how a fresh implementer learns the names
   its neighbours use.
@@ -89,7 +99,11 @@ The replacement for a separate plan:
   evidence (the test or command that proves it), and pointers (owning
   doc §, spec §, policy §). A task is the smallest unit worth a
   reviewer's gate: split only where a reviewer could reject one task
-  while approving its neighbour.
+  while approving its neighbour. **Where the deliverable is a guard over
+  an invariant that already holds, the evidence is mutation** — break the
+  invariant, watch it redden, revert — never a failing test first, which
+  is incoherent for a guard and can only be satisfied by breaking the
+  code the task is not about.
 - **Global constraints** — one line each, exact values verbatim.
 - **Sequencing notes** — only where order is genuinely at risk.
 
@@ -103,8 +117,17 @@ before execution, and eat review rounds that belong to implementation
 
 1. Self-review, once: coverage (every requirement has a task),
    consistency (names and signatures agree across sections), ambiguity
-   (anything readable two ways gets one reading), placeholder scan. Fix
-   inline.
+   (anything readable two ways gets one reading), placeholder scan,
+   **satisfiability**. Fix inline.
+
+   Satisfiability is the one that hides: for each bound, name the
+   mechanism that would *produce* the state it asserts. A bound whose
+   state nothing can reach is a defect, not a gap — it will be written,
+   quietly skipped, and found at the end by whoever checks the bounds
+   against the tree. One shipped that way here: a round trip was demanded
+   for a pair of tokens the encoder can never emit together, and it
+   survived the author, eight task reviews and the implementer before
+   the whole-branch review named it.
 2. The user reads the file, once. Fold their changes, then **ask for
    approval in plain words and wait for it**. Their yes is the only
    thing that rewrites the status line to `approved, in delivery`.

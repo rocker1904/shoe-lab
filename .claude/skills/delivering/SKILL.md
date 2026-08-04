@@ -31,6 +31,11 @@ reasons to stop are BLOCKED, a DISCOVERY that moves behaviour, or done.
 - Read the spec once. Todo per task. Scan the build sheet for internal
   contradictions or policy collisions; raise everything found as one
   batched question before starting, not one interrupt each mid-run.
+  **A trailing documentation task is one of those defects**: docs ride
+  the behaviour commit that changes them, so fold each doc edit into the
+  task that earns it and let the trailing task keep only what belongs to
+  no single one — a dated decision entry, a policy line, a backlog
+  closure.
 
 ## Choosing the execution mode
 
@@ -80,6 +85,18 @@ reviewer. The measured basis for the floor: same brief, same rig, the
 cheap model filed zero findings where the strong one filed six. A
 cheap "done" can be a direction never actually searched.
 
+**The model is a property of the agent, not of the task.** It is fixed
+when the agent is spawned and no follow-up message can change it — so a
+cheap-model agent may be reused only for further *mechanical* tasks, and
+**the first judgment task after a mechanical one is a rotation, not a
+reuse**. Left implicit, this rule and the reuse default silently defeat
+the floor: a cheap model correctly chosen for a mechanical first task
+rides into every task handed to that agent afterwards, and nothing ever
+presents as a model decision, because handing over the next task feels
+like continuing rather than choosing. Measured here: three judgment
+tasks, including a URL parser and a registry, were written by the cheap
+model before anyone noticed the trailers.
+
 **Dispatch in the background, always.** Sequencing comes from *when*
 you dispatch, not from blocking on the call: send the agent, end your
 turn with a short status, act on the completion notification. A
@@ -101,11 +118,48 @@ before reviewing) · NEEDS_CONTEXT (provide it, continue) · BLOCKED
 (change something — context, model, task size — never re-run unchanged) ·
 DISCOVERY (see below).
 
+## When an agent dies without reporting
+
+An API error, a stalled stream, a token or session limit — any cause
+that is not the work itself. **Resume it from its transcript.** Its
+context is intact and its task did not defeat it, so replacing it with a
+fresh spawn throws away everything it had loaded, and re-running it from
+scratch pays for that twice. This is the opposite case to BLOCKED, where
+something must change before the agent runs again; here nothing should.
+
+**Verify the tree yourself before resuming**, and put what you found in
+the resume message: `HEAD`, whether the working tree is clean, and which
+of its steps did and did not land. A dead agent may have left partial
+edits it will not remember making, and a transcript preserves context but
+not attention — an agent that half-remembers work it never finished will
+skip it and report success. Restate the instruction compactly alongside
+the pointer to your original message, for the same reason.
+
+**A reviewer that dies without a verdict is not a review.** The task
+stays unreviewed. Check the tree before resuming it, too: a reviewer that
+died mid-probe can leave the worktree mutated, and a verdict reached on a
+tree nobody has checked is worth no more than no verdict at all.
+
 ## Every task, either mode
 
 1. Record BASE: `git rev-parse HEAD`.
 2. Implement with superpowers:test-driven-development. Docs ride the
    change: the owning doc moves in the same commits.
+   **Where the deliverable is a guard** — an assertion protecting an
+   invariant that already holds — failing-test-first is incoherent, and
+   the bar is **mutation**: write the assertion, break the invariant,
+   record which case reddened and its message, revert, confirm green. A
+   green guard that asserts nothing looks exactly like one that works,
+   and the next task will be built on the assumption it protects.
+   **Sweep for prose the change falsifies, beyond the diff's own files.**
+   A WHY comment asserts a fact about neighbouring code and nothing
+   typechecks it, so a behaviour change strands some every time. On this
+   skill's second delivery that was the single most common finding —
+   nine across eight reviews, every one in a file the diff never touched,
+   including a browser claim that had been wrong for months and was
+   inherited into new code by three people in a row before anyone
+   rendered it. Hand the implementer the passages you already know of;
+   assume the list is incomplete.
 3. Build the review package into one file under `.delivery/<spec>/`:
    `git log --oneline BASE..HEAD`, `git diff --stat BASE..HEAD`,
    `git diff -U10 BASE..HEAD`. Always BASE..HEAD — `HEAD~1` silently
@@ -143,7 +197,13 @@ DISCOVERY (see below).
    on it. Minors go straight to the ledger for final-review triage and
    never extend a loop. Silent discards are forbidden.
 6. Ledger: `Task <N>: complete (commits <base7>..<head7>, <review
-   outcome>)`. Findings travel forward: any review finding that names a
+   outcome>)`. **A finding can be real while fixing it makes the suite
+   worse** — most often a test pinning a value later measured inert,
+   which will then fire for a change that breaks nothing and teach the
+   next reader to distrust the suite. Neither keeping it nor quietly
+   dropping it is right: remove the assertion, move the knowledge that
+   justified it into a comment beside the code and a backlog item, and
+   write the ruling down. Findings travel forward: any review finding that names a
    later task's ground rides in that task's brief verbatim — a warning
    the reviewer wrote for task N+2 is worthless in a file task N+2's
    implementer never reads. Then the next task.
@@ -169,7 +229,18 @@ enforce the wrong document.
   not one per finding), one scoped re-review, adjudicate residuals.
 - Gates before landing: suites green; owning docs moved wherever
   behaviour did; deliberately deferred items in BACKLOG.md with
-  provenance.
+  provenance. **Run the project's own end-to-end script, not the test
+  runner directly** — the script builds first, and a runner pointed at a
+  stale build reports failures that read exactly like regressions from
+  whatever you did last.
+- **Re-check the base, and treat a moved one as a re-verification event
+  rather than a formality.** A delivery long enough to need this skill is
+  long enough for the base to move under it. Rebase, resolve, and run
+  every gate again on the tree that will actually land: the reviewed tree
+  and the landing tree are then two different trees, and only the second
+  one matters. Watch for conflicts that merge cleanly but are wrong —
+  two branches closing *different* items in one ordered list is the
+  sharp case, since each renumbers the other's survivors.
 - Flip the spec's status to delivered-and-frozen, and make sure nothing
   live names a backlog item by list position — titles survive
   renumbering, numbers do not; a still-live build sheet once pointed
