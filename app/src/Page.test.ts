@@ -740,6 +740,72 @@ describe('Page story selection', () => {
     expect(screen.getAllByRole('radio', { name: /All|Easy|Tempo|Race/ })).toHaveLength(4);
     expect(screen.getByRole('radio', { name: 'Heel' })).toBeInTheDocument();
   });
+  /**
+   * The chain a person meets, which no seam test reaches: `Page.svelte` parses the address once at
+   * init inside `untrack`, composes the canonical one through `addressOf`, and writes it with
+   * `replaceState`, while every mark is a `$derived` comparison over the parsed view. A link that
+   * parsed perfectly and still lit the wrong pill, or wrote back an address it was never given,
+   * would be invisible to urlstate.test.ts (docs/app.md §View and URL ownership).
+   */
+  it('opens a shorthand link with both groups marked, and leaves the address it arrived on', () => {
+    history.replaceState(null, '', '/?zone=forefoot&story=easy');
+    render(Page, { props: { data } });
+    expect(markedStory()).toEqual(['Easy']);
+    expect(screen.getByRole('radio', { name: 'Forefoot' })).toBeChecked();
+    settle();
+    // It arrived canonical, so the one init write has nothing to change about it.
+    expect(location.search).toBe('?zone=forefoot&story=easy');
+  });
+  /**
+   * The init write is a scrub *and* a canonicalisation, so the address a recipient copies is not
+   * always byte-for-byte the one they were sent (docs/app.md §View and URL ownership). The longhand
+   * side is built from `applyPreset` rather than pasted, or it would rot the day Easy's columns,
+   * gate or sort change and stop being the longhand spelling of anything.
+   */
+  it('re-spells a longhand story link into the shorthand', () => {
+    const easy = applyPreset('easy', 'heel', false);
+    const longhand = new URLSearchParams([
+      ['plate', easy.filters.plate!.join(',')],
+      ['sort', `-${easy.sort.key}`],
+      ['cols', easy.columns.join(',')],
+    ]);
+    history.replaceState(null, '', `/?${longhand}`);
+    render(Page, { props: { data } });
+    expect(markedStory()).toEqual(['Easy']);
+    settle();
+    expect(location.search).toBe('?story=easy');
+  });
+  /**
+   * The divergence §URL encoding describes, at the level a person meets it: `story=` names what a
+   * view was built from, while the pill is a `sameValue` comparison of whole views — so this address
+   * names Easy and nothing is lit, deliberately. Easy's gate is what the runner overrode, which is
+   * exactly why the token survives: naming the baseline and correcting one field is the shortest way
+   * to write this view.
+   */
+  it('keeps a story token on a view no pill marks', () => {
+    history.replaceState(null, '', '/?story=easy&plate=carbon');
+    render(Page, { props: { data } });
+    expect(markedStory()).toEqual([]);
+    expect(screen.getByRole('radio', { name: 'Heel' })).toBeChecked();
+    settle();
+    expect(location.search).toBe('?story=easy&plate=carbon');
+  });
+  /**
+   * The zero-column table became link-reachable when `cols` learned to name its list literally
+   * (docs/app.md §URL encoding), and nothing asserted that it renders — only that it parses. This is
+   * the desktop rendering, mounted at this suite's 1024px; the phone's own floor is asserted in
+   * ShoeTableMobile.test.ts, where the guard that needs it lives.
+   */
+  it('renders the zero-column table a link can now ask for', () => {
+    history.replaceState(null, '', '/?cols=');
+    render(Page, { props: { data } });
+    expect(screen.getByTestId('receipt')).toHaveTextContent('Showing 5 of the 5 shoes');
+    expect(screen.getAllByRole('row').length).toBeGreaterThan(FLEET.length);
+    expect(screen.queryByRole('columnheader', { name: /Heel stack/ })).toBeNull();
+    settle();
+    expect(location.search).toBe('?cols=');
+  });
+
   // A regression guard rather than a red-first test: the heel baseline already marks Heel.
   it('marks both groups when the view is a story on a zone', async () => {
     render(Page, { props: { data } });
