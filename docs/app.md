@@ -87,10 +87,12 @@ the **canonical** address rather than the one the runner arrived on, and the two
 callers ask one rule of two addresses: `Page.svelte` passes the address it has
 just composed, where it reduces to "is it empty", and `App.svelte`'s placeholder
 has no catalogue yet and passes the raw one, where it is the same question asked
-of what the address *carries*. The residue between them is exactly an owned key
-whose value parsing then drops — `?plate=xyz` — which costs one layout shift on a
-hand-mangled link; making it exact would need the catalogue the placeholder is
-waiting for. A link that carried a real token, junk beside it or not, is not bare.
+of what the address *carries*. The residue between them is exactly an owned token
+whose value leaves the view at its default: `?plate=xyz`, which is mangled, but
+also `?zone=heel`, which is a perfectly ordinary thing to send and parses to the
+default table by design (§URL encoding). Either costs one layout shift, and making
+it exact would need the catalogue the placeholder is waiting for. A link that
+carried a real token, junk beside it or not, is not bare.
 
 **Stability rides in `ViewState` and therefore in the URL alone.** It resets on a
 bare arrival like every other field, and any bookmark or shared link of a
@@ -248,6 +250,8 @@ boundary, and needs the decision above.
 ## URL encoding
 
 Compact and default-omitting, so a shared link carries only what was changed:
+`zone=heel|forefoot` and `story=<preset id>`, which name the view the rest is
+layered over and are written before it (below),
 `r.<key>=<min>~<max>` per range (either side may be empty for open-ended),
 `plate` and `brands` (comma-joined), `after`, `q`, `disc=hide|only`,
 `c.<slug>=<comma-joined values>` per feature selection, `missing=1`,
@@ -327,14 +331,12 @@ So an address can name a story no pill marks, deliberately: the token is an
 encoding of a view, and making it mean "is this story" would cost either a longer
 address for every near-story view or a second definition of what a story is.
 
-**An old link is resolved against the build that opens it.** `zone=forefoot`
-means whatever `defaultColumns('forefoot')` returns *now*, and `story=easy`
-whatever `applyPreset` builds *now*, so a link kept across a change to a story's
-columns, gate or sort — or to the default columns — opens on the newer table,
-with nothing saying so. A link that spells its columns out is unaffected, and so
-is every link this app emitted before the shorthand existed. Why that is accepted,
-and what it narrows in the promise this app makes about a shared address, is
-§A shared address is faithful on one build.
+**A shorthand token is expanded when the link is opened, not when it was
+written.** `zone=forefoot` becomes whatever `defaultColumns('forefoot')` returns
+*now*, and `story=easy` whatever `applyPreset` builds *now*, where a longhand
+address carries its columns, gate and sort literally and expands to nothing. What
+that costs, and why it is accepted, is §A shared address is faithful on one
+build, which owns the decision.
 
 `parseView` treats the query string as hostile input and drops anything it
 cannot vouch for, never throwing: range and sort keys must name a numeric test

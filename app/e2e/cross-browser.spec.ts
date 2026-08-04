@@ -670,6 +670,13 @@ test('keeps the one-row toolbar to one row at the narrowest width that has one',
   await page.setViewportSize({ width: 801, height: 900 });
   // A two-digit `Columns, N shown` badge, which is the widest that control ever gets, and a story
   // applied, so the bar is carrying the setup groups the strip hands it.
+  //
+  // `story=easy` is deliberate, and it now means more than it did when this fixture was written: it
+  // was an inert token then and is Easy's whole baseline today — its plate gate and its sort as well
+  // as its columns, which the `cols=` below replaces outright
+  // (docs/app.md §URL encoding). Neither the gate nor the sort key reaches what this measures, which
+  // is the width of the toolbar's two groups; the token is kept because a story applied is the state
+  // the bound is about.
   await page.goto('/?story=easy&cols=score,msrpGbp,heel-stack,forefoot-stack,weight,'
     + 'energy-return-heel,energy-return-forefoot,toebox-width-widest-part,shock-absorption-heel,'
     + 'shock-absorption-forefoot,outsole-durability,midsole-width-in-the-heel');

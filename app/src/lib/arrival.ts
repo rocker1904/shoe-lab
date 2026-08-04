@@ -34,10 +34,11 @@ const OWNED = /^(?:r\.|c\.|gen\.)|^(?:plate|after|brands|q|disc|missing|stab|sor
  * passes the raw one, where it is the same question asked of what the address *carries*. One rule,
  * two addresses.
  *
- * The residue between the two is exactly an owned key whose value parsing then drops — `?plate=xyz`,
- * say. The placeholder reserves no strip there and the page draws one, which is one layout shift on
- * a hand-mangled link; making it exact would need the catalogue, which is the thing the placeholder
- * is waiting for.
+ * The residue between the two is exactly an owned token whose value leaves the view at its default:
+ * `?plate=xyz`, which is mangled, but also `?zone=heel`, which is a legitimate thing to send and
+ * parses to the default table by design (docs/app.md §URL encoding). The placeholder reserves no
+ * strip there and the page draws one, which is one layout shift either way; making it exact would
+ * need the catalogue, which is the thing the placeholder is waiting for.
  */
 export function isBareArrival(address = location.search.replace(/^\?/, '')): boolean {
   return [...new URLSearchParams(address).keys()].every((k) => !OWNED.test(k));

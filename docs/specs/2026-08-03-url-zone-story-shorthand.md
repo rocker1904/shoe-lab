@@ -166,7 +166,7 @@ measured off the current `serializeView`.
 | round-trip for every story × zone × stability, and for each zone's plain table, each also carrying a search, a range bound, a brand set, `disc` and a feature selection | `urlstate.test.ts` |
 | a view carrying no shorthand serialises byte-identically to today | `urlstate.test.ts`, as literal expected strings |
 | `parseView('cols=').columns` is `[]`, and so is it for `cols=,,,` and `cols=name` | `urlstate.test.ts` |
-| the zero-column view round-trips, bare and alongside a shorthand token | `urlstate.test.ts` |
+| the zero-column view round-trips bare; alongside a shorthand token it is asserted **parse-side**, `?story=easy&cols=` being that story with an empty column list — a round trip cannot reach the pair, because a story candidate is derived from the columns a view holds and this view has none | `urlstate.test.ts` |
 | `applyPreset(id, z, true)` differs from `applyPreset(id, z, false)` in `stability` and nothing else, for every id and zone | `presets.test.ts` |
 | `zone=` and `story=` are not bare arrivals | `arrival.test.ts` |
 | `/?zone=forefoot&story=easy` opens with Easy and Forefoot marked, and the address bar canonicalised to that same string | `Page.test.ts` |

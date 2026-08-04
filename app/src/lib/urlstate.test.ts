@@ -588,6 +588,20 @@ describe('the zone= and story= baseline', () => {
   it('layers stab=1 over the story baseline', () => {
     expect(parseView('story=easy&stab=1', idx)).toEqual(applyPreset('easy', 'heel', true));
   });
+  /**
+   * The zero-column view beside a shorthand token, which only this door can be asked. A story
+   * candidate is derived from the columns a view holds (docs/app.md §URL encoding), so a view with
+   * none can never be *written* with a `story=` beside its `cols=` — the pair is reachable by hand
+   * and by an older link, and nowhere else. Parsed, the two layer like every other pair: the story's
+   * gate and sort stand, and `cols=` empties the list it would have set.
+   */
+  it('layers an empty column list over a shorthand baseline', () => {
+    expect(parseView('story=easy&cols=', idx)).toEqual({ ...applyPreset('easy', 'heel', false), columns: [] });
+    // A zone speaks only through the columns, so emptying them leaves it nothing to say: both
+    // spellings are the same zero-column table, and it is the zero-column default view.
+    expect(parseView('zone=forefoot&cols=', idx)).toEqual({ ...defaultView(), columns: [] });
+    expect(parseView('zone=forefoot&cols=', idx)).toEqual(parseView('zone=heel&cols=', idx));
+  });
   it('an address carrying neither token still parses to exactly defaultView()', () => {
     expect(parseView('', idx)).toEqual(defaultView());
     expect(parseView('sort=-weight', idx).columns).toEqual(defaultColumns(DEFAULT_ZONE));
