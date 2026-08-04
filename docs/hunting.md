@@ -98,6 +98,7 @@ pointers, so a finding correctly reporting a broken pointer would fail the build
 | `hunt/png.mjs` | minimal PNG decoder, so contrast can be read off painted pixels |
 | `hunt/smoke.mjs` | proves every helper returns the right shape in every engine |
 | `hunt/fit-boundary.mjs` | **asserts**, and exits non-zero: the sidebar's boundary, the fit rule and the two agreeing, against the real fleet |
+| `hunt/overscan.mjs` | how far the page travels per animation frame under the hardest gestures, per engine — the reading `OVERSCAN_PX` is chosen against. `hunt/overscan-3engine.log` is the run it was chosen from, and is the one recorded output kept here rather than in `.hunt/` |
 | `hunt/in-docker.sh` | runs a probe in the Playwright image, the only place WebKit launches here |
 
 `fit-boundary.mjs` is the one file here that makes a claim about the app rather than about the rig,
@@ -109,6 +110,17 @@ those are the inputs that move the boundary, and each moves it silently.
 
 **It has no tests and will rot silently. Run `node hunt/smoke.mjs` before trusting it**, and again
 after any UI change — the selectors move.
+
+**Committed source cites a finding, or a tracked `hunt/` rig — never a `.hunt/` path.** A pointer to
+a gitignored one-shot script reads as provenance and does not function as it: the directory is
+worktree-local, so the pointer dangles the moment the branch lands, and what it says in the meantime
+is *trust me, I measured it*. So a comment states the number and the conditions it was taken at —
+the engines, the widths, the fleet — which is what lets the next reader judge it or take it again.
+Where re-running is the only way to check a constant, the rig is promoted into `hunt/` and cited
+there; `hunt/overscan.mjs` is the one that earned it, `OVERSCAN_PX` being a budget with no assertion
+behind it. `.delivery/` is worse than dangling and is never cited at all: the delivery convention
+deletes it. One branch put 28 such pointers into `app/src` and `app/e2e` before this was written
+down.
 
 Serving the **real dataset** is the point: `app/scripts/prepare-e2e.mjs` deliberately swaps
 it for a 5-shoe fixture — which is why the 1200px overflow survived a long run of green CI before

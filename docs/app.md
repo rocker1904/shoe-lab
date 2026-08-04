@@ -1466,7 +1466,8 @@ Each of the following is a failure mode rather than a detail.
   fleet, a declined measurement holding the last one rather than falling back,
   and the wash ranked over the filtered set.
 - **And what is *not* held, said out loud.** Measuring after a `tick` is argued
-  rather than asserted: reverting it passes everything, because task 4's sweep
+  rather than asserted: reverting it passes everything, because the height sweep in
+  `app/e2e/fit-support.ts`
   measures the function rather than the app's call of it and the race does not
   reproduce on a routed fleet. `ShoeTable.svelte` says so beside the line, which
   is where someone about to simplify it would look.
@@ -1488,7 +1489,11 @@ renders a permanent hidden one-row prototype table — a cell per rendered colum
 so the row's floor is the one the table really draws, the same `<colgroup>` and
 width so it is a copy rather than a second model, out of flow, `visibility:
 hidden` so it is still laid out, and out of the accessibility tree. Everything
-that reads the real table selects `table:not(.proto)`.
+in `app/src` and `app/e2e` that reads the real table selects `table:not(.proto)`,
+`tr.shoe` or `tr.expand`. **`hunt/` does not, and its readings say so**: the
+boundary rig's `td.name` walk and the two fingerprints that count `tbody tr` now
+see the prototype's row as well, and a fingerprint's first rows are a windowful
+rather than the head of the fleet.
 
 **Row heights are measured, never derived**, and `lib/row-height.ts` is the one
 home for how and for what it costs. A row's height is a function of its **name**

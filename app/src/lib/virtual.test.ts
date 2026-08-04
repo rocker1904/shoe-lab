@@ -245,7 +245,7 @@ describe('virtualPlan', () => {
    * this wrote every edge in terms of the constant it was bounding, which is not a bound at all:
    * `OVERSCAN_PX` 1280 → 640 left it green, and the §Bounds row's number was held by nothing. The
    * local below is a SECOND, independent spelling of that row. If the constant ever moves, this is
-   * re-derived from `.hunt/task6/overscan.ts` and the derivation in `virtual.ts` rewritten with it —
+   * re-derived by running `hunt/overscan.mjs` and the derivation in `virtual.ts` rewritten with it —
    * never edited to agree.
    */
   it('reaches 1,280px past the window, at both ends and no further', () => {

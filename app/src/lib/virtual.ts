@@ -24,7 +24,8 @@
  *
  * **`height` must be non-negative.** Nothing here enforces it — a negative one would make a spacer's
  * px negative, which is a `<tr>` nobody can express — and no height source in the tree can produce
- * one. It is stated because the next one to join, task 8's phone measurement, inherits the contract.
+ * one. It is stated because the next height source to join — the stacked list's, in
+ * docs/specs/2026-08-04-windowing-the-phone-list.md — inherits the contract.
  */
 export interface VirtualItem { readonly key: string; readonly height: number }
 
@@ -36,8 +37,9 @@ export interface VirtualItem { readonly key: string; readonly height: number }
  * the frame it is painted in. A plan is computed from a `scroll` event, so the answer is bounded by
  * what one frame of scrolling moves — measured on the real fleet at 1440px with a wheel fling, a
  * `Page Down`, an `End` and a scrollbar drag, in Chromium, Firefox and WebKit
- * (`.hunt/task6/overscan.ts`, logged in `.hunt/task6/overscan-3engine.log`). Worst travel per frame,
- * by gesture: a scrollbar drag **0px**; a wheel notch **120px** in Chromium and Firefox and **535px**
+ * (`hunt/overscan.mjs`; `hunt/overscan-3engine.log` is the run these came from). That rig is
+ * tracked rather than scratch because re-running it is the only way to check this number — nothing
+ * asserts it (docs/hunting.md §The rig). Worst travel per frame, by gesture: a scrollbar drag **0px**; a wheel notch **120px** in Chromium and Firefox and **535px**
  * in WebKit; a wheel fling **600–649px** in all three; a held `Page Down` **2,436–3,945px**; `End`
  * **3,010–8,440px**, crossing a document about 16,800px tall at the default column set.
  *
@@ -49,9 +51,9 @@ export interface VirtualItem { readonly key: string; readonly height: number }
  * prevented.
  *
  * **What the uncovered half costs was measured against a control**, because a windowed body is not
- * the only thing that paints a blank frame. Painted compositor frames, `2ca7ac6` — every row
- * rendered — against this build, Chromium, three repeats each (`.hunt/review12/probe-k.ts`,
- * `probe-m.ts`): a wheel fling paints the same 1–2 blank frames of ~41 on both, `End` is inside the
+ * the only thing that paints a blank frame. Painted compositor frames counted through Chromium's
+ * own frame timing, three repeats each, this build against the last one that rendered every row:
+ * a wheel fling paints the same 1–2 blank frames of ~41 on both, `End` is inside the
  * run-to-run spread, and a held `Page Down` is the one that moves — 1 blank frame of a ~12-frame
  * burst becomes 2–4. Raising the number to cover that would pay DOM on every frame of every gesture
  * to repair a burst, which is the trade this design makes the other way.
@@ -122,8 +124,8 @@ export type VirtualEntry =
  * a trailing gap) and the entry's own array position both satisfy it, and this plan's shape makes
  * the first easy to derive, which is why `ShoeTable.svelte` uses it. An earlier version of this note
  * claimed an array position would make Svelte reuse the wrong node; it would not, and the two were
- * measured rendering byte-identical bodies across 27 DOM states
- * (`.delivery/2026-08-03-virtualising-the-table/task-6-fix-1-review.md`, M1).
+ * measured rendering byte-identical bodies across 27 DOM states — nine scroll positions in three
+ * arrangements, at rest, with a focused row splitting a spacer, and with a panel open.
  */
 export function virtualPlan(
   items: readonly VirtualItem[],

@@ -19,8 +19,7 @@ import type { Shoe, ShoesFile } from '../../../shared/types.js';
  * here.** jsdom lays nothing out, so `measureDesktopRowHeights` can only ever decline — which meant
  * this file could reach the plan in one state only, the *cannot measure* one that renders every
  * shoe. The whole windowed half of the component was therefore unreachable from any committed
- * suite, and ten mutations at the seam between the plan and the DOM survived it
- * (`.delivery/2026-08-03-virtualising-the-table/task-6-review.md`, F1).
+ * suite, and ten mutations at the seam between the plan and the DOM survived it.
  *
  * The stub answers `null` until a test says otherwise, which is the real module's answer under
  * jsdom, so nothing above changes behaviour. It replaces `createRowHeights` rather than adding a
@@ -366,8 +365,7 @@ describe('ShoeTable renders a plan', () => {
  * **The other half: a body that really is windowed.** Nothing committed had ever run against one —
  * the e2e fixture is five shoes against 1,280px of overscan at each end, so no viewport and no
  * arrangement of open panels can window it, and this file could not measure at all. Ten mutations at
- * the seam between the plan and the DOM survived the whole suite as a result
- * (`.delivery/2026-08-03-virtualising-the-table/task-6-review.md`, F1).
+ * the seam between the plan and the DOM survived the whole suite as a result.
  *
  * What is stubbed is the row measurement and nothing else. The plan's own arithmetic is `virtual.ts`
  * and is asserted entry by entry in `virtual.test.ts`; what these hold is the seam — that the plan
@@ -406,16 +404,61 @@ describe('ShoeTable windows the body', () => {
     [...table.querySelectorAll<HTMLElement>('tr.spacer > td')]
       .reduce((total, td) => total + parseFloat(td.style.height), 0);
 
+  /**
+   * **Every spacer's OWN height, against the shoes that spacer stands for — and the total is not
+   * that claim.** Move 500px from the first spacer to the last and the sum above is unmoved while
+   * every rendered row sits half a screenful from where the scrollbar says it is, which is the one
+   * property this whole design is justified by. That mutation passed the whole unit suite and the
+   * whole windowed e2e — an assertion over an AGGREGATE surviving a REDISTRIBUTION, which this
+   * table produced often enough to earn a rule of its own
+   * (docs/decisions.md §Testing bar: adversarial, no live network).
+   *
+   * Derived from the DOM rather than from the plan, so it is not a second copy of `virtualPlan`: a
+   * spacer stands for the fleet positions between the rendered rows either side of it, and
+   * `aria-rowindex` is where those positions are written. A skipped shoe is always closed — an open
+   * one is never spaced for — so each is one row of `ROW_PX`, where a RENDERED open shoe advances
+   * the index by two.
+   */
+  function spacerRuns(table: HTMLElement): { at: string; px: number; want: number }[] {
+    const rowCount = Number(table.getAttribute('aria-rowcount'));
+    const body = [...table.querySelectorAll<HTMLElement>('tbody > tr')];
+    const indexOf = (tr: HTMLElement) => Number(tr.getAttribute('aria-rowindex'));
+    return body.flatMap((tr, i) => {
+      if (!tr.classList.contains('spacer')) return [];
+      const before = body.slice(0, i).reverse().find((t) => t.classList.contains('shoe'));
+      const after = body.slice(i + 1).find((t) => t.classList.contains('shoe'));
+      // The first body row is index 2, the header being 1; a trailing spacer runs to the last row
+      // the fleet would have, which is `aria-rowcount` itself.
+      const span = before?.nextElementSibling?.className.includes('expand') ? 2 : 1;
+      const from = before ? indexOf(before) + span : 2;
+      const to = after ? indexOf(after) : rowCount + 1;
+      return [{
+        at: `the spacer standing for rows ${from}–${to - 1}`,
+        px: parseFloat(tr.querySelector<HTMLElement>('td')!.style.height),
+        want: (to - from) * ROW_PX,
+      }];
+    });
+  }
+
+  /** Both halves of the same claim: every spacer individually, and nothing left over. */
+  function expectSpacersStandForTheirOwnRuns(table: HTMLElement): void {
+    const runs = spacerRuns(table);
+    expect(runs.length, 'no spacer exists here, so nothing below is a claim about one')
+      .toBeGreaterThan(0);
+    for (const run of runs) expect(run.px, `${run.at} is the wrong height`).toBe(run.want);
+    expect(spacerPx(table), 'the spacers do not add up to the shoes they replace')
+      .toBe((BIG.length - shoeRows(table).length) * ROW_PX);
+  }
+
   it('renders the shoes on screen and spaces for exactly the ones it left out', async () => {
     const { table } = await windowed();
     const rows = shoeRows(table);
     expect(rows.length, 'the body is not windowed, so nothing below is a claim about a window')
       .toBeLessThan(BIG.length);
     expect(rows.length).toBeGreaterThan(0);
-    // **The whole contract of a spacer in one line**: it stands for the shoes that are not there and
-    // for nothing else, so the scrollbar means the same thing windowed as it did rendering all 400.
-    expect(spacerPx(table), 'the spacers do not add up to the shoes they replace')
-      .toBe((BIG.length - rows.length) * ROW_PX);
+    // **The whole contract of a spacer**: each stands for the shoes that are not there and for
+    // nothing else, so the scrollbar means the same thing windowed as it did rendering all 400.
+    expectSpacersStandForTheirOwnRuns(table);
   });
 
   it('keeps the spacers out of the accessibility tree and the fleet in aria-rowcount', async () => {
@@ -447,8 +490,9 @@ describe('ShoeTable windows the body', () => {
     // is what the spacer above it says, and its DOM position says nothing about its fleet position.
     expect(row!.getAttribute('aria-rowindex')).toBe('392');
     expect(row!.previousElementSibling?.className).toContain('spacer');
-    expect(spacerPx(table), 'the spacers stopped adding up once one of them was split')
-      .toBe((BIG.length - shoeRows(table).length) * ROW_PX);
+    // The split-spacer case, and the one that can tell a redistribution from a total: the run above
+    // the kept row and the run below it are each held to their own shoes.
+    expectSpacersStandForTheirOwnRuns(table);
   });
 
   it('keeps an open row in the plan wherever it sits in the fleet', async () => {
@@ -466,6 +510,10 @@ describe('ShoeTable windows the body', () => {
       'the row is in the plan but the panel it controls is not').not.toBeNull();
     // And it is KEPT rather than merely inside the window, which is what makes that mean anything.
     expect(row!.previousElementSibling?.className).toContain('spacer');
+    // The runs either side of it, each against its own shoes — and this is the case where an open
+    // shoe advances `aria-rowindex` by two while the spacer below it still stands for one row per
+    // shoe, since an open shoe is never spaced for.
+    expectSpacersStandForTheirOwnRuns(table);
   });
 
   it('holds the last measurement rather than falling back when one declines', async () => {
@@ -500,8 +548,9 @@ describe('ShoeTable windows the body', () => {
     // harness's doing rather than a gap: `rerender` replaces the whole props object
     // (`@testing-library/svelte-core`), so `data` reads as changed too and every `$derived` over it
     // recomputes whatever the component does. What a real filter drag costs is measured in the
-    // engine instead — 0 measurements over six steps that empty and refill the fleet, both engines
-    // (`.hunt/review12/probe-g.ts`).
+    // engine instead — 0 measurements over six steps that empty and refill the fleet, driving the
+    // price filter on the real fleet at 1440px in Chromium and Firefox and counting every call into
+    // `heights`.
     await windowed({ shoes: BIG.filter((_, i) => i % 2 === 0) });
     expect(rig.seen[0], 'the filtered list was measured rather than the fleet')
       .toHaveLength(BIG.length);

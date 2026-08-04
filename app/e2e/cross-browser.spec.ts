@@ -965,8 +965,9 @@ test('keeps a dropped column\'s header inside its declared column', async ({ pag
  * (spec §Failure behaviour).
  *
  * The rest is the same arrangement `smoke.spec.ts` holds in Chromium, and the same caveat applies:
- * five shoes fit in one window, so nothing here is windowed and the fleet-wide half is
- * `.hunt/task6/rig.ts`'s.
+ * five shoes fit in one window, so nothing here is windowed. A body that really is one is
+ * `app/e2e/virtual.spec.ts`'s, in Chromium; what these two engines add is the half that is theirs —
+ * the heights every row renders at, swept per engine below.
  */
 test('numbers the rows the table would have, and lets no engine re-anchor over them', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -1001,7 +1002,9 @@ test('numbers the rows the table would have, and lets no engine re-anchor over t
  * `activeElement` on `<body>`, and the next Tab restarts from the top of the document past every
  * filter (docs/policies.md §Interaction chrome). Here because focus and scrolling are exactly where
  * the three engines differ (`lib/focus-scroll.ts`). The fixture cannot scroll a row out of the
- * window; `.hunt/task6/rig.ts` does that on the committed fleet in all three.
+ * window; `app/e2e/virtual.spec.ts` does that, in Chromium. Measured on the committed fleet in all
+ * three before that guard existed: a row focused and scrolled 12,000px away is still focused, still
+ * in the DOM, and Tab from it lands on a shoe row.
  */
 test('keeps focus on the row that has it while the page scrolls away from it', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 400 });

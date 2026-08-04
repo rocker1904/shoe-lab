@@ -41,8 +41,8 @@ export const FIT_TOLERANCE_PX = 4;
  * real fleet across the four `FIT_SETS`, `FIT_DROPPED_COLS` and eight widths each — the narrowest
  * width every set mounts at, both sides of the sidebar's boundary, and out to 2560px — the worst
  * reading anywhere is **0.72px**, on `RunRepeat Score`'s header in Firefox, with WebKit at 0.70px
- * and Chromium at 0 (`.hunt/no-overflow.mjs`). The widest a runner's own data reaches is **0.13px**,
- * on `Both sides (semi)` in the cell-bound `tongue-gusset-type` column.
+ * and Chromium at 0. The widest a runner's own data reaches is **0.13px**, on `Both sides (semi)`
+ * in the cell-bound `tongue-gusset-type` column.
  *
  * **Two, because of what absorbs it.** Every cell carries `--s2` — 8px — of padding on each side,
  * so ink 2px past its content box is still 6px inside the cell's own edge and 14px from the nearest
@@ -287,9 +287,10 @@ export interface Declared {
  * **The quiet period is kept, and that is measured rather than inherited.** Two consecutive agreeing
  * frames — the cheap version, ~12ms against this wait's ~110 — settles on the PREVIOUS sharing
  * 10 times out of 10 in both engines against a redistribution deferred by only 60ms, which today's
- * poll survives (`.hunt/task4-fix3/probe-settle.mjs`). A quiet period of one frame is a quiet period
- * of nothing: the whole class this guard exists for is a change that has been decided in JS and has
- * not reached the DOM yet. So the wait is per frame and the WINDOW is wall-clock, which also means
+ * poll survives — measured in both engines by deferring every `ResizeObserver` callback by a fixed
+ * delay and asking each candidate wait which sharing it settled on. A quiet period of one frame is
+ * a quiet period of nothing: the whole class this guard exists for is a change that has been decided
+ * in JS and has not reached the DOM yet. So the wait is per frame and the WINDOW is wall-clock, which also means
  * it degrades the right way — where frames are scarce, `stableSince` still has to be
  * `SETTLE_QUIET_MS` old, so a stalled compositor makes this stronger rather than weaker.
  *
@@ -357,8 +358,9 @@ export async function measureDeclared(page: Page): Promise<Declared> {
  * How long the widths must hold still. Kept at the poll's own 100ms rather than shortened to a
  * frame, because that is where the measured edge is: this survives a redistribution deferred by
  * 60ms and does not survive one deferred by 250ms, and neither does anything else that has ever
- * guarded these sweeps (`.hunt/task4-fix3/probe-settle.mjs`). Today's app has no such path — the
- * redistribution lands 21-37ms after a resize, loaded — so what this buys over the poll is that it
+ * guarded these sweeps, by the same deferred-`ResizeObserver` measurement. Today's app has no such
+ * path — the redistribution lands 21-37ms after a resize, loaded — so what this buys over the poll
+ * is that it
  * observes every frame in the window instead of its two ends, and it costs the same: 122ms mean per
  * width over the four column sets in two engines against the poll's 126, the difference being the
  * poll's own 250ms rung wherever the widths did move.
@@ -376,17 +378,20 @@ const SETTLE_QUIET_MS = 100;
  * for and Svelte's `ResizeObserver` flush landed in the middle of a measurement — handing the two
  * halves of a bound two different layouts, and reddening the suite in two runs out of three.
  *
- * That is the FOURTH time on this branch that an assertion over an AGGREGATE has survived a
- * REDISTRIBUTION: a vacuous `declaredSum` comparison in task 3, the note `measureDeclared` carries
- * about why it returns `widths` at all, this wait, and the same sum standing as a wait in
+ * That is one more assertion over an AGGREGATE surviving a REDISTRIBUTION, which this table has
+ * produced repeatedly and which now has a home of its own
+ * (docs/decisions.md §Testing bar: adversarial, no live network). Its instances here: a vacuous
+ * `declaredSum` comparison landed with the declared widths, the note `measureDeclared` carries about
+ * why it returns `widths` at all, this wait, and the same sum standing as a wait in
  * `smoke.spec.ts`'s filter test — which is not a live flake only because the resize it guards moves
  * the track first, and becomes one the moment a windowed body makes the pending change a JS decision
  * with nothing in the DOM behind it yet.
  *
  * **Anything that has to be true of the columns is asked of the columns**, and this is now the only
  * place in the suite that waits on a declared width — swept for, rather than claimed. The waits that
- * remain are over other geometry and carry their own reasons where they stand: two frames for the
- * utilities to land in the host a width gives them, and a sleep past a smooth scroll's tail.
+ * remain are over other geometry and each carries its own reason where it stands; they are not
+ * enumerated here, because a count written into prose is falsified by the next test that adds one
+ * (docs/README.md rule 4).
  *
  * **The reading returned is the one that settled**, not a fresh read afterwards — a third read is a
  * third chance to catch a different layout, which is the same defect in miniature.
@@ -427,7 +432,11 @@ export interface Excursion { column: string; text: string; px: number }
  * five-shoe fixture every shoe is in the window at every width, so the bound is over the whole
  * fixture fleet exactly as it was, and the day that stops being true this reddens rather than
  * quietly narrowing. And the real fleet's excursions are swept with the window **scrolled across
- * it** in `.hunt/task6/no-overflow.ts`, which is where a 455-shoe population can be reached at all.
+ * it**, which is where a 455-shoe population can be reached at all: 455 of 455 distinct shoes seen
+ * per column set, five sets, three engines, worst excursion **0.61px** against this file's
+ * `FIT_OVERFLOW_PX` of 2. That half is a **reading rather than an assertion** — no committed suite
+ * can mount the real fleet — so what is held here is the fixture with its population asserted, and
+ * the fleet-wide figure is recorded so a later reading can be compared with it.
  *
  * `:not(.proto)` on the table: the wrapper also holds the hidden one-row prototype the height
  * measurement is taken off (`app/src/lib/row-height.ts`), which is out of flow, invisible, and not

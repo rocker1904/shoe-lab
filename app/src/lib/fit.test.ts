@@ -343,7 +343,11 @@ describe('sharing a declared track between the columns', () => {
     // The global constraint the expanded row is the reason for: a table that does not fill its
     // track lays the panel out in a narrower box than the window offers.
     const m = model();
-    const sets = [['score'], ['msrpGbp', 'weight', 'plate'],
+    // The empty set is in here because it is REACHABLE — `ColumnPicker` will untick the last column
+    // — and because it is the case where clause two's divisor has nothing but the name column in
+    // it. Both clauses then return the whole track to that column, which is what a table with no
+    // figure columns should draw (`fit.ts`).
+    const sets = [[], ['score'], ['msrpGbp', 'weight', 'plate'],
       ['releasedAt', 'score', 'msrpGbp', 'weight', 'plate', 'removable-insole']];
     for (const cols of sets) {
       for (const trackPx of [sum(mins(cols, m)), 900, 1146, 1440, 2560]) {

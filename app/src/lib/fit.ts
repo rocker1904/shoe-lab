@@ -479,7 +479,11 @@ export function desktopMinWidth(columns: readonly string[], model: FitModel): nu
  *    gets `0/0` and stops short of its track by the whole excess. The alternative of giving the
  *    excess to the name column was measured and lost: every figure column is right-aligned and the
  *    last one ends at the track's edge whatever happens, so the only thing the rule can move is
- *    where the figures START, and the name column takes them 159px further right at three columns.
+ *    where the figures START, and the name column takes them **160.70px** further right — measured
+ *    on the committed fleet at `msrpGbp,weight,plate` on a 1,146px track, where this rule gives the
+ *    name column 755.30px and the alternative gives it 916.00px. Those three want nothing, so the
+ *    two spellings of the alternative — the whole excess, or the track less every other column's
+ *    max-content — are the same number here.
  *
  * A column's max is floored at its own min here, and that is not defensive tidying: the name
  * column's minimum is a DECLARED `14rem` floor rather than its content (`columnPx`), so on any
@@ -488,8 +492,14 @@ export function desktopMinWidth(columns: readonly string[], model: FitModel): nu
  * Flooring makes `want` non-negative and clause two start from a width nothing can clip out of.
  *
  * Negative slack is clamped for the same one-sided reason. This is only ever called where the table
- * has been judged to fit (`rendersPhone`), but a track under the sum of the minimums must overrun
- * the panel rather than clip a cell (spec §Failure behaviour).
+ * has been judged to fit — `!rendersPhone`, i.e. `fitsDesktop` — but a track under the sum of the
+ * minimums must overrun the panel rather than clip a cell (spec §Failure behaviour).
+ *
+ * **And `totalMax` is never zero, which clause two divides by.** Not because a column cannot be
+ * 0px wide but because `keys` always begins with `'name'`, whose min is the declared `14rem` floor
+ * and whose max is floored at it — so the sum is at least that floor at every column set, the empty
+ * one included. That is the guarantee, and it is a different one from the `0/0` clause two exists
+ * to prevent: `totalWant` legitimately IS zero on a table of figure columns.
  */
 export function columnWidths(columns: readonly string[], trackPx: number,
   model: FitModel): number[] {

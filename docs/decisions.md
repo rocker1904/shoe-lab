@@ -61,6 +61,21 @@ test may touch the live site — fixtures were
 captured once and are committed; the monthly contract-drift workflow is the
 only sanctioned recurring live check besides refreshes.
 
+**An assertion over an aggregate does not hold a distribution, and one branch
+paid for that five times.** A sum, a total, a count: each survives the values
+being moved around inside it, which is the defect shape most worth catching,
+because a redistribution is what a layout bug and an off-by-one both look like
+from the outside. The five, all in the windowed table: three waits on the
+declared widths' *sum* that settled on the wrong sharing (`app/e2e/fit-support.ts`
+carries them and now waits per column), the body's *total* height, and the
+spacers' *total* px — the last two green while 500px moved from the first spacer
+to the last put every rendered row half a screenful from where the scrollbar said
+it was. So an assertion at a seam holds each part against what that part is
+supposed to be — a spacer against its own run of shoes, a column against its own
+width — and totals it afterwards if a total is worth having. Deriving the
+expectation from the thing under test is the trap on the other side: read it off
+the rendered DOM or off the inputs, never off the code that produced it.
+
 ### Fewer dependencies
 Scraper has zero runtime dependencies (devalue decoder and robots parser are
 vendored); the app ships Svelte only. Adding a dependency is a decision, not

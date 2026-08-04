@@ -417,9 +417,10 @@ test('keeps an expanded row below the chrome that opening it scrolls under', asy
  * **What this fixture can and cannot say.** Five shoes fit inside one window at every width, so the
  * body here is never actually windowed: no spacer is emitted, and the assertions below are about the
  * arrangement that makes windowing safe rather than about the windowing itself. The window is
- * exercised on the committed fleet by `.hunt/task6/rig.ts`, in three engines, which is the only
- * place 455 shoes exist — a fixture wide enough to window would be a different fixture and every
- * count in this file would move with it.
+ * exercised by `app/e2e/virtual.spec.ts`, which routes a 400-shoe fleet for its own tests alone —
+ * a fixture wide enough to window here would be a different fixture and every count in this file
+ * would move with it. On the committed 455 it was measured over 46 scroll positions and 1,455
+ * viewport samples in all three engines: none over a spacer, at worst 97 rows in the DOM.
  *
  * The four claims that are the fixture's to make: the header row is row 1 and the shoes count on
  * from it, `aria-rowcount` is the rows the table WOULD have rather than the rows it has, an expanded
@@ -486,8 +487,10 @@ test('numbers the rows the table would have, and keeps the prototype out of the 
  * On this fixture the row cannot leave the window, so what this holds is the half a small fleet can:
  * focus survives a scroll to the far end of the document and Tab continues from the row rather than
  * from the top. The half that needs a window — the row kept in the plan 12,000px away, and Tab
- * landing on a shoe rather than on `<body>` — is measured on the committed fleet in three engines by
- * `.hunt/task6/rig.ts`.
+ * landing on the shoe the fleet puts next rather than on `<body>` — is held by
+ * `app/e2e/virtual.spec.ts`, and was measured on the committed fleet in all three engines before
+ * that guard existed: focused, scrolled 12,000px away, still focused and still in the DOM with 97
+ * rows rendered.
  */
 test('keeps focus on the row that has it while the page scrolls away from it', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 400 });
@@ -1844,7 +1847,7 @@ test('renders every row at the height it measured', async ({ page }) => {
  * without timing anything: a filter moves no declared width, so the cache key does not move and a
  * drag pays nothing (spec §Decisions, `app/src/lib/row-height.ts`). It is true because a declared
  * width is `min + share` over the COLUMNS and the track, never over the rows in the DOM — which is
- * what task 3 bought and what this would catch the loss of.
+ * what declaring the widths bought and what this would catch the loss of.
  */
 test('does not move a declared column width when a filter does', async ({ page }) => {
   const rows = page.locator('.tblwrap table tbody tr.shoe');

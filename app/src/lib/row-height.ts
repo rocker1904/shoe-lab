@@ -14,17 +14,18 @@
  * rule about what a line is worth, and that rule is engine- and face-dependent too. Exact by
  * construction, in whatever engine is running, with no font table involved — and the engines really
  * do disagree: on the committed fleet at 1440px with the wide column set, Chromium wraps 35 names
- * onto a second line where Firefox wraps 27 and WebKit 28 (`.hunt/task4/rig.ts`).
+ * onto a second line where Firefox wraps 27 and WebKit 28 — the same 455 names at the same
+ * declared width, laid out by this function in each engine.
  *
  * **What it costs, and why that is affordable.** Measured through this function on the committed
  * fleet of 455 names, medians of nine runs in the Playwright image: **5.2ms in Chromium, 7.0ms in
  * Firefox and WebKit**. Linear with a fixed overhead — 910 names cost 8.6 / 11 / 12ms and 1820 cost
  * 16.3 / 18 / 22 — so twice the fleet costs about 1.6x rather than twice, and a marginal name is
  * under 10us. Nearly all of it is the engine laying out 455 boxes: building the markup is free and
- * the reads are ~0.2ms (`.hunt/task4/probe7-cost.mjs`). The two things around that container are
- * fixed rather than fleet-shaped — one clone to read the geometry off and a replica of two rows,
- * whatever the fleet looks like — and re-measured after both were changed the figures did not move
- * (`.hunt/task4/rig.ts`). That is over the 2.0-2.3ms estimated before implementation, and it is not
+ * the reads are ~0.2ms of it. The two things around that container are fixed rather than
+ * fleet-shaped — one clone to read the geometry off and a replica of two rows, whatever the fleet
+ * looks like — and re-measured after both were changed the figures did not move. That is over the
+ * 2.0-2.3ms estimated before implementation, and it is not
  * reducible without giving up laying every name out, which is the design.
  *
  * What makes it affordable is WHEN it is paid, not how long it takes: once per name-column width,
@@ -49,9 +50,8 @@ export interface NameEntry {
  * (spec §Failure behaviour).
  *
  * **No imports, deliberately, and it must stay that way.** This function is handed whole to
- * `page.evaluate` by `app/e2e/fit-support.ts` and by the `.hunt/` rigs, which is how the
- * measured-equals-rendered bound is a claim about THIS code rather than about a copy of it that
- * drifted. A closure over anything outside the function body — a module constant, an imported
+ * `page.evaluate` by `app/e2e/fit-support.ts`, which is how the measured-equals-rendered bound is
+ * a claim about THIS code rather than about a copy of it that drifted. A closure over anything outside the function body — a module constant, an imported
  * helper — does not survive serialisation, and the failure is silent: the reference is simply
  * undefined in the page.
  */
@@ -109,8 +109,9 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // **It has to run before the clone is attached**, and that is measured rather than assumed:
   // attach a clone open, read anything that flushes layout, then de-open, and the 120ms `transform`
   // transition starts — the advance reads 18.00, 18.63, 17.34, 14.80 … over the following frames
-  // instead of 5.00, and only `prefers-reduced-motion: reduce` snaps it
-  // (`.hunt/task4-fix2/probe2.ts`). With nothing flushing in between there is no before-change
+  // instead of 5.00, and only `prefers-reduced-motion: reduce` snaps it — read off the chevron's
+  // own advance in Chromium, frame by frame, over the transition. With nothing flushing in between
+  // there is no before-change
   // style and nothing is caught, so moving this line alone changes no reading — the ORDER is what
   // makes the advance independent of whatever else comes to touch layout here.
   //
@@ -199,9 +200,10 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // and the rest of the name then wraps against that wider box rather than against `avail`.
   // Measured, an unbroken run of about 28 characters is enough and the error is a whole line — a
   // row reserved at 71 rendering at 53, identically in all three engines — and it OVER-reserves,
-  // which the `null` contract cannot catch because the function returns numbers
-  // (`.hunt/task4-fix2/probe1.ts`). Hyphens do not trigger it: every engine breaks at them and so
-  // does min-content. Declared on the container rather than corrected afterwards, so the thing
+  // which the `null` contract cannot catch because the function returns numbers. The threshold is a
+  // measurement rather than an estimate: names were laid out at one declared width with the unbroken
+  // run grown a character at a time until the reserved height left the rendered one. Hyphens do not
+  // trigger it: every engine breaks at them and so does min-content. Declared on the container rather than corrected afterwards, so the thing
   // being measured is subject to the same floor the flex item is.
   block.style.minWidth = 'min-content';
   const plain = block.outerHTML;
@@ -235,7 +237,8 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   // most common row in the fleet — the figures and the bound they withdrew live in the spec's
   // §Bounds row, which is their one home — and a per-line-count lookup is wrong again wherever a
   // line box is not the face's own, over-reserving 8px on a two-line Japanese name in Firefox,
-  // which counts as three (`.hunt/task4-fix1/probe4.ts`). Both facts come off a clone of the row the
+  // which counts as three — measured on a name set in kana against the same name in Latin, at the
+  // same width, in all three engines. Both facts come off a clone of the row the
   // component itself renders, because markup built from scratch carries no `svelte-xxxxxx` class and
   // would get none of its styles.
   const replica = document.createElement('table');
@@ -301,16 +304,16 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
  *
  * **The event is not enough on its own, because one engine never sends it.** Measured on the real
  * fleet, WebKit dispatches `loading` and then nothing at all — no `loadingdone`, no `loadingerror`,
- * with `document.fonts.status` reading `loaded` all the same (`.hunt/task6/probe3-stale.ts`). So a
- * table that mounted before its faces landed would hold the fallback's heights there for the life of
+ * with `document.fonts.status` reading `loaded` all the same — every `document.fonts` event logged
+ * from before the table mounts until after the faces are in use. So a table that mounted before its
+ * faces landed would hold the fallback's heights there for the life of
  * the page, and nothing on screen would say so: the spacers stand for shoes that are not that tall,
  * and the scrollbar is wrong by the difference.
  *
  * The second half is therefore a **ruler rather than an event**: the prototype's own name block,
  * whose width is its content laid out in the name face, is part of the key and is watched for
  * changes. Measured across the swap, a string in this face moves 5.4px and the same string in the
- * mono face moves 41px (`.hunt/task6/probe7-ruler.ts`), so any change at all is the face moving
- * under it. The prototype is the one node this module can rely on being in the document, which is
+ * mono face moves 41px, so any change at all is the face moving under it. The prototype is the one node this module can rely on being in the document, which is
  * the second job it does — `ShoeTable.svelte` renders it so that the measurement never depends on
  * which shoes are on screen.
  *
@@ -413,7 +416,7 @@ export function createRowHeights(
       watchProto();
       // The name column's own declaration, which is the whole of what a name breaks against. It
       // does not move when a filter does — a declared width is `min + share` over the COLUMNS and
-      // the track, never over the rows in the DOM, which is what task 3 bought
+      // the track, never over the rows in the DOM, which is what declaring them bought
       // (docs/app.md §Table presentation). So a filter change is a hit and costs nothing.
       const declared = document.querySelector<HTMLElement>(
         '.tblwrap table:not(.proto) colgroup col')?.style.width;

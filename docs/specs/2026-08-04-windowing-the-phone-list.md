@@ -1,7 +1,7 @@
 # Windowing the stacked phone list
 
 *2026-08-04 · the deferred half of docs/specs/2026-08-03-virtualising-the-table.md,
-split out when the desktop half was landed on its own · status: **drafted** —
+split out when the desktop half was delivered on its own · status: **drafted** —
 not approved, and nothing is built from it yet.*
 
 The desktop table now renders a windowed plan. `ShoeTableMobile` still puts every
@@ -10,8 +10,9 @@ name row, a values row and a rule row between. This does to it what the desktop
 half already had done, reusing everything that was built to be reusable.
 
 **Read the desktop spec first.** Every decision it records applies here unless
-this one says otherwise, and the corrections it carries — it was amended five
-times during delivery — are the load-bearing parts.
+this one says otherwise, and the corrections it carries — every one of
+them marked *Amended*, and they are most of what the delivery learned — are the
+load-bearing parts.
 
 ## Why this was deferred rather than dropped, honestly
 
@@ -72,7 +73,12 @@ phone-shaped hole. Confirmed by reading, not assumed:
 - **`revealRow(index)` already speaks in fleet positions on both renderings**,
   so `Page.svelte` does not need to know which is mounted. `ShoeTableMobile`
   takes the index today and resolves it directly, because it is not yet
-  windowed.
+  windowed. **Its half of that signature change is untested, and this spec owns
+  the gap**: `ShoeTableMobile.test.ts` has no reveal case at all, and
+  `Page.test.ts`'s popstate-scroll block pins `innerWidth` at 1400, so only the
+  desktop path is exercised end to end. An index/slug confusion on the phone
+  would redden nothing today. Three lines with a null guard close it, and they
+  belong with the rewrite rather than before it.
 
 ## What the phone still needs, and where it genuinely differs
 
@@ -163,9 +169,11 @@ of the measurement module so jsdom can window without fabricating geometry. It
 cost roughly 70 lines and 0.4s of wall clock.
 
 **So: before claiming this rendering is guarded, mutate the seam and report what
-survives.** Twelve mutations were found on the desktop half by reviewers rather
-than by implementers; ten are caught, and the two that are not are *recorded as
-unheld* rather than left looking guarded.
+survives.** Of the twelve mutations in the desktop half's formal set — found by
+reviewers rather than by implementers — ten are caught, and the two that are not
+are *recorded as unheld* rather than left looking guarded. It is not the count
+that transfers, and the set was not complete: more survivors turned up outside it
+in every round that went looking, the last of them at whole-branch review.
 
 Three specifics from that work transfer directly, and each was expensive.
 

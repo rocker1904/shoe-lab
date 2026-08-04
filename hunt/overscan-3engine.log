@@ -1,0 +1,23 @@
+hunt/overscan.mjs, all three engines under hunt/in-docker.sh, real fleet at 1440x900.
+The run OVERSCAN_PX was derived from; app/src/lib/virtual.ts argues what it buys.
+
+=== chromium
+  wheel fling (30 x 600px, no pause) worst px per frame    600px over 89 frames
+  wheel notches (120px x 60)         worst px per frame    120px over 155 frames
+  Page Down x20                      worst px per frame   2436px over 36 frames
+  scrollbar drag, top to bottom      worst px per frame      0px over 182 frames
+  End (a jump, not a scroll)         worst px per frame   3010px over 67 frames
+
+=== firefox
+  wheel fling (30 x 600px, no pause) worst px per frame    600px over 67 frames
+  wheel notches (120px x 60)         worst px per frame    120px over 97 frames
+  Page Down x20                      worst px per frame   3945px over 38 frames
+  scrollbar drag, top to bottom      worst px per frame      0px over 181 frames
+  End (a jump, not a scroll)         worst px per frame   4844px over 67 frames
+
+=== webkit
+  wheel fling (30 x 600px, no pause) worst px per frame    649px over 57 frames
+  wheel notches (120px x 60)         worst px per frame    535px over 91 frames
+  Page Down x20                      worst px per frame   3905px over 29 frames
+  scrollbar drag, top to bottom      worst px per frame      0px over 34 frames
+  End (a jump, not a scroll)         worst px per frame   8440px over 58 frames

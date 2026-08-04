@@ -9,7 +9,7 @@ import { APP_FACES, awaitFacesLoaded, settledDeclared } from './fit-support';
  * `smoke.spec.ts` and `cross-browser.spec.ts` say so in their own words, and `fit-support.ts`
  * asserts it, which is right for what those protect. It also meant that every guard this change
  * most needs was unreachable, and ten mutations at the seam between the plan and the DOM survived
- * the whole suite (`.delivery/2026-08-03-virtualising-the-table/task-6-review.md`, F1).
+ * the whole suite.
  *
  * So this file routes its own fleet, for its own tests only. Every count in every other file is
  * untouched, and the fixture's `spacers === 0` assertions stay true rather than being loosened —
@@ -157,7 +157,13 @@ async function scrollTo(page: Page, y: number): Promise<void> {
  *
  * The body's own height is what says it: it is a fact about the whole plan, invariant to where the
  * runner is looking, and 42 scroll positions in two engines put it at 0.00px of spread on the real
- * fleet (`.hunt/review12/probe-c.ts`).
+ * fleet — the windowed panel and the unwindowed one both 16,623.00px.
+ *
+ * **A total is not the whole claim**, and this one cannot be: move px from one spacer to another and
+ * it is unmoved while every row below sits somewhere the scrollbar does not say. Each spacer's own
+ * height against its own run is `ShoeTable.test.ts`, where a uniform stubbed row height makes a
+ * spacer's px readable as a count of shoes
+ * (docs/decisions.md §Testing bar: adversarial, no live network).
  */
 test('holds the body to one height however the plan is cut', async ({ page }) => {
   await mount(page);

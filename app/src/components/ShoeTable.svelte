@@ -119,13 +119,14 @@
     // `<col>` still said 240px, so every name was laid out 133px narrow, the answer was filed under
     // `240px` — correctly — and nothing asked again, because the model's width never moved after
     // that. That is a table 3,000px taller than the shoes in it, in every engine, healed only where
-    // an unrelated `loadingdone` happened to fire afterwards (`.hunt/task6/probe8-when.ts`). `tick`
+    // an unrelated `loadingdone` happened to fire afterwards — measured on the real fleet at 1440px
+    // by logging the model's width and the declared `<col>` at every measurement. `tick`
     // puts this after the DOM has caught up, so the two widths are one width.
     //
     // **Nothing holds this, and whoever touches it should know that before they do.** Reverting to
     // `Promise.resolve()` passes `npm run verify`, the whole e2e suite and the windowed guard in
-    // `app/e2e/virtual.spec.ts`: task 4's sweep measures `measureDesktopRowHeights` rather than this
-    // call of it, and the race needs the real fleet's arrival ordering — on a routed fleet a width
+    // `app/e2e/virtual.spec.ts`: `fit-support.ts`'s height sweep measures `measureDesktopRowHeights`
+    // rather than this call of it, and the race needs the real fleet's arrival ordering — on a routed fleet a width
     // round trip reads the same `<tbody>` height in both builds. It is argued rather than asserted,
     // which is the honest state and not an invitation to simplify the line
     // (spec §Failure behaviour).
@@ -279,7 +280,7 @@
    * through a spacer, which carries no focus, no id and no transition. The run index is in fact the
    * marginally more expensive of the two, churning 27 spacer insertions over a 30-step scroll
    * against 20, because the next-item index moves on nearly every frame where an array position does
-   * not (`.delivery/2026-08-03-virtualising-the-table/task-6-fix-1-review.md`, M1).
+   * not.
    *
    * **`aria-rowindex` counts the rows the table WOULD have**, panels included, which is the whole
    * point of it: the rendered rows are a window and their DOM positions say nothing about where in

@@ -124,7 +124,8 @@
    *
    * **A fleet position rather than a slug**, because the desktop rendering's body is a window over
    * that list and only the table can say whether a position is mounted yet. This list is not
-   * windowed until task 8, so here the position is simply resolved to the shoe and looked up; the
+   * windowed — that is `docs/specs/2026-08-04-windowing-the-phone-list.md`'s work — so here the
+   * position is simply resolved to the shoe and looked up; the
    * two renderings answer one ask, which is what stops `Page.svelte` needing to know which is up.
    */
   export async function revealRow(index: number): Promise<void> {
