@@ -264,6 +264,35 @@ describe('virtualPlan', () => {
     expect(rendered).toHaveLength(2 * BOUND_PX + 102);
   });
 
+  /**
+   * **The one figure in the cost record that is a property rather than a reading.** What a held grip
+   * pays for is the rows it re-renders, and the whole claim of this change is that the body's size is
+   * a function of the viewport and the overscan and of nothing else — so it does not grow when
+   * upstream publishes another two hundred shoes. That is arithmetic, it is deterministic, and it
+   * belongs in the suite.
+   *
+   * **The milliseconds either side of it do not** (docs/app.md §What a drag may recompute). They are
+   * hardware, and the spread on one quiet machine is already a tenth of the median and a fifth of the
+   * worst step; a wall-clock bound on CI would be a flake rather than a guard, and the e2e fixture is
+   * five shoes, so a cost measured there would be the cost of five names. They are re-measured by a
+   * rig on the committed fleet and recorded in the doc that owns them.
+   *
+   * A viewport of 900 over 36px shoes — the fleet's modal row — gives a window of 900 + 2×1,280 =
+   * 3,460px, and 9,000px in that is [7,720, 11,180], which touches 97 rows. Written out rather than
+   * derived from `OVERSCAN_PX`, for the reason the overscan's own bound above is; and the count is
+   * the one this offset gives rather than a constant of the window, since a window whose edges land
+   * exactly on two boundaries touches a row more.
+   */
+  it('renders a window sized by the viewport and the overscan, whatever the fleet', () => {
+    const uniform = (n: number) => Array.from({ length: n }, (_, i) => ({ key: `u${i}`, height: 36 }));
+    const rendered = (n: number) => virtualPlan(uniform(n), 9_000, 900, OVERSCAN_PX, none)
+      .filter((e) => e.kind === 'item').length;
+    expect(rendered(455)).toBe(97);
+    for (const fleet of [4_550, 45_500]) {
+      expect(rendered(fleet), `the body grows with the fleet: ${fleet} shoes`).toBe(rendered(455));
+    }
+  });
+
   it('accounts for every item exactly once, across every combination there is', () => {
     // The supplement, and the only place a sweep appears: the cases above pin what the window
     // decides, this holds the grouping and the arithmetic against whatever it decided.

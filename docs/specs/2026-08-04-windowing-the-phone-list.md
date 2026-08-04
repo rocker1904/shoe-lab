@@ -21,10 +21,22 @@ the argument no longer holds.** It was measured before the wash ramp was
 quantised; afterwards the same unchanged probe read **12.7ms phone against 13.0
 desktop**. The phone is now the ordinary case, not the urgent one.
 
-What survives is the DOM: 1,364 rows and 9,431 nodes against a 29,125px
+What survives is the DOM: 1,364 rows and 9,433 nodes against a 29,125px
 document, on the hardware least able to carry it. That is worth removing. It is
 not worth rushing, and this spec should be read knowing the deadline it was
 written under no longer exists.
+
+**The baseline, measured the way the desktop half was measured rather than
+quoted from it.** `.hunt/task9/cost.ts` at 390×900 on the real fleet, three runs
+an engine, before and after the desktop change so the reading is known to be
+about this rendering and not about that one: a drag step is **7.3–7.4ms** median
+in Chromium and **10–11ms** in Firefox, worst step 26.0–27.7 and 51–57; a scroll
+frame is **0.0ms**, because nothing happens on one. The same rig at 1440px, and
+what the desktop's plan cost and bought, is docs/app.md §Table presentation.
+Read these as the floor a windowed list has to beat and as the shape of the
+instrument, never as a target: the run-to-run spread on one quiet machine is a
+tenth of the median and a fifth of the worst step, which is the whole reason the
+desktop half asserts a row count and records the milliseconds.
 
 ## What is already built for this
 

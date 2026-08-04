@@ -236,7 +236,7 @@ restated here.
   §Decisions (a dated entry for the version-relative link).
 - `docs/policies.md` §Identity and sharing — one sentence narrowing the fidelity
   promise to one build.
-- `BACKLOG.md` — close item 8.
+- `BACKLOG.md` — close *A `zone=` shorthand in the URL*, by title: the list is renumbered whenever an item lands.
 
 ## Interfaces
 

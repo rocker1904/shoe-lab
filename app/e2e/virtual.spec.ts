@@ -257,6 +257,82 @@ test('keeps the focused row in the plan wherever it scrolls to', async ({ page }
     .toContain('spacer');
 });
 
+/** Every rendered shoe's own number in the fleet, in the order the body puts them. */
+function renderedRowIndexes(page: Page): Promise<number[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll('.tblwrap table:not(.proto) tbody tr.shoe')]
+      .map((r) => Number(r.getAttribute('aria-rowindex'))));
+}
+
+/** The fleet position of the row focus is on, or `null` where focus is not on a row at all. */
+function focusedRowIndex(page: Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const row = (document.activeElement as HTMLElement | null)?.closest?.('tr.shoe') ?? null;
+    return row ? Number(row.getAttribute('aria-rowindex')) : null;
+  });
+}
+
+/**
+ * **And the tab order continues from the pinned row, at the place in the fleet the plan gives it.**
+ *
+ * `activeElement` still being the row is a claim about the row and not about where it is: a plan that
+ * hoisted its kept shoes to one end of the body would satisfy it exactly, while putting the row a
+ * fleet away from the shoes either side of it — so the next Tab would land somewhere the runner has
+ * not been reading. A `<tr>` cannot be taken out of flow, so document order **is** the tab order
+ * here, and pressing the key is what makes that a fact about the runner's next keystroke rather than
+ * about `previousElementSibling`.
+ *
+ * **Both directions, because neither alone discriminates.** Pinned ABOVE the window the row is the
+ * first shoe in the body, so hoisting kept shoes to the FRONT leaves a forward Tab landing on the
+ * same row; pinned BELOW it the row is the last, and hoisting them to the back leaves a backward one
+ * unchanged. Each half was reddened by the mutation the other half survives.
+ *
+ * **And what the key press adds over the row's neighbours** — which the test above already reads —
+ * is that nothing BETWEEN the pinned row and the window takes a stop of its own. A spacer given a
+ * `tabindex` is a row standing for rows that a keyboard has to walk through, and it lands here and
+ * nowhere else: it leaves every other test in this file green, the plan and the accessibility tree
+ * included.
+ *
+ * Only one press per position: leaving the body clears the pin — that is what
+ * `ShoeTable.svelte`'s `focusout` is for — so a row cannot be tabbed away from and back to.
+ */
+test('continues the tab order from the pinned row, in the fleet order', async ({ page }) => {
+  await mount(page);
+  const bottom = await page.evaluate(() => document.documentElement.scrollHeight);
+
+  // Pinned ABOVE the window: it is the first shoe in the body, and Tab has to reach the window.
+  await scrollTo(page, 4_000);
+  await page.locator(`tr.shoe[data-slug="${(await plan(page)).slugs[3]!}"]`).focus();
+  await scrollTo(page, bottom);
+  const above = await renderedRowIndexes(page);
+  const pinnedAbove = await focusedRowIndex(page);
+  expect(pinnedAbove, 'focus left the row it was on').not.toBeNull();
+  expect(pinnedAbove, 'the pinned row was hoisted: the body holds shoes before it').toBe(above[0]);
+  expect(above[1]! - above[0]!,
+    'the window sits beside the pinned row, so the tab order below proves nothing about a pin')
+    .toBeGreaterThan(FLEET_SIZE / 4);
+  await page.keyboard.press('Tab');
+  expect(await focusedRowIndex(page),
+    'Tab from the pinned row did not continue at the shoe the fleet puts next in the plan')
+    .toBe(above[1]);
+
+  // Pinned BELOW it: it is the last shoe in the body, and Shift+Tab has to come back to the window.
+  await scrollTo(page, bottom);
+  await page.locator(`tr.shoe[data-slug="${(await plan(page)).slugs.at(-3)!}"]`).focus();
+  await scrollTo(page, 0);
+  const below = await renderedRowIndexes(page);
+  const pinnedBelow = await focusedRowIndex(page);
+  expect(pinnedBelow, 'focus left the row it was on').not.toBeNull();
+  expect(pinnedBelow, 'the pinned row was hoisted: the body holds shoes after it').toBe(below.at(-1));
+  expect(below.at(-1)! - below.at(-2)!,
+    'the window sits beside the pinned row, so the tab order below proves nothing about a pin')
+    .toBeGreaterThan(FLEET_SIZE / 4);
+  await page.keyboard.press('Shift+Tab');
+  expect(await focusedRowIndex(page),
+    'Shift+Tab from the pinned row did not come back to the shoe the fleet puts before it')
+    .toBe(below.at(-2));
+});
+
 /**
  * **The wash ranks over the whole filtered set, never over the plan** (spec §Non-goals). Ranked over
  * what is on screen, a cell's tint would mean something different from its neighbours' in the same

@@ -1,7 +1,7 @@
 # Virtualising the table body
 
 *2026-08-03 · from BACKLOG's "Cut what a drag re-renders, not just what it
-recomputes", item 4 · status: **approved, in delivery**.*
+recomputes" · status: **approved, in delivery**.*
 
 Both renderings put every visible shoe in the DOM, up to the whole fleet. That
 is the larger half of a held grip's per-frame cost, and it is a row-count
@@ -129,9 +129,9 @@ stacked list is the worse case — 26.1ms a frame at 390px against the desktop's
 20.9. **That figure did not survive the wash ramp being quantised**: the same
 unchanged probe afterwards reads 12.7ms phone against 13.0 desktop, so the phone
 is the ordinary case rather than the urgent one, and the argument for bundling it
-went with the number. What is left there is the DOM — 1,364 rows and 9,431 nodes
-for 455 shoes — worth removing on the hardware least able to carry it, and not
-worth rushing.
+went with the number. What is left there is the DOM, which its own spec measures
+and owns — worth removing on the hardware least able to carry it, and not worth
+rushing.
 
 Splitting the work would ordinarily risk exactly the drift
 docs/app.md §Two renderings, and only one of them mounted exists to prevent, so
@@ -311,8 +311,9 @@ implementation* have no honest value until the thing exists.
 | A focused row and an open row are in the plan at any scroll position | `app/src/lib/virtual.test.ts` |
 | Spacer height equals the summed height of exactly the items it stands for | `app/src/lib/virtual.test.ts` |
 | Per-drag fleet-wide pass counts stay independent of fleet size | `app/src/recompute-budget.test.ts` (existing, must not regress) |
+| The body's size is a function of the viewport and the overscan and **never of the fleet** — which is the assertable half of task 9's cost record, the rows being what a drag re-renders. The **milliseconds either side of it are a rig reading rather than an assertion**, for the reason the row-height cost row above already gives and one more: re-measured three runs an engine, the spread on one quiet machine is a tenth of the median and a fifth of the worst step, so a wall-clock bound would redden on load rather than on a regression | `app/src/lib/virtual.test.ts`; the readings, the rig and the before-and-after are docs/app.md §Table presentation |
 | ~~Desktop row base and line step, in px~~ — **withdrawn at implementation: there is no such pair.** A row is 36px at one line and 53 at two, and every line after that adds 18, so the first step is not the step: one line is set by the rest of the row rather than by the name. Any base-and-step constant is therefore wrong at 445 of the fleet's 455 rows. A height is the taller of a measured floor and the name's own measured box instead, and the bound above holds it | `app/e2e/fit-support.ts` |
-| Phone shoe base and line step, in px | *measured at implementation*; `app/e2e/smoke.spec.ts` |
+| ~~Phone shoe base and line step, in px~~ — **deferred with the rendering**, and re-asked in its own terms there, since the phone's height depends on the metadata run as well as the name | `docs/specs/2026-08-04-windowing-the-phone-list.md` §Bounds |
 | Overscan, in px | **1,280 at each end**, asserted as behaviour in `virtual.test.ts` over a fleet of 1px shoes, so a rendered index is a distance rather than a row count — and written there as **its own px figure rather than in terms of `OVERSCAN_PX`**, which is what makes it a bound at all: the first shape of the assertion was in the constant's own terms, so 1280 → 640 left the suite green. `app/src/lib/virtual.ts` owns the number and its derivation, which is the one thing worth carrying here: the plan is applied in the SAME FRAME as the scroll in every engine and gesture a rig can drive, so this is a stall budget rather than a catch-up distance, and it covers wheel and scrollbar work only — a keyed jump *and* a held Page Down outrun it and are repaired by the next frame's plan rather than covered (`.hunt/task6/overscan.ts`) |
 
 ## Interfaces
@@ -555,7 +556,7 @@ owes it.
 | `app/e2e/smoke.spec.ts` | modify | no-overflow, derived-height, row constants |
 | `app/e2e/cross-browser.spec.ts` | modify | the same in Firefox and WebKit |
 | `docs/app.md` | modify | §Columns and sorting, §Table presentation, §Two renderings, and only one of them mounted, §What a drag may recompute |
-| `BACKLOG.md` | modify | close item 4 and record what it left |
+| `BACKLOG.md` | modify | close *Cut what a drag re-renders, not just what it recomputes* and record what it left |
 
 ## Tasks
 
@@ -604,8 +605,10 @@ where to read first.
 9. **Drag and scroll cost, recorded.** Evidence: a `.hunt/` rig reporting
    ms/frame before and after at 1440px and 390px, and the scroll-path cost the
    drag rigs do not exercise. Read docs/app.md §What a drag may recompute.
-10. **Docs and backlog.** The owning sections above, and BACKLOG item 4 closed
-    with what it left behind.
+10. **Docs and backlog.** The owning sections above, and BACKLOG's *Cut what a
+    drag re-renders, not just what it recomputes* closed with what it left
+    behind — **by title, never by list position**: a build sheet pointing at a
+    numbered item once named the wrong feature after the list moved.
 
 ## Global constraints
 

@@ -224,20 +224,22 @@ What remains per update is what genuinely moved: one filter pass, two more per
 **bounded** row for its `excluded` count — a leave-one-out is conditioned on the
 rest of the set, so moving any bound moves every other row's figure — one sort,
 one ranking per rendered column (`percentileMap` defers to `rankMap`, one walk
-of the sorted run rather than one per shoe), and the table's DOM. The DOM was
-the larger half, and it is a row-count problem rather than a reactivity one: the
-**desktop** body renders a window of the filtered list rather than all of it
-(§Table presentation), which takes a drag step on the real fleet at 1440px from
-6.4ms to 4.6ms in Chromium and from 10.0ms to 5.0ms in Firefox, worst step 23.0ms
-to 13.0ms and 38.0ms to 15.0ms. The stacked list still renders every shoe and
-BACKLOG.md holds the rest. The ranking above stays over the whole filtered set
-and never over the window — a wash ranked over what is on screen would mean
-something different at every scroll position.
-A measured piece of it has already been taken back
-without touching the row count: the wash reaches a cell as one **class** naming
-a stepped bucket, so most cells' class is the one they already carried and
-neither the write nor the style recalculation that would have followed happens
-(§Theming owns the before and after).
+of the sorted run rather than one per shoe), and the table's DOM.
+
+**The DOM was the larger half, and it was a row-count problem rather than a
+reactivity one.** Two things take that work out of the DOM rather than out of the
+reactivity. The wash reaches a cell as one **class** naming a stepped bucket, so
+most cells' class is the one they already carried and neither the write nor the
+style recalculation that would have followed happens (§Theming owns the before
+and after). And the **desktop** body now renders a window of the filtered list
+rather than all of it, so what a step re-renders is set by the viewport and the
+overscan and **not by the fleet** —
+that independence is the assertable half and `lib/virtual.test.ts` holds it,
+while what the change costs and buys in milliseconds is a rig reading owned by
+§Table presentation. The stacked list still renders every shoe; BACKLOG.md's
+*Window the stacked phone list* is what is left of this. The ranking above stays
+over the whole filtered set and never over the window — a wash ranked over what
+is on screen would mean something different at every scroll position.
 
 ## Sanitised-HTML boundary
 
@@ -1396,7 +1398,7 @@ whether it is drawn from 51 rows and a spacer or from all 455, to the pixel in
 all three engines, and the body holds **45–97 rows** against the fleet's 455
 (`.hunt/task6/rig.ts`).
 
-Six things follow, and each is a failure mode rather than a detail.
+Each of the following is a failure mode rather than a detail.
 
 - **A spacer gives back everything a `td` is given.** Cells carry `--s2` of
   padding and a 1px bottom border, so an unreset spacer stands 17px above the run
@@ -1432,11 +1434,20 @@ Six things follow, and each is a failure mode rather than a detail.
   paints blank frames of its own — a wheel fling is the same on both, `End` is
   inside the run-to-run spread, and a held Page Down goes from 1 blank painted
   frame of a burst to 2–4.
-- **The window's cost, and what it buys.** The scroll path is new work — 0.7ms a
-  frame in Chromium and 1.0ms in Firefox, worst 1.1 and 2.0, against a 16.7ms
-  budget — and the drag it pays for goes from 6.4ms to 4.6ms a step in Chromium
-  and from 10.0ms to 5.0ms in Firefox, with the worst step halving in both. The
-  panel's node count goes from 6,643 to 842 (`.hunt/task6/cost.ts`).
+- **The window's cost, and what it buys.** The scroll path is work that did not
+  exist — nothing happened on a scroll before — at 0.7–0.8ms a frame in Chromium
+  and 1.0ms in Firefox, worst 1.3 and 2.0 against a 16.7ms budget. The drag it
+  pays for goes from 7.2–7.8ms a step to 4.0–4.6 in Chromium and from 10.0ms to
+  5.0 in Firefox, worst step 23.6–26.0 to 12.3–13.2 and 33–38 to 16–22. The panel
+  holds 842 nodes with the table at rest and 1,514 with the window mid-fleet,
+  against 6,643 for every row. Three runs an engine on the real fleet at
+  1440×900, against the last build that rendered every row
+  (`.hunt/task9/cost.ts`). **The ranges are the instrument, and they are why
+  nothing here is asserted**: the spread on one quiet machine is already a tenth
+  of the median and a fifth of the worst step, and the e2e fixture is five shoes,
+  so a wall-clock bound would be a flake rather than a guard. What is asserted is
+  the row count these follow from — the body's size is a function of the viewport
+  and the overscan and not of the fleet (`lib/virtual.test.ts`).
 - **What holds the window, and where.** Nothing committed could run against a
   windowed body at first: the e2e fixture is five shoes against 1,280px of
   overscan at each end, so it cannot window whatever the viewport does, and
@@ -1444,8 +1455,9 @@ Six things follow, and each is a failure mode rather than a detail.
   its own tests only — every other file's counts and its `spacers === 0`
   assertions stay true, because they are true of five shoes — and holds the body
   to one height however the plan is cut, the spacers out of Chromium's own
-  accessibility tree, the focused row in the plan across the length of the
-  fleet, a shoe's tint invariant to where the window is, the runner's scroll
+  accessibility tree, the focused row in the plan across the length of the fleet
+  with the tab order continuing from it in both directions at the place the fleet
+  gives it, a shoe's tint invariant to where the window is, the runner's scroll
   position surviving a rendering swap under them, and — with panels open above
   the window — no sampled point of the viewport standing on a spacer.
   `ShoeTable.test.ts` holds the half jsdom can reach, with the row measurement
@@ -1458,6 +1470,12 @@ Six things follow, and each is a failure mode rather than a detail.
   measures the function rather than the app's call of it and the race does not
   reproduce on a routed fleet. `ShoeTable.svelte` says so beside the line, which
   is where someone about to simplify it would look.
+
+**Find-in-page no longer reaches every shoe here, and that is a price paid
+rather than an oversight.** The browser's own search finds only rows that are in
+the DOM, and a window is most of the fleet missing; the shoe search filter covers
+the need and runs over the fleet rather than over what is on screen (§Filters).
+It is the desktop rendering's price alone: the stacked list renders every shoe.
 
 **The measurement's prototypes never come from the plan.** `row-height.ts` clones
 a row for its replica and copies a `DiscontinuedTag`'s markup, and both used to
