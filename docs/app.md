@@ -1318,6 +1318,30 @@ Letting the cell wrap instead is measured and rejected: it takes the column to
 68px, but the plated rows then stand 71px against every other row's 36px, which
 is the raggedness `nowrap` exists to prevent.
 
+**Three things in the width model are guarded rather than assumed, because each
+quantifies over data nobody here controls** — `lib/fit.ts` computes them and
+`lib/fit.test.ts` holds them, against the committed fleet rather than a fixture.
+
+- A header's longest word is found by a splitter that breaks after a hyphen
+  **except between digits**, which is UAX #14's numeric context. Firefox
+  implements it and the other two do not, so a URL naming a column the catalogue
+  has dropped — whose header is the raw slug (§Columns are permissive, ranges and
+  sorts are strict) — is modelled against the engine that refuses to break, and
+  the model over-reserves in the two that do. Reversed, the shortfall is tens of
+  pixels of header hanging out of a declared column.
+- The **name column's floor** is the wider of the declared `min-width: 14rem` and
+  the fleet's own longest unbreakable token. The `discontinued` chip counts with
+  the name's **last** word, because the markup leaves no break opportunity
+  between them and no engine breaks there; behind a short final word it costs the
+  column nothing. Today's widest name cell sits a fraction of a pixel under the
+  declaration, which the suite pins rather than this sentence.
+- "Every figure column's minimum is its header, not its cells" — the claim that
+  makes a sub-pixel model error land in the cell's own padding rather than clip a
+  runner's figure
+  (docs/specs/2026-08-03-virtualising-the-table.md §Failure behaviour) — is **a
+  margin, not a law**. It is asserted with its size, and with the story-score
+  columns named as the exception that their *declared* cell bound creates.
+
 **This table never scrolls sideways any more, because it is only mounted where it
 fits** (§Two renderings, and only one of them mounted). The default view's
 document is **917px** wide once the sidebar is a drawer and the content track

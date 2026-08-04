@@ -1,12 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { ShoesFile } from '../../../shared/types.js';
 import { indexTests } from './dataset';
 import {
   availableForTable, cellMaxPx, columnWidths, DESKTOP_FLOOR_PX, desktopMinWidth, FIT_SLACK_PX,
-  type FitModel, fitModel, fitsDesktop, headerMaxPx, headerMinPx, nameCellMaxPx, rendersPhone,
-  sidebarPermanent, sidebarPermanentAt, SIDEBAR_PERMANENT_PX,
+  type FitModel, fitModel, fitsDesktop, headerMaxPx, headerMinPx, nameCellMaxPx, nameCellMinPx,
+  rendersPhone, sidebarPermanent, sidebarPermanentAt, SIDEBAR_PERMANENT_PX,
 } from './fit';
+import { DERIVED_ZONE_PAIRS } from './lineage';
 import { FLEET, labTest, shoe, TESTS } from './test-fixtures';
+import { isFigure } from './units';
 
 const data = (over: Partial<ShoesFile> = {}): ShoesFile => ({
   builtAt: '2026-01-01T00:00:00.000Z', source: 'test', groups: [], tests: TESTS, shoes: FLEET,
@@ -48,6 +53,29 @@ describe('the desktop table\'s min-content model', () => {
     const whole = headerMinPx('stack-height-heel', undefined);
     const widest = headerMinPx('height-', undefined);
     expect(whole).toBe(widest);
+  });
+
+  it('does not break a hyphen that sits between digits — UAX #14\'s numeric context', () => {
+    // Firefox implements it and the other two do not, so this is the one place the model cannot
+    // follow Chromium: measured against each engine's own min-content on a header the catalogue
+    // does not hold, splitting `2024-2025` at the hyphen left the model 34.63px short in Firefox
+    // and within a sub-pixel of the other two. A slug is reachable as a header
+    // (docs/app.md §Columns are permissive, ranges and sorts are strict), so the pessimistic
+    // reading is the only safe one.
+    //
+    // Stated as min == max: an unbreakable string has one width, and only a splitter that leaves
+    // it whole makes the two agree.
+    for (const slug of ['10-12', '2024-2025', '2024-2025-2026']) {
+      expect(headerMinPx(slug, undefined), slug).toBe(headerMaxPx(slug, undefined));
+    }
+  });
+
+  it('still breaks a hyphen with a letter on either side of it', () => {
+    // The numeric context needs a digit on BOTH sides; anything else keeps the break opportunity
+    // the existing slug headers depend on.
+    for (const slug of ['10-abc', 'abc-12', 'stack-height-heel']) {
+      expect(headerMinPx(slug, undefined), slug).toBeLessThan(headerMaxPx(slug, undefined));
+    }
   });
 
   it('sizes a phrase column by the widest string the loaded fleet renders', () => {
@@ -181,16 +209,70 @@ describe('the desktop table\'s max-content model', () => {
     expect(nameCellMaxPx([gone]) - nameCellMaxPx([plain])).toBeCloseTo(110.64, 2);
   });
 
-  it('keeps the name column\'s MINIMUM a declared floor rather than its content', () => {
-    // `min-width: 14rem` is what the engine floors that column at, and it is wider than the widest
-    // word any shoe name carries — so the name is the one column whose two widths come from two
-    // different kinds of fact, and only the max one moves with the fleet.
+  it('keeps the name column\'s MINIMUM the DECLARED floor while the fleet fits inside it', () => {
+    // `min-width: 14rem` is what the engine floors that column at, and every word in this fleet is
+    // narrower — so the name is the one column whose two widths come from two different kinds of
+    // fact, and while the floor binds only the max one moves with the fleet.
     const short = model();
     const long = model({ shoes: [shoe({ slug: 'a', name: 'New Balance FuelCell SuperComp Elite' })] });
     expect(short.columnPx('name')).toBe(224 + 16);
     expect(long.columnPx('name')).toBe(short.columnPx('name'));
     expect(long.columnMaxPx('name')).toBeGreaterThan(short.columnMaxPx('name'));
     expect(long.columnMaxPx('name')).toBeGreaterThan(long.columnPx('name'));
+  });
+});
+
+/**
+ * The name column's floor, which is the one minimum in the table that is a CSS declaration rather
+ * than a measurement — and therefore the one that can be crossed by a name nobody here chose. A
+ * declared column width turns that from "the column widens" into "the cell overflows", so the floor
+ * takes the fleet's own longest unbreakable token wherever that is wider
+ * (docs/app.md §Table presentation).
+ */
+describe('the name column\'s floor under the fleet\'s longest unbreakable token', () => {
+  it('measures the cell\'s minimum as the chevron, the gap and the longest WORD', () => {
+    // Not the longest name: the name cell is the one cell in the table that wraps, so its minimum
+    // is a word rather than a string. The chevron and the gap are flex furniture and cannot break
+    // away from it, which is why they are in the minimum too.
+    const one = shoe({ slug: 'a', name: 'mmmm mmmmmmmmmm mmm' });
+    const two = shoe({ slug: 'b', name: 'mmmmmmmmmm' });
+    expect(nameCellMinPx([one])).toBe(nameCellMinPx([two]));
+    expect(nameCellMinPx([two]) - nameCellMinPx([shoe({ slug: 'c', name: 'm' })])).toBe(9 * 13);
+  });
+
+  it('glues the discontinued chip to the name\'s LAST word, where the markup glues it', () => {
+    // `<strong>{name}</strong><DiscontinuedTag/>` with no whitespace between, so the chip's
+    // `margin-left` is CSS rather than a break opportunity and no engine breaks there. Measured on
+    // the real fleet: `On Cloudmonster` takes 223.64px in Chromium, of which 110.64 is the chip.
+    const last = 'm mmmmmmmmmm';
+    expect(nameCellMinPx([shoe({ slug: 'a', name: last, discontinued: true })])
+      - nameCellMinPx([shoe({ slug: 'b', name: last })])).toBeCloseTo(110.64, 2);
+    // The LAST word, not the widest: a chip behind a short final word can break onto its own line
+    // and costs the column nothing, which is why the term is per word rather than per name.
+    const first = 'mmmmmmmmmm m';
+    expect(nameCellMinPx([shoe({ slug: 'c', name: first, discontinued: true })]))
+      .toBe(nameCellMinPx([shoe({ slug: 'd', name: first })]));
+  });
+
+  it('raises the column\'s minimum above the declared floor where a token crosses it', () => {
+    // The failure this guard exists for: under a declared width a token wider than `14rem` is an
+    // overflowing cell, not a widening column. It takes a name of one long word to reach, which is
+    // a shape the fleet already carries — `Cloudmonster`, `Alphabounce+` — at half the length.
+    const token = 'Superlightweightcarbonplatedracer';
+    const over = model({ shoes: [shoe({ slug: 'a', name: token })] });
+    expect(nameCellMinPx([shoe({ slug: 'a', name: token })])).toBeGreaterThan(224);
+    expect(over.columnPx('name')).toBe(nameCellMinPx([shoe({ slug: 'a', name: token })]) + 16);
+    expect(over.columnPx('name')).toBeGreaterThan(224 + 16);
+  });
+
+  it('takes the floor with it into the mount decision', () => {
+    // `desktopMinWidth` reads the same width, so a fleet whose names widen the column moves the
+    // width at which the desktop table is offered rather than overflowing inside it. Asserted with
+    // no columns ticked, because any column set makes the two models differ by their cells too.
+    const token = 'Superlightweightcarbonplatedracer';
+    const over = model({ shoes: [shoe({ slug: 'a', name: token })] });
+    expect(desktopMinWidth([], over)).toBe(over.columnPx('name') + 2);
+    expect(desktopMinWidth([], over)).toBeGreaterThan(desktopMinWidth([], model()));
   });
 });
 
@@ -323,6 +405,72 @@ describe('sharing a declared track between the columns', () => {
     expect(m.columnMaxPx('name')).toBeLessThan(m.columnPx('name'));
     const w = columnWidths(['msrpGbp', 'weight', 'plate'], 1146, m);
     expect(w[0]).toBeGreaterThan(m.columnPx('name'));
+  });
+});
+
+/**
+ * The **committed fleet**, not `test-fixtures.ts`: both claims below quantify over strings and
+ * figures that arrive from upstream, and a hand-written fixture can never fail on data nobody here
+ * chose (`lib/filters.test.ts` says the same). Resolved through `fileURLToPath` because the jsdom
+ * environment replaces the global `URL` with one `readFileSync` rejects.
+ *
+ * **The numbers are pinned rather than bounded, and that is the point.** Each is the headroom under
+ * a claim the width model rests on, and a refresh that moves one has to be re-read rather than
+ * re-pinned: crossing the first changes which rendering mounts, and crossing the second makes a
+ * column's declared width a runner's figure rather than our own header.
+ */
+const fleet = JSON.parse(readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8'),
+) as ShoesFile;
+const fleetIdx = indexTests(fleet.tests);
+const SCORE_KEYS: ReadonlySet<string> = new Set(
+  DERIVED_ZONE_PAIRS.flatMap((p) => [p.heel, p.forefoot]));
+
+describe('the width guards against the fleet that is actually shipped', () => {
+  it('leaves the name column on its declared floor, and says by how little', () => {
+    // 0.36px of it, all of which is the discontinued chip's: the widest name cell in the fleet is
+    // `On Cloudmonster` — one 12-character word with the chip glued behind it — and it is a third
+    // of a pixel under the 14rem the column is declared at. Measured against the engines' own
+    // min-content the model is exact in Chromium and 3.1–3.2px wide of Firefox and WebKit, which
+    // is the `NAME_PX` table being one engine's (`fit.ts`).
+    expect(nameCellMinPx(fleet.shoes)).toBeCloseTo(223.64, 2);
+    expect(fitModel(fleet, fleetIdx).columnPx('name')).toBe(224 + 16);
+  });
+
+  it('keeps every figure column header-bound, and states the tightest margin', () => {
+    // The claim the width model's failure behaviour rests on: a sub-pixel shortfall lands in a
+    // header's longest word rather than in a runner's figure, and therefore in the `--s2` padding
+    // the cell already carries (docs/app.md §Table presentation). It is a margin and not a law,
+    // so the margin is what is asserted.
+    const keys = [...fleet.tests.map((t) => t.slug), 'msrpGbp', 'score'];
+    const margins = keys.filter((k) => isFigure(k, fleetIdx.bySlug.get(k))).map((k) => ({
+      key: k,
+      px: headerMinPx(k, fleetIdx.bySlug.get(k))
+        - cellMaxPx(k, fleet.shoes, fleetIdx, SCORE_KEYS),
+    }));
+    expect(margins.filter((m) => m.px <= 0).map((m) => m.key)).toEqual([]);
+    // Both of the two tightest are under one mono advance (8.71px), so one more rendered character
+    // in either flips that column cell-bound. Nothing breaks the day it does — it is the reasoning
+    // above that stops holding, and this is what says so. `Size` is the tightest of all and is in
+    // no default view, which is why the wide-set reading missed it.
+    const tightest = Math.min(...margins.map((m) => m.px));
+    expect(tightest).toBeCloseTo(5.16, 2);
+    expect(margins.filter((m) => m.px === tightest).map((m) => m.key)).toEqual(['size-rating']);
+    // Both slugs of a superseded pair render the same `Width / Fit` header over the same figures.
+    expect(margins.filter((m) => m.key.startsWith('toebox-width-at-the-widest')
+      || m.key === 'toebox-width-widest-part').map((m) => m.px))
+      .toEqual([expect.closeTo(8.45, 2), expect.closeTo(8.45, 2)]);
+  });
+
+  it('excepts the story scores, whose cells are a declared bound rather than data', () => {
+    // `SCORE_CELL_CHARS` reserves six characters because a score is the view's rather than the
+    // dataset's (`fit.ts`), and the two shortest-labelled heel columns come out cell-bound against
+    // it. The model over-reserves there — every score `displayNumber` can emit is narrower — so
+    // the exception runs in the safe direction, and naming it is what keeps the claim above from
+    // reading wider than it is.
+    const cellBound = [...SCORE_KEYS].filter((k) =>
+      headerMinPx(k, undefined) < cellMaxPx(k, fleet.shoes, fleetIdx, SCORE_KEYS));
+    expect(cellBound.sort()).toEqual(['easy-score-heel', 'race-score-heel']);
   });
 });
 

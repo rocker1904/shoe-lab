@@ -215,18 +215,36 @@ const textPx = (s: string, table: Record<string, number>): number =>
   [...s].reduce((sum, ch) => sum + (table[ch] ?? FALLBACK_PX), 0);
 
 /**
- * What a wrapping box cannot go under: its longest word. The desktop headers wrap deliberately —
- * `nowrap` on a `th` made every column's minimum its longest header — so this, not the whole
- * label, is a header's contribution (docs/app.md §Columns and sorting).
+ * Where a line may break, and the one rule in this file that follows Firefox rather than Chromium.
  *
  * A hyphen is a break opportunity and the break comes AFTER it, so `stack-height-heel` is three
  * words and the widest of them carries the hyphen. That matters for exactly the columns a URL is
  * allowed to name and the catalogue no longer holds: their header is the raw slug
  * (docs/app.md §Columns are permissive, ranges and sorts are strict), and treating one as a single
  * unbreakable word measured 150px against a rendered 76px in both engines.
+ *
+ * **Except between digits, which is UAX #14's numeric context**: Firefox implements it and refuses
+ * to break `10-12` or `2024-2025` at all, where Chromium and WebKit break both. Measured against
+ * each engine's own min-content on those two as slug headers, a splitter that broke them left the
+ * model 14.50px and 34.63px short in Firefox — an overflowing cell once the width is declared —
+ * against a sub-pixel disagreement in the other two. So the model takes the widest engine's
+ * reading: it over-reserves such a column by up to 36px in Chromium and WebKit, which only makes
+ * an unknown column wider than it needed to be (docs/app.md §Table presentation).
+ *
+ * The two alternatives are the negation of "a digit on both sides", written apart because each
+ * side has to be asked separately: JavaScript has no way to negate a lookbehind and a lookahead
+ * together.
+ */
+const HYPHEN_BREAK = /(?<=-)(?!\d)|(?<=-)(?<!\d-)/;
+const words = (s: string): string[] => s.split(/\s+/).flatMap((w) => w.split(HYPHEN_BREAK));
+
+/**
+ * What a wrapping box cannot go under: its longest word. The desktop headers wrap deliberately —
+ * `nowrap` on a `th` made every column's minimum its longest header — so this, not the whole
+ * label, is a header's contribution (docs/app.md §Columns and sorting).
  */
 const widestWordPx = (s: string, table: Record<string, number>): number =>
-  Math.max(0, ...s.split(/\s+/).flatMap((w) => w.split(/(?<=-)/)).map((w) => textPx(w, table)));
+  Math.max(0, ...words(s).map((w) => textPx(w, table)));
 
 /**
  * A header's min-content: the name line and the units line, whichever is wider. The caret sits on
@@ -298,13 +316,39 @@ export function cellMaxPx(key: string, shoes: readonly Shoe[], idx: TestIndex,
  * is a flex row of a chevron, a gap and a name in the bold face, with a chip after the name on the
  * shoes that carry one (`ShoeTable.svelte`, `.name-row`).
  *
- * The name is the one cell in the table that WRAPS, which is why this number has no counterpart in
- * `columnPx`: the column's minimum is the declared `min-width: 14rem` floor, not the widest word any
- * name holds (docs/app.md §Table presentation).
+ * The name is the one cell in the table that WRAPS, so its minimum is a word rather than a string —
+ * `nameCellMinPx` below (docs/app.md §Table presentation).
  */
 export function nameCellMaxPx(shoes: readonly Shoe[]): number {
   const widest = Math.max(0, ...shoes.map((s) =>
     textPx(s.name, NAME_PX) + (s.discontinued ? DISC_TAG_PX : 0)));
+  return CHEV_PX + NAME_ROW_GAP_PX + widest;
+}
+
+/**
+ * The same cell at min-content: the chevron, the gap and the widest single WORD the fleet's names
+ * carry. The furniture is additive for the reason `headerMinPx` gives — flex items cannot break
+ * apart — and the word rather than the name because this is the one cell that wraps.
+ *
+ * **The discontinued chip is glued to the name's LAST word, and that is markup rather than
+ * choice.** `<strong>{name}</strong><DiscontinuedTag/>` carries no whitespace between the two, and
+ * a chip's `margin-left` is not a break opportunity, so no engine breaks there: measured on the
+ * real fleet, the widest name cell in the table is `On Cloudmonster` — one 12-character word with
+ * the whole chip behind it. A chip trailing a SHORT final word costs the column nothing, since the
+ * pair can wrap under a wider word ahead of it, which is why the term is per word and not per name.
+ *
+ * It is a floor under a floor: `columnPx('name')` takes the wider of this and the declared
+ * `min-width: 14rem`. Under `table-layout: auto` a name that crossed the declaration merely widened
+ * the column, and only `hunt/fit-boundary.mjs` would have noticed; under a declared width it is an
+ * overflowing cell, and the fleet is upstream's
+ * (docs/specs/2026-08-03-virtualising-the-table.md §Decisions).
+ */
+export function nameCellMinPx(shoes: readonly Shoe[]): number {
+  const widest = Math.max(0, ...shoes.map((s) => {
+    const parts = words(s.name);
+    return Math.max(0, ...parts.map((w, i) =>
+      textPx(w, NAME_PX) + (s.discontinued && i === parts.length - 1 ? DISC_TAG_PX : 0)));
+  }));
   return CHEV_PX + NAME_ROW_GAP_PX + widest;
 }
 
@@ -347,11 +391,15 @@ export function fitModel(data: ShoesFile, index?: TestIndex): FitModel {
   };
   return {
     columnPx(key: string): number {
-      // The name column's minimum is DECLARED — `min-width: 14rem` is what the engine floors it at,
-      // and it is wider than the widest word any shoe name carries, which `hunt/fit-boundary.mjs`
-      // checks against the real fleet. Reading its cells here would report the widest whole name
-      // instead, which is a max-content and would push every mount decision hundreds of pixels out.
-      if (key === 'name') return NAME_COL_PX + CELL_PAD_PX;
+      // The name column's minimum is the DECLARED `min-width: 14rem` or the fleet's own longest
+      // unbreakable token, whichever is wider (`nameCellMinPx`). The declaration is what binds on
+      // today's fleet, by a third of a pixel — `fit.test.ts` pins that headroom — and a fleet that
+      // crossed it would overflow the cell rather than widen the column once the width is declared.
+      // Reading the whole cell here instead would report the widest whole NAME, which is a
+      // max-content and would push every mount decision hundreds of pixels out.
+      if (key === 'name') {
+        return memo(mins, key, () => Math.max(NAME_COL_PX, nameCellMinPx(data.shoes)) + CELL_PAD_PX);
+      }
       return memo(mins, key, () => {
         const test = idx.bySlug.get(key);
         return CELL_PAD_PX + Math.max(headerMinPx(key, test),
