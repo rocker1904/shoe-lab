@@ -116,11 +116,14 @@ export type VirtualEntry =
  * declines, so the caller renders everything, which puts a row back and re-measures. The loop is
  * self-healing by design but it is a loop, and the caller is what has to be shown to settle.
  *
- * **A gap needs a key, and its position in the plan is the wrong one.** The plan gains and loses
- * spacers as kept shoes split them, so an array index is a gap in one frame and an item in the next.
- * The run a spacer stands for is the stable identity, and it is already derivable: the index of the
- * next item entry, or `items.length` for a trailing gap. Whatever is chosen has to be namespaced
- * away from slugs, or a shoe slugged `3` collides with a spacer.
+ * **A gap needs a key, and the one thing it must be is namespaced away from slugs** — a shoe slugged
+ * `3` would otherwise collide with a spacer. Past that, uniqueness within the frame is the whole
+ * requirement: the run a spacer stands for (the index of the next item entry, or `items.length` for
+ * a trailing gap) and the entry's own array position both satisfy it, and this plan's shape makes
+ * the first easy to derive, which is why `ShoeTable.svelte` uses it. An earlier version of this note
+ * claimed an array position would make Svelte reuse the wrong node; it would not, and the two were
+ * measured rendering byte-identical bodies across 27 DOM states
+ * (`.delivery/2026-08-03-virtualising-the-table/task-6-fix-1-review.md`, M1).
  */
 export function virtualPlan(
   items: readonly VirtualItem[],

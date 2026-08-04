@@ -297,7 +297,7 @@ implementation* have no honest value until the thing exists.
 | The word split happens on break opportunities only — never on non-breaking whitespace | `app/src/lib/labels.test.ts` |
 | The name column's floor clears the fleet's longest unbreakable token | `app/src/lib/fit.test.ts` |
 | Every figure column's header exceeds its widest cell, and by how much — the margin is the assertion, not the ordering | `app/src/lib/fit.test.ts` |
-| The plan reaches the DOM as a window: spacers standing for exactly the shoes left out and out of the accessibility tree, the fleet's own row numbers on rows the DOM no longer counts, a focused row and a revealed row kept wherever the fleet has scrolled to, a declined measurement holding the last one, and a shoe's tint the same at every scroll position. **Added at the task-6 fix**, because nothing committed had ever run against a windowed body — the e2e fixture cannot window at any viewport and jsdom lays nothing out, so ten mutations at this seam survived the whole suite | `app/e2e/virtual.spec.ts` on a fleet routed for that file alone, and `app/src/components/ShoeTable.test.ts` §windows the body for the half jsdom reaches with the row measurement stubbed |
+| The plan reaches the DOM as a window: spacers standing for exactly the shoes left out and out of the accessibility tree, the fleet's own row numbers on rows the DOM no longer counts, a focused row, an open row and a revealed row each kept wherever the fleet has scrolled to, an open shoe's height counting its panel so no sampled point of the viewport stands on a spacer, a declined measurement holding the last one, a rendering swap under a deep scroll keeping the runner's place rather than collapsing the document, and a shoe's tint the same at every scroll position. **Added at the task-6 fix**, because nothing committed had ever run against a windowed body — the e2e fixture cannot window at any viewport and jsdom lays nothing out, so ten mutations at this seam survived the whole suite | `app/e2e/virtual.spec.ts` on a fleet routed for that file alone, and `app/src/components/ShoeTable.test.ts` §windows the body for the half jsdom reaches with the row measurement stubbed |
 | With no measured viewport, every item renders and no spacer is emitted | `app/src/lib/virtual.test.ts` |
 | A focused row and an open row are in the plan at any scroll position | `app/src/lib/virtual.test.ts` |
 | Spacer height equals the summed height of exactly the items it stands for | `app/src/lib/virtual.test.ts` |
@@ -431,7 +431,13 @@ filed under `240px` correctly, and nothing asked again, because the model's widt
 never moved after that. Measured on the real fleet: a table 19,634px tall against
 the 16,623px it renders, in **every** engine, healed only where an unrelated
 `loadingdone` happened to fire afterwards. The measurement is now taken after a
-`tick`.
+`tick` — **and that repair is argued rather than held.** Reverting the `tick`
+passes `verify`, the whole e2e suite and the windowed guard alike: task 4's sweep
+still measures the function rather than the app's call of it, and the race does
+not reproduce on a routed fleet, where a width round trip reads 14,842px at every
+step in both builds. A probe was written at the task-6 fix and deleted rather
+than committed, because a test that passes with the defect reinstated is the
+emptied-population species that same fix went to repair.
 
 **And a face swap cannot be listened for.** WebKit dispatches `loading` and then
 nothing — no `loadingdone`, no `loadingerror`, `document.fonts.status` reading

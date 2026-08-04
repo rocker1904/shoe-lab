@@ -451,6 +451,23 @@ describe('ShoeTable windows the body', () => {
       .toBe((BIG.length - shoeRows(table).length) * ROW_PX);
   });
 
+  it('keeps an open row in the plan wherever it sits in the fleet', async () => {
+    // *Open rows are always rendered* — the other half of the rule the focused row obeys
+    // (spec §Decisions, *The window is what is on screen, plus what the runner has claimed*). It was
+    // held only where `kept` is an ARGUMENT, in `virtual.test.ts`, and nothing said the component
+    // puts `open` into it: dropping `open` from `kept` survived the whole suite. A panel is
+    // 843–1005px, so estimating one instead costs 25 rows of scrollbar error — by far the worst
+    // estimate available, and the reason the rule exists at all.
+    const { table } = await windowed({ open: ['w390'] });
+    const row = table.querySelector<HTMLElement>('tbody tr.shoe[data-slug="w390"]');
+    expect(row, 'an open row 390 of 400 into the fleet was left out of the plan').not.toBeNull();
+    expect(row!.getAttribute('aria-expanded')).toBe('true');
+    expect(table.querySelector('tr.expand[data-slug="w390"]'),
+      'the row is in the plan but the panel it controls is not').not.toBeNull();
+    // And it is KEPT rather than merely inside the window, which is what makes that mean anything.
+    expect(row!.previousElementSibling?.className).toContain('spacer');
+  });
+
   it('holds the last measurement rather than falling back when one declines', async () => {
     // *Cannot measure* is render-everything on the way up and a held answer after that. A resize
     // drag misses the cache on every frame, so a body that dropped back to all 400 rows on a decline

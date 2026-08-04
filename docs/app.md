@@ -1445,12 +1445,19 @@ Six things follow, and each is a failure mode rather than a detail.
   assertions stay true, because they are true of five shoes — and holds the body
   to one height however the plan is cut, the spacers out of Chromium's own
   accessibility tree, the focused row in the plan across the length of the
-  fleet, and a shoe's tint invariant to where the window is.
+  fleet, a shoe's tint invariant to where the window is, the runner's scroll
+  position surviving a rendering swap under them, and — with panels open above
+  the window — no sampled point of the viewport standing on a spacer.
   `ShoeTable.test.ts` holds the half jsdom can reach, with the row measurement
   stubbed and no geometry invented: the spacers summing to exactly the shoes
-  left out, a revealed row kept at its own place in the fleet, a declined
-  measurement holding the last one rather than falling back, and the wash ranked
-  over the filtered set.
+  left out, a revealed row and an open row each kept at their own place in the
+  fleet, a declined measurement holding the last one rather than falling back,
+  and the wash ranked over the filtered set.
+- **And what is *not* held, said out loud.** Measuring after a `tick` is argued
+  rather than asserted: reverting it passes everything, because task 4's sweep
+  measures the function rather than the app's call of it and the race does not
+  reproduce on a routed fleet. `ShoeTable.svelte` says so beside the line, which
+  is where someone about to simplify it would look.
 
 **The measurement's prototypes never come from the plan.** `row-height.ts` clones
 a row for its replica and copies a `DiscontinuedTag`'s markup, and both used to

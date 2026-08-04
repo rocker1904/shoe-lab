@@ -31,24 +31,32 @@ const FLEET_SIZE = 400;
  * detail the app renders is one the rest of the suite already trusts — what changes is only how
  * many there are. One name in three is long enough to wrap the name column, so the fleet's rows are
  * not all one height and a spacer's px is a real sum rather than a multiple.
+ *
+ * Built once and held, because a test may navigate more than once: `route.fetch()` reads through to
+ * the preview server and its response belongs to the navigation that asked for it, so fetching
+ * again on a second `goto` disposes the first rather than answering it.
  */
 async function routeBigFleet(page: Page): Promise<void> {
+  let payload: Record<string, unknown> | null = null;
   await page.route('**/shoes.json*', async (route) => {
-    const file = await (await route.fetch()).json() as
-      { shoes: { slug: string; name: string }[] } & Record<string, unknown>;
-    const shoes = Array.from({ length: FLEET_SIZE }, (_, i) => {
-      const base = file.shoes[i % file.shoes.length]!;
-      const suffix = ['', ' Continental Ultraride Edition', ' Pro'][i % 3];
-      return { ...base, slug: `${base.slug}-${i}`, name: `${base.name} ${i}${suffix}` };
-    });
-    await route.fulfill({ json: { ...file, shoes } });
+    if (!payload) {
+      const file = await (await route.fetch()).json() as
+        { shoes: { slug: string; name: string }[] } & Record<string, unknown>;
+      const shoes = Array.from({ length: FLEET_SIZE }, (_, i) => {
+        const base = file.shoes[i % file.shoes.length]!;
+        const suffix = ['', ' Continental Ultraride Edition', ' Pro'][i % 3];
+        return { ...base, slug: `${base.slug}-${i}`, name: `${base.name} ${i}${suffix}` };
+      });
+      payload = { ...file, shoes };
+    }
+    await route.fulfill({ json: payload });
   });
 }
 
 /** Everything a plan can be read off the page as. Heights come off the boxes rather than off the
  *  declared `style`, because what a spacer is *given* and what it *occupies* differing by the
  *  cell's own padding is one of the things this file exists to catch. */
-async function readPlan(page: Page) {
+async function readPlanNow(page: Page) {
   return page.evaluate(() => {
     const table = document.querySelector('.tblwrap table:not(.proto)')!;
     const body = table.querySelector('tbody')!;
@@ -70,6 +78,33 @@ async function readPlan(page: Page) {
           .flatMap((c) => [...c.classList].filter((x) => /^w-[bmg]-\d+$/.test(x))).join(' ')])),
     };
   });
+}
+
+type Plan = Awaited<ReturnType<typeof readPlanNow>>;
+
+/**
+ * **The plan, read only once it has stopped moving — and every read below goes through this.**
+ *
+ * A plan is not settled the moment the gesture that changed it returns. Opening a panel is the case
+ * that proves it: the row's own height changes when `panelPx` arrives, and that arrives through a
+ * `ResizeObserver` a frame or two after the click, so the window re-cuts from 97 rendered shoes to
+ * 93 *after* the panel is in the DOM. A snapshot taken on the near side of that delivery is a
+ * number that was true and is not any more, and an assertion polling a locator against it fails on
+ * whichever machine is fast enough to lose the race — measured at 4 failures in 8 isolated runs,
+ * invisible under the parallel suite because the extra load lets the delivery land first.
+ *
+ * Two consecutive agreeing reads, rather than a wait of any length: a duration is a guess about a
+ * machine and this is a claim about the page.
+ */
+async function plan(page: Page): Promise<Plan> {
+  let last: Plan | null = null;
+  await expect.poll(async () => {
+    const next = await readPlanNow(page);
+    const same = last !== null && JSON.stringify(last) === JSON.stringify(next);
+    last = next;
+    return same;
+  }, { message: 'the plan never stopped moving' }).toBe(true);
+  return last!;
 }
 
 /** The table settled at a width, on a fleet big enough to window. */
@@ -126,16 +161,16 @@ async function scrollTo(page: Page, y: number): Promise<void> {
  */
 test('holds the body to one height however the plan is cut', async ({ page }) => {
   await mount(page);
-  const rest = await readPlan(page);
+  const rest = await plan(page);
   expect(rest.shoes, 'the body is not windowed').toBeLessThan(FLEET_SIZE);
   expect(rest.rowcount, 'aria-rowcount is not the header plus the whole fleet')
     .toBe(1 + FLEET_SIZE);
 
-  const seen: { at: number; plan: Awaited<ReturnType<typeof readPlan>> }[] = [];
+  const seen: { at: number; plan: Plan }[] = [];
   const bottom = await page.evaluate(() => document.documentElement.scrollHeight);
   for (const at of [0, 3_000, Math.round(bottom / 2), bottom]) {
     await scrollTo(page, at);
-    seen.push({ at, plan: await readPlan(page) });
+    seen.push({ at, plan: await plan(page) });
   }
   // The cut has to actually vary, or the invariant below holds vacuously: a plan taken from the
   // middle is spacer-shoes-spacer where one taken from either end is a single spacer.
@@ -168,19 +203,21 @@ test('holds the body to one height however the plan is cut', async ({ page }) =>
 test('keeps the spacers out of the accessibility tree', async ({ page }) => {
   await mount(page);
   await scrollTo(page, 6_000);
-  const plan = await readPlan(page);
-  expect(plan.spacers, 'no spacer exists here, so its absence from the tree proves nothing')
+  const shut = await plan(page);
+  expect(shut.spacers, 'no spacer exists here, so its absence from the tree proves nothing')
     .toBeGreaterThan(0);
   await expect(page.getByRole('row'), 'a spacer reached the accessibility tree')
-    .toHaveCount(plan.shoes + plan.panels + 1);
+    .toHaveCount(shut.shoes + shut.panels + 1);
 
   // The same claim with a panel open, which is the case where the tree has rows a spacer sits
-  // between rather than only after.
+  // between rather than only after. The plan is read only once it has settled: opening a panel
+  // re-cuts the window a frame or two later, when the panel's own height arrives.
   await page.locator('tr.shoe').first().click();
   await expect(page.locator('tr.expand')).toHaveCount(1);
-  const open = await readPlan(page);
+  const open = await plan(page);
   expect(open.spacers).toBeGreaterThan(0);
-  await expect(page.getByRole('row')).toHaveCount(open.shoes + open.panels + 1);
+  await expect(page.getByRole('row'), 'a spacer reached the accessibility tree beside a panel')
+    .toHaveCount(open.shoes + open.panels + 1);
 });
 
 /**
@@ -194,7 +231,7 @@ test('keeps the spacers out of the accessibility tree', async ({ page }) => {
 test('keeps the focused row in the plan wherever it scrolls to', async ({ page }) => {
   await mount(page);
   await scrollTo(page, 4_000);
-  const slug = (await readPlan(page)).slugs[3]!;
+  const slug = (await plan(page)).slugs[3]!;
   await page.locator(`tr.shoe[data-slug="${slug}"]`).focus();
   await expect(page.locator('tr.shoe:focus')).toHaveCount(1);
 
@@ -227,14 +264,18 @@ test('keeps the focused row in the plan wherever it scrolls to', async ({ page }
  * runner scrolls past it.
  *
  * Two windows with an overlap, so the claim is about the shoes in both rather than about a formula
- * restated here.
+ * restated here — and it is the cross-window comparison that discriminates, verified against the
+ * honest form of the defect: ranking over `plan` rather than over `shoes` reddens this with
+ * "cushy-145 is painted differently from one scroll position to the next". The bluntest spelling of
+ * the mutation — ranking over a slice of the fleet — leaves most shoes with no percentile at all
+ * and trips the sentinel below first, which is a coarser reason than the one this test is for.
  */
 test('paints a shoe the same wherever the window is', async ({ page }) => {
   await mount(page);
   await scrollTo(page, 6_000);
-  const before = await readPlan(page);
+  const before = await plan(page);
   await scrollTo(page, 6_600);
-  const after = await readPlan(page);
+  const after = await plan(page);
 
   const shared = before.slugs.filter((s) => after.slugs.includes(s));
   expect(shared.length, 'the two windows do not overlap, so nothing is compared').toBeGreaterThan(5);
@@ -247,3 +288,117 @@ test('paints a shoe the same wherever the window is', async ({ page }) => {
 });
 
 
+
+
+/**
+ * **A table that cannot measure renders everything, and the runner keeps their place**
+ * (spec §Failure behaviour). `null` from the row measurement means *cannot measure*, never *every
+ * row is 0px tall*, and the caller states it by handing `virtualPlan` a viewport of zero — which
+ * that function already owns as "render every item, space for nothing".
+ *
+ * **The path that reaches it is a rendering swap, not a reload.** A reload cannot: the app fetches
+ * its data after mount, so the engine's scroll restoration clamps to the top before the table
+ * exists — measured, `scrollY` is 0 across 180 sampled frames. But the app mounts ONE of two
+ * renderings and swaps between them (docs/app.md §Two renderings, and only one of them mounted), so
+ * the desktop table can mount fresh at any scroll position the phone list was left at — rotating a
+ * tablet, dragging a window wider, or ticking a column at a width that never moved.
+ *
+ * Measured, at 390px scrolled to 12,000 and resized to 1440: the desktop document is shorter than
+ * the stacked list's, so the engine clamps to 11,360 and the table mounts windowed there, 90 rows
+ * over 2 spacers. Without the fallback the fleet has zero measured height at a body offset of
+ * 11,156px, the window selects nothing at all, the document collapses to its chrome and the engine
+ * clamps the scroll to **0**: the runner is thrown back to the top of the fleet and loses their
+ * place. Nothing blank is painted — the collapse and the re-measurement happen inside one frame —
+ * which is why an instrument that counts blank frames never saw this.
+ */
+test('keeps the runner where they were when the rendering swaps under them', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await routeBigFleet(page);
+  await page.goto('/');
+  await expect(page.getByTestId('shoe-table-mobile'),
+    'the stacked list is not mounted, so nothing here swaps').toBeVisible();
+  await scrollTo(page, 12_000);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('.tblwrap'), 'the desktop table never mounted').toHaveCount(1);
+  await settledDeclared(page, 'after the rendering swapped');
+  const swapped = await plan(page);
+  const at = await page.evaluate(() => ({
+    y: window.scrollY,
+    max: document.documentElement.scrollHeight - window.innerHeight,
+  }));
+
+  // Within a screenful of where the gesture left them, or clamped by the shorter document — the
+  // desktop rendering is more compact than the stacked list, so some clamping is the honest answer
+  // and losing the position entirely is not.
+  expect(at.y, `the swap threw the runner back up the fleet, to ${at.y}px`)
+    .toBeGreaterThan(Math.min(12_000, at.max) - 900);
+  // And it mounted WINDOWED there rather than showing the top of the fleet: the rows on screen are
+  // the ones the scroll position names.
+  expect(swapped.first, 'the table mounted at the top of the fleet rather than where the page is')
+    .toBeGreaterThan(FLEET_SIZE / 4);
+  expect(swapped.shoes).toBeLessThan(FLEET_SIZE);
+});
+
+
+/**
+ * **What an open shoe occupies is a row PLUS its panel, and the plan has to believe it.**
+ *
+ * A panel is 843–1005px on the desktop. Left out of the item's height, every shoe below an open one
+ * sits that much further down the document than the plan believes, so the window computed for a
+ * scroll position past it selects rows that are nowhere near the screen — which is why the
+ * component measures the panel off the DOM rather than modelling it, and it is what
+ * `ShoeTable.svelte` calls "a blank body rather than a subtle error" in its own words.
+ *
+ * **The instrument is what a runner would see**, not an offset: sample down the middle of the table
+ * and ask what is under each point. Measured with six panels open above the window, at three depths:
+ * clean, **29 of 29 points land on shoe rows and none on a spacer**; with the panel height dropped
+ * from the item, **29 of 29 land on a spacer** — the whole viewport is the stand-in for rows that
+ * are elsewhere in the DOM. One open panel is inside the 1,280px overscan and invisible; the error
+ * is per open panel, so it is a defect that arrives with the comparison the app exists for.
+ *
+ * It holds the other half of the same rule too: **an open row is in the plan at any scroll
+ * position** (spec §Decisions), asserted as the six panels still being mounted a fleet away from
+ * where they were opened.
+ */
+test('never leaves the runner looking at a spacer, with panels open above them', async ({ page }) => {
+  await mount(page);
+  // Opened through the address rather than by clicking, because a click also scrolls: the landing
+  // is `toggle`'s job and this test is about the plan (docs/app.md §View and URL ownership).
+  const opened = (await plan(page)).slugs.slice(0, 6);
+  await page.goto(`/?open=${opened.join(',')}`);
+  await expect(page.locator('.tblwrap'), 'the desktop table never mounted').toHaveCount(1);
+  await settledDeclared(page, 'with panels open');
+  await expect(page.locator('tr.expand'), 'an open row was left out of the plan')
+    .toHaveCount(opened.length);
+
+  for (const y of [6_000, 10_000, 14_000]) {
+    await scrollTo(page, y);
+    const cut = await plan(page);
+    expect(cut.spacers, `nothing is spaced for at ${y}px, so this asserts nothing`)
+      .toBeGreaterThan(0);
+    expect(cut.panels, `an open row was dropped from the plan at ${y}px`).toBe(opened.length);
+
+    const under = await page.evaluate(() => {
+      const wrap = document.querySelector('.tblwrap')!.getBoundingClientRect();
+      const x = Math.round(wrap.left + wrap.width / 2);
+      const hits: Record<string, number> = {};
+      for (let sample = 0; sample <= window.innerHeight; sample += 25) {
+        const tr = document.elementFromPoint(x, sample)?.closest('tr');
+        // The pinned header and the page outside the table are neither: what matters is that no
+        // point inside the body is standing on a spacer.
+        const kind = !tr ? 'none' : tr.closest('thead') ? 'head'
+          : tr.classList.contains('spacer') ? 'spacer'
+          : tr.classList.contains('expand') ? 'expand' : 'shoe';
+        hits[kind] = (hits[kind] ?? 0) + 1;
+      }
+      return hits;
+    });
+    expect(under['spacer'] ?? 0,
+      `the runner is looking at ${under['spacer']} sampled points of spacer at ${y}px: `
+      + JSON.stringify(under)).toBe(0);
+    expect((under['shoe'] ?? 0) + (under['expand'] ?? 0),
+      `the table covers almost none of the viewport at ${y}px, so a blank band would not show`)
+      .toBeGreaterThan(10);
+  }
+});
