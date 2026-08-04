@@ -145,12 +145,20 @@ on `10-12` and `2024-2025`. There is no tolerance that repairs this, because the
 thing being modelled genuinely has three answers.
 
 So the app measures instead: **every name laid out in one hidden container at
-the current name-column width, and the line counts read back.** 2.0–2.3ms for
-455 names in all three engines, linear at about 4.8µs a name. Exact by
-construction, in whatever engine is running, with no font table involved —
-`nameLines` needs none. What remains true from the original reasoning is that
-one cell wraps and the others cannot: every other cell is a nowrap phrase or an
-unbreakable mono figure, so a row's height is a function of its name alone.
+the current name-column width, and the line counts read back.** Exact by
+construction, in whatever engine is running, with no font table involved. What
+remains true from the original reasoning is that one cell wraps and the others
+cannot: every other cell is a nowrap phrase or an unbreakable mono figure, so a
+row's height is a function of its name alone.
+
+*Amended 2026-08-04, at implementation.* Two things this paragraph asserted
+before the thing existed are wrong and were replaced by measurement, both
+recorded in `app/src/lib/row-height.ts`. **The cost is 5.2ms in Chromium and
+7.0ms in Firefox and WebKit**, not 2.0–2.3ms, and it is the engine laying out 455
+boxes rather than anything reducible; it stays affordable on WHEN it is paid.
+And **a line count is not a height**: a one-line row is not set by the name at
+all, so there is no base and no line step to multiply by — the height is read off
+a replica of the whole row, one per distinct line count.
 
 **The cache is keyed on width, and width is the fragile part — not row count.**
 Anything that changes how a name breaks invalidates every measured height at
@@ -255,7 +263,7 @@ implementation* have no honest value until the thing exists.
 | No cell's content exceeds its declared column by more than the model's cross-engine spread, over every column and every mounting width, in all three engines. The spread is *measured at implementation* (~0.8px at the readings taken so far) and must be justified against the cell padding that absorbs it, never asserted as a bare number | `app/e2e/cross-browser.spec.ts`, `app/e2e/smoke.spec.ts` |
 | The model's min-content still agrees with the engine's, measured with the override off, within `FIT_TOLERANCE_PX` | `app/e2e/fit-support.ts` (unchanged claim, new measurement path) |
 | Bulk-measured row heights equal the heights the table renders, for every shoe in the fleet, three engines | `app/e2e/cross-browser.spec.ts` |
-| The bulk measurement costs under 5ms for the committed fleet, and is paid per name-column change rather than per filter change | *measured at implementation*; `app/e2e/smoke.spec.ts` |
+| The bulk measurement is paid per name-column change rather than per filter change | `app/e2e/smoke.spec.ts` asserts the load-bearing half without timing anything — a filter moves no declared width, so the cache key does not move. The **milliseconds are a rig reading, not an assertion**: the e2e fixture is five shoes, so a cost measured there would be a cost for five names, and a wall-clock bound on CI hardware is a flake rather than a guard. `.hunt/task4/rig.ts` measures it on the committed fleet in three engines and `app/src/lib/row-height.ts` owns the figures. It came in **over the 5ms this row asked for** — 5.2ms Chromium, 7.0ms Firefox and WebKit — and the paragraph above says why that is the wrong thing to hold it to |
 | The model is never narrower than any engine's own min-content — the over-reserve rule's whole justification. Held for **raw-slug headers**, in three engines. Over every catalogue label and every name in the fleet it is a **rig reading rather than an assertion**: no committed suite quantifies over either, `fit.test.ts` having no engine in it and `FIT_SETS` running on the five-shoe e2e fixture | `app/e2e/fit-support.ts` (`FIT_DROPPED_COLS`, three engines); the fleet-wide half is unheld, and its sweep is gitignored |
 | What that over-reservation costs at the worst slug a link can name — pinned against both of its inputs, so a longer `MAX_SLUG_LEN` or a regenerated `HEADER_PX` reddens rather than silently restating it | `app/src/lib/fit.test.ts`; the figure and its derivation live in `app/e2e/fit-support.ts` |
 | The word split happens on break opportunities only — never on non-breaking whitespace | `app/src/lib/labels.test.ts` |
@@ -265,7 +273,7 @@ implementation* have no honest value until the thing exists.
 | A focused row and an open row are in the plan at any scroll position | `app/src/lib/virtual.test.ts` |
 | Spacer height equals the summed height of exactly the items it stands for | `app/src/lib/virtual.test.ts` |
 | Per-drag fleet-wide pass counts stay independent of fleet size | `app/src/recompute-budget.test.ts` (existing, must not regress) |
-| Desktop row base and line step, in px | *measured at implementation*; `app/e2e/smoke.spec.ts` |
+| ~~Desktop row base and line step, in px~~ — **withdrawn at implementation: there is no such pair.** A row is 36px at one line and 53 at two, and every line after that adds 18, so the first step is not the step: one line is set by the rest of the row rather than by the name. Any base-and-step constant is therefore wrong at 445 of the fleet's 455 rows. Heights are read off a replica row per distinct line count instead, and the bound above holds them | `app/e2e/fit-support.ts` |
 | Phone shoe base and line step, in px | *measured at implementation*; `app/e2e/smoke.spec.ts` |
 | Overscan, in px | *measured at implementation*; asserted as behaviour in `virtual.test.ts` |
 
@@ -296,9 +304,20 @@ export function columnWidths(
   columns: readonly string[], trackPx: number, model: FitModel,
 ): number[];                          // name column first, one entry per rendered column
 
-// app/src/lib/row-height.ts
-export function nameLines(name: string, discontinued: boolean, widthPx: number): number;
-export function desktopRowPx(shoe: Shoe, nameColumnPx: number): number;
+// app/src/lib/row-height.ts — DOM, no Svelte. Delivered shape, task 4.
+// Bulk rather than per name: the measurement is one layout of the whole fleet, so a per-name
+// signature would be one layout per name. Import-free by construction, so `page.evaluate` can be
+// handed the function itself and the three-engine bound is about this code.
+export interface NameEntry { readonly name: string; readonly discontinued: boolean }
+export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] | null;
+export interface RowHeights {
+  heights(names: readonly NameEntry[]): number[] | null;   // null: cannot measure, render everything
+  destroy(): void;
+}
+export function createRowHeights(onInvalidate: () => void): RowHeights;
+
+// Task 8's, unbuilt: the phone's ident cell wraps the name AND the metadata run, which varies with
+// the column set, so it is a different measurement and gets its own evidence.
 export function phoneShoePx(shoe: Shoe, columns: readonly string[], widthPx: number): number;
 ```
 
@@ -438,6 +457,7 @@ owes it.
 | `FIT_DROPPED_COLS` in `app/e2e/fit-support.ts` | the raw-slug headers held to three engines. **Two claims, and only one of them is separate.** The min-content claim is one-sided where `FIT_SETS` carries a ±4px tolerance, which is why the array stands apart. The no-overflow claim is not separate at all: as of task 3 both names are passed to `sweepDeclaredColumns` and get an identical assertion, so a guard added to that sweep reaches the slug headers too and one added to only one caller is a bug |
 | `FIT_OVERFLOW_PX` and `measureExcursions` in `app/e2e/fit-support.ts` | **Paid by task 3 and owed again by tasks 4–6.** `measureExcursions` walks `thead th, tbody tr.shoe > *` — the rows in the DOM. Today that is the whole fleet, so "no cell's ink leaves its column" quantifies over every shoe. **Windowing the body silently narrows it to a windowful**, with no assertion failing and nothing in the bound to say its population changed: the widest cell in a column would simply stop being measured. Whoever lands the window either measures excursions with the window scrolled across the fleet, or states in the sweep's docblock what the bound now quantifies over. `FIT_OVERFLOW_PX`'s own size is justified against `--s2` where it is declared and does not move with this |
 | the slug length `urlstate.ts` accepts | bounds the worst raw-slug header the model can be asked for, and therefore the over-reserve's true ceiling |
+| `measureDesktopRowHeights` in `app/src/lib/row-height.ts` | **Quantifies over the whole fleet but reads the DOM for its prototypes, and tasks 5-6 change what is in the DOM.** It clones a live `tr.shoe` for the replica and copies a discontinued chip's markup from a rendered instance, because both carry Svelte-scoped classes that cannot be reconstructed. Windowing the body means the window may contain **no discontinued row**, and then there is no chip to copy: the function returns `null` — cannot measure — rather than a set of heights short by a chip, and the caller renders everything, which puts an instance back on the page and heals it. That is correct but it is a loop, so whoever lands the window must check it settles rather than alternating. The same applies to the row clone itself: with an empty window there is no row to clone at all |
 | `recompute-budget.test.ts`'s per-drag counts | must stay fleet-size-independent |
 
 ---
@@ -450,8 +470,8 @@ owes it.
 |---|---|---|
 | `app/src/lib/virtual.ts` | create | `virtualPlan` and its types |
 | `app/src/lib/virtual.test.ts` | create | the plan's bounds |
-| `app/src/lib/row-height.ts` | create | the line-break simulation and both height models |
-| `app/src/lib/row-height.test.ts` | create | derived heights against known names |
+| `app/src/lib/row-height.ts` | create | the bulk measurement and its invalidation — no simulation, no derivation |
+| `app/src/lib/row-height.test.ts` | create | the cache's rules and the cannot-measure answer; the heights themselves are a browser fact and live in the e2e |
 | `app/src/lib/fit.ts` | modify | `headerMaxPx`, `columnMaxPx`, `columnWidths` |
 | `app/src/lib/fit.test.ts` | modify | the two-clause distribution, the no-slack case |
 | `app/src/components/ShoeTable.svelte` | modify | `<colgroup>`, `table-layout: fixed`, the plan, scroll-to-index |

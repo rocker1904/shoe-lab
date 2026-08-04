@@ -6,6 +6,7 @@ import type { ShoesFile } from '../../shared/types.js';
 import {
   DESKTOP_FLOOR_PX, desktopMinWidth, fitModel, NAME_COL_PX, rendersPhone, SIDEBAR_PERMANENT_PX,
 } from '../src/lib/fit';
+import { measureDesktopRowHeights } from '../src/lib/row-height';
 
 /**
  * The one thing that stops the fit model rotting: it is arithmetic over committed font tables, and
@@ -260,6 +261,7 @@ export async function setLayoutWidth(page: Page, layoutPx: number, height = 900)
  */
 export async function measureDeclared(page: Page): Promise<{
   layout: string; tableWidth: number; trackWidth: number; declaredSum: number; cols: number;
+  widths: number[];
 }> {
   return page.evaluate(() => {
     const wrap = document.querySelector<HTMLElement>('.tblwrap');
@@ -273,6 +275,10 @@ export async function measureDeclared(page: Page): Promise<{
       trackWidth: wrap.clientWidth,
       declaredSum: declared.reduce((a, b) => a + b, 0),
       cols: declared.length,
+      // Per column as well as summed, because the sum is the TRACK: `columnWidths` shares every
+      // spare pixel out, so two different sharings of the same track sum identically. A claim about
+      // what a width is a function of has to read the widths.
+      widths: declared,
     };
   });
 }
@@ -373,5 +379,101 @@ export async function sweepDeclaredColumns(page: Page, cols: readonly string[]):
     const over = await measureExcursions(page);
     expect(over[0]?.px ?? 0, `at ${width}px: ${JSON.stringify(over.slice(0, 3))}`)
       .toBeLessThanOrEqual(FIT_OVERFLOW_PX);
+  }
+}
+
+/**
+ * Ground truth for a name the fixture does not contain: put it in a LIVE row, read the row, put the
+ * row back. The table itself is the only authority on what it renders, and a second model of it
+ * here would be the thing under test wearing a different hat.
+ *
+ * Both rows are used on purpose — one carrying a discontinued chip and one not — so the chipped
+ * half of the claim is asked of a row that really has one rather than of a chip stitched on for the
+ * measurement.
+ */
+function renderedForNames(words: number): { names: string[]; disc: boolean[]; rendered: number[] } {
+  const rows = [...document.querySelectorAll<HTMLTableRowElement>('.tblwrap table tbody tr.shoe')];
+  const chipOf = (r: HTMLElement) => r.querySelector('td.name .name-row > div > span');
+  const plainRow = rows.find((r) => !chipOf(r));
+  const chipRow = rows.find((r) => chipOf(r));
+  const names: string[] = [];
+  const disc: boolean[] = [];
+  const rendered: number[] = [];
+  for (const [row, isDisc] of [[plainRow, false], [chipRow, true]] as const) {
+    if (!row) continue;
+    const strong = row.querySelector('td.name strong')!;
+    const was = strong.textContent;
+    // Four-letter words in one-word steps, not long ones: the claim is about WHERE a line breaks,
+    // so the sweep has to cross break points in small enough steps to land just under and just over
+    // one. In whole-line steps the chip could be dropped from the measurement entirely and every
+    // reading still agreed, because no name ever sat close enough to a boundary for it to matter.
+    for (let n = 1; n <= words; n++) {
+      const name = Array.from({ length: n }, () => 'Mmmm').join(' ');
+      strong.textContent = name;
+      names.push(name);
+      disc.push(isDisc);
+      rendered.push(row.getBoundingClientRect().height);
+    }
+    strong.textContent = was;
+  }
+  return { names, disc, rendered };
+}
+
+/**
+ * The height sweep: what `measureDesktopRowHeights` says a row will be, against what the table
+ * renders, at every width a column set is mounted at.
+ *
+ * **The module's own function is handed to `page.evaluate`, never a copy of it.** That is the whole
+ * of the bound — a paraphrase living in this file could agree with itself for ever while the app
+ * drifted — and it is why `app/src/lib/row-height.ts` is written with no imports
+ * (spec §Decisions, heights are measured in bulk).
+ *
+ * **Two claims, because the fixture can only carry one of them.** The five fixture shoes have
+ * one-word names that never wrap, so measuring them holds the one-line row and nothing else — and
+ * one line is the case a name-only model gets WRONG, so it is worth holding, but it is not the
+ * claim. The synthetic half asks the same question of names built to wrap. Their rendered heights
+ * are asserted to take more than one value, or the sweep would pass vacuously on a fixture whose
+ * names all fit.
+ */
+export async function sweepRowHeights(page: Page, cols: readonly string[]): Promise<void> {
+  await page.goto(`/?cols=${cols.join(',')}`);
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  const fleet = FIXTURE.shoes.map((s) => ({ name: s.name, discontinued: !!s.discontinued }));
+
+  for (const width of mountWidths(cols)) {
+    expect(await setLayoutWidth(page, width), 'the viewport did not resolve to this layout width')
+      .toBe(width);
+    await expect(page.locator('.tblwrap'), `the desktop table is not mounted at ${width}px`)
+      .toHaveCount(1);
+    await expect.poll(async () => {
+      const now = await measureDeclared(page);
+      return Math.abs(now.declaredSum - now.tableWidth);
+    }, { message: `the table is not laid out by its declared widths at ${width}px` })
+      .toBeLessThanOrEqual(1);
+
+    const measured = await page.evaluate(measureDesktopRowHeights, fleet);
+    expect(measured, `nothing could be measured at ${width}px`).not.toBeNull();
+    const rendered = await page.evaluate(() => {
+      const out: Record<string, number> = {};
+      for (const tr of document.querySelectorAll<HTMLElement>('.tblwrap table tbody tr.shoe')) {
+        out[tr.dataset['slug']!] = tr.getBoundingClientRect().height;
+      }
+      return out;
+    });
+    FIXTURE.shoes.forEach((s, i) => {
+      expect(measured![i], `${s.name} at ${width}px`).toBe(rendered[s.slug]);
+    });
+
+    const truth = await page.evaluate(renderedForNames, 40);
+    const names = truth.names.map((name, i) => ({ name, discontinued: truth.disc[i]! }));
+    const heights = await page.evaluate(measureDesktopRowHeights, names);
+    expect(heights, `nothing could be measured for synthetic names at ${width}px`).not.toBeNull();
+    expect(new Set(truth.rendered).size,
+      `every synthetic name rendered one height at ${width}px, so this proves nothing`)
+      .toBeGreaterThan(1);
+    names.forEach((n, i) => {
+      expect(heights![i], `${n.discontinued ? '[disc] ' : ''}${n.name.length} chars at ${width}px`)
+        .toBe(truth.rendered[i]);
+    });
   }
 }

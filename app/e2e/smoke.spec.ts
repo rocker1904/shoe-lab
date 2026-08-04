@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, NAME_COL_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
-  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, sweepDeclaredColumns,
+  APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureDeclared,
+  measureFit, setLayoutWidth, sweepDeclaredColumns, sweepRowHeights,
 } from './fit-support';
 
 /**
@@ -1717,6 +1718,61 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
  */
 test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
   await sweepDeclaredColumns(page, FIT_DROPPED_COLS);
+});
+
+/**
+ * **Bulk-measured row heights against what the table renders**, in the engine the width model was
+ * measured in. The measurement is the app's own function, handed to the page — the sweep and the
+ * reason it looks like this live in `fit-support.ts`.
+ *
+ * The default set only, here and in `cross-browser.spec.ts`: a row's height is a function of its
+ * NAME and the width the name wraps at, and the ladder inside the sweep already walks that width
+ * from the narrowest mounting to 2560px. A second column set would re-ask the same question with
+ * the same answer.
+ */
+test('renders every row at the height it measured', async ({ page }) => {
+  await sweepRowHeights(page, FIT_SETS['default']!);
+});
+
+/**
+ * **The claim that makes the measurement affordable**, and the one thing about it a suite can hold
+ * without timing anything: a filter moves no declared width, so the cache key does not move and a
+ * drag pays nothing (spec §Decisions, `app/src/lib/row-height.ts`). It is true because a declared
+ * width is `min + share` over the COLUMNS and the track, never over the rows in the DOM — which is
+ * what task 3 bought and what this would catch the loss of.
+ */
+test('does not move a declared column width when a filter does', async ({ page }) => {
+  const rows = page.locator('.tblwrap table tbody tr.shoe');
+  // The layout width is re-established after each load and the reading is polled, for the two
+  // reasons the height sweep polls: the declaration reaches the DOM through a `ResizeObserver`, so
+  // a reading taken straight after a resize is the previous track's — and a filter that empties the
+  // page takes the classic scrollbar with it, which moves the LAYOUT width by its own 15px and
+  // would be read here as the filter having moved a column.
+  const settled = async () => {
+    expect(await setLayoutWidth(page, 1440)).toBe(1440);
+    await expect.poll(async () => {
+      const now = await measureDeclared(page);
+      return Math.abs(now.declaredSum - now.tableWidth);
+    }).toBeLessThanOrEqual(1);
+    return measureDeclared(page);
+  };
+
+  await page.goto('/');
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  const before = await settled();
+  const shown = await rows.count();
+
+  await page.goto('/?disc=only');
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  expect(await rows.count(),
+    'the filter removed no rows, so it cannot show that removing rows moves nothing')
+    .toBeLessThan(shown);
+  const after = await settled();
+
+  expect(after.cols).toBe(before.cols);
+  // Per column, not the sum: `columnWidths` shares the whole track out either way, so the sums
+  // agree even when every column has moved.
+  expect(after.widths).toEqual(before.widths);
 });
 
 /**

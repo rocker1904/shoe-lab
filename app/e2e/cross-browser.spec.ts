@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, sweepDeclaredColumns,
+  sweepRowHeights,
 } from './fit-support';
 
 /**
@@ -953,6 +954,15 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
  *  whose hyphen rule that over-reservation exists for (`FIT_DROPPED_COLS`). */
 test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
   await sweepDeclaredColumns(page, FIT_DROPPED_COLS);
+});
+
+/**
+ * The same height bound in the two engines whose line breaking the model is NOT built from — which
+ * is the whole reason heights are measured rather than derived: `Under Armour Charged Pursuit 3` is
+ * two lines in Chromium and one here (spec §Decisions).
+ */
+test('renders every row at the height it measured', async ({ page }) => {
+  await sweepRowHeights(page, FIT_SETS['default']!);
 });
 
 /**
