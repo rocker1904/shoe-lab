@@ -1,7 +1,19 @@
 # A `zone=` and `story=` shorthand in the URL
 
 *2026-08-03 · from BACKLOG's "A `zone=` shorthand in the URL", widened to carry
-the story too · status: **approved, in delivery**.*
+the story too · status: **delivered 2026-08-04 and frozen** — history rather
+than reference, and where it disagrees with docs/, docs/ wins. The build sheet
+below records what was done and is not a list to run again.*
+
+*Two amendments were made during delivery and are recorded here because the
+sheet below still reads as written. Task 7 (the arrival registry) was folded
+into task 4, so `zone=`/`story=` could never parse while unowned by
+`isBareArrival`. Task 9 (documentation) was dissolved: each behaviour commit
+carries its own owning-doc edit, per CLAUDE.md §Conventions, and its residue —
+the dated §Decisions entry, the docs/policies.md sentence, closing BACKLOG's
+item — landed inside the tasks. One §Bounds row was corrected rather than met
+as written; it says so in place. WebKit could not be launched in the delivery
+environment, so the three-engine e2e run first happened in CI.*
 
 Give the address bar a short spelling for the two things a shared link is most
 often about — which half of the shoe the table measures, and which story it is
