@@ -101,8 +101,27 @@ const FALLBACK_PX = 12;
 const textPx = (s: string): number =>
   [...s].reduce((sum, ch) => sum + (CHAR_PX[ch] ?? FALLBACK_PX), 0);
 
+/**
+ * Where this app is willing to say a line may break: **at whitespace, and nowhere else**. The one
+ * home for that rule — `lineCount` below simulates the wrap with it, `widestWordPx` below takes the
+ * widest token it yields, and `lib/fit.ts` measures both header words and shoe names through it
+ * (docs/app.md §Table presentation).
+ *
+ * **A hyphen is deliberately NOT a break opportunity here, and that is over-reservation rather than
+ * a claim about any engine.** Every engine does break at some hyphens, so the whole token is the
+ * widest answer any of them can give and a model built on it can only ever be too wide. Modelling
+ * which ones is the losing game: measured in all three engines, Chromium and WebKit break
+ * `breathability-25`, `abc-12` and `10-12` alike, while Firefox implements UAX #14's numeric
+ * context and leaves every one of them whole — and a rule tuned to any single engine puts the
+ * model *under* another engine's min-content, which is a header hanging out of a declared column
+ * rather than a column a few pixels wider than it needed to be. The reachable cost is a raw slug
+ * (docs/app.md §Columns are permissive, ranges and sorts are strict), which is the case with no
+ * design behind it at all.
+ */
+export const wordsOf = (s: string): string[] => s.split(/\s+/);
+
 export function widestWordPx(label: string): number {
-  return Math.max(...label.split(/\s+/).map(textPx));
+  return Math.max(...wordsOf(label).map(textPx));
 }
 
 /**
@@ -120,7 +139,7 @@ export function lineCount(label: string, maxPx: number = MAX_LABEL_PX): number {
   const space = textPx(' ');
   let lines = 1;
   let width = 0;
-  for (const word of label.split(/\s+/)) {
+  for (const word of wordsOf(label)) {
     const w = textPx(word);
     if (width === 0) width = w;
     else if (width + space + w <= maxPx) width += space + w;

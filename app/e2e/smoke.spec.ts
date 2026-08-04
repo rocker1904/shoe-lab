@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
-import { awaitFacesLoaded, FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
+import {
+  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
+} from './fit-support';
 
 /**
  * Wait for the utilities to have landed in the host this width gives them. They move between the
@@ -1675,6 +1677,20 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
       .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
   });
 }
+
+/**
+ * Chromium's third of the dropped-column guard; `cross-browser.spec.ts` owns the reasoning and the
+ * two engines that can actually fail it. Here because a raw-slug header is over-reserved rather
+ * than agreed with, so the claim is one-sided in every engine and this is where a Chromium-side
+ * regression would show first (docs/app.md §Table presentation).
+ */
+test('never models a dropped column\'s header narrower than Chromium renders it', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const { model, rendered } = await measureFit(page, FIT_DROPPED_COLS);
+  expect(rendered - model,
+    `the fit model says ${model.toFixed(1)}px and Chromium renders ${rendered.toFixed(1)}px`)
+    .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
+});
 
 /**
  * **The stacked list under the DESKTOP chrome** — the regime the fit switch created and the one no

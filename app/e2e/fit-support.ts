@@ -83,17 +83,39 @@ export async function awaitFacesLoaded(
 /** The two faces every rendered measurement in these suites depends on (`app/src/app.css`). */
 export const APP_FACES = ['Inter Tight', 'JetBrains Mono'];
 
-/** The column sets the model is held to: the default view, the narrowest thing there is, a set of
- *  phrase columns whose width is the fleet's rather than the labels', and a wide one. */
+/**
+ * The column sets the model is held to: the default view, the narrowest thing there is, a set of
+ * phrase columns whose width is the fleet's rather than the labels', and a wide one.
+ *
+ * **`phrases` is every cell-bound column there is, and it is four.** Those are the columns whose
+ * minimum comes from a runner's data rather than from a header we wrote, so they are the case a
+ * declared width has to be checked hardest against — `heel-tab` most of all, whose
+ * `Extended heel collar` is the widest cell in the table on the real fleet. The count is asserted
+ * over the committed fleet in `app/src/lib/fit.test.ts`, so it cannot silently become five.
+ */
 export const FIT_SETS: Record<string, string[]> = {
   default: ['releasedAt', 'score', 'msrpGbp', 'heel-stack', 'plate', 'energy-return-heel',
     'toebox-width-widest-part', 'weight'],
   minimal: ['score'],
-  phrases: ['releasedAt', 'plate', 'tongue-gusset-type'],
+  phrases: ['releasedAt', 'plate', 'tongue-gusset-type', 'heel-tab'],
   wide: ['releasedAt', 'score', 'msrpGbp', 'heel-stack', 'plate', 'energy-return-heel',
     'toebox-width-widest-part', 'weight', 'shock-absorption-heel', 'outsole-durability',
     'heel-counter-stiffness'],
 };
+
+/**
+ * The columns the catalogue does NOT hold — a shared link outliving a remethod, whose header is the
+ * raw slug (docs/app.md §Columns are permissive, ranges and sorts are strict). `-26` is upstream's
+ * own convention for the next generation of a test, so this is the shape a stale link actually
+ * carries; `10-12` is the adversarial one.
+ *
+ * **Deliberately not in `FIT_SETS`, because the claim is one-sided rather than an agreement.** The
+ * model treats no hyphen as a break opportunity, which means it over-reserves a slug header by up
+ * to 208px against every engine — far outside `FIT_TOLERANCE_PX`, and on purpose. What has to hold
+ * is only that it never goes UNDER, in the one engine that leaves those hyphens alone
+ * (docs/app.md §Table presentation).
+ */
+export const FIT_DROPPED_COLS = ['breathability-26', 'energy-return-heel-24', '10-12'];
 
 /**
  * The model's number and the engine's, for one column set. The engine's is read by asking the table

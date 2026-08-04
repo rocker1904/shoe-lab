@@ -118,6 +118,30 @@
       ]
     },
     {
+      "id": 40,
+      "slug": "heel-tab",
+      "name": "Heel tab",
+      "type": "option",
+      "units": "",
+      "groupId": null,
+      "chartLabel": null,
+      "isNew": false,
+      "previousId": null,
+      "updateId": null,
+      "primaryTestId": null,
+      "secondaryTestIds": [],
+      "options": [
+        {
+          "value": "extended-heel-collar",
+          "name": "Extended heel collar"
+        },
+        {
+          "value": "pull-tab",
+          "name": "Pull tab"
+        }
+      ]
+    },
+    {
       "type": "percent",
       "units": "",
       "groupId": null,
@@ -291,6 +315,7 @@
         "68": 140,
         "70": 40,
         "39": "both-sides-semi",
+        "40": "extended-heel-collar",
         "41": true
       },
       "details": {
@@ -352,6 +377,7 @@
         "68": 150,
         "70": 42,
         "39": "none",
+        "40": "pull-tab",
         "41": false
       },
       "details": null,
@@ -390,6 +416,7 @@
         "68": 120,
         "70": 30,
         "39": "both-sides-semi",
+        "40": "extended-heel-collar",
         "41": true
       },
       "details": null,
@@ -426,6 +453,7 @@
         "67": 90,
         "68": 100,
         "39": "none",
+        "40": "pull-tab",
         "41": false
       },
       "details": null,

@@ -1320,15 +1320,24 @@ is the raggedness `nowrap` exists to prevent.
 
 **Three things in the width model are guarded rather than assumed, because each
 quantifies over data nobody here controls** — `lib/fit.ts` computes them and
-`lib/fit.test.ts` holds them, against the committed fleet rather than a fixture.
+`lib/fit.test.ts` holds them — the second and third against the committed fleet
+rather than a fixture, the first in all three engines through
+`FIT_DROPPED_COLS` in `app/e2e/fit-support.ts`.
 
-- A header's longest word is found by a splitter that breaks after a hyphen
-  **except between digits**, which is UAX #14's numeric context. Firefox
-  implements it and the other two do not, so a URL naming a column the catalogue
-  has dropped — whose header is the raw slug (§Columns are permissive, ranges and
-  sorts are strict) — is modelled against the engine that refuses to break, and
-  the model over-reserves in the two that do. Reversed, the shortfall is tens of
-  pixels of header hanging out of a declared column.
+- **A hyphen is never a break opportunity**, so a header's longest word is its
+  longest whitespace-delimited token; `wordsOf` in `lib/labels.ts` is the one home
+  for that rule and the mobile label bounds read the same one. It is deliberate
+  over-reservation rather than a model of any engine: all three break at *some*
+  hyphens and no two agree which — Firefox implements UAX #14's numeric context
+  and Chromium and WebKit do not — so a rule tuned to either puts the model
+  **under** the other's min-content, which is a header hanging out of a declared
+  column. The whole token is the widest answer any engine can give, so the model
+  can only ever be too wide. **The price falls on raw-slug headers alone**
+  (§Columns are permissive, ranges and sorts are strict): no label the catalogue
+  renders carries an intra-word hyphen, so no real column set moves and no mount
+  boundary with it — but a stale link naming a dropped column is handed a column
+  far wider than any engine needs, and can take the stacked list at a width the
+  desktop table would have fitted.
 - The **name column's floor** is the wider of the declared `min-width: 14rem` and
   the fleet's own longest unbreakable token. The `discontinued` chip counts with
   the name's **last** word, because the markup leaves no break opportunity

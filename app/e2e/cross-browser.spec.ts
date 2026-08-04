@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
-import { awaitFacesLoaded, FIT_SETS, FIT_TOLERANCE_PX, measureFit } from './fit-support';
+import {
+  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
+} from './fit-support';
 
 /**
  * Firefox and WebKit implement none of `input type="month"` — both reflect the type back as `text`,
@@ -910,6 +912,23 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
       .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
   });
 }
+
+/**
+ * The one-sided half of the same guard, and the one only Firefox can fail. A column the catalogue
+ * no longer holds renders its raw slug as a header, and Firefox implements UAX #14's numeric
+ * context where Chromium and WebKit do not — so a model that broke `breathability-26` at its
+ * hyphen declared a width 17px under what Firefox needs, and the header hangs out of the column.
+ * The model now breaks no hyphen at all, so what is claimed here is that it never goes UNDER,
+ * never that it agrees: the over-reservation is the point and it is far outside
+ * `FIT_TOLERANCE_PX` (docs/app.md §Table presentation).
+ */
+test('never models a dropped column\'s header narrower than this engine renders it', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const { model, rendered } = await measureFit(page, FIT_DROPPED_COLS);
+  expect(rendered - model,
+    `the fit model says ${model.toFixed(1)}px and this engine renders ${rendered.toFixed(1)}px`)
+    .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
+});
 
 /**
  * The guard above is only worth its precision if it cannot measure a fallback face by mistake, and

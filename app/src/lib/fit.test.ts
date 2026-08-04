@@ -46,36 +46,27 @@ describe('the desktop table\'s min-content model', () => {
     expect(headerMinPx('x', long)).toBe(headerMinPx('y', short));
   });
 
-  it('breaks an unmeasured slug after its hyphens, as the engines do', () => {
-    // A column a URL may still name after the catalogue has dropped it renders as its raw slug
-    // (docs/app.md §Columns are permissive, ranges and sorts are strict). Treated as one word it
-    // measured 150px against a rendered 76px.
-    const whole = headerMinPx('stack-height-heel', undefined);
-    const widest = headerMinPx('height-', undefined);
-    expect(whole).toBe(widest);
-  });
-
-  it('does not break a hyphen that sits between digits — UAX #14\'s numeric context', () => {
-    // Firefox implements it and the other two do not, so this is the one place the model cannot
-    // follow Chromium: measured against each engine's own min-content on a header the catalogue
-    // does not hold, splitting `2024-2025` at the hyphen left the model 34.63px short in Firefox
-    // and within a sub-pixel of the other two. A slug is reachable as a header
-    // (docs/app.md §Columns are permissive, ranges and sorts are strict), so the pessimistic
-    // reading is the only safe one.
+  it('treats no hyphen as a break opportunity, whatever sits either side of it', () => {
+    // **Over-reservation, not a model of any engine.** Every engine breaks at SOME hyphens and no
+    // two agree on which: Chromium and WebKit break `10-12`, `abc-12` and `breathability-25` alike
+    // while Firefox leaves all three whole, so a rule tuned to either puts the model UNDER the
+    // other engine's min-content — a header hanging out of a declared column. The whole token is
+    // the widest answer any engine can give, so a model built on it can only be too wide, and the
+    // price is a raw-slug header (docs/app.md §Table presentation).
     //
     // Stated as min == max: an unbreakable string has one width, and only a splitter that leaves
-    // it whole makes the two agree.
-    for (const slug of ['10-12', '2024-2025', '2024-2025-2026']) {
+    // the hyphen alone makes the two agree.
+    for (const slug of ['10-12', '2024-2025', 'abc-12', '10-abc', 'a-1',
+      'breathability-26', 'stack-height-heel']) {
       expect(headerMinPx(slug, undefined), slug).toBe(headerMaxPx(slug, undefined));
     }
   });
 
-  it('still breaks a hyphen with a letter on either side of it', () => {
-    // The numeric context needs a digit on BOTH sides; anything else keeps the break opportunity
-    // the existing slug headers depend on.
-    for (const slug of ['10-abc', 'abc-12', 'stack-height-heel']) {
-      expect(headerMinPx(slug, undefined), slug).toBeLessThan(headerMaxPx(slug, undefined));
-    }
+  it('breaks at whitespace, which is the whole of the rule', () => {
+    // The other half: a splitter that broke nowhere would make every header's minimum its whole
+    // label, which is what `nowrap` on a `th` used to do and what pushed the document sideways.
+    expect(headerMinPx('Shock absorption heel', undefined))
+      .toBeLessThan(headerMaxPx('Shock absorption heel', undefined));
   });
 
   it('sizes a phrase column by the widest string the loaded fleet renders', () => {
@@ -252,6 +243,19 @@ describe('the name column\'s floor under the fleet\'s longest unbreakable token'
     const first = 'mmmmmmmmmm m';
     expect(nameCellMinPx([shoe({ slug: 'c', name: first, discontinued: true })]))
       .toBe(nameCellMinPx([shoe({ slug: 'd', name: first })]));
+  });
+
+  it('keeps a hyphenated name whole, which is where this floor is actually reached', () => {
+    // The shape that crosses `14rem` in practice is not a 33-character invention: it is an ordinary
+    // name with a year or a code hyphenated onto it, and the chip behind it. Measured, a
+    // `Speedgoat-2024` cell is 239.82px in Firefox against a 224px content box — so a model that
+    // broke the hyphen would declare a width 78px under what that engine needs.
+    const gone = shoe({ slug: 'a', name: 'Hoka Speedgoat-2024', discontinued: true });
+    expect(nameCellMinPx([gone])).toBeGreaterThan(224);
+    expect(model({ shoes: [gone] }).columnPx('name')).toBe(nameCellMinPx([gone]) + 16);
+    // The token is the whole of `Speedgoat-2024`, so it is wider than either half of it.
+    expect(nameCellMinPx([shoe({ slug: 'b', name: 'Hoka Speedgoat-2024' })]))
+      .toBeGreaterThan(nameCellMinPx([shoe({ slug: 'c', name: 'Hoka Speedgoat' })]));
   });
 
   it('raises the column\'s minimum above the declared floor where a token crosses it', () => {
@@ -460,6 +464,25 @@ describe('the width guards against the fleet that is actually shipped', () => {
     expect(margins.filter((m) => m.key.startsWith('toebox-width-at-the-widest')
       || m.key === 'toebox-width-widest-part').map((m) => m.px))
       .toEqual([expect.closeTo(8.45, 2), expect.closeTo(8.45, 2)]);
+  });
+
+  it('names every cell-bound column there is, and the worst excursion among them', () => {
+    // The other side of the same claim, and the one a declared width has to be checked hardest
+    // against: these are the columns whose minimum is a runner's phrase rather than a header we
+    // wrote, so what leaves the box under a model error is upstream's string. `FIT_SETS.phrases`
+    // in `app/e2e/fit-support.ts` is this list, and this is what stops the two drifting.
+    // De-duplicated: the catalogue carries a `plate` test of its own beside the shoe field, and
+    // both render the one column.
+    const keys = [...new Set([...fleet.tests.map((t) => t.slug), 'releasedAt', 'plate'])];
+    const bound = keys.map((k) => ({
+      key: k,
+      px: cellMaxPx(k, fleet.shoes, fleetIdx, SCORE_KEYS) - headerMinPx(k, fleetIdx.bySlug.get(k)),
+    })).filter((m) => m.px > 0 && !isFigure(m.key, fleetIdx.bySlug.get(m.key)));
+    expect(bound.map((m) => m.key).sort())
+      .toEqual(['heel-tab', 'plate', 'releasedAt', 'tongue-gusset-type']);
+    // `Extended heel collar` against a `Heel tab` header — twice the next worst, and the widest
+    // thing any cell in this table puts past a model that under-measures.
+    expect(Math.max(...bound.map((m) => m.px))).toBeCloseTo(87, 2);
   });
 
   it('excepts the story scores, whose cells are a declared bound rather than data', () => {

@@ -1,7 +1,7 @@
 import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';
 import { categoricalValue, PLATE_LABELS } from './categorical';
 import { displayNumber, indexTests, numericValue, type TestIndex } from './dataset';
-import { columnLabel } from './labels';
+import { columnLabel, wordsOf } from './labels';
 import { DERIVED_ZONE_PAIRS } from './lineage';
 import { displayReleaseDate } from './release-date';
 import { headerUnits } from './units';
@@ -215,36 +215,17 @@ const textPx = (s: string, table: Record<string, number>): number =>
   [...s].reduce((sum, ch) => sum + (table[ch] ?? FALLBACK_PX), 0);
 
 /**
- * Where a line may break, and the one rule in this file that follows Firefox rather than Chromium.
- *
- * A hyphen is a break opportunity and the break comes AFTER it, so `stack-height-heel` is three
- * words and the widest of them carries the hyphen. That matters for exactly the columns a URL is
- * allowed to name and the catalogue no longer holds: their header is the raw slug
- * (docs/app.md §Columns are permissive, ranges and sorts are strict), and treating one as a single
- * unbreakable word measured 150px against a rendered 76px in both engines.
- *
- * **Except between digits, which is UAX #14's numeric context**: Firefox implements it and refuses
- * to break `10-12` or `2024-2025` at all, where Chromium and WebKit break both. Measured against
- * each engine's own min-content on those two as slug headers, a splitter that broke them left the
- * model 14.50px and 34.63px short in Firefox — an overflowing cell once the width is declared —
- * against a sub-pixel disagreement in the other two. So the model takes the widest engine's
- * reading: it over-reserves such a column by up to 36px in Chromium and WebKit, which only makes
- * an unknown column wider than it needed to be (docs/app.md §Table presentation).
- *
- * The two alternatives are the negation of "a digit on both sides", written apart because each
- * side has to be asked separately: JavaScript has no way to negate a lookbehind and a lookahead
- * together.
- */
-const HYPHEN_BREAK = /(?<=-)(?!\d)|(?<=-)(?<!\d-)/;
-const words = (s: string): string[] => s.split(/\s+/).flatMap((w) => w.split(HYPHEN_BREAK));
-
-/**
  * What a wrapping box cannot go under: its longest word. The desktop headers wrap deliberately —
  * `nowrap` on a `th` made every column's minimum its longest header — so this, not the whole
  * label, is a header's contribution (docs/app.md §Columns and sorting).
+ *
+ * A word is `wordsOf`'s: whitespace-delimited, hyphens kept. That rule has one home in `labels.ts`
+ * and it is deliberate over-reservation rather than a model of anyone's line breaking — the price
+ * is a raw slug header wider than the engine would have drawn it, and the alternative is a header
+ * hanging out of a declared column in whichever engine the rule was not tuned to.
  */
 const widestWordPx = (s: string, table: Record<string, number>): number =>
-  Math.max(0, ...words(s).map((w) => textPx(w, table)));
+  Math.max(0, ...wordsOf(s).map((w) => textPx(w, table)));
 
 /**
  * A header's min-content: the name line and the units line, whichever is wider. The caret sits on
@@ -327,8 +308,9 @@ export function nameCellMaxPx(shoes: readonly Shoe[]): number {
 
 /**
  * The same cell at min-content: the chevron, the gap and the widest single WORD the fleet's names
- * carry. The furniture is additive for the reason `headerMinPx` gives — flex items cannot break
- * apart — and the word rather than the name because this is the one cell that wraps.
+ * carry — `wordsOf`'s word, so `Speedgoat-2024` is one of them and not two. The furniture is
+ * additive for the reason `headerMinPx` gives — flex items cannot break apart — and the word rather
+ * than the name because this is the one cell that wraps.
  *
  * **The discontinued chip is glued to the name's LAST word, and that is markup rather than
  * choice.** `<strong>{name}</strong><DiscontinuedTag/>` carries no whitespace between the two, and
@@ -345,7 +327,7 @@ export function nameCellMaxPx(shoes: readonly Shoe[]): number {
  */
 export function nameCellMinPx(shoes: readonly Shoe[]): number {
   const widest = Math.max(0, ...shoes.map((s) => {
-    const parts = words(s.name);
+    const parts = wordsOf(s.name);
     return Math.max(0, ...parts.map((w, i) =>
       textPx(w, NAME_PX) + (s.discontinued && i === parts.length - 1 ? DISC_TAG_PX : 0)));
   }));
