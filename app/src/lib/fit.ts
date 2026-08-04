@@ -219,10 +219,11 @@ const textPx = (s: string, table: Record<string, number>): number =>
  * `nowrap` on a `th` made every column's minimum its longest header — so this, not the whole
  * label, is a header's contribution (docs/app.md §Columns and sorting).
  *
- * A word is `wordsOf`'s: whitespace-delimited, hyphens kept. That rule has one home in `labels.ts`
- * and it is deliberate over-reservation rather than a model of anyone's line breaking — the price
- * is a raw slug header wider than the engine would have drawn it, and the alternative is a header
- * hanging out of a declared column in whichever engine the rule was not tuned to.
+ * A word is `wordsOf`'s: split at the three separators every engine breaks at and drops, hyphens
+ * kept. That rule has one home in `labels.ts` and it is deliberate over-reservation rather than a
+ * model of anyone's line breaking — the price is a raw slug header wider than the engine would have
+ * drawn it, and the alternative is a header hanging out of a declared column in whichever engine
+ * the rule was not tuned to.
  */
 const widestWordPx = (s: string, table: Record<string, number>): number =>
   Math.max(0, ...wordsOf(s).map((w) => textPx(w, table)));

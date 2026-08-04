@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { categoricalEntries } from './categorical';
 import { indexTests, NUMERIC_TEST_TYPES } from './dataset';
-import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, MAX_UNITS_CLEAR_PX, MAX_UNITS_PX, shortLabel, unitsPx, widestWordPx } from './labels';
+import { chipLabel, columnLabel, lineCount, MAX_LABEL_LINES, MAX_LABEL_PX, MAX_UNITS_CLEAR_PX, MAX_UNITS_PX, shortLabel, unitsPx, widestWordPx, wordsOf } from './labels';
 import { headerUnits } from './units';
 import type { LabTest } from '../../../shared/types.js';
 import type { Zone } from './lineage';
@@ -124,6 +124,59 @@ describe('the width table matches the shipped header face', () => {
     // FALLBACK_PX is face-specific too: left at the old face's value it would under-charge a name
     // full of characters the table has never seen, which is the one case the bound cannot catch.
     expect(widestWordPx('€')).toBeGreaterThanOrEqual(widestWordPx('m'));
+  });
+});
+
+/**
+ * **The half of the over-reserve rule that can put the model UNDER an engine.** Not splitting only
+ * ever costs width; splitting where an engine will not break is a header hanging out of a declared
+ * column, so every separator in the rule has to be one all three engines break at AND drop the
+ * advance of. Both lists were measured in Chromium, Firefox and WebKit rather than read off a
+ * whitespace definition (`wordsOf` in `labels.ts` names the readings); the strings here are
+ * upstream's `test.name` and `shoe.name`, which nothing normalises
+ * (docs/app.md §Table presentation).
+ */
+describe('where this app is willing to say a line may break', () => {
+  const SPLITS_AT: [string, string][] = [
+    ['U+0020 space', ' '],
+    ['U+0009 tab', '\t'],
+    ['U+000A line feed', '\n'],
+  ];
+
+  const KEEPS_WHOLE: [string, string][] = [
+    // The four whose entire purpose is to FORBID the break `/\s+/` used to take at them. `shoes.json`
+    // already carries U+00A0 and U+FEFF in its prose fields.
+    ['U+00A0 no-break space', ' '],
+    ['U+2007 figure space', ' '],
+    ['U+202F narrow no-break space', ' '],
+    ['U+FEFF zero-width no-break space', '﻿'],
+    // Whitespace by HTML's definition and by JS's, and still not a break: Chromium and WebKit offer
+    // none at a form feed, and WebKit none at a lone carriage return. These strings reach the DOM as
+    // JS text nodes, so the parser's newline normalisation never runs on them.
+    ['U+000C form feed', '\f'],
+    ['U+000D carriage return', '\r'],
+    // No engine breaks at it, and it is in JS's whitespace class alone.
+    ['U+000B vertical tab', '\v'],
+    // These three DO break, and are still out: only U+0020 hangs at a line end, so each of them
+    // leaves its own advance on the line the model would have thrown away.
+    ['U+2009 thin space', ' '],
+    ['U+3000 ideographic space', '　'],
+    ['U+1680 ogham space mark', ' '],
+  ];
+
+  it('splits at the three separators every engine breaks at and drops', () => {
+    for (const [name, sep] of SPLITS_AT) {
+      expect(wordsOf(`Nike${sep}Air`), name).toEqual(['Nike', 'Air']);
+    }
+  });
+
+  it('keeps a name whole at every other separator, whatever JS calls whitespace', () => {
+    for (const [name, sep] of KEEPS_WHOLE) {
+      expect(wordsOf(`Nike${sep}Air`), name).toEqual([`Nike${sep}Air`]);
+      // The consumer, not just the splitter: a header modelled at one fragment of a string no engine
+      // breaks is the failure, and it is unbounded in the string's length.
+      expect(widestWordPx(`Nike${sep}Air`), name).toBeGreaterThan(widestWordPx('Nike Air'));
+    }
   });
 });
 

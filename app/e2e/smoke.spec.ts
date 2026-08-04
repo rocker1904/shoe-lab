@@ -1681,8 +1681,10 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
 /**
  * Chromium's third of the dropped-column guard; `cross-browser.spec.ts` owns the reasoning and the
  * two engines that can actually fail it. Here because a raw-slug header is over-reserved rather
- * than agreed with, so the claim is one-sided in every engine and this is where a Chromium-side
- * regression would show first (docs/app.md §Table presentation).
+ * than agreed with, so the claim is a floor in every engine and this is where a Chromium-side
+ * regression would show first. The floor is `FIT_TOLERANCE_PX` rather than zero for the reason that
+ * file gives: `10-12` is over-reserved by nothing, so the font table's own spread is all that is
+ * left between the two numbers (docs/app.md §Table presentation).
  */
 test('never models a dropped column\'s header narrower than Chromium renders it', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });

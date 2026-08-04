@@ -102,10 +102,10 @@ const textPx = (s: string): number =>
   [...s].reduce((sum, ch) => sum + (CHAR_PX[ch] ?? FALLBACK_PX), 0);
 
 /**
- * Where this app is willing to say a line may break: **at whitespace, and nowhere else**. The one
- * home for that rule — `lineCount` below simulates the wrap with it, `widestWordPx` below takes the
- * widest token it yields, and `lib/fit.ts` measures both header words and shoe names through it
- * (docs/app.md §Table presentation).
+ * Where this app is willing to say a line may break: **at a space, a tab or a line feed, and
+ * nowhere else**. The one home for that rule — `lineCount` below wraps with it, `widestWordPx`
+ * below takes the widest token it yields, and `lib/fit.ts` measures both header words and shoe
+ * names through it (docs/app.md §Table presentation).
  *
  * **A hyphen is deliberately NOT a break opportunity here, and that is over-reservation rather than
  * a claim about any engine.** Every engine does break at some hyphens, so the whole token is the
@@ -117,8 +117,29 @@ const textPx = (s: string): number =>
  * rather than a column a few pixels wider than it needed to be. The reachable cost is a raw slug
  * (docs/app.md §Columns are permissive, ranges and sorts are strict), which is the case with no
  * design behind it at all.
+ *
+ * **Splitting is the one half that can make the model narrow, so the separator set is measured
+ * rather than named.** Not splitting only ever costs width. Splitting where an engine will not
+ * break, or where it breaks but keeps the separator's own advance on the line, models a fragment of
+ * a string the engine renders whole — unbounded in that string's length. So a character is in this
+ * set only where all three engines both break at it and drop it, and `labels.test.ts` names every
+ * one that is out and why.
+ *
+ * Two definitions were tried and both are wrong here. JS's `\s` matches U+00A0, U+2007, U+202F and
+ * U+FEFF, whose whole purpose is to forbid the break — it put a real catalogue label 193px narrow,
+ * and `shoes.json` already carries U+00A0 and U+FEFF in its prose fields. HTML's own ASCII
+ * whitespace is no better: measured, Chromium and WebKit offer no break at U+000C and WebKit none
+ * at a lone U+000D, and these strings reach the DOM as JS text nodes, so the parser's newline
+ * normalisation never runs on them.
+ *
+ * **What it still does not cover is a break that ADDS ink, and that is the residual rather than a
+ * hole.** An engine may put on the widest line something no token carries: Firefox draws the hyphen
+ * for a break at a U+00AD (6.30px at the desktop header face) and keeps a space's own advance when a
+ * combining mark clings to it (3.10px). Both are one glyph on one line however long the string is,
+ * so the shortfall is bounded by a character rather than by a token and lands in the `--s2` padding
+ * the cell already carries.
  */
-export const wordsOf = (s: string): string[] => s.split(/\s+/);
+export const wordsOf = (s: string): string[] => s.split(/[ \t\n]+/);
 
 export function widestWordPx(label: string): number {
   return Math.max(...wordsOf(label).map(textPx));
@@ -134,7 +155,14 @@ export function widestWordPx(label: string): number {
  */
 export const MAX_LABEL_LINES = 3;
 
-/** The browser's own greedy wrap, which is what decides how tall the sticky header stands. */
+/**
+ * A greedy wrap, which is how the sticky header's height is decided — over `wordsOf`'s conservative
+ * break rule rather than the engine's own, which is what this one really wants. Safe rather than
+ * merely shared: nothing renders from this count, its only consumers being `labels.test.ts`'s bound
+ * assertions, so a rule that breaks in fewer places than the engine can only ever fail the build
+ * early. Two rules would be the worse trade — a second home for the one thing this file is careful
+ * to state once.
+ */
 export function lineCount(label: string, maxPx: number = MAX_LABEL_PX): number {
   const space = textPx(' ');
   let lines = 1;

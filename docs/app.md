@@ -1325,19 +1325,39 @@ rather than a fixture, the first in all three engines through
 `FIT_DROPPED_COLS` in `app/e2e/fit-support.ts`.
 
 - **A hyphen is never a break opportunity**, so a header's longest word is its
-  longest whitespace-delimited token; `wordsOf` in `lib/labels.ts` is the one home
-  for that rule and the mobile label bounds read the same one. It is deliberate
-  over-reservation rather than a model of any engine: all three break at *some*
-  hyphens and no two agree which — Firefox implements UAX #14's numeric context
-  and Chromium and WebKit do not — so a rule tuned to either puts the model
-  **under** the other's min-content, which is a header hanging out of a declared
-  column. The whole token is the widest answer any engine can give, so the model
-  can only ever be too wide. **The price falls on raw-slug headers alone**
-  (§Columns are permissive, ranges and sorts are strict): no label the catalogue
-  renders carries an intra-word hyphen, so no real column set moves and no mount
-  boundary with it — but a stale link naming a dropped column is handed a column
-  far wider than any engine needs, and can take the stacked list at a width the
-  desktop table would have fitted.
+  longest token; `wordsOf` in `lib/labels.ts` is the one home for that rule and
+  the mobile label bounds read the same one. It is deliberate over-reservation
+  rather than a model of any engine: all three break at *some* hyphens and no two
+  agree which — Firefox implements UAX #14's numeric context and Chromium and
+  WebKit do not — so a rule tuned to either puts the model **under** the other's
+  min-content, which is a header hanging out of a declared column. The whole
+  token is the widest answer any engine can give.
+
+  **That is an upper bound only if the split is on separators every engine breaks
+  at, and two definitions of "whitespace" are not.** JS's `\s` matches U+00A0,
+  U+2007, U+202F and U+FEFF, whose purpose is to forbid the break — `shoes.json`
+  carries the first and last in its prose fields today, and one real catalogue
+  label spelled with them modelled 193px narrow. HTML's ASCII whitespace is no
+  better: Chromium and WebKit offer no break at a form feed and WebKit none at a
+  lone carriage return, and these strings reach the DOM as JS text nodes rather
+  than through the parser that would have normalised them. So the rule splits at
+  a **space, a tab or a line feed** and nowhere else, and the set is measured in
+  the three engines rather than named — `lib/labels.test.ts` lists every
+  separator that is out and why. What it cannot cover is a break that *adds* ink:
+  Firefox draws the hyphen for a U+00AD break and keeps a space's own advance when
+  a combining mark clings to it, each one glyph on one line however long the
+  string (6.30px and 3.10px measured), which lands in the padding the cell already
+  carries.
+
+  **The price falls on raw-slug headers alone** (§Columns are permissive, ranges
+  and sorts are strict): the one rendered label with an intra-word hyphen is
+  `Hi-vis`, which is 29.56px against the phone's 48px bound and one line either
+  way, so no real column set moves and no mount boundary with it. A stale link
+  naming a dropped column is handed a column far wider than any engine needs, and
+  can take the stacked list at a width the desktop table would have fitted —
+  bounded by the 64 characters `lib/urlstate.ts` accepts rather than by anything
+  upstream has published, which is **691px** of phantom header at the worst of
+  them.
 - The **name column's floor** is the wider of the declared `min-width: 14rem` and
   the fleet's own longest unbreakable token. The `discontinued` chip counts with
   the name's **last** word, because the markup leaves no break opportunity

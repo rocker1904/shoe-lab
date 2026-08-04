@@ -918,9 +918,14 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
  * no longer holds renders its raw slug as a header, and Firefox implements UAX #14's numeric
  * context where Chromium and WebKit do not — so a model that broke `breathability-26` at its
  * hyphen declared a width 17px under what Firefox needs, and the header hangs out of the column.
- * The model now breaks no hyphen at all, so what is claimed here is that it never goes UNDER,
- * never that it agrees: the over-reservation is the point and it is far outside
- * `FIT_TOLERANCE_PX` (docs/app.md §Table presentation).
+ * The model now breaks no hyphen at all, so what is claimed here is a floor rather than an
+ * agreement: the over-reservation is the point and it is far outside `FIT_TOLERANCE_PX` on the two
+ * slugs that carry a letter after the hyphen.
+ *
+ * **The floor is `FIT_TOLERANCE_PX` and not zero, and `10-12` is why.** There the model and Firefox
+ * take the same view of the hyphen, so nothing is over-reserved and all that stands between the two
+ * is the `HEADER_PX` table being Chromium's — the same spread `FIT_SETS` is held to on either side
+ * (docs/app.md §Table presentation).
  */
 test('never models a dropped column\'s header narrower than this engine renders it', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });

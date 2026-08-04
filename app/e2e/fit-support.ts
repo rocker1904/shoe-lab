@@ -90,8 +90,9 @@ export const APP_FACES = ['Inter Tight', 'JetBrains Mono'];
  * **`phrases` is every cell-bound column there is, and it is four.** Those are the columns whose
  * minimum comes from a runner's data rather than from a header we wrote, so they are the case a
  * declared width has to be checked hardest against — `heel-tab` most of all, whose
- * `Extended heel collar` is the widest cell in the table on the real fleet. The count is asserted
- * over the committed fleet in `app/src/lib/fit.test.ts`, so it cannot silently become five.
+ * `Extended heel collar` is the widest cell in the table on the real fleet. `app/src/lib/fit.test.ts`
+ * imports this array and compares it to the cell-bound columns the committed fleet actually has, so
+ * neither a fifth column upstream nor an edit here can move without the other.
  */
 export const FIT_SETS: Record<string, string[]> = {
   default: ['releasedAt', 'score', 'msrpGbp', 'heel-stack', 'plate', 'energy-return-heel',
@@ -110,9 +111,18 @@ export const FIT_SETS: Record<string, string[]> = {
  * carries; `10-12` is the adversarial one.
  *
  * **Deliberately not in `FIT_SETS`, because the claim is one-sided rather than an agreement.** The
- * model treats no hyphen as a break opportunity, which means it over-reserves a slug header by up
- * to 208px against every engine — far outside `FIT_TOLERANCE_PX`, and on purpose. What has to hold
- * is only that it never goes UNDER, in the one engine that leaves those hyphens alone
+ * model treats no hyphen as a break opportunity, so a slug header is over-reserved against every
+ * engine that breaks at one — far outside `FIT_TOLERANCE_PX`, and on purpose.
+ *
+ * **The bound is what `urlstate.ts` accepts, not what the catalogue has published.** §Columns are
+ * permissive renders any accepted slug raw, and `MAX_SLUG_LEN` takes 64 characters: the worst of
+ * those is eleven five-letter chunks, which the model reserves **691px** more header for than an
+ * engine breaking at every hyphen needs. Today's widest catalogue stem is 208px of that, and
+ * quoting it would read as a ceiling when it is a sample.
+ *
+ * What has to hold here is only that the model never goes under by more than `FIT_TOLERANCE_PX` —
+ * `10-12` is the case with no over-reservation at all, because Firefox leaves `-<digits>` whole and
+ * the model does too, so what is left between them is the `HEADER_PX` table being one engine's
  * (docs/app.md §Table presentation).
  */
 export const FIT_DROPPED_COLS = ['breathability-26', 'energy-return-heel-24', '10-12'];

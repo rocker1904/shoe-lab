@@ -2,6 +2,11 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+// The e2e column sets, imported into the unit run on purpose: `FIT_SETS.phrases` is a claim about
+// the committed fleet that only this file can check, and a claim two files assert in prose and
+// neither enforces is the drift docs/policies.md §Vocabulary exists to stop. Nothing else crosses
+// the boundary — `fit-support.ts`'s Playwright import is a type and erases.
+import { FIT_SETS } from '../../e2e/fit-support';
 import type { ShoesFile } from '../../../shared/types.js';
 import { indexTests } from './dataset';
 import {
@@ -470,7 +475,10 @@ describe('the width guards against the fleet that is actually shipped', () => {
     // The other side of the same claim, and the one a declared width has to be checked hardest
     // against: these are the columns whose minimum is a runner's phrase rather than a header we
     // wrote, so what leaves the box under a model error is upstream's string. `FIT_SETS.phrases`
-    // in `app/e2e/fit-support.ts` is this list, and this is what stops the two drifting.
+    // in `app/e2e/fit-support.ts` is the set the three engines mount it against, and comparing the
+    // two here is what stops them drifting — in BOTH directions, which the sentence each file used
+    // to carry could not do: a fifth cell-bound column in the fleet reddens this, and so does an
+    // edit to that array.
     // De-duplicated: the catalogue carries a `plate` test of its own beside the shoe field, and
     // both render the one column.
     const keys = [...new Set([...fleet.tests.map((t) => t.slug), 'releasedAt', 'plate'])];
@@ -480,6 +488,7 @@ describe('the width guards against the fleet that is actually shipped', () => {
     })).filter((m) => m.px > 0 && !isFigure(m.key, fleetIdx.bySlug.get(m.key)));
     expect(bound.map((m) => m.key).sort())
       .toEqual(['heel-tab', 'plate', 'releasedAt', 'tongue-gusset-type']);
+    expect(bound.map((m) => m.key).sort()).toEqual([...FIT_SETS['phrases']!].sort());
     // `Extended heel collar` against a `Heel tab` header — twice the next worst, and the widest
     // thing any cell in this table puts past a model that under-measures.
     expect(Math.max(...bound.map((m) => m.px))).toBeCloseTo(87, 2);
