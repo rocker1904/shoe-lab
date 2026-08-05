@@ -311,6 +311,11 @@ describe('measurePhoneGroupHeights', () => {
       || e.hasAttribute('aria-expanded'))).toEqual([]);
     expect(added.filter((e) => e.matches('.chev.open'))).toEqual([]);
     expect(added.filter((e) => e.matches('.disc-tag'))).toHaveLength(1);
+    const discontinued = added.find((e) => e.matches('tr.shoe:has(.disc-tag)'))!;
+    const finalMeta = [...discontinued.querySelectorAll('.meta')].at(-1)!;
+    expect(finalMeta.nextSibling?.nodeType).toBe(Node.TEXT_NODE);
+    expect(finalMeta.nextSibling?.textContent).toMatch(/\s/);
+    expect(finalMeta.nextSibling?.nextSibling).toBe(discontinued.querySelector('.disc-tag'));
     expect(document.querySelector('.mobile-proto')!.querySelectorAll('tbody')).toHaveLength(1);
   });
 

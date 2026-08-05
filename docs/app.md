@@ -1474,12 +1474,17 @@ Each of the following is a failure mode rather than a detail.
 **The stacked phone list uses the same plan in whole shoe groups.** A group owns
 its leading rule, name row and values row; an open detail row is observed and
 added to that item rather than estimated. Its permanent `mobile-proto` table is
-outside both the plan and the accessibility tree, and
-`measurePhoneGroupHeights` clones those styled rows to measure the complete
-fleet at the current metadata-producing column set. The cache input keeps one
-identity across sort and filter changes; changing columns, layout width or
-either the prose or mono face invalidates it. A failed first read renders the
-fleet, while a later failed read holds the last good plan.
+outside both the plan and the accessibility tree. `measurePhoneGroupHeights`
+clones its styled name and values rows to measure the complete fleet at the
+current metadata-producing column set, while the rule is measured once and
+attached by position in the current filtered/sorted sequence. That separation
+keeps a shoe's cached content height independent of whether it happens to be
+first. The cache input keeps one identity across sort and filter changes;
+changing columns, layout width or either the prose or mono face invalidates it.
+A failed first read renders the fleet, while a later failed read holds the last
+good plan. Explicit collapsible spaces at both inline seams — name to metadata,
+then final metadata to the discontinued tag — are shared by the live and
+prototype rows; the clone inserts metadata before the preserved trailing space.
 
 At 390×900 on the real 455-shoe fleet, the phone body falls from **1,364 rows /
 9,386 nodes to 81 rows / 561 nodes** at rest. Three comparative runs put a

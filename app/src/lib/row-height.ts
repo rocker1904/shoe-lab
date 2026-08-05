@@ -346,8 +346,14 @@ export function measurePhoneGroupHeights(
     strong.textContent = entry.name;
     for (const old of shoe.querySelectorAll('.meta')) old.remove();
     const disc = shoe.querySelector<HTMLElement>('.disc-tag');
+    // The live row has one collapsible space after its metadata loop. Keep the prototype's matching
+    // text node AFTER every inserted metadata element; inserting directly before the tag would put
+    // the clones after this node and silently join the final metadata string to "discontinued".
+    const beforeDisc = disc?.previousSibling;
+    const metadataTail = beforeDisc?.nodeType === Node.TEXT_NODE
+      && (beforeDisc.textContent ?? '').trim() === '' ? beforeDisc : null;
     if (!entry.discontinued) disc?.remove();
-    const anchor = entry.discontinued ? disc : null;
+    const anchor = metadataTail ?? (entry.discontinued ? disc : null);
     for (const text of entry.metadata) {
       const meta = metaSource!.cloneNode(true) as HTMLElement;
       meta.textContent = text;

@@ -792,7 +792,7 @@ export async function sweepPhoneGroupHeights(
     // The fixture names sit comfortably inside a line. Walk a real live row a character at a time
     // until its metadata crosses a line boundary, then compare both sides of that transition. This
     // catches even one missing collapsible space between the name and metadata in the prototype.
-    const boundary = await live.evaluate((table) => {
+    const nameBoundary = await live.evaluate((table) => {
       const shoe = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')]
         .find((row) => row.querySelector('.meta') && !row.querySelector('.disc-tag'));
       const strong = shoe?.querySelector<HTMLElement>('strong');
@@ -822,10 +822,52 @@ export async function sweepPhoneGroupHeights(
         strong.textContent = original;
       }
     });
-    expect(boundary, 'no synthetic phone name reached a wrapping boundary').not.toBeNull();
-    const measured = await page.evaluate(measurePhoneGroupHeights, boundary!.entries);
+    expect(nameBoundary, 'no synthetic phone name reached a wrapping boundary').not.toBeNull();
+    const measured = await page.evaluate(measurePhoneGroupHeights, nameBoundary!.entries);
     expect(measured, 'the synthetic wrapping-boundary entries could not be measured')
-      .toEqual(boundary!.rendered);
+      .toEqual(nameBoundary!.rendered);
+
+    // The other inline seam is independently load-bearing: a discontinued tag follows the whole
+    // metadata loop. Vary the LAST metadata chip so this transition can only be caused by the
+    // collapsible space between that loop and the tag.
+    const discontinuedBoundary = await live.evaluate((table) => {
+      const shoe = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')]
+        .find((row) => row.querySelector('.meta') && row.querySelector('.disc-tag'));
+      const strong = shoe?.querySelector<HTMLElement>('strong');
+      const values = shoe?.nextElementSibling as HTMLElement | null;
+      const metas = shoe ? [...shoe.querySelectorAll<HTMLElement>('.meta')] : [];
+      const last = metas.at(-1);
+      if (!shoe || !strong || !last || !values?.classList.contains('values')) return null;
+      const original = last.textContent ?? '';
+      const fixed = metas.slice(0, -1).map((meta) => meta.textContent ?? '');
+      let previous: { metadata: string[]; height: number } | null = null;
+      try {
+        for (let length = 1; length <= 240; length++) {
+          last.textContent = 'i'.repeat(length);
+          const metadata = [...fixed, last.textContent];
+          const height = shoe.getBoundingClientRect().height + values.getBoundingClientRect().height;
+          if (previous && height !== previous.height) {
+            return {
+              entries: [previous, { metadata, height }].map((entry) => ({
+                name: strong.textContent ?? '', metadata: entry.metadata, discontinued: true,
+              })),
+              rendered: [previous.height, height],
+            };
+          }
+          previous = { metadata, height };
+        }
+        return null;
+      } finally {
+        last.textContent = original;
+      }
+    });
+    expect(discontinuedBoundary,
+      'no discontinued phone row reached a metadata/tag wrapping boundary').not.toBeNull();
+    const discontinuedMeasured = await page.evaluate(
+      measurePhoneGroupHeights, discontinuedBoundary!.entries);
+    expect(discontinuedMeasured,
+      'the discontinued wrapping-boundary entries could not be measured')
+      .toEqual(discontinuedBoundary!.rendered);
   }
 
   const prototype = page.locator('.mobile-proto table.proto');

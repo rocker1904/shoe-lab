@@ -349,8 +349,7 @@
           <tr class="shoe">
             <td class="ident" colspan={span}>
               <span class="chev" aria-hidden="true">›</span>
-              <strong>M</strong>
-              <span class="meta">M</span><DiscontinuedTag />
+              <strong>M</strong>&#32;<span class="meta">M</span>&#32;<DiscontinuedTag />
             </td>
           </tr>
           <tr class="values">
@@ -397,9 +396,8 @@
               onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
             <td class="ident" colspan={span}>
               <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
-              <strong>{s.name}</strong>
-              {#each metaOf(s) as m (m.key)}<span class="meta">{m.text}</span>{/each}
-              {#if s.discontinued}<DiscontinuedTag />{/if}
+              <strong>{s.name}</strong>&#32;{#each metaOf(s) as m (m.key)}<span
+                class="meta">{m.text}</span>{/each}&#32;{#if s.discontinued}<DiscontinuedTag />{/if}
             </td>
           </tr>
           <tr class="values" aria-rowindex={p.rowIndex + 1}>

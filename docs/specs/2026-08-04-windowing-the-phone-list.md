@@ -342,8 +342,8 @@ phone's geometry is its own.
 - Adversarial checks caught the hidden prototype leaking into two broad e2e
   selectors, a fleet array that initially lost identity on sort-only changes,
   a ruler that initially watched only one of the two faces, prototype whitespace
-  that differed from the live inline row, and separator height tied to dataset
-  order rather than current order. The final guards fail if a group is split, a
-  spacer is redistributed, an open/revealed group is dropped, the fallback is
-  removed, ARIA positions collapse to DOM positions, or the wash is ranked over
-  the plan.
+  that differed from the live row at both inline seams (name/metadata and final
+  metadata/discontinued tag), and separator height tied to dataset order rather
+  than current order. The final guards fail if a group is split, a spacer is
+  redistributed, an open/revealed group is dropped, the fallback is removed,
+  ARIA positions collapse to DOM positions, or the wash is ranked over the plan.
