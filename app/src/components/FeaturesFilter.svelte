@@ -2,6 +2,7 @@
   import type { LabTest } from '../../../shared/types.js';
   import { BOOL_LABELS, facetLabel, facetValues } from '../lib/categorical';
   import { chipLabel } from '../lib/labels';
+  import CategoricalDisclosure from './CategoricalDisclosure.svelte';
   import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
 
   let { tests, selections, countsFor, onchange }: {
@@ -64,12 +65,7 @@
   }
 </script>
 
-<!-- `details` maps to role=group, so it needs a name of its own or it joins the sidebar's range
-     groups as an unnamed one — Brand's shape, and the marker is drawn for Brand's reason. -->
-<details aria-label="Features">
-  <summary>{selectedCount ? `${selectedCount} selected` : 'Any feature'}
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </summary>
+<CategoricalDisclosure label="Features" summary={selectedCount ? `${selectedCount} selected` : 'Any feature'}>
   {#each tests as test (test.slug)}
     {@const noun = chipLabel(test.slug, test)}
     <!-- Each group is named by its own heading rather than by a second copy of the noun,
@@ -99,12 +95,9 @@
       </div>
     {/if}
   {/each}
-</details>
+</CategoricalDisclosure>
 
 <style>
-  summary { cursor: pointer; font-size: var(--t-sm); color: var(--text-dim); list-style: none;
-            display: inline-flex; align-items: center; gap: var(--s2); }
-  summary::-webkit-details-marker { display: none; }
   .facet { margin-top: var(--s2); }
   /* Quieter than the sidebar's uppercase micro-labels, which belong to the section rather than to
      the facets inside it: sentence case, dim and small, so the heading above still leads. Every
@@ -112,6 +105,4 @@
      margin — so the face is the sidebar's and does not move with the element. */
   .head { margin: 0 0 var(--s1); font-size: var(--t-xs); font-weight: 600; color: var(--text-dim); }
   ul { list-style: none; margin: 0; padding: 0; }
-  li { font-size: var(--t-sm); padding: 0.1rem 0; }
-  li.empty { color: var(--text-dim); }
 </style>

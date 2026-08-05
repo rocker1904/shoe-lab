@@ -734,12 +734,12 @@ exceeds the number of controls that can act on it. Both seeds land in one map at
 zero, so a selected brand the catalogue *does* hold gets one row rather than two
 and the counting is a walk of the population rather than one per brand.
 
-A search box narrows the
-brand list in a 14rem scroll box. Its `<summary>` **suppresses the UA
-marker and draws an SVG chevron**, which is the rule for **every** `<details>`
-this app draws rather than a trait of this one: a disclosure wearing the
-browser's triangle beside one that does not reads as an oversight rather than a
-choice, so each one added obeys it too.
+A search box narrows the brand list in a 14rem scroll box. Brand and Features
+share `CategoricalDisclosure`, which owns their native `<details>` shell,
+summary treatment, option-row treatment and 10px SVG chevron. It **suppresses
+the UA marker and draws the chevron itself** so the two categorical disclosures
+cannot acquire mismatched affordances. Their bodies remain consumer-owned:
+Brand owns its search and flat list, while Features owns its facet hierarchy.
 
 The sidebar carries **two heading styles on purpose**. `h3` names a *section* —
 Search, Brand, Plate — and is an uppercase micro-label at the same size and
