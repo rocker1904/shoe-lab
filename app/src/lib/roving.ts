@@ -1,12 +1,10 @@
 /**
- * Arrow-key movement for a `role="radiogroup"`, applied as one action to every one of them
- * (docs/app.md §Filters). The role promises that the group is a single tab stop and that the
- * arrows move the selection; every group here made each radio its own stop and ignored the keys,
- * so the promise was a lie to anyone navigating by keyboard.
+ * Arrow-key movement for button-based `role="radiogroup"` controls (docs/app.md §Filters).
+ * The role promises that the group is a single tab stop and that the arrows move selection.
  *
- * The radios are buttons rather than native inputs — two rendered copies of a group must not join
- * one document-wide radio group by sharing a `name` — so *the browser does none of this for us*,
- * and moving focus has to activate too, which `click()` is.
+ * The radios remain buttons because the native controls lose Home, End and Enter activation in
+ * every supported engine, and a null selection has different reverse-Tab entry in WebKit. Moving
+ * focus therefore has to activate too, which `click()` is.
  */
 type Step = (from: number, count: number) => number;
 
@@ -24,11 +22,7 @@ export function roving(node: HTMLElement): { destroy(): void } {
   /**
    * Disabled radios are skipped rather than counted, because the role's promise has to hold even
    * when one is: a disabled control can be neither focused nor clicked, so making it the tab stop
-   * takes the whole group out of the tab order and stepping onto it leaves the arrows dead. Both
-   * were observed, in a grid that has since stopped using this action for an unrelated reason
-   * (docs/app.md §Released after is month-granular); no group disables a radio today, so the
-   * filter is inert — which is a fact about the groups that exist, not a property to rely on: the
-   * first group that disables one is exactly the case this was written for.
+   * takes the whole group out of the tab order and stepping onto it leaves the arrows dead.
    */
   const all = (): HTMLElement[] => [...node.querySelectorAll<HTMLElement>('[role="radio"]')];
   const radios = (): HTMLElement[] => all().filter((r) => !(r as HTMLButtonElement).disabled);
@@ -64,8 +58,8 @@ export function roving(node: HTMLElement): { destroy(): void } {
    * the component having to tell the action anything.
    */
   const watch = new MutationObserver(sync);
-  // `disabled` as well as `aria-checked`: the month grid re-disables a different set of months on
-  // every year step, and a tab stop left on one of them takes the whole group out of the tab order.
+  // `disabled` as well as `aria-checked`: a tab stop left on a disabled option takes the whole
+  // group out of the tab order.
   watch.observe(node, { subtree: true, attributes: true, attributeFilter: ['aria-checked', 'disabled'] });
   node.addEventListener('keydown', onkeydown);
   sync();

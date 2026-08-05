@@ -858,14 +858,15 @@ announced with the field inside it, so the metric is the only thing that tells
 them apart.
 
 **Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
-one action, `lib/roving.ts`, applied to all four of them — the zone, the story
-segment, discontinued, and the generation picker. The role promises exactly
-that, and each group made every radio its own stop and ignored the keys. The
-radios are buttons rather than native inputs — two rendered copies of a group
-must not join one document-wide radio group by sharing a `name` — so the
-browser does none of it for us, and moving focus must also *activate*, which
-`click()` is. Both axes move, because the generation picker is a column. The
-tab stop is whatever is checked, tracked through a `MutationObserver` on
+one action, `lib/roving.ts`. The role promises exactly that, and the app's
+button radios supply it consistently through `SegmentedControl` or directly on
+the richer generation rows. Native radios were rendered in Chromium, Firefox
+and WebKit before keeping the buttons: arrows and disabled-option skipping were
+consistent, but Home and End did nothing, Enter did not activate, and a group
+with nothing selected entered from reverse Tab at opposite ends in WebKit and
+the other engines. The app therefore owns those behaviours rather than making
+keyboard access depend on an engine. Both axes move, because the generation
+picker is a column. The tab stop is whatever is checked, tracked through a `MutationObserver` on
 `aria-checked` so a selection made with the mouse, or re-derived from a link,
 carries it too; a group with nothing checked still admits focus at its first
 radio.
@@ -2984,11 +2985,12 @@ but it was never only that pill. Each pill therefore carries its own label a
 second time, in a `data-label` the CSS draws again at the selected weight in a
 **zero-height line of the same column**, so the box is sized by the wider of the
 two states and neither moves. `visibility: hidden` rather than `opacity`, which
-keeps the duplicate out of the accessibility tree as well as off the screen; the
-zone group states the rule again because Svelte's scoping puts its two buttons
-out of `Toolbar.svelte`'s reach, exactly as their padding already is. The
-sidebar's released-after chips are the same family and carry the same
-reservation. The bound is `holds every segmented pill to one width across its own
+keeps the duplicate out of the accessibility tree as well as off the screen.
+`SegmentedControl.svelte` owns that reservation for the toolbar's zone, story
+and stability controls and for the Display panel's theme control, so Svelte
+scoping cannot leave one member of the family at a different weight or target
+size. The sidebar's released-after chips carry the same reservation. The bound
+is `holds every segmented pill to one width across its own
 toggle`, in `cross-browser.spec.ts` rather than the Chromium-only suite: what the
 trick is worth is a question of text metrics, which is the kind of thing one
 engine rounds differently.
@@ -3546,8 +3548,8 @@ contexts, and losing the preference beats losing the click.
 cycle.** `lib/theme.ts` exports `setTheme(name)` and no stepper, because a cycle
 is the wrong shape for three named states: reaching the third costs two presses,
 and the button can only ever show the state you are *in* rather than the ones you
-could have. The group is the same language the toolbar's zone and story groups
-speak — `lib/roving.ts` for one tab stop and arrows that move *and* activate,
+could have. `SegmentedControl.svelte` gives it the same language as the
+toolbar's zone, story and stability controls — `lib/roving.ts` for one tab stop and arrows that move *and* activate,
 `aria-checked` for the state, a recessed `--bg` track, and the chosen pill filled
 `--accent-solid` carrying `--on-accent`. It measures 133px against 78px of slack
 inside the panel at every width from 360px to 1440px, and 54px at 320px.

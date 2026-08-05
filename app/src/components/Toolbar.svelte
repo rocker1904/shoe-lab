@@ -2,8 +2,8 @@
   import type { Snippet } from 'svelte';
   import type { Zone } from '../lib/lineage';
   import { PRESETS } from '../lib/presets';
-  import { roving } from '../lib/roving';
   import { ICON_PATHS } from './icons';
+  import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
   import ZoneToggle from './ZoneToggle.svelte';
 
   let { zone, onzone, selected, onstory, showFilters, onfilters, drawer, columns, utilities,
@@ -45,7 +45,10 @@
 
   // `All` leads so the group reads as everything → narrow to a story, and it is the same state a
   // `Clear` button used to produce, named for what you get (docs/app.md §Presets).
-  const STORIES = [{ id: 'all', label: 'All' }, ...PRESETS.map((p) => ({ id: p.id, label: p.label }))];
+  const STORIES = [
+    { value: 'all', label: 'All' },
+    ...PRESETS.map((preset) => ({ value: preset.id, label: preset.label })),
+  ] as [SegmentOption, ...SegmentOption[]];
 </script>
 
 <div class="toolbar" data-testid="toolbar">
@@ -56,29 +59,19 @@
     <div class="setup">
       <div class="zone-wrap"><ZoneToggle {zone} onchange={onzone} /></div>
       <div class="pace-wrap">
-        <span class="seg" role="radiogroup" aria-label="Built for" use:roving>
-          <!-- No count: a scored story's is the size of its pool rather than of a shortlist
-               (docs/app.md §The toolbar). -->
-          <!-- `data-story` is how the strip's hand-over finds the pill that replaces the card it
-               just unmounted (docs/app.md §Presets). By id rather than by the checked mark, because
-               a view that matches no story marks nothing and focus would fall to `<body>` again. -->
-          <!-- `data-label` is the width reservation's, not the control's: the style block below
-               draws it again at the selected weight so the pill cannot change size when it is
-               picked (docs/app.md §The toolbar). -->
-          {#each STORIES as s (s.id)}
-            <button type="button" role="radio" class="s" data-story={s.id} data-label={s.label}
-                    aria-checked={selected === s.id}
-                    class:on={selected === s.id} onclick={() => onstory(s.id)}>{s.label}</button>
-          {/each}
-        </span>
+        <!-- No count: a scored story's is the size of its pool rather than of a shortlist
+             (docs/app.md §The toolbar). `data-segment` carries each id so the setup strip can hand
+             focus to the pill it replaces even when a hand-edited view leaves every pill clear. -->
+        <SegmentedControl mode="radio" options={STORIES} value={selected} onchange={onstory}
+                          ariaLabel="Built for" scale="toolbar" />
       </div>
       <!-- A property of the runner rather than of the search, so it rides the bar rather than the
            strip — but it answers a third question about the same table, so it is drawn as one pill
            in the same family rather than as a checkbox standing among segmented groups. Its words
            are the About panel's now (docs/app.md §The About panel). -->
-      <span class="seg one">
-        <button type="button" class="s pill" aria-pressed={stability} data-label="Stability"
-                class:on={stability} onclick={() => onstability(!stability)}>Stability</button>
+      <span class="stability-wrap">
+        <SegmentedControl mode="toggle" label="Stability" pressed={stability}
+                          onchange={onstability} scale="toolbar" />
       </span>
     </div>
   {/if}
@@ -115,29 +108,6 @@
      you are happy with" on the right. Without it the five controls bunch at one end and the row's
      slack lands in the wrong place. */
   .actions .utils-host { margin-left: auto; }
-  /* `overflow: visible`, not hidden: the focus ring is a box-shadow and a clipped track would
-     swallow it (docs/app.md §Theming). */
-  .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--border);
-         border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
-  /* A COLUMN, so the width reservation below can sit under the label without standing beside it.
-     Every pill here holds one string and nothing else, which is what makes the direction free. */
-  .s { display: inline-flex; flex-direction: column; align-items: center; padding: var(--s1) var(--s3); border: none;
-       border-radius: var(--r-sm); background: none; color: var(--text-dim); cursor: pointer;
-       font-size: var(--t-sm); white-space: nowrap; }
-  /* THE WIDTH RESERVATION, and it is the whole family's — the zone group states it again for the
-     reason its own file gives. A selected pill is 600 and an unselected one 400, so the box grew as
-     it came on: 70→73px for the lone `Stability` toggle and 70→76px for `Forefoot`, with a group of
-     four redistributing on every press, measured in both engines. The ghost is the same string at
-     the selected weight in a zero-height line of the same column, so the box is sized by the wider
-     of the two states in both of them and nothing moves. `visibility: hidden`, not `opacity`: it
-     keeps the duplicate out of the accessibility tree as well as off the screen. */
-  .s::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden;
-              visibility: hidden; pointer-events: none; }
-  /* `--accent-solid`, not `--accent`: --on-accent on the accent is 3.71:1 in dark. A filled accent
-     under --on-accent text is the only kind of site that token exists for (docs/app.md §Theming).
-     `--on-accent`, not `#fff`: the pair is one fact and a literal here splits it across files —
-     `tokens.test.ts` fails the build on a raw white in a component's style block. */
-  .s.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
   /* Present exactly where the `drawer` prop says there is a drawer, which reaches 390px further
      than the width at which this bar stops being a phone's — so it is on the bar carrying its word
      across the whole band between the two boundaries (docs/app.md §The chrome bands). It carries no
@@ -170,10 +140,6 @@
        at any width including the fractional ones zoom and Firefox both produce. */
     .word { display: none; }
     .glyph { display: inline-flex; }
-    /* DENSITY, not fit: this is the band where every pixel of chrome is paid before the first shoe
-       (above), and at the base `--s3` the row lands within a pixel of its own cap either way
-       (docs/app.md §The chrome bands). */
-    .s { padding-inline: var(--s2); }
     .actions { order: -1; flex-basis: 100%; }
     /* `--s1` rather than the base `--s2`, and it is SPACING: under `space-between` the gap is only
        a floor, so the visible gaps are whatever the row has spare and it shows only at the widths
@@ -194,6 +160,5 @@
      docs/app.md §The chrome bands owns the measurements. */
   @media (max-width: 429.98px) {
     .setup { max-width: none; margin-inline: 0; }
-    .s { padding-inline: var(--s1); }
   }
 </style>

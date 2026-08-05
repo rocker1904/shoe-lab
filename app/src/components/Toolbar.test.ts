@@ -196,7 +196,8 @@ describe('Toolbar stability preference', () => {
   // It stands with the zone and story groups, not with the controls that open panels.
   it('sits on the setup row with the groups, not among the actions', () => {
     const { container } = render(Toolbar, { props: { ...props } });
-    expect(container.querySelector('.setup .pill')).not.toBeNull();
-    expect(container.querySelector('.actions .pill')).toBeNull();
+    const pill = screen.getByRole('button', { name: 'Stability' });
+    expect(container.querySelector('.setup')?.contains(pill)).toBe(true);
+    expect(container.querySelector('.actions')?.contains(pill)).toBe(false);
   });
 });

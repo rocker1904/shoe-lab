@@ -1,10 +1,10 @@
 <script lang="ts">
   import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { DISPLAY_BOUNDS } from '../lib/display';
-  import { roving } from '../lib/roving';
-  import { THEMES, type Theme } from '../lib/theme';
+  import type { Theme } from '../lib/theme';
   import { DISPLAY_DEFAULTS, type DisplayPrefs, type ResolvedWash } from '../lib/wash';
   import { ICON_PATHS } from './icons';
+  import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
 
   let { prefs, resolved, onchange, theme, ontheme, worded, open, onopen }: {
     prefs: DisplayPrefs;
@@ -57,7 +57,11 @@
   const set = (patch: Partial<DisplayPrefs>) => onchange({ ...prefs, ...patch });
   const num = (e: Event) => +(e.currentTarget as HTMLInputElement).value;
 
-  const THEME_WORD: Record<Theme, string> = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+  const THEME_OPTIONS: [SegmentOption, ...SegmentOption[]] = [
+    { value: 'auto', label: 'Auto' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ];
   // The floor says where the ramp starts, and with the base on there is no bare end to start from.
   // Disabled rather than hidden: a control that vanishes reads as a bug, and the panel is a place
   // where "this does nothing here" is worth saying (docs/app.md §The display preferences).
@@ -94,11 +98,9 @@
              runner press twice to reach the third state and never says what the other two are. -->
         <div class="row theme">
           <span class="lbl" id="d-theme">Theme</span>
-          <span class="seg" role="radiogroup" aria-labelledby="d-theme" use:roving>
-            {#each THEMES as t (t)}
-              <button type="button" role="radio" aria-checked={theme === t} class:on={theme === t}
-                      onclick={() => ontheme(t)}>{THEME_WORD[t]}</button>
-            {/each}
+          <span class="theme-control">
+            <SegmentedControl mode="radio" options={THEME_OPTIONS} value={theme}
+                              onchange={(value) => ontheme(value as Theme)} ariaLabelledby="d-theme" />
           </span>
         </div>
 
@@ -263,19 +265,7 @@
                            background: var(--surface); border: 2px solid var(--text); cursor: pointer; }
 
   .check { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-xs); }
-  /* The toolbar groups' own treatment, restated because Svelte scopes a style block to its own
-     file: a recessed `--bg` track, `--r-md` outside and `--r-sm` pills inside, and the chosen one
-     filled `--accent-solid` carrying `--on-accent` — the only ink allowed on it
-     (docs/app.md §Theming). `overflow: visible`, like the zone group's, because the focus ring is
-     a box-shadow drawn outside the pill. `--t-xs` rather than the bar's `--t-sm`: this group
-     stands among the panel's own labels, not among the toolbar's pills, and the three words have
-     to sit inside a 20rem panel's second column at 320px. */
-  .seg { grid-column: 2 / -1; justify-self: start; display: inline-flex; background: var(--bg);
-         border: 1px solid var(--border); border-radius: var(--r-md); padding: 2px; gap: 2px;
-         overflow: visible; }
-  .seg button { padding: 2px var(--s2); border: none; border-radius: var(--r-sm); background: none;
-                color: var(--text-dim); cursor: pointer; font-size: var(--t-xs); }
-  .seg button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
+  .theme-control { grid-column: 2 / -1; justify-self: start; display: inline-flex; }
   .note { margin: 0; font-size: var(--t-xs); color: var(--text-dim); }
   .note.warn { color: var(--bad); }
   .mono { font-family: var(--font-mono); }

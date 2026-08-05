@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { roving } from './roving';
 
-/** Shaped like the four real groups: buttons carrying `aria-checked`, never native radio inputs. */
+/** Shaped like the app's radio groups: buttons carrying `aria-checked`, never native inputs. */
 function group(checked: number | null = 1, n = 3) {
   const el = document.createElement('div');
   el.setAttribute('role', 'radiogroup');
@@ -103,11 +103,6 @@ describe('roving', () => {
     expect(tabs(radios)).toEqual([0, -1, -1]);
   });
 
-  /**
-   * The month picker is the first group to disable some of its radios, and a disabled control can
-   * neither be focused nor clicked — so making one the tab stop leaves the group unreachable, and
-   * stepping onto one leaves the arrows dead. Both were reproduced in a browser before this.
-   */
   describe('disabled radios', () => {
     const disable = (radios: HTMLElement[], ...i: number[]) => {
       for (const n of i) (radios[n] as HTMLButtonElement).disabled = true;

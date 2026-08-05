@@ -517,7 +517,7 @@
     // Only on the hand-over: called from the bar's own group, `lib/roving.ts` already owns focus.
     if (!handingOver) return;
     await tick();
-    document.querySelector<HTMLElement>(`[data-story="${CSS.escape(id)}"]`)?.focus();
+    document.querySelector<HTMLElement>(`[aria-label="Built for"] [data-segment="${CSS.escape(id)}"]`)?.focus();
   }
   /** A preference, so it does not clear the story or the `All` mark: `applyPreset` and `allView`
    *  both carry it through, which is what keeps the mark derived rather than lost
