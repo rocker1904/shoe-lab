@@ -684,6 +684,37 @@ test('pins metric help from a touch press without choosing its Add-filter row', 
   await context.close();
 });
 
+test('matches the complete metric-help interaction contract', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  const sidebar = page.locator('.sidebar');
+  const first = sidebar.getByRole('button', { name: /^Help for / }).first();
+  const second = sidebar.getByRole('button', { name: /^Help for / }).nth(1);
+
+  await first.hover();
+  await expect(page.getByRole('note')).toBeVisible();
+  await page.mouse.move(1190, 790);
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await first.click();
+  await expect(page.getByRole('note')).toBeVisible();
+  await second.click();
+  await expect(page.getByRole('note', { name: 'Stack metric help' })).toBeVisible();
+  await expect(page.getByRole('note', { name: 'Price metric help' })).toHaveCount(0);
+  await second.click();
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await first.click();
+  await sidebar.getByRole('searchbox', { name: 'Search' }).click();
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await first.focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('note').getByRole('link')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('note')).toHaveCount(0);
+});
+
 /**
  * The phone half of the ordering line. jsdom evaluates no media query, so which of the two tables
  * mounts is invisible to the suite — and the whole point of this line is that the phone renders a

@@ -1065,6 +1065,7 @@ test('keeps metric help and both filter surfaces inside their measured bounds', 
     if (width === 360) await page.getByRole('button', { name: 'Filters', exact: true }).click();
     const sidebar = page.locator('.sidebar');
     await assertHelp(sidebar.getByRole('button', { name: /^Help for / }), width);
+    expect(await sidebar.evaluate((port) => port.scrollWidth - port.clientWidth)).toBe(0);
     await sidebar.getByRole('button', { name: 'Add filter', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Add filter' });
     await assertHelp(dialog.getByRole('button', { name: /^Help for / }), width, dialog);
@@ -1076,11 +1077,58 @@ test('keeps metric help and both filter surfaces inside their measured bounds', 
     expect(Math.min(...rows.map((row) => row.height))).toBeGreaterThanOrEqual(32);
     expect(Math.max(...rows.map((row) => row.height))).toBeLessThanOrEqual(width === 360 ? 40 : 34);
     expect(rows.every((row) => row.overflow === 0)).toBe(true);
+    expect(await dialog.locator('.list').evaluate((port) => port.scrollWidth - port.clientWidth)).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     const percentage = await dialog.locator('.offer').first().locator('.pct').boundingBox();
     await page.mouse.click(percentage!.x + percentage!.width / 2, percentage!.y + percentage!.height / 2);
     await expect(dialog).toHaveCount(0);
   }
+});
+
+test('matches the complete metric-help interaction contract in Chromium', async ({ page, browser, baseURL }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  const sidebar = page.locator('.sidebar');
+  const first = sidebar.getByRole('button', { name: /^Help for / }).first();
+  const second = sidebar.getByRole('button', { name: /^Help for / }).nth(1);
+
+  await first.hover();
+  await expect(page.getByRole('note')).toBeVisible();
+  await page.mouse.move(1190, 790);
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await first.click();
+  await second.click();
+  await expect(page.getByRole('note', { name: 'Stack metric help' })).toBeVisible();
+  await expect(page.getByRole('note', { name: 'Price metric help' })).toHaveCount(0);
+  await second.click();
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await first.click();
+  await sidebar.getByRole('searchbox', { name: 'Search' }).click();
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await first.focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('note').getByRole('link')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  const touch = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const touchPage = await touch.newPage();
+  await touchPage.goto('/');
+  await touchPage.getByRole('button', { name: 'Filters', exact: true }).tap();
+  const help = touchPage.locator('.sidebar').getByRole('button', { name: 'Help for Price' });
+  await help.tap();
+  await expect(touchPage.getByRole('note')).toBeVisible();
+  await help.tap();
+  await expect(touchPage.getByRole('note')).toHaveCount(0);
+  await touchPage.getByRole('button', { name: 'Add filter', exact: true }).tap();
+  const dialog = touchPage.getByRole('dialog', { name: 'Add filter' });
+  await dialog.getByRole('button', { name: /^Help for / }).first().tap();
+  await expect(touchPage.getByRole('note')).toBeVisible();
+  await expect(dialog).toBeVisible();
+  await touch.close();
 });
 
 /**
