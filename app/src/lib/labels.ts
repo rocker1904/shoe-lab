@@ -8,11 +8,14 @@ const SCORE_LABELS = new Map<string, string>(DERIVED_ZONE_PAIRS.flatMap((p) =>
   (['heel', 'forefoot'] as const).map((zone) =>
     [p[zone], `${p.label.replace(/ score$/, '')} ${zone} score`] as const)));
 
+const ZERO_WIDTH_BREAK = '\u200b';
+
 /**
  * The header's first line. The four shoe fields that have cells carry no catalogue test behind
  * them, so they are named here; everything else is the catalogue's own name. Both renderings read
  * this, so a column is called the same thing on a phone and on a desktop before `shortLabel` gets
- * a say (docs/app.md §Columns and sorting).
+ * a say. A dropped catalogue slug authors its cross-engine hyphen breaks here too, so rendering and
+ * width arithmetic receive one string (docs/app.md §Columns and sorting).
  */
 export function columnLabel(key: string, test: LabTest | undefined): string {
   // Neither is ever a column — the table renders both itself — but `name`'s header is a real sort
@@ -27,7 +30,7 @@ export function columnLabel(key: string, test: LabTest | undefined): string {
   if (key === 'plate') return 'Plate';
   const score = SCORE_LABELS.get(key);
   if (score) return score;
-  return test?.name ?? key;
+  return test?.name ?? key.replaceAll('-', `-${ZERO_WIDTH_BREAK}`);
 }
 
 /**
@@ -80,9 +83,10 @@ export const MAX_LABEL_PX = 48;
  * Self-hosting the face is what makes this table meaningful everywhere: `system-ui` resolved to a
  * different face on every OS, so the widths were only ever true on the machine that measured them.
  *
- * `Δ` is the exception, and stays one: it is outside the latin subset the app ships, so the browser
- * falls back for that glyph and this number is a `system-ui` measurement. It is here because two
- * short labels use it, and it is approximate for the same reason the whole table used to be.
+ * `Δ` is the visible exception: it is outside the latin subset the app ships, so the browser falls
+ * back for that glyph and this number is a `system-ui` measurement. U+200B is the structural one,
+ * authored into a dropped slug by `columnLabel`; its zero advance keeps the marker from falling
+ * through to the pessimistic unmeasured-character width.
  */
 const CHAR_PX: Record<string, number> = {
   a: 5.76, b: 6.76, c: 6.76, d: 6.76, e: 6.76, f: 3.76, g: 6.76, h: 6.76, i: 2.76, j: 2.76,
@@ -94,7 +98,7 @@ const CHAR_PX: Record<string, number> = {
   '0': 7.76, '1': 4.76, '2': 6.76, '3': 6.76, '4': 7.76, '5': 6.76, '6': 6.76, '7': 5.76,
   '8': 6.76, '9': 6.76,
   ' ': 2.76, '.': 2.76, ',': 3.76, '/': 3.76, '(': 3.76, ')': 3.76, '%': 9.76, '-': 4.76,
-  'Δ': 7.81,
+  '\u200b': 0, 'Δ': 7.81,
 };
 const FALLBACK_PX = 12;
 
@@ -102,10 +106,10 @@ const textPx = (s: string): number =>
   [...s].reduce((sum, ch) => sum + (CHAR_PX[ch] ?? FALLBACK_PX), 0);
 
 /**
- * Where this app is willing to say a line may break: **at a space, a tab or a line feed, and
- * nowhere else**. The one home for that rule — `lineCount` below wraps with it, `widestWordPx`
- * below takes the widest token it yields, and `lib/fit.ts` measures both header words and shoe
- * names through it (docs/app.md §Table presentation).
+ * Where this app is willing to say a line may break: **at a space, a tab, a line feed, or an
+ * authored U+200B**, and nowhere else. The one home for that rule — `lineCount` below wraps with it,
+ * `widestWordPx` below takes the widest token it yields, and `lib/fit.ts` measures both header words
+ * and shoe names through it (docs/app.md §Table presentation).
  *
  * **A hyphen is deliberately NOT a break opportunity here, and that is over-reservation rather than
  * a claim about any engine.** Every engine does break at some hyphens, so the whole token is the
@@ -114,9 +118,9 @@ const textPx = (s: string): number =>
  * `breathability-25`, `abc-12` and `10-12` alike, while Firefox implements UAX #14's numeric
  * context and leaves every one of them whole — and a rule tuned to any single engine puts the
  * model *under* another engine's min-content, which is a header hanging out of a declared column
- * rather than a column a few pixels wider than it needed to be. The reachable cost is a raw slug
- * (docs/app.md §Columns are permissive, ranges and sorts are strict), which is the case with no
- * design behind it at all.
+ * rather than a column a few pixels wider than it needed to be. A dropped raw slug is the only
+ * exception: `columnLabel` authors a zero-width break after its visible hyphens, so all three
+ * engines and this splitter receive an explicit opportunity rather than guessing from `-`.
  *
  * **Splitting is the one half that can make the model narrow, so the separator set is measured
  * rather than named.** Not splitting only ever costs width. Splitting where an engine will not
@@ -151,7 +155,7 @@ const textPx = (s: string): number =>
  * upstream publishes carries a combining mark or a soft hyphen in a name or a label, so reaching it
  * takes a string written to reach it.
  */
-export const wordsOf = (s: string): string[] => s.split(/[ \t\n]+/);
+export const wordsOf = (s: string): string[] => s.split(/[ \t\n\u200b]+/);
 
 export function widestWordPx(label: string): number {
   return Math.max(...wordsOf(label).map(textPx));

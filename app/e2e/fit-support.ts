@@ -168,30 +168,22 @@ export const FIT_SETS: Record<string, string[]> = {
  * own convention for the next generation of a test, so this is the shape a stale link actually
  * carries; `10-12` is the adversarial one.
  *
- * **Deliberately not in `FIT_SETS`, because the claim is one-sided rather than an agreement.** The
- * model treats no hyphen as a break opportunity, so a slug header is over-reserved against every
- * engine that breaks at one — far outside `FIT_TOLERANCE_PX`, and on purpose.
- *
  * **The bound is what `urlstate.ts` accepts, not what the catalogue has published.** §Columns are
  * permissive renders any accepted slug raw, and `MAX_SLUG_LEN` takes 64 characters. Maximised over
  * every chunking `TEST_SLUG_RE` admits at that length, the worst is eleven chunks — ten of five
  * letters and one of four, `mmmmm-…-mmmmm-mmmm` — which is 64 exactly, where eleven FIVE-letter
- * chunks would be 65 and rejected. The model reserves a 762px header for it against the 71px an
- * engine breaking at every hyphen needs: **691px**. Today's widest catalogue stem is 208px of that,
- * and quoting it would read as a ceiling when it is a sample.
+ * chunks would be 65 and rejected. It is included in the set rather than represented only by a
+ * shorter sample, so the browser guard prices the URL grammar's actual edge.
  *
- * **This is the one home for that figure, and `app/src/lib/fit.test.ts` holds it** — *prices the
- * worst slug a link can name*. It is arithmetic over `HEADER_PX` and `MAX_SLUG_LEN`, each of which
- * moves on its own schedule, so either moving would otherwise leave the number stale with nothing to
- * say so; that test pins the witness at both sides of the length door and both widths, so either
- * input moving reddens rather than quietly restating a new truth.
- *
- * What has to hold here is only that the model never goes under by more than `FIT_TOLERANCE_PX` —
- * `10-12` is the case with no over-reservation at all, because Firefox leaves `-<digits>` whole and
- * the model does too, so what is left between them is the `HEADER_PX` table being one engine's
- * (docs/app.md §Table presentation).
+ * `columnLabel` authors a zero-width break after each visible hyphen, and `wordsOf` models that same
+ * marker, so this set now has the same two-sided `FIT_TOLERANCE_PX` agreement as the catalogue sets.
+ * `app/src/lib/fit.test.ts` pins the witness at both sides of the length door and its re-priced
+ * width, so `HEADER_PX` or `MAX_SLUG_LEN` cannot move without a deliberate re-measurement.
  */
-export const FIT_DROPPED_COLS = ['breathability-26', 'energy-return-heel-24', '10-12'];
+export const FIT_WORST_DROPPED_COL = [...Array<string>(10).fill('mmmmm'), 'mmmm'].join('-');
+export const FIT_DROPPED_COLS = [
+  'breathability-26', 'energy-return-heel-24', '10-12', FIT_WORST_DROPPED_COL,
+];
 
 /**
  * The model's number and the engine's, for one column set. The engine's is read by asking the table

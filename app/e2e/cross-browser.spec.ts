@@ -914,24 +914,12 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
   });
 }
 
-/**
- * The one-sided half of the same guard, and the one only Firefox can fail. A column the catalogue
- * no longer holds renders its raw slug as a header, and Firefox implements UAX #14's numeric
- * context where Chromium and WebKit do not — so a model that broke `breathability-26` at its
- * hyphen declared a width 17px under what Firefox needs, and the header hangs out of the column.
- * The model now breaks no hyphen at all, so what is claimed here is a floor rather than an
- * agreement: the over-reservation is the point and it is far outside `FIT_TOLERANCE_PX` on the two
- * slugs that carry a letter after the hyphen.
- *
- * **The floor is `FIT_TOLERANCE_PX` and not zero, and `10-12` is why.** There the model and Firefox
- * take the same view of the hyphen, so nothing is over-reserved and all that stands between the two
- * is the `HEADER_PX` table being Chromium's — the same spread `FIT_SETS` is held to on either side
- * (docs/app.md §Table presentation).
- */
-test('never models a dropped column\'s header narrower than this engine renders it', async ({ page }) => {
+/** A dropped slug authors the same breaks the model reads, removing the engine-specific natural
+ * hyphen rules from this comparison (docs/app.md §Table presentation). */
+test('models a dropped column\'s min-content width in this engine', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   const { model, rendered } = await measureFit(page, FIT_DROPPED_COLS);
-  expect(rendered - model,
+  expect(Math.abs(model - rendered),
     `the fit model says ${model.toFixed(1)}px and this engine renders ${rendered.toFixed(1)}px`)
     .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
 });
@@ -950,8 +938,7 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
   });
 }
 
-/** The same bound on a header the model deliberately over-reserves for, including in the engine
- *  whose hyphen rule that over-reservation exists for (`FIT_DROPPED_COLS`). */
+/** The same bound on a raw-slug header whose break opportunities are authored (`FIT_DROPPED_COLS`). */
 test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
   await sweepDeclaredColumns(page, FIT_DROPPED_COLS);
 });

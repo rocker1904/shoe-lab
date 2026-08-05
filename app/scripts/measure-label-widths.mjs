@@ -22,10 +22,12 @@ const ui = font('inter-tight.woff2');
 const mono = font('jetbrains-mono.woff2');
 
 /**
- * The phone header's set. Kept as it was: the table it feeds is validated against a 48px bound, so
- * a wider set would only add characters no short label uses.
+ * The phone header's visible set stays limited to labels guarded by the 48px bound; the authored
+ * zero-width break joins it because a dropped raw slug can reach the same header arithmetic.
  */
-const PHONE_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,/()%-Δ'];
+const ZERO_WIDTH_BREAK = '\u200b';
+const PHONE_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,/()%-Δ',
+  ZERO_WIDTH_BREAK];
 /**
  * The desktop set is wider because the strings it measures are the fleet's own, not a curated label
  * list: upstream test names, categorical option names ("Both sides (semi)"), plate words, dates and
@@ -33,6 +35,7 @@ const PHONE_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012
  * — `£` and `/` for units, `—` for an absent reading, `:` from "Tongue: gusset type".
  */
 const DESKTOP_CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;/()%+-£—Δ'];
+const PROPORTIONAL_DESKTOP_CHARS = [...DESKTOP_CHARS, ZERO_WIDTH_BREAK];
 /**
  * A units string is a different alphabet from a name or a phrase, which is why it gets its own set
  * rather than borrowing `DESKTOP_CHARS`: it is `test.units` straight from upstream (`HC`, `HA`,
@@ -66,19 +69,19 @@ const FACES = [
     name: 'HEADER_PX (app/src/lib/fit.ts)',
     css: "font-family:M,system-ui;font-size:14.72px;font-weight:600;letter-spacing:normal",
     note: 'desktop header — Inter Tight 600 at 14.72px (--t-md), no tracking (ShoeTable.svelte th button)',
-    chars: DESKTOP_CHARS, take: 'chromium',
+    chars: PROPORTIONAL_DESKTOP_CHARS, take: 'chromium',
   },
   {
     name: 'NAME_PX (app/src/lib/fit.ts)',
     css: "font-family:M,system-ui;font-size:14.72px;font-weight:700;letter-spacing:normal",
     note: 'desktop shoe name — Inter Tight 700 at 14.72px, no tracking (ShoeTable.svelte td.name strong, whose weight is the UA default for <strong> against a 400 parent and is read back, not assumed, by .hunt/max-content.ts)',
-    chars: DESKTOP_CHARS, take: 'chromium',
+    chars: PROPORTIONAL_DESKTOP_CHARS, take: 'chromium',
   },
   {
     name: 'PHRASE_PX (app/src/lib/fit.ts)',
     css: "font-family:M,system-ui;font-size:14.72px;font-weight:400;letter-spacing:normal",
     note: 'desktop phrase cell — Inter Tight 400 at 14.72px, no tracking (ShoeTable.svelte td.num:not(.fig))',
-    chars: DESKTOP_CHARS, take: 'chromium',
+    chars: PROPORTIONAL_DESKTOP_CHARS, take: 'chromium',
   },
   {
     name: 'FIGURE_ADVANCE_PX (app/src/lib/fit.ts)',
@@ -267,7 +270,7 @@ FACES.forEach((face, i) => {
   console.log(`   ${face.css}`);
   console.log(`   widest per-character disagreement between engines: ${Math.max(...spread).toFixed(2)}px */`);
   if (uniform === null) {
-    console.log(JSON.stringify(table, null, 0));
+    console.log(JSON.stringify(table, null, 0).replaceAll(ZERO_WIDTH_BREAK, '\\u200b'));
     console.log('FALLBACK =', fallback);
   } else {
     console.log(`UNIFORM ADVANCE = ${uniform}  (every character but Δ measures the same)`);

@@ -5,8 +5,9 @@ import { describe, expect, it } from 'vitest';
 // The e2e column sets, imported into the unit run on purpose: `FIT_SETS.phrases` is a claim about
 // the committed fleet that only this file can check, and a claim two files assert in prose and
 // neither enforces is the drift docs/policies.md §Vocabulary exists to stop. Nothing else crosses
-// the boundary — `fit-support.ts`'s Playwright import is a type and erases.
-import { FIT_SETS } from '../../e2e/fit-support';
+// the boundary — the set and its worst dropped witness are pure data, and `fit-support.ts`'s
+// Playwright import is a type and erases.
+import { FIT_SETS, FIT_WORST_DROPPED_COL } from '../../e2e/fit-support';
 import type { ShoesFile } from '../../../shared/types.js';
 import { indexTests } from './dataset';
 import {
@@ -52,42 +53,47 @@ describe('the desktop table\'s min-content model', () => {
     expect(headerMinPx('x', long)).toBe(headerMinPx('y', short));
   });
 
-  it('treats no hyphen as a break opportunity, whatever sits either side of it', () => {
+  it('keeps natural hyphens whole in catalogue labels, whatever sits either side of them', () => {
     // **Over-reservation, not a model of any engine.** Every engine breaks at SOME hyphens and no
     // two agree on which: Chromium and WebKit break `10-12`, `abc-12` and `breathability-25` alike
     // while Firefox leaves all three whole, so a rule tuned to either puts the model UNDER the
     // other engine's min-content — a header hanging out of a declared column. The whole token is
     // the widest answer any engine can give, so a model built on it can only be too wide, and the
-    // price is a raw-slug header (docs/app.md §Table presentation).
+    // price is any catalogue label or shoe name (docs/app.md §Table presentation).
     //
     // Stated as min == max: an unbreakable string has one width, and only a splitter that leaves
     // the hyphen alone makes the two agree.
     for (const slug of ['10-12', '2024-2025', 'abc-12', '10-abc', 'a-1',
       'breathability-26', 'stack-height-heel']) {
-      expect(headerMinPx(slug, undefined), slug).toBe(headerMaxPx(slug, undefined));
+      const test = labTest({ id: 900, slug, name: slug });
+      expect(headerMinPx(slug, test), slug).toBe(headerMaxPx(slug, test));
     }
   });
 
+  it('models a dropped slug at the break its rendered label authors after each hyphen', () => {
+    const slug = 'breathability-26';
+    expect(headerMinPx(slug, undefined)).toBeLessThan(headerMaxPx(slug, undefined));
+    expect(headerMinPx(slug, undefined))
+      .toBe(headerMinPx('breathability-', labTest({ id: 900, slug: 'x', name: 'breathability-' })));
+    expect(headerMaxPx(slug, undefined))
+      .toBe(headerMaxPx(slug, labTest({ id: 901, slug, name: slug })));
+  });
+
   it('prices the worst slug a link can name, so neither input can move unnoticed', () => {
-    // What the raw-slug price costs is stated as 691px in `FIT_DROPPED_COLS`
-    // (`app/e2e/fit-support.ts`), and it is arithmetic over two constants that move on their own
-    // schedules — `HEADER_PX` here, `MAX_SLUG_LEN` in `urlstate.ts`. Stated in prose it was a
-    // promise. This is a PIN and not a bound: either input moving has to be re-derived and re-read
-    // by a human, which is why the numbers are written out rather than computed here.
-    //
-    // The witness is the worst chunking `TEST_SLUG_RE` admits at that length — eleven chunks, ten
-    // of five letters and one of four, which is 64 exactly where eleven FIVE-letter chunks would be
-    // 65 and rejected. `fit-support.ts` owns the maximisation; this holds its result.
-    const worst = [...Array<string>(10).fill('mmmmm'), 'mmmm'].join('-');
+    // The witness and its maximisation live with the browser set in `FIT_DROPPED_COLS`; this test
+    // keeps both inputs to that claim from moving silently — `HEADER_PX` here and the URL parser's
+    // 64-character door. This is a PIN and not a bound: either move requires a re-measurement.
+    const worst = FIT_WORST_DROPPED_COL;
     // Both sides of the length door, so a `MAX_SLUG_LEN` that moved either way lands here: the
     // witness is a column a shared link can still name, and one character more is not.
     const idx = indexTests(TESTS);
     expect(parseView(`cols=${worst}`, idx).columns).toEqual([worst]);
     expect(parseView(`cols=${worst}m`, idx).columns).toEqual([]);
-    // The model reserves the whole token; an engine that breaks at every hyphen needs only the
-    // widest chunk and the hyphen behind it. The caret is in both terms and cancels.
-    expect(headerMinPx(worst, undefined)).toBe(774);
-    expect(headerMinPx(worst, undefined) - headerMinPx('mmmmm-', undefined)).toBe(691);
+    // Every repeated chunk has the same width, and the visible hyphen stays on it. The zero residual
+    // proves the marker itself costs nothing rather than the fallback advance.
+    const chunk = labTest({ id: 900, slug: 'x', name: 'mmmmm-' });
+    expect(headerMinPx(worst, undefined)).toBe(83);
+    expect(headerMinPx(worst, undefined) - headerMinPx('x', chunk)).toBe(0);
   });
 
   it('breaks at whitespace, which is the whole of the rule', () => {

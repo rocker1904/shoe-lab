@@ -37,10 +37,17 @@ describe('columnLabel', () => {
     expect(columnLabel('weight', labTest({ id: 24, slug: 'weight', name: 'Weight' }))).toBe('Weight');
   });
 
-  it('falls back to the slug rather than an empty header when the test is unknown', () => {
+  it('falls back to the visible slug with a break after each hyphen when the test is unknown', () => {
     // A column can outlive its test: `cols` is permissive, so a link can name a slug this
     // dataset no longer ships (docs/app.md §Columns and sorting).
-    expect(columnLabel('gone-upstream', undefined)).toBe('gone-upstream');
+    const label = columnLabel('gone-upstream-again', undefined);
+    expect(label).toBe('gone-\u200bupstream-\u200bagain');
+    expect(label.replaceAll('\u200b', '')).toBe('gone-upstream-again');
+  });
+
+  it('does not mark a catalogue name merely because it contains a hyphen', () => {
+    const test = labTest({ id: 900, slug: 'hi-vis', name: 'Hi-vis' });
+    expect(columnLabel(test.slug, test)).toBe('Hi-vis');
   });
 });
 
@@ -131,9 +138,10 @@ describe('the width table matches the shipped header face', () => {
  * **The half of the over-reserve rule that can put the model UNDER an engine.** Not splitting only
  * ever costs width; splitting where an engine will not break is a header hanging out of a declared
  * column, so every separator in the rule has to be one all three engines break at AND drop the
- * advance of. Both lists were measured in Chromium, Firefox and WebKit rather than read off a
- * whitespace definition (`wordsOf` in `labels.ts` names the readings); the strings here are
- * upstream's `test.name` and `shoe.name`, which nothing normalises
+ * advance of. Both natural-separator lists were measured in Chromium, Firefox and WebKit rather
+ * than read off a whitespace definition; the separately asserted U+200B is authored only after a
+ * dropped slug's visible hyphen. The strings here are otherwise upstream's `test.name` and
+ * `shoe.name`, which nothing normalises
  * (docs/app.md §Table presentation).
  */
 describe('where this app is willing to say a line may break', () => {
@@ -168,6 +176,11 @@ describe('where this app is willing to say a line may break', () => {
     for (const [name, sep] of SPLITS_AT) {
       expect(wordsOf(`Nike${sep}Air`), name).toEqual(['Nike', 'Air']);
     }
+  });
+
+  it('splits at an authored zero-width break and keeps its preceding visible hyphen', () => {
+    expect(wordsOf('Nike-\u200bAir')).toEqual(['Nike-', 'Air']);
+    expect(widestWordPx('mmmmm-\u200bmmmm')).toBe(widestWordPx('mmmmm- mmmm'));
   });
 
   it('keeps a name whole at every other separator, whatever JS calls whitespace', () => {

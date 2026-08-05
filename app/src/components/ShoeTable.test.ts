@@ -6,6 +6,7 @@ import ShoeTable from './ShoeTable.svelte';
 import { indexTests } from '../lib/dataset';
 import { washOf } from '../lib/direction';
 import { columnWidths, fitModel } from '../lib/fit';
+import { columnLabel } from '../lib/labels';
 import { type ScoreColumns } from '../lib/score';
 import { EASY } from '../lib/score-defs';
 import { percentileMap } from '../lib/stats';
@@ -219,12 +220,14 @@ describe('ShoeTable', () => {
    * column the catalogue has since dropped, and the table has to render it rather than throw
    * (docs/app.md §Columns are permissive, ranges and sorts are strict). Every
    * lookup the header and the cell make has to tolerate a key with no test behind it: the label
-   * falls back to the slug, the units line is empty, the direction and the wash read neutral, and
-   * every cell prints the no-reading em dash.
+   * falls back to the visibly unchanged slug with authored breaks, the units line is empty, the
+   * direction and the wash read neutral, and every cell prints the no-reading em dash.
    */
   it('renders a column the catalogue no longer holds without crashing', () => {
     const { container } = setup({ view: { columns: ['score', 'gone-metric-slug'] } }).rendered;
-    const head = screen.getByRole('columnheader', { name: /gone-metric-slug/ });
+    const head = screen.getByRole('columnheader', {
+      name: columnLabel('gone-metric-slug', undefined),
+    });
     expect(head.querySelector('.h-units')!.textContent).toBe('');
     // `table:not(.proto)`: the hidden prototype row beside the table carries a cell per column too,
     // and its figures are placeholders rather than this fleet's (`lib/row-height.ts`).

@@ -158,7 +158,7 @@ const HEADER_PX: Record<string, number> = {
   A: 10, B: 9, C: 10, D: 10, E: 8, F: 8, G: 11, H: 10, I: 4, J: 8, K: 9, L: 8, M: 13, N: 10,
   O: 11, P: 9, Q: 11, R: 9, S: 9, T: 9, U: 10, V: 10, W: 14, X: 10, Y: 10, Z: 9,
   ' ': 3, '.': 4, ',': 4, ':': 4, ';': 4, '/': 5, '(': 5, ')': 5, '%': 12, '+': 9, '-': 6,
-  '£': 9, '—': 15, 'Δ': 9.88,
+  '£': 9, '—': 15, '\u200b': 0, 'Δ': 9.88,
 };
 
 /**
@@ -173,7 +173,7 @@ const PHRASE_PX: Record<string, number> = {
   A: 9, B: 9, C: 10, D: 10, E: 8, F: 8, G: 10, H: 10, I: 3, J: 7, K: 9, L: 8, M: 12, N: 10,
   O: 11, P: 9, Q: 11, R: 9, S: 9, T: 9, U: 10, V: 9, W: 13, X: 9, Y: 9, Z: 9,
   ' ': 3, '.': 4, ',': 4, ':': 4, ';': 4, '/': 5, '(': 5, ')': 5, '%': 11, '+': 9, '-': 6,
-  '£': 9, '—': 15, 'Δ': 9.41,
+  '£': 9, '—': 15, '\u200b': 0, 'Δ': 9.41,
 };
 
 /**
@@ -205,7 +205,7 @@ const NAME_PX: Record<string, number> = {
   A: 11, B: 9, C: 11, D: 10, E: 9, F: 8, G: 11, H: 11, I: 4, J: 8, K: 10, L: 8, M: 13, N: 10,
   O: 11, P: 9, Q: 11, R: 9, S: 9, T: 9, U: 10, V: 11, W: 15, X: 10, Y: 10, Z: 9,
   ' ': 3, '.': 4, ',': 5, ':': 4, ';': 5, '/': 5, '(': 5, ')': 5, '%': 12, '+': 10, '-': 6,
-  '£': 9, '—': 15, 'Δ': 9.88,
+  '£': 9, '—': 15, '\u200b': 0, 'Δ': 9.88,
 };
 
 /** Wider than anything any of the tables holds, so an unmeasured character can only ever make the
@@ -239,11 +239,10 @@ const textPx = (s: string, table: Record<string, number>): number =>
  * `nowrap` on a `th` made every column's minimum its longest header — so this, not the whole
  * label, is a header's contribution (docs/app.md §Columns and sorting).
  *
- * A word is `wordsOf`'s: split at the three separators every engine breaks at and drops, hyphens
- * kept. That rule has one home in `labels.ts` and it is deliberate over-reservation rather than a
- * model of anyone's line breaking — the price is a raw slug header wider than the engine would have
- * drawn it, and the alternative is a header hanging out of a declared column in whichever engine
- * the rule was not tuned to.
+ * A word is `wordsOf`'s: natural hyphens stay whole, while a dropped slug carries an authored
+ * zero-width break after each one. That rule has one home in `labels.ts`; upstream labels and shoe
+ * names keep the conservative over-reservation that prevents one engine's break behaviour from
+ * putting a header or name outside its declared column.
  */
 const widestWordPx = (s: string, table: Record<string, number>): number =>
   Math.max(0, ...wordsOf(s).map((w) => textPx(w, table)));

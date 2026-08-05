@@ -1792,18 +1792,12 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
   });
 }
 
-/**
- * Chromium's third of the dropped-column guard; `cross-browser.spec.ts` owns the reasoning and the
- * two engines that can actually fail it. Here because a raw-slug header is over-reserved rather
- * than agreed with, so the claim is a floor in every engine and this is where a Chromium-side
- * regression would show first. The floor is `FIT_TOLERANCE_PX` rather than zero for the reason that
- * file gives: `10-12` is over-reserved by nothing, so the font table's own spread is all that is
- * left between the two numbers (docs/app.md §Table presentation).
- */
-test('never models a dropped column\'s header narrower than Chromium renders it', async ({ page }) => {
+/** A dropped slug authors the same breaks the model reads, so it carries the ordinary two-sided
+ * agreement rather than the old deliberate over-reservation (docs/app.md §Table presentation). */
+test('models a dropped column\'s min-content width in Chromium', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   const { model, rendered } = await measureFit(page, FIT_DROPPED_COLS);
-  expect(rendered - model,
+  expect(Math.abs(model - rendered),
     `the fit model says ${model.toFixed(1)}px and Chromium renders ${rendered.toFixed(1)}px`)
     .toBeLessThanOrEqual(FIT_TOLERANCE_PX);
 });
@@ -1824,9 +1818,8 @@ for (const [name, cols] of Object.entries(FIT_SETS)) {
 }
 
 /**
- * The same bound where the header is a raw slug the model deliberately over-reserves for
- * (`FIT_DROPPED_COLS`). Over-reservation is the safe direction and this is the check that it stayed
- * that way in the one engine the tables were measured in.
+ * The same declared-column bound for a raw slug whose break opportunities are authored rather than
+ * inferred (`FIT_DROPPED_COLS`).
  */
 test('keeps a dropped column\'s header inside its declared column', async ({ page }) => {
   await sweepDeclaredColumns(page, FIT_DROPPED_COLS);
