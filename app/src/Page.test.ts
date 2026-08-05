@@ -610,7 +610,7 @@ describe('Page', () => {
     await fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
-  // 49 tab stops from the top of the page to the first row, and the skip link is the way past them.
+  // The controls before the first result row make the skip link the keyboard route past them.
   it('sends the keyboard straight to the table, without touching the URL', async () => {
     render(Page, { props: { data } });
     const link = screen.getByRole('link', { name: /Skip to results/ });
