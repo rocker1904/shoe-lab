@@ -859,8 +859,9 @@ them apart.
 
 **Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
 one action, `lib/roving.ts`. The role promises exactly that, and the app's
-button radios supply it consistently through `SegmentedControl` or directly on
-the richer generation rows. Native radios were rendered in Chromium, Firefox
+button radios supply it consistently through `SegmentedControl` in the chrome
+and Display panel, or through the same action on the filter controls and richer
+generation rows. Native radios were rendered in Chromium, Firefox
 and WebKit before keeping the buttons: arrows and disabled-option skipping were
 consistent, but Home and End did nothing, Enter did not activate, and a group
 with nothing selected entered from reverse Tab at opposite ends in WebKit and

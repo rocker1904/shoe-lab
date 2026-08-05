@@ -1041,13 +1041,11 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
  * Every row of chrome is paid before the first shoe, and the ceiling is what stops the saving the
  * rebuild bought being given back one padding step at a time — docs/app.md §The chrome bands owns
  * what it spends. A bound rather than a pin, so a font tweak does not fail the build but a
- * regression does — each is set roughly 10px above what the components actually measure, and above
- * the HIGHER of the two engines: Firefox runs about 5px taller than Chromium here, and this SUITE
- * is Chromium-only (docs/operations.md §The e2e run needs three browsers). The numbers themselves
- * are docs/app.md §The chrome bands'.
+ * regression does. Chromium, Firefox and Docker WebKit agree on the measured touch heights;
+ * docs/app.md §The chrome bands owns those numbers.
  *
  * Both states, because the bar is taller once the strip has handed it the three setup controls —
- * and the strip-up pass is the binding one, because that is a first arrival.
+ * and that handed-over state is the binding one.
  */
 test('keeps the chrome under its ceiling on a phone', async ({ page }) => {
   const chrome = () => page.evaluate(() =>
