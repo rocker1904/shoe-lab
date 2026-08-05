@@ -737,7 +737,7 @@ and the counting is a walk of the population rather than one per brand.
 A search box narrows the brand list in a 14rem scroll box. Brand and Features
 share `CategoricalDisclosure`, which owns their native `<details>` shell,
 summary treatment, option-row treatment and 10px SVG chevron. It **suppresses
-the UA marker and draws the chevron itself** so the two categorical disclosures
+the UA marker and draws the chevron itself** so these categorical disclosures
 cannot acquire mismatched affordances. Their bodies remain consumer-owned:
 Brand owns its search and flat list, while Features owns its facet hierarchy.
 

@@ -16,8 +16,16 @@ describe('CategoricalDisclosure', () => {
     const summary = details.querySelector(':scope > summary');
     expect(summary).toHaveTextContent('Any material');
     expect(summary).toBe(container.querySelector('summary'));
-    expect(summary?.querySelector('svg')).toHaveAttribute('width', '10');
-    expect(summary?.querySelector('svg')).toHaveAttribute('height', '10');
+    const chevron = summary?.querySelector('svg');
+    expect(chevron).toHaveAttribute('width', '10');
+    expect(chevron).toHaveAttribute('height', '10');
+    expect(chevron).toHaveAttribute('viewBox', '0 0 10 10');
+    const mark = chevron?.querySelector('path');
+    expect(mark).toHaveAttribute('d', 'M2 4l3 3 3-3');
+    expect(mark).toHaveAttribute('stroke', 'currentColor');
+    expect(mark).toHaveAttribute('stroke-width', '1.4');
+    expect(mark).toHaveAttribute('stroke-linecap', 'round');
+    expect(mark).toHaveAttribute('stroke-linejoin', 'round');
     expect(screen.getByText('Disclosure body')).toBeInTheDocument();
     expect(details.open).toBe(false);
     await fireEvent.click(summary!);
