@@ -65,9 +65,10 @@
   </div>
 
   {#if metric.kind === 'pair'}
-    <div class="gens" role="radiogroup" aria-label={metric.label} use:roving>
+    <div class="gens" role="radiogroup" aria-label={metric.label} data-segmented-control use:roving>
       {#each generations as g (g.key)}
         <button type="button" role="radio" aria-checked={chosen === g.key} aria-label="{metric.label}, {g.generation}"
+                data-segment={g.key}
                 class:on={chosen === g.key} class:filtering={chosen === g.key && bounded(g.key)}
                 onclick={() => onchoose(g.key)}>
           <span class="gen">{g.generation}{g.units ? ` (${g.units})` : ''}</span>
@@ -92,9 +93,13 @@
          font-variant-numeric: tabular-nums; white-space: nowrap; }
   .gens { display: flex; flex-direction: column; gap: var(--s1); }
   button { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s2); width: 100%;
+           box-sizing: border-box; min-width: 24px; min-height: 24px;
            padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
            background: none; color: var(--text-dim); font-size: var(--t-xs); text-align: left; cursor: pointer; }
   button.on { border-color: var(--accent); color: var(--text); }
   button.on .gen { font-weight: 600; }
   button.filtering .gen { font-weight: 700; }
+  @media (hover: none) {
+    button { min-height: 32px; }
+  }
 </style>

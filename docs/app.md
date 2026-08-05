@@ -445,8 +445,8 @@ contribute are screened against the declared values before a row is drawn, so th
 only way two rows can carry one value is a catalogue that declares it twice —
 refused upstream rather than defended here
 (docs/scraping.md §A duplicate option value fails the run).
-A `bool` test is an Any/Yes/No tri-state built the way
-Discontinued is, and carries no counts: ticking both boxes would be a near-no-op
+A `bool` test is an Any/Yes/No tri-state drawn by the same shared segmented
+control as Discontinued, and carries no counts: ticking both boxes would be a near-no-op
 whose only effect is excluding the handful of unread shoes, which is not a state
 a runner means. A selection is set membership on the population side, so it moves
 the coverage denominator exactly as a brand tick does (§Coverage), and a shoe
@@ -574,7 +574,7 @@ this surface deleted. That still needs somewhere to record which rows are
 bound keys is exactly what made clearing and removing the same action. A row
 that arrived by link holding a non-curated bound is seeded into the list by
 `parseView`, or clearing it would silently remove it. Released after is unset
-from an **Any** chip: a chip that sets a date cannot also clear it.
+from an **Any** shortcut: a shortcut that sets a date cannot also clear it.
 
 **The sidebar is a drawer everywhere the table cannot be seen beside it, and
 that is a fit decision rather than a width.** `sidebarPermanentAt` in `lib/fit.ts`
@@ -673,9 +673,11 @@ filter, then Clear filters, in one wrapping row. Add leads because it grows the
 surface and Clear empties it, and a column of two lone buttons reads as two
 unrelated afterthoughts rather than as the surface's own controls.
 
-Discontinued is three-valued — `hide`, `only`, or absent meaning both. A
-boolean could only ever hide, and "only the last-generation models" is half
-the value strategy in docs/shoe-stories.md.
+Discontinued is three-valued — `hide`, `only`, or absent meaning both. Its
+visible segments are **Any / Hide / Only** so the row stays one line on a phone;
+the latter two retain the explicit accessible names **Hide discontinued** and
+**Only discontinued**. A boolean could only ever hide, and "only the
+last-generation models" is half the value strategy in docs/shoe-stories.md.
 
 **Brand counts respect the other filters, and a facet must not filter itself.**
 `brandCounts` counts over the population with the *brand* filter removed —
@@ -859,9 +861,8 @@ them apart.
 
 **Every `role="radiogroup"` is one tab stop and answers the arrow keys**, from
 one action, `lib/roving.ts`. The role promises exactly that, and the app's
-button radios supply it consistently through `SegmentedControl` in the chrome
-and Display panel, or through the same action on the filter controls and richer
-generation rows. Native radios were rendered in Chromium, Firefox
+button radios supply it consistently through `SegmentedControl`; only the richer
+generation rows call the action directly. Native radios were rendered in Chromium, Firefox
 and WebKit before keeping the buttons: arrows and disabled-option skipping were
 consistent, but Home and End did nothing, Enter did not activate, and a group
 with nothing selected entered from reverse Tab at opposite ends in WebKit and
@@ -871,6 +872,14 @@ picker is a column. The tab stop is whatever is checked, tracked through a `Muta
 `aria-checked` so a selection made with the mouse, or re-derived from a link,
 carries it too; a group with nothing checked still admits focus at its first
 radio.
+
+**A segment's target size is a floor shared by every caller.** Standard segments
+and the richer generation choices are at least 24×24px; in a touch context they
+remain at least 24px wide and step to 32px high. `cross-browser.spec.ts` opens
+the Display and Features disclosures and the filter drawer, then quantifies over
+the shared `data-segment` registry at 1440px and at the supported 360px floor in
+Chromium, Firefox and Docker WebKit. The same 360px pass holds zone, story and
+Stability to one row with no toolbar or document overflow.
 
 **Wherever the sidebar is a drawer it traps focus.** It slides
 on a transform rather than toggling `display`, which cannot be animated;
@@ -2450,22 +2459,20 @@ Firefox and WebKit run this filter in CI for exactly this reason
 (docs/operations.md §The e2e run needs three browsers).
 
 `startOfMonth` in `lib/release-date.ts` is the one normalisation, applied at
-three edges: the input, the 1y/2y/3y chips, and `parseView`. It exists because
+three edges: the input, the 1y/2y/3y shortcuts, and `parseView`. It exists because
 bounds compare against full ISO dates and a bare `YYYY-MM` sorts *before* every
 day in that month, so an unnormalised bound would silently shift the window by a
 month. `applyFilters` is untouched by this and still compares whole ISO strings.
 
-The chips truncate too, which **widens** the window by up to a month rather than
+The shortcuts truncate too, which **widens** the window by up to a month rather than
 narrowing it. That is the deliberate direction: this filter's failure mode
 should be showing a shoe that is marginally too old, not hiding one that
 qualifies.
 
-**The four chips are a radiogroup, and `Any` lights when nothing is bound.**
+**The four shortcuts are one segmented radiogroup, and `Any` lights when nothing is bound.**
 They are exclusive, and each names a whole state of one bound rather than a thing
-to switch on — so they take the segmented family's selected state, filled
-`--accent-solid` under `--on-accent` on the pill shape they already had, with the
-border going to the fill so a chosen chip is one colour rather than a filled pill
-wearing a grey outline (§Theming). **No bound is a state of this filter, not an
+to switch on. The old four separate round chips are one recessed track now, the
+same shared face as the other standard segmented choices. **No bound is a state of this filter, not an
 absence of one**, and `Any` is the control that names it, so `Any` is marked
 exactly when `releasedAfter` is unset: a group that marked nothing on the default
 view would be telling a runner their filter was in no state at all. A bound the
@@ -2475,9 +2482,9 @@ and `roving` still gives a group with nothing checked one tab stop. `aria-checke
 rather than fill alone: a control that looks chosen and does not say so is
 visible to one runner and invisible to the next.
 
-Each chip's bound is resolved **once**, when the sidebar renders, rather than at
+Each shortcut's bound is resolved **once**, when the sidebar renders, rather than at
 the moment it is clicked. The mark compares the view against those strings, so
-two reads of the clock could have let a chip set a bound it then failed to look
+two reads of the clock could have let a shortcut set a bound it then failed to look
 selected for.
 
 The URL carries `after=YYYY-MM`. A day-precise `after` from an older link still
@@ -2989,7 +2996,7 @@ keeps the duplicate out of the accessibility tree as well as off the screen.
 `SegmentedControl.svelte` owns that reservation for the toolbar's zone, story
 and stability controls and for the Display panel's theme control, so Svelte
 scoping cannot leave one member of the family at a different weight or target
-size. The sidebar's released-after chips carry the same reservation. The bound
+size. The sidebar's release shortcuts inherit the same reservation. The bound
 is `holds every segmented pill to one width across its own
 toggle`, in `cross-browser.spec.ts` rather than the Chromium-only suite: what the
 trick is worth is a question of text metrics, which is the kind of thing one
@@ -3622,9 +3629,9 @@ variant used only where a filled accent carries text: `--on-accent` on
 `--accent` is 4.56:1 in light but **3.61:1 in dark**, so the two themes cannot
 share one solid value. `--on-accent` is the one ink allowed on it, and it is a
 token rather than a `#fff` written into each component, because the fill and its
-ink are one fact and a literal splits it across the components that read it —
-`Toolbar.svelte`, `ZoneToggle.svelte`, `MonthPicker.svelte`,
-`DiscontinuedFilter.svelte` and the Display panel's theme group.
+ink are one fact and a literal splits it across the components that read it.
+`SegmentedControl.svelte` owns the filled segmented carriers; other control
+families, including `MonthPicker.svelte`, are guarded by the same token scan.
 `tokens.test.ts` fails the build on a raw white in a component's style block.
 
 **All three are DERIVED, per theme, from one primary colour**

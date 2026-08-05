@@ -5,9 +5,9 @@ import { expect, test, type Page } from '@playwright/test';
  * file. Every unit assertion for it reads through a **closed** `<details>`, because jsdom does not
  * implement the UA rule that hides a collapsed disclosure's children, so the disclosure itself —
  * the only interaction between a runner and this feature — is invisible to the suite. `use:roving`
- * has the same shape: the tri-states are button radios precisely so two rendered copies cannot join
- * one native group, which means the browser does none of the arrow-key work and jsdom's simulated
- * focus proves nothing about whether a real one behaves.
+ * has the same shape: the shared control deliberately uses button radios to own Home/End, Enter and
+ * nullable entry consistently across engines, so jsdom's simulated focus proves nothing about
+ * whether a mounted browser control behaves.
  *
  * Runs in all three engines rather than one, unlike the layout suite: WebKit is where `<details>`
  * open/close and marker suppression have diverged before, and the marker suppression here is copied
@@ -60,7 +60,7 @@ test('names each facet group from its own heading, in the accessibility tree', a
   `);
 });
 
-test('makes each feature tri-state one tab stop the arrows move within', async ({ page }) => {
+test('gives each feature tri-state the complete mounted keyboard contract', async ({ page }) => {
   await page.goto('/');
   const features = await openFeatures(page);
   const group = features.getByRole('radiogroup', { name: 'Removable insole' });
@@ -81,6 +81,14 @@ test('makes each feature tri-state one tab stop the arrows move within', async (
   await page.keyboard.press('ArrowLeft');
   await expect(group.getByRole('radio', { name: 'Any' })).toHaveAttribute('aria-checked', 'true');
   await expect(page).not.toHaveURL(/c\./);
+
+  await page.keyboard.press('End');
+  await expect(group.getByRole('radio', { name: 'No' })).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('Home');
+  await expect(group.getByRole('radio', { name: 'Any' })).toHaveAttribute('aria-checked', 'true');
+  await group.getByRole('radio', { name: 'Yes' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(group.getByRole('radio', { name: 'Yes' })).toHaveAttribute('aria-checked', 'true');
 });
 
 /**

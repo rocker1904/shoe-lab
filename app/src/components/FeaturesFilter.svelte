@@ -2,7 +2,7 @@
   import type { LabTest } from '../../../shared/types.js';
   import { BOOL_LABELS, facetLabel, facetValues } from '../lib/categorical';
   import { chipLabel } from '../lib/labels';
-  import { roving } from '../lib/roving';
+  import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
 
   let { tests, selections, countsFor, onchange }: {
     tests: LabTest[];
@@ -52,10 +52,10 @@
    * `parseView` then refuses, which is a link that loses its filter on arrival with nothing said.
    */
   const TRI = [
-    { v: undefined, label: 'Any' },
-    { v: 'true', label: BOOL_LABELS['true'] },
-    { v: 'false', label: BOOL_LABELS['false'] },
-  ] as const;
+    { value: 'any', label: 'Any' },
+    { value: 'true', label: BOOL_LABELS['true'] },
+    { value: 'false', label: BOOL_LABELS['false'] },
+  ] satisfies readonly [SegmentOption, ...SegmentOption[]];
 
   /** Anything a tri-state cannot display reads as Any, rather than lighting one half of it. */
   function triOf(slug: string): 'true' | 'false' | undefined {
@@ -78,14 +78,9 @@
     {#if test.type === 'bool'}
       <div class="facet">
         <h4 class="head" id="facet-{test.slug}">{noun}</h4>
-        <!-- Buttons rather than native radios, exactly as `DiscontinuedFilter` argues. -->
-        <div class="tri" role="radiogroup" aria-labelledby="facet-{test.slug}" use:roving>
-          {#each TRI as o (o.label)}
-            <button type="button" role="radio" aria-checked={triOf(test.slug) === o.v}
-                    class:on={triOf(test.slug) === o.v}
-                    onclick={() => onchange(test.slug, o.v === undefined ? undefined : [o.v])}>{o.label}</button>
-          {/each}
-        </div>
+        <SegmentedControl mode="radio" options={TRI} value={triOf(test.slug) ?? 'any'}
+                          onchange={(value) => onchange(test.slug, value === 'any' ? undefined : [value])}
+                          ariaLabelledby="facet-{test.slug}" fill />
       </div>
     {:else}
       <div class="facet" role="group" aria-labelledby="facet-{test.slug}">
@@ -119,11 +114,4 @@
   ul { list-style: none; margin: 0; padding: 0; }
   li { font-size: var(--t-sm); padding: 0.1rem 0; }
   li.empty { color: var(--text-dim); }
-  /* `overflow: visible`, not hidden: the focus ring is a box-shadow (docs/app.md §Theming). */
-  .tri { display: flex; background: var(--bg); border: 1px solid var(--border);
-         border-radius: var(--r-md); padding: 2px; gap: 2px; overflow: visible; }
-  .tri button { flex: 1; padding: var(--s1); border: none; border-radius: var(--r-sm);
-                background: none; color: var(--text-dim); cursor: pointer; font-size: var(--t-xs); }
-  /* `--accent-solid` carrying `--on-accent`, like the toolbar's pill (docs/app.md §Theming). */
-  .tri button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
 </style>

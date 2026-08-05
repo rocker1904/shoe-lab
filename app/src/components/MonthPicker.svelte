@@ -8,7 +8,7 @@
     value: string | undefined;
     /** The fleet's own first and last release dates — the picker offers nothing outside them. */
     min: string; max: string;
-    /** Only ever a bound. Clearing belongs to the Any chip beside the trigger, which is the one
+    /** Only ever a bound. Clearing belongs to the Any shortcut beside the trigger, which is the one
      *  control that can unset a date (docs/app.md §Released after is month-granular). */
     onchange: (iso: string) => void;
   } = $props();

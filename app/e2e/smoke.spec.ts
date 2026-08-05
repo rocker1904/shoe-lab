@@ -735,7 +735,7 @@ test('lays the chrome out in bands', async ({ page }) => {
       overflow: tb.scrollWidth - tb.clientWidth,
       // The story group must take the row it is given rather than filling one of its own — carried
       // over from the tier test Task 8 retires, which is where this claim lived.
-      paceW: tb.querySelector('.pace-wrap .seg')!.getBoundingClientRect().width,
+      paceW: tb.querySelector('.pace-wrap [data-segmented-control]')!.getBoundingClientRect().width,
       wrapW: tb.querySelector('.pace-wrap')!.getBoundingClientRect().width,
     };
   });
@@ -750,9 +750,8 @@ test('lays the chrome out in bands', async ({ page }) => {
 
   // At 800 and below the two bands separate, and the actions lead: what acts on the table sits above
   // what the table is, so the row carrying every word is the one nearest the table. This boundary is
-  // the CHROME's own and no longer the sidebar's, which sits far wider — the merged line the design
-  // wanted from 700 up does not fit the shipped controls until 731px, so it would cover 69 of the
-  // 100 pixels asked for and wrap in the wrong order below that (docs/app.md §The chrome bands).
+  // the CHROME's own and no longer the sidebar's, which sits far wider. Keeping one boundary also
+  // keeps the actions-before-setup order stable throughout the tier (docs/app.md §The chrome bands).
   for (const width of [800, 760, 660]) {
     await page.setViewportSize({ width, height: 900 });
     const split = await bands();

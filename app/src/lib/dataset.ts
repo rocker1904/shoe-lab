@@ -57,7 +57,7 @@ export function displayNumber(v: number): string {
   return String(Math.round(v * 100) / 100);
 }
 
-/** Resolves the sidebar's released-after chips. No preset uses it: recency is a strategy rather
+/** Resolves the sidebar's released-after shortcuts. No preset uses it: recency is a strategy rather
  *  than a story, so a preset takes no position on it (docs/shoe-stories.md). */
 export function isoYearsAgo(now: Date, years: number): string {
   const d = new Date(now);

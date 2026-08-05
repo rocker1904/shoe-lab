@@ -66,8 +66,10 @@ describe('MetricRow pair', () => {
   it('renders one heading and two generation controls, current selected by default', () => {
     setup(pair, { chosen: 'midsole-softness-22' });
     expect(screen.getAllByRole('heading')).toHaveLength(1);
+    expect(screen.getByRole('radiogroup')).toHaveAttribute('data-segmented-control');
     const radios = screen.getAllByRole('radio');
     expect(radios).toHaveLength(2);
+    expect(radios.every((radio) => radio.hasAttribute('data-segment'))).toBe(true);
     expect(radios[0]).toHaveAttribute('aria-checked', 'true');
     expect(radios[0]).toHaveAccessibleName(/2022 method/);
     expect(radios[1]).toHaveAttribute('aria-checked', 'false');

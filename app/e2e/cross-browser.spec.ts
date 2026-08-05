@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, routeWindowFleet,
@@ -661,7 +661,7 @@ test('keeps an open panel across the rendering swap', async ({ page }) => {
  * the widest of the three on the width where the other two are tightest, which is exactly how the
  * sub-800 bands shipped an overflow once already.
  *
- * The slack is 33px in Firefox and WebKit and 36px in Chromium, and those numbers are the same on
+ * The shared segments now leave at least 151px in all three engines, and that number is the same on
  * every machine only because the controls carry the app's own face. Until they did, this row was
  * drawn in whatever form face the HOST resolved for the engine — 9px of slack in the Playwright
  * image, −15px on a runner whose `sans-serif` is DejaVu Sans, which is what failed CI twice while
@@ -802,51 +802,117 @@ test('draws each range grip on the bound it marks, with room inside the row', as
   expect(marks.worstOut, 'a marker reaches outside the row that has to hold it').toBeLessThanOrEqual(0);
 });
 
-/**
- * **No pill changes width when it is picked.** The selected state carries `font-weight: 600` and
- * the unselected one 400, so every control in the segmented family was sized by whichever weight it
- * happened to be wearing: `Stability` grew 70→73px as it came on, `Forefoot` 70→76px, and the four
- * story pills redistributed on every press, shifting the groups beside them. Measured in Chromium
- * and Firefox before the reservation went in.
- *
- * It has to be a browser: the fix is a pseudo-element drawing the same string at the selected
- * weight in a zero-height line, so what it is worth is entirely a question of text metrics, and
- * that is exactly the sort of thing one engine rounds differently. Hence this file rather than the
- * Chromium-only suite — and the sidebar's released-after chips are the same family, same rule.
- */
-test('holds every segmented pill to one width across its own toggle', async ({ page }) => {
-  await page.setViewportSize({ width: 1400, height: 900 });
-  await page.goto('/');
+const SEGMENTED_VIEW = '/?story=easy&after=2000-05&rows=midsole-softness-22';
+
+async function revealSegmentedControls(page: Page) {
+  await page.goto(SEGMENTED_VIEW);
   await awaitFacesLoaded(page);
-  // Through the strip, not by URL: the bar draws no setup group until the strip has handed over,
-  // and `story` is not a token the address owns (docs/app.md §The toolbar).
-  await page.locator('.card.story').filter({ hasText: 'Easy' }).click();
-  await expect(page.locator('.setup button')).toHaveCount(7);
+  await page.locator('details[aria-label="Features"] summary').click();
+  await page.getByRole('button', { name: 'Display' }).click();
+  await expect(page.getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
+}
 
-  const widths = () => page.evaluate(() => Object.fromEntries(
-    [...document.querySelectorAll<HTMLElement>('.setup button, .chips button')]
-      .map((el) => [el.textContent!.trim(), el.getBoundingClientRect().width])));
-
-  const seen = new Map<string, Set<number>>();
-  const record = async () => {
-    for (const [name, w] of Object.entries(await widths())) {
-      let ws = seen.get(name);
-      if (!ws) seen.set(name, ws = new Set());
-      ws.add(Math.round(w * 100) / 100);
+test('holds every shared segment to one width across its own toggle', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await revealSegmentedControls(page);
+  const result = await page.evaluate(async () => {
+    const visible = (el: HTMLElement) => el.offsetParent !== null;
+    const tracks = [...document.querySelectorAll<HTMLElement>('[data-segmented-control]')]
+      .filter(visible)
+      // Story changes can remove hand-added rows, so exercise it after every other track.
+      .sort((a, b) => Number(a.getAttribute('aria-label') === 'Built for')
+        - Number(b.getAttribute('aria-label') === 'Built for'));
+    const changed: string[] = [];
+    let segments = 0;
+    for (const track of tracks) {
+      const buttons = [...track.querySelectorAll<HTMLElement>('[data-segment]')];
+      segments += buttons.length;
+      const seen = buttons.map(() => new Set<number>());
+      const record = () => [...track.querySelectorAll<HTMLElement>('[data-segment]')]
+        .forEach((button, i) => seen[i]?.add(Math.round(button.getBoundingClientRect().width * 100) / 100));
+      record();
+      for (const button of buttons) {
+        button.click();
+        await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        if (track.isConnected) record();
+      }
+      seen.forEach((widths, i) => {
+        if (widths.size !== 1) changed.push(`${buttons[i]?.textContent?.trim()}: ${[...widths].join(', ')}`);
+      });
     }
-  };
-  // Every state each group can be in, so each pill is measured both wearing its mark and not.
-  await record();
-  for (const name of ['Forefoot', 'Heel', 'All', 'Easy', 'Tempo', 'Race', 'Stability', '1y', '3y', 'Any']) {
-    await page.getByRole('button', { name, exact: true })
-      .or(page.getByRole('radio', { name, exact: true })).first().click();
-    await record();
-  }
+    return { tracks: tracks.length, segments, changed };
+  });
+  expect(result.tracks, 'the registry found no segmented tracks').toBeGreaterThan(6);
+  expect(result.segments, 'the registry skipped segmented options').toBeGreaterThan(18);
+  expect(result.changed, 'a segment changes width when selected').toEqual([]);
+});
 
-  expect(seen.size, 'nothing was measured — the selectors have moved').toBeGreaterThan(8);
-  for (const [name, ws] of seen) {
-    expect([...ws], `${name} changes width when it is picked`).toHaveLength(1);
-  }
+test('holds every segment and generation choice to the desktop target floor', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await revealSegmentedControls(page);
+  const result = await page.locator('[data-segment]').evaluateAll((segments) => segments
+    .filter((segment) => (segment as HTMLElement).offsetParent !== null)
+    .map((segment) => {
+      const box = segment.getBoundingClientRect();
+      return { name: segment.textContent?.trim(), width: box.width, height: box.height };
+    }));
+  expect(result.length, 'the target registry skipped segmented choices').toBeGreaterThan(18);
+  expect(result.filter(({ width, height }) => width < 24 || height < 24),
+    'a desktop segment is smaller than 24×24px').toEqual([]);
+});
+
+test('holds the complete touch registry and phone toolbar at 360px', async ({ browser, browserName, baseURL }) => {
+  const context = await browser.newContext({
+    baseURL, viewport: { width: 360, height: 844 }, hasTouch: true,
+    ...(browserName === 'firefox' ? {} : { isMobile: true }),
+  });
+  const page = await context.newPage();
+  await page.goto(SEGMENTED_VIEW);
+  await awaitFacesLoaded(page);
+  expect(await page.evaluate(() => matchMedia('(hover: none)').matches),
+    'the context is not on the touch tier').toBe(true);
+
+  const measured: { name: string; width: number; height: number }[] = [];
+  const collect = async () => measured.push(...await page.locator('[data-segment]').evaluateAll((segments) => segments
+    .filter((segment) => (segment as HTMLElement).offsetParent !== null)
+    .map((segment) => {
+      const box = segment.getBoundingClientRect();
+      return { name: segment.textContent?.trim() ?? '', width: box.width, height: box.height };
+    })));
+
+  await collect();
+  const toolbar = await page.evaluate(() => {
+    const bar = document.querySelector<HTMLElement>('[data-testid="toolbar"]')!;
+    const children = [...bar.querySelectorAll<HTMLElement>('.setup > *')].map((child) => {
+      const box = child.getBoundingClientRect();
+      return box.top + box.height / 2;
+    });
+    return {
+      centres: Math.max(...children) - Math.min(...children),
+      ownOverflow: bar.scrollWidth - bar.clientWidth,
+      documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  expect(toolbar.centres, 'zone, story and Stability left their one row').toBeLessThanOrEqual(1);
+  expect(toolbar.ownOverflow, 'the toolbar overflows at 360px').toBeLessThanOrEqual(0);
+  expect(toolbar.documentOverflow, 'the document overflows at 360px').toBeLessThanOrEqual(0);
+
+  await page.getByRole('button', { name: 'Display' }).click();
+  await collect();
+  await page.getByRole('button', { name: 'Display' }).click();
+  await page.getByRole('button', { name: 'Filters' }).click();
+  await page.locator('details[aria-label="Features"] summary').click();
+  await collect();
+
+  expect(measured.length, 'the touch registry skipped segmented choices').toBeGreaterThan(18);
+  expect(measured.filter(({ width, height }) => width < 24 || height < 32),
+    'a touch segment is smaller than 24×32px').toEqual([]);
+
+  const release = page.getByRole('radiogroup', { name: 'Released after, quick bounds' });
+  await expect(release.getByRole('radio', { checked: true })).toHaveCount(0);
+  expect(await release.getByRole('radio').evaluateAll((radios) => radios.map((radio) => radio.tabIndex)))
+    .toEqual([0, -1, -1, -1]);
+  await context.close();
 });
 
 /**

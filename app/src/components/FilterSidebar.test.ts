@@ -28,7 +28,7 @@ const open = (trigger: HTMLElement) => {
 
 /**
  * Which section a control belongs to, because two of them now offer one called `Any`: the release
- * chips, whose unset state that is, and the discontinued group. The chips' own comment predicted
+ * shortcuts, whose unset state that is, and the discontinued group. The shortcuts' own comment predicted
  * this — "a second control named Any arriving in this sidebar cannot silently retarget the click" —
  * so every query for either says which section it means. The LAST match, for the tests that render
  * a second sidebar over the first.
@@ -127,7 +127,7 @@ describe('FilterSidebar', () => {
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getAllByLabelText(/^Brand \(/)).toHaveLength(1);
   });
-  it('released-after chips set a UTC cut-off, truncated to the month the data can honour', async () => {
+  it('released-after shortcuts set a UTC cut-off, truncated to the month the data can honour', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
     try {
@@ -140,16 +140,16 @@ describe('FilterSidebar', () => {
     }
   });
   /*
-   * The chips carry the segmented family's selected state now, so each has to SAY which state of
+   * The shortcuts carry the segmented family's selected state now, so each has to SAY which state of
    * the bound it names — `Any` included, because "no bound" is a state of the filter rather than an
    * absence of one (docs/app.md §Released after is month-granular). A fill with no `aria-checked`
    * behind it is the untrue-claim species: visible to one runner and invisible to the next.
    */
-  describe('released-after chips mark the bound they name', () => {
-    const chips = (container: HTMLElement) => within([...container.querySelectorAll('section')]
+  describe('released-after shortcuts mark the bound they name', () => {
+    const shortcuts = (container: HTMLElement) => within([...container.querySelectorAll('section')]
       .find((s) => s.querySelector('h3')?.textContent === 'Released after')!)
       .getAllByRole('radio');
-    const marked = (container: HTMLElement) => chips(container)
+    const marked = (container: HTMLElement) => shortcuts(container)
       .filter((c) => c.getAttribute('aria-checked') === 'true').map((c) => c.textContent?.trim());
 
     it('lights Any when nothing is bound, because that is the state Any names', () => {
@@ -158,7 +158,7 @@ describe('FilterSidebar', () => {
       expect(marked(container)).toEqual(['Any']);
     });
 
-    it('lights the chip whose own bound the view holds', () => {
+    it('lights the shortcut whose own bound the view holds', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-07-28T02:00:00Z'));
       try {
@@ -171,23 +171,31 @@ describe('FilterSidebar', () => {
       }
     });
 
-    // The month picker can set a bound no chip names, and a group marking nothing is the same shape
+    // The month picker can set a bound no shortcut names, and a group marking nothing is the same shape
     // the toolbar's own take on a hand-edited view (docs/app.md §The toolbar).
     it('marks nothing for a bound the month picker set between them', () => {
       const view = defaultView();
       view.filters.releasedAfter = '2019-04-01';
       const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
       expect(marked(container)).toEqual([]);
-      expect(chips(container).filter((c) => c.tabIndex === 0), 'still one tab stop').toHaveLength(1);
+      expect(shortcuts(container).filter((c) => c.tabIndex === 0), 'still one tab stop').toHaveLength(1);
     });
 
-    /** The reservation's input: without it a chip is sized by whichever weight it is wearing and
+    /** The reservation's input: without it a shortcut is sized by whichever weight it is wearing and
      *  the row shuffles as the choice moves along it (docs/app.md §The toolbar). */
-    it('gives every chip its own label to reserve the selected width with', () => {
+    it('gives every shortcut its own label to reserve the selected width with', () => {
       const { container } = render(FilterSidebar,
         { props: { data, view: defaultView(), onchange: vi.fn(), population: FLEET } });
-      for (const c of chips(container)) expect(c.dataset['label']).toBe(c.textContent?.trim());
+      for (const c of shortcuts(container)) expect(c.dataset['label']).toBe(c.textContent?.trim());
     });
+  });
+
+  it('draws all release shortcuts in one shared segmented track', () => {
+    setup();
+    const group = sectionNamed('Released after').getByRole('radiogroup', { name: 'Released after, quick bounds' });
+    expect(group).toHaveAttribute('data-segmented-control');
+    expect([...group.querySelectorAll('[data-segment]')].map((segment) => segment.textContent))
+      .toEqual(['Any', '1y', '2y', '3y']);
   });
 
   it('resets every filter at once', async () => {
@@ -265,7 +273,7 @@ describe('FilterSidebar text and toggle controls', () => {
     expect(onchange.mock.lastCall![0].filters.releasedAfter).toBe(`${newest - 1}-03-01`);
   });
 
-  it('clears the released-after bound from the Any chip, which is the only control that can', async () => {
+  it('clears the released-after bound from the Any shortcut, which is the only control that can', async () => {
     const view = defaultView();
     view.filters.releasedAfter = '2024-03-01';
     const onchange = vi.fn();
@@ -302,6 +310,16 @@ describe('FilterSidebar text and toggle controls', () => {
     await fireEvent.click(sectionNamed('Discontinued').getByRole('radio', { name: 'Any' }));
     expect(off.mock.lastCall![0].filters.discontinued).toBeUndefined();
     expect(off.mock.lastCall![0].filters).toEqual(defaultView().filters);
+  });
+
+  it('shortens discontinued visually without shortening its accessible choices', () => {
+    setup();
+    const group = screen.getByRole('radiogroup', { name: 'Discontinued' });
+    expect(group).toHaveAttribute('data-segmented-control');
+    const radios = within(group).getAllByRole('radio');
+    expect(radios.map((radio) => radio.textContent)).toEqual(['Any', 'Hide', 'Only']);
+    expect(radios.map((radio) => radio.getAttribute('aria-label')))
+      .toEqual([null, 'Hide discontinued', 'Only discontinued']);
   });
 });
 
@@ -504,7 +522,7 @@ describe('FilterSidebar filter set management', () => {
     expect(sameValue(onchange.mock.lastCall![0], defaultView())).toBe(true);
   });
 
-  it('unsets released-after from a chip', async () => {
+  it('unsets released-after from a shortcut', async () => {
     const onchange = vi.fn();
     const view = defaultView();
     view.filters.releasedAfter = '2024-01-01';

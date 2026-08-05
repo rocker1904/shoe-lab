@@ -86,6 +86,8 @@ describe('FeaturesFilter', () => {
   it('offers a bool as three exclusive states rather than two checkboxes', () => {
     mount({ 'removable-insole': ['true'] });
     const group = screen.getByRole('radiogroup', { name: 'Removable insole' });
+    expect(group).toHaveAttribute('data-segmented-control');
+    expect(group.querySelectorAll('[data-segment]')).toHaveLength(3);
     expect([...group.querySelectorAll('[role=radio]')].map((b) => b.getAttribute('aria-checked')))
       .toEqual(['false', 'true', 'false']);
   });

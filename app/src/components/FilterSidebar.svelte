@@ -8,7 +8,6 @@
   import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
   import { stableBrandCounts, stableFacetCounts } from '../lib/population';
   import { excludedBy } from '../lib/relax';
-  import { roving } from '../lib/roving';
   import type { ViewState } from '../lib/view';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
@@ -19,6 +18,7 @@
   import MonthPicker from './MonthPicker.svelte';
   import PlateFilter from './PlateFilter.svelte';
   import RangeFilter from './RangeFilter.svelte';
+  import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
 
   let { data, view, onchange, population }: {
     data: ShoesFile; view: ViewState; onchange: (v: ViewState) => void;
@@ -29,10 +29,14 @@
   const idx = $derived(indexTests(data.tests));
   const ZONE_LABEL: Record<Zone, string> = { forefoot: 'Forefoot', heel: 'Heel' };
 
-  /** The bound each quick chip sets, resolved ONCE so the value a chip writes and the value its
+  /** The bound each quick shortcut sets, resolved ONCE so the value a shortcut writes and the value its
    *  mark compares against are the same string. Computed at click time they were two reads of the
-   *  clock, and a chip could set a bound it then failed to look selected for. */
+   *  clock, and a shortcut could set a bound it then failed to look selected for. */
   const QUICK_BOUNDS = [1, 2, 3].map((years) => ({ years, iso: startOfMonth(isoYearsAgo(new Date(), years)) }));
+  const QUICK_OPTIONS = [
+    { value: 'any', label: 'Any' },
+    ...QUICK_BOUNDS.map((bound) => ({ value: bound.iso, label: `${bound.years}y` })),
+  ] as [SegmentOption, ...SegmentOption[]];
 
   /** `score` and `msrpGbp` are shoe fields, not catalogue tests, so `metricEntries` cannot emit
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
@@ -251,16 +255,15 @@
          bound (docs/app.md §Released after is month-granular). A view the month picker put outside
          all four marks none, which a radiogroup is allowed to do — same shape as the toolbar's
          nullable marks. -->
-    <div class="chips" role="radiogroup" aria-label="Released after, quick bounds" use:roving>
-      <!-- The only way to unset a date the chips set: a chip that sets one cannot also clear it. -->
-      <button type="button" role="radio" aria-checked={view.filters.releasedAfter === undefined}
-              class:on={view.filters.releasedAfter === undefined} data-label="Any"
-              onclick={() => patch((v) => { v.filters.releasedAfter = undefined; })}>Any</button>
-      {#each QUICK_BOUNDS as q (q.years)}
-        <button type="button" role="radio" aria-checked={view.filters.releasedAfter === q.iso}
-                class:on={view.filters.releasedAfter === q.iso} data-label="{q.years}y"
-                onclick={() => patch((v) => { v.filters.releasedAfter = q.iso; })}>{q.years}y</button>
-      {/each}
+    <div class="quick">
+      <!-- The only way to unset a date the shortcuts set: a segment that sets one cannot also
+           clear it. A picker value between the shortcuts deliberately marks none. -->
+      <SegmentedControl mode="radio" options={QUICK_OPTIONS}
+                        value={view.filters.releasedAfter ?? 'any'}
+                        onchange={(value) => patch((v) => {
+                          v.filters.releasedAfter = value === 'any' ? undefined : value;
+                        })}
+                        ariaLabel="Released after, quick bounds" fill />
     </div>
   </section>
 
@@ -368,23 +371,7 @@
   @media (hover: none) {
     .search { font-size: 16px; }
   }
-  .chips { display: flex; gap: var(--s1); margin-top: var(--s1); }
-  /* A column for the same reason the toolbar's pills are one: the width reservation below sits
-     under the label rather than beside it. */
-  .chips button { display: inline-flex; flex-direction: column; align-items: center;
-                  padding: var(--s1) var(--s2); border: 1px solid var(--border);
-                  border-radius: var(--r-full); background: var(--surface); color: var(--text-dim);
-                  cursor: pointer; }
-  /* The segmented family's selected state, on the shape these chips already had: `--accent-solid`
-     filled and inked with `--on-accent`, which is the one job that token exists for
-     (docs/app.md §Theming). The border goes to the fill so a chosen chip is one colour rather than
-     a filled pill wearing a grey outline. */
-  .chips button.on { background: var(--accent-solid); border-color: var(--accent-solid);
-                     color: var(--on-accent); font-weight: 600; }
-  /* The same reservation the toolbar's pills carry, and here it is what keeps four chips in a row
-     from shuffling sideways as the choice moves along them (docs/app.md §The toolbar). */
-  .chips button::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden;
-                         visibility: hidden; pointer-events: none; }
+  .quick { display: flex; margin-top: var(--s1); }
   /* The rows used to be children of the flex `aside` and took their 12px from its `gap`. Wrapped in
      a section so the heading scopes them, they are outside that gap, so each row states the same
      12px as its own top margin — which also leaves the heading paying only its own `margin-bottom`,
