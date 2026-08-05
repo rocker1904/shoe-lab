@@ -10,9 +10,28 @@ import { expect, test, type Page } from '@playwright/test';
  * whether a mounted browser control behaves.
  *
  * Runs in all three engines rather than one, unlike the layout suite: WebKit is where `<details>`
- * open/close and marker suppression have diverged before, and the marker suppression here is copied
- * from `BrandFilter` rather than shared with it (docs/app.md §Filters).
+ * open/close and marker suppression have diverged before. Brand and Features now share that native
+ * shell, so this suite guards both consumers of it (docs/app.md §Filters).
  */
+
+type DisclosureMetrics = {
+  summary: { width: number; height: number };
+  chevron: { width: number; height: number };
+  row: { width: number; height: number };
+  summaryStyle: {
+    display: string; fontSize: string; color: string; gap: string; cursor: string; listStyleType: string;
+  };
+  rowStyle: { fontSize: string; paddingBlockStart: string; paddingBlockEnd: string; color: string };
+};
+
+const expectWithin = (actual: number, expected: number, label: string) =>
+  expect(Math.abs(actual - expected), label).toBeLessThanOrEqual(1);
+
+const SUMMARY_WIDTHS = {
+  chromium: { Brand: 75, Features: 83 },
+  firefox: { Brand: 76.38, Features: 83.43 },
+  webkit: { Brand: 76.34, Features: 83.36 },
+} as const;
 
 const openFeatures = async (page: Page) => {
   const section = page.locator('details[aria-label="Features"]');
@@ -20,6 +39,103 @@ const openFeatures = async (page: Page) => {
   await expect(section).toHaveAttribute('open', '');
   return section;
 };
+
+test('keeps the shared categorical disclosure geometry and treatment', async ({ browserName, page }) => {
+  await page.goto('/');
+  for (const width of [360, 1200] as const) {
+    for (const theme of ['light', 'dark'] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => localStorage.setItem('theme', value), theme);
+      await page.reload();
+      await page.evaluate(() => document.fonts.ready);
+      if (width === 360) {
+        await page.getByRole('button', { name: 'Filters' }).click();
+        await expect(page.getByTestId('filter-drawer')).toBeVisible();
+      }
+
+      const sections = Object.fromEntries(['Brand', 'Features'].map((label) => [
+        label, page.locator(`details[aria-label="${label}"]`),
+      ]));
+      await sections.Brand!.locator('summary').click();
+      await expect(sections.Brand!).toHaveAttribute('open', '');
+      await expect(sections.Features!).not.toHaveAttribute('open', '');
+      await sections.Features!.locator('summary').click();
+      await expect(sections.Features!).toHaveAttribute('open', '');
+      await page.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }));
+
+      const metrics = await page.evaluate(() => Object.fromEntries(['Brand', 'Features'].map((label) => {
+        const details = document.querySelector(`details[aria-label="${label}"]`)!;
+        const summary = details.querySelector(':scope > summary')!;
+        const chevron = summary.querySelector('svg')!;
+        const row = details.querySelector('li')!;
+        const summaryBox = summary.getBoundingClientRect();
+        const chevronBox = chevron.getBoundingClientRect();
+        const rowBox = row.getBoundingClientRect();
+        const summaryStyle = getComputedStyle(summary);
+        const rowStyle = getComputedStyle(row);
+        return [label, {
+          summary: { width: summaryBox.width, height: summaryBox.height },
+          chevron: { width: chevronBox.width, height: chevronBox.height },
+          row: { width: rowBox.width, height: rowBox.height },
+          summaryStyle: {
+            display: summaryStyle.display,
+            fontSize: summaryStyle.fontSize,
+            color: summaryStyle.color,
+            gap: summaryStyle.gap,
+            cursor: summaryStyle.cursor,
+            listStyleType: summaryStyle.listStyleType,
+          },
+          rowStyle: {
+            fontSize: rowStyle.fontSize,
+            paddingBlockStart: rowStyle.paddingBlockStart,
+            paddingBlockEnd: rowStyle.paddingBlockEnd,
+            color: rowStyle.color,
+          },
+        }];
+      }))) as Record<'Brand' | 'Features', DisclosureMetrics>;
+
+      const expectedRowWidth = width === 360 ? 283.8 : 228;
+      const expectedSummaryColor = theme === 'light' ? 'rgb(95, 102, 115)' : 'rgb(152, 160, 171)';
+      const expectedRowColor = theme === 'light' ? 'rgb(22, 24, 27)' : 'rgb(236, 238, 241)';
+      for (const label of ['Brand', 'Features'] as const) {
+        const measured = metrics[label];
+        expectWithin(measured.summary.width, SUMMARY_WIDTHS[browserName][label],
+          `${browserName} ${width}px ${theme} ${label} summary width drifted`);
+        expectWithin(measured.summary.height, 16,
+          `${browserName} ${width}px ${theme} ${label} summary height drifted`);
+        expectWithin(measured.chevron.width, 10,
+          `${browserName} ${width}px ${theme} ${label} chevron width drifted`);
+        expectWithin(measured.chevron.height, 10,
+          `${browserName} ${width}px ${theme} ${label} chevron height drifted`);
+        expectWithin(measured.row.width, expectedRowWidth,
+          `${browserName} ${width}px ${theme} ${label} option width drifted`);
+        expectWithin(measured.row.height, 21.2,
+          `${browserName} ${width}px ${theme} ${label} option height drifted`);
+        expect(measured.summaryStyle).toEqual({
+          display: 'inline-flex', fontSize: '13.28px', color: expectedSummaryColor,
+          gap: '8px', cursor: 'pointer', listStyleType: 'none',
+        });
+        expect(measured.rowStyle).toEqual({
+          fontSize: '13.28px', paddingBlockStart: '1.6px', paddingBlockEnd: '1.6px',
+          color: expectedRowColor,
+        });
+      }
+
+      expect(await page.evaluate(() =>
+        document.documentElement.scrollWidth - document.documentElement.clientWidth),
+      `${browserName} ${width}px ${theme} document overflow`).toBeLessThanOrEqual(0);
+      expect(await page.getByTestId('filter-drawer').evaluate((sidebar) =>
+        sidebar.scrollWidth - sidebar.clientWidth),
+      `${browserName} ${width}px ${theme} sidebar overflow`).toBeLessThanOrEqual(0);
+
+      await sections.Brand!.locator('summary').click();
+      await expect(sections.Brand!).not.toHaveAttribute('open', '');
+      await expect(sections.Features!).toHaveAttribute('open', '');
+    }
+  }
+});
 
 test('opens the features section and filters the fleet from it', async ({ page }) => {
   await page.goto('/');
