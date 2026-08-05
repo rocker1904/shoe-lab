@@ -1,7 +1,8 @@
 /**
- * Outside-press dismissal for a floating panel, shared by the two anchored to a trigger of their
- * own — the column picker and the month picker. Each dialog's scrim is the same affordance drawn
- * rather than a second mechanism (docs/app.md §Every floating panel dismisses the same way). Three choices here are not obvious, and each was got wrong first:
+ * Outside-press dismissal for a floating panel anchored to its own trigger. Each modal dialog's
+ * scrim is the same affordance drawn rather than a second mechanism
+ * (docs/app.md §Every floating panel dismisses the same way). Three choices here are not obvious,
+ * and each was got wrong first:
  *
  * **`pointerdown`, not `click`.** It fires before focus moves, so a press on the panel's own
  * trigger is still recognised as inside and is left to the trigger's toggle. On `click` the order

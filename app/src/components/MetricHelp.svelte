@@ -26,7 +26,9 @@
 
   function close(returnFocus = false) {
     clearTimeout(closeTimer);
-    if (returnFocus && document.activeElement !== trigger) trigger?.focus();
+    if ((returnFocus || panel?.contains(document.activeElement)) && document.activeElement !== trigger) {
+      trigger?.focus();
+    }
     open = false;
     pinned = false;
     if (active?.owner === owner) active = undefined;
@@ -84,6 +86,11 @@
     const reposition = () => place();
     const enter = () => { overPanel = true; clearTimeout(closeTimer); };
     const leave = () => { overPanel = false; schedulePreviewClose(); };
+    const resize = new ResizeObserver(place);
+    const mutations = new MutationObserver(place);
+    resize.observe(surface);
+    if (trigger) resize.observe(trigger);
+    mutations.observe(document.body, { childList: true, subtree: true, characterData: true });
     surface.addEventListener('pointerenter', enter);
     surface.addEventListener('pointerleave', leave);
     window.addEventListener('resize', reposition);
@@ -91,6 +98,8 @@
     return () => {
       surface.removeEventListener('pointerenter', enter);
       surface.removeEventListener('pointerleave', leave);
+      resize.disconnect();
+      mutations.disconnect();
       window.removeEventListener('resize', reposition);
       window.removeEventListener('scroll', reposition, true);
       surface.hidePopover();
@@ -146,7 +155,7 @@
            cursor: help; }
   button:hover { color: var(--text); border-color: var(--accent); background: var(--accent-dim); }
   .panel { position: fixed; inset: auto; box-sizing: border-box; width: min(18rem, calc(100vw - 16px));
-           max-height: calc(100vh - 16px); overflow: auto; margin: 0; padding: var(--s3);
+           margin: 0; padding: var(--s3);
            border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface);
            color: var(--text); box-shadow: var(--shadow-dialog); font-size: var(--t-sm);
            line-height: 1.4; text-align: left; }

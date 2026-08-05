@@ -985,10 +985,13 @@ on the engine naming its destination. The two `<body>`-mounted dialogs need none
 of this: they trap Tab, so focus cannot leave them in the first place.
 
 **Escape is stopped exactly where a second handler would hear it.** The month
-picker and metric help stop it because each remains a real descendant of the
-focus-trapping drawer, even while metric help paints in the top layer. The
-chrome panels have no listening ancestor, and both dialogs render into `<body>`
-(§Stacking order). One press produces one dismissal wherever a panel is mounted.
+picker stops it because it remains a descendant of the focus-trapping drawer.
+Metric help stops it because it can sit inside either that drawer or the
+Add-filter dialog, whose ancestor also handles Escape; painting in the top layer
+does not change that DOM path. In the permanent sidebar there is no second
+handler, so stopping is harmless. The chrome panels have no listening ancestor,
+and both dialogs render into `<body>` (§Stacking order). One press produces one
+dismissal wherever a panel is mounted.
 
 The column picker is the one **native disclosure**, and it gets neither
 behaviour free: a `<details>` stays open until its own summary is clicked again

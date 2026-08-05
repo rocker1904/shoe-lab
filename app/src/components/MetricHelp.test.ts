@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import MetricHelp from './MetricHelp.svelte';
 
@@ -47,17 +47,38 @@ describe('MetricHelp', () => {
   it('replaces another open help panel', async () => {
     render(MetricHelp, { props: { metricKey: 'heel-stack', label: 'Stack' } });
     render(MetricHelp, { props: { metricKey: 'weight', label: 'Weight' } });
-    await fireEvent.click(screen.getByRole('button', { name: 'Help for Stack' }));
-    await fireEvent.click(screen.getByRole('button', { name: 'Help for Weight' }));
+    const firstTrigger = screen.getByRole('button', { name: 'Help for Stack' });
+    await fireEvent.click(firstTrigger);
+    screen.getByRole('link', { name: /RunRepeat method/ }).focus();
+    await fireEvent.pointerEnter(screen.getByRole('button', { name: 'Help for Weight' }));
     expect(screen.queryByRole('note', { name: 'Stack metric help' })).not.toBeInTheDocument();
     expect(screen.getByRole('note', { name: 'Weight metric help' })).toBeInTheDocument();
+    expect(firstTrigger, 'replacement must not drop the old source link to body').toHaveFocus();
   });
 
   it('dismisses on an outside press', async () => {
     const trigger = renderHelp()!;
     await fireEvent.click(trigger);
+    screen.getByRole('link').focus();
     await fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    expect(trigger, 'a non-focusing outside press still needs a landing pad').toHaveFocus();
+  });
+
+  it('repositions when content-driven layout moves its trigger', async () => {
+    const trigger = renderHelp()!;
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(20, 100, 20, 20));
+    await fireEvent.click(trigger);
+    const panel = screen.getByRole('note');
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 80));
+    const changedContent = document.createElement('i');
+    document.body.append(changedContent);
+    await waitFor(() => expect(panel).toHaveStyle({ left: '8px' }));
+
+    vi.mocked(trigger.getBoundingClientRect).mockReturnValue(new DOMRect(200, 100, 20, 20));
+    changedContent.textContent = 'moved';
+    await waitFor(() => expect(panel).toHaveStyle({ left: '160px' }));
+    changedContent.remove();
   });
 
   it('keeps the source in the boundary and returns focus on Escape', async () => {
