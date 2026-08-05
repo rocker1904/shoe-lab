@@ -1,6 +1,6 @@
 # One home for categorical disclosures
 
-Status: approved, in delivery
+status: delivered-and-frozen
 
 ## Purpose
 
