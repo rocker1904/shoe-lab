@@ -3718,10 +3718,12 @@ three utilities wherever their band mounts them (§Where the utilities live), th
 pair, and the Add-filter dialog's and the About panel's Close. It is repeated per component
 rather than written once as a global `button` rule, because most of this app's
 buttons are **not** this: the segmented pills, the table headers, the range
-rows' clear icon, the setup cards and the two `<details>` summaries each carry
-their own, and a global rule would have to be undone in more places than it
-applied. The cost of that choice is that a button which simply omits it renders
-as a bare UA control among styled ones — which is exactly what it looks like.
+rows' clear icon, the setup cards, the shared categorical-disclosure summary
+and ColumnPicker's separate `<details>` summary all have treatments outside
+that button family, and a global rule would have to be undone in more places
+than it applied. The cost of that choice is that a button which simply omits it
+renders as a bare UA control among styled ones — which is exactly what it looks
+like.
 
 **The one thing that IS global on a form control is its face.**
 `button, input, select, textarea { font-family: inherit }` in `app.css`, because
