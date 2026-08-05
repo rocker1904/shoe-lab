@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, routeWindowFleet,
@@ -8,18 +8,19 @@ import {
 /**
  * Firefox and WebKit implement none of `input type="month"` — both reflect the type back as `text`,
  * so the control that Chromium renders as a picker is a bare box there, and a Chromium-only suite
- * reported it working. These run in those two engines only; the layout assertions in
- * `smoke.spec.ts` stay on one engine, where a single set of font metrics keeps them meaningful.
+ * reported it working. Most tests here run in those two engines only; the segmented registry also
+ * runs in Chromium. Layout assertions in `smoke.spec.ts` stay on one engine, where a single set of
+ * font metrics keeps them meaningful.
  *
- * That is this file's remit: the places where a NATIVE control's behaviour is the thing under test.
- * The column picker's `<details>` is here for the same reason as the month input.
+ * This file owns cross-engine compatibility seams: native controls and the shared segmented
+ * registry. The column picker's `<details>` is here for the same reason as the month input.
  */
 test('bounds the fleet by release month without a native month input', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
   await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
 
-  // The control that was a bare text box in these two engines. Chromium does not run this file, so
+  // The control that was a bare text box in these two engines. Chromium does not run this test, so
   // the same claim is made against jsdom in `FilterSidebar.test.ts`.
   await expect(page.locator('input[type="month"]')).toHaveCount(0);
 
@@ -36,7 +37,7 @@ test('bounds the fleet by release month without a native month input', async ({ 
   await expect(page).toHaveURL(/after=\d{4}-03/);
   await expect(trigger).toHaveText(/March \d{4}/);
 
-  // The chips still own clearing: a chip that sets a date cannot also unset it. Scoped to its own
+  // The shortcuts still own clearing: one that sets a date cannot also unset it. Scoped to its own
   // group, because the discontinued filter offers an `Any` too and neither is the other's.
   await page.getByRole('radiogroup', { name: 'Released after, quick bounds' })
     .getByRole('radio', { name: 'Any', exact: true }).click();
@@ -804,12 +805,36 @@ test('draws each range grip on the bound it marks, with room inside the row', as
 
 const SEGMENTED_VIEW = '/?story=easy&after=2000-05&rows=midsole-softness-22';
 
+async function expectRadioTrack(page: Page, name: string, segments: number) {
+  const track = page.getByRole('radiogroup', { name, exact: true });
+  await expect(track, `${name} segmented track is missing`).toBeVisible();
+  await expect(track.locator('[data-segment]'), `${name} options left the segmented registry`)
+    .toHaveCount(segments);
+}
+
+async function expectToolbarTracks(page: Page) {
+  await expectRadioTrack(page, 'Measured at', 2);
+  await expectRadioTrack(page, 'Built for', 4);
+  await expect(page.getByRole('button', { name: 'Stability', exact: true }))
+    .toHaveAttribute('data-segment', '');
+}
+
+async function expectFilterTracks(page: Page) {
+  await expectRadioTrack(page, 'Released after, quick bounds', 4);
+  await expectRadioTrack(page, 'Discontinued', 3);
+  await expectRadioTrack(page, 'Removable insole', 3);
+  await expectRadioTrack(page, 'Midsole softness', 2);
+}
+
 async function revealSegmentedControls(page: Page) {
   await page.goto(SEGMENTED_VIEW);
   await awaitFacesLoaded(page);
   await page.locator('details[aria-label="Features"] summary').click();
+  await expect(page.locator('details[aria-label="Features"]')).toHaveAttribute('open', '');
   await page.getByRole('button', { name: 'Display' }).click();
-  await expect(page.getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
+  await expectToolbarTracks(page);
+  await expectRadioTrack(page, 'Theme', 3);
+  await expectFilterTracks(page);
 }
 
 test('holds every shared segment to one width across its own toggle', async ({ page }) => {
@@ -842,8 +867,8 @@ test('holds every shared segment to one width across its own toggle', async ({ p
     }
     return { tracks: tracks.length, segments, changed };
   });
-  expect(result.tracks, 'the registry found no segmented tracks').toBeGreaterThan(6);
-  expect(result.segments, 'the registry skipped segmented options').toBeGreaterThan(18);
+  expect(result.tracks, 'the complete named registry changed').toBe(8);
+  expect(result.segments, 'the complete named registry changed').toBe(22);
   expect(result.changed, 'a segment changes width when selected').toEqual([]);
 });
 
@@ -856,7 +881,7 @@ test('holds every segment and generation choice to the desktop target floor', as
       const box = segment.getBoundingClientRect();
       return { name: segment.textContent?.trim(), width: box.width, height: box.height };
     }));
-  expect(result.length, 'the target registry skipped segmented choices').toBeGreaterThan(18);
+  expect(result.length, 'the complete named target registry changed').toBe(22);
   expect(result.filter(({ width, height }) => width < 24 || height < 24),
     'a desktop segment is smaller than 24×24px').toEqual([]);
 });
@@ -873,14 +898,18 @@ test('holds the complete touch registry and phone toolbar at 360px', async ({ br
     'the context is not on the touch tier').toBe(true);
 
   const measured: { name: string; width: number; height: number }[] = [];
-  const collect = async () => measured.push(...await page.locator('[data-segment]').evaluateAll((segments) => segments
-    .filter((segment) => (segment as HTMLElement).offsetParent !== null)
+  const collect = async (segments: Locator) => measured.push(...await segments.evaluateAll((nodes) => nodes
     .map((segment) => {
       const box = segment.getBoundingClientRect();
       return { name: segment.textContent?.trim() ?? '', width: box.width, height: box.height };
     })));
+  const collectTrack = (name: string) => collect(page.getByRole('radiogroup', { name, exact: true })
+    .locator('[data-segment]'));
 
-  await collect();
+  await expectToolbarTracks(page);
+  await collectTrack('Measured at');
+  await collectTrack('Built for');
+  await collect(page.getByRole('button', { name: 'Stability', exact: true }));
   const toolbar = await page.evaluate(() => {
     const bar = document.querySelector<HTMLElement>('[data-testid="toolbar"]')!;
     const children = [...bar.querySelectorAll<HTMLElement>('.setup > *')].map((child) => {
@@ -898,13 +927,19 @@ test('holds the complete touch registry and phone toolbar at 360px', async ({ br
   expect(toolbar.documentOverflow, 'the document overflows at 360px').toBeLessThanOrEqual(0);
 
   await page.getByRole('button', { name: 'Display' }).click();
-  await collect();
+  await expectRadioTrack(page, 'Theme', 3);
+  await collectTrack('Theme');
   await page.getByRole('button', { name: 'Display' }).click();
   await page.getByRole('button', { name: 'Filters' }).click();
   await page.locator('details[aria-label="Features"] summary').click();
-  await collect();
+  await expect(page.locator('details[aria-label="Features"]')).toHaveAttribute('open', '');
+  await expectFilterTracks(page);
+  await collectTrack('Released after, quick bounds');
+  await collectTrack('Discontinued');
+  await collectTrack('Removable insole');
+  await collectTrack('Midsole softness');
 
-  expect(measured.length, 'the touch registry skipped segmented choices').toBeGreaterThan(18);
+  expect(measured.length, 'the complete named touch registry changed').toBe(22);
   expect(measured.filter(({ width, height }) => width < 24 || height < 32),
     'a touch segment is smaller than 24×32px').toEqual([]);
 

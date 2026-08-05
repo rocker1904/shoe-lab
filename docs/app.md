@@ -2993,12 +2993,12 @@ second time, in a `data-label` the CSS draws again at the selected weight in a
 **zero-height line of the same column**, so the box is sized by the wider of the
 two states and neither moves. `visibility: hidden` rather than `opacity`, which
 keeps the duplicate out of the accessibility tree as well as off the screen.
-`SegmentedControl.svelte` owns that reservation for the toolbar's zone, story
-and stability controls and for the Display panel's theme control, so Svelte
-scoping cannot leave one member of the family at a different weight or target
-size. The sidebar's release shortcuts inherit the same reservation. The bound
-is `holds every segmented pill to one width across its own
-toggle`, in `cross-browser.spec.ts` rather than the Chromium-only suite: what the
+`SegmentedControl.svelte` owns that reservation for every standard caller: the
+toolbar's zone, story and Stability controls, the Display panel's theme control,
+the sidebar's release and Discontinued controls, and boolean feature facets.
+Svelte scoping therefore cannot leave one member of the family at a different
+weight or target size. The bound is `holds every shared segment to one width
+across its own toggle`, in `cross-browser.spec.ts` across all three engines: what the
 trick is worth is a question of text metrics, which is the kind of thing one
 engine rounds differently.
 

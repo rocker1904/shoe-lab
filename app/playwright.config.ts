@@ -6,12 +6,15 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: 'http://localhost:4173' },
   /**
-   * The smoke suite is Chromium-only. `cross-browser.spec.ts` and `features.spec.ts` run in all
-   * three engines: the former owns the compatibility-floor registry and native-control seams;
-   * the latter owns disclosure and mounted shared-radio behaviour that jsdom cannot resolve.
+   * The smoke suite is Chromium-only. Most of `cross-browser.spec.ts` is the Firefox/WebKit half
+   * of that suite; its segmented registry is the exception and has a small Chromium project so
+   * those quantified contracts run in all three engines. `features.spec.ts` runs in all three for
+   * disclosure and mounted shared-radio behaviour that jsdom cannot resolve.
    */
   projects: [
-    { name: 'chromium', use: { browserName: 'chromium' } },
+    { name: 'chromium', use: { browserName: 'chromium' }, testIgnore: /cross-browser/ },
+    { name: 'chromium-segmented', use: { browserName: 'chromium' }, testMatch: /cross-browser/,
+      grep: /holds every shared segment|holds every segment and generation choice|holds the complete touch registry/ },
     { name: 'firefox', use: { browserName: 'firefox' }, testMatch: /cross-browser|features/ },
     { name: 'webkit', use: { browserName: 'webkit' }, testMatch: /cross-browser|features/ },
   ],
