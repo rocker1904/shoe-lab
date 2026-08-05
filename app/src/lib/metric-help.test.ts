@@ -1,5 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import type { ShoesFile } from '../../../shared/types.js';
 import { METRIC_HELP, metricHelpOf, metricInterpretation } from './metric-help';
+
+const published = JSON.parse(readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8')) as ShoesFile;
+const validKeys = new Set([
+  ...published.tests.filter((t) => ['float', 'score', 'percent', 'rating'].includes(t.type))
+    .map((t) => t.slug),
+  'msrpGbp', 'score',
+]);
 
 describe('metricHelpOf', () => {
   it('returns no metadata for an unknown future metric', () => {
@@ -15,6 +27,15 @@ describe('metricHelpOf', () => {
       expect(url.hostname, key).toBe('runrepeat.com');
       expect(fact.source.label.trim(), key).not.toBe('');
     }
+  });
+
+  it('rejects authored keys outside the published range surface', () => {
+    for (const key of Object.keys(METRIC_HELP)) expect(validKeys.has(key), key).toBe(true);
+  });
+
+  it('keeps RunRepeat Score as the sole intentionally unsourced fact', () => {
+    expect(Object.entries(METRIC_HELP).filter(([, fact]) => !fact.source).map(([key]) => key))
+      .toEqual(['score']);
   });
 
   it('states the sharp measurements directly', () => {
@@ -45,6 +66,12 @@ describe('metricHelpOf', () => {
     expect(score.text).toMatch(/RunRepeat.s.*0.?100 verdict/i);
     expect(score.text).toMatch(/not.*Shoe Lab/i);
     expect(score.source).toBeUndefined();
+  });
+
+  it('distinguishes the internal-length and owner-vote fit methods', () => {
+    expect(metricHelpOf('internal-length')?.text).toMatch(/caliper/i);
+    expect(metricHelpOf('internal-length')?.text).not.toMatch(/gel mould/i);
+    expect(metricHelpOf('size-rating')?.text).toMatch(/owner.*votes/i);
   });
 });
 

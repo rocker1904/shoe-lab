@@ -6,7 +6,7 @@ export interface MetricHelpFact {
 }
 
 const METHOD = { label: 'RunRepeat method', href: 'https://runrepeat.com/testing-methodology' };
-const FIT_METHOD = { label: 'RunRepeat sizing guide', href: 'https://runrepeat.com/guides/how-to-measure-shoe-size' };
+const FIT_POLL = { label: 'RunRepeat owner-vote example', href: 'https://runrepeat.com/uk/nike-initiator' };
 const PRICE_METHOD = {
   label: 'RunRepeat price guide',
   href: 'https://runrepeat.com/guides/behind-the-price-tag-of-running-shoes',
@@ -69,24 +69,24 @@ const metricHelp: Record<string, MetricHelpFact> = {
   'toebox-width-at-the-widest-part': method('RunRepeat’s original fit method uses a caliper to measure the upper at its widest forefoot point.'),
   'toebox-width-widest-part': {
     text: 'RunRepeat makes a gel mould of the shoe interior and measures its widest forefoot point between the first and fifth metatarsal joints.',
-    source: FIT_METHOD,
+    source: METHOD,
   },
   'toebox-width-at-the-big-toe': method('RunRepeat’s original fit method uses a caliper to measure the upper near the big-toe area.'),
   'toebox-width-big-toe': {
     text: 'RunRepeat measures the internal gel mould 28.3 mm from its tip to capture width around the big-toe area and the toebox taper.',
-    source: FIT_METHOD,
+    source: METHOD,
   },
   'toebox-height': {
     text: 'RunRepeat measures the vertical space in the internal gel mould 28.3 mm from its tip.',
-    source: FIT_METHOD,
+    source: METHOD,
   },
   'internal-length': {
-    text: 'RunRepeat measures the length of the shoe’s internal gel mould in millimetres.',
-    source: FIT_METHOD,
+    text: 'RunRepeat flattens the shoe and uses a caliper to measure its internal length from the heel to the toe bumper in millimetres.',
+    source: METHOD,
   },
   'size-rating': {
-    text: 'RunRepeat’s five-point fit scale describes how the shoe runs in length: 3 is true to size, with lower values smaller and higher values larger.',
-    source: FIT_METHOD,
+    text: 'The average of RunRepeat owner votes on a five-point length scale: 3 is true to size, with lower values smaller and higher values larger.',
+    source: FIT_POLL,
   },
   'insole-thickness': method('RunRepeat removes the insole and measures its thickness at the centre of the heel with a caliper.'),
   'tongue-padding': method('RunRepeat measures the thickest part of the tongue with a caliper.'),
