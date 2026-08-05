@@ -461,6 +461,19 @@ cost of that is a real dead end — typing "gusset" into Add filter answers
 already, except that here the control is one section up rather than in the list
 below.
 
+**Metric help states provenance, not preference.** `lib/metric-help.ts` owns a
+short factual account of what each current numeric range represents and how
+RunRepeat obtains it, with a direct RunRepeat methodology link where one exists.
+It also translates the app's declared direction into one literal sentence:
+whether higher or lower readings are better, or whether neither end is
+universally better. It does not speculate about the runner who might prefer a
+value. Price is explicitly RunRepeat's manufacturer-suggested list price in GBP,
+not a current offer or a regional price, and RunRepeat Score is identified as
+RunRepeat's own 0–100 verdict rather than a Shoe Lab calculation; no derivation
+link is invented for it. The registry is deliberately permissive: an upstream
+numeric test with no authored fact remains available to filter, without a help
+control, until its method has been researched.
+
 **The search box matches a case-insensitive substring of the name *or* the
 brand.** The brand half is not redundant: almost every name already begins with
 its brand (§Table presentation), and the handful that shorten it — Topo
