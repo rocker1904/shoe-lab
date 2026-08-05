@@ -16,10 +16,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 type DisclosureMetrics = {
   summary: { width: number; height: number };
-  chevron: { width: number; height: number };
-  row: { width: number; height: number };
+  chevron: { width: number; height: number; topInset: number; rightInset: number };
+  row: { width: number; height: number; leftInset: number; rightInset: number };
   summaryStyle: {
-    display: string; fontSize: string; color: string; gap: string; cursor: string; listStyleType: string;
+    display: string; alignItems: string; fontSize: string; color: string; gap: string;
+    cursor: string; listStyleType: string;
   };
   rowStyle: { fontSize: string; paddingBlockStart: string; paddingBlockEnd: string; color: string };
 };
@@ -46,7 +47,7 @@ test('keeps the shared categorical disclosure geometry and treatment', async ({ 
     for (const theme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height: 900 });
       await page.evaluate((value) => localStorage.setItem('theme', value), theme);
-      await page.reload();
+      await page.goto('/');
       await page.evaluate(() => document.fonts.ready);
       if (width === 360) {
         await page.getByRole('button', { name: 'Filters' }).click();
@@ -67,6 +68,7 @@ test('keeps the shared categorical disclosure geometry and treatment', async ({ 
 
       const metrics = await page.evaluate(() => Object.fromEntries(['Brand', 'Features'].map((label) => {
         const details = document.querySelector(`details[aria-label="${label}"]`)!;
+        const detailsBox = details.getBoundingClientRect();
         const summary = details.querySelector(':scope > summary')!;
         const chevron = summary.querySelector('svg')!;
         const row = details.querySelector('li')!;
@@ -77,10 +79,17 @@ test('keeps the shared categorical disclosure geometry and treatment', async ({ 
         const rowStyle = getComputedStyle(row);
         return [label, {
           summary: { width: summaryBox.width, height: summaryBox.height },
-          chevron: { width: chevronBox.width, height: chevronBox.height },
-          row: { width: rowBox.width, height: rowBox.height },
+          chevron: {
+            width: chevronBox.width, height: chevronBox.height,
+            topInset: chevronBox.top - summaryBox.top, rightInset: summaryBox.right - chevronBox.right,
+          },
+          row: {
+            width: rowBox.width, height: rowBox.height,
+            leftInset: rowBox.left - detailsBox.left, rightInset: detailsBox.right - rowBox.right,
+          },
           summaryStyle: {
             display: summaryStyle.display,
+            alignItems: summaryStyle.alignItems,
             fontSize: summaryStyle.fontSize,
             color: summaryStyle.color,
             gap: summaryStyle.gap,
@@ -109,12 +118,20 @@ test('keeps the shared categorical disclosure geometry and treatment', async ({ 
           `${browserName} ${width}px ${theme} ${label} chevron width drifted`);
         expectWithin(measured.chevron.height, 10,
           `${browserName} ${width}px ${theme} ${label} chevron height drifted`);
+        expectWithin(measured.chevron.topInset, 3,
+          `${browserName} ${width}px ${theme} ${label} chevron left the summary centre`);
+        expectWithin(measured.chevron.rightInset, 0,
+          `${browserName} ${width}px ${theme} ${label} chevron right edge drifted`);
         expectWithin(measured.row.width, expectedRowWidth,
           `${browserName} ${width}px ${theme} ${label} option width drifted`);
         expectWithin(measured.row.height, 21.2,
           `${browserName} ${width}px ${theme} ${label} option height drifted`);
+        expectWithin(measured.row.leftInset, 0,
+          `${browserName} ${width}px ${theme} ${label} option left edge drifted`);
+        expectWithin(measured.row.rightInset, 0,
+          `${browserName} ${width}px ${theme} ${label} option right edge drifted`);
         expect(measured.summaryStyle).toEqual({
-          display: 'inline-flex', fontSize: '13.28px', color: expectedSummaryColor,
+          display: 'inline-flex', alignItems: 'center', fontSize: '13.28px', color: expectedSummaryColor,
           gap: '8px', cursor: 'pointer', listStyleType: 'none',
         });
         expect(measured.rowStyle).toEqual({
@@ -129,6 +146,18 @@ test('keeps the shared categorical disclosure geometry and treatment', async ({ 
       expect(await page.getByTestId('filter-drawer').evaluate((sidebar) =>
         sidebar.scrollWidth - sidebar.clientWidth),
       `${browserName} ${width}px ${theme} sidebar overflow`).toBeLessThanOrEqual(0);
+
+      // Each consumer has to reach the shared empty-row rule in the real app. Selecting a feature
+      // leaves Other at zero; selecting that still-clickable brand then leaves feature values at
+      // zero. A first-row-only check never exercises this separate colour contract.
+      await sections.Features!.getByRole('checkbox', { name: /Both sides \(semi\)/ }).click();
+      const emptyBrand = sections.Brand!.locator('li.empty').first();
+      await expect(emptyBrand).toBeVisible();
+      await expect(emptyBrand).toHaveCSS('color', expectedSummaryColor);
+      await sections.Brand!.getByRole('checkbox', { name: /Other \(0\)/ }).click();
+      const emptyFeature = sections.Features!.locator('li.empty').first();
+      await expect(emptyFeature).toBeVisible();
+      await expect(emptyFeature).toHaveCSS('color', expectedSummaryColor);
 
       await sections.Brand!.locator('summary').click();
       await expect(sections.Brand!).not.toHaveAttribute('open', '');
