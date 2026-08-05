@@ -1,8 +1,8 @@
 # Windowing the stacked phone list
 
 *2026-08-04 · the deferred half of docs/specs/2026-08-03-virtualising-the-table.md,
-split out when the desktop half was delivered on its own · status: **drafted** —
-not approved, and nothing is built from it yet.*
+split out when the desktop half was delivered on its own · status: **approved,
+in delivery** — approved explicitly for execution on 2026-08-05.*
 
 The desktop table now renders a windowed plan. `ShoeTableMobile` still puts every
 visible shoe in the DOM — 1,364 `<tr>` for 455 shoes, since a shoe there is a
@@ -254,3 +254,60 @@ phone's geometry is its own.
 | `revealRow` on both renderings | already index-based; the phone's must survive a group outside the window |
 | the e2e fixture | five shoes cannot window; a larger fleet is routed for the windowing spec alone |
 | `SHORT_LABELS` and the metadata run | feed the measured cell content, so a vocabulary change moves a height |
+
+---
+
+# Build sheet
+
+## File map
+
+| Task | Create / modify | For |
+|---|---|---|
+| 1 | `app/src/lib/row-height.ts`, `app/src/lib/row-height.test.ts`, `app/src/components/ShoeTableMobile.svelte` | measure one stable fleet of complete phone groups at the current column set and make the shared cache accept a rendering-specific layout key and face ruler |
+| 2 | `app/src/components/ShoeTableMobile.svelte`, `app/src/components/ShoeTableMobile.test.ts`, `app/src/lib/virtual.ts` | render the mobile body from `virtualPlan`, with intact groups, exact spacers, panel heights, pinned focus/open/reveal groups and real ARIA positions |
+| 3 | `app/e2e/virtual.spec.ts`, `app/e2e/fit-support.ts`, `app/e2e/smoke.spec.ts`, `app/e2e/cross-browser.spec.ts`, `app/src/Page.test.ts`, `docs/app.md`, `BACKLOG.md` | route a fleet that can window, hold the mobile seam in three engines, measure the real fleet, and close the delivered backlog item |
+
+## Interfaces
+
+- `PhoneHeightEntry` carries `name`, the ordered metadata strings and
+  `discontinued`; `measurePhoneGroupHeights(entries)` returns each closed
+  shoe group's full height in fleet order, including its inter-shoe rule where
+  that group owns one, or `null` when the permanent prototype cannot be
+  measured.
+- `createRowHeights(onInvalidate, measure, environment)` keeps its existing
+  desktop defaults. A non-default environment supplies the rendered layout key
+  and the face-ruler element whose resize invalidates a cached answer.
+- `ShoeTableMobile.revealRow(index)` pins `shoes[index]` before querying the
+  DOM, matching the desktop component's fleet-position contract.
+
+## Tasks
+
+1. **Measure phone groups.** Establish the exact group geometry in the real
+   table, then implement the stable fleet/column-set input and shared cache
+   environment. Evidence: cache unit tests plus measured-versus-rendered
+   readings at 390px before any plan consumes them. Read §What the phone still
+   needs and docs/app.md §Categorical columns.
+2. **Render the plan.** Add the permanent prototype and plan seam, with group
+   ownership of rule rows, measured open-panel heights, namespaced spacers,
+   `overflow-anchor: none`, focus/open/reveal pinning and semantic row indices.
+   Evidence: `ShoeTableMobile.test.ts` must force a window under jsdom and prove
+   exact group/spacer accounting. Read §Requirements carried from the desktop
+   delivery and docs/policies.md §Interaction chrome.
+3. **Prove the integration and record the result.** Extend the routed 400-shoe
+   e2e fixture to the phone rendering; hold the opposite rendering swap,
+   measured heights, accessibility, focus, open panels and viewport coverage in
+   all three engines. Measure the real-fleet DOM and cost, update the owning
+   docs, freeze this spec and close the backlog entry. Read §The test lesson and
+   docs/app.md §What a drag may recompute.
+
+## Global constraints
+
+- The plan's item is one whole shoe group; it never splits the name, values,
+  rule or open panel rows.
+- The wash, filtering, sorting and scoring continue over the whole filtered
+  fleet, never the rendered plan.
+- A failed first measurement renders everything; a later failed measurement
+  holds the last good plan.
+- The desktop rendering, fit boundary, URL and open-set semantics do not move.
+- Every behavior bound runs without live network and the compatibility floor is
+  Chromium, Firefox, WebKit and 360px of layout.
