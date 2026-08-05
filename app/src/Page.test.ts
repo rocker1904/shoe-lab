@@ -113,7 +113,9 @@ async function openAddFilter() {
 }
 async function addFilter(name: string) {
   await openAddFilter();
-  await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: new RegExp(name) }));
+  await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', {
+    name: new RegExp(`^Add filter: ${name}`),
+  }));
 }
 
 it('lays a scrim behind the drawer, so the page reads as inert as well as being it', async () => {
@@ -1063,9 +1065,11 @@ describe('Page keeps the view in the URL alone', () => {
     expect(location.search).toBe('');
     expect(strip()).toBeInTheDocument();
     // Read before the unmount, or the container is emptied along with it. The histogram's hatch
-    // pattern carries a per-instance counter that keeps rising across renders, so it is normalised
-    // away: it is an id, not a rendering.
-    const shape = (html: string) => html.replace(/hatch-\d+/g, 'hatch');
+    // pattern and metric-help relationship carry per-instance counters that keep rising across
+    // renders, so they are normalised away: they are ids, not rendering differences.
+    const shape = (html: string) => html
+      .replace(/hatch-\d+/g, 'hatch')
+      .replace(/metric-help-\d+/g, 'metric-help');
     const withJunk = shape(container.innerHTML);
     cleanup();
 

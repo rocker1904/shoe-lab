@@ -315,6 +315,7 @@
     {#each shown as e (keysOf(e)[0])}
       <section class="metric">
         <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)}
+                   helpKey={chosenKey(e)}
                    coverage={(k) => coverageOf(population, k, idx)}
                    bounded={(k) => k in view.filters.ranges} />
         {#each rowKeysOf(e) as key (key)}

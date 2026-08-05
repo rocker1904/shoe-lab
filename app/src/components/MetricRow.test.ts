@@ -29,14 +29,16 @@ const colocated = metricEntries([
 const lower = metricEntries([labTest({ id: 4, slug: 'outsole-durability', name: 'Outsole durability', units: 'mm' })])[0]!;
 
 function setup(metric: typeof single, over: {
-  chosen?: string; coverage?: (k: string) => Coverage; bounded?: (k: string) => boolean;
+  chosen?: string; helpKey?: string; coverage?: (k: string) => Coverage; bounded?: (k: string) => boolean;
 } = {}) {
   const onchoose = vi.fn();
+  const chosen = over.chosen ?? 'heel-stack';
   render(MetricRow, {
     props: {
       metric,
       coverage: over.coverage ?? flat(0.8),
-      chosen: over.chosen ?? 'heel-stack',
+      chosen,
+      helpKey: over.helpKey ?? chosen,
       bounded: over.bounded ?? (() => false),
       onchoose,
     },
@@ -59,6 +61,36 @@ describe('MetricRow single', () => {
   it('says nothing at all when every shoe has a reading', () => {
     setup(single, { coverage: () => ({ n: 5, total: 5, fraction: 1 }) });
     expect(screen.queryByText(/measured/)).toBeNull();
+  });
+});
+
+describe('MetricRow help', () => {
+  it('puts one factual trigger beside a known metric heading', () => {
+    setup(single);
+    expect(screen.getByRole('button', { name: 'Help for Heel stack' })).toBeInTheDocument();
+  });
+
+  it('follows the selected generation and its changed method', async () => {
+    setup(pair, { chosen: 'midsole-softness-22' });
+    await fireEvent.click(screen.getByRole('button', { name: 'Help for Midsole softness' }));
+    expect(screen.getByRole('note')).toHaveTextContent('Asker C');
+
+    cleanup();
+    setup(pair, { chosen: 'midsole-softness' });
+    await fireEvent.click(screen.getByRole('button', { name: 'Help for Midsole softness' }));
+    expect(screen.getByRole('note')).toHaveTextContent('Shore A');
+  });
+
+  it('uses one shared trigger for a heel/forefoot family', () => {
+    setup(colocated, { chosen: 'energy-return-heel', helpKey: 'energy-return-forefoot' });
+    expect(screen.getAllByRole('button', { name: 'Help for Energy return' })).toHaveLength(1);
+  });
+
+  it('keeps an unknown future metric visible without reserving help', () => {
+    const future = metricEntries([labTest({ id: 999, slug: 'future-test', name: 'Future test' })])[0]!;
+    setup(future, { chosen: 'future-test' });
+    expect(screen.getByRole('heading', { name: 'Future test' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Help for Future test' })).toBeNull();
   });
 });
 
@@ -155,7 +187,7 @@ describe('MetricRow colocated', () => {
     setup(colocated, { chosen: 'energy-return-heel' });
     expect(screen.getAllByRole('heading')).toHaveLength(1);
     expect(screen.getByRole('heading')).toHaveAccessibleName(/Energy return/);
-    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.getAllByRole('button')).toHaveLength(1); // the one shared factual-help trigger
     expect(screen.queryByText('Forefoot')).toBeNull();
     expect(screen.queryByText('Heel')).toBeNull();
   });
@@ -166,7 +198,8 @@ describe('MetricRow coverage is one vocabulary', () => {
   it('never renders a percentage or a bar in any shape', () => {
     for (const metric of [single, pair, colocated]) {
       const { container } = render(MetricRow, {
-        props: { metric, coverage: flat(0.8), chosen: 'heel-stack', bounded: () => false, onchoose: vi.fn() },
+        props: { metric, coverage: flat(0.8), chosen: 'heel-stack', helpKey: 'heel-stack',
+                 bounded: () => false, onchoose: vi.fn() },
       });
       expect(container.textContent).not.toMatch(/\d+%/);
       expect(container.querySelector('.bar')).toBeNull();

@@ -1,11 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import MetricHelp from './MetricHelp.svelte';
-
-beforeAll(() => {
-  HTMLElement.prototype.showPopover ??= function () { this.dataset['popoverOpen'] = ''; };
-  HTMLElement.prototype.hidePopover ??= function () { delete this.dataset['popoverOpen']; };
-});
 
 afterEach(() => vi.useRealTimers());
 
@@ -81,6 +76,21 @@ describe('MetricHelp', () => {
     changedContent.remove();
   });
 
+  it('places an initially unmeasured WebKit panel with the measured-height allowance', async () => {
+    const boxes = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.getAttribute('aria-label') === 'Help for Stack'
+          ? new DOMRect(100, 440, 20, 20)
+          : new DOMRect(0, 0, 0, 0);
+      });
+    const height = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(500);
+    const trigger = renderHelp()!;
+    await fireEvent.focus(trigger);
+    expect(await screen.findByRole('note')).toHaveStyle({ top: '272px' });
+    height.mockRestore();
+    boxes.mockRestore();
+  });
+
   it('keeps the source in the boundary and returns focus on Escape', async () => {
     const trigger = renderHelp()!;
     await fireEvent.click(trigger);
@@ -95,6 +105,16 @@ describe('MetricHelp', () => {
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
     expect(ancestorEscape).not.toHaveBeenCalled();
+  });
+
+  it('moves Tab from the trigger to the top-layer source without scrolling its DOM ancestors', async () => {
+    const trigger = renderHelp()!;
+    trigger.focus();
+    const source = await screen.findByRole('link');
+    const focus = vi.spyOn(source, 'focus');
+    await fireEvent.keyDown(trigger, { key: 'Tab' });
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(source).toHaveFocus();
   });
 
   it('states direction literally and does not invent a Score source', async () => {

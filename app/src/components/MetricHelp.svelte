@@ -16,6 +16,7 @@
   const interpretation = $derived(metricInterpretation(metricKey));
   let trigger = $state<HTMLButtonElement | null>(null);
   let panel = $state<HTMLElement | null>(null);
+  let source = $state<HTMLAnchorElement | null>(null);
   let open = $state(false);
   let pinned = $state(false);
   let overTrigger = false;
@@ -65,16 +66,21 @@
     const gap = 8;
     const anchor = trigger.getBoundingClientRect();
     const box = panel.getBoundingClientRect();
+    // WebKit can expose the newly shown top-layer box as 0×0 for its first focus event. The
+    // measured catalogue maximum is 154px; this first-frame allowance keeps collision selection
+    // safe until ResizeObserver supplies the real box on the next layout.
+    const panelWidth = box.width || panel.offsetWidth || Math.min(288, window.innerWidth - edge * 2);
+    const panelHeight = Math.max(box.height, panel.offsetHeight, panel.scrollHeight, 160);
     left = Math.min(
-      Math.max(edge, anchor.left + anchor.width / 2 - box.width / 2),
-      Math.max(edge, window.innerWidth - edge - box.width),
+      Math.max(edge, anchor.left + anchor.width / 2 - panelWidth / 2),
+      Math.max(edge, window.innerWidth - edge - panelWidth),
     );
     const below = anchor.bottom + gap;
-    const above = anchor.top - gap - box.height;
+    const above = anchor.top - gap - panelHeight;
     const roomBelow = window.innerHeight - edge - below;
     const roomAbove = anchor.top - gap - edge;
-    top = box.height <= roomBelow || roomBelow >= roomAbove
-      ? Math.min(below, Math.max(edge, window.innerHeight - edge - box.height))
+    top = panelHeight <= roomBelow || roomBelow >= roomAbove
+      ? Math.min(below, Math.max(edge, window.innerHeight - edge - panelHeight))
       : Math.max(edge, above);
   }
 
@@ -83,6 +89,7 @@
     const surface = panel;
     surface.showPopover();
     place();
+    const firstLayout = requestAnimationFrame(place);
     const reposition = () => place();
     const enter = () => { overPanel = true; clearTimeout(closeTimer); };
     const leave = () => { overPanel = false; schedulePreviewClose(); };
@@ -100,6 +107,7 @@
       surface.removeEventListener('pointerleave', leave);
       resize.disconnect();
       mutations.disconnect();
+      cancelAnimationFrame(firstLayout);
       window.removeEventListener('resize', reposition);
       window.removeEventListener('scroll', reposition, true);
       surface.hidePopover();
@@ -115,7 +123,19 @@
   });
 
   function onkeydown(event: KeyboardEvent) {
-    if (!open || event.key !== 'Escape') return;
+    if (!open) return;
+    // WebKit scrolls the sidebar DOM ancestor when Tab focuses a link in its top-layer descendant,
+    // even though that ancestor cannot clip the popover. Move this one step explicitly so the
+    // anchor and collision direction remain still.
+    if (event.key === 'Tab' && !event.shiftKey && event.currentTarget === trigger && source) {
+      event.preventDefault();
+      // The trigger's delegated focus scroll may only have reached layout after the opening effect.
+      // Re-read that settled anchor before moving focus into the independent top layer.
+      place();
+      source.focus({ preventScroll: true });
+      return;
+    }
+    if (event.key !== 'Escape') return;
     event.preventDefault();
     event.stopPropagation();
     close(true);
@@ -140,7 +160,8 @@
         <p>{fact.text}</p>
         <p class="interpretation">{interpretation}</p>
         {#if fact.source}
-          <a href={fact.source.href} target="_blank" rel="noopener" onkeydown={onkeydown}>{fact.source.label} ↗</a>
+          <a bind:this={source} href={fact.source.href} target="_blank" rel="noopener"
+             onkeydown={onkeydown}>{fact.source.label} ↗</a>
         {/if}
       </aside>
     {/if}

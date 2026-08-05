@@ -474,6 +474,25 @@ link is invented for it. The registry is deliberately permissive: an upstream
 numeric test with no authored fact remains available to filter, without a help
 control, until its method has been researched.
 
+**The visible affordance is one small `?` beside the metric name.** The sidebar
+puts one beside each explained heading, not beside each bound: a heel/forefoot
+family shares its method, while a superseded metric follows the generation its
+radio group currently shows. In Add filter, the add action and help action are
+sibling buttons in that keyboard order. The add button still covers the whole
+visual row behind its label, direction, coverage bar and percentage; only the
+`?` sits above it and owns its own press. An unknown key emits neither button nor
+layout box from `MetricHelp`, so the row and range remain fully usable.
+
+The usual Add-filter row measures 32.8px at both 360px and 1200px; a long
+method-era label in the compact fixture wraps to 40px at the phone floor. The
+browser guard therefore permits 40px at 360px and 34px at 1200px while requiring
+every row to remain at least 32px and free of horizontal overflow. The 288px
+panel keeps an 8px viewport allowance, both target scrollports retain zero
+horizontal overflow, and the three-engine suite checks first, middle and last
+triggers in both surfaces at those widths. The panel is also a boundary for the
+app's delegated focus scrolling: a focused source link belongs to the top layer,
+not to the sidebar scrollport that remains its DOM ancestor.
+
 **The search box matches a case-insensitive substring of the name *or* the
 brand.** The brand half is not redundant: almost every name already begins with
 its brand (§Table presentation), and the handful that shorten it — Topo
@@ -1185,7 +1204,9 @@ collided. Direction is shown in **three** places instead — the column picker,
 the add-filter dialog and the sidebar's metric rows — and in the table it is
 carried by the wash: `percentileMap` inverts for a `lower` metric, so the
 strongest tint sits on the best value whichever numeric end that is
-(docs/app.md §Theming). The two pickers mark **both** of their row loops, so the
+(docs/app.md §Theming). Table headers carry no metric-help trigger: they are a
+dense sorting surface and are outside this filter-help delivery. The two pickers
+mark **both** of their row loops, so the
 shoe fields carry it too and price keeps its `↓`; the sidebar marks the metric
 row's heading, glued to the name rather than pushed to the far end of a
 `space-between` row, and one key answers for the whole row because both halves

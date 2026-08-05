@@ -405,11 +405,16 @@ describe('FilterSidebar filter set management', () => {
     // softness is offered because it is deliberately not curated — redundant with shock absorption,
     // which is a row already (docs/app.md §Filters) — and heel counter is offered because it is a
     // score term that is not a natural search.
-    expect(within(screen.getByRole('dialog')).getAllByRole('button').map((b) => b.textContent?.trim().split(/\s+/)[0]))
-      .toEqual(['Midsole', 'Outsole', 'Heel', 'Stiffness', 'RunRepeat', 'Close']);
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.getAllByRole('button', { name: /^Add filter:/ })).toHaveLength(5);
+    for (const name of [/Midsole softness/, /Outsole thickness/, /Heel counter stiffness/,
+                        /Stiffness/, /RunRepeat Score/]) {
+      expect(dialog.getByRole('button', { name: new RegExp(`^Add filter: .*${name.source}`) }))
+        .toBeInTheDocument();
+    }
 
     // a row, not a hollow range key: the two are different state, and only the row survives a clear
-    await fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Stiffness/ }));
+    await fireEvent.click(dialog.getByRole('button', { name: /^Add filter: Stiffness/ }));
     expect(onchange.mock.lastCall![0].rows).toEqual(['stiffness']);
     expect(onchange.mock.lastCall![0].filters.ranges).toEqual({});
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -603,6 +608,49 @@ describe('FilterSidebar metric entries', () => {
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByRole('group', { name: /Width \/ Fit — previous method/ })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /Width \/ Fit — current method/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('FilterSidebar metric help', () => {
+  it('explains that Price is MSRP in GBP rather than a current regional offer', async () => {
+    setup();
+    await fireEvent.click(screen.getByRole('button', { name: 'Help for Price' }));
+    const help = screen.getByRole('note', { name: 'Price metric help' });
+    expect(help).toHaveTextContent(/manufacturer.s suggested retail price/i);
+    expect(help).toHaveTextContent(/not a current offer or a price for the user.s region/i);
+  });
+
+  it('identifies RunRepeat Score as RunRepeat’s verdict without a source link', async () => {
+    const view = defaultView();
+    view.filters.ranges['score'] = { min: 80 };
+    render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Help for RunRepeat Score' }));
+    const help = screen.getByRole('note', { name: 'RunRepeat Score metric help' });
+    expect(help).toHaveTextContent(/RunRepeat.s own 0.?100 verdict/i);
+    expect(within(help).queryByRole('link')).toBeNull();
+  });
+
+  it('follows the method selected for a superseded metric', async () => {
+    setup();
+    await fireEvent.click(screen.getByRole('button', { name: 'Help for Width / Fit' }));
+    expect(screen.getByRole('note')).toHaveTextContent(/gel mould/i);
+
+    const view = defaultView();
+    view.generations['toebox-width-widest-part'] = 'toebox-width-at-the-widest-part';
+    const next = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    await fireEvent.click(within(next.container).getByRole('button', { name: 'Help for Width / Fit' }));
+    expect(within(next.container).getByRole('note')).toHaveTextContent(/caliper/i);
+  });
+
+  it('keeps an unknown future metric visible without help', () => {
+    const future = labTest({ id: 999, slug: 'future-test', name: 'Future test' });
+    const view = defaultView();
+    view.rows = ['future-test'];
+    render(FilterSidebar, { props: {
+      data: { ...data, tests: [...data.tests, future] }, view, onchange: vi.fn(), population: FLEET,
+    } });
+    expect(screen.getByRole('group', { name: 'Future test' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Help for Future test' })).toBeNull();
   });
 });
 

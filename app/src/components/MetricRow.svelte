@@ -3,9 +3,11 @@
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
   import type { ResolvedMetric } from '../lib/lineage';
   import { roving } from '../lib/roving';
+  import MetricHelp from './MetricHelp.svelte';
 
-  let { metric, coverage, chosen, onchoose, bounded }: {
+  let { metric, helpKey, coverage, chosen, onchoose, bounded }: {
     metric: ResolvedMetric;
+    helpKey: string;
     coverage: (key: string) => Coverage;
     chosen: string;
     onchoose: (key: string) => void;
@@ -59,8 +61,11 @@
          far end of a `space-between` row where the coverage figure is. `aria-hidden`, like both
          pickers' — the legend above states the meaning once, and restating it per row would make
          every row twice as long to hear (docs/app.md §Table presentation). -->
-    <h4 class:on={active}>{metric.label}{metric.kind === 'single' && metric.units ? ` (${metric.units})` : ''}<span
-      class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(dirKey)]}</span></h4>
+    <div class="title">
+      <h4 class:on={active}>{metric.label}{metric.kind === 'single' && metric.units ? ` (${metric.units})` : ''}<span
+        class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(dirKey)]}</span></h4>
+      <MetricHelp metricKey={helpKey} label={metric.label} />
+    </div>
     {#if headCoverage}<span class="cov">{headCoverage}</span>{/if}
   </div>
 
@@ -81,7 +86,8 @@
 
 <style>
   .metric { display: flex; flex-direction: column; gap: var(--s1); }
-  .head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+  .title { display: flex; align-items: center; gap: var(--s1); min-width: 0; }
   h4 { font-size: var(--t-sm); color: var(--text-dim); margin: 0; font-weight: 600; }
   h4.on { color: var(--text); font-weight: 700; }
   /* The same mono glyph the two pickers draw, at the same size and dimmed the same way — a

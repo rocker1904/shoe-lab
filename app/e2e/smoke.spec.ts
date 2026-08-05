@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, NAME_COL_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
@@ -1035,6 +1035,53 @@ for (const { width, label } of [{ width: 1200, label: 'the chrome and the pinned
     expect(covered, 'something paints over the open dialog').toEqual([]);
   });
 }
+
+/** Chromium owns the numeric layout gate. This complements the engine-specific interaction test
+ * with exact row consistency and horizontal-overflow bounds at the supported phone floor and in
+ * the permanent-sidebar layout. */
+test('keeps metric help and both filter surfaces inside their measured bounds', async ({ page }) => {
+  const assertHelp = async (triggers: Locator, width: number, owner?: Locator) => {
+    const count = await triggers.count();
+    expect(count).toBeGreaterThan(2);
+    for (const index of [0, Math.floor(count / 2), count - 1]) {
+      const trigger = triggers.nth(index);
+      await trigger.scrollIntoViewIfNeeded();
+      await trigger.focus();
+      const panel = page.getByRole('note');
+      await expect(panel).toBeVisible();
+      const box = await panel.boundingBox();
+      expect(box!.x).toBeGreaterThanOrEqual(7);
+      expect(box!.y).toBeGreaterThanOrEqual(7);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(width - 7);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(793);
+      if (owner) expect(await owner.evaluate((node, help) => node.contains(help), await panel.elementHandle())).toBe(true);
+      await page.keyboard.press('Escape');
+    }
+  };
+
+  for (const width of [360, 1200]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/');
+    if (width === 360) await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    const sidebar = page.locator('.sidebar');
+    await assertHelp(sidebar.getByRole('button', { name: /^Help for / }), width);
+    await sidebar.getByRole('button', { name: 'Add filter', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add filter' });
+    await assertHelp(dialog.getByRole('button', { name: /^Help for / }), width, dialog);
+
+    const rows = await dialog.locator('.offer').evaluateAll((offers) => offers.map((offer) => {
+      const box = offer.getBoundingClientRect();
+      return { height: box.height, overflow: offer.scrollWidth - offer.clientWidth };
+    }));
+    expect(Math.min(...rows.map((row) => row.height))).toBeGreaterThanOrEqual(32);
+    expect(Math.max(...rows.map((row) => row.height))).toBeLessThanOrEqual(width === 360 ? 40 : 34);
+    expect(rows.every((row) => row.overflow === 0)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    const percentage = await dialog.locator('.offer').first().locator('.pct').boundingBox();
+    await page.mouse.click(percentage!.x + percentage!.width / 2, percentage!.y + percentage!.height / 2);
+    await expect(dialog).toHaveCount(0);
+  }
+});
 
 /**
  * Every row of chrome is paid before the first shoe, and the ceiling is what stops the saving the

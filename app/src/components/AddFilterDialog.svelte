@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import DirectionLegend from './DirectionLegend.svelte';
+  import MetricHelp from './MetricHelp.svelte';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
 
   export interface AddFilterOption { key: string; label: string; groupId: string | null; coverage: number }
@@ -58,7 +59,8 @@
     // `aria-modal` tells a screen reader the rest of the page is inert; without a trap, Tab walks
     // straight out of it and the promise is a lie. Nothing here is in the top layer, so the
     // browser will not do this for us.
-    const focusable = [...panel.querySelectorAll<HTMLElement>('input, button')].filter((el) => !el.hasAttribute('disabled'));
+    const focusable = [...panel.querySelectorAll<HTMLElement>('input, button, a[href]')]
+      .filter((el) => !el.hasAttribute('disabled'));
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (!first || !last) return;
@@ -84,13 +86,16 @@
     {#each grouped as [group, offers] (group)}
       <h4>{group}</h4>
       {#each offers as o (o.key)}
-        <button type="button" onclick={() => onchoose(o.key)}>
-          <span class="name">{o.label}</span>
+        <div class="offer">
+          <button type="button" class="choose" aria-label={`Add filter: ${o.label}, ${o.coverage}% measured`}
+                  onclick={() => onchoose(o.key)}></button>
+          <span class="name" aria-hidden="true">{o.label}</span>
+          <MetricHelp metricKey={o.key} label={o.label} />
           <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
           <!-- A bar, which is what the `select` this replaced could never hold (docs/app.md §Filters). -->
-          <span class="bar"><span class="fill" style:width="{o.coverage}%"></span></span>
-          <span class="pct">{o.coverage}%</span>
-        </button>
+          <span class="bar" aria-hidden="true"><span class="fill" style:width="{o.coverage}%"></span></span>
+          <span class="pct" aria-hidden="true">{o.coverage}%</span>
+        </div>
       {/each}
     {/each}
   </div>
@@ -144,19 +149,29 @@
           margin-inline: calc(-1 * var(--ring-room)); padding-inline-end: var(--s3);
           margin-inline-end: calc(-1 * var(--s3)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }
+  .offer { position: relative; display: grid;
+           grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr) auto 4rem 2.4rem;
+           align-items: center; min-height: 1.55rem; padding: var(--s1); color: var(--text);
+           font-size: var(--t-sm); }
+  .choose { position: absolute; inset: 0; z-index: 0; padding: 0;
+            border: 1px solid transparent; border-radius: var(--r-sm); background: none;
+            cursor: pointer; font: inherit; }
+  .choose:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .name, .dir, .bar, .pct { position: relative; z-index: 1; pointer-events: none; }
+  .name { min-width: 0; }
+  :global(.offer > .metric-help) { position: relative; z-index: 2; margin-left: var(--s1); }
   /* Separated, and the same rule and the same margin as the column picker's: the three clauses are
      one sentence and read as three headings without them. */
-  .dir { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
-  .list button { display: grid; grid-template-columns: 1fr auto 4rem 2.4rem; align-items: center; gap: var(--s2);
-                 padding: var(--s1); border: 1px solid transparent; border-radius: var(--r-sm);
-                 background: none; color: var(--text); cursor: pointer; font: inherit; font-size: var(--t-sm); text-align: left; }
-  .list button:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .dir { grid-column: 4; margin-left: var(--s2); font-family: var(--font-mono);
+         font-size: var(--t-xs); color: var(--text-dim); width: 1ch; text-align: center; }
   /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
      mark, --border-soft the groove it sits in. Neutral rather than accent because accent means
      "you selected this" in a CONTROL, and a dialog row is a control (docs/app.md §Theming). */
-  .bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--border-soft); overflow: hidden; }
+  .bar { display: block; height: 6px; margin-left: var(--s2); border-radius: var(--r-full);
+         background: var(--border-soft); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--hist-dim); }
-  .pct { font-size: var(--t-xs); color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+  .pct { margin-left: var(--s2); font-size: var(--t-xs); color: var(--text-dim);
+         text-align: right; font-variant-numeric: tabular-nums; }
   /* `margin: 0`, where `BrandFilter`'s carries one: the dialog is a flex column with its own gap,
      so a top margin here would double the space the sentence sits in. */
   .none { margin: 0; font-size: var(--t-xs); color: var(--text-dim); }

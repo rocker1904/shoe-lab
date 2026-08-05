@@ -294,13 +294,17 @@ test('keeps every sidebar tab stop on screen and clear of the clip edge', async 
       // Firefox gives a scrollport a tab stop of its own; the port is not a control in it.
       if (!el || !port || el === port) return null;
       const b = el.getBoundingClientRect(), p = port.getBoundingClientRect();
+      const topLayer = el.closest('[popover]');
+      const clip = topLayer ? { top: 0, bottom: window.innerHeight } : p;
+      const trigger = topLayer?.parentElement?.querySelector('button')?.getBoundingClientRect();
       return {
-        name: el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim() ?? el.tagName,
+        name: el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim()
+          ?? el.textContent?.trim() ?? el.tagName,
         offscreen: b.bottom <= 0 || b.top >= window.innerHeight,
-        slack: Math.round(Math.min(b.top - p.top, p.bottom - b.bottom)),
+        slack: Math.round(Math.min(b.top - clip.top, clip.bottom - b.bottom)),
         // Carried into the failure message: which of the two — the port's own scroll or the page's
         // — came up short is not recoverable from a slack figure alone.
-        where: `el ${Math.round(b.top)}..${Math.round(b.bottom)} in port ${Math.round(p.top)}..${Math.round(p.bottom)} at scrollTop ${Math.round(port.scrollTop)}`,
+        where: `el ${Math.round(b.top)}..${Math.round(b.bottom)} in port ${Math.round(p.top)}..${Math.round(p.bottom)} at scrollTop ${Math.round(port.scrollTop)}${topLayer ? `; trigger ${Math.round(trigger!.top)}..${Math.round(trigger!.bottom)}; viewport ${window.innerHeight}; ${topLayer.getAttribute('style')}` : ''}`,
       };
     });
     if (!stop) continue;
@@ -605,6 +609,78 @@ test('sets every drawer text input at or above the iOS zoom threshold', async ({
     .filter((n) => n.px < 16));
   expect(small, 'a focused input this small zooms iOS Safari with no way back out').toEqual([]);
 
+  await context.close();
+});
+
+/** Native top-layer geometry and focus are engine work: jsdom has neither, and these are the two
+ * engines the Chromium smoke suite does not cover. First/middle/last prevents one fortunate anchor
+ * position from standing in for both collision directions. */
+test('keeps metric help reachable and unclipped across both filter surfaces', async ({ page }) => {
+  for (const width of [360, 1200]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/');
+    if (width === 360) await page.getByRole('button', { name: 'Filters', exact: true }).click();
+
+    const assertPositions = async (triggers: Locator, owner?: Locator) => {
+      const count = await triggers.count();
+      expect(count).toBeGreaterThan(2);
+      for (const index of [0, Math.floor(count / 2), count - 1]) {
+        const trigger = triggers.nth(index);
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.focus();
+        const panel = page.getByRole('note');
+        await expect(panel).toBeVisible();
+        const box = await panel.boundingBox();
+        expect(box!.x).toBeGreaterThanOrEqual(7);
+        expect(box!.y).toBeGreaterThanOrEqual(7);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(width - 7);
+        expect(box!.y + box!.height).toBeLessThanOrEqual(793);
+        if (owner) expect(await owner.evaluate((node, help) => node.contains(help), await panel.elementHandle())).toBe(true);
+        if (index === 0) {
+          await page.keyboard.press('Tab');
+          await expect(panel.getByRole('link')).toBeFocused();
+          const focusedBox = await panel.boundingBox();
+          expect(focusedBox!.x).toBeGreaterThanOrEqual(7);
+          expect(focusedBox!.y).toBeGreaterThanOrEqual(7);
+          expect(focusedBox!.x + focusedBox!.width).toBeLessThanOrEqual(width - 7);
+          expect(focusedBox!.y + focusedBox!.height).toBeLessThanOrEqual(793);
+        }
+        await page.keyboard.press('Escape');
+        await expect(panel).toHaveCount(0);
+        await expect(trigger).toBeFocused();
+      }
+    };
+
+    const sidebar = page.locator('.sidebar');
+    await assertPositions(sidebar.getByRole('button', { name: /^Help for / }));
+    await sidebar.getByRole('button', { name: 'Add filter', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add filter' });
+    await assertPositions(dialog.getByRole('button', { name: /^Help for / }), dialog);
+    await expect(dialog).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    await dialog.getByRole('button', { name: 'Close' }).click();
+  }
+});
+
+test('pins metric help from a touch press without choosing its Add-filter row', async ({ browser, browserName, baseURL }) => {
+  const context = await browser.newContext({
+    baseURL, viewport: { width: 390, height: 844 }, hasTouch: true,
+    ...(browserName === 'firefox' ? {} : { isMobile: true }),
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Filters', exact: true }).tap();
+  const sidebarHelp = page.locator('.sidebar').getByRole('button', { name: 'Help for Price' });
+  await sidebarHelp.tap();
+  await expect(page.getByRole('note', { name: 'Price metric help' })).toBeVisible();
+  await sidebarHelp.tap();
+  await expect(page.getByRole('note')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Add filter', exact: true }).tap();
+  const dialog = page.getByRole('dialog', { name: 'Add filter' });
+  await dialog.getByRole('button', { name: /^Help for / }).first().tap();
+  await expect(page.getByRole('note')).toBeVisible();
+  await expect(dialog).toBeVisible();
   await context.close();
 });
 

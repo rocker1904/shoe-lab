@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
-import AddFilterDialog from './AddFilterDialog.svelte';
+import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
 
 const options = [
   { key: 'heel-stack', label: 'Stack — Heel', groupId: '3', coverage: 80 },
@@ -8,7 +8,10 @@ const options = [
 ];
 const groups = { '3': 'Cushioning' };
 
-function setup(over: Partial<{ onchoose: (k: string) => void; onclose: () => void }> = {}) {
+function setup(over: Partial<{
+  options: AddFilterOption[]; groups: Record<string, string>;
+  onchoose: (k: string) => void; onclose: () => void;
+}> = {}) {
   const onchoose = vi.fn();
   const onclose = vi.fn();
   const rendered = render(AddFilterDialog, { props: { options, groups, onchoose, onclose, ...over } });
@@ -22,7 +25,8 @@ describe('AddFilterDialog', () => {
     expect(dialog).toHaveAccessibleName('Add filter');
     expect(screen.getByRole('heading', { name: 'Cushioning' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Other' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Stack — Heel/ })).toHaveTextContent('80%');
+    expect(screen.getByRole('button', { name: /^Add filter: Stack — Heel/ })).toBeInTheDocument();
+    expect(screen.getByText('80%')).toBeInTheDocument();
     // the constraint the `select` could not meet: an `option` cannot contain a bar
     const bars = [...dialog.querySelectorAll('.fill')].map((b) => b.getAttribute('style'));
     expect(bars).toEqual(['width: 80%;', 'width: 12%;']);
@@ -30,8 +34,8 @@ describe('AddFilterDialog', () => {
   it('narrows the list from the text filter', async () => {
     setup();
     await fireEvent.input(screen.getByLabelText('Filter metrics'), { target: { value: 'stiff' } });
-    expect(screen.getByRole('button', { name: /Stiffness/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Stack/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Add filter: Stiffness \(N\)/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Add filter: Stack — Heel/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Cushioning' })).not.toBeInTheDocument();
   });
   /**
@@ -55,8 +59,38 @@ describe('AddFilterDialog', () => {
   });
   it('reports the metric that was chosen', async () => {
     const { onchoose } = setup();
-    await fireEvent.click(screen.getByRole('button', { name: /Stiffness/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Add filter: Stiffness \(N\)/ }));
     expect(onchoose).toHaveBeenCalledExactlyOnceWith('stiffness');
+  });
+
+  it('keeps add and help as sibling actions, with help isolated from selection', async () => {
+    const { onchoose, onclose } = setup();
+    const add = screen.getByRole('button', { name: /^Add filter: Stack — Heel/ });
+    const help = screen.getByRole('button', { name: 'Help for Stack — Heel' });
+    expect(add.contains(help)).toBe(false);
+    expect(add.parentElement).toBe(help.closest('.offer'));
+    await fireEvent.click(help);
+    expect(screen.getByRole('note', { name: 'Stack — Heel metric help' })).toBeInTheDocument();
+    expect(onchoose).not.toHaveBeenCalled();
+    expect(onclose).not.toHaveBeenCalled();
+  });
+
+  it('lets Escape close help without closing its owning dialog', async () => {
+    const { onclose } = setup();
+    await fireEvent.click(screen.getByRole('button', { name: 'Help for Stack — Heel' }));
+    const source = screen.getByRole('link', { name: /RunRepeat method/ });
+    source.focus();
+    await fireEvent.keyDown(source, { key: 'Escape' });
+    expect(screen.queryByRole('note')).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(onclose).not.toHaveBeenCalled();
+  });
+
+  it('keeps an unknown option addable without a help target or empty gap', () => {
+    setup({ options: [{ key: 'future-test', label: 'Future test', groupId: null, coverage: 0 }] });
+    expect(screen.getByRole('button', { name: /^Add filter: Future test/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Help for Future test' })).toBeNull();
+    expect(document.querySelector('.offer')?.children).toHaveLength(5);
   });
   it('closes on Escape and from its own control', async () => {
     const { onclose } = setup();

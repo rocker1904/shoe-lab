@@ -43,7 +43,13 @@ export function scrollDelta(
 /** The scrollports between `el` and the document, innermost first. */
 const portsAbove = (el: Element): HTMLElement[] => {
   const out: HTMLElement[] = [];
-  for (let n = el.parentElement; n; n = n.parentElement) if (n.classList.contains('scrollport')) out.push(n);
+  for (let n = el.parentElement; n; n = n.parentElement) {
+    // A shown popover is laid out in the top layer, so DOM ancestors above it cannot clip it.
+    // Treating those ancestors as ports scrolls the anchor underneath the panel and can make the
+    // collision direction flip while its source link is taking focus.
+    if (n.hasAttribute('popover')) break;
+    if (n.classList.contains('scrollport')) out.push(n);
+  }
   return out;
 };
 
