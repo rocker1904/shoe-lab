@@ -1,6 +1,6 @@
 # Metric help where filters are chosen and set
 
-status: approved, in delivery
+status: delivered-and-frozen
 
 ## Purpose and scope
 
