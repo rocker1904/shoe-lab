@@ -7,7 +7,7 @@ docs/scraping.md.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | two jobs: `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
+| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | two jobs: `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, and the three-engine Playwright matrix below — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
 | `deploy.yml` | After `CI` succeeds on `main`, including a refresh-dispatched CI run; deploys that exact commit (§The refresh chain) | builds the app, publishes to Pages |
@@ -22,17 +22,18 @@ needs all three:
 npx playwright install chromium firefox webkit --with-deps
 ```
 
-Only `cross-browser.spec.ts` runs in Firefox and WebKit; the smoke suite stays
-on Chromium, because it asserts layout and one font stack is what makes those
-numbers mean anything. The split exists because Firefox and WebKit implement
-none of `input type="month"` and a Chromium-only suite reported the release
-filter working when it was a bare text box in both
-(docs/app.md §Released after is month-granular).
+The layout-heavy smoke and virtual suites stay on Chromium, because one font
+stack is what makes their exact numbers meaningful. `features.spec.ts` runs in
+all three engines. Most of `cross-browser.spec.ts` is the Firefox/WebKit half of
+the matrix; a small `chromium-segmented` project also runs its three quantified
+segmented-control contracts, giving that registry a three-engine floor. The
+split began because Firefox and WebKit implement none of `input type="month"`
+and a Chromium-only suite reported the release filter working when it was a
+bare text box in both (docs/app.md §Released after is month-granular).
 
-On CI the two extra engines cost 23–54s to install across the runs measured so
-far — the spread is the runner's apt cache, not the payload — and about a second
-of test time, since `cross-browser.spec.ts` runs alongside the smoke suite
-rather than after it.
+The projects run together rather than serially. Browser installation normally
+dominates the extra CI time, with the runner's apt cache accounting for most of
+the variation.
 
 **WebKit does not launch on a distribution Playwright supports only through
 apt.** Its bundle wants 19 sonames pinned to Ubuntu 24.04 — `libicu*.so.74`,
