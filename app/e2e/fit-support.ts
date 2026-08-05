@@ -744,9 +744,11 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
  * function crosses `page.evaluate`, so this guards the implementation used by the component rather
  * than a test-side reconstruction of it.
  */
-export async function sweepPhoneGroupHeights(page: Page): Promise<void> {
+export async function sweepPhoneGroupHeights(
+  page: Page, columns?: readonly string[],
+): Promise<void> {
   await page.setViewportSize({ width: 390, height: 900 });
-  await page.goto('/');
+  await page.goto(columns === undefined ? '/' : `/?cols=${columns.join(',')}`);
   await awaitFacesLoaded(page, { required: APP_FACES });
   const live = page.getByTestId('shoe-table-mobile');
   await expect(live).toBeVisible();
@@ -775,10 +777,11 @@ export async function sweepPhoneGroupHeights(page: Page): Promise<void> {
     expect(measured).toEqual(truth.rendered);
   };
 
-  await compare('while every group is closed');
+  const atColumns = columns === undefined ? 'the default columns' : `[${columns.join(',')}]`;
+  await compare(`while every group is closed on ${atColumns}`);
   await live.locator('tbody tr.shoe').first().click();
   await expect(live.locator('tbody tr.expand')).toHaveCount(1);
-  await compare('with a live group expanded');
+  await compare(`with a live group expanded on ${atColumns}`);
 
   const prototype = page.locator('.mobile-proto table.proto');
   await expect(prototype).toHaveAttribute('aria-hidden', 'true');

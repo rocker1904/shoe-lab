@@ -1,6 +1,6 @@
 /**
- * What `OVERSCAN_PX` has to be, measured rather than picked — the one constant in the windowed
- * table with no assertion behind it, which is why this rig is tracked rather than scratch
+ * What each rendering's overscan has to be, measured rather than picked — constants with no
+ * meaningful timing assertion behind them, which is why this rig is tracked rather than scratch
  * (docs/hunting.md §The rig).
  *
  *   node hunt/overscan.mjs [engine[,engine...]] [desktop|phone]
@@ -8,9 +8,9 @@
  *
  * **The bound is a distance, not a row count.** The plan is recomputed from a `scroll` event, so the
  * DOM at any instant holds the window for wherever the page was when the last event was delivered.
- * Travel `d` past that point is covered exactly while `d <= OVERSCAN_PX`; past it the viewport is
- * over a spacer. So the thing to measure is how far the page moves between one scroll event and the
- * next, per animation frame, under the hardest gestures there are.
+ * Travel `d` past that point is covered exactly while `d` stays inside that rendering's overscan;
+ * past it the viewport is over a spacer. So the thing to measure is how far the page moves between
+ * one scroll event and the next, per animation frame, under the hardest gestures there are.
  *
  * Reported per gesture, because they are different regimes and the design treats them differently: a
  * wheel or a scrollbar drag is what a runner READS through, and a keyed jump (`End`) is a teleport

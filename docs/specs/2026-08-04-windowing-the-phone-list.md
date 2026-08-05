@@ -4,10 +4,11 @@
 split out when the desktop half was delivered on its own · status: **delivered
 2026-08-05** — approved explicitly for execution on 2026-08-05.*
 
-The desktop table now renders a windowed plan. `ShoeTableMobile` still puts every
-visible shoe in the DOM — 1,364 `<tr>` for 455 shoes, since a shoe there is a
-name row, a values row and a rule row between. This does to it what the desktop
-half already had done, reusing everything that was built to be reusable.
+Before this delivery, the desktop table rendered a windowed plan while
+`ShoeTableMobile` still put every visible shoe in the DOM — 1,364 `<tr>` for 455
+shoes, since a shoe there is a name row, a values row and a rule row between.
+This does to it what the desktop half already had done, reusing everything that
+was built to be reusable.
 
 **Read the desktop spec first.** Every decision it records applies here unless
 this one says otherwise, and the corrections it carries — every one of

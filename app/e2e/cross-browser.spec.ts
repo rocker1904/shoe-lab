@@ -1034,6 +1034,9 @@ test('renders every row at the height it measured', async ({ page }) => {
 
 test('renders every phone group at the height it measured', async ({ page }) => {
   await sweepPhoneGroupHeights(page);
+  await sweepPhoneGroupHeights(page, FIT_SETS['phrases']!);
+  await sweepPhoneGroupHeights(page, FIT_SETS['wide']!);
+  await sweepPhoneGroupHeights(page, []);
 });
 
 test('keeps focused and open groups in a windowed phone list', async ({ page }) => {

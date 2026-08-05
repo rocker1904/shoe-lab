@@ -482,6 +482,9 @@ test('numbers the rows the table would have, and keeps the prototype out of the 
 
 test('measures every closed phone group at the height this engine renders it', async ({ page }) => {
   await sweepPhoneGroupHeights(page);
+  await sweepPhoneGroupHeights(page, FIT_SETS['phrases']!);
+  await sweepPhoneGroupHeights(page, FIT_SETS['wide']!);
+  await sweepPhoneGroupHeights(page, []);
 });
 
 /**
