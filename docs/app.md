@@ -4242,10 +4242,11 @@ source link. Trigger and top-layer panel form one dismissal boundary, and Escape
 from the link returns focus to the trigger. This is the deliberate anchored
 exception to modal focus transfer: moving focus into a factual panel on every
 hover, focus or touch opening would separate the runner from the filter they
-asked about. A transparent hover corridor spans the placement gap on either side
-of the panel, so pointer speed does not determine whether its source link remains
-reachable. Focus is retained rather than dropped, and outside press, Escape and
-focus departure remain the shared closing contract.
+asked about. A pointer-transparent geometric hover corridor spans the placement
+gap on either side of the panel, so pointer speed does not determine whether its
+source link remains reachable and a press in that visually outside space still
+reaches the control beneath it. Focus is retained rather than dropped, and outside
+press, Escape and focus departure remain the shared closing contract.
 
 ### Every row links back to RunRepeat
 Attribution is structural, not decorative: the header carries a permanent

@@ -24,23 +24,26 @@
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let left = $state(0);
   let top = $state(0);
-  let corridorLeft = $state(0);
-  let corridorTop = $state(0);
-  let corridorWidth = $state(0);
-  let corridorHeight = $state(0);
+  let hoverCorridor: { left: number; right: number; top: number; bottom: number } | undefined;
+
+  function cancelPreviewClose() {
+    clearTimeout(closeTimer);
+    closeTimer = undefined;
+  }
 
   function close(returnFocus = false) {
-    clearTimeout(closeTimer);
+    cancelPreviewClose();
     if ((returnFocus || panel?.contains(document.activeElement)) && document.activeElement !== trigger) {
       trigger?.focus();
     }
     open = false;
     pinned = false;
+    hoverCorridor = undefined;
     if (active?.owner === owner) active = undefined;
   }
 
   function reveal(pin: boolean) {
-    clearTimeout(closeTimer);
+    cancelPreviewClose();
     if (!open) {
       active?.close();
       active = { owner, close: () => close() };
@@ -58,10 +61,21 @@
     [trigger, panel].some((node) => node?.contains(document.activeElement));
 
   function schedulePreviewClose() {
-    clearTimeout(closeTimer);
+    cancelPreviewClose();
     closeTimer = setTimeout(() => {
+      closeTimer = undefined;
       if (!pinned && !overTrigger && !overPanel && !containsFocus()) close();
     }, 80);
+  }
+
+  function trackPreviewRoute(event: PointerEvent) {
+    const corridor = hoverCorridor;
+    if (corridor && event.clientX >= corridor.left && event.clientX <= corridor.right
+      && event.clientY >= corridor.top && event.clientY <= corridor.bottom) {
+      cancelPreviewClose();
+    } else if (!pinned && !overTrigger && !overPanel && !containsFocus() && closeTimer === undefined) {
+      schedulePreviewClose();
+    }
   }
 
   function place() {
@@ -89,14 +103,17 @@
       : Math.max(edge, above);
     left = placedLeft;
     top = placedTop;
-    corridorLeft = Math.min(anchor.left, placedLeft);
-    corridorWidth = Math.max(anchor.right, placedLeft + panelWidth) - corridorLeft;
+    const corridorLeft = Math.min(anchor.left, placedLeft);
+    const corridorRight = Math.max(anchor.right, placedLeft + panelWidth);
     if (placedTop >= anchor.bottom) {
-      corridorTop = anchor.bottom;
-      corridorHeight = placedTop - anchor.bottom;
+      hoverCorridor = { left: corridorLeft, right: corridorRight, top: anchor.bottom, bottom: placedTop };
     } else {
-      corridorTop = placedTop + renderedPanelHeight;
-      corridorHeight = Math.max(0, anchor.top - corridorTop);
+      hoverCorridor = {
+        left: corridorLeft,
+        right: corridorRight,
+        top: placedTop + renderedPanelHeight,
+        bottom: anchor.top,
+      };
     }
   }
 
@@ -107,7 +124,7 @@
     place();
     const firstLayout = requestAnimationFrame(place);
     const reposition = () => place();
-    const enter = () => { overPanel = true; clearTimeout(closeTimer); };
+    const enter = () => { overPanel = true; cancelPreviewClose(); };
     const leave = () => { overPanel = false; schedulePreviewClose(); };
     const resize = new ResizeObserver(place);
     const mutations = new MutationObserver(place);
@@ -116,11 +133,13 @@
     mutations.observe(document.body, { childList: true, subtree: true, characterData: true });
     surface.addEventListener('pointerenter', enter);
     surface.addEventListener('pointerleave', leave);
+    document.addEventListener('pointermove', trackPreviewRoute, true);
     window.addEventListener('resize', reposition);
     window.addEventListener('scroll', reposition, true);
     return () => {
       surface.removeEventListener('pointerenter', enter);
       surface.removeEventListener('pointerleave', leave);
+      document.removeEventListener('pointermove', trackPreviewRoute, true);
       resize.disconnect();
       mutations.disconnect();
       cancelAnimationFrame(firstLayout);
@@ -158,7 +177,7 @@
   }
 
   onDestroy(() => {
-    clearTimeout(closeTimer);
+    cancelPreviewClose();
     if (active?.owner === owner) active = undefined;
   });
 </script>
@@ -173,9 +192,6 @@
     {#if open}
       <aside bind:this={panel} id={panelId} class="panel" popover="manual" role="note"
              aria-label={`${label} metric help`} style:left={`${left}px`} style:top={`${top}px`}>
-        <span class="hover-corridor" aria-hidden="true"
-              style:left={`${corridorLeft}px`} style:top={`${corridorTop}px`}
-              style:width={`${corridorWidth}px`} style:height={`${corridorHeight}px`}></span>
         <p>{fact.text}</p>
         <p class="interpretation">{interpretation}</p>
         {#if fact.source}
@@ -199,7 +215,6 @@
            border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface);
            color: var(--text); box-shadow: var(--shadow-dialog); font-size: var(--t-sm);
            line-height: 1.4; text-align: left; }
-  .hover-corridor { position: fixed; }
   .panel:popover-open { display: flex; flex-direction: column; gap: var(--s2); }
   p { margin: 0; }
   .interpretation { color: var(--text-dim); }

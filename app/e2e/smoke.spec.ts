@@ -1092,7 +1092,7 @@ test('matches the complete metric-help interaction contract in Chromium', async 
   const first = sidebar.getByRole('button', { name: /^Help for / }).first();
   const second = sidebar.getByRole('button', { name: /^Help for / }).nth(1);
 
-  const crossSlowlyToSource = async (trigger: Locator) => {
+  const crossSlowlyToSource = async (trigger: Locator, side: 'above' | 'below') => {
     await trigger.scrollIntoViewIfNeeded();
     await trigger.hover();
     const preview = page.getByRole('note');
@@ -1102,6 +1102,7 @@ test('matches the complete metric-help interaction contract in Chromium', async 
       trigger.boundingBox(), preview.boundingBox(), source.boundingBox(),
     ]);
     const panelIsBelow = panelBox!.y >= triggerBox!.y + triggerBox!.height;
+    expect(panelIsBelow ? 'below' : 'above').toBe(side);
     const gapY = panelIsBelow
       ? (triggerBox!.y + triggerBox!.height + panelBox!.y) / 2
       : (panelBox!.y + panelBox!.height + triggerBox!.y) / 2;
@@ -1113,9 +1114,19 @@ test('matches the complete metric-help interaction contract in Chromium', async 
     await expect(source).toBeVisible();
     await page.mouse.move(1190, 790);
     await expect(preview).toHaveCount(0);
+    return { x: sourceBox!.x + sourceBox!.width / 2, y: gapY };
   };
 
-  await crossSlowlyToSource(first);
+  await crossSlowlyToSource(first, 'above');
+
+  await sidebar.getByRole('button', { name: 'Add filter', exact: true }).click();
+  const addDialog = page.getByRole('dialog', { name: 'Add filter' });
+  const dialogHelp = addDialog.getByRole('button', { name: /^Help for / }).first();
+  const dialogGap = await crossSlowlyToSource(dialogHelp, 'below');
+  await dialogHelp.hover();
+  await expect(page.getByRole('note')).toBeVisible();
+  await page.mouse.click(dialogGap.x, dialogGap.y);
+  await expect(addDialog, 'the hover-only corridor must not swallow the row action beneath it').toHaveCount(0);
 
   await first.click();
   await second.click();
