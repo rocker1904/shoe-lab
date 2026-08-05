@@ -1761,14 +1761,12 @@ The `thead` pins at `--thead-top`, and the first column pins left.
 and the toolbar in one `.chrome` box, pins that box at `top: 0`, and binds its
 `clientHeight`; the same number gives the sidebar its `top` and its
 `max-height`. There is no fallback value, because there is no width at which a
-constant is right: measured with the real fleet, once the strip has handed over,
-the chrome is 91px at 1200px (a one-row banner over a one-row bar), 111px at
-700px and 109px at 375px, where the bar takes its second row (§The chrome
-bands). A hard-coded `3.2rem` is 51px, so it pinned the header row about 60px
-behind the chrome at 700px — the row was not merely partly invisible, it was off
-the screen, and before the chrome rebuild it was 147px off at 375px. This is the
-one home for these figures; `ShoeTable.svelte` and `smoke.spec.ts` point here
-rather than restating them.
+constant is right: once the strip has handed over, the chrome is 92px at an
+801px desktop viewport and 118px at a 360px touch viewport. A hard-coded
+`3.2rem` is 51px, so it pinned the header row behind the chrome wherever the
+bar grew — the row was not merely partly invisible, it was off the screen.
+§The chrome bands owns the current width ladder; `ShoeTable.svelte` and
+`smoke.spec.ts` measure the box rather than restating an offset.
 
 It varies with **time** as well as width, now that the app self-hosts its faces:
 the face swaps in after first paint, the chrome reflows by about 6px, and a
@@ -2913,7 +2911,8 @@ reader was left on the document rather than on the thing it had just operated.
 Forward made it worse — the bar precedes the strip in the DOM, so Tab walked on
 into the sidebar and the replacement pill was **4 to 10 Shift+Tabs behind**,
 depending on the engine. `onStory` therefore focuses the toolbar pill for the
-same story, found by the shared control's value-bearing `data-segment` rather than by the checked mark, because a
+same story, found by the shared control's value-bearing `data-segment` inside
+the toolbar's stable marker rather than by accessible copy or the checked mark, because a
 view matching no story marks nothing and focus would fall to `<body>` again. It
 runs only on the hand-over: called from the bar's own group, `lib/roving.ts`
 already owns focus. A **zone** click leaves the strip up, so the card that was
@@ -2929,9 +2928,9 @@ top of the screen. It is the same one-surface-at-a-time rule the section already
 states, reached by scrolling rather than by clicking.
 
 **Permanent, not reversible, and that was settled by measurement.** A
-visibility-driven swap would oscillate: gaining the groups makes the bar **33px
-taller at 390px**, the pinned band reserves that height, and the strip is pushed
-back into view by more than the margin that hid it — hide, grow, reappear, shrink,
+visibility-driven swap would oscillate: gaining the groups makes the bar taller,
+the pinned band reserves that height, and the strip is pushed back into view by
+more than the margin that hid it — hide, grow, reappear, shrink,
 at frame rate. The permanent form has no such loop, and it is what this section
 already says happens anyway.
 
@@ -3087,11 +3086,10 @@ shrink-wrapped rather than stretched, at every width.
 everything above the first shoe is paid on the screen with the least of it. The
 masthead and the bar measured 217px at 390×844 with the setup strip up, and 198px
 at 360px with the story pills up — which with the pinned table header put 39% of
-the viewport in front of the first result. The rebuild spends **109px at 360px
-with all three setup controls on the bar, and 80px on a first arrival**. The
-ceilings are set roughly 10px above the **taller engine** — Firefox runs about
-5px above Chromium here, and the suite that asserts them runs Chromium only —
-and are asserted in `smoke.spec.ts`; they
+the viewport in front of the first result. With the shared control's mobile
+target floor the rebuilt chrome spends **118px at 360px with all three setup
+controls on the bar, and 76px on a first arrival**, identically in Chromium,
+Firefox and Docker WebKit. The ceilings are asserted in `smoke.spec.ts`; they
 are bounds rather than pins, so a font tweak does not fail the build but a
 regression does. Nothing was dropped to buy it: the explanation moved into one
 panel (§The About panel), the utilities and two of the actions became icons on
@@ -3193,8 +3191,9 @@ was still being sized as though it did not (§Filters).
 
 Between them the bar is one row carrying an extra control it never used to
 carry — `Filters`, **with its word**, because words-become-icons is the chrome's
-boundary and did not move. Measured at 801px with a two-digit column badge, the
-row's remaining slack is **36px in Chromium and 33px in Firefox and WebKit**;
+boundary and did not move. Measured at 801px, the compact shared segments leave
+at least **151px** between the setup and actions groups across Chromium, Firefox
+and Docker WebKit;
 `keeps the one-row toolbar to one row at the narrowest width that has one` is in
 `cross-browser.spec.ts` rather than the smoke suite because the two engines that
 run there are the two whose UA form face is the generic `sans-serif`, which is
@@ -3217,17 +3216,12 @@ sidebar's boundary needs no such spelling any more — a `>=` in the script is t
 whole convention, and `SIDEBAR_PERMANENT_PX` is the first PERMANENT width by
 construction rather than by a hundredth of a pixel.
 
-**The design asked for a merged line from 700px to 800px, and the shipped
-controls do not fit one.** Measured with the icon forms in place, the setup row
-needs 374px in Chromium and 376px in Firefox and WebKit, and the actions 329px
-and 331px — the actions carry a worded `About`, two glyphs and the three
-utilities — so the merged line's own minimum is a **727px viewport in Chromium
-and 731px in the other two**. It covers 69 of the 100 pixels the design asked
-for, not the band; below 731 the bar wraps anyway with the two rows in the
-**wrong order**, because `flex-wrap` puts the actions after the setup where the
-design puts them above it. So the split stays on the boundary that already
-exists and the bands are separate for the whole sub-800 range, which is one row
-of chrome between 700px and 800px that the design hoped to save.
+**The band stays split for the whole sub-800 range.** Adding a second internal
+fit threshold would make the same controls change order inside one chrome tier:
+when split, actions lead setup; when flex happens to fit them, DOM order puts
+setup first. The single 800px density boundary keeps that sequence stable, and
+`never adds a chrome row that a narrower window hands back` checks the result
+across the width ladder.
 
 **The actions lead and the setup follows.** What acts on the table sits above
 what the table is, so the row carrying every word and all the colour is the one
@@ -3240,12 +3234,6 @@ surplus. Below 430 the cap is wider than
 the row, so it stops meaning anything and the row goes flush to both padding
 edges, which is the property the whole rebuild exists to restore. `space-around`
 was measured and rejected: it never touches the padding edge again at any width.
-
-**The `--s3` → `--s2` pill step at 800px is density, not fit.** It is the band
-where every pixel of chrome is paid before the first shoe, and that is the whole
-reason for it: held at the base `--s3` the setup row's content lands within a
-pixel of the 414px cap — 1px under in Chromium, 0.8px over in Firefox — so
-nothing about fit chooses between the two values.
 
 **The pill geometry does not step at a chrome boundary.** The shared segmented
 control holds every standard segment to the same `--s1` inline padding and 24px
@@ -3539,8 +3527,9 @@ and the button can only ever show the state you are *in* rather than the ones yo
 could have. `SegmentedControl.svelte` gives it the same language as the
 toolbar's zone, story and stability controls — `lib/roving.ts` for one tab stop and arrows that move *and* activate,
 `aria-checked` for the state, a recessed `--bg` track, and the chosen pill filled
-`--accent-solid` carrying `--on-accent`. It measures 133px against 78px of slack
-inside the panel at every width from 360px to 1440px, and 54px at 320px.
+`--accent-solid` carrying `--on-accent`. Its track is at most **113px** across
+Chromium, Firefox and Docker WebKit, with 32px targets on a touch viewport and
+24px targets otherwise.
 
 Colour, spacing, radius, type and elevation all live in `app.css` as tokens on
 `:root`, with dark values under both `prefers-color-scheme` and `[data-theme]`

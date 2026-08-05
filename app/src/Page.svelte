@@ -118,8 +118,8 @@
    *
    * Permanent, and driven by the strip having gone rather than by whether it is showing. The
    * reversible form oscillates on measurement rather than in theory: gaining the groups makes the
-   * bar 33px taller at 390px, the pinned band reserves that height, and the strip is pushed back
-   * into view by more than the margin that hid it.
+   * bar taller, the pinned band reserves that height, and the strip is pushed back into view by
+   * more than the margin that hid it.
    */
   $effect(() => {
     if (!stripOpen || !stripEl) return;
@@ -150,8 +150,8 @@
     requestAnimationFrame(settle);
   }
   /**
-   * Measured, never assumed: the header wraps to two lines below 800px and the toolbar to two
-   * below 880px, so the pinned `thead` and the sticky sidebar both sit under a box whose height
+   * Measured, never assumed: the header and toolbar wrap to two lines below 800px, so the pinned
+   * `thead` and the sticky sidebar both sit under a box whose height
    * is a function of the viewport. A hard-coded offset put the table's header row *behind* the
    * chrome on every width where the chrome grew (docs/app.md §Columns and sorting).
    *
@@ -517,7 +517,7 @@
     // Only on the hand-over: called from the bar's own group, `lib/roving.ts` already owns focus.
     if (!handingOver) return;
     await tick();
-    document.querySelector<HTMLElement>(`[aria-label="Built for"] [data-segment="${CSS.escape(id)}"]`)?.focus();
+    document.querySelector<HTMLElement>(`[data-testid="toolbar"] [data-segment="${CSS.escape(id)}"]`)?.focus();
   }
   /** A preference, so it does not clear the story or the `All` mark: `applyPreset` and `allView`
    *  both carry it through, which is what keeps the mark derived rather than lost
@@ -826,7 +826,7 @@
   .layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); align-items: start; }
   /* A sticky column taller than the viewport can never scroll to its own bottom, and ten range
      filters easily outgrow it — give the sidebar its own scrollbar. The offset is the measured
-     chrome, not the header alone: the toolbar pins too, and is two lines tall below 880px. */
+     chrome, not the header alone: the toolbar pins too, and is two lines tall below 800px. */
   .sidebar { position: sticky; top: var(--chrome-h); max-height: calc(100vh - var(--chrome-h)); overflow-y: auto; }
   /* No `overflow-x` here, deliberately. It would make `.content` a scrollport — `overflow-x: auto`
      forces `overflow-y` to compute to `auto` — so the table's sticky `thead` would stick to a box

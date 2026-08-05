@@ -129,10 +129,10 @@
      but `About` becomes a glyph. It is a question about how much room this bar has for words, which
      is why it does not move with the drawer's own boundary, which sits far wider — between the two,
      Filters is on the bar carrying its word.
-     ONE band split, not two: the design asked for a merged line from 700 to 800 and the shipped
-     components do not fit one, so the bands separate for the whole sub-800 range. The ACTIONS lead
-     — what acts on the table above what the table is, so the row carrying every word sits nearest
-     the table. docs/app.md §The chrome bands owns the widths that moved the boundary. */
+     ONE band split, not two: an internal fit threshold would reverse the two groups inside one
+     chrome tier, so the bands stay separate for the whole sub-800 range. The ACTIONS lead — what
+     acts on the table above what the table is, so the row carrying every word sits nearest the
+     table. docs/app.md §The chrome bands owns the boundary. */
   @media (max-width: 800px) {
     .toolbar { padding: var(--s1) var(--s2); gap: var(--s1) var(--s2); }
     .filters-toggle { padding-inline: var(--s2); }
