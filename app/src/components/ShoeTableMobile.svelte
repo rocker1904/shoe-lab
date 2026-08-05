@@ -52,12 +52,7 @@
   /** The value row is only ever numeric: it is what keeps every chip the same box under a header
    *  that labels it (docs/app.md §Columns and sorting). */
   const cols = $derived(view.columns.filter((c) => isFigure(c, idx.bySlug.get(c))));
-  /** The floor over a zero-column view, and it is **unobservable**: measured with it and without,
-   *  every rendered box is identical to the pixel. Nothing asserts it, deliberately — a test on an
-   *  inert attribute would fire for a change that breaks nothing — so do not read it as load-bearing
-   *  and do not restore it if it goes. BACKLOG.md holds the measurement, the engines it was taken
-   *  in, and the deletion. */
-  const span = $derived(Math.max(cols.length, 1));
+  const span = $derived(cols.length);
   // The score's wash ranks over the whole filtered set, never the window, or its tint would change
   // as the runner scrolls.
   const percentiles = $derived(new Map(cols.map((c) => [c,

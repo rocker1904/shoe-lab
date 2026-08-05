@@ -79,10 +79,9 @@ describe('ShoeTableMobile', () => {
    * names its column list literally, empty included (docs/app.md §URL encoding). This is the phone
    * rendering of it; the desktop one is proved in Page.test.ts, from the link.
    *
-   * Asserted as what a runner sees — a card per shoe, named, and not one value cell — rather than
-   * through `span`'s floor, which is measured to be unobservable (the comment over `span` holds the
-   * measurement, and BACKLOG.md holds its deletion). A test on that attribute would fire for a
-   * change that breaks nothing, which teaches a reader to distrust the suite.
+   * Asserted as what a runner sees — a card per shoe, named, and not one value cell. A test on the
+   * inert `colspan` attribute would fire for a change that breaks nothing, which teaches a reader
+   * to distrust the suite.
    */
   it('renders with no columns at all', () => {
     const { rendered } = setup({ view: { columns: [] } });
