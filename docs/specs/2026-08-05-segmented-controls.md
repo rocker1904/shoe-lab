@@ -1,7 +1,7 @@
 # Segmented controls
 
 *2026-08-05 · BACKLOG items 7 (segmented-control half) and 8 · status:
-**approved, in delivery** — approved explicitly for execution on 2026-08-05.*
+**delivered 2026-08-05 and frozen** — approved explicitly for execution on 2026-08-05.*
 
 The app has one visual language for a small set of mutually exclusive choices:
 a recessed track, a filled selected segment and one focus stop. It currently has
