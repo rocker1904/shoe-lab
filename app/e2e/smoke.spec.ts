@@ -1092,10 +1092,30 @@ test('matches the complete metric-help interaction contract in Chromium', async 
   const first = sidebar.getByRole('button', { name: /^Help for / }).first();
   const second = sidebar.getByRole('button', { name: /^Help for / }).nth(1);
 
-  await first.hover();
-  await expect(page.getByRole('note')).toBeVisible();
-  await page.mouse.move(1190, 790);
-  await expect(page.getByRole('note')).toHaveCount(0);
+  const crossSlowlyToSource = async (trigger: Locator) => {
+    await trigger.scrollIntoViewIfNeeded();
+    await trigger.hover();
+    const preview = page.getByRole('note');
+    await expect(preview).toBeVisible();
+    const source = preview.getByRole('link');
+    const [triggerBox, panelBox, sourceBox] = await Promise.all([
+      trigger.boundingBox(), preview.boundingBox(), source.boundingBox(),
+    ]);
+    const panelIsBelow = panelBox!.y >= triggerBox!.y + triggerBox!.height;
+    const gapY = panelIsBelow
+      ? (triggerBox!.y + triggerBox!.height + panelBox!.y) / 2
+      : (panelBox!.y + panelBox!.height + triggerBox!.y) / 2;
+    await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, gapY);
+    await page.waitForTimeout(120);
+    await expect(preview, 'the hover route to the interactive source crosses the placement gap').toBeVisible();
+    await source.hover();
+    await page.waitForTimeout(120);
+    await expect(source).toBeVisible();
+    await page.mouse.move(1190, 790);
+    await expect(preview).toHaveCount(0);
+  };
+
+  await crossSlowlyToSource(first);
 
   await first.click();
   await second.click();

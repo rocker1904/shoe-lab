@@ -24,6 +24,10 @@
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let left = $state(0);
   let top = $state(0);
+  let corridorLeft = $state(0);
+  let corridorTop = $state(0);
+  let corridorWidth = $state(0);
+  let corridorHeight = $state(0);
 
   function close(returnFocus = false) {
     clearTimeout(closeTimer);
@@ -71,7 +75,8 @@
     // safe until ResizeObserver supplies the real box on the next layout.
     const panelWidth = box.width || panel.offsetWidth || Math.min(288, window.innerWidth - edge * 2);
     const panelHeight = Math.max(box.height, panel.offsetHeight, panel.scrollHeight, 160);
-    left = Math.min(
+    const renderedPanelHeight = box.height || panel.offsetHeight || panel.scrollHeight || panelHeight;
+    const placedLeft = Math.min(
       Math.max(edge, anchor.left + anchor.width / 2 - panelWidth / 2),
       Math.max(edge, window.innerWidth - edge - panelWidth),
     );
@@ -79,9 +84,20 @@
     const above = anchor.top - gap - panelHeight;
     const roomBelow = window.innerHeight - edge - below;
     const roomAbove = anchor.top - gap - edge;
-    top = panelHeight <= roomBelow || roomBelow >= roomAbove
+    const placedTop = panelHeight <= roomBelow || roomBelow >= roomAbove
       ? Math.min(below, Math.max(edge, window.innerHeight - edge - panelHeight))
       : Math.max(edge, above);
+    left = placedLeft;
+    top = placedTop;
+    corridorLeft = Math.min(anchor.left, placedLeft);
+    corridorWidth = Math.max(anchor.right, placedLeft + panelWidth) - corridorLeft;
+    if (placedTop >= anchor.bottom) {
+      corridorTop = anchor.bottom;
+      corridorHeight = placedTop - anchor.bottom;
+    } else {
+      corridorTop = placedTop + renderedPanelHeight;
+      corridorHeight = Math.max(0, anchor.top - corridorTop);
+    }
   }
 
   $effect(() => {
@@ -157,6 +173,9 @@
     {#if open}
       <aside bind:this={panel} id={panelId} class="panel" popover="manual" role="note"
              aria-label={`${label} metric help`} style:left={`${left}px`} style:top={`${top}px`}>
+        <span class="hover-corridor" aria-hidden="true"
+              style:left={`${corridorLeft}px`} style:top={`${corridorTop}px`}
+              style:width={`${corridorWidth}px`} style:height={`${corridorHeight}px`}></span>
         <p>{fact.text}</p>
         <p class="interpretation">{interpretation}</p>
         {#if fact.source}
@@ -180,6 +199,7 @@
            border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface);
            color: var(--text); box-shadow: var(--shadow-dialog); font-size: var(--t-sm);
            line-height: 1.4; text-align: left; }
+  .hover-corridor { position: fixed; }
   .panel:popover-open { display: flex; flex-direction: column; gap: var(--s2); }
   p { margin: 0; }
   .interpretation { color: var(--text-dim); }
