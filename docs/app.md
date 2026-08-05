@@ -925,11 +925,11 @@ window from a phone width to a laptop one dismissed the open drawer at 800px.
 
 ### Every floating panel dismisses the same way
 
-Four surfaces float over the page — the column picker, the month picker, the
-add-filter dialog and the About panel — and all four answer **a press outside**,
-**Escape**, and **focus leaving them**. `app/src/lib/dismiss.ts` owns the pointer half for the two
-anchored to a trigger of their own; each dialog's scrim is the same affordance
-drawn rather than a second mechanism. It is a **captured `pointerdown`, not a
+The floating surfaces — column picker, Display panel, month picker, metric help,
+Add-filter dialog and About panel — all answer **a press outside**, **Escape**,
+and **focus leaving them**. `app/src/lib/dismiss.ts` owns the pointer half for
+those anchored to a trigger of their own; each dialog's scrim is the same
+affordance drawn rather than a second mechanism. It is a **captured `pointerdown`, not a
 `click`**: `pointerdown` fires before focus moves, so a press on a panel's own
 trigger is still recognised as *inside* and is left to that trigger's toggle,
 where on `click` the order is focusout → close → click → reopen and a trigger
@@ -940,9 +940,10 @@ effect's teardown, so it exists only while a panel is on screen and never
 outlives one.
 
 **A press inside is not a dismissal**, at any depth — ticking a column,
-stepping the month picker's year, selecting the About panel's prose — and
-that is the same fact as the trigger case, since every trigger sits inside the
-box its own panel is guarded by.
+stepping the month picker's year, following a metric source, selecting the About
+panel's prose — and that is the same fact as the trigger case. Metric help is the
+separated case: its trigger and top-layer panel are two nodes in one guarded
+boundary rather than one containing the other.
 
 **Focus leaving a panel is the keyboard's outside press**, and it was the way
 out that none of these had. Escape only ever arrives while focus is *inside*,
@@ -984,13 +985,12 @@ on the engine naming its destination. The two `<body>`-mounted dialogs need none
 of this: they trap Tab, so focus cannot leave them in the first place.
 
 **Escape is stopped exactly where a second handler would hear it.** The month
-picker stops it, and is now the only one that does, because its panel is a real
-descendant of the focus-trapping drawer. The other three do not, and their
-reasons are not the same: the column picker lives in the pinned chrome, and both
-dialogs render into `<body>` (§Stacking order), so none of the three has an
-ancestor listening. One press, one dismissal, wherever it is mounted.
+picker and metric help stop it because each remains a real descendant of the
+focus-trapping drawer, even while metric help paints in the top layer. The
+chrome panels have no listening ancestor, and both dialogs render into `<body>`
+(§Stacking order). One press produces one dismissal wherever a panel is mounted.
 
-The column picker is the one **native control** of the four, and it gets neither
+The column picker is the one **native disclosure**, and it gets neither
 behaviour free: a `<details>` stays open until its own summary is clicked again
 in every engine, so `open` is bound rather than driven and both dismissals are
 the app's. Two consequences. The binding is fed by the `toggle` event, which the
@@ -3438,11 +3438,18 @@ indentation, not the column:
 | Add-filter dialog's scrim, About panel's scrim | 32 | the page |
 | Add-filter dialog, About panel | 35 | the page |
 | skip link | 40 | the page |
+| metric-help panel | top layer | above the document stacking tree |
 
 So the column picker's 10 does **not** outrank the chrome's 5 — it is inside
 it, and rides wherever the chrome goes. The month picker's 20 does not outrank
 the drawer's 30 for the same reason. Only the unindented rows can be compared
 with one another.
+
+Metric help does not join that numeric scale. Its manual native popover remains
+a DOM descendant of the sidebar or Add-filter dialog, so their focus ownership
+still contains it, but the browser promotes its box to the top layer so neither
+scrollport nor document stacking context clips it. Its app-owned fixed position
+is recalculated for nested scroll and viewport resize.
 
 **A modal has to be a child of `<body>`, or its number is not on this scale at
 all.** `position: sticky` creates a stacking context whatever its z-index, so
@@ -3470,7 +3477,7 @@ sit on surfaces that are simply part of the page. Each dialog lays its own scrim
 at 32 over everything else and traps Tab inside itself, so whichever is up puts
 the other's opener behind a scrim and out of reach (§The About panel).
 
-**Two floating boxes size against the viewport, and neither may exceed it.**
+**The viewport-sized floating boxes may not exceed it.**
 There is no global `box-sizing` reset — the components that size against their
 container set it themselves — so a width meant as a total has to say so:
 
@@ -3489,6 +3496,9 @@ container set it themselves — so a width meant as a total has to say so:
   would silently delete the ring's reservation (§Theming). The head stays still
   above it, which also keeps `Reset` reachable from a ramp dragged somewhere
   unreadable.
+- **metric help** is `width: min(18rem, calc(100vw - 16px))` with border-box
+  sizing and an 8px viewport allowance. It prefers the vertical side of its
+  trigger with more usable room and clamps both axes to that allowance.
 - the **column picker panel** is `min-width: 20rem` of *content*, so 354px in
   total against the 352px the bar leaves it at 360px — its left hairline fell
   off the screen. The 4px a side comes out of the **padding** below 400px, never
@@ -4199,6 +4209,17 @@ sideways **from 360px of layout up**, and `fits six columns and keeps the rest
 reachable at 360px` holds the column count there — and the 320px readings that
 appear elsewhere in this document are recorded as *what happens*, not as bugs
 outstanding. Revisit only if a 320px phone becomes worth a five-column default.
+
+### Anchored help retains trigger focus (2026-08-05)
+
+Metric help is an anchored disclosure, not a small modal. Hover or focus previews
+it and a press pins it, while focus stays on the `?`; Tab can then enter its
+source link. Trigger and top-layer panel form one dismissal boundary, and Escape
+from the link returns focus to the trigger. This is the deliberate anchored
+exception to modal focus transfer: moving focus into a factual panel on every
+hover, focus or touch opening would separate the runner from the filter they
+asked about. Focus is retained rather than dropped, and outside press, Escape
+and focus departure remain the shared closing contract.
 
 ### Every row links back to RunRepeat
 Attribution is structural, not decorative: the header carries a permanent

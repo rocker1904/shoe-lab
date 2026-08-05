@@ -93,10 +93,12 @@ docs/app.md §The header names the catalogue, the receipt owns the count).
 
 **Every floating panel dismisses the same three ways — outside press,
 Escape, focus leaving — and focus is moved deliberately, never dropped.**
-Panels take focus on open and return it on close; the one ring rule lives
-once in `app.css`, every scrollport holding a focusable pays `--ring-room`
-through one class, and the suite enumerates the scrollports rather than
-trusting the CSS (docs/app.md §Every floating panel dismisses the same way,
+Modal panels take focus on open and return it to their opener on close; an
+anchored panel may retain focus on its trigger and treats trigger plus panel as
+one boundary. The one ring rule lives once in `app.css`, every scrollport
+holding a focusable pays `--ring-room` through one class, and the suite
+enumerates the scrollports rather than trusting the CSS
+(docs/app.md §Every floating panel dismisses the same way,
 docs/app.md §Theming).
 
 ## Third parties and cost

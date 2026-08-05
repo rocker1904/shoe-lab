@@ -13,22 +13,32 @@
  * and `document` stops it bubbling; the month picker's grid and the drawer both handle pointer
  * events of their own.
  *
- * **`within` is a getter, not a node.** The panel's root is a `bind:this` that is null on the tick
- * the effect first runs and can be replaced when the panel re-renders, so reading it per event is
- * what keeps the check pointed at the node that is actually on screen.
+ * **`within` is a getter, not a node.** A root bound with `bind:this` is null on the tick the effect
+ * first runs and can be replaced when the panel re-renders, so reading it per event keeps the check
+ * pointed at what is actually on screen. A separated trigger and top-layer panel pass both nodes,
+ * because interaction can remain inside their shared boundary without either containing the other.
  *
  * The caller owns *when* — `$effect(() => { if (!open) return; return dismissOnOutsidePress(…) })`
  * adds the listener only while the panel is open and removes it on close and on destroy, which is
  * the whole leak story.
  */
+export type DismissBoundary = Node | readonly Node[] | null | undefined;
+
+function boundaryContains(boundary: DismissBoundary, target: Node | null): boolean {
+  if (!boundary) return false;
+  return Array.isArray(boundary)
+    ? boundary.some((node) => node.contains(target))
+    : (boundary as Node).contains(target);
+}
+
 export function dismissOnOutsidePress(
-  within: () => Node | null | undefined,
+  within: () => DismissBoundary,
   dismiss: () => void,
 ): () => void {
   // `contains(null)` is false, so a press with no target counts as outside without a branch of its
   // own — which is right: nothing identifiable was pressed inside the panel.
   const onpress = (e: Event) => {
-    if (!within()?.contains(e.target as Node | null)) dismiss();
+    if (!boundaryContains(within(), e.target as Node | null)) dismiss();
   };
   document.addEventListener('pointerdown', onpress, true);
   return () => document.removeEventListener('pointerdown', onpress, true);
@@ -72,7 +82,7 @@ export function dismissOnOutsidePress(
  * and closes nothing, where a real exit has left `document.activeElement` outside.
  */
 export function dismissOnFocusLeave(
-  within: () => Node | null | undefined,
+  within: () => DismissBoundary,
   dismiss: () => void,
 ): () => void {
   let pressing = false;
@@ -81,17 +91,17 @@ export function dismissOnFocusLeave(
   const up = () => { pressing = false; };
   const onleave = (e: FocusEvent) => {
     const box = within();
-    if (!box?.contains(e.target as Node | null)) return;
+    if (!boundaryContains(box, e.target as Node | null)) return;
     if (pressing) return;
     const to = e.relatedTarget as Node | null;
     if (to !== null) {
-      if (!box.contains(to)) dismiss();
+      if (!boundaryContains(box, to)) dismiss();
       return;
     }
     clearTimeout(settling);
     settling = setTimeout(() => {
       const now = within();
-      if (now && !now.contains(document.activeElement)) dismiss();
+      if (now && !boundaryContains(now, document.activeElement)) dismiss();
     });
   };
   document.addEventListener('pointerdown', down, true);

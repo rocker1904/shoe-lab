@@ -41,6 +41,22 @@ describe('dismissOnOutsidePress', () => {
     expect(dismiss).not.toHaveBeenCalled();
   });
 
+  it('treats separated trigger and panel nodes as one boundary', () => {
+    const trigger = document.createElement('button');
+    const panel = document.createElement('div');
+    const inside = document.createElement('a');
+    const outside = document.createElement('button');
+    panel.append(inside);
+    document.body.append(trigger, panel, outside);
+    const dismiss = vi.fn();
+    stop = dismissOnOutsidePress(() => [trigger, panel], dismiss);
+    press(trigger);
+    press(inside);
+    expect(dismiss).not.toHaveBeenCalled();
+    press(outside);
+    expect(dismiss).toHaveBeenCalledOnce();
+  });
+
   it('counts a press as outside while the panel is not on screen yet', () => {
     const dismiss = vi.fn();
     stop = dismissOnOutsidePress(() => null, dismiss);
@@ -104,6 +120,22 @@ describe('dismissOnFocusLeave', () => {
     leave(inside, deeper);
     leave(deeper, inside);
     expect(dismiss).not.toHaveBeenCalled();
+  });
+
+  it('treats focus moves between separated trigger and panel nodes as internal', () => {
+    const trigger = document.createElement('button');
+    const panel = document.createElement('div');
+    const link = document.createElement('a');
+    const outside = document.createElement('button');
+    panel.append(link);
+    document.body.append(trigger, panel, outside);
+    const dismiss = vi.fn();
+    stop = dismissOnFocusLeave(() => [trigger, panel], dismiss);
+    leave(trigger, link);
+    leave(link, trigger);
+    expect(dismiss).not.toHaveBeenCalled();
+    leave(link, outside);
+    expect(dismiss).toHaveBeenCalledOnce();
   });
 
   /*
