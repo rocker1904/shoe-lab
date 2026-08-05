@@ -15,12 +15,16 @@ docs/scraping.md.
 
 ## The e2e run needs three browsers
 
-`npm -w app run e2e` drives Chromium, Firefox and WebKit, so a local checkout
-needs all three:
+CI's `npm -w app run e2e` drives Chromium, Firefox and WebKit. A host on a
+Playwright-supported Ubuntu release can install all three directly:
 
 ```
 npx playwright install chromium firefox webkit --with-deps
 ```
+
+That native command is not the local WebKit route on an unsupported host: use
+`npm -w app run e2e:docker`, as detailed below. Chromium and Firefox may still
+run natively when a narrower probe needs them.
 
 The layout-heavy smoke and virtual suites stay on Chromium, because one font
 stack is what makes their exact numbers meaningful. `features.spec.ts` runs in
