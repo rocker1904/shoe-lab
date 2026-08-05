@@ -48,6 +48,20 @@ Run it in Playwright's own image instead, which is the same Ubuntu CI uses:
 npm -w app run e2e:docker
 ```
 
+**That is the route for every WebKit question, not only the full e2e suite.**
+A host launch failure does not make a WebKit-specific behaviour, layout or
+design question deferrable. Build outside the container when the probe needs
+the app, then run the probe through the same image:
+
+```
+npm -w app run build
+sh hunt/in-docker.sh hunt/<probe>.mjs webkit
+```
+
+`hunt/in-docker.sh` accepts any probe path and further arguments; probes that
+do not need the built app can omit the build. This is also the route for a
+one-off browser measurement before its assertion has a permanent suite home.
+
 That mounts the repo and runs as the calling user, so nothing lands root-owned.
 The image tag is **read from the installed `@playwright/test` at run time**
 rather than written down: the dependency is a caret range, so a pinned tag
