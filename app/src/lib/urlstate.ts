@@ -25,7 +25,8 @@ const NUMBER_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 /**
  * What a catalogue test slug looks like. `cols` is permissive about whether the slug still exists
  * — a column the catalogue has dropped prints nothing — but not about the shape, because a header
- * renders an unknown key verbatim. Lowercase hyphen-joined alphanumerics, and no longer than a
+ * renders an unknown key visibly unchanged, with only zero-width breaks after its hyphens.
+ * Lowercase hyphen-joined alphanumerics, and no longer than a
  * slug could plausibly be: the longest the catalogue has ever carried is 38 characters
  * (`difference-in-midsole-softness-in-cold`).
  * docs/app.md §Columns are permissive, ranges and sorts are strict

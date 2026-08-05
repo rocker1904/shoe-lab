@@ -224,9 +224,10 @@ describe('urlstate hostile input', () => {
     expect(parseView('cols=gone,gone,score', idx).columns).toEqual(['gone', 'score']);
   });
   /**
-   * Permissive about the slug, not about the shape. A header renders an unknown key verbatim, so
-   * what survives has to look like a catalogue slug and be no longer than one could be — the
-   * longest the catalogue has ever carried is 38 characters, and the bound is 64.
+   * Permissive about the slug, not about the shape. A header renders an unknown key visibly
+   * unchanged, with only zero-width breaks after its hyphens, so what survives has to look like a
+   * catalogue slug and be no longer than one could be — the longest the catalogue has ever carried
+   * is 38 characters, and the bound is 64.
    */
   it.each([
     'cols=<script>alert(1)</script>',

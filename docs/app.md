@@ -4293,9 +4293,10 @@ instead drops the unknown column silently — the exact opposite of what it
 asked for, with nothing on screen saying so.
 
 Permissive about the slug is not permissive about the **shape**: an unknown key
-is rendered verbatim as a header, so what survives has to look like a slug —
-lowercase hyphen-joined alphanumerics, at most 64 characters against the longest
-the catalogue has ever carried (38). `name` and `brand` are still refused, being
+is rendered visibly unchanged as a header, with only zero-width breaks inserted
+after its hyphens, so what survives has to look like a slug — lowercase
+hyphen-joined alphanumerics, at most 64 characters against the longest the
+catalogue has ever carried (38). `name` and `brand` are still refused, being
 sort fields the table renders itself, and that pair is derived as
 `SORT_FIELDS` minus `COLUMN_FIELDS` rather than listed again.
 
