@@ -89,7 +89,7 @@ runs offline against committed fixtures.
 Repository layout: `scraper/` (TypeScript scraper + dataset builder, zero runtime dependencies),
 `app/` (Svelte 5 + Vite SPA), `shared/` (types used by both), `data/` (the datasets),
 `curated/` (hand-researched release months), `docs/`
-(agent-facing reference — start at `CLAUDE.md`).
+(agent-facing reference — start at `AGENTS.md`).
 
 ## CSV column names
 

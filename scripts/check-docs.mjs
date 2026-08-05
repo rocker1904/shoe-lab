@@ -7,7 +7,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 const SCAN = /\.(md|ts|svelte|mjs|js|yml|yaml|css|html)$/;
 /**
  * `docs/superpowers/` is frozen: spec and plan artifacts recording what was decided at the time,
- * which docs/ then supersedes (CLAUDE.md). Their pointers name headings as those headings stood
+ * which docs/ then supersedes (AGENTS.md). Their pointers name headings as those headings stood
  * then, so a live rename dangles one — and the fix would be editing history to match the present,
  * which is the one thing a frozen artifact must not do. The index check below already excludes
  * them for the same reason.
@@ -62,20 +62,20 @@ for (const file of files) {
   }
 }
 
-// Doc-index parity. docs/README.md is the contract itself, linked from CLAUDE.md's "Start here"
+// Doc-index parity. docs/README.md is the contract itself, linked from AGENTS.md's "Start here"
 // rather than indexed as a domain doc; docs/superpowers/ is frozen history and not a directory
 // entry here, so a non-recursive read excludes it.
-const claude = readFileSync('CLAUDE.md', 'utf8');
-const indexed = [...claude.matchAll(/^\|\s*([\w./-]+\.md)\s*\|/gm)].map((m) => m[1]);
+const agents = readFileSync('AGENTS.md', 'utf8');
+const indexed = [...agents.matchAll(/^\|\s*([\w./-]+\.md)\s*\|/gm)].map((m) => m[1]);
 const actual = readdirSync('docs')
   .filter((f) => f.endsWith('.md') && f !== 'README.md')
   .map((f) => `docs/${f}`);
 
 for (const row of indexed) {
-  if (!existsSync(row)) errors.push(`CLAUDE.md doc index lists ${row}, which does not exist`);
+  if (!existsSync(row)) errors.push(`AGENTS.md doc index lists ${row}, which does not exist`);
 }
 for (const doc of actual) {
-  if (!indexed.includes(doc)) errors.push(`${doc} exists but is missing from the CLAUDE.md doc index`);
+  if (!indexed.includes(doc)) errors.push(`${doc} exists but is missing from the AGENTS.md doc index`);
 }
 
 if (errors.length) {

@@ -2,8 +2,8 @@
 
 Docs in this repo exist to give an agent full context for a task in minimum
 words. Words are money: the measure of the doc set is per-task read cost
-(CLAUDE.md + the owning doc), not narrative completeness. This file is the
-contract; the doc index lives in CLAUDE.md and nowhere else (parity-checked
+(AGENTS.md + the owning doc), not narrative completeness. This file is the
+contract; the doc index lives in AGENTS.md and nowhere else (parity-checked
 by `npm run check:docs`). Sizing choices for this repo are recorded in
 docs/decisions.md §Doc system.
 
@@ -52,7 +52,7 @@ Cross-references are written `docs/<path>.md` or `docs/<path>.md §Heading`
 (the § form pins a heading). One pointer per line; heading text may contain
 spaces but no parentheses, backticks, quotes, semicolons, or pipes.
 `npm run check:docs` resolves both forms in every tracked file and checks
-CLAUDE.md's doc index against the files present, so renames and deleted
+AGENTS.md's doc index against the files present, so renames and deleted
 sections fail CI loudly. Prefer § pointers into long docs.
 
 ## Doc-gc (periodic review)

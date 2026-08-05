@@ -26,12 +26,14 @@ sh hunt/in-docker.sh .hunt/your-probe.mjs      # probe calls start({ build: fals
 other engines. **Its limit: Playwright's WebKit is WebCore, not Mobile Safari** — iOS focus
 auto-zoom is not observable, `visualViewport.scale` stays exactly 1. That one needs a real iPhone.
 
-### Opus is the floor
+### Strongest available model for judgment
 
-The one controlled comparison in the hunt: same journey, same rig, same brief — **Sonnet filed 0
-findings, Opus filed 6.** Sonnet is fine for mechanical work like shaking the rig down, and its pass
-paid for itself by finding two rig defects. But a cheap agent reporting "nothing found" retires a
-direction that was never searched, and nothing downstream can tell that apart from a clean one.
+The one controlled comparison in the hunt used the models available at the time: same journey,
+same rig, same brief — **Sonnet filed 0 findings, Opus filed 6.** That is evidence for a capability
+floor, not a permanent provider allowlist. A cheaper model is fine for mechanical work like shaking
+the rig down, and that pass paid for itself by finding two rig defects. But a cheap agent reporting
+"nothing found" retires a direction that was never searched, and nothing downstream can tell that
+apart from a clean one.
 
 ### Sequencing
 
@@ -39,7 +41,8 @@ Shake the rig down with one solo agent before any parallelism — its gaps are f
 generators and you pay for them once instead of N times. Then run journeys before class sweeps:
 class-based sweeps miss integration failures because every class looks fine in isolation.
 
-Costs, for planning: an Opus journey is ~200–245k tokens, 40–125 tool calls, 20–30 minutes.
+Reference cost from that hunt: an Opus journey was ~200–245k tokens, 40–125 tool calls,
+20–30 minutes. Re-measure before using those figures to budget another provider or model family.
 
 ## The failure classes this app actually produces
 
@@ -82,7 +85,7 @@ honours neither.**
 shape — brands, rows, fields, tab stops, workflow steps — and right everywhere they record a
 decision or a measurement of the world. Not one physical constant, frozen score, threshold or
 endpoint had drifted. The fix is structural: an enumerable count wants an assertion, not an edit
-(CLAUDE.md §Working approach, "state bounds as testable numbers").
+(AGENTS.md §Working approach, "state bounds as testable numbers").
 
 ## The rig
 
