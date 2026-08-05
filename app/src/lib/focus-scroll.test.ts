@@ -27,6 +27,11 @@ describe('scrollDelta', () => {
     expect(scrollDelta(port, { top: 270, bottom: 300 }, 4)).toBe(4);
   });
 
+  it('rounds a subpixel correction away from the clipped edge', () => {
+    expect(scrollDelta({ top: 100.25, height: 199.5 }, { top: 104, bottom: 200 }, 4)).toBe(-1);
+    expect(scrollDelta({ top: 100.25, height: 199.5 }, { top: 200, bottom: 296 }, 4)).toBe(1);
+  });
+
   it('asks for nothing when the port reserves no room and the control fits', () => {
     expect(scrollDelta(port, { top: 100, bottom: 300 }, 0)).toBe(0);
   });

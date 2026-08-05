@@ -187,7 +187,7 @@ describe('MetricRow colocated', () => {
     setup(colocated, { chosen: 'energy-return-heel' });
     expect(screen.getAllByRole('heading')).toHaveLength(1);
     expect(screen.getByRole('heading')).toHaveAccessibleName(/Energy return/);
-    expect(screen.getAllByRole('button')).toHaveLength(1); // the one shared factual-help trigger
+    expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.queryByText('Forefoot')).toBeNull();
     expect(screen.queryByText('Heel')).toBeNull();
   });

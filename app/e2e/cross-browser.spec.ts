@@ -286,32 +286,53 @@ test('keeps every sidebar tab stop on screen and clear of the clip edge', async 
   await awaitFacesLoaded(page);
 
   const bad: string[] = [];
-  for (let i = 0; i < 40; i++) {
+  const visited: string[] = [];
+  let entered = false;
+  let left = false;
+  // Each help source exists only while its trigger is focused, so a DOM count taken before the
+  // walk cannot know the route. Exiting the sidebar is the observable proof that every stop ran.
+  for (let guard = 0; guard < 120 && !left; guard++) {
     await page.keyboard.press('Tab');
-    const stop = await page.evaluate(() => {
+    // `keepFocusInScrollports` deliberately corrects a browser's own late focus scroll on the next
+    // frame; sample after that owned correction rather than between the two scroll decisions.
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    const state = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
       const port = el?.closest('.sidebar');
       // Firefox gives a scrollport a tab stop of its own; the port is not a control in it.
-      if (!el || !port || el === port) return null;
+      if (!el || !port) return { inside: false, stop: null };
+      if (el === port) return { inside: true, stop: null };
       const b = el.getBoundingClientRect(), p = port.getBoundingClientRect();
       const topLayer = el.closest('[popover]');
       const clip = topLayer ? { top: 0, bottom: window.innerHeight } : p;
       const trigger = topLayer?.parentElement?.querySelector('button')?.getBoundingClientRect();
       return {
-        name: el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim()
-          ?? el.textContent?.trim() ?? el.tagName,
-        offscreen: b.bottom <= 0 || b.top >= window.innerHeight,
-        slack: Math.round(Math.min(b.top - clip.top, clip.bottom - b.bottom)),
-        // Carried into the failure message: which of the two — the port's own scroll or the page's
-        // — came up short is not recoverable from a slack figure alone.
-        where: `el ${Math.round(b.top)}..${Math.round(b.bottom)} in port ${Math.round(p.top)}..${Math.round(p.bottom)} at scrollTop ${Math.round(port.scrollTop)}${topLayer ? `; trigger ${Math.round(trigger!.top)}..${Math.round(trigger!.bottom)}; viewport ${window.innerHeight}; ${topLayer.getAttribute('style')}` : ''}`,
+        inside: true,
+        stop: {
+          name: el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim()
+            ?? el.textContent?.trim() ?? el.tagName,
+          offscreen: b.bottom <= 0 || b.top >= window.innerHeight,
+          slack: Math.round(Math.min(b.top - clip.top, clip.bottom - b.bottom)),
+          // Carried into the failure message: which of the two — the port's own scroll or the page's
+          // — came up short is not recoverable from a slack figure alone.
+          where: `el ${Math.round(b.top)}..${Math.round(b.bottom)} in port ${Math.round(p.top)}..${Math.round(p.bottom)} at scrollTop ${Math.round(port.scrollTop)}${topLayer ? `; trigger ${Math.round(trigger!.top)}..${Math.round(trigger!.bottom)}; viewport ${window.innerHeight}; ${topLayer.getAttribute('style')}` : ''}`,
+        },
       };
     });
+    if (!state.inside) {
+      if (entered) left = true;
+      continue;
+    }
+    entered = true;
+    const stop = state.stop;
     if (!stop) continue;
+    visited.push(stop.name);
     if (stop.offscreen) bad.push(`${stop.name}: focused below the fold`);
     // 4px is the ring's own outer radius, which is what the port reserves.
     if (stop.slack < 4) bad.push(`${stop.name}: ${stop.slack}px inside the port, ring clipped (${stop.where})`);
   }
+  expect(left, 'the Tab walk never reached the far side of the sidebar').toBe(true);
+  expect(visited).toContain('Clear filters');
   expect(bad, 'the sidebar did not follow focus').toEqual([]);
 });
 

@@ -35,9 +35,11 @@ export function scrollDelta(
   room: number,
 ): number {
   const above = el.top - room - port.top;
-  if (above < 0) return above;
+  // WebKit quantises scrollTop to whole CSS pixels in the sidebar. Round away from the clipped
+  // edge or a fractional correction can be discarded with one pixel of the ring still outside.
+  if (above < 0) return Math.floor(above);
   const below = el.bottom + room - (port.top + port.height);
-  return below > 0 ? Math.min(below, el.top - room - port.top) : 0;
+  return below > 0 ? Math.ceil(Math.min(below, el.top - room - port.top)) : 0;
 }
 
 /** The scrollports between `el` and the document, innermost first. */
