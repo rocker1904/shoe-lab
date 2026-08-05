@@ -21,8 +21,11 @@ reasons to stop are BLOCKED, a DISCOVERY that moves behaviour, or done.
   yourself, is not approval; the line is, and only the user can write it.
 - Use the environment's worktree workflow, or `git worktree` directly when no
   helper exists. Never work on main without explicit consent.
-- Commit the approved spec as the branch's first commit — worktrees do
-  not share untracked files, and the crew reads the spec from the repo.
+- Commit the approved spec before implementation begins — worktrees do not
+  share untracked files, and the crew reads the spec from the repo. It is
+  normally the branch's first commit. One explicitly user-requested
+  housekeeping or documentation commit made before approval may precede it;
+  record that exception in the ledger, and keep implementation after the spec.
 - Ledger at `.delivery/<spec-basename>/progress.md`, gitignored (add
   `.delivery/` to .gitignore if absent), first line naming the spec. The
   ledger is what survives compaction: after one, trust it and `git log`
