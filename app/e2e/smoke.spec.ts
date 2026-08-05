@@ -2,7 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, NAME_COL_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
-  setLayoutWidth, settledDeclared, sweepDeclaredColumns, sweepRowHeights, twoPaints,
+  setLayoutWidth, settledDeclared, sweepDeclaredColumns, sweepPhoneGroupHeights, sweepRowHeights,
+  twoPaints,
 } from './fit-support';
 
 /**
@@ -479,6 +480,10 @@ test('numbers the rows the table would have, and keeps the prototype out of the 
   expect(open.rowcount, 'aria-rowcount does not count the panel').toBe(shut.rowcount + 1);
 });
 
+test('measures every closed phone group at the height this engine renders it', async ({ page }) => {
+  await sweepPhoneGroupHeights(page);
+});
+
 /**
  * **A focused row is never unmounted, wherever it has scrolled to.** Unmounting it drops
  * `activeElement` to `<body>`: no ring anywhere, and the next Tab restarts from the top of the
@@ -575,7 +580,7 @@ for (const width of [1440, 390]) {
     // The precondition the finding turns on: while the strip is up the bar holds neither group.
     await expect(page.getByRole('radiogroup', { name: 'Built for' })).toHaveCount(0);
 
-    await page.locator('tr.shoe').first().click();
+    await page.locator('table:not(.proto) tbody tr.shoe').first().click();
     await expect(page.locator('.detail').first()).toBeVisible();
     // Opening a shoe scrolls, smoothly: measuring into the tail of that animation would read its
     // remaining pixels as drift from the hand-over.
@@ -586,7 +591,7 @@ for (const width of [1440, 390]) {
       const strip = document.querySelector('[data-testid="setup-strip"]')!;
       window.scrollTo(0, window.scrollY + strip.getBoundingClientRect().bottom + 40);
       const cleared = strip.getBoundingClientRect().bottom < 0;
-      const row = document.querySelectorAll<HTMLElement>('tr.shoe')[1]!;
+      const row = document.querySelectorAll<HTMLElement>('table:not(.proto) tbody tr.shoe')[1]!;
       const before = row.getBoundingClientRect().top;
       await new Promise((r) => setTimeout(r, 500));
       return { cleared, moved: Math.round(row.getBoundingClientRect().top - before) };
@@ -818,7 +823,7 @@ test('keeps the sidebar a drawer until the table can be seen beside it', async (
   const layout = async () => {
     // The layout is the LOADED page's: until the data lands `App.svelte` is drawing the placeholder,
     // which reserves the same track from its own rule and has no `.layout` at all.
-    await expect(page.locator('tbody tr.shoe').first()).toBeVisible();
+    await expect(page.locator('table:not(.proto) tbody tr.shoe').first()).toBeVisible();
     return page.evaluate(() => {
       const tracks = getComputedStyle(document.querySelector('.layout')!).gridTemplateColumns;
       return {

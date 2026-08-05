@@ -6,7 +6,7 @@ import type { ShoesFile } from '../../shared/types.js';
 import {
   DESKTOP_FLOOR_PX, desktopMinWidth, fitModel, NAME_COL_PX, rendersPhone, SIDEBAR_PERMANENT_PX,
 } from '../src/lib/fit';
-import { measureDesktopRowHeights } from '../src/lib/row-height';
+import { measureDesktopRowHeights, measurePhoneGroupHeights } from '../src/lib/row-height';
 
 /** Let an observer callback and the render it schedules both reach a painted frame. */
 export async function twoPaints(page: Page): Promise<void> {
@@ -28,6 +28,30 @@ export async function twoPaints(page: Page): Promise<void> {
 
 const FIXTURE: ShoesFile = JSON.parse(readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), 'fixtures/shoes.json'), 'utf8')) as ShoesFile;
+
+/** A routed fleet large enough for either rendering to emit spacers. */
+export const WINDOW_FLEET_SIZE = 400;
+
+/**
+ * Repeats the trusted e2e fixture without changing any suite-wide fixture counts. The response is
+ * held across navigations because `route.fetch()` belongs to the request that caused it.
+ */
+export async function routeWindowFleet(page: Page): Promise<void> {
+  let payload: Record<string, unknown> | null = null;
+  await page.route('**/shoes.json*', async (route) => {
+    if (!payload) {
+      const file = await (await route.fetch()).json() as
+        { shoes: { slug: string; name: string }[] } & Record<string, unknown>;
+      const shoes = Array.from({ length: WINDOW_FLEET_SIZE }, (_, i) => {
+        const base = file.shoes[i % file.shoes.length]!;
+        const suffix = ['', ' Continental Ultraride Edition', ' Pro'][i % 3];
+        return { ...base, slug: `${base.slug}-${i}`, name: `${base.name} ${i}${suffix}` };
+      });
+      payload = { ...file, shoes };
+    }
+    await route.fulfill({ json: payload });
+  });
+}
 
 /**
  * Widest measured disagreement between the model and a rendered table is 2.0px, over eight column
@@ -713,4 +737,50 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
     await first.click();
     await expect(page.locator('.tblwrap table:not(.proto) tbody tr.expand')).toHaveCount(0);
   }
+}
+
+/**
+ * Compares the phone measurement with the complete groups the live table draws. The module's own
+ * function crosses `page.evaluate`, so this guards the implementation used by the component rather
+ * than a test-side reconstruction of it.
+ */
+export async function sweepPhoneGroupHeights(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto('/');
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  const live = page.getByTestId('shoe-table-mobile');
+  await expect(live).toBeVisible();
+
+  const compare = async (at: string) => {
+    const truth = await live.evaluate((table) => {
+      const shoes = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')];
+      return {
+        entries: shoes.map((shoe) => ({
+          name: shoe.querySelector('strong')?.textContent ?? '',
+          metadata: [...shoe.querySelectorAll<HTMLElement>('.meta')].map((m) => m.textContent ?? ''),
+          discontinued: !!shoe.querySelector('.disc-tag'),
+        })),
+        rendered: shoes.map((shoe) => {
+          const rule = shoe.previousElementSibling?.classList.contains('rule')
+            ? shoe.previousElementSibling as HTMLElement : null;
+          const values = shoe.nextElementSibling as HTMLElement | null;
+          return (rule?.getBoundingClientRect().height ?? 0)
+            + shoe.getBoundingClientRect().height
+            + (values?.classList.contains('values') ? values.getBoundingClientRect().height : 0);
+        }),
+      };
+    });
+    const measured = await page.evaluate(measurePhoneGroupHeights, truth.entries);
+    expect(measured, `nothing could be measured ${at}`).not.toBeNull();
+    expect(measured).toEqual(truth.rendered);
+  };
+
+  await compare('while every group is closed');
+  await live.locator('tbody tr.shoe').first().click();
+  await expect(live.locator('tbody tr.expand')).toHaveCount(1);
+  await compare('with a live group expanded');
+
+  const prototype = page.locator('.mobile-proto table.proto');
+  await expect(prototype).toHaveAttribute('aria-hidden', 'true');
+  await expect(prototype.locator('tbody').first().locator('tr')).toHaveCount(3);
 }

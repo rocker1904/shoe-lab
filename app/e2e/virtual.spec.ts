@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { APP_FACES, awaitFacesLoaded, settledDeclared } from './fit-support';
+import {
+  APP_FACES, awaitFacesLoaded, routeWindowFleet, settledDeclared, WINDOW_FLEET_SIZE,
+} from './fit-support';
 
 /**
  * **The one file that runs against a body that is actually windowed.**
@@ -23,35 +25,7 @@ import { APP_FACES, awaitFacesLoaded, settledDeclared } from './fit-support';
 
 /** Enough shoes that the window is a small fraction of them, so a spacer is never a rounding error
  *  and the fleet's own row numbers are nowhere near the DOM's. */
-const FLEET_SIZE = 400;
-
-/**
- * The fixture's own shoes, repeated until there are enough of them to window, with a distinct slug
- * and name each. Built from the fixture rather than invented so that every value, reading and
- * detail the app renders is one the rest of the suite already trusts — what changes is only how
- * many there are. One name in three is long enough to wrap the name column, so the fleet's rows are
- * not all one height and a spacer's px is a real sum rather than a multiple.
- *
- * Built once and held, because a test may navigate more than once: `route.fetch()` reads through to
- * the preview server and its response belongs to the navigation that asked for it, so fetching
- * again on a second `goto` disposes the first rather than answering it.
- */
-async function routeBigFleet(page: Page): Promise<void> {
-  let payload: Record<string, unknown> | null = null;
-  await page.route('**/shoes.json*', async (route) => {
-    if (!payload) {
-      const file = await (await route.fetch()).json() as
-        { shoes: { slug: string; name: string }[] } & Record<string, unknown>;
-      const shoes = Array.from({ length: FLEET_SIZE }, (_, i) => {
-        const base = file.shoes[i % file.shoes.length]!;
-        const suffix = ['', ' Continental Ultraride Edition', ' Pro'][i % 3];
-        return { ...base, slug: `${base.slug}-${i}`, name: `${base.name} ${i}${suffix}` };
-      });
-      payload = { ...file, shoes };
-    }
-    await route.fulfill({ json: payload });
-  });
-}
+const FLEET_SIZE = WINDOW_FLEET_SIZE;
 
 /** Everything a plan can be read off the page as. Heights come off the boxes rather than off the
  *  declared `style`, because what a spacer is *given* and what it *occupies* differing by the
@@ -110,7 +84,7 @@ async function plan(page: Page): Promise<Plan> {
 /** The table settled at a width, on a fleet big enough to window. */
 async function mount(page: Page, width = 1440): Promise<void> {
   await page.setViewportSize({ width, height: 900 });
-  await routeBigFleet(page);
+  await routeWindowFleet(page);
   await page.goto('/');
   await awaitFacesLoaded(page, { required: APP_FACES });
   await settledDeclared(page, 'before reading the plan');
@@ -395,7 +369,7 @@ test('paints a shoe the same wherever the window is', async ({ page }) => {
  */
 test('keeps the runner where they were when the rendering swaps under them', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
-  await routeBigFleet(page);
+  await routeWindowFleet(page);
   await page.goto('/');
   await expect(page.getByTestId('shoe-table-mobile'),
     'the stacked list is not mounted, so nothing here swaps').toBeVisible();
@@ -483,4 +457,140 @@ test('never leaves the runner looking at a spacer, with panels open above them',
       `the table covers almost none of the viewport at ${y}px, so a blank band would not show`)
       .toBeGreaterThan(10);
   }
+});
+
+/** The phone rendering of the routed fleet, settled on a plan that really omits groups. */
+async function mountPhone(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 390, height: 600 });
+  await routeWindowFleet(page);
+  await page.goto('/');
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  await expect(page.getByTestId('shoe-table-mobile')).toBeVisible();
+  await expect(page.getByTestId('shoe-table-mobile').locator('tbody tr.spacer').first(),
+    'the routed phone fleet never windowed').toBeAttached();
+  await scrollTo(page, 600);
+  await scrollTo(page, 0);
+}
+
+/** The phone list keeps groups intact and preserves the two states that may outlive its window. */
+test('windows whole phone groups while preserving open and focused shoes', async ({ page }) => {
+  await mountPhone(page);
+  const table = page.getByTestId('shoe-table-mobile');
+  const read = () => table.evaluate((el) => ({
+    shoes: el.querySelectorAll('tbody tr.shoe').length,
+    values: el.querySelectorAll('tbody tr.values').length,
+    panels: el.querySelectorAll('tbody tr.expand').length,
+    spacers: el.querySelectorAll('tbody tr.spacer').length,
+    rowcount: Number(el.getAttribute('aria-rowcount')),
+  }));
+
+  const initial = await read();
+  expect(initial.shoes, 'the phone body still renders the whole fleet').toBeLessThan(FLEET_SIZE);
+  expect(initial.values, 'a planned shoe lost its values row').toBe(initial.shoes);
+  expect(initial.spacers).toBeGreaterThan(0);
+  expect(initial.rowcount).toBe(1 + FLEET_SIZE * 2);
+  await expect(table.getByRole('row'), 'a rule, spacer or prototype entered the accessibility tree')
+    .toHaveCount(1 + initial.shoes * 2);
+
+  const openedSlug = await table.locator('tbody tr.shoe').first().getAttribute('data-slug');
+  await page.goto(`/?open=${openedSlug}`);
+  await expect(table.locator(`tr.expand[data-slug="${openedSlug}"]`)).toHaveCount(1);
+  await scrollTo(page, await page.evaluate(() => document.documentElement.scrollHeight));
+  await expect(table.locator(`tr.expand[data-slug="${openedSlug}"]`),
+    'an open phone group was removed from the plan').toHaveCount(1);
+
+  await page.goto('/');
+  await scrollTo(page, 4_000);
+  const focused = table.locator('tbody tr.shoe').nth(3);
+  const focusedSlug = await focused.getAttribute('data-slug');
+  await focused.focus();
+  await scrollTo(page, await page.evaluate(() => document.documentElement.scrollHeight));
+  const kept = table.locator(`tr.shoe[data-slug="${focusedSlug}"]`);
+  await expect(kept, 'the focused phone group was removed from the plan').toHaveCount(1);
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset['slug']))
+    .toBe(focusedSlug);
+  const group = await kept.evaluate((row) => ({
+    before: row.previousElementSibling?.className ?? '',
+    beforeRule: row.previousElementSibling?.previousElementSibling?.className ?? '',
+    after: row.nextElementSibling?.className ?? '',
+    afterValues: row.nextElementSibling?.nextElementSibling?.className ?? '',
+  }));
+  expect(group.before).toContain('rule');
+  expect(group.beforeRule, 'the focused group is still in the window, so nothing pinned it')
+    .toContain('spacer');
+  expect(group.after).toContain('values');
+  expect(group.afterValues, 'the group was split from its trailing spacer').toContain('spacer');
+});
+
+test('paints a phone shoe the same in every window', async ({ page }) => {
+  await mountPhone(page);
+  const table = page.getByTestId('shoe-table-mobile');
+  const wash = () => table.evaluate((el) => Object.fromEntries(
+    [...el.querySelectorAll<HTMLElement>('tbody tr.shoe')].map((row) => [
+      row.dataset['slug']!,
+      [...row.nextElementSibling!.querySelectorAll('.chip')]
+        .flatMap((chip) => [...chip.classList].filter((name) => /^w-[bmg]-\d+$/.test(name)))
+        .join(' '),
+    ])));
+  await scrollTo(page, 6_000);
+  const before = await wash();
+  await scrollTo(page, 6_700);
+  const after = await wash();
+  const shared = Object.keys(before).filter((slug) => slug in after);
+  expect(shared.length, 'the phone windows do not overlap').toBeGreaterThan(5);
+  expect(before).not.toEqual(after);
+  for (const slug of shared) {
+    expect(before[slug], `${slug} carries no wash bucket`).not.toBe('');
+    expect(after[slug], `${slug} repainted when the window moved`).toBe(before[slug]);
+  }
+});
+
+test('never puts a phone spacer under the viewport with panels open above it', async ({ page }) => {
+  await mountPhone(page);
+  const table = page.getByTestId('shoe-table-mobile');
+  const opened = await table.locator('tbody tr.shoe').evaluateAll((rows) =>
+    rows.slice(0, 6).map((row) => (row as HTMLElement).dataset['slug']!));
+  await page.goto(`/?open=${opened.join(',')}`);
+  await expect(table.locator('tbody tr.expand')).toHaveCount(opened.length);
+
+  for (const y of [8_000, 15_000]) {
+    await scrollTo(page, y);
+    const hits = await page.evaluate(() => {
+      const table = document.querySelector('[data-testid="shoe-table-mobile"]')!;
+      const box = table.getBoundingClientRect();
+      const x = Math.round(box.left + Math.min(box.width, innerWidth) / 2);
+      const out: Record<string, number> = {};
+      for (let at = 0; at <= innerHeight; at += 25) {
+        const row = document.elementFromPoint(x, at)?.closest('tr');
+        const kind = !row ? 'none' : row.closest('thead') ? 'head'
+          : row.classList.contains('spacer') ? 'spacer'
+          : row.classList.contains('expand') ? 'expand'
+          : row.classList.contains('values') ? 'values'
+          : row.classList.contains('shoe') ? 'shoe' : 'rule';
+        out[kind] = (out[kind] ?? 0) + 1;
+      }
+      return out;
+    });
+    expect(hits['spacer'] ?? 0, `the phone viewport covers a spacer at ${y}px`).toBe(0);
+    expect((hits['shoe'] ?? 0) + (hits['values'] ?? 0) + (hits['expand'] ?? 0),
+      `almost none of the phone viewport is over table content at ${y}px`).toBeGreaterThan(10);
+  }
+});
+
+/** A freshly mounted phone list renders everything until its first exact measurement arrives. */
+test('keeps the runner in place when the desktop window swaps to the phone list', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await routeWindowFleet(page);
+  await page.goto('/');
+  await awaitFacesLoaded(page, { required: APP_FACES });
+  await expect(page.locator('.tblwrap tbody tr.spacer').first()).toBeAttached();
+  await scrollTo(page, 10_000);
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  const mobile = page.getByTestId('shoe-table-mobile');
+  await expect(mobile).toBeVisible();
+  await expect(mobile.locator('tbody tr.spacer').first()).toBeAttached();
+  const y = await page.evaluate(() => window.scrollY);
+  expect(y, 'mounting the initially unmeasured phone list threw the runner back to the top')
+    .toBeGreaterThan(9_100);
 });

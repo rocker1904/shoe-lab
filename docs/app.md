@@ -231,15 +231,14 @@ reactivity one.** Two things take that work out of the DOM rather than out of th
 reactivity. The wash reaches a cell as one **class** naming a stepped bucket, so
 most cells' class is the one they already carried and neither the write nor the
 style recalculation that would have followed happens (§Theming owns the before
-and after). And the **desktop** body now renders a window of the filtered list
-rather than all of it, so what a step re-renders is set by the viewport and the
-overscan and **not by the fleet** —
+and after). And **both** bodies now render a window of the filtered list rather
+than all of it, so what a step re-renders is set by the viewport and that
+rendering's overscan and **not by the fleet** —
 that independence is the assertable half and `lib/virtual.test.ts` holds it,
 while what the change costs and buys in milliseconds is a rig reading owned by
-§Table presentation. The stacked list still renders every shoe; BACKLOG.md's
-*Window the stacked phone list* is what is left of this. The ranking above stays
-over the whole filtered set and never over the window — a wash ranked over what
-is on screen would mean something different at every scroll position.
+§Table presentation. The ranking above stays over the whole filtered set and
+never over either window — a wash ranked over what is on screen would mean
+something different at every scroll position.
 
 ## Sanitised-HTML boundary
 
@@ -1472,11 +1471,38 @@ Each of the following is a failure mode rather than a detail.
   reproduce on a routed fleet. `ShoeTable.svelte` says so beside the line, which
   is where someone about to simplify it would look.
 
+**The stacked phone list uses the same plan in whole shoe groups.** A group owns
+its leading rule, name row and values row; an open detail row is observed and
+added to that item rather than estimated. Its permanent `mobile-proto` table is
+outside both the plan and the accessibility tree, and
+`measurePhoneGroupHeights` clones those styled rows to measure the complete
+fleet at the current metadata-producing column set. The cache input keeps one
+identity across sort and filter changes; changing columns, layout width or
+either the prose or mono face invalidates it. A failed first read renders the
+fleet, while a later failed read holds the last good plan.
+
+At 390×900 on the real 455-shoe fleet, the phone body falls from **1,364 rows /
+9,386 nodes to 81 rows / 561 nodes** at rest. Three comparative runs put a
+range-filter drag at **13.4–14.5ms to 3.5–3.7ms median in Chromium**, and
+**23–24ms to 5ms in Firefox**. The new scroll work is 1.4–1.8ms and 3ms median
+respectively. Measuring all 455 complete groups costs 24.6ms in Chromium and
+29ms in Firefox and is paid once per layout/column-set/face change, not per
+filter update (`hunt/phone-window-cost.mjs`, `hunt/phone-window-cost.log`).
+
+The phone owns a separate **1,280px** overscan. Its real 390px three-engine
+probe found ordinary wheel travel up to 825px/frame in WebKit, while Page Down
+and End are jumps of thousands of pixels repaired by the next plan
+(`hunt/overscan-phone-3engine.log`). A routed 400-shoe fixture holds whole
+groups, accessibility positions, open/focused retention and the desktop→phone
+fallback in Chromium; complete-group measurement and open/focused retention
+also run in Firefox and WebKit. `ShoeTableMobile.test.ts` forces the same seam
+under jsdom and checks each spacer against its own skipped fleet run rather than
+only checking a total.
+
 **Find-in-page no longer reaches every shoe here, and that is a price paid
 rather than an oversight.** The browser's own search finds only rows that are in
 the DOM, and a window is most of the fleet missing; the shoe search filter covers
 the need and runs over the fleet rather than over what is on screen (§Filters).
-It is the desktop rendering's price alone: the stacked list renders every shoe.
 
 **The measurement's prototypes never come from the plan.** `row-height.ts` clones
 a row for its replica and copies a `DiscontinuedTag`'s markup, and both used to
@@ -1484,13 +1510,14 @@ come from whichever shoe was in the DOM — which under a window is a fact about
 the scroll position: the window may hold no discontinued shoe, and past either
 end of the fleet it holds no shoe at all. Each of those made the measurement
 decline, the caller render everything, the prototype reappear and the measurement
-succeed, which is a loop rather than a fallback. `ShoeTable.svelte` therefore
-renders a permanent hidden one-row prototype table — a cell per rendered column,
-so the row's floor is the one the table really draws, the same `<colgroup>` and
-width so it is a copy rather than a second model, out of flow, `visibility:
-hidden` so it is still laid out, and out of the accessibility tree. Everything
-in `app/src` and `app/e2e` that reads the real table selects `table:not(.proto)`,
-`tr.shoe` or `tr.expand`. **`hunt/` does not, and its readings say so**: the
+succeed, which is a loop rather than a fallback. Each rendering therefore owns
+a permanent hidden prototype table: one desktop row carrying a cell per rendered
+column, and the phone's rule/name/values group carrying both face rulers. Each is
+a copy rather than a second model, out of flow, `visibility: hidden` so it is
+still laid out, and out of the accessibility tree. Everything in `app/src` and
+`app/e2e` that reads a runner-facing table selects `table:not(.proto)`,
+`[data-testid="shoe-table-mobile"]`, `tr.shoe` or `tr.expand`. **Older `hunt/`
+readings do not all make that distinction, and say so**: the
 boundary rig's `td.name` walk and the two fingerprints that count `tbody tr` now
 see the prototype's row as well, and a fingerprint's first rows are a windowful
 rather than the head of the fleet.

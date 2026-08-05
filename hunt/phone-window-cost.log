@@ -1,0 +1,19 @@
+hunt/phone-window-cost.mjs, real 455-shoe fleet at 390x900.
+Three comparative runs per engine; each drag figure is the median/worst after four warmup steps.
+The group measurement is a median of nine direct calls in the final run.
+
+Chromium
+  control:  1364 rows / 9386 body nodes at rest; 1223 / 8433 after the driven bound
+  windowed:   81 rows /  561 body nodes at rest;  109 /  730 after the driven bound
+  drag control:  13.4–14.5ms median, 17.4–18.9ms worst
+  drag windowed:  3.5–3.7ms median,  4.8–6.0ms worst
+  scroll windowed: 1.4–1.8ms median, 2.6–4.0ms worst (control has no scroll work)
+  measure 455 complete groups: 24.6ms median
+
+Firefox
+  control:  1364 rows / 9386 body nodes at rest; 1223 / 8433 after the driven bound
+  windowed:   81 rows /  561 body nodes at rest;  109 /  730 after the driven bound
+  drag control:  23–24ms median, 37–40ms worst
+  drag windowed: 5ms median,      7–8ms worst
+  scroll windowed: 3ms median,    8–11ms worst (control has no scroll work)
+  measure 455 complete groups: 29ms median

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
-  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, sweepDeclaredColumns,
-  sweepRowHeights, twoPaints,
+  awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, routeWindowFleet,
+  sweepDeclaredColumns, sweepPhoneGroupHeights, sweepRowHeights, twoPaints, WINDOW_FLEET_SIZE,
 } from './fit-support';
 
 /**
@@ -1030,6 +1030,41 @@ test('keeps focus on the row that has it while the page scrolls away from it', a
 test('renders every row at the height it measured', async ({ page }) => {
   await sweepRowHeights(page, FIT_SETS['default']!);
   await sweepRowHeights(page, FIT_SETS['minimal']!);
+});
+
+test('renders every phone group at the height it measured', async ({ page }) => {
+  await sweepPhoneGroupHeights(page);
+});
+
+test('keeps focused and open groups in a windowed phone list', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 600 });
+  await routeWindowFleet(page);
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  const table = page.getByTestId('shoe-table-mobile');
+  await expect(table.locator('tbody tr.spacer').first(), 'the routed fleet did not window')
+    .toBeAttached();
+  expect(await table.locator('tbody tr.shoe').count()).toBeLessThan(WINDOW_FLEET_SIZE);
+
+  await page.evaluate(() => window.scrollTo(0, 4_000));
+  await twoPaints(page);
+  const focused = table.locator('tbody tr.shoe').nth(3);
+  const focusedSlug = await focused.getAttribute('data-slug');
+  await focused.focus();
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await twoPaints(page);
+  await expect(table.locator(`tr.shoe[data-slug="${focusedSlug}"]`),
+    'scrolling removed the focused group').toHaveCount(1);
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset['slug']))
+    .toBe(focusedSlug);
+
+  const openSlug = await table.locator('tbody tr.shoe').last().getAttribute('data-slug');
+  await page.goto(`/?open=${openSlug}`);
+  await expect(table.locator(`tr.expand[data-slug="${openSlug}"]`)).toHaveCount(1);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await twoPaints(page);
+  await expect(table.locator(`tr.expand[data-slug="${openSlug}"]`),
+    'scrolling removed the open group').toHaveCount(1);
 });
 
 /**

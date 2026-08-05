@@ -1,8 +1,8 @@
 # Windowing the stacked phone list
 
 *2026-08-04 · the deferred half of docs/specs/2026-08-03-virtualising-the-table.md,
-split out when the desktop half was delivered on its own · status: **approved,
-in delivery** — approved explicitly for execution on 2026-08-05.*
+split out when the desktop half was delivered on its own · status: **delivered
+2026-08-05** — approved explicitly for execution on 2026-08-05.*
 
 The desktop table now renders a windowed plan. `ShoeTableMobile` still puts every
 visible shoe in the DOM — 1,364 `<tr>` for 455 shoes, since a shoe there is a
@@ -311,3 +311,32 @@ phone's geometry is its own.
 - The desktop rendering, fit boundary, URL and open-set semantics do not move.
 - Every behavior bound runs without live network and the compatibility floor is
   Chromium, Firefox, WebKit and 360px of layout.
+
+## Delivery record
+
+- The shared cache now takes a rendering-specific layout key and face ruler;
+  the phone ruler watches both Inter Tight and JetBrains Mono. The stable fleet
+  input is rebuilt only for a new dataset or column signature, not a sort or
+  filter replacement.
+- The plan item is the complete closed group. The leading rule belongs to the
+  following shoe, panels are observed live, and open, focused and revealed
+  groups are kept at their own fleet position. Semantic row counts exclude
+  rules, spacers and the permanent three-row prototype.
+- `PHONE_OVERSCAN_PX` is independently 1,280px. The real-fleet 390×900 probe
+  measured ordinary wheel travel at 600px/frame in Chromium and Firefox and
+  825px in WebKit; Page Down and End remain uncovered jumps by design.
+- At rest on 455 shoes, the phone body fell from 1,364 rows / 9,386 nodes to 81
+  rows / 561 nodes. Three comparative runs cut the driven range-filter step
+  from 13.4–14.5ms to 3.5–3.7ms median in Chromium and 23–24ms to 5ms in
+  Firefox. Scroll work is 1.4–1.8ms and 3ms median. Measuring all groups costs
+  24.6ms and 29ms respectively and is cached across filter changes.
+- A routed 400-shoe browser fixture now forces the phone seam. Chromium holds
+  exact grouping, accessibility, wash invariance, panel-aware viewport coverage
+  and both rendering-swap directions; Firefox and WebKit hold measured height
+  equality plus focused/open retention. The Docker suite passes in all three.
+- Adversarial checks caught the hidden prototype leaking into two broad e2e
+  selectors, a fleet array that initially lost identity on sort-only changes,
+  and a ruler that initially watched only one of the two faces. The final guards
+  fail if a group is split, a spacer is redistributed, an open/revealed group is
+  dropped, the fallback is removed, ARIA positions collapse to DOM positions,
+  or the wash is ranked over the plan.
