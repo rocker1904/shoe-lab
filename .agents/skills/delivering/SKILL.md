@@ -242,6 +242,10 @@ enforce the wrong document.
   one matters. Watch for conflicts that merge cleanly but are wrong —
   two branches closing *different* items in one ordered list is the
   sharp case, since each renumbers the other's survivors.
+- **For an explicitly requested reviewed-but-unlanded handoff, stop here.**
+  Keep the spec `approved, in delivery`; retain the branch, worktree and
+  `.delivery/` evidence; and report the exact reviewed head. On a later landing
+  instruction, resume here and re-check the base and gates before continuing.
 - Flip the spec's status to delivered-and-frozen, and make sure nothing
   live names a backlog item by list position — titles survive
   renumbering, numbers do not; a still-live build sheet once pointed
