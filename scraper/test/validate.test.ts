@@ -159,6 +159,23 @@ describe('duplicate tests in the catalogue', () => {
   });
 });
 
+describe('test slugs in the catalogue', () => {
+  it('rejects empty or ASCII-whitespace slugs on every catalogue validation path', () => {
+    for (const slug of ['', 'heel stack', 'heel\tstack', 'heel\nstack', 'heel\fstack', 'heel\rstack']) {
+      const malformed = { ...tests, tests: tests.tests.map((t, i) => i ? t : { ...t, slug }) };
+      expect(() => validateValuesAgainstCatalogue({}, malformed), JSON.stringify(slug))
+        .toThrow(/invalid slug/);
+    }
+  });
+
+  it('accepts punctuation and non-ASCII space that remain one id reference', () => {
+    for (const slug of ['heel_stack.v2', 'heel\u00a0stack']) {
+      const valid = { ...tests, tests: tests.tests.map((t, i) => i ? t : { ...t, slug }) };
+      expect(() => validateValuesAgainstCatalogue({}, valid), JSON.stringify(slug)).not.toThrow();
+    }
+  });
+});
+
 describe('validateDetailsRecord', () => {
   it('passes tombstones and complete records, rejects broken ones', () => {
     expect(() => validateDetailsRecord({ gone: true, scrapedAt: 't' }, 's')).not.toThrow();

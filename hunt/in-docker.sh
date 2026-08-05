@@ -9,10 +9,12 @@
 # The repo is mounted at /work, so node_modules and data/ come along; the server and the browser
 # both run inside the container, so no port needs publishing. Build OUTSIDE first — probes should
 # call start({ build: false }) so the container never writes to dist/.
+# `--init` keeps xvfb-run out of PID 1: Xvfb's readiness signal is otherwise ignored and the
+# wrapper waits forever before starting Node. Xvfb is also what makes headed/classic probes real.
 set -e
-exec docker run --rm \
+exec docker run --rm --init \
   -v "$(pwd)":/work -w /work \
   --user "$(id -u):$(id -g)" -e HOME=/tmp \
   --ipc=host \
   "mcr.microsoft.com/playwright:v$(node -p "require('@playwright/test/package.json').version")-noble" \
-  node "$@"
+  xvfb-run -a node "$@"

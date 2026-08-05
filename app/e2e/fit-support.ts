@@ -8,6 +8,13 @@ import {
 } from '../src/lib/fit';
 import { measureDesktopRowHeights } from '../src/lib/row-height';
 
+/** Let an observer callback and the render it schedules both reach a painted frame. */
+export async function twoPaints(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }));
+}
+
 /**
  * The one thing that stops the fit model rotting: it is arithmetic over committed font tables, and
  * nothing in the unit suite can notice when the browser stops agreeing with it. So the specs mount

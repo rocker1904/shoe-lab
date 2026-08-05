@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import type { LabTest } from '../../../shared/types.js';
+import { isIdReferenceToken } from '../../../shared/id-reference.js';
 import { isCategorical } from '../lib/categorical';
 import { labTest } from '../lib/test-fixtures';
 import FeaturesFilter from './FeaturesFilter.svelte';
@@ -190,14 +191,13 @@ describe('the id each facet mints', () => {
   const catalogue = JSON.parse(
     readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../data/tests.json'), 'utf8'),
   ) as { tests: LabTest[] };
-  const ID_TOKEN = /^[a-z0-9-]+$/;
-
   it('is one id token, whatever the catalogue calls a categorical test', () => {
-    expect(ID_TOKEN.test('tongue-gusset-type')).toBe(true);
+    expect(isIdReferenceToken('tongue-gusset-type')).toBe(true);
     // The shape that breaks it, and the one upstream is free to send tomorrow.
-    expect(ID_TOKEN.test('tongue gusset type')).toBe(false);
+    expect(isIdReferenceToken('tongue gusset type')).toBe(false);
+    expect(isIdReferenceToken('tongue_gusset_type')).toBe(true);
     const facets = catalogue.tests.filter(isCategorical);
     expect(facets.length).toBeGreaterThan(0); // or the filter below asserts nothing
-    expect(facets.map((t) => t.slug).filter((slug) => !ID_TOKEN.test(slug))).toEqual([]);
+    expect(facets.map((t) => t.slug).filter((slug) => !isIdReferenceToken(slug))).toEqual([]);
   });
 });

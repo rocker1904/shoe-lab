@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  actions: write # to dispatch deploy.yml (docs/operations.md §The refresh chain)
+  actions: write # to dispatch ci.yml (docs/operations.md §The refresh chain)
 concurrency:
   group: scrape
   cancel-in-progress: false
@@ -45,8 +45,8 @@ jobs:
             git push
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Trigger deploy
+      - name: Trigger CI
         if: steps.commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run deploy.yml --ref main
+        run: gh workflow run ci.yml --ref main

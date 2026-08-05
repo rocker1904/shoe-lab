@@ -18,6 +18,18 @@ describe('extractTestCatalogue', () => {
     expect(() => extractTestCatalogue({}, 's', 't')).toThrow(PayloadError);
     expect(() => extractTestCatalogue({ lab_tests: { tests: { '1': { id: 1, slug: 'x', name: 'X', type: 'float', units: '' } }, groups: {} } }, 's', 't')).toThrow(PayloadError);
   });
+  it('rejects a slug that would become more than one aria-labelledby reference before crawling', () => {
+    const page = loadAzuraPageData();
+    const first = Object.values<any>(page.lab_tests.tests)[0]!;
+    first.slug = 'heel stack';
+    expect(() => extractTestCatalogue(page, 's', 't')).toThrow(/invalid slug.*heel stack/);
+  });
+  it('accepts punctuation that is valid inside one id reference', () => {
+    const page = loadAzuraPageData();
+    const first = Object.values<any>(page.lab_tests.tests)[0]!;
+    first.slug = 'heel_stack.v2';
+    expect(extractTestCatalogue(page, 's', 't').tests[0]!.slug).toBe('heel_stack.v2');
+  });
 });
 
 // RunRepeat revised nine test methods and kept the old names, so the catalogue is the only

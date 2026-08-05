@@ -7,10 +7,10 @@ docs/scraping.md.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main` | two jobs: `full-suite` on `ubuntu-latest` — typecheck, lint, doc check, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
+| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | two jobs: `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, Playwright smoke on Chromium plus a cross-browser spec on Firefox and WebKit — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
-| `deploy.yml` | After `CI` succeeds on a `main` push (deploys that exact commit), + dispatch — the refresh chain’s path, ungated because its `GITHUB_TOKEN` pushes never ran CI (§The refresh chain) | builds the app, publishes to Pages |
+| `deploy.yml` | After `CI` succeeds on `main`, including a refresh-dispatched CI run; deploys that exact commit (§The refresh chain) | builds the app, publishes to Pages |
 | `contract-drift.yml` | 1st of the month 07:00 UTC + dispatch | `check:live`, files or comments on an issue when it fails |
 
 ## The e2e run needs three browsers
@@ -77,7 +77,7 @@ whole workflow's conclusion (§Deploy).
 ## The refresh chain
 
 Both refresh workflows run the same tail: **scrape → `build:dataset` →
-commit-if-changed → dispatch deploy**. Two properties matter.
+commit-if-changed → dispatch CI → deploy on success**. Two properties matter.
 
 *Commit-if-changed* is a `git diff --cached --quiet -- data` on staged data
 plus a step output; nothing else in the job is conditional on it. Because the
@@ -85,10 +85,12 @@ build is deterministic (docs/scraping.md §Determinism), "no diff" genuinely
 means "nothing moved upstream", so an unchanged week costs one workflow run
 and no commit.
 
-*The deploy is dispatched explicitly*, with `gh workflow run deploy.yml`, and
-the job carries `actions: write` for it. This is not belt-and-braces: pushes
-made with `GITHUB_TOKEN` do not trigger push-event workflows, so `deploy.yml`
-would never fire on a data commit otherwise (§Decisions).
+*CI is dispatched explicitly*, with `gh workflow run ci.yml`, and the job
+carries `actions: write` for it. This is not belt-and-braces: pushes made with
+`GITHUB_TOKEN` do not trigger push-event workflows. Dispatching the same CI
+workflow code changes use makes data compatibility guards run before
+`deploy.yml` sees the successful `workflow_run`; dispatching deploy directly
+would publish a refresh that can fail the app suite (§Decisions).
 
 ## The weekly release supplement
 
@@ -174,12 +176,8 @@ the run red until the shift is taken deliberately
 `check:live` is not the only drift detector. `lineage.test.ts` asserts the
 declared heel/forefoot pairs (docs/app.md §Columns and sorting) against the
 committed `data/shoes.json`, so an upstream **rename or unlink** of one of
-those eight tests turns it red. Expect it on an unrelated branch: the refresh
-workflows run scrape → build → commit and never `verify`, and their pushes use
-`GITHUB_TOKEN`, which triggers no push workflows. So the failure surfaces on
-the next PR touching anything, not on the refresh that caused it — the diff
-under review is not the cause. Fix the declaration to match the new catalogue;
-do not delete the assertion.
+those eight tests turns the refresh-dispatched CI red before deploy. Fix the
+declaration to match the new catalogue; do not delete the assertion.
 
 `direction.test.ts` is the second such guard, over
 `app/src/lib/direction.ts` (docs/app.md §Theming). It reads the **full**
@@ -219,7 +217,7 @@ design, and only a scale falling *short* of an anchor is a fault.
 
 ## Resuming release-date curation
 
-Curation is author-side work: it spends the author's Claude Code budget and
+Curation is author-side work: it spends the author's interactive-agent budget and
 produces a committed file, and adds nothing to the weekly refresh
 (docs/decisions.md §Free tools only). Nothing here runs in CI. Semantics and
 gates are docs/scraping.md §Curated release months; method and evidence rules
@@ -281,12 +279,14 @@ has passed and the deploy has run — a few minutes, and a red CI deploys nothin
 
 ## Decisions
 
-### Refresh commits are pushed with GITHUB_TOKEN and dispatch the deploy
+### Refresh commits are pushed with GITHUB_TOKEN and dispatch CI
 Pushing as `github-actions[bot]` with the default token is what keeps the
 refresh credential-free — no PAT, no deploy key, no App to rotate. The
 documented consequence is that such pushes trigger no push-event workflows, so
-each refresh ends by dispatching `deploy.yml` itself. Do not "fix" the missing
-trigger by introducing a PAT; the dispatch is the cheaper half of the trade.
+each changed refresh dispatches `ci.yml`; a successful run triggers
+`deploy.yml` exactly as a code push does. Do not "fix" the missing push trigger
+by introducing a PAT, and do not dispatch deploy directly — the explicit CI
+dispatch is the cheaper half of the trade and the app's data-compatibility gate.
 
 ### Repo access is the gate on who may trigger a refresh
 Both refresh workflows are `workflow_dispatch` only, so triggering one takes

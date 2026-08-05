@@ -3,6 +3,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Token-authored refresh commits do not emit a push event, so the refresh workflow dispatches
+  # this same gate explicitly rather than bypassing it on the way to deploy.
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:

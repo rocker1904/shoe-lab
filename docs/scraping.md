@@ -103,6 +103,13 @@ means a red workflow and untouched `data/` — never a partial write.
 - **Absolute floors:** fewer than 300 shoes or fewer than 50 tests fails. The
   catalogue extractor enforces the same 50 independently, so a gutted
   `lab_tests` payload fails before a single API call is spent.
+- **Test slugs are one ID-reference token:** empty slugs and ASCII whitespace
+  are fatal. Categorical facet headings use the slug as an HTML id and
+  `aria-labelledby` target, where whitespace would split one reference into a
+  list of missing ids. The extractor applies the gate before the per-test API
+  crawl; the shared catalogue index repeats it on every path that can write or
+  join a catalogue. Other punctuation is valid and must not be rejected merely
+  because today's upstream slugs use lowercase letters and hyphens.
 - **Type matching:** every value must match its test's declared type
   (numeric family → number, `bool` → boolean, everything else → string), and
   a value for a test id absent from the catalogue is fatal. Checked wherever

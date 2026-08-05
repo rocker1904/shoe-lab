@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, NAME_COL_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   APP_FACES, awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit,
-  setLayoutWidth, settledDeclared, sweepDeclaredColumns, sweepRowHeights,
+  setLayoutWidth, settledDeclared, sweepDeclaredColumns, sweepRowHeights, twoPaints,
 } from './fit-support';
 
 /**
@@ -501,7 +501,7 @@ test('keeps focus on the row that has it while the page scrolls away from it', a
   const slug = await row.getAttribute('data-slug');
 
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await page.waitForTimeout(120);
+  await twoPaints(page);
   expect(await page.evaluate(() => (document.activeElement as HTMLElement).dataset['slug']),
     'the scroll took focus off the row').toBe(slug);
   expect(await page.evaluate(() => document.activeElement === document.body),

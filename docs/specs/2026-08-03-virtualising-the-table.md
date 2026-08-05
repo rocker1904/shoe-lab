@@ -1,7 +1,7 @@
 # Virtualising the table body
 
 *2026-08-03 · from BACKLOG's "Cut what a drag re-renders, not just what it
-recomputes" · status: **approved, in delivery**.*
+recomputes" · status: **delivered and frozen**.*
 
 Both renderings put every visible shoe in the DOM, up to the whole fleet. That
 is the larger half of a held grip's per-frame cost, and it is a row-count

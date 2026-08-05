@@ -90,3 +90,7 @@ window.matchMedia ??= ((query: string) => ({
   addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
   addListener: () => {}, removeListener: () => {},
 })) as unknown as typeof window.matchMedia;
+
+/** jsdom exposes `scrollTo` but reports every call as an unimplemented error. A no-op is the honest
+ * stand-in where no box has a position; real landing behavior is measured by Playwright. */
+window.scrollTo = () => {};

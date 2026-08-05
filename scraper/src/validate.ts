@@ -1,5 +1,6 @@
 import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, Shoe, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
+import { isIdReferenceToken } from '../../shared/id-reference.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
 
 export class ValidationError extends Error {}
@@ -23,6 +24,9 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
   const index = new Map<string, CatalogueEntry>();
   const slugs = new Set<string>();
   for (const t of tests) {
+    if (!isIdReferenceToken(t.slug)) {
+      throw new ValidationError(`test id ${t.id} has invalid slug ${JSON.stringify(t.slug)}`);
+    }
     // The repeated id is the fault nothing downstream reports (docs/scraping.md §A test declared twice fails the run).
     if (index.has(String(t.id))) throw new ValidationError(`test id ${t.id} declared twice (${t.slug})`);
     if (slugs.has(t.slug)) throw new ValidationError(`test slug ${t.slug} declared twice (id ${t.id})`);
