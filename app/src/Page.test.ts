@@ -1204,7 +1204,9 @@ describe('Page mounts the rendering that fits', () => {
     stubWidth(690);
     const { container } = render(Page, { props: { data } });
     expect(mobile()).not.toBeNull();
-    expect(container.querySelectorAll('table')).toHaveLength(1);
+    // The phone rendering owns an inert prototype table for exact group-height measurement; only
+    // one runner-facing rendering may mount.
+    expect(container.querySelectorAll('table:not(.proto)')).toHaveLength(1);
   });
 
   /**

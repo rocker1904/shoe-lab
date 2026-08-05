@@ -101,7 +101,7 @@ pointers, so a finding correctly reporting a broken pointer would fail the build
 | `hunt/png.mjs` | minimal PNG decoder, so contrast can be read off painted pixels |
 | `hunt/smoke.mjs` | proves every helper returns the right shape in every engine |
 | `hunt/fit-boundary.mjs` | **asserts**, and exits non-zero: the sidebar's boundary, the fit rule and the two agreeing, against the real fleet |
-| `hunt/overscan.mjs` | how far the page travels per animation frame under the hardest gestures, per engine — the reading `OVERSCAN_PX` is chosen against. `hunt/overscan-3engine.log` is the run it was chosen from, and is the one recorded output kept here rather than in `.hunt/` |
+| `hunt/overscan.mjs` | how far the page travels per animation frame under the hardest gestures, per engine and rendering — the readings `OVERSCAN_PX` and `PHONE_OVERSCAN_PX` are chosen against. `hunt/overscan-3engine.log` and `hunt/overscan-phone-3engine.log` are the recorded runs |
 | `hunt/in-docker.sh` | runs a probe in the Playwright image, the only place WebKit launches here |
 
 `fit-boundary.mjs` is the one file here that makes a claim about the app rather than about the rig,

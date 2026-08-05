@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createRowHeights, measureDesktopRowHeights, type NameEntry } from './row-height';
+import {
+  createRowHeights, measureDesktopRowHeights, measurePhoneGroupHeights, type NameEntry,
+  type PhoneHeightEntry, type RowHeightEnvironment,
+} from './row-height';
 import { fireResizeObservers } from '../test-setup';
 
 /**
@@ -79,6 +82,25 @@ const NAMES: NameEntry[] = [
   { name: 'A Shoe', discontinued: false },
   { name: 'B Shoe', discontinued: true },
 ];
+
+const PHONE: PhoneHeightEntry[] = [
+  { name: 'A Shoe', metadata: ['June 2025', 'Carbon'], discontinued: false },
+  { name: 'B Shoe', metadata: ['Gusset: Both sides (semi)'], discontinued: true },
+];
+
+function mountPhonePrototype(): void {
+  document.body.innerHTML = `
+    <div class="mobile-proto">
+      <table class="proto" aria-hidden="true"><tbody>
+        <tr class="rule"><td colspan="2"></td></tr>
+        <tr class="shoe" data-slug="prototype" tabindex="0" aria-expanded="true">
+          <td class="ident" colspan="2"><span class="chev open">›</span><strong>M</strong>
+            <span class="meta">old</span><span class="disc-tag">discontinued</span></td>
+        </tr>
+        <tr class="values"><td><span class="chip">0</span></td><td><span class="chip">0</span></td></tr>
+      </tbody></table>
+    </div>`;
+}
 
 afterEach(() => { document.body.innerHTML = ''; vi.restoreAllMocks(); });
 
@@ -258,6 +280,47 @@ describe('measureDesktopRowHeights', () => {
   });
 });
 
+describe('measurePhoneGroupHeights', () => {
+  it('declines with no permanent phone prototype', () => {
+    expect(measurePhoneGroupHeights(PHONE)).toBeNull();
+  });
+
+  it('builds whole groups from the prototype without carrying state or trusting upstream text', () => {
+    mountPhonePrototype();
+    const hostile: PhoneHeightEntry[] = [{
+      name: '<img src=x onerror=alert(1)>', metadata: ['<b>not markup</b>'], discontinued: false,
+    }, ...PHONE.slice(1)];
+    const added: Element[] = [];
+    const observer = new MutationObserver(() => {});
+    observer.observe(document.body, { childList: true, subtree: true });
+    expect(measurePhoneGroupHeights(hostile)).toBeNull();
+    for (const record of observer.takeRecords()) {
+      for (const node of record.addedNodes) {
+        if (node instanceof Element) added.push(node, ...node.querySelectorAll('*'));
+      }
+    }
+    observer.disconnect();
+
+    expect(added.filter((e) => e.matches('tr.shoe'))).toHaveLength(hostile.length);
+    expect(added.filter((e) => e.matches('tr.values'))).toHaveLength(hostile.length);
+    expect(added.filter((e) => e.matches('tr.rule'))).toHaveLength(hostile.length - 1);
+    expect(added.map((e) => e.tagName)).not.toContain('IMG');
+    expect(added.map((e) => e.tagName)).not.toContain('B');
+    expect(added.filter((e) => e.hasAttribute('data-slug') || e.hasAttribute('tabindex')
+      || e.hasAttribute('aria-expanded'))).toEqual([]);
+    expect(added.filter((e) => e.matches('.chev.open'))).toEqual([]);
+    expect(added.filter((e) => e.matches('.disc-tag'))).toHaveLength(1);
+    expect(document.querySelector('.mobile-proto')!.querySelectorAll('tbody')).toHaveLength(1);
+  });
+
+  it('has no free variables so the browser suite measures this exact function', () => {
+    mountPhonePrototype();
+    const rebuilt = new Function(`return (${measurePhoneGroupHeights.toString()})`)() as
+      typeof measurePhoneGroupHeights;
+    expect(rebuilt(PHONE)).toBeNull();
+  });
+});
+
 describe('createRowHeights', () => {
   const fake = (heights: number[] | null) => vi.fn(() => (heights ? [...heights] : null));
 
@@ -278,6 +341,38 @@ describe('createRowHeights', () => {
     document.querySelector<HTMLElement>('colgroup col')!.style.width = '260px';
     rh.heights(NAMES);
     expect(measure).toHaveBeenCalledTimes(2);
+  });
+
+  it('takes its layout key and face ruler from the rendering that owns the measurement', () => {
+    mountTable();
+    const ruler = document.createElement('span');
+    document.body.append(ruler);
+    let layout = 'phone:390:score,weight';
+    let facePx = 100;
+    vi.spyOn(ruler, 'getBoundingClientRect')
+      .mockImplementation(() => ({ width: facePx }) as DOMRect);
+    const environment: RowHeightEnvironment = {
+      layoutKey: () => layout,
+      faceElement: () => ruler,
+    };
+    const measure = fake([60, 76]);
+    const onInvalidate = vi.fn();
+    const rh = createRowHeights(onInvalidate, measure, environment);
+
+    expect(rh.heights(NAMES)).toEqual([60, 76]);
+    document.querySelector<HTMLElement>('colgroup col')!.style.width = '999px';
+    expect(rh.heights(NAMES)).toEqual([60, 76]);
+    expect(measure).toHaveBeenCalledTimes(1);
+
+    layout = 'phone:390:score,weight,plate';
+    rh.heights(NAMES);
+    expect(measure).toHaveBeenCalledTimes(2);
+
+    facePx = 140;
+    fireResizeObservers();
+    expect(onInvalidate).toHaveBeenCalledTimes(1);
+    rh.heights(NAMES);
+    expect(measure).toHaveBeenCalledTimes(3);
   });
 
   it('re-measures for an equal fleet that is not the SAME array, which is the caller contract', () => {

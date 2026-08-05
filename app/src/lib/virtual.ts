@@ -65,6 +65,16 @@ export interface VirtualItem { readonly key: string; readonly height: number }
  */
 export const OVERSCAN_PX = 1280;
 
+/**
+ * The phone list owns its overscan even though its independently measured answer matches the
+ * desktop's. On the real fleet at 390x900, ordinary wheel travel peaked at 600px/frame in Chromium
+ * and Firefox and 825px in WebKit; 1280 clears the hardest of those by ~1.55x. Page Down reached
+ * 2,970–4,123px and End 5,268–9,798px, so they are jumps repaired by the next plan rather than a DOM
+ * budget paid at every scroll position (`hunt/overscan-phone-3engine.log`). Keeping this separate
+ * prevents a later desktop tuning from silently changing the phone's budget.
+ */
+export const PHONE_OVERSCAN_PX = 1280;
+
 /** A spacer standing for one or more shoes, or a shoe to render, by index into `items`. */
 export type VirtualEntry =
   | { readonly kind: 'gap'; readonly px: number }

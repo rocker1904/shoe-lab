@@ -40,6 +40,11 @@ export interface NameEntry {
   readonly discontinued: boolean;
 }
 
+/** Every piece of prose that can change a closed phone shoe group's height. */
+export interface PhoneHeightEntry extends NameEntry {
+  readonly metadata: readonly string[];
+}
+
 /**
  * Heights in the order given, or `null` when nothing can be measured.
  *
@@ -291,16 +296,80 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
 }
 
 /**
+ * Measures the phone rendering's closed shoe groups from the permanent prototype it owns.
+ *
+ * The group is the plan's indivisible item: its leading rule where it has one, the name row and the
+ * values row. An open panel is deliberately absent — open groups are kept and their panel is a live
+ * box observed by the component. Building from cloned rows preserves Svelte's scoped classes; text
+ * is assigned through `textContent` because every string here belongs to the dataset.
+ *
+ * No closure over module state: the browser suite serialises this function into `page.evaluate`, as
+ * it does the desktop measurement, so its evidence exercises this exact implementation.
+ */
+export function measurePhoneGroupHeights(
+  entries: readonly PhoneHeightEntry[],
+): number[] | null {
+  const table = document.querySelector<HTMLTableElement>('.mobile-proto table.proto');
+  const source = table?.tBodies[0];
+  const ruleSource = source?.querySelector<HTMLTableRowElement>('tr.rule');
+  const shoeSource = source?.querySelector<HTMLTableRowElement>('tr.shoe');
+  const valuesSource = source?.querySelector<HTMLTableRowElement>('tr.values');
+  const metaSource = shoeSource?.querySelector<HTMLElement>('.meta');
+  const discSource = shoeSource?.querySelector<HTMLElement>('.disc-tag');
+  if (!table || !source || !ruleSource || !shoeSource || !valuesSource) return null;
+  if (entries.some((entry) => entry.metadata.length) && !metaSource) return null;
+  if (entries.some((entry) => entry.discontinued) && !discSource) return null;
+
+  const measuredBody = document.createElement('tbody');
+  measuredBody.setAttribute('aria-hidden', 'true');
+  const groups: HTMLTableRowElement[][] = [];
+
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!;
+    const rows: HTMLTableRowElement[] = [];
+    if (i > 0) rows.push(ruleSource.cloneNode(true) as HTMLTableRowElement);
+
+    const shoe = shoeSource.cloneNode(true) as HTMLTableRowElement;
+    for (const attr of ['data-slug', 'tabindex', 'aria-controls', 'aria-expanded', 'style']) {
+      shoe.removeAttribute(attr);
+    }
+    shoe.querySelector<HTMLElement>('.chev')?.classList.remove('open');
+    const strong = shoe.querySelector<HTMLElement>('td.ident strong');
+    const ident = shoe.querySelector<HTMLTableCellElement>('td.ident');
+    if (!strong || !ident) return null;
+    strong.textContent = entry.name;
+    for (const old of shoe.querySelectorAll('.meta')) old.remove();
+    const disc = shoe.querySelector<HTMLElement>('.disc-tag');
+    if (!entry.discontinued) disc?.remove();
+    const anchor = entry.discontinued ? disc : null;
+    for (const text of entry.metadata) {
+      const meta = metaSource!.cloneNode(true) as HTMLElement;
+      meta.textContent = text;
+      ident.insertBefore(meta, anchor);
+    }
+    rows.push(shoe, valuesSource.cloneNode(true) as HTMLTableRowElement);
+    measuredBody.append(...rows);
+    groups.push(rows);
+  }
+
+  table.append(measuredBody);
+  try {
+    const heights = groups.map((rows) => rows.reduce(
+      (sum, row) => sum + row.getBoundingClientRect().height, 0));
+    return heights.every((height) => height > 0) ? heights : null;
+  } finally {
+    measuredBody.remove();
+  }
+}
+
+/**
  * The measurement plus the thing a caller would otherwise have to remember: when it stops being
  * true.
  *
- * **Everything that changes how a name breaks invalidates every height at once** — a resize, a
- * browser zoom, a ticked column, and the faces swapping in after first paint, which this app does
- * by self-hosting its own (docs/app.md §Theming). The first three all reach here as a changed
- * name-column width and the cache is keyed on it; the fourth does not change any width at all,
- * which is why it is a subscription rather than a key. Measured before the faces land, every height
- * is the fallback face's. That is the same hazard `Page.svelte` documents for the pinned chrome's
- * height, and it is why that one is `ResizeObserver`-backed.
+ * **Everything that changes a measured group invalidates every height at once** — a resize, browser
+ * zoom, a ticked column, and the faces swapping in after first paint. Each rendering supplies the
+ * layout key for the first three; the fourth does not necessarily move that key, which is why it is
+ * also a subscription. Measured before the faces land, every height is the fallback face's.
  *
  * **The event is not enough on its own, because one engine never sends it.** Measured on the real
  * fleet, WebKit dispatches `loading` and then nothing at all — no `loadingdone`, no `loadingerror`,
@@ -310,22 +379,21 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
  * the page, and nothing on screen would say so: the spacers stand for shoes that are not that tall,
  * and the scrollbar is wrong by the difference.
  *
- * The second half is therefore a **ruler rather than an event**: the prototype's own name block,
- * whose width is its content laid out in the name face, is part of the key and is watched for
+ * The second half is therefore a **ruler rather than an event**: a prototype element whose width
+ * is sensitive to every face that sets the measured boxes is part of the key and is watched for
  * changes. Measured across the swap, a string in this face moves 5.4px and the same string in the
  * mono face moves 41px, so any change at all is the face moving under it. The prototype is the one node this module can rely on being in the document, which is
  * the second job it does — `ShoeTable.svelte` renders it so that the measurement never depends on
  * which shoes are on screen.
  *
- * **Keyed on the declared width read back from the DOM, not on one passed in.** The declaration
- * reaches the DOM through a `ResizeObserver`, so for one frame after a resize a caller's width and
- * the table's differ; keying on what the table is actually laid out at cannot measure one width and
- * label it another.
+ * **Keyed on layout read back from the DOM, not on a proposed value.** For one frame after a resize
+ * a caller's model and the rendered table can differ; the rendering-specific environment prevents
+ * measuring one layout and labelling it as another.
  *
  * A filter change moves neither the width nor the fleet, so it is a cache hit — which is the whole
  * of why this is affordable (docs/app.md §What a drag may recompute).
  *
- * **`names` is compared by IDENTITY, so a caller must pass the same array and not an equal one.**
+ * **The entries are compared by IDENTITY, so a caller must pass the same array and not an equal one.**
  * Comparing 455 entries element by element on every call would cost more than the hit saves, and a
  * caller that already holds the fleet has one array to hand over. A caller that rebuilds it per
  * render — `filtered.map(…)` inside a reactive block — misses every time and pays the whole
@@ -333,12 +401,27 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
  * precondition on the caller, not a detail: `row-height.test.ts` holds it, and a windowing caller
  * is the one likeliest to break it (spec §Registry sweep).
  */
-export interface RowHeights {
-  /** Heights for `names` in order, or `null` while nothing can be measured. */
-  heights(names: readonly NameEntry[]): number[] | null;
+export interface RowHeights<T extends NameEntry = NameEntry> {
+  /** Heights for `entries` in order, or `null` while nothing can be measured. */
+  heights(entries: readonly T[]): number[] | null;
   /** Unsubscribes and empties the cache; `heights` declines from then on. */
   destroy(): void;
 }
+
+/** The rendered facts that make one cached height answer valid. */
+export interface RowHeightEnvironment {
+  /** Changes whenever the boxes measured by this rendering can lay out differently. */
+  layoutKey(): string | null;
+  /** A face-sensitive ruler kept in the DOM independently of the rendered window. */
+  faceElement(): Element | null;
+}
+
+const desktopEnvironment: RowHeightEnvironment = {
+  layoutKey: () => document.querySelector<HTMLElement>(
+    '.tblwrap table:not(.proto) colgroup col')?.style.width ?? null,
+  faceElement: () => document.querySelector(
+    '.tblwrap table.proto td.name .name-row > div'),
+};
 
 /**
  * `measure` is not a test affordance and not a strategy: the DOM half can NEVER succeed under
@@ -347,13 +430,16 @@ export interface RowHeights {
  * the other half and it holds the measurement itself
  * (`app/e2e/smoke.spec.ts`, `app/e2e/cross-browser.spec.ts`).
  */
-export function createRowHeights(
-  onInvalidate: () => void, measure = measureDesktopRowHeights,
-): RowHeights {
+export function createRowHeights<T extends NameEntry = NameEntry>(
+  onInvalidate: () => void,
+  measure: (entries: readonly T[]) => number[] | null =
+    measureDesktopRowHeights as (entries: readonly T[]) => number[] | null,
+  environment: RowHeightEnvironment = desktopEnvironment,
+): RowHeights<T> {
   let key: string | null = null;
-  /** The prototype's name-block width the cached answer was measured beside; see `watchProto`. */
+  /** The prototype ruler width the cached answer was measured beside; see `watchProto`. */
   let faceKey: number | null = null;
-  let cachedFor: readonly NameEntry[] | null = null;
+  let cachedFor: readonly T[] | null = null;
   let cached: number[] | null = null;
   let destroyed = false;
 
@@ -372,8 +458,8 @@ export function createRowHeights(
   fonts?.addEventListener?.('loadingdone', invalidate);
 
   /**
-   * The half that does not depend on an engine sending an event: **the prototype's own name block
-   * is part of the key, and a `ResizeObserver` on it is what makes anything ask.**
+   * The half that does not depend on an engine sending an event: **the prototype's face ruler is
+   * part of the key, and a `ResizeObserver` on it is what makes anything ask.**
    *
    * Its width is its content's, so it moves when the face under it does and stays put when nothing
    * has. Being in the KEY is what makes this correct — a call that arrives for any other reason
@@ -389,17 +475,15 @@ export function createRowHeights(
    * Attached on the first call rather than in the constructor, because the prototype is markup the
    * component renders and this is built while its script is still running.
    */
-  const protoBlock = () =>
-    document.querySelector('.tblwrap table.proto td.name .name-row > div');
-  const protoWidth = () => protoBlock()?.getBoundingClientRect().width ?? null;
+  const faceWidth = () => environment.faceElement()?.getBoundingClientRect().width ?? null;
   let watcher: ResizeObserver | null = null;
   let watched: Element | null = null;
   const watchProto = () => {
     if (typeof ResizeObserver === 'undefined') return;
-    const block = protoBlock();
+    const block = environment.faceElement();
     if (!block || block === watched) return;
     watcher ??= new ResizeObserver(() => {
-      if (faceKey !== null && protoWidth() !== faceKey) invalidate();
+      if (faceKey !== null && faceWidth() !== faceKey) invalidate();
     });
     watcher.disconnect();
     watched = block;
@@ -407,31 +491,26 @@ export function createRowHeights(
   };
 
   return {
-    heights(names) {
+    heights(entries) {
       // Nothing is measured or answered after `destroy()`. The subscription is what would notice a
       // face settling, so an answer given after it is unsealed from the one thing that invalidates
       // it — and `null`, which the caller already handles by rendering everything, is the honest
       // reply from a thing that has been torn down.
       if (destroyed) return null;
       watchProto();
-      // The name column's own declaration, which is the whole of what a name breaks against. It
-      // does not move when a filter does — a declared width is `min + share` over the COLUMNS and
-      // the track, never over the rows in the DOM, which is what declaring them bought
-      // (docs/app.md §Table presentation). So a filter change is a hit and costs nothing.
-      const declared = document.querySelector<HTMLElement>(
-        '.tblwrap table:not(.proto) colgroup col')?.style.width;
-      const face = protoWidth();
-      if (declared === key && face === faceKey && cachedFor === names && cached) return cached;
-      const measured = measure(names);
+      const layout = environment.layoutKey();
+      const face = faceWidth();
+      if (layout === key && face === faceKey && cachedFor === entries && cached) return cached;
+      const measured = measure(entries);
       // A failure is never cached. It means the table is not up yet, and the next call is the one
       // that can succeed. It no longer means "the window happens to hold no discontinued shoe":
       // that was a fact about the scroll position, and the prototype row above is what removed it.
       if (!measured) return null;
-      key = declared ?? null;
+      key = environment.layoutKey();
       // Read AFTER the measurement rather than before it, so what the answer is filed under is the
       // prototype as it stood while the names were laid out beside it.
-      faceKey = protoWidth();
-      cachedFor = names;
+      faceKey = faceWidth();
+      cachedFor = entries;
       cached = measured;
       return measured;
     },

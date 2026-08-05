@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
   import type { Shoe, ShoesFile } from '../../../shared/types.js';
   import { displayNumber, indexTests, numericValue } from '../lib/dataset';
   import { washOf } from '../lib/direction';
@@ -7,11 +7,18 @@
   import { categoricalValue, isNegativeReading, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { chipLabel, columnLabel, shortLabel } from '../lib/labels';
+  import {
+    createRowHeights,
+    measurePhoneGroupHeights,
+    type PhoneHeightEntry,
+    type RowHeightEnvironment,
+  } from '../lib/row-height';
   import type { ScoreColumns } from '../lib/score';
   import { nextSort } from '../lib/sort';
   import { percentileMap, rankMap } from '../lib/stats';
   import { headerUnits, isFigure } from '../lib/units';
   import type { ViewState } from '../lib/view';
+  import { PHONE_OVERSCAN_PX, virtualPlan, type VirtualEntry, type VirtualItem } from '../lib/virtual';
   import DetailPanel from './DetailPanel.svelte';
   import DiscontinuedTag from './DiscontinuedTag.svelte';
   import SortCaret from './SortCaret.svelte';
@@ -50,8 +57,8 @@
    *  and do not restore it if it goes. BACKLOG.md holds the measurement, the engines it was taken
    *  in, and the deletion. */
   const span = $derived(Math.max(cols.length, 1));
-  // The score's wash ranks over the **rendered rows**, like every other column's, or its tint would
-  // mean something different from its neighbours' in the same row.
+  // The score's wash ranks over the whole filtered set, never the window, or its tint would change
+  // as the runner scrolls.
   const percentiles = $derived(new Map(cols.map((c) => [c,
     scores.has(c)
       ? rankMap(new Map(shoes.flatMap((s) => {
@@ -105,6 +112,151 @@
     }
     return out;
   }
+
+  /* The window is planned in whole phone groups: leading rule, name row and value row. The fleet is
+   * measured rather than the filtered result so a filter drag is a cache hit, and the array stays
+   * stable until either the dataset or the metadata-producing column set changes. */
+  let entriesData: ShoesFile | null = null;
+  let entriesColumns = '';
+  let entriesCache: PhoneHeightEntry[] = [];
+  const fleetEntries = $derived.by(() => {
+    const columns = view.columns.join('\0');
+    if (data !== entriesData || columns !== entriesColumns) {
+      entriesData = data;
+      entriesColumns = columns;
+      entriesCache = data.shoes.map((s) => ({
+        name: s.name,
+        discontinued: !!s.discontinued,
+        metadata: metaOf(s).map((m) => m.text),
+      }));
+    }
+    return entriesCache;
+  });
+
+  let body = $state<HTMLElement | null>(null);
+  let liveTable = $state<HTMLTableElement | null>(null);
+  let prototype = $state<HTMLElement | null>(null);
+  const phoneEnvironment: RowHeightEnvironment = {
+    layoutKey: () => {
+      const width = liveTable?.getBoundingClientRect().width ?? 0;
+      return width > 0 ? `${width}:${span}` : null;
+    },
+    faceElement: () => prototype?.querySelector('.face-ruler') ?? null,
+  };
+  let facesEpoch = $state(0);
+  const groupHeights = createRowHeights(
+    () => facesEpoch++, measurePhoneGroupHeights, phoneEnvironment);
+  onDestroy(() => groupHeights.destroy());
+
+  // Hold the last good answer across a resize frame where the new DOM has not become measurable
+  // yet. Dropping it would alternate between a window and the whole fleet during the gesture.
+  let measured = $state<number[] | null>(null);
+  $effect(() => {
+    void fleetEntries;
+    void span;
+    void facesEpoch;
+    let live = true;
+    void tick().then(() => {
+      if (!live) return;
+      const next = groupHeights.heights(fleetEntries);
+      if (next) measured = next;
+    });
+    return () => { live = false; };
+  });
+
+  const heightBySlug = $derived.by(() => {
+    const out = new Map<string, number>();
+    if (measured) data.shoes.forEach((s, i) => out.set(s.slug, measured![i] ?? 0));
+    return out;
+  });
+
+  // Panels are live, potentially very tall boxes. Open groups are always kept, so their observed
+  // height can be added exactly and can never be folded into a spacer.
+  let panelPx = $state<Record<string, number>>({});
+  $effect(() => {
+    const openSlugs = [...open];
+    if (!body || !openSlugs.length) return;
+    const ro = new ResizeObserver((entries) => {
+      let next: Record<string, number> | null = null;
+      for (const entry of entries) {
+        const el = entry.target as HTMLElement;
+        const slug = el.dataset['slug'];
+        const px = el.getBoundingClientRect().height;
+        if (!slug || panelPx[slug] === px) continue;
+        next ??= { ...panelPx };
+        next[slug] = px;
+      }
+      if (next) panelPx = next;
+    });
+    for (const el of body.querySelectorAll<HTMLElement>('tr.expand[data-slug]')) ro.observe(el);
+    return () => ro.disconnect();
+  });
+
+  /** The pinned header is content-sized, so its own face/label changes move the body offset. */
+  let headHeight = $state(0);
+  let scrollTopPx = $state(0);
+  let viewportPx = $state(0);
+  function readWindow(): void {
+    const rect = body?.getBoundingClientRect();
+    if (!rect) return;
+    scrollTopPx = -rect.top;
+    viewportPx = window.innerHeight;
+  }
+  $effect(() => {
+    void headHeight;
+    readWindow();
+    const onMove = () => readWindow();
+    window.addEventListener('scroll', onMove, { passive: true });
+    window.addEventListener('resize', onMove);
+    return () => {
+      window.removeEventListener('scroll', onMove);
+      window.removeEventListener('resize', onMove);
+    };
+  });
+
+  let focusedSlug = $state<string | null>(null);
+  let pinnedSlug = $state<string | null>(null);
+  const kept = $derived.by(() => {
+    const out = new Set<string>(open);
+    if (focusedSlug) out.add(focusedSlug);
+    if (pinnedSlug) out.add(pinnedSlug);
+    return out;
+  });
+  const items = $derived.by<VirtualItem[]>(() => shoes.map((s) => ({
+    key: s.slug,
+    height: (heightBySlug.get(s.slug) ?? 0) + (open.has(s.slug) ? (panelPx[s.slug] ?? 0) : 0),
+  })));
+  function planFor(list: VirtualItem[], window: {
+    scrollTopPx: number; viewportPx: number; overscanPx: number; kept: ReadonlySet<string>;
+  }): VirtualEntry[] {
+    return virtualPlan(list, window.scrollTopPx, window.viewportPx, window.overscanPx, window.kept);
+  }
+  const plan = $derived(planFor(items, {
+    scrollTopPx,
+    viewportPx: measured === null ? 0 : viewportPx,
+    overscanPx: PHONE_OVERSCAN_PX,
+    kept,
+  }));
+
+  // Rules are visual separators, not rows in the accessibility model. Each closed shoe contributes
+  // two semantic rows; an open detail panel contributes a third.
+  const planned = $derived.by(() => {
+    const rowIndex: number[] = [];
+    let n = 2;
+    for (const s of shoes) {
+      rowIndex.push(n);
+      n += 2 + (open.has(s.slug) ? 1 : 0);
+    }
+    const entries = plan.map((entry, i) => {
+      if (entry.kind === 'item') {
+        return { key: `s:${shoes[entry.index]!.slug}`, entry, rowIndex: rowIndex[entry.index]! };
+      }
+      const next = plan[i + 1];
+      return { key: `g:${next?.kind === 'item' ? next.index : items.length}`, entry, rowIndex: 0 };
+    });
+    return { entries, rowCount: n - 1 };
+  });
+
   async function toggle(slug: string, row: HTMLElement | null) {
     const opening = !open.has(slug);
     ontoggle(slug);
@@ -115,24 +267,21 @@
     reveal(row);
   }
 
-  let body = $state<HTMLElement | null>(null);
   /**
    * The same landing a tap gets, for a row this component did not open. Back and Forward are the
    * only other way one opens, and `Page.svelte` owns which row that is
    * (docs/app.md §View and URL ownership) — it holds a position in the list it handed over and no
    * element, so the row is looked up here rather than passed in.
    *
-   * **A fleet position rather than a slug**, because the desktop rendering's body is a window over
-   * that list and only the table can say whether a position is mounted yet. This list is not
-   * windowed — that is `docs/specs/2026-08-04-windowing-the-phone-list.md`'s work — so here the
-   * position is simply resolved to the shoe and looked up; the
-   * two renderings answer one ask, which is what stops `Page.svelte` needing to know which is up.
+   * **A fleet position rather than a slug**, because the row may be outside the DOM until this
+   * component pins its group in the plan.
    */
   export async function revealRow(index: number): Promise<void> {
-    const slug = shoes[index]?.slug;
-    if (!slug) return;
+    pinnedSlug = shoes[index]?.slug ?? null;
+    if (!pinnedSlug) return;
     await tick();
-    reveal(body?.querySelector<HTMLElement>(`tr.shoe[data-slug="${CSS.escape(slug)}"]`) ?? null);
+    reveal(body?.querySelector<HTMLElement>(
+      `tr.shoe[data-slug="${CSS.escape(pinnedSlug)}"]`) ?? null);
   }
 
   /** jsdom lays nothing out and defines neither `matchMedia` nor a real `scrollTo`, hence the
@@ -164,8 +313,6 @@
       : window.scrollY + row.getBoundingClientRect().top - room;
     window.scrollTo?.({ top, behavior });
   }
-  /** The pinned header's measured height; see the markup below for why it cannot be a constant. */
-  let headHeight = $state(0);
   function onRowKey(e: KeyboardEvent, slug: string) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -182,9 +329,33 @@
      `scroll-margin-top` adds to `--thead-top` (docs/app.md §Table presentation). -->
 <div class="bleed" style:--head-h="{headHeight}px" style:--cols={span}>
   <div class="panel">
-    <table data-testid="shoe-table-mobile">
+    <!-- Permanent, styled source rows for measurement. It is outside the plan and the accessibility
+         tree, so neither an empty window nor the current mix of metadata/discontinued shoes can
+         remove a shape the height measurement needs. -->
+    <div class="mobile-proto" bind:this={prototype} aria-hidden="true">
+      <!-- Both faces can move a group: prose wraps the ident row and the mono face sets the values
+           row. WebKit emits no `loadingdone`, so the observer must see either one settle. -->
+      <span class="face-ruler"><span>MMMMMMMMMMMMMMMM</span><span
+        class="face-figures">0000000000000000</span></span>
+      <table class="proto" aria-hidden="true">
+        <tbody>
+          <tr class="rule"><td colspan={span}></td></tr>
+          <tr class="shoe">
+            <td class="ident" colspan={span}>
+              <span class="chev" aria-hidden="true">›</span>
+              <strong>M</strong><span class="meta">M</span><DiscontinuedTag />
+            </td>
+          </tr>
+          <tr class="values">
+            {#each cols as col (col)}<td><span class="chip">0</span></td>{/each}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <table bind:this={liveTable} data-testid="shoe-table-mobile" aria-rowcount={planned.rowCount}>
     <thead bind:clientHeight={headHeight}>
-      <tr>
+      <tr aria-rowindex="1">
         {#each cols as col (col)}
           <th aria-sort={view.sort.key === col ? (view.sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
             <button type="button" onclick={() => setSort(col)}>
@@ -196,40 +367,49 @@
         {/each}
       </tr>
     </thead>
-    <!-- `data-slug` is how `revealRow` finds a row Back or Forward opened, which arrives as a slug
-         off the address rather than as an element. -->
-    <tbody bind:this={body}>
-      {#each shoes as s, i (s.slug)}
-        {#if i > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
-        <!-- `aria-expanded` says the row controls something; `aria-controls` is the only thing
-             that says what, and the panel is a sibling row rather than a child of the control.
-             Emitted only while it is open: the panel exists only then, and an IDREF naming a node
-             that is not in the document is an unresolvable reference rather than a promise of one. -->
-        <tr class="shoe" tabindex="0" data-slug={s.slug} aria-expanded={open.has(s.slug)}
-            aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
-            onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
-          <td class="ident" colspan={span}>
-            <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
-            <strong>{s.name}</strong>
-            {#each metaOf(s) as m (m.key)}<span class="meta">{m.text}</span>{/each}
-            {#if s.discontinued}<DiscontinuedTag />{/if}
-          </td>
-        </tr>
-        <tr class="values">
-          {#each cols as col (col)}
-            {@const p = percentiles.get(col)?.get(s.slug)}
-            {@const blue = washOf(col) === 'blue'}
-            <td>
-              <!-- The desktop table's grammar exactly: one bucket class, no value at all
-                   (docs/app.md §Theming). -->
-              <span class="chip {p === undefined ? '' : washCellClass(blue, p, paint)}"
-                    class:tinted={p !== undefined}
-                    class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</span>
+    <tbody bind:this={body}
+           onfocusin={(e) => {
+             const row = (e.target as HTMLElement | null)?.closest?.('tr.shoe');
+             if (row) focusedSlug = (row as HTMLElement).dataset['slug'] ?? null;
+           }}
+           onfocusout={(e) => {
+             if (!body?.contains(e.relatedTarget as Node | null)) focusedSlug = null;
+           }}>
+      {#each planned.entries as p (p.key)}
+        {#if p.entry.kind === 'gap'}
+          <tr class="spacer" aria-hidden="true"><td colspan={span}
+            style:height="{p.entry.px}px"></td></tr>
+        {:else}
+          {@const s = shoes[p.entry.index]!}
+          <!-- The leading rule is part of this shoe's measured group, including when a spacer
+               precedes it. It is decorative and therefore does not consume an ARIA row index. -->
+          {#if p.entry.index > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
+          <tr class="shoe" tabindex="0" data-slug={s.slug} aria-rowindex={p.rowIndex}
+              aria-expanded={open.has(s.slug)}
+              aria-controls={open.has(s.slug) ? `detail-${s.slug}` : undefined}
+              onclick={(e) => void toggle(s.slug, e.currentTarget)} onkeydown={(e) => onRowKey(e, s.slug)}>
+            <td class="ident" colspan={span}>
+              <span class="chev" class:open={open.has(s.slug)} aria-hidden="true">›</span>
+              <strong>{s.name}</strong>
+              {#each metaOf(s) as m (m.key)}<span class="meta">{m.text}</span>{/each}
+              {#if s.discontinued}<DiscontinuedTag />{/if}
             </td>
-          {/each}
-        </tr>
-        {#if open.has(s.slug)}
-          <tr class="expand" id="detail-{s.slug}"><td colspan={span}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
+          </tr>
+          <tr class="values" aria-rowindex={p.rowIndex + 1}>
+            {#each cols as col (col)}
+              {@const percentile = percentiles.get(col)?.get(s.slug)}
+              {@const blue = washOf(col) === 'blue'}
+              <td>
+                <span class="chip {percentile === undefined ? '' : washCellClass(blue, percentile, paint)}"
+                      class:tinted={percentile !== undefined}
+                      class:blue={blue} class:grey={washOf(col) === 'grey'}>{cellText(s, col)}</span>
+              </td>
+            {/each}
+          </tr>
+          {#if open.has(s.slug)}
+            <tr class="expand" id="detail-{s.slug}" data-slug={s.slug}
+                aria-rowindex={p.rowIndex + 2}><td colspan={span}><DetailPanel shoe={s} {data} columns={view.columns} {stability} /></td></tr>
+          {/if}
         {/if}
       {/each}
     </tbody>
@@ -261,10 +441,18 @@
      makes this a scroll container and the header lands 19px out of place, the same failure mode
      `.content` has with `overflow-x`. Plain `overflow: clip` makes every column past the sixth
      unreachable, which `cross-browser.spec.ts` now asserts. */
-  .panel { background: var(--surface); box-sizing: border-box; min-width: calc(var(--table-w) + 2px);
+  .panel { position: relative; background: var(--surface); box-sizing: border-box;
+           min-width: calc(var(--table-w) + 2px);
            border: 1px solid var(--border); border-top: none;
            border-radius: 0 0 var(--r-md) var(--r-md);
            box-shadow: var(--shadow-panel); overflow-x: visible; overflow-y: clip; }
+  /* A real styled table, but permanently out of flow and out of sight. The measuring function
+     clones these rows, so it inherits this component's scoped selectors instead of restating them. */
+  .mobile-proto { position: absolute; inset: 0 auto auto 0; width: 100%;
+                  visibility: hidden; pointer-events: none; }
+  .mobile-proto .face-ruler { position: absolute; display: inline-flex; width: max-content;
+                              font-size: var(--t-sm); font-weight: 600; white-space: nowrap; }
+  .mobile-proto .face-figures { font-family: var(--font-mono); font-weight: 400; }
   /* Fixed layout with spacing-derived gaps: content-sized columns made every chip a different
      width and detached each header from the values it labels. The min-width is the six-column
      bound — 53px a column plus the spacing either side of each — so past six columns the geometry
@@ -275,6 +463,8 @@
     min-width: var(--table-w);
     font-size: var(--t-md);
   }
+  tbody { overflow-anchor: none; }
+  tr.spacer td { padding: 0; border: 0; }
   /* 2px, deliberately not `--s1`: the token is 4px and would take 4px off a 53px column, which is
      the difference between a name fitting the header and clipping (docs/app.md §Columns and sorting).
      The lid belongs to the thing that is pinned. Square corners, deliberately: a rounded opaque

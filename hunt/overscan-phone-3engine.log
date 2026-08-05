@@ -1,0 +1,23 @@
+hunt/overscan.mjs, all three engines under hunt/in-docker.sh, real fleet at 390x900.
+The run PHONE_OVERSCAN_PX was derived from; app/src/lib/virtual.ts argues what it buys.
+
+=== chromium phone 390x900
+  wheel fling (30 x 600px, no pause) worst px per frame    600px
+  wheel notches (120px x 60)         worst px per frame    120px
+  Page Down x20                      worst px per frame   2970px
+  scrollbar drag, top to bottom      worst px per frame      0px
+  End (a jump, not a scroll)         worst px per frame   5268px
+
+=== firefox phone 390x900
+  wheel fling (30 x 600px, no pause) worst px per frame    600px
+  wheel notches (120px x 60)         worst px per frame    120px
+  Page Down x20                      worst px per frame   4123px
+  scrollbar drag, top to bottom      worst px per frame      0px
+  End (a jump, not a scroll)         worst px per frame   8813px
+
+=== webkit phone 390x900
+  wheel fling (30 x 600px, no pause) worst px per frame    825px
+  wheel notches (120px x 60)         worst px per frame    145px
+  Page Down x20                      worst px per frame   3272px
+  scrollbar drag, top to bottom      worst px per frame      0px
+  End (a jump, not a scroll)         worst px per frame   9798px

@@ -3,8 +3,8 @@
  * table with no assertion behind it, which is why this rig is tracked rather than scratch
  * (docs/hunting.md §The rig).
  *
- *   node hunt/overscan.mjs [engine[,engine...]]
- *   IN_DOCKER=1 sh hunt/in-docker.sh node hunt/overscan.mjs
+ *   node hunt/overscan.mjs [engine[,engine...]] [desktop|phone]
+ *   sh hunt/in-docker.sh hunt/overscan.mjs chromium,firefox,webkit phone
  *
  * **The bound is a distance, not a row count.** The plan is recomputed from a `scroll` event, so the
  * DOM at any instant holds the window for wherever the page was when the last event was delivered.
@@ -25,6 +25,8 @@ import { chromium, firefox, webkit } from 'playwright';
 const ENGINES = { chromium, firefox, webkit };
 const picked = (process.argv[2]?.split(',')
   ?? (process.env['IN_DOCKER'] ? ['chromium', 'firefox', 'webkit'] : ['chromium', 'firefox']));
+const rendering = process.argv[3] === 'phone' ? 'phone' : 'desktop';
+const viewport = rendering === 'phone' ? { width: 390, height: 900 } : { width: 1440, height: 900 };
 
 /**
  * **What is measured is the scroll RATE, in px per animation frame** — not the lag between a scroll
@@ -55,22 +57,22 @@ const server = await start({ build: false });
 
 for (const engine of picked) {
   const browser = await ENGINES[engine].launch();
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   await page.goto(server.url);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(400);
   await page.evaluate(INSTRUMENT);
-  console.log(`\n=== ${engine}`);
+  console.log(`\n=== ${engine} ${rendering} ${viewport.width}x${viewport.height}`);
 
   const gestures = [
     ['wheel fling (30 x 600px, no pause)', async () => {
-      await page.mouse.move(700, 500);
+      await page.mouse.move(Math.round(viewport.width / 2), 500);
       for (let i = 0; i < 30; i++) await page.mouse.wheel(0, 600);
       await page.waitForTimeout(600);
     }],
     ['wheel notches (120px x 60)', async () => {
-      await page.mouse.move(700, 500);
+      await page.mouse.move(Math.round(viewport.width / 2), 500);
       for (let i = 0; i < 60; i++) await page.mouse.wheel(0, 120);
       await page.waitForTimeout(600);
     }],

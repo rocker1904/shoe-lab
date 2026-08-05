@@ -1,28 +1,51 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
 import { defaultView, type ViewState } from '../lib/view';
 import { FLEET, TESTS, labTest, shoe } from '../lib/test-fixtures';
 import type { ScoreColumns } from '../lib/score';
 import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';
 
+const rig = vi.hoisted(() => ({
+  measure: null as ((entries: readonly unknown[]) => number[] | null) | null,
+  seen: [] as readonly (readonly unknown[])[],
+  invalidate: (() => {}) as () => void,
+}));
+vi.mock('../lib/row-height', () => ({
+  measurePhoneGroupHeights: () => null,
+  createRowHeights: (onInvalidate: () => void) => {
+    rig.invalidate = onInvalidate;
+    return {
+      heights: (entries: readonly unknown[]) => {
+        rig.seen = [...rig.seen, entries];
+        return rig.measure?.(entries) ?? null;
+      },
+      destroy: () => {},
+    };
+  },
+}));
+beforeEach(() => { rig.measure = null; rig.seen = []; });
+
 // A test whose real name is one `labels.ts` shortens, so the mobile header can be shown to use the
 // short one rather than the catalogue name.
 const data: ShoesFile = { builtAt: 't', source: 'RunRepeat', groups: {}, tests: TESTS, shoes: FLEET };
 
-function setup(over: { shoes?: Shoe[]; view?: Partial<ViewState>; scores?: ScoreColumns; tests?: LabTest[]; open?: string[] } = {}) {
+function setup(over: { shoes?: Shoe[]; data?: ShoesFile; view?: Partial<ViewState>;
+  scores?: ScoreColumns; tests?: LabTest[]; open?: string[] } = {}) {
   const onchange = vi.fn();
   const view = { ...defaultView(), ...over.view };
   view.columns = over.view?.columns ?? ['releasedAt', 'score', 'heel-stack', 'plate'];
   // The set lives in Page.svelte now, so this helper plays the parent. A `SvelteSet` mutated in
   // place is what the component actually receives, so no re-render plumbing is needed here either.
   const open = new SvelteSet<string>(over.open ?? []);
+  const file = over.data ?? (over.tests ? { ...data, tests: over.tests } : data);
   const rendered = render(ShoeTableMobile, {
-    props: { shoes: over.shoes ?? FLEET, data: over.tests ? { ...data, tests: over.tests } : data,
+    props: { shoes: over.shoes ?? file.shoes, data: file,
       view, onchange, scores: over.scores ?? new Map(), stability: false, open,
       ontoggle: (slug: string) => { if (!open.delete(slug)) open.add(slug); } } });
   return Object.assign(onchange, { rendered });
@@ -62,7 +85,8 @@ describe('ShoeTableMobile', () => {
   it('renders with no columns at all', () => {
     const { rendered } = setup({ view: { columns: [] } });
     expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
-    const idents = [...rendered.container.querySelectorAll('td.ident')];
+    const idents = [...rendered.container.querySelectorAll(
+      'table[data-testid="shoe-table-mobile"] td.ident')];
     expect(idents.map((td) => td.querySelector('strong')!.textContent)).toEqual(FLEET.map((s) => s.name));
     expect(rendered.container.querySelectorAll('.chip')).toHaveLength(0);
   });
@@ -105,13 +129,123 @@ describe('ShoeTableMobile', () => {
 
   it('insets the percentile wash as a chip rather than filling the cell', () => {
     const { container } = setup().rendered;
-    const chip = container.querySelector('tr.values .chip')!;
+    const chip = container.querySelector('table[data-testid="shoe-table-mobile"] tr.values .chip')!;
     expect(chip.className).toContain('blue'); // score — higher is better
   });
 
   it('missing values render as em dash', () => {
     setup({ shoes: [FLEET[4]!], view: { columns: ['heel-stack'] } });
     expect(screen.getByText('—')).toBeInTheDocument();
+  });
+});
+
+describe('ShoeTableMobile windows whole shoe groups', () => {
+  const BIG: Shoe[] = Array.from({ length: 200 }, (_, i) =>
+    shoe({ slug: `m${i}`, name: `Mobile shoe ${i}`, score: i }));
+  const HEIGHTS = BIG.map((_, i) => i === 0 ? 60 : 68);
+  const bigData: ShoesFile = { ...data, shoes: BIG };
+
+  async function windowed(over: Parameters<typeof setup>[0] = {}) {
+    rig.measure = () => [...HEIGHTS];
+    const rendered = setup({ data: bigData, shoes: BIG, ...over }).rendered;
+    const table = rendered.container.querySelector<HTMLTableElement>(
+      'table[data-testid="shoe-table-mobile"]')!;
+    await waitFor(() => expect(table.querySelectorAll('tr.spacer').length).toBeGreaterThan(0));
+    return { rendered, table };
+  }
+
+  it('renders the fleet while nothing is measurable and keeps a permanent prototype outside it', () => {
+    const { rendered } = setup({ data: bigData, shoes: BIG });
+    const live = rendered.container.querySelector('table[data-testid="shoe-table-mobile"]')!;
+    expect(live.querySelectorAll('tbody tr.shoe')).toHaveLength(BIG.length);
+    expect(live.querySelectorAll('tr.spacer')).toHaveLength(0);
+    const prototype = rendered.container.querySelector('.mobile-proto table.proto')!;
+    expect(prototype.getAttribute('aria-hidden')).toBe('true');
+    expect(prototype.querySelectorAll('tbody tr')).toHaveLength(3);
+    expect(screen.getAllByRole('row')).toHaveLength(1 + BIG.length * 2);
+  });
+
+  it('renders each selected shoe as one intact group and spaces for each skipped run exactly', async () => {
+    const { table } = await windowed();
+    const rows = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')];
+    expect(rows.length).toBeLessThan(BIG.length);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      const index = Number(row.dataset['slug']!.slice(1));
+      expect(row.nextElementSibling?.classList).toContain('values');
+      expect(row.getAttribute('aria-rowindex')).toBe(String(2 + index * 2));
+      expect(row.nextElementSibling?.getAttribute('aria-rowindex')).toBe(String(3 + index * 2));
+      if (index > 0) expect(row.previousElementSibling?.classList).toContain('rule');
+    }
+
+    const body = [...table.querySelectorAll<HTMLElement>('tbody > tr')];
+    const spacers = body.filter((row) => row.classList.contains('spacer'));
+    for (const spacer of spacers) {
+      const at = body.indexOf(spacer);
+      const before = body.slice(0, at).reverse().find((row) => row.classList.contains('shoe'));
+      const after = body.slice(at + 1).find((row) => row.classList.contains('shoe'));
+      const from = before ? Number(before.dataset['slug']!.slice(1)) + 1 : 0;
+      const to = after ? Number(after.dataset['slug']!.slice(1)) : BIG.length;
+      const expected = HEIGHTS.slice(from, to).reduce((sum, px) => sum + px, 0);
+      expect(parseFloat(spacer.querySelector<HTMLElement>('td')!.style.height),
+        `the spacer standing for groups ${from}–${to - 1}`).toBe(expected);
+    }
+
+    expect(table.getAttribute('aria-rowcount')).toBe(String(1 + BIG.length * 2));
+    expect(screen.getAllByRole('row')).toHaveLength(1 + rows.length * 2);
+    expect(rig.seen[0]).toHaveLength(BIG.length);
+  });
+
+  it('pins a revealed group outside the window before trying to scroll to it', async () => {
+    const { table, rendered } = await windowed();
+    const component = rendered.component as { revealRow: (index: number) => Promise<void> };
+    await component.revealRow(190);
+    await tick();
+    const row = table.querySelector<HTMLElement>('tr.shoe[data-slug="m190"]');
+    expect(row, 'the revealed group never entered the plan').not.toBeNull();
+    expect(row!.nextElementSibling?.classList).toContain('values');
+    expect(row!.previousElementSibling?.classList).toContain('rule');
+    expect(row!.getAttribute('aria-rowindex')).toBe(String(2 + 190 * 2));
+  });
+
+  it('keeps an open group and its panel outside the window', async () => {
+    const { table } = await windowed({ open: ['m190'] });
+    const row = table.querySelector<HTMLElement>('tr.shoe[data-slug="m190"]');
+    expect(row).not.toBeNull();
+    expect(row!.previousElementSibling?.classList).toContain('rule');
+    expect(row!.nextElementSibling?.classList).toContain('values');
+    expect(row!.nextElementSibling?.nextElementSibling?.classList).toContain('expand');
+    expect(table.querySelector('tr.expand[data-slug="m190"]')).not.toBeNull();
+    expect(table.getAttribute('aria-rowcount')).toBe(String(2 + BIG.length * 2));
+  });
+
+  it('holds a successful plan when a later measurement declines', async () => {
+    const { table } = await windowed();
+    const entries = rig.seen[0];
+    const calls = rig.seen.length;
+    rig.measure = () => null;
+    rig.invalidate();
+    await waitFor(() => expect(rig.seen.length).toBeGreaterThan(calls));
+    expect(rig.seen.at(-1)).toBe(entries);
+    expect(table.querySelectorAll('tr.spacer').length).toBeGreaterThan(0);
+    expect(table.querySelectorAll('tbody tr.shoe').length).toBeLessThan(BIG.length);
+  });
+
+  it('reuses the fleet measurement across view changes that keep the columns', async () => {
+    const { rendered } = await windowed();
+    const calls = rig.seen.length;
+    const entries = rig.seen.at(-1);
+    const sorted = defaultView();
+    sorted.columns = ['releasedAt', 'score', 'heel-stack', 'plate'];
+    sorted.sort = { key: 'name', dir: 'asc' };
+    await rendered.rerender({ view: sorted });
+    await tick();
+    expect(rig.seen).toHaveLength(calls);
+
+    const changed = { ...sorted, columns: [...sorted.columns, 'weight'] };
+    await rendered.rerender({ view: changed });
+    await waitFor(() => expect(rig.seen.length).toBeGreaterThan(calls));
+    expect(rig.seen.at(-1)).not.toBe(entries);
   });
 });
 
