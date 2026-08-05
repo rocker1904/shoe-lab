@@ -78,7 +78,7 @@ describe('SegmentedControl', () => {
     expect(onchange).toHaveBeenCalledWith(true);
   });
 
-  it('exposes scale and fill only as layout modifiers', () => {
+  it('exposes typography scale and fill as independent modifiers', () => {
     const { container } = render(SegmentedControl, {
       props: {
         mode: 'radio', options, value: 'any', onchange: vi.fn(), ariaLabel: 'Availability',

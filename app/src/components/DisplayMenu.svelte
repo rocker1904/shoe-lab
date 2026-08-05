@@ -1,7 +1,7 @@
 <script lang="ts">
   import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { DISPLAY_BOUNDS } from '../lib/display';
-  import type { Theme } from '../lib/theme';
+  import { THEMES, type Theme } from '../lib/theme';
   import { DISPLAY_DEFAULTS, type DisplayPrefs, type ResolvedWash } from '../lib/wash';
   import { ICON_PATHS } from './icons';
   import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
@@ -57,11 +57,9 @@
   const set = (patch: Partial<DisplayPrefs>) => onchange({ ...prefs, ...patch });
   const num = (e: Event) => +(e.currentTarget as HTMLInputElement).value;
 
-  const THEME_OPTIONS: [SegmentOption, ...SegmentOption[]] = [
-    { value: 'auto', label: 'Auto' },
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-  ];
+  const THEME_WORD: Record<Theme, string> = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+  const THEME_OPTIONS = (THEMES.map((value) => ({ value, label: THEME_WORD[value] })) as
+    [SegmentOption, ...SegmentOption[]]);
   // The floor says where the ramp starts, and with the base on there is no bare end to start from.
   // Disabled rather than hidden: a control that vanishes reads as a bug, and the panel is a place
   // where "this does nothing here" is worth saying (docs/app.md §The display preferences).

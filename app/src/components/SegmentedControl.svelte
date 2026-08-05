@@ -61,7 +61,7 @@
            overflow: visible; }
   button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
            box-sizing: border-box; min-width: 24px; min-height: 24px;
-           padding: 2px var(--s2); border: none; border-radius: var(--r-sm);
+           padding: 2px var(--s1); border: none; border-radius: var(--r-sm);
            background: none; color: var(--text-dim); cursor: pointer;
            font: inherit; font-size: var(--t-xs); white-space: nowrap; }
   button.on { background: var(--accent-solid); color: var(--on-accent); font-weight: 600; }
@@ -69,16 +69,10 @@
   /* Reserve the selected weight so choosing a segment never redistributes its siblings. */
   button::after { content: attr(data-label); height: 0; overflow: hidden; visibility: hidden;
                   pointer-events: none; font-weight: 600; }
-  .toolbar button { padding-inline: var(--s3); font-size: var(--t-sm); }
+  .toolbar button { font-size: var(--t-sm); }
   .fill { width: 100%; }
   .fill button { flex: 1; }
 
-  @media (max-width: 800px) {
-    .toolbar button { padding-inline: var(--s2); }
-  }
-  @media (max-width: 429.98px) {
-    .toolbar button { padding-inline: var(--s1); }
-  }
   @media (hover: none) {
     button { min-height: 32px; }
   }

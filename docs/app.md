@@ -2913,7 +2913,7 @@ reader was left on the document rather than on the thing it had just operated.
 Forward made it worse — the bar precedes the strip in the DOM, so Tab walked on
 into the sidebar and the replacement pill was **4 to 10 Shift+Tabs behind**,
 depending on the engine. `onStory` therefore focuses the toolbar pill for the
-same story, found by `data-story` rather than by the checked mark, because a
+same story, found by the shared control's value-bearing `data-segment` rather than by the checked mark, because a
 view matching no story marks nothing and focus would fall to `<body>` again. It
 runs only on the hand-over: called from the bar's own group, `lib/roving.ts`
 already owns focus. A **zone** click leaves the strip up, so the card that was
@@ -3115,8 +3115,8 @@ what the table is — and above it **two**.
 |---|---|
 | (none — above the sidebar's boundary) | one row: `.setup` (zone · story · Stability) — gap — `.actions` (About, Columns). No `Filters`: the sidebar is permanent, so the toggle has nothing to toggle — and it is *absent*, not hidden, because the decision is the script's |
 | (the `drawer` prop, below that boundary) | `Filters` joins `.actions`, because the sidebar is a drawer here (§Filters). Still one row, and the word is still a word |
-| `max-width: 800px` | two rows: `.actions` first (`order: -1`), then `.setup`, which is `space-between`, capped at 414px and centred. Every word on the actions row but `About` becomes a glyph, `Filters` included. Pill inline padding `--s3` → `--s2` |
-| `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges. **Every** pill's inline padding `--s2` → `--s1`, the zone group's included |
+| `max-width: 800px` | two rows: `.actions` first (`order: -1`), then `.setup`, which is `space-between`, capped at 414px and centred. Every word on the actions row but `About` becomes a glyph, `Filters` included |
+| `max-width: 429.98px` | `.setup` drops the cap: full width, `space-between`, flush to both padding edges |
 
 There is no spacer element on this bar: `.actions { margin-left: auto }` is what
 holds the trailing edge above 800px, and the "gap" in the table above is that
@@ -3247,25 +3247,13 @@ reason for it: held at the base `--s3` the setup row's content lands within a
 pixel of the 414px cap — 1px under in Chromium, 0.8px over in Firefox — so
 nothing about fit chooses between the two values.
 
-**The pill padding steps at `429.98px`, not at the `374.98px` the design named.**
-That figure came from a rig carrying the app's tokens but not its components, and
-its pills are narrower than the real ones by enough to move the boundary. Held
-at the band above's `--s2`, the three groups measure what the merged line above
-needs — 374/376px — against the 344px available at 360px, so they are 30 to 32px
-over there, still 15 to 17px over at 375px and 0 to 2.4px over at 390px,
-so the flush band, the one the rebuild exists to make flush, overflowed at all
-three. At `--s1` for **every** pill they measure 318px and 320px, which is 24 to
-26px clear at 360px. So the step moved to the boundary that already existed for
-that band and one width changes shape instead of two.
-
-**Both steps are written twice, and Svelte's scoping leaves no way to state them
-once.** `ZoneToggle.svelte` owns its own buttons' padding in its own scoped style
-block, so `Toolbar.svelte`'s `.s` rule has never reached them — which is why
-"every pill" is spelled out. Stepping only the pills the toolbar owns leaves the
-row 14px over at 360px in Chromium and 16px over in the other two, and leaves
-the zone group a step behind its neighbours between 430px and 800px: one group
-padded differently from the two it stands with, in a row whose whole point is
-that the three read as one family.
+**The pill geometry does not step at a chrome boundary.** The shared segmented
+control holds every standard segment to the same `--s1` inline padding and 24px
+minimum target; its `toolbar` scale changes typography only. That deletes the
+old scoped duplication between `Toolbar.svelte` and `ZoneToggle.svelte`, and it
+keeps all three setup controls in one visual family at every width. The 360px
+one-row bound is measured in the three browser engines rather than inferred
+from those CSS values.
 
 **The setup row's `gap` is `--s1` below 800px, and it is spacing rather than
 fit.** Under `space-between` the gap is only a floor, so the visible gaps are

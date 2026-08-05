@@ -152,12 +152,7 @@
   /* At 430px and below the cap is wider than the row, so it stops meaning anything and the row goes
      flush to both padding edges — which is the property the rebuild exists to restore. The cap above
      is the row's own content width at 430px, so above that it holds this spacing rather than growing
-     gaps that widen with the screen.
-     The pills tighten again on the same boundary rather than on one of their own — 360px is the
-     binding width, not 375, because it is the usual Android one. ALL of them: the zone group's
-     padding lives in `ZoneToggle.svelte`, a scoped style block this rule cannot reach, so the step
-     is stated there too and stepping only the pills this file owns leaves the row over at 360px.
-     docs/app.md §The chrome bands owns the measurements. */
+     gaps that widen with the screen (docs/app.md §The chrome bands). */
   @media (max-width: 429.98px) {
     .setup { max-width: none; margin-inline: 0; }
   }
