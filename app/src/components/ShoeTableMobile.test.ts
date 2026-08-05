@@ -13,11 +13,13 @@ import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';
 
 const rig = vi.hoisted(() => ({
   measure: null as ((entries: readonly unknown[]) => number[] | null) | null,
+  rulePx: null as number | null,
   seen: [] as readonly (readonly unknown[])[],
   invalidate: (() => {}) as () => void,
 }));
 vi.mock('../lib/row-height', () => ({
   measurePhoneGroupHeights: () => null,
+  measurePhoneRuleHeight: () => rig.rulePx,
   createRowHeights: (onInvalidate: () => void) => {
     rig.invalidate = onInvalidate;
     return {
@@ -29,7 +31,7 @@ vi.mock('../lib/row-height', () => ({
     };
   },
 }));
-beforeEach(() => { rig.measure = null; rig.seen = []; });
+beforeEach(() => { rig.measure = null; rig.rulePx = null; rig.seen = []; });
 
 // A test whose real name is one `labels.ts` shortens, so the mobile header can be shown to use the
 // short one rather than the catalogue name.
@@ -143,10 +145,12 @@ describe('ShoeTableMobile windows whole shoe groups', () => {
   const BIG: Shoe[] = Array.from({ length: 200 }, (_, i) =>
     shoe({ slug: `m${i}`, name: `Mobile shoe ${i}`, score: i }));
   const HEIGHTS = BIG.map((_, i) => i === 0 ? 60 : 68);
+  const CONTENT_HEIGHTS = HEIGHTS.map((height, i) => height - (i > 0 ? 1 : 0));
   const bigData: ShoesFile = { ...data, shoes: BIG };
 
   async function windowed(over: Parameters<typeof setup>[0] = {}) {
-    rig.measure = () => [...HEIGHTS];
+    rig.measure = () => [...CONTENT_HEIGHTS];
+    rig.rulePx = 1;
     const rendered = setup({ data: bigData, shoes: BIG, ...over }).rendered;
     const table = rendered.container.querySelector<HTMLTableElement>(
       'table[data-testid="shoe-table-mobile"]')!;
@@ -194,6 +198,23 @@ describe('ShoeTableMobile windows whole shoe groups', () => {
     expect(table.getAttribute('aria-rowcount')).toBe(String(1 + BIG.length * 2));
     expect(screen.getAllByRole('row')).toHaveLength(1 + rows.length * 2);
     expect(rig.seen[0]).toHaveLength(BIG.length);
+  });
+
+  it('accounts for separators by the filtered order rather than the measured fleet order', async () => {
+    // Move the dataset-first shoe to the far end. Its cached CONTENT height has no special status:
+    // the current first shoe gets no rule and this now-last shoe does. Baking the dataset position
+    // into the cache makes the tail spacer one pixel short and the current first item one pixel tall.
+    const reordered = [...BIG.slice(1), BIG[0]!];
+    const { table } = await windowed({ shoes: reordered });
+    const body = [...table.querySelectorAll<HTMLElement>('tbody > tr')];
+    const spacer = [...body].reverse().find((row) => row.classList.contains('spacer'))!;
+    const at = body.indexOf(spacer);
+    const before = body.slice(0, at).reverse().find((row) => row.classList.contains('shoe'));
+    const from = before ? reordered.findIndex((s) => s.slug === before.dataset['slug']) + 1 : 0;
+    const contentBySlug = new Map(BIG.map((shoe, i) => [shoe.slug, CONTENT_HEIGHTS[i]!]));
+    const expected = reordered.slice(from).reduce((sum, shoe, index) =>
+      sum + contentBySlug.get(shoe.slug)! + (from + index > 0 ? 1 : 0), 0);
+    expect(parseFloat(spacer.querySelector<HTMLElement>('td')!.style.height)).toBe(expected);
   });
 
   it('pins a revealed group outside the window before trying to scroll to it', async () => {

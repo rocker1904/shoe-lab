@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  createRowHeights, measureDesktopRowHeights, measurePhoneGroupHeights, type NameEntry,
+  createRowHeights, measureDesktopRowHeights, measurePhoneGroupHeights, measurePhoneRuleHeight,
+  type NameEntry,
   type PhoneHeightEntry, type RowHeightEnvironment,
 } from './row-height';
 import { fireResizeObservers } from '../test-setup';
@@ -303,7 +304,7 @@ describe('measurePhoneGroupHeights', () => {
 
     expect(added.filter((e) => e.matches('tr.shoe'))).toHaveLength(hostile.length);
     expect(added.filter((e) => e.matches('tr.values'))).toHaveLength(hostile.length);
-    expect(added.filter((e) => e.matches('tr.rule'))).toHaveLength(hostile.length - 1);
+    expect(added.filter((e) => e.matches('tr.rule'))).toHaveLength(0);
     expect(added.map((e) => e.tagName)).not.toContain('IMG');
     expect(added.map((e) => e.tagName)).not.toContain('B');
     expect(added.filter((e) => e.hasAttribute('data-slug') || e.hasAttribute('tabindex')
@@ -313,11 +314,23 @@ describe('measurePhoneGroupHeights', () => {
     expect(document.querySelector('.mobile-proto')!.querySelectorAll('tbody')).toHaveLength(1);
   });
 
+  it('declines a separator that has no layout', () => {
+    mountPhonePrototype();
+    expect(measurePhoneRuleHeight()).toBeNull();
+  });
+
   it('has no free variables so the browser suite measures this exact function', () => {
     mountPhonePrototype();
     const rebuilt = new Function(`return (${measurePhoneGroupHeights.toString()})`)() as
       typeof measurePhoneGroupHeights;
     expect(rebuilt(PHONE)).toBeNull();
+  });
+
+  it('serialises the separator measurement used by the browser suite too', () => {
+    mountPhonePrototype();
+    const rebuilt = new Function(`return (${measurePhoneRuleHeight.toString()})`)() as
+      typeof measurePhoneRuleHeight;
+    expect(rebuilt()).toBeNull();
   });
 });
 

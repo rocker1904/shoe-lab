@@ -319,10 +319,12 @@ phone's geometry is its own.
   the phone ruler watches both Inter Tight and JetBrains Mono. The stable fleet
   input is rebuilt only for a new dataset or column signature, not a sort or
   filter replacement.
-- The plan item is the complete closed group. The leading rule belongs to the
-  following shoe, panels are observed live, and open, focused and revealed
-  groups are kept at their own fleet position. Semantic row counts exclude
-  rules, spacers and the permanent three-row prototype.
+- The plan item is the complete closed group. Shoe content is cached by slug,
+  while the leading rule is measured independently and attached to the shoe's
+  position in the current filtered/sorted sequence. Panels are observed live,
+  and open, focused and revealed groups are kept at their own fleet position.
+  Semantic row counts exclude rules, spacers and the permanent three-row
+  prototype.
 - `PHONE_OVERSCAN_PX` is independently 1,280px. The real-fleet 390×900 probe
   measured ordinary wheel travel at 600px/frame in Chromium and Firefox and
   825px in WebKit; Page Down and End remain uncovered jumps by design.
@@ -332,12 +334,16 @@ phone's geometry is its own.
   Firefox. Scroll work is 1.4–1.8ms and 3ms median. Measuring all groups costs
   24.6ms and 29ms respectively and is cached across filter changes.
 - A routed 400-shoe browser fixture now forces the phone seam. Chromium holds
-  exact grouping, accessibility, wash invariance, panel-aware viewport coverage
-  and both rendering-swap directions; Firefox and WebKit hold measured height
-  equality plus focused/open retention. The Docker suite passes in all three.
+  exact grouping, body-height invariance across window cuts, accessibility,
+  wash invariance, panel-aware viewport coverage and both rendering-swap
+  directions; Firefox and WebKit hold measured height equality plus focused/open
+  retention. The height sweep includes synthetic names immediately around a
+  live wrapping boundary. The Docker suite passes in all three.
 - Adversarial checks caught the hidden prototype leaking into two broad e2e
   selectors, a fleet array that initially lost identity on sort-only changes,
-  and a ruler that initially watched only one of the two faces. The final guards
-  fail if a group is split, a spacer is redistributed, an open/revealed group is
-  dropped, the fallback is removed, ARIA positions collapse to DOM positions,
-  or the wash is ranked over the plan.
+  a ruler that initially watched only one of the two faces, prototype whitespace
+  that differed from the live inline row, and separator height tied to dataset
+  order rather than current order. The final guards fail if a group is split, a
+  spacer is redistributed, an open/revealed group is dropped, the fallback is
+  removed, ARIA positions collapse to DOM positions, or the wash is ranked over
+  the plan.

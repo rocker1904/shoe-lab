@@ -10,6 +10,7 @@
   import {
     createRowHeights,
     measurePhoneGroupHeights,
+    measurePhoneRuleHeight,
     type PhoneHeightEntry,
     type RowHeightEnvironment,
   } from '../lib/row-height';
@@ -113,9 +114,10 @@
     return out;
   }
 
-  /* The window is planned in whole phone groups: leading rule, name row and value row. The fleet is
-   * measured rather than the filtered result so a filter drag is a cache hit, and the array stays
-   * stable until either the dataset or the metadata-producing column set changes. */
+  /* The window is planned in whole phone groups: leading rule, name row and value row. The fleet's
+   * name-and-values content is measured rather than the filtered result so a filter drag is a cache
+   * hit; the rule is added from the current sequence position because that cannot be cached by slug.
+   * The fleet array stays stable until the dataset or metadata-producing column set changes. */
   let entriesData: ShoesFile | null = null;
   let entriesColumns = '';
   let entriesCache: PhoneHeightEntry[] = [];
@@ -151,6 +153,7 @@
   // Hold the last good answer across a resize frame where the new DOM has not become measurable
   // yet. Dropping it would alternate between a window and the whole fleet during the gesture.
   let measured = $state<number[] | null>(null);
+  let rulePx = $state<number | null>(null);
   $effect(() => {
     void fleetEntries;
     void span;
@@ -158,7 +161,9 @@
     let live = true;
     void tick().then(() => {
       if (!live) return;
+      const nextRule = measurePhoneRuleHeight();
       const next = groupHeights.heights(fleetEntries);
+      if (nextRule !== null) rulePx = nextRule;
       if (next) measured = next;
     });
     return () => { live = false; };
@@ -222,9 +227,10 @@
     if (pinnedSlug) out.add(pinnedSlug);
     return out;
   });
-  const items = $derived.by<VirtualItem[]>(() => shoes.map((s) => ({
+  const items = $derived.by<VirtualItem[]>(() => shoes.map((s, index) => ({
     key: s.slug,
-    height: (heightBySlug.get(s.slug) ?? 0) + (open.has(s.slug) ? (panelPx[s.slug] ?? 0) : 0),
+    height: (heightBySlug.get(s.slug) ?? 0) + (index > 0 ? (rulePx ?? 0) : 0)
+      + (open.has(s.slug) ? (panelPx[s.slug] ?? 0) : 0),
   })));
   function planFor(list: VirtualItem[], window: {
     scrollTopPx: number; viewportPx: number; overscanPx: number; kept: ReadonlySet<string>;
@@ -233,7 +239,7 @@
   }
   const plan = $derived(planFor(items, {
     scrollTopPx,
-    viewportPx: measured === null ? 0 : viewportPx,
+    viewportPx: measured === null || rulePx === null ? 0 : viewportPx,
     overscanPx: PHONE_OVERSCAN_PX,
     kept,
   }));
@@ -343,7 +349,8 @@
           <tr class="shoe">
             <td class="ident" colspan={span}>
               <span class="chev" aria-hidden="true">›</span>
-              <strong>M</strong><span class="meta">M</span><DiscontinuedTag />
+              <strong>M</strong>
+              <span class="meta">M</span><DiscontinuedTag />
             </td>
           </tr>
           <tr class="values">
@@ -381,8 +388,8 @@
             style:height="{p.entry.px}px"></td></tr>
         {:else}
           {@const s = shoes[p.entry.index]!}
-          <!-- The leading rule is part of this shoe's measured group, including when a spacer
-               precedes it. It is decorative and therefore does not consume an ARIA row index. -->
+          <!-- The leading rule belongs to this position in the filtered/sorted sequence, including
+               when a spacer precedes it. It is decorative and consumes no ARIA row index. -->
           {#if p.entry.index > 0}<tr class="rule" aria-hidden="true"><td colspan={span}></td></tr>{/if}
           <tr class="shoe" tabindex="0" data-slug={s.slug} aria-rowindex={p.rowIndex}
               aria-expanded={open.has(s.slug)}

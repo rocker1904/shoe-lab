@@ -295,13 +295,22 @@ export function measureDesktopRowHeights(names: readonly NameEntry[]): number[] 
   return boxes.map((b) => Math.max(floorPx, b + rowPx));
 }
 
+/** Measures the decorative separator independently of the shoe it currently precedes. */
+export function measurePhoneRuleHeight(): number | null {
+  const rule = document.querySelector<HTMLElement>('.mobile-proto table.proto tbody tr.rule');
+  const height = rule?.getBoundingClientRect().height ?? 0;
+  return height > 0 ? height : null;
+}
+
 /**
- * Measures the phone rendering's closed shoe groups from the permanent prototype it owns.
+ * Measures the phone rendering's closed shoe content from the permanent prototype it owns.
  *
- * The group is the plan's indivisible item: its leading rule where it has one, the name row and the
- * values row. An open panel is deliberately absent — open groups are kept and their panel is a live
- * box observed by the component. Building from cloned rows preserves Svelte's scoped classes; text
- * is assigned through `textContent` because every string here belongs to the dataset.
+ * The plan's indivisible item is this name-and-values content plus a separator determined by the
+ * shoe's position in the CURRENT filtered/sorted sequence. The separator therefore cannot be baked
+ * into a fleet measurement cached by slug. An open panel is deliberately absent — open groups are
+ * kept and their panel is a live box observed by the component. Building from cloned rows preserves
+ * Svelte's scoped classes; text is assigned through `textContent` because every string here belongs
+ * to the dataset.
  *
  * No closure over module state: the browser suite serialises this function into `page.evaluate`, as
  * it does the desktop measurement, so its evidence exercises this exact implementation.
@@ -311,12 +320,11 @@ export function measurePhoneGroupHeights(
 ): number[] | null {
   const table = document.querySelector<HTMLTableElement>('.mobile-proto table.proto');
   const source = table?.tBodies[0];
-  const ruleSource = source?.querySelector<HTMLTableRowElement>('tr.rule');
   const shoeSource = source?.querySelector<HTMLTableRowElement>('tr.shoe');
   const valuesSource = source?.querySelector<HTMLTableRowElement>('tr.values');
   const metaSource = shoeSource?.querySelector<HTMLElement>('.meta');
   const discSource = shoeSource?.querySelector<HTMLElement>('.disc-tag');
-  if (!table || !source || !ruleSource || !shoeSource || !valuesSource) return null;
+  if (!table || !source || !shoeSource || !valuesSource) return null;
   if (entries.some((entry) => entry.metadata.length) && !metaSource) return null;
   if (entries.some((entry) => entry.discontinued) && !discSource) return null;
 
@@ -324,10 +332,8 @@ export function measurePhoneGroupHeights(
   measuredBody.setAttribute('aria-hidden', 'true');
   const groups: HTMLTableRowElement[][] = [];
 
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i]!;
+  for (const entry of entries) {
     const rows: HTMLTableRowElement[] = [];
-    if (i > 0) rows.push(ruleSource.cloneNode(true) as HTMLTableRowElement);
 
     const shoe = shoeSource.cloneNode(true) as HTMLTableRowElement;
     for (const attr of ['data-slug', 'tabindex', 'aria-controls', 'aria-expanded', 'style']) {

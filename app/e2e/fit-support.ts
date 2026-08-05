@@ -6,7 +6,9 @@ import type { ShoesFile } from '../../shared/types.js';
 import {
   DESKTOP_FLOOR_PX, desktopMinWidth, fitModel, NAME_COL_PX, rendersPhone, SIDEBAR_PERMANENT_PX,
 } from '../src/lib/fit';
-import { measureDesktopRowHeights, measurePhoneGroupHeights } from '../src/lib/row-height';
+import {
+  measureDesktopRowHeights, measurePhoneGroupHeights, measurePhoneRuleHeight,
+} from '../src/lib/row-height';
 
 /** Let an observer callback and the render it schedules both reach a painted frame. */
 export async function twoPaints(page: Page): Promise<void> {
@@ -740,9 +742,10 @@ export async function sweepRowHeights(page: Page, cols: readonly string[]): Prom
 }
 
 /**
- * Compares the phone measurement with the complete groups the live table draws. The module's own
- * function crosses `page.evaluate`, so this guards the implementation used by the component rather
- * than a test-side reconstruction of it.
+ * Compares the phone measurement with the closed content the live table draws. Separators are
+ * checked independently because they belong to the current filtered/sorted position, not to the
+ * fleet entry cached by slug. The module's own functions cross `page.evaluate`, so this guards the
+ * implementation used by the component rather than a test-side reconstruction of it.
  */
 export async function sweepPhoneGroupHeights(
   page: Page, columns?: readonly string[],
@@ -763,11 +766,8 @@ export async function sweepPhoneGroupHeights(
           discontinued: !!shoe.querySelector('.disc-tag'),
         })),
         rendered: shoes.map((shoe) => {
-          const rule = shoe.previousElementSibling?.classList.contains('rule')
-            ? shoe.previousElementSibling as HTMLElement : null;
           const values = shoe.nextElementSibling as HTMLElement | null;
-          return (rule?.getBoundingClientRect().height ?? 0)
-            + shoe.getBoundingClientRect().height
+          return shoe.getBoundingClientRect().height
             + (values?.classList.contains('values') ? values.getBoundingClientRect().height : 0);
         }),
       };
@@ -775,6 +775,11 @@ export async function sweepPhoneGroupHeights(
     const measured = await page.evaluate(measurePhoneGroupHeights, truth.entries);
     expect(measured, `nothing could be measured ${at}`).not.toBeNull();
     expect(measured).toEqual(truth.rendered);
+
+    const renderedRule = await live.locator('tbody tr.rule').first().evaluate((rule) =>
+      rule.getBoundingClientRect().height);
+    const measuredRule = await page.evaluate(measurePhoneRuleHeight);
+    expect(measuredRule, `the separator could not be measured ${at}`).toBe(renderedRule);
   };
 
   const atColumns = columns === undefined ? 'the default columns' : `[${columns.join(',')}]`;
@@ -782,6 +787,46 @@ export async function sweepPhoneGroupHeights(
   await live.locator('tbody tr.shoe').first().click();
   await expect(live.locator('tbody tr.expand')).toHaveCount(1);
   await compare(`with a live group expanded on ${atColumns}`);
+
+  if (columns === undefined) {
+    // The fixture names sit comfortably inside a line. Walk a real live row a character at a time
+    // until its metadata crosses a line boundary, then compare both sides of that transition. This
+    // catches even one missing collapsible space between the name and metadata in the prototype.
+    const boundary = await live.evaluate((table) => {
+      const shoe = [...table.querySelectorAll<HTMLElement>('tbody tr.shoe')]
+        .find((row) => row.querySelector('.meta') && !row.querySelector('.disc-tag'));
+      const strong = shoe?.querySelector<HTMLElement>('strong');
+      const values = shoe?.nextElementSibling as HTMLElement | null;
+      if (!shoe || !strong || !values?.classList.contains('values')) return null;
+      const original = strong.textContent ?? '';
+      const metadata = [...shoe.querySelectorAll<HTMLElement>('.meta')]
+        .map((meta) => meta.textContent ?? '');
+      let previous: { name: string; height: number } | null = null;
+      try {
+        for (let length = 1; length <= 240; length++) {
+          const name = 'i'.repeat(length);
+          strong.textContent = name;
+          const height = shoe.getBoundingClientRect().height + values.getBoundingClientRect().height;
+          if (previous && height !== previous.height) {
+            return {
+              entries: [previous, { name, height }].map((entry) => ({
+                name: entry.name, metadata, discontinued: false,
+              })),
+              rendered: [previous.height, height],
+            };
+          }
+          previous = { name, height };
+        }
+        return null;
+      } finally {
+        strong.textContent = original;
+      }
+    });
+    expect(boundary, 'no synthetic phone name reached a wrapping boundary').not.toBeNull();
+    const measured = await page.evaluate(measurePhoneGroupHeights, boundary!.entries);
+    expect(measured, 'the synthetic wrapping-boundary entries could not be measured')
+      .toEqual(boundary!.rendered);
+  }
 
   const prototype = page.locator('.mobile-proto table.proto');
   await expect(prototype).toHaveAttribute('aria-hidden', 'true');

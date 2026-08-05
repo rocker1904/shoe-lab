@@ -472,6 +472,54 @@ async function mountPhone(page: Page): Promise<void> {
   await scrollTo(page, 0);
 }
 
+async function readPhonePlanNow(page: Page) {
+  return page.getByTestId('shoe-table-mobile').evaluate((table) => {
+    const body = table.querySelector('tbody')!;
+    const spacers = [...body.querySelectorAll('tr.spacer')];
+    const shoes = [...body.querySelectorAll<HTMLElement>('tr.shoe')];
+    return {
+      bodyPx: body.getBoundingClientRect().height,
+      shoes: shoes.length,
+      spacers: spacers.length,
+      first: shoes[0]?.dataset['slug'] ?? '',
+      last: shoes.at(-1)?.dataset['slug'] ?? '',
+    };
+  });
+}
+
+type PhonePlan = Awaited<ReturnType<typeof readPhonePlanNow>>;
+
+async function phonePlan(page: Page): Promise<PhonePlan> {
+  let last: PhonePlan | null = null;
+  await expect.poll(async () => {
+    const next = await readPhonePlanNow(page);
+    const same = last !== null && JSON.stringify(last) === JSON.stringify(next);
+    last = next;
+    return same;
+  }, { message: 'the phone plan never stopped moving' }).toBe(true);
+  return last!;
+}
+
+test('holds the phone body to one height however its window is cut', async ({ page }) => {
+  await mountPhone(page);
+  const seen: { at: number; plan: PhonePlan }[] = [];
+  const bottom = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (const at of [0, 6_000, Math.round(bottom / 2), bottom]) {
+    await scrollTo(page, at);
+    seen.push({ at, plan: await phonePlan(page) });
+  }
+  expect(Math.max(...seen.map(({ plan }) => plan.spacers)),
+    'no phone position split the fleet into two skipped runs').toBe(2);
+  expect(new Set(seen.map(({ plan }) => `${plan.first}:${plan.last}`)).size,
+    'the phone window never changed').toBeGreaterThan(2);
+  expect(Math.max(...seen.map(({ plan }) => plan.shoes)), 'the phone body is not windowed')
+    .toBeLessThan(FLEET_SIZE / 2);
+  const heights = seen.map(({ plan }) => plan.bodyPx);
+  expect(Math.max(...heights) - Math.min(...heights),
+    `the phone body changes height with the cut: ${JSON.stringify(seen)}`)
+    .toBeLessThanOrEqual(0.5);
+});
+
 /** The phone list keeps groups intact and preserves the two states that may outlive its window. */
 test('windows whole phone groups while preserving open and focused shoes', async ({ page }) => {
   await mountPhone(page);
