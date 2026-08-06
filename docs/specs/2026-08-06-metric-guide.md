@@ -287,8 +287,9 @@ changes.
 
 ### Global constraints
 
-- Method retirement lands first; delivery rebases onto its lifecycle-aware
-  labels and fixture metadata before implementation review.
+- Delivery starts from the reviewed method-era app contracts and its current
+  lifecycle-aware labels and fixture metadata; it rebases onto main again after
+  method retirement lands.
 - The guide is read-only and registry-backed; no new fact or per-row Columns
   help trigger is authored.
 - The 360px Columns panel stays within 346px by 402px, with checklist name
@@ -302,10 +303,11 @@ changes.
 ### Sequencing notes
 
 The method-retirement branch changes the `LabTest`, resolved-metric and
-ColumnPicker offer interfaces this work consumes. It must land before Task 1 is
-implemented; this branch then rebases onto main before its first delivery
-commit. The spec may be reviewed before that landing because the approved
-retirement interface and exact lifecycle vocabulary are already fixed.
+ColumnPicker offer interfaces this work consumes. Its data and app-contract
+tasks are complete and independently reviewed through `0d9cb6c`; delivery may
+therefore base on the branch tip before its remaining browser review and final
+landing. Once method retirement lands, this branch rebases onto main and reruns
+every gate before its own landing.
 
 BACKLOG.md is changed only after the feature branch is complete and verified,
 in the commit that freezes this spec before landing. Unlike scraper work, this
