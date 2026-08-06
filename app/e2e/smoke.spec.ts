@@ -279,14 +279,11 @@ test('switches to the stacked list on a phone, and back', async ({ page }) => {
   const gap = await page.evaluate(() => {
     const chrome = document.querySelector('.chrome')!.getBoundingClientRect();
     const th = document.querySelector('[data-testid="shoe-table-mobile"] th')!.getBoundingClientRect();
-    return Math.round(th.top - chrome.bottom);
+    return th.top - chrome.bottom;
   });
-  // Bounded at BOTH ends, or the assertion cannot fail on the bug it was written for: a header
-  // pinned against a stale pre-swap measurement leaves a 6px strip of page that rows scroll
-  // through, which is a POSITIVE gap and passes a `>= 0` check silently. One pixel of slack for a
-  // sub-pixel sticky offset, and no more.
-  expect(gap, 'the pinned header is occluded after the font swap').toBeGreaterThanOrEqual(0);
-  expect(gap, 'the pinned header is not flush against the chrome after the font swap').toBeLessThanOrEqual(1);
+  // Exactly one pixel of overlap makes the chrome's bottom border and the header's top border one
+  // shared hairline. Keep the raw fractional reading: adjacent rules look like a gap on a phone.
+  expect(gap, 'the pinned header does not share one hairline with the chrome').toBe(-1);
 
   // The score breakdown is five columns wide and does not fit a 375px panel, so it has to scroll
   // inside its own box rather than take the page sideways with it (docs/app.md §The story scores).

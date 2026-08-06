@@ -2320,7 +2320,9 @@ chosen:
   corner, and a panel lid would scroll up and out from under the pinned row
   anyway, leaving the box visibly open for the rest of the session. The panel's
   top sits flush under the full-bleed chrome, where a rounded corner rounds
-  against nothing.
+  against nothing. When pinned, the header overlaps the chrome by **1px**, so
+  its top border and the chrome's bottom border paint one shared hairline;
+  abutting the two boxes paints adjacent rules that read as a gap on a phone.
 - **The lid is drawn by the header's shadow stack, not by `border-top` alone.**
   `border-spacing: 2px 0` means the header row is not a continuous band — there
   is a 2px gap between every pair of cells and another between the outermost

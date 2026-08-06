@@ -482,8 +482,10 @@
          border-top and border-bottom rather than a pixel above them.
      Without the --surface copies a cell background stops at the cell and scrolled rows show through
      the gaps; without the --border copies the lid is a dashed line. Both are load-bearing. */
+  /* The 1px overlap makes this top rule and the chrome's bottom rule the same hairline; merely
+     abutting the two borders paints adjacent rows that read as a gap on a phone screen. */
   th { padding: var(--s1) 2px; background: var(--surface); vertical-align: bottom;
-       position: sticky; top: var(--thead-top); z-index: 2;
+       position: sticky; top: calc(var(--thead-top) - 1px); z-index: 2;
        border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
        box-shadow: var(--shadow-sticky),
                    3px 0 0 -1px var(--surface), -3px 0 0 -1px var(--surface),
