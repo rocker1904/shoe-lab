@@ -28,23 +28,25 @@
   const FIXED: [string, string][] = [['releasedAt', 'Release date'], ...SCORE_ENTRIES,
     ['score', 'RunRepeat Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];
 
-  interface Offer { key: string; label: string }
+  interface Offer { key: string; label: string; retired: boolean }
   // A pair offers whichever generation is chosen and never both; a colocated metric offers both
   // halves, which is what keeps them independently sortable (docs/app.md §Columns and sorting).
   const offersOf = (e: ResolvedMetric): Offer[] => {
-    if (e.kind === 'single') return [{ key: e.key, label: e.label }];
+    if (e.kind === 'single') return [{ key: e.key, label: e.label, retired: e.retired }];
     if (e.kind === 'pair') {
       const g = generations[e.current.key] === e.retired.key ? e.retired : e.current;
-      return [{ key: g.key, label: `${e.label} (${g.generation})` }];
+      return [{ key: g.key, label: `${e.label} (${g.generation})`, retired: g.retired }];
     }
-    return e.parts.map((p) => ({ key: p.key, label: p.label }));
+    return e.parts.map((p) => ({ key: p.key, label: p.label, retired: p.retired }));
   };
   const grouped = $derived.by(() => {
     const m = new Map<string, Offer[]>();
     // Categorical tests are choosable columns but never rangeable, so they are offered here and
     // deliberately not through `metricEntries`, which the filter dialog also reads
     // (docs/app.md §Categorical columns).
-    for (const e of [...metricEntries(tests), ...categoricalEntries(tests).map((c) => ({ kind: 'single' as const, key: c.key, label: c.label, units: '', groupId: c.groupId }))]) {
+    for (const e of [...metricEntries(tests), ...categoricalEntries(tests).map((c) => ({
+      kind: 'single' as const, key: c.key, label: c.label, units: '', groupId: c.groupId, retired: c.retired,
+    }))]) {
       const g = (e.groupId && groups[e.groupId]) || 'Other';
       m.set(g, [...(m.get(g) ?? []), ...offersOf(e)]);
     }

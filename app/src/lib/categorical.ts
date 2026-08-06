@@ -117,7 +117,9 @@ export function facetValues(test: LabTest): { value: string; label: string }[] {
 
 /** The categorical columns the picker offers, in catalogue order. Reads the same rule as every
  *  other caller, so a field-owned slug cannot be offered twice. */
-export function categoricalEntries(tests: LabTest[]): { key: string; label: string; groupId: string | null }[] {
+export function categoricalEntries(tests: LabTest[]): {
+  key: string; label: string; groupId: string | null; retired: boolean;
+}[] {
   return tests.filter((t) => isCategorical(t))
-    .map((t) => ({ key: t.slug, label: t.name, groupId: t.groupId }));
+    .map((t) => ({ key: t.slug, label: t.name, groupId: t.groupId, retired: t.methodStatus === 'retired' }));
 }

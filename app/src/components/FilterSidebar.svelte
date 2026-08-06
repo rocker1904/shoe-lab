@@ -41,8 +41,8 @@
   /** `score` and `msrpGbp` are shoe fields, not catalogue tests, so `metricEntries` cannot emit
    *  them — and leaving them out would take the price filter with them (docs/app.md §Filters). */
   const FIELD_METRICS: ResolvedMetric[] = [
-    { kind: 'single', key: 'msrpGbp', label: 'Price', units: '£', groupId: null },
-    { kind: 'single', key: 'score', label: 'RunRepeat Score', units: '', groupId: null },
+    { kind: 'single', key: 'msrpGbp', label: 'Price', units: '£', groupId: null, retired: false },
+    { kind: 'single', key: 'score', label: 'RunRepeat Score', units: '', groupId: null, retired: false },
   ];
   const entries = $derived([...metricEntries(data.tests), ...FIELD_METRICS]);
   const keysOf = (e: ResolvedMetric): string[] =>
@@ -92,6 +92,11 @@
     if (p.zone) return `${e.label} — ${ZONE_LABEL[p.zone]}`;
     return p.units ? `${p.label} (${p.units})` : p.label;
   };
+  const retiredFor = (e: ResolvedMetric, key: string): boolean => {
+    if (e.kind === 'single') return e.retired;
+    if (e.kind === 'pair') return (key === e.current.key ? e.current : e.retired).retired;
+    return e.parts.find((p) => p.key === key)?.retired ?? false;
+  };
   /**
    * A colocated entry renders two controls under one heading, so each needs its zone on screen.
    * Without it the coverage rows above read as labels for the controls below and name the wrong
@@ -118,7 +123,7 @@
     const rows = shown.includes(e) ? rowKeysOf(e) : [];
     return (e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)])
       .filter((k) => !rows.includes(k) && !ALIASED_BY_A_FIELD.has(k))
-      .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId }));
+      .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId, retired: retiredFor(e, k) }));
   }));
   const withCoverage = (): AddFilterOption[] => addable.map((o) => ({ ...o, coverage: pctOf(o.key) }));
   let adding = $state(false);

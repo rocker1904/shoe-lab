@@ -12,47 +12,64 @@ import type { LabTest } from '../../../shared/types.js';
 const colocatedOf = (e: ResolvedMetric) => e as Extract<ResolvedMetric, { kind: 'colocated' }>;
 
 describe('generationLabel', () => {
-  it('reads a method year off the slug suffix', () => {
-    expect(generationLabel('midsole-softness-22', 'current')).toBe('2022 method');
-    expect(generationLabel('breathability-25', 'current')).toBe('2025 method');
+  it('combines a method year with each lifecycle', () => {
+    expect(generationLabel('midsole-softness-22', 'current')).toBe('2022 · current');
+    expect(generationLabel('breathability-25', 'retired')).toBe('2025 · retired');
   });
   it('falls back to a relative label when no year can be derived', () => {
     // three real pairs carry no year on either zone and share both name and units
     expect(generationLabel('toebox-width-widest-part', 'current')).toBe('current method');
-    expect(generationLabel('toebox-width-at-the-widest-part', 'previous')).toBe('previous method');
+    expect(generationLabel('toebox-width-at-the-widest-part', 'retired')).toBe('retired method');
   });
   it('does not read a trailing number that is not a plausible method year', () => {
     expect(generationLabel('shoe-test-5', 'current')).toBe('current method');
-    expect(generationLabel('some-test-99', 'current')).toBe('current method');
+    expect(generationLabel('some-test-99', 'retired')).toBe('retired method');
   });
 });
 
 describe('metricEntries', () => {
   it('pairs a superseded test with its replacement, current first', () => {
     const e = metricEntries([
-      labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', updateId: 70 }),
+      labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', updateId: 70, methodStatus: 'retired' }),
       labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', previousId: 11 }),
     ])[0]!;
     expect(e).toMatchObject({
       kind: 'pair', label: 'Midsole softness',
-      current: { key: 'midsole-softness-22', units: 'AC', generation: '2022 method' },
-      retired: { key: 'midsole-softness', units: 'HA', generation: 'original' },
+      current: {
+        key: 'midsole-softness-22', units: 'AC', generation: '2022 · current', lifecycle: 'current', retired: false,
+      },
+      retired: {
+        key: 'midsole-softness', units: 'HA', generation: 'retired method', lifecycle: 'retired', retired: true,
+      },
     });
   });
   it('distinguishes a pair whose slugs carry no year and whose units match', () => {
     const e = metricEntries([
-      labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', updateId: 55 }),
+      labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', updateId: 55, methodStatus: 'retired' }),
       labTest({ id: 55, slug: 'toebox-width-widest-part', name: 'Width / Fit', units: 'mm', previousId: 27 }),
     ])[0]! as Extract<ReturnType<typeof metricEntries>[number], { kind: 'pair' }>;
-    expect(e.current.generation).not.toBe(e.retired.generation);
+    expect([e.current.generation, e.retired.generation]).toEqual(['current method', 'retired method']);
+    expect([e.current.lifecycle, e.retired.lifecycle]).toEqual(['current', 'retired']);
   });
   it('dates the retired half too when its own slug carries a year', () => {
     const e = metricEntries([
-      labTest({ id: 1, slug: 'grip-22', name: 'Grip', updateId: 2 }),
+      labTest({ id: 1, slug: 'grip-22', name: 'Grip', updateId: 2, methodStatus: 'retired' }),
       labTest({ id: 2, slug: 'grip-25', name: 'Grip', previousId: 1 }),
     ])[0]! as Extract<ReturnType<typeof metricEntries>[number], { kind: 'pair' }>;
-    expect(e.retired.generation).toBe('2022 method');
-    expect(e.current.generation).toBe('2025 method');
+    expect(e.retired.generation).toBe('2022 · retired');
+    expect(e.current.generation).toBe('2025 · current');
+  });
+  it('carries an exact test status through singles and treats absent or unknown status as no claim', () => {
+    const absent = labTest({ id: 2, slug: 'cached-test', name: 'Cached test' });
+    delete (absent as { methodStatus?: unknown }).methodStatus;
+    const entries = metricEntries([
+      labTest({ id: 1, slug: 'curated-retired', name: 'Curated retired', methodStatus: 'retired' }),
+      absent,
+      labTest({ id: 3, slug: 'future-status', name: 'Future status', methodStatus: 'paused' as never }),
+    ]);
+    expect(entries.map((e) => e.kind === 'single' && [e.key, e.retired])).toEqual([
+      ['curated-retired', true], ['cached-test', false], ['future-status', false],
+    ]);
   });
   it('produces one entry per pair, not two', () => {
     expect(metricEntries([
@@ -69,6 +86,16 @@ describe('metricEntries', () => {
     expect(e).toMatchObject({ kind: 'colocated', label: 'Traction', groupId: '3' });
     expect(colocatedOf(e).parts.map((p) => p.key)).toEqual(['traction-heel', 'traction-forefoot']);
     expect(colocatedOf(e).parts.map((p) => p.zone)).toEqual([null, null]);
+  });
+  it('carries each colocated part\'s exact test status', () => {
+    const e = metricEntries([
+      labTest({ id: 60, slug: 'traction-heel', name: 'Traction heel', chartLabel: 'Traction',
+        secondaryTestIds: [61], methodStatus: 'retired' }),
+      labTest({ id: 61, slug: 'traction-forefoot', name: 'Traction forefoot', primaryTestId: 60 }),
+    ])[0]!;
+    expect(colocatedOf(e).parts.map((p) => [p.key, p.retired])).toEqual([
+      ['traction-heel', true], ['traction-forefoot', false],
+    ]);
   });
   it('ignores a secondary that is not in the published catalogue', () => {
     // real case: forefoot-traction names #61, which was dropped for having no readings
@@ -135,7 +162,9 @@ describe('metricEntries', () => {
   });
   it('degrades a declared pair with one half absent to a single', () => {
     const e = metricEntries([labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm' })]);
-    expect(e).toEqual([{ kind: 'single', key: 'heel-stack', label: 'Heel stack', units: 'mm', groupId: null }]);
+    expect(e).toEqual([{
+      kind: 'single', key: 'heel-stack', label: 'Heel stack', units: 'mm', groupId: null, retired: false,
+    }]);
   });
   it('emits nothing for a declared pair whose slugs are both absent', () => {
     expect(metricEntries([labTest({ id: 24, slug: 'weight', name: 'Weight' })]).map((e) => e.label)).toEqual(['Weight']);
@@ -227,7 +256,9 @@ describe('declared zone pairs against the published catalogue', () => {
     for (const pair of ZONE_PAIRS) {
       const found = entries.filter((e) => e.kind === 'colocated' && e.parts.some((p) => p.key === pair.heel));
       expect(found, `${pair.label} does not resolve to one entry`).toHaveLength(1);
-      expect(colocatedOf(found[0]!).parts.map((p) => p.key)).toEqual([pair.forefoot, pair.heel]);
+      const parts = colocatedOf(found[0]!).parts;
+      expect(parts.map((p) => p.key)).toEqual([pair.forefoot, pair.heel]);
+      expect(new Set(parts.map((p) => p.retired)).size, `${pair.label} has mixed method status`).toBe(1);
     }
   });
 });

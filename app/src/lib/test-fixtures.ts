@@ -3,7 +3,8 @@ import type { LabTest, Shoe } from '../../../shared/types.js';
 export function labTest(over: Partial<LabTest> & Pick<LabTest, 'id' | 'slug' | 'name'>): LabTest {
   return {
     type: 'float', units: '', groupId: null, chartLabel: null, isNew: false,
-    previousId: null, updateId: null, primaryTestId: null, secondaryTestIds: [], options: null,
+    previousId: null, updateId: null, methodStatus: null,
+    primaryTestId: null, secondaryTestIds: [], options: null,
     ...over,
   };
 }
@@ -16,7 +17,7 @@ export const TESTS: LabTest[] = [
   labTest({ id: 24, slug: 'weight', name: 'Weight', units: 'g', groupId: '10' }),
   labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return (heel)', type: 'percent', groupId: '3', chartLabel: 'Energy return', secondaryTestIds: [66] }),
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', type: 'percent', groupId: null, chartLabel: 'Energy return', primaryTestId: 65 }),
-  labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', groupId: '3', updateId: 70 }),
+  labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', groupId: '3', updateId: 70, methodStatus: 'retired' }),
   labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', groupId: '3', previousId: 11 }),
   labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', groupId: '3',
     options: [{ value: 'none', name: 'None' }, { value: 'both-sides-semi', name: 'Both sides (semi)' }] }),
@@ -31,7 +32,7 @@ export const TESTS: LabTest[] = [
   labTest({ id: 69, slug: 'plate', name: 'Plate', type: 'bool' }),
   // A pair carrying no method year on either zone and sharing both name and units — the case the
   // generation label cannot derive from a slug (docs/scraping.md §Test lineage).
-  labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', updateId: 55 }),
+  labTest({ id: 27, slug: 'toebox-width-at-the-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', updateId: 55, methodStatus: 'retired' }),
   labTest({ id: 55, slug: 'toebox-width-widest-part', name: 'Width / Fit', units: 'mm', groupId: '3', previousId: 27 }),
   // The metrics the Easy score reads. Carried by all four reading-carrying shoes and absent on
   // `mystery`, because `score.test.ts` needs exactly one unscoreable shoe.
@@ -39,6 +40,7 @@ export const TESTS: LabTest[] = [
   labTest({ id: 67, slug: 'shock-absorption-forefoot', name: 'Shock absorption forefoot', units: 'SA', groupId: null, chartLabel: 'Shock absorption', primaryTestId: 68 }),
   labTest({ id: 4, slug: 'outsole-durability', name: 'Outsole durability', units: 'mm', groupId: '2', chartLabel: 'Outsole wear' }),
   labTest({ id: 9, slug: 'outsole-thickness', name: 'Outsole thickness', units: 'mm', groupId: '2' }),
+  labTest({ id: 10, slug: 'outsole-hardness', name: 'Outsole hardness', units: 'HC', groupId: '2', methodStatus: 'retired' }),
   labTest({ id: 19, slug: 'heel-counter-stiffness', name: 'Heel counter stiffness', type: 'score', groupId: '5' }),
   labTest({ id: 26, slug: 'midsole-width-in-the-heel', name: 'Midsole width in the heel', units: 'mm', groupId: '5' }),
   labTest({ id: 25, slug: 'midsole-width-in-the-forefoot', name: 'Midsole width in the forefoot', units: 'mm', groupId: '5' }),

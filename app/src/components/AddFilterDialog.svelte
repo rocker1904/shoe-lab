@@ -4,7 +4,9 @@
   import MetricHelp from './MetricHelp.svelte';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
 
-  export interface AddFilterOption { key: string; label: string; groupId: string | null; coverage: number }
+  export interface AddFilterOption {
+    key: string; label: string; groupId: string | null; coverage: number; retired: boolean;
+  }
 
   let { options, groups, onchoose, onclose }: {
     options: AddFilterOption[]; groups: Record<string, string>;

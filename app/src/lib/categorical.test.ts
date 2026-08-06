@@ -72,6 +72,20 @@ describe('isCategorical and categoricalEntries', () => {
       .toEqual(['heel-tab', 'removable-insole', 'tongue-gusset-type']);
     expect(categoricalEntries(TESTS).every((e) => e.groupId === '3')).toBe(true);
   });
+
+  it('carries exact retirement status without making a categorical test rangeable', () => {
+    const absent = labTest({ id: 2, slug: 'cached-option', name: 'Cached option', type: 'option' });
+    delete (absent as { methodStatus?: unknown }).methodStatus;
+    const tests = [
+      labTest({ id: 1, slug: 'retired-option', name: 'Retired option', type: 'option', methodStatus: 'retired' }),
+      absent,
+      labTest({ id: 3, slug: 'future-bool', name: 'Future bool', type: 'bool', methodStatus: 'paused' as never }),
+    ];
+    expect(categoricalEntries(tests).map(({ key, retired }) => [key, retired])).toEqual([
+      ['retired-option', true], ['cached-option', false], ['future-bool', false],
+    ]);
+    expect(tests.every((test) => isCategorical(test))).toBe(true);
+  });
 });
 
 /**

@@ -406,8 +406,8 @@ describe('FilterSidebar filter set management', () => {
     // which is a row already (docs/app.md §Filters) — and heel counter is offered because it is a
     // score term that is not a natural search.
     const dialog = within(screen.getByRole('dialog'));
-    expect(dialog.getAllByRole('button', { name: /^Add filter:/ })).toHaveLength(5);
-    for (const name of [/Midsole softness/, /Outsole thickness/, /Heel counter stiffness/,
+    expect(dialog.getAllByRole('button', { name: /^Add filter:/ })).toHaveLength(6);
+    for (const name of [/Midsole softness/, /Outsole thickness/, /Outsole hardness/, /Heel counter stiffness/,
                         /Stiffness/, /RunRepeat Score/]) {
       expect(dialog.getByRole('button', { name: new RegExp(`^Add filter: .*${name.source}`) }))
         .toBeInTheDocument();
@@ -587,7 +587,7 @@ describe('FilterSidebar metric entries', () => {
     expect(next.filters.ranges).toEqual({});
     expect(next.columns).toEqual(['score']);
     const after = render(FilterSidebar, { props: { data, view: next, onchange: vi.fn(), population: FLEET } });
-    expect(within(after.container).getByRole('group', { name: /Width \/ Fit — previous method/ })).toBeInTheDocument();
+    expect(within(after.container).getByRole('group', { name: /Width \/ Fit — retired method/ })).toBeInTheDocument();
   });
   it('moves a hand-added pair\'s row to the generation it switches to', async () => {
     const pairPlus: ShoesFile = { ...data, tests: [
@@ -606,7 +606,7 @@ describe('FilterSidebar metric entries', () => {
     const view = defaultView();
     view.generations['toebox-width-widest-part'] = 'toebox-width-at-the-widest-part';
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
-    expect(screen.getByRole('group', { name: /Width \/ Fit — previous method/ })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /Width \/ Fit — retired method/ })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /Width \/ Fit — current method/ })).not.toBeInTheDocument();
   });
 });

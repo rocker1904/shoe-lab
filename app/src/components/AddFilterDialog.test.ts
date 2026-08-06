@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
 
 const options = [
-  { key: 'heel-stack', label: 'Stack — Heel', groupId: '3', coverage: 80 },
-  { key: 'stiffness', label: 'Stiffness (N)', groupId: null, coverage: 12 },
+  { key: 'heel-stack', label: 'Stack — Heel', groupId: '3', coverage: 80, retired: false },
+  { key: 'stiffness', label: 'Stiffness (N)', groupId: null, coverage: 12, retired: false },
 ];
 const groups = { '3': 'Cushioning' };
 
@@ -87,7 +87,7 @@ describe('AddFilterDialog', () => {
   });
 
   it('keeps an unknown option addable without a help target or empty gap', () => {
-    setup({ options: [{ key: 'future-test', label: 'Future test', groupId: null, coverage: 0 }] });
+    setup({ options: [{ key: 'future-test', label: 'Future test', groupId: null, coverage: 0, retired: false }] });
     expect(screen.getByRole('button', { name: /^Add filter: Future test/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Help for Future test' })).toBeNull();
     expect(document.querySelector('.offer')?.children).toHaveLength(5);

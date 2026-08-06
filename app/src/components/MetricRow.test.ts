@@ -103,7 +103,7 @@ describe('MetricRow pair', () => {
     expect(radios).toHaveLength(2);
     expect(radios.every((radio) => radio.hasAttribute('data-segment'))).toBe(true);
     expect(radios[0]).toHaveAttribute('aria-checked', 'true');
-    expect(radios[0]).toHaveAccessibleName(/2022 method/);
+    expect(radios[0]).toHaveAccessibleName(/2022 · current/);
     expect(radios[1]).toHaveAttribute('aria-checked', 'false');
   });
   it('reports the retired generation when it is chosen', async () => {

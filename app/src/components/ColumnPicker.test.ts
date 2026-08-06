@@ -47,7 +47,7 @@ describe('ColumnPicker metric entries', () => {
     render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
     const softness = screen.getAllByRole('checkbox', { name: /Midsole softness/ });
     expect(softness).toHaveLength(1);
-    expect(softness[0]).toHaveAccessibleName(/2022 method/);
+    expect(softness[0]).toHaveAccessibleName(/2022 · current/);
   });
   it('offers the retired generation once it is the chosen one', () => {
     render(ColumnPicker, {
@@ -55,7 +55,7 @@ describe('ColumnPicker metric entries', () => {
     });
     const softness = screen.getAllByRole('checkbox', { name: /Midsole softness/ });
     expect(softness).toHaveLength(1);
-    expect(softness[0]).toHaveAccessibleName(/original/);
+    expect(softness[0]).toHaveAccessibleName(/retired method/);
   });
   it('files a colocated half under its primary group and keeps it separately selectable', async () => {
     const tests = [

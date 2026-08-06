@@ -7,17 +7,17 @@ import { NUMERIC_TEST_TYPES } from './dataset';
  * component's name is a duplicate identifier.
  */
 export type ResolvedMetric =
-  | { kind: 'single'; key: string; label: string; units: string; groupId: string | null }
+  | { kind: 'single'; key: string; label: string; units: string; groupId: string | null; retired: boolean }
   | {
       kind: 'pair'; label: string; groupId: string | null;
-      current: { key: string; units: string; generation: string };
-      retired: { key: string; units: string; generation: string };
+      current: { key: string; units: string; generation: string; lifecycle: 'current'; retired: boolean };
+      retired: { key: string; units: string; generation: string; lifecycle: 'retired'; retired: boolean };
     }
   | {
       kind: 'colocated'; label: string; groupId: string | null;
       /** `label` stays the full test name — `zone` is additive. The column picker renders `label`,
        *  and repurposing it would fill the picker with four checkboxes called "Forefoot". */
-      parts: { key: string; label: string; units: string; zone: Zone | null }[];
+      parts: { key: string; label: string; units: string; zone: Zone | null; retired: boolean }[];
     };
 
 /** Which end of the shoe a reading describes, and which end the runner lands on. */
@@ -129,10 +129,12 @@ export const CURATED_RANGE_KEYS = [
 /** RunRepeat suffixes a revised method with its two-digit year. 20–29 only: a bare trailing number is a body part or a size, not a year. */
 const METHOD_YEAR = /-(2\d)$/;
 
-export function generationLabel(slug: string, fallback: 'current' | 'previous'): string {
+export function generationLabel(slug: string, lifecycle: 'current' | 'retired'): string {
   const m = METHOD_YEAR.exec(slug);
-  return m ? `20${m[1]} method` : `${fallback} method`;
+  return m ? `20${m[1]} · ${lifecycle}` : `${lifecycle} method`;
 }
+
+const isRetired = (test: LabTest): boolean => test.methodStatus === 'retired';
 
 /**
  * Resolves the catalogue into the entries the UI offers: every numeric test appears in exactly
@@ -179,8 +181,14 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
       claimed.add(retired.id);
       out.push({
         kind: 'pair', label: current.name, groupId: current.groupId,
-        current: { key: current.slug, units: current.units, generation: generationLabel(current.slug, 'current') },
-        retired: { key: retired.slug, units: retired.units, generation: retiredGeneration(retired, current) },
+        current: {
+          key: current.slug, units: current.units, generation: generationLabel(current.slug, 'current'),
+          lifecycle: 'current', retired: isRetired(current),
+        },
+        retired: {
+          key: retired.slug, units: retired.units, generation: generationLabel(retired.slug, 'retired'),
+          lifecycle: 'retired', retired: isRetired(retired),
+        },
       });
       continue;
     }
@@ -197,17 +205,13 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
       continue;
     }
 
-    out.push({ kind: 'single', key: t.slug, label: t.name, units: t.units, groupId: t.groupId });
+    out.push({
+      kind: 'single', key: t.slug, label: t.name, units: t.units, groupId: t.groupId, retired: isRetired(t),
+    });
   }
   return out;
 }
 
 function zonePart(t: LabTest, zone: Zone | null) {
-  return { key: t.slug, label: t.name, units: t.units, zone };
-}
-
-/** A dated current method dates what it replaced too: the retired half is simply the original. */
-function retiredGeneration(retired: LabTest, current: LabTest): string {
-  if (METHOD_YEAR.test(retired.slug)) return generationLabel(retired.slug, 'previous');
-  return METHOD_YEAR.test(current.slug) ? 'original' : generationLabel(retired.slug, 'previous');
+  return { key: t.slug, label: t.name, units: t.units, zone, retired: isRetired(t) };
 }

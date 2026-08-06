@@ -1124,6 +1124,23 @@ its column in the same `setView` call, matching what `parseView` does to a URL
 constructs `score` and `msrpGbp` as entries itself; they are shoe fields, and
 without that the price filter would disappear.
 
+Every test-shaped resolved key carries whether its catalogue test explicitly
+says `methodStatus: "retired"`: numeric singles, both generations of a
+superseded pair, and each part of a colocated family. The comparison is exact,
+so an older cached catalogue with no field, or a future value this build does
+not know, makes no retirement claim. Shoe fields and synthetic scores have no
+test status. Status is catalogue metadata only; coverage, release dates,
+`isNew`, the current time and the loaded fleet do not resolve or clear it.
+
+A superseded generation also carries its role in that pair, independently of
+the exact-key status. `generationLabel` is the one vocabulary for the role: a
+dated generation is `20YY · current` or `20YY · retired`, while an undated
+one is `current method` or `retired method`. These replace `20YY method`,
+`original` and `previous method`. The current generation remains the default;
+selecting its predecessor changes the same resolved row to the retired
+modifier. The selection continues to use the existing `generations` mapping,
+so method status adds no URL or view-state field.
+
 Sorting reads numbers, with missing values always last and score as the
 tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
 an ISO string; year-derived dates therefore sit at 1 January, and the table
@@ -2345,6 +2362,9 @@ reads them from `categoricalEntries` rather than `metricEntries` — the
 Add-filter dialog reads `metricEntries` too, and a range over a categorical test
 would empty the fleet in one click (docs/app.md §Filters). They also carry no
 units and no direction mark in the pickers: there is no better end to point at.
+`categoricalEntries` does carry the same exact retirement boolean as numeric
+resolved keys, so Columns does not need a second identity list to know the
+status of an option or bool test.
 
 Four readings were already in the dataset and unreachable before this existed —
 the two option tests plus `removable-insole` and `reflective-elements`, which
