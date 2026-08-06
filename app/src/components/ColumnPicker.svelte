@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import type { LabTest, Shoe } from '../../../shared/types.js';
   import { categoricalEntries } from '../lib/categorical';
   import { coverageOf } from '../lib/coverage';
@@ -10,6 +11,8 @@
   import { columnLabel } from '../lib/labels';
   import { DERIVED_ZONE_PAIRS, effectiveGeneration, metricEntries, type ResolvedMetric } from '../lib/lineage';
   import type { RangeBound } from '../lib/filters';
+  import { metricHelpOf } from '../lib/metric-help';
+  import MetricGuide, { type MetricGuideSection } from './MetricGuide.svelte';
 
   let { tests, groups, columns, ranges, rows, onchange, population, idx, generations }: {
     tests: LabTest[]; groups: Record<string, string>; columns: string[];
@@ -57,6 +60,18 @@
     }
     return [...m.entries()];
   });
+  const guideSections = $derived.by(() => {
+    const sections: MetricGuideSection[] = [];
+    const fixed = FIXED.filter(([key]) => metricHelpOf(key) !== undefined)
+      .map(([key, label]) => ({ key, label }));
+    if (fixed.length > 0) sections.push({ group: null, entries: fixed });
+    for (const [group, offers] of grouped) {
+      const entries = offers.filter((offer) => metricHelpOf(offer.key) !== undefined)
+        .map(({ key, label }) => ({ key, label }));
+      if (entries.length > 0) sections.push({ group, entries });
+    }
+    return sections;
+  });
   const pct = (key: string) => Math.round(coverageOf(population, key, idx).fraction * 100);
   function toggle(key: string) {
     onchange(columns.includes(key) ? columns.filter((c) => c !== key) : [...columns, key]);
@@ -69,15 +84,34 @@
    * dismisses one in any engine, measured in all three, so both are ours to add
    * (docs/app.md §Every floating panel dismisses the same way).
    *
-   * The binding earns its keep twice. A closed `<details>` still renders its children, so the
-   * coverage bars below were being recomputed on every view update — forty-odd full passes over the
-   * population, twice each, for a panel nobody could see. One pass is cheap; sixty times a second
-   * during a drag is not (docs/app.md §What a drag may recompute). The rows themselves stay
-   * mounted: they hold the checked state and cost nothing to keep.
+   * A closed `<details>` still renders its active mode, so checklist coverage is resolved only while
+   * the disclosure is open. Guide mode unmounts the checklist as well: none of its rows or
+   * fleet-wide coverage passes may stay alive behind a read-only list
+   * (docs/app.md §What a drag may recompute).
    */
   let open = $state(false);
   let details = $state<HTMLDetailsElement | null>(null);
   let summary = $state<HTMLElement | null>(null);
+  let mode = $state<'columns' | 'guide'>('columns');
+  let list = $state<HTMLElement | null>(null);
+  let guideEntry = $state<HTMLButtonElement | null>(null);
+  let checklistScroll = 0;
+
+  function openGuide() {
+    checklistScroll = list?.scrollTop ?? checklistScroll;
+    mode = 'guide';
+  }
+
+  async function backToColumns() {
+    mode = 'columns';
+    await tick();
+    if (list) list.scrollTop = checklistScroll;
+    guideEntry?.focus();
+  }
+
+  function resetMode() {
+    mode = 'columns';
+  }
 
   /**
    * The element as well as the binding, and that is not belt and braces. `open` mirrors the
@@ -90,7 +124,16 @@
   function shut() {
     if (details) details.open = false;
     open = false;
+    resetMode();
   }
+
+  $effect(() => {
+    if (!open && mode !== 'columns') resetMode();
+  });
+
+  $effect(() => {
+    if (mode === 'columns' && list) list.scrollTop = checklistScroll;
+  });
 
   $effect(() => {
     if (!open) return;
@@ -132,33 +175,48 @@
     <svg class="chev" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </summary>
   <div class="panel">
-    <!-- OUTSIDE the scrollport, which is what `.list` below is for: inside it the legend scrolled
-         away with the first few rows and every glyph under it stopped meaning anything.
-         `DirectionLegend.svelte` owns the words (docs/app.md §Table presentation). -->
-    <DirectionLegend />
-    <div class="list scrollport">
-    {#each FIXED as [key, label] (key)}
-      <label>
-        <input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} />
-        <span class="name">{label}</span>
-        <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(key)]}</span>
-      </label>
-    {/each}
-    {#each grouped as [group, offers] (group)}
-      <h4>{group}</h4>
-      {#each offers as o (o.key)}
-        <label>
-          <input type="checkbox" checked={columns.includes(o.key)} onchange={() => toggle(o.key)} />
-          <span class="name">{o.label}</span>
-          <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
-          {#if open}
-            {@const p = pct(o.key)}
-            <span class="bar"><span class="fill" style:width="{p}%"></span></span>
-            <span class="pct">{p}%</span>
-          {/if}
-        </label>
-      {/each}
-    {/each}
+    {#if mode === 'columns'}
+      <!-- OUTSIDE the scrollport, which is what `.list` below is for: inside it the legend scrolled
+           away with the first few rows and every glyph under it stopped meaning anything.
+           `DirectionLegend.svelte` owns the words (docs/app.md §Table presentation). -->
+      <DirectionLegend />
+    {/if}
+    <div class="mode-slot">
+      {#if mode === 'columns'}
+        <button bind:this={guideEntry} class="guide-entry" type="button" onclick={openGuide}>
+          <span>Metric guide</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M3 2l3 3-3 3" stroke="currentColor" stroke-width="1.4"
+                  stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div bind:this={list} class="list scrollport">
+        {#each FIXED as [key, label] (key)}
+          <label>
+            <input type="checkbox" checked={columns.includes(key)} onchange={() => toggle(key)} />
+            <span class="name">{label}</span>
+            <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(key)]}</span>
+          </label>
+        {/each}
+        {#each grouped as [group, offers] (group)}
+          <h4>{group}</h4>
+          {#each offers as o (o.key)}
+            <label>
+              <input type="checkbox" checked={columns.includes(o.key)} onchange={() => toggle(o.key)} />
+              <span class="name">{o.label}</span>
+              <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
+              {#if open}
+                {@const p = pct(o.key)}
+                <span class="bar"><span class="fill" style:width="{p}%"></span></span>
+                <span class="pct">{p}%</span>
+              {/if}
+            </label>
+          {/each}
+        {/each}
+        </div>
+      {:else}
+        <MetricGuide sections={guideSections} onback={backToColumns} />
+      {/if}
     </div>
   </div>
 </details>
@@ -223,6 +281,13 @@
      (docs/app.md §Stacking order). `min-width: 0` is what lets the left/right pair size the box —
      a min-width is applied last and the 20rem would otherwise win. */
   @media (max-width: 359.98px) { .panel { left: var(--s2); width: auto; min-width: 0; } }
+  .mode-slot { min-height: 0; max-height: 22rem; display: flex; flex-direction: column;
+               gap: var(--s2); }
+  .guide-entry { width: 100%; flex: none; padding: var(--s2); border: 1px solid var(--border);
+                 border-radius: var(--r-sm); background: var(--surface); color: var(--text);
+                 display: flex; align-items: center; justify-content: space-between; gap: var(--s2);
+                 font-size: var(--t-sm); text-align: left; cursor: pointer; }
+  .guide-entry:hover { border-color: var(--accent); background: var(--accent-dim); }
   /* `.scrollport` in `app.css` pays the ring's room; the negative margin gives that room back to
      the panel's own padding, so the rows sit exactly where they did (docs/app.md §Theming).
      The INLINE-END pair is the scrollbar's, and it is a different fact. This list always overflows
@@ -234,7 +299,7 @@
      is given straight back as margin, so the ROW keeps the width it had in both regimes — measured
      identical at 308px classic and 320px overlay before and after — and only the bar moves, out of
      the figures and into the panel's own padding. */
-  .list { max-height: 22rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s1);
+  .list { min-height: 0; overflow-y: auto; display: flex; flex: 1; flex-direction: column; gap: var(--s1);
           margin-inline: calc(-1 * var(--ring-room)); padding-inline-end: var(--s3);
           margin-inline-end: calc(-1 * var(--s3)); }
   h4 { margin: var(--s2) 0 var(--s1); font-size: var(--t-xs); color: var(--text-dim); text-transform: uppercase; }

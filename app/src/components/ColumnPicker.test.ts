@@ -1,17 +1,46 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
-import { tick } from 'svelte';
+import { tick, type ComponentProps } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import ColumnPicker from './ColumnPicker.svelte';
+import { coverageOf } from '../lib/coverage';
 import { indexTests } from '../lib/dataset';
+import { metricHelpOf } from '../lib/metric-help';
 import { EASY } from '../lib/score-defs';
 import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
 import type { Shoe } from '../../../shared/types.js';
+
+vi.mock('../lib/coverage', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/coverage')>();
+  return { ...actual, coverageOf: vi.fn(actual.coverageOf) };
+});
 
 const idx = indexTests(TESTS);
 const base = {
   tests: TESTS, groups: { '3': 'Cushioning' }, population: FLEET, idx,
   generations: {}, ranges: {}, rows: [],
 };
+type PickerProps = ComponentProps<typeof ColumnPicker>;
+
+const settle = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await tick();
+};
+
+const press = (target: EventTarget) =>
+  target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+async function renderGuide(overrides: Partial<PickerProps> = {}) {
+  const props: PickerProps = { ...base, columns: [], onchange: vi.fn(), ...overrides };
+  const rendered = render(ColumnPicker, { props });
+  const details = rendered.container.querySelector('details')!;
+  const summary = rendered.container.querySelector('summary')!;
+  await fireEvent.click(summary);
+  await settle();
+  expect(details.open).toBe(true);
+  await fireEvent.click(screen.getByRole('button', { name: 'Metric guide' }));
+  await tick();
+  return { ...rendered, details, summary, props };
+}
 
 describe('ColumnPicker', () => {
   it('toggles columns on and off via checkboxes', async () => {
@@ -140,6 +169,167 @@ describe('ColumnPicker metric entries', () => {
   });
 });
 
+describe('ColumnPicker metric guide', () => {
+  it('adds one guide entry without changing checklist rows, then mounts only the guide', async () => {
+    const { container } = render(ColumnPicker, {
+      props: { ...base, columns: [], onchange: vi.fn() },
+    });
+    const labels = [...container.querySelectorAll('.list label')];
+
+    expect(screen.getAllByRole('button', { name: 'Metric guide' })).toHaveLength(1);
+    for (const label of labels) {
+      expect(label.querySelectorAll('input, button, a[href], [tabindex]')).toHaveLength(1);
+      expect(label.querySelector('input[type="checkbox"]')).not.toBeNull();
+    }
+
+    await fireEvent.click(container.querySelector('summary')!);
+    await settle();
+    await fireEvent.click(screen.getByRole('button', { name: 'Metric guide' }));
+    await tick();
+    expect(container.querySelector('.list')).toBeNull();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Metric guide' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search metrics' })).toBeInTheDocument();
+  });
+
+  it('derives fixed and grouped guide rows from only offers with registry facts', async () => {
+    const future = labTest({ id: 101, slug: 'future-test', name: 'Future test', groupId: '3' });
+    const tests = [...TESTS, future];
+    const { container } = render(ColumnPicker, {
+      props: {
+        ...base,
+        tests,
+        idx: indexTests(tests),
+        columns: [],
+        onchange: vi.fn(),
+      },
+    });
+    expect(screen.getByRole('checkbox', { name: /Future test/ })).toBeInTheDocument();
+
+    await fireEvent.click(container.querySelector('summary')!);
+    await settle();
+    await fireEvent.click(screen.getByRole('button', { name: 'Metric guide' }));
+    await tick();
+
+    expect(screen.getByRole('button', { name: 'RunRepeat Score' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Price' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Release date' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Plate' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Easy .* score/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tongue gusset' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Future test' })).not.toBeInTheDocument();
+    expect([...container.querySelectorAll('.results h4')].map((heading) => heading.textContent))
+      .toEqual(['Cushioning', 'Other']);
+  });
+
+  it.each([
+    {
+      source: 'the current default',
+      overrides: {} as Partial<PickerProps>,
+      key: 'midsole-softness-22',
+      label: 'Midsole softness (2022 · current)',
+    },
+    {
+      source: 'the explicit generation choice',
+      overrides: { generations: { 'midsole-softness-22': 'midsole-softness' } },
+      key: 'midsole-softness',
+      label: 'Midsole softness (retired method)',
+    },
+    {
+      source: 'a retired-generation range',
+      overrides: { ranges: { 'midsole-softness': { min: 20 } } },
+      key: 'midsole-softness',
+      label: 'Midsole softness (retired method)',
+    },
+    {
+      source: 'a retired-generation open row',
+      overrides: { rows: ['midsole-softness'] },
+      key: 'midsole-softness',
+      label: 'Midsole softness (retired method)',
+    },
+    {
+      source: 'a retired-generation column',
+      overrides: { columns: ['midsole-softness'] },
+      key: 'midsole-softness',
+      label: 'Midsole softness (retired method)',
+    },
+  ])('keeps $source label, key and fact together', async ({
+    overrides,
+    key,
+    label,
+  }) => {
+    const { props } = await renderGuide(overrides);
+
+    await fireEvent.click(screen.getByRole('button', { name: label }));
+    expect(screen.getByText(metricHelpOf(key)!.text)).toBeInTheDocument();
+    const other = key === 'midsole-softness' ? '2022 · current' : 'retired method';
+    expect(screen.queryByRole('button', { name: new RegExp(other) })).not.toBeInTheDocument();
+    expect(props.onchange).not.toHaveBeenCalled();
+  });
+
+  it('restores checklist scroll and guide-entry focus on Back without changing columns', async () => {
+    const onchange = vi.fn();
+    const { container } = render(ColumnPicker, {
+      props: { ...base, columns: ['score'], onchange },
+    });
+    await fireEvent.click(container.querySelector('summary')!);
+    await settle();
+    const list = container.querySelector<HTMLElement>('.list')!;
+    list.scrollTop = 137;
+    await fireEvent.click(screen.getByRole('button', { name: 'Metric guide' }));
+    await tick();
+    expect(container.querySelector('.list')).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await tick();
+
+    const restored = container.querySelector<HTMLElement>('.list')!;
+    expect(restored.scrollTop).toBe(137);
+    expect(screen.getByRole('button', { name: 'Metric guide' })).toHaveFocus();
+    expect(screen.getByRole('checkbox', { name: /^RunRepeat Score/ })).toBeChecked();
+    expect(onchange).not.toHaveBeenCalled();
+  });
+
+  it.each(['summary', 'Escape', 'outside press', 'focus leave'])(
+    'resets guide mode after %s dismissal',
+    async (way) => {
+      const { details, summary } = await renderGuide();
+      await fireEvent.input(screen.getByRole('searchbox', { name: 'Search metrics' }), {
+        target: { value: 'stack' },
+      });
+
+      if (way === 'summary') await fireEvent.click(summary);
+      else if (way === 'Escape') await fireEvent.keyDown(details, { key: 'Escape' });
+      else if (way === 'outside press') press(document.body);
+      else await fireEvent.focusOut(screen.getByRole('heading', { name: 'Metric guide' }), {
+        relatedTarget: document.body,
+      });
+      await settle();
+      expect(details.open).toBe(false);
+
+      await fireEvent.click(summary);
+      await settle();
+      expect(details.open).toBe(true);
+      expect(screen.queryByRole('searchbox', { name: 'Search metrics' })).not.toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: /Heel stack/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Metric guide' })).toBeInTheDocument();
+    },
+  );
+
+  it('does not resolve or render checklist coverage while the guide is mounted', async () => {
+    const coverage = vi.mocked(coverageOf);
+    coverage.mockClear();
+    const rendered = await renderGuide();
+    const callsBeforeGuideUpdate = coverage.mock.calls.length;
+    expect(callsBeforeGuideUpdate).toBeGreaterThan(0);
+    expect(rendered.container.querySelector('.list')).toBeNull();
+    expect(rendered.container.querySelectorAll('.bar, .pct')).toHaveLength(0);
+
+    await rendered.rerender({ ...rendered.props, population: [...FLEET] });
+    await tick();
+    expect(coverage).toHaveBeenCalledTimes(callsBeforeGuideUpdate);
+  });
+});
+
 describe('ColumnPicker and the Easy score', () => {
   it('offers a tickable score column per zone, each naming its own', () => {
     render(ColumnPicker, { props: { ...base, columns: [EASY.keys.heel], onchange: vi.fn() } });
@@ -161,8 +351,6 @@ it('states what the direction marks mean, once, above the list', () => {
  * (docs/app.md §Every floating panel dismisses the same way).
  */
 describe('ColumnPicker dismissal', () => {
-  const press = (target: EventTarget) =>
-    target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
   const pointerListeners = (spy: { mock: { calls: unknown[][] } }) =>
     spy.mock.calls.filter(([type]) => type === 'pointerdown').length;
   /**
@@ -171,11 +359,6 @@ describe('ColumnPicker dismissal', () => {
    * microtask flush lands *between* the element opening and the binding hearing about it, and every
    * assertion below would read a state one event behind the DOM.
    */
-  const settle = async () => {
-    await new Promise((r) => setTimeout(r, 0));
-    await tick();
-  };
-
   async function setup() {
     const { container, unmount } = render(ColumnPicker, {
       props: { ...base, columns: ['score'], onchange: vi.fn() },

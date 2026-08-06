@@ -146,9 +146,9 @@
   }
   /* `overflow-y: auto` computes `overflow-x` to `auto` as well, so this is a scrollport on both
      axes and a row flush against its edge has its outside ring cropped: `.scrollport` in `app.css`
-     is where the room is reserved, for this list and the three others (docs/app.md §Theming). The
-     negative inline margin gives that room back to the dialog's own padding, so the rows sit
-     exactly where they did; the block room is left to stand, where it reads as part of the gap. */
+     is where every such port reserves the room (docs/app.md §Theming). The negative inline margin
+     gives that room back to the dialog's own padding, so the rows sit exactly where they did; the
+     block room is left to stand, where it reads as part of the gap. */
   /* The INLINE-END pair is the SCROLLBAR's room, not the ring's, and it is the same reservation the
      column picker's list makes for the same reason: every row here ends in a coverage figure, and
      it sat 4px from a bar that takes layout in one regime and is painted straight over the figure

@@ -1523,9 +1523,10 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
  * A focus ring drawn as an outside `box-shadow` needs 4px of room outside the element, and **every**
  * scrollport holding a focusable has to reserve it — `overflow-y: auto` computes `overflow-x` to
  * `auto` as well, so a control flush against the port's edge has its ring clipped on the sides and
- * at whichever end it is scrolled to (docs/app.md §Theming). There are four, and the reservation is
- * made once by `.scrollport` in `app.css`; this walks all four, because the way that rule was got
- * wrong before was a list nobody had counted.
+ * at whichever end it is scrolled to (docs/app.md §Theming). The reservation is made once by
+ * `.scrollport` in `app.css`; this walks every active port because the way that rule was got wrong
+ * before was a list nobody had counted. The picker checklist and guide are mutually exclusive, so
+ * switching modes replaces one measured port with the other rather than adding a hidden one.
  *
  * Measured rather than asserted from the CSS, because the slack is the sum of the port's own
  * padding and whatever inset its content carries. The second measurement focuses the last control
@@ -1539,7 +1540,7 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
   await page.goto('/');
 
   // Both `<details>` opened without a press: an outside `pointerdown` is a dismissal, so clicking
-  // one to open it would shut the other and the four could never be measured in one pass.
+  // one to open it would shut the other and the ports could never be measured in one pass.
   await page.getByRole('button', { name: /^Add filter/ }).click();
   await page.evaluate(() => {
     for (const d of document.querySelectorAll<HTMLDetailsElement>('details')) d.open = true;
@@ -1583,7 +1584,7 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
   });
 
   // Enumerated rather than listed: the way this rule was got wrong was a scrollport nobody had
-  // counted, so a fifth one that forgets `.scrollport` has to fail here on the day it is added.
+  // counted, so a new one that forgets `.scrollport` has to fail here on the day it is added.
   expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(5);
 
   // 4px is the ring's outer radius; anything less and it is drawn cropped.

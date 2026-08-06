@@ -194,7 +194,8 @@ object from rebuilding all three stories' score maps over both zones. Reading
 `view.stability` directly at the point of use puts them back on every frame.
 
 **Nothing invisible pays for itself.** A closed `<details>` still renders its
-children, so `ColumnPicker` resolves its coverage bars only while open, and
+children, so `ColumnPicker` resolves its coverage bars only while open **and
+while its checklist is the active mode**; the guide unmounts that checklist.
 `FilterSidebar` resolves the add-filter options' coverage where the dialog is
 mounted rather than in the derived that feeds it. Each figure is a full pass
 over the population, and there are forty-odd of them.
@@ -468,7 +469,7 @@ already, except that here the control is one section up rather than in the list
 below.
 
 **Metric help states provenance, not preference.** `lib/metric-help.ts` owns a
-short factual account of what each current numeric range represents and how
+short factual account of what each authored numeric method represents and how
 RunRepeat obtains it, with a direct RunRepeat methodology link where one exists.
 It also translates the app's declared direction into one literal sentence:
 whether higher or lower readings are better, or whether neither end is
@@ -479,6 +480,13 @@ RunRepeat's own 0–100 verdict rather than a Shoe Lab calculation; no derivatio
 link is invented for it. The registry is deliberately permissive: an upstream
 numeric test with no authored fact remains available to filter, without a help
 control, until its method has been researched.
+
+The same registry feeds the read-only guide in Columns. It receives the fixed
+shoe fields and the selected method-era offers that the checklist actually
+renders, then omits any key whose fact is absent. That lookup boundary is what
+lets a new catalogue metric remain a usable column without presenting an
+unresearched explanation, and what keeps a superseded method's visible label,
+key and fact on the same selected generation.
 
 **The visible affordance is one small `?` beside the metric name.** The sidebar
 puts one beside each explained heading, not beside each bound: a heel/forefoot
@@ -1107,6 +1115,23 @@ against the build that opens it (§URL encoding).
 The picker is a `<details>`, and it closes on an outside press and on Escape
 like every other floating panel — neither of which a native disclosure gives
 (docs/app.md §Every floating panel dismisses the same way).
+
+Its checklist and **Metric guide** are mutually exclusive modes in the same
+panel slot. The entry is a single button outside the checklist scrollport, so
+no checkbox row gains a second focus stop or changes its selection behaviour.
+The guide is read-only: browsing preserves the fixed-fields-first and catalogue
+group order of the rendered offers, while a search flattens matches without
+reordering them. Only registry-backed offers appear; categorical columns and
+unknown future metrics remain available in the checklist without speculative
+help.
+
+Guide state is private and temporary. Entering it saves the checklist scroll
+position and deliberately focuses the guide heading rather than its search;
+Back remounts the checklist at that position and returns focus to the guide
+entry. Closing through the summary, outside press, focus leave or Escape resets
+to checklist mode, so reopening never restores a stale search or expanded fact.
+The two modes never mount together, which also keeps checklist coverage passes
+out of a read-only guide (docs/app.md §What a drag may recompute).
 
 The picker and the sidebar both offer `metricEntries` (`app/src/lib/lineage.ts`)
 rather than the raw catalogue, so a superseded pair is one entry and a
@@ -3844,16 +3869,14 @@ place**: `--ring-room` is the ring's own outer spread, the ring reads it so the
 two cannot drift, and `.scrollport` in `app.css` pays it as `padding` plus a
 matching `scroll-padding` — the padding for a control at rest, the
 `scroll-padding` for one Tab has just scrolled flush against the edge. A
-scrollport carries that class; it does not restate the number. There are four —
-the column picker's list, the add-filter dialog's list, the brand list and the
-sidebar — and the rule was originally written per list against a spec that named
-**two**, so the two nobody had counted reserved nothing and clipped the ring on
-every row Tab scrolled to. `smoke.spec.ts` therefore **enumerates** every
-scrolling box that holds a focusable and measures its slack rather than reading
-the CSS back, so a fifth scrollport that forgets the class fails on the day it is
-added. The three lists give the inline room back with a negative margin of their
-own, and the sidebar's takes it out of `FilterSidebar`'s padding, so nothing
-moved on screen.
+scrollport carries that class; it does not restate the number. The picker guide
+and checklist are one active port rather than two because their modes are never
+mounted together. `smoke.spec.ts` therefore **enumerates** every scrolling box
+that holds a focusable and measures its slack rather than reading the CSS back,
+so a new port that forgets the class fails on the day it is added. Ports whose
+inline room must not move their content give it back with a negative margin of
+their own, and the sidebar takes it out of `FilterSidebar`'s padding, so nothing
+moves on screen.
 
 **Reserving the room is only half of it: the app scrolls focus into that room
 itself.** A ring is worth what the browser's willingness to scroll the thing

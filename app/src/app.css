@@ -229,15 +229,14 @@ input[type='checkbox']:disabled { cursor: default; opacity: 0.5; }
  * the room for one Tab has just scrolled flush against the edge — both are needed and neither
  * substitutes for the other.
  *
- * ONE rule rather than one per list, because the way this was got wrong was arithmetic: the spec
- * named two lists, the app had four, and the two nobody had counted (the brand list and the
- * sidebar) reserved nothing. A scrollport carries this class and pays the reservation from here;
+ * ONE rule rather than one per list, because the way this was got wrong was arithmetic: uncounted
+ * lists reserved nothing. A scrollport carries this class and pays the reservation from here;
  * `smoke.spec.ts` enumerates every scrolling box holding a focusable and fails on one that does not.
  *
  * `border-box`, so a port that states a `max-height` still measures that tall with the room inside
- * it. Where the 4px must not move the content — the two metric lists and the brand list — the
- * component gives it back with a negative inline margin of its own, which is a layout decision
- * about that list rather than part of the reservation.
+ * it. Where the 4px must not move the content, the component gives it back with a negative inline
+ * margin of its own, which is a layout decision about that port rather than part of the
+ * reservation.
  */
 :where(.scrollport) {
   box-sizing: border-box;
