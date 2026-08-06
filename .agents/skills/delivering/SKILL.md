@@ -21,6 +21,14 @@ reasons to stop are BLOCKED, a DISCOVERY that moves behaviour, or done.
   yourself, is not approval; the line is, and only the user can write it.
 - Use the environment's worktree workflow, or `git worktree` directly when no
   helper exists. Never work on main without explicit consent.
+- Provision dependencies inside the worktree before running repository commands.
+  When its lockfile matches an already-installed checkout, prefer a real local
+  copy of that checkout's dependency directory; use a copy-on-write/reflink copy
+  where the host supports one. Do not symlink the whole `node_modules` directory
+  across checkouts: Vite/ESM follows realpaths and may resolve config imports from
+  the source checkout instead. If the lockfile differs or a safe copy is not
+  available, install from the lockfile in the worktree. Then use repository-owned
+  package scripts, not binaries invoked from another checkout.
 - Commit the approved spec before implementation begins — worktrees do not
   share untracked files, and the crew reads the spec from the repo. It is
   normally the branch's first commit. One explicitly user-requested
