@@ -59,6 +59,21 @@ describe('metricEntries', () => {
     expect(e.retired.generation).toBe('2022 · retired');
     expect(e.current.generation).toBe('2025 · current');
   });
+  it.each(['absent', 'unknown'] as const)(
+    'keeps a formal predecessor retired by role when its published status is %s',
+    (status) => {
+      const predecessor = labTest({ id: 1, slug: 'grip-22', name: 'Grip', updateId: 2 });
+      if (status === 'absent') delete (predecessor as { methodStatus?: unknown }).methodStatus;
+      else predecessor.methodStatus = 'paused' as never;
+      const e = metricEntries([
+        predecessor,
+        labTest({ id: 2, slug: 'grip-25', name: 'Grip', previousId: 1 }),
+      ])[0]! as Extract<ReturnType<typeof metricEntries>[number], { kind: 'pair' }>;
+      expect(e.retired).toMatchObject({
+        key: 'grip-22', generation: '2022 · retired', lifecycle: 'retired', retired: false,
+      });
+    },
+  );
   it('carries an exact test status through singles and treats absent or unknown status as no claim', () => {
     const absent = labTest({ id: 2, slug: 'cached-test', name: 'Cached test' });
     delete (absent as { methodStatus?: unknown }).methodStatus;
@@ -258,7 +273,12 @@ describe('declared zone pairs against the published catalogue', () => {
       expect(found, `${pair.label} does not resolve to one entry`).toHaveLength(1);
       const parts = colocatedOf(found[0]!).parts;
       expect(parts.map((p) => p.key)).toEqual([pair.forefoot, pair.heel]);
-      expect(new Set(parts.map((p) => p.retired)).size, `${pair.label} has mixed method status`).toBe(1);
+    }
+  });
+  it('gives every resolved colocated family one method status', () => {
+    for (const entry of metricEntries(tests)) {
+      if (entry.kind !== 'colocated') continue;
+      expect(new Set(entry.parts.map((p) => p.retired)).size, `${entry.label} has mixed method status`).toBe(1);
     }
   });
 });
