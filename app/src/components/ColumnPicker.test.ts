@@ -5,6 +5,7 @@ import ColumnPicker from './ColumnPicker.svelte';
 import { indexTests } from '../lib/dataset';
 import { EASY } from '../lib/score-defs';
 import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
+import type { Shoe } from '../../../shared/types.js';
 
 const idx = indexTests(TESTS);
 const base = {
@@ -98,6 +99,31 @@ describe('ColumnPicker metric entries', () => {
     expect(cushioning.textContent).toContain('Energy return forefoot');
     await fireEvent.click(screen.getByRole('checkbox', { name: /Energy return forefoot/ }));
     expect(onchange).toHaveBeenLastCalledWith(['energy-return-forefoot']);
+  });
+  it('names each uniformly retired colocated part with its own coverage and sole focus stop', async () => {
+    const tests = TESTS.map((test) => test.id === 65 || test.id === 66
+      ? { ...test, methodStatus: 'retired' as const }
+      : test);
+    const population: Shoe[] = [
+      { ...FLEET[0]!, values: { '65': 70, '66': 55 } },
+      { ...FLEET[1]!, values: { '65': 75 } },
+    ];
+    const { container } = render(ColumnPicker, { props: {
+      ...base, tests, population, idx: indexTests(tests), columns: [], onchange: vi.fn(),
+    } });
+    await fireEvent.click(container.querySelector('summary')!);
+    await new Promise((resolve) => setTimeout(resolve));
+
+    const heel = screen.getByRole('checkbox', {
+      name: 'Energy return (heel) (retired) 100%',
+    });
+    const forefoot = screen.getByRole('checkbox', {
+      name: 'Energy return forefoot (retired) 50%',
+    });
+    const focusStops = (checkbox: HTMLElement) => checkbox.closest('label')!
+      .querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    expect([...focusStops(heel)]).toEqual([heel]);
+    expect([...focusStops(forefoot)]).toEqual([forefoot]);
   });
   // Opened first, because the figures are resolved for an open panel only: each is a full pass over
   // the population, and a closed picker recomputing forty of them on every view update is what made

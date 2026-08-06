@@ -1091,8 +1091,8 @@ test('keeps metric help and both filter surfaces inside their measured bounds', 
     expect(rows.every((row) => row.overflow === 0)).toBe(true);
     expect(await dialog.locator('.list').evaluate((port) => port.scrollWidth - port.clientWidth)).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-    // The production-complete formal-method fixture makes this list taller than the sampled help
-    // walk above, so return the row to the scrollport before pressing through its painted figure.
+    // The prepared fixture makes this list taller than the sampled help walk above, so return the
+    // row to the scrollport before pressing through its painted figure.
     const firstOffer = dialog.locator('.offer').first();
     await firstOffer.scrollIntoViewIfNeeded();
     const percentage = await firstOffer.locator('.pct').boundingBox();

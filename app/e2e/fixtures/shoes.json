@@ -18,6 +18,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": []
     },
@@ -29,6 +30,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [],
       "id": 5,
@@ -46,6 +48,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": []
     },
@@ -60,6 +63,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [
         66
@@ -106,6 +110,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [],
       "options": [
@@ -130,6 +135,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [],
       "options": [
@@ -151,6 +157,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": 65,
       "secondaryTestIds": [],
       "id": 66,
@@ -168,6 +175,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": []
     },
@@ -179,6 +187,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [],
       "id": 25,
@@ -193,6 +202,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [],
       "id": 26,
@@ -210,6 +220,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [
         67
@@ -226,6 +237,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": 68,
       "secondaryTestIds": []
     },
@@ -240,6 +252,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": []
     },
@@ -254,6 +267,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": []
     },
@@ -313,6 +327,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": []
     },
@@ -327,6 +342,7 @@
       "isNew": false,
       "previousId": null,
       "updateId": null,
+      "methodStatus": null,
       "primaryTestId": null,
       "secondaryTestIds": [],
       "options": null
