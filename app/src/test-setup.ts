@@ -1,4 +1,7 @@
-import '@testing-library/jest-dom/vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { expect } from 'vitest';
+
+expect.extend(matchers);
 
 /** jsdom has no top layer. Component tests still need the open/close calls to succeed; visibility,
  * clipping and placement remain browser assertions because jsdom has no layout to model them. */
