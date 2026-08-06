@@ -297,6 +297,134 @@ test('drives the column picker guide keyboard path and restores Back state', asy
     .toBe(scoreInitiallyChecked);
 });
 
+/**
+ * A first/last probe misses the failure focus scrolling was added for: a middle control can be
+ * absent from the sequential route, or can receive focus while its ring remains under an edge of
+ * the independently scrolling results. Walk the rendered route because source stops exist only
+ * while their owning disclosure is open, so a static DOM inventory cannot describe it.
+ */
+test('walks every column picker guide control by Tab without clipping', async ({ page, browserName }) => {
+  test.slow();
+  await page.setViewportSize({ width: 360, height: 844 });
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  const picker = page.locator('details.picker');
+  const summary = picker.locator('summary');
+  await summary.click();
+  await picker.getByRole('button', { name: 'Metric guide' }).click();
+  await expect(picker.getByRole('heading', { name: 'Metric guide' })).toBeFocused();
+
+  const expectedDisclosures = (await picker.locator('.results .disclosure').allTextContents())
+    .map((name) => name.trim());
+  const priceIndex = expectedDisclosures.indexOf('Price');
+  expect(priceIndex, 'the fixture no longer puts Price between other guide disclosures')
+    .toBeGreaterThan(0);
+  expect(priceIndex, 'the fixture no longer puts Price between other guide disclosures')
+    .toBeLessThan(expectedDisclosures.length - 1);
+  const expectedDocumentOverflow = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(expectedDocumentOverflow, `${browserName} starts the 360px guide walk with page overflow`)
+    .toBe(0);
+
+  const visitedKinds: string[] = [];
+  const visitedDisclosures: string[] = [];
+  const expectedSources: string[] = [];
+  const visitedSources: string[] = [];
+  const bad: string[] = [];
+  let entered = false;
+  let left = false;
+  await summary.focus();
+  // A disclosure can contribute itself and one source. Back, search, and the exit add three more;
+  // the fixed surplus keeps the loop bounded even if broken focus cycles inside the picker.
+  const guardLimit = expectedDisclosures.length * 2 + 6;
+  for (let guard = 0; guard < guardLimit && !left; guard++) {
+    await page.keyboard.press('Tab');
+    // `keepFocusInScrollports` applies its owned correction on the next frame.
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    const state = await picker.evaluate((node) => {
+      const guide = node.querySelector<HTMLElement>('.guide');
+      const port = guide?.querySelector<HTMLElement>('.results');
+      const el = document.activeElement as HTMLElement | null;
+      if (!guide || !port || !el || !guide.contains(el)) return { inside: false } as const;
+      const box = el.getBoundingClientRect();
+      const portBox = port.getBoundingClientRect();
+      // Firefox gives an overflowing port a tab stop of its own. It is part of the route but not a
+      // rendered guide control inside itself, so only its viewport and document state apply.
+      const kind = el === port ? 'port'
+        : el.classList.contains('back') ? 'back'
+        : el.classList.contains('search') ? 'search'
+          : el.classList.contains('disclosure') ? 'disclosure'
+            : el.matches('a[href]') ? 'source' : 'unknown';
+      const name = el === port ? 'guide results port'
+        : el.getAttribute('aria-label') ?? el.textContent?.trim() ?? el.tagName;
+      const inPort = port.contains(el);
+      return {
+        inside: true,
+        kind,
+        name,
+        inPort,
+        portSlack: inPort && el !== port
+          ? Math.round(Math.min(
+            box.left - portBox.left,
+            portBox.right - box.right,
+            box.top - portBox.top,
+            portBox.bottom - box.bottom,
+          ))
+          : null,
+        viewportSlack: Math.round(Math.min(
+          box.left,
+          window.innerWidth - box.right,
+          box.top,
+          window.innerHeight - box.bottom,
+        )),
+        documentOverflow: document.documentElement.scrollWidth
+          - document.documentElement.clientWidth,
+      } as const;
+    });
+    if (!state.inside) {
+      if (entered) left = true;
+      continue;
+    }
+    entered = true;
+    visitedKinds.push(state.kind);
+    if (state.kind === 'disclosure') visitedDisclosures.push(state.name);
+    if (state.kind === 'source') visitedSources.push(state.name);
+    if (state.kind === 'unknown') bad.push(`${state.name}: unknown sequential guide control`);
+    if (state.viewportSlack < 4) {
+      bad.push(`${state.name}: ${state.viewportSlack}px inside the viewport, ring clipped`);
+    }
+    if ((state.kind === 'disclosure' || state.kind === 'source') && !state.inPort) {
+      bad.push(`${state.name}: result control escaped the active guide port`);
+    }
+    if (state.portSlack !== null && state.portSlack < 4) {
+      bad.push(`${state.name}: ${state.portSlack}px inside the guide port, ring clipped`);
+    }
+    if (state.documentOverflow !== expectedDocumentOverflow) {
+      bad.push(`${state.name}: changed document overflow from ${expectedDocumentOverflow}px to ${state.documentOverflow}px`);
+    }
+
+    if (state.kind === 'disclosure') {
+      await page.keyboard.press('Enter');
+      await expect(page.locator(':focus')).toHaveAttribute('aria-expanded', 'true');
+      const source = await page.evaluate(() => {
+        const active = document.activeElement as HTMLElement | null;
+        return active?.closest('.entry')?.querySelector<HTMLAnchorElement>('a[href]')
+          ?.textContent?.trim() ?? null;
+      });
+      if (source !== null) expectedSources.push(source);
+    }
+  }
+
+  expect(left, `${browserName} guide Tab walk never reached the far side of the picker`).toBe(true);
+  expect(visitedKinds.slice(0, 2), `${browserName} guide route did not start Back, then search`)
+    .toEqual(['back', 'search']);
+  expect(visitedDisclosures, `${browserName} guide Tab walk skipped or reordered a disclosure`)
+    .toEqual(expectedDisclosures);
+  expect(visitedSources, `${browserName} guide Tab walk skipped or reordered an expanded source`)
+    .toEqual(expectedSources);
+  expect(bad, `${browserName} guide did not follow sequential focus`).toEqual([]);
+});
+
 for (const exit of ['Escape', 'outside press', 'forward focus exit', 'backward focus exit'] as const) {
   test(`dismisses the column picker guide on ${exit} and resets its mode`, async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });

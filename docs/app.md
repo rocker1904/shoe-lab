@@ -1141,9 +1141,11 @@ the lifecycle labels retain the same one- or two-line bounds. Both active
 scrollports and the document have zero horizontal overflow there. Across the
 existing below-floor-to-desktop width sweep the guide stays on screen wherever
 the checklist does; at the unsupported 320px case each inherits the document's
-existing 26px overflow rather than adding any of its own. The guide is therefore
-deliberately shorter by the legend it does not render — do not equalise the two
-heights by adding empty space.
+existing 26px overflow rather than adding any of its own. Each panel is 304px
+wide there, from x=8px to x=312px; it is the table and document that remain
+wider than the viewport, not the picker. The guide is therefore deliberately
+shorter by the legend it does not render — do not equalise the two heights by
+adding empty space.
 
 The picker and the sidebar both offer `metricEntries` (`app/src/lib/lineage.ts`)
 rather than the raw catalogue, so a superseded pair is one entry and a
@@ -3617,8 +3619,10 @@ container set it themselves — so a width meant as a total has to say so:
   sizing shrinks it to 320px and wraps it, which the design forbids. **Below
   360px the 20rem cannot fit at all** — 346px of panel wants 354px of screen —
   so there the panel spans the bar (`left`/`right` both at `--s2`, `min-width: 0`
-  to let them size it) and the legend does take a second line. One width, traded
-  for the checkboxes being on screen.
+  to let them size it) and the legend does take a second line. At 320px both
+  picker modes now measure 304px from x=8px to x=312px: the document still
+  overflows because of the table, but the picker itself does not inherit that
+  overhang. One width, traded for the checkboxes being on screen.
 
 **Both anchored panels hang off the chrome below 800px, not off their own
 trigger.** The `right: 0` says "the end of the row", which was true while the
@@ -4278,22 +4282,26 @@ docs/scraping.md §Test lineage.
 **320px is not supported, and the cost of supporting it is why.** Every phone
 bound in this document is stated at 360 — the usual Android width — and at 360
 the app is clean: the document scrolls sideways by **0px** in Chromium and
-Firefox, and every floating panel is on screen. At 320 it is not, and the
-failures are one failure wearing three faces:
+Firefox and WebKit, and every floating panel is on screen. At 320 it is not. The
+table's minimum still appears through the document and toolbar, while the
+picker independently clamps itself inside the viewport:
 
-| at 320px | measured |
+| current result at 320px | measured |
 |---|---|
-| the document scrolls sideways | **27px** Chromium, **26px** Firefox |
-| the toolbar overflows its own row | 27px in Firefox; Chromium spends it on a `.chrome` grown to 347px instead |
-| the column picker's panel leaves the screen | 19px past the right edge in Chromium |
+| the document scrolls sideways | **26px** Chromium, Firefox and WebKit |
+| the toolbar overflows its own row | **17px** Chromium, **27px** Firefox, **19px** WebKit; the chrome remains 320px |
+| the column picker remains on screen | 304px wide, from x=8px to x=312px, in both modes |
 
-The cause is the same in all three: the six-column list needs **332px of table
-plus 2px of panel border**, and after the bleed the document's minimum is 347px.
-Nothing about the chrome is really at fault — it follows the document (§The
-chrome bands), so it reports the table's shortfall as its own.
+The first two are the same failure: the six-column list needs **332px of table
+plus 2px of panel border**, and after the bleed the document's minimum is about
+346px. Nothing about the chrome is really at fault — it follows the document
+(§The chrome bands), so it reports the table's shortfall as its own. The picker
+used to follow an off-screen toolbar anchor and report that shortfall too; its
+current below-360 span rule removes that panel symptom without changing the
+table, the document or the compatibility floor (§Stacking order).
 
 **So the only real fix is narrower columns, and that is the bill.** Fitting six
-into 320 means giving up 27px across them: 53px a column becomes about 48.5px,
+into 320 means giving up roughly 26–27px across them: 53px a column becomes about 48.5px,
 and the text bound inside it — `MAX_LABEL_PX`, 48px today — becomes about 44.5px.
 Measured against the real catalogue with the app's own `widestWordPx`, that takes
 the labels with a word too wide for their column from **2 of 55 to 21 of 55**.
