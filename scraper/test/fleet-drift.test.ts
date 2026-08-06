@@ -143,3 +143,24 @@ describe('gates are skipped without a previous run', () => {
     expect(() => buildDataset(tests, metrics, details)).not.toThrow();
   });
 });
+
+describe('the SHOE_LAB_ALLOW_FLEET_SHIFT build option', () => {
+  const skipFleetValidation = { skipFleetValidation: true };
+
+  it('skips only comparison-based fleet drift', () => {
+    const previous = baseline();
+    const { metrics, details } = fleet();
+    for (const record of Object.values(details.shoes)) {
+      if (!('gone' in record)) { record.pros = []; record.cons = []; record.intro = ''; }
+    }
+    expect(() => buildDataset(tests, metrics, details, undefined, undefined, previous, skipFleetValidation)).not.toThrow();
+  });
+
+  it('still rejects loss of a previously published retirement', () => {
+    const previous = baseline();
+    previous.tests.find((test) => test.slug === 'heel-stack')!.methodStatus = 'retired';
+    const { metrics, details } = fleet();
+    expect(() => buildDataset(tests, metrics, details, undefined, undefined, previous, skipFleetValidation))
+      .toThrow(/heel-stack.*retired/);
+  });
+});

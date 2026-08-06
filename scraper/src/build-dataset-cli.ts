@@ -19,12 +19,11 @@ try {
   // hand-edited (docs/decisions.md §Git is the database). Absent is fine: the file is optional.
   const curatedPath = fileURLToPath(new URL('../../curated/release-dates.jsonl', import.meta.url));
   const curated = existsSync(curatedPath) ? parseCuratedDates(readFileSync(curatedPath, 'utf8')) : new Map<string, string>();
-  // The last published dataset is the previous run: git is the database, so it is simply on disk
-  // (docs/decisions.md §Git is the database). A genuine catalogue shift is a deliberate act, and
-  // SHOE_LAB_ALLOW_FLEET_SHIFT=1 builds it as a first run does — absolute gates only
-  // (docs/scraping.md §Validation gates).
-  const previous = process.env.SHOE_LAB_ALLOW_FLEET_SHIFT === '1' ? null : dir.read<ShoesFile>('shoes.json');
-  const { shoesFile, csv, ruleDerived, pageDated } = buildDataset(tests, metrics, details, releaseYears, curated, previous);
+  // The last published dataset stays available to irreversible catalogue gates. A deliberate
+  // fleet shift skips only the relative fleet comparison (docs/scraping.md §Validation gates).
+  const previous = dir.read<ShoesFile>('shoes.json');
+  const options = { skipFleetValidation: process.env.SHOE_LAB_ALLOW_FLEET_SHIFT === '1' };
+  const { shoesFile, csv, ruleDerived, pageDated } = buildDataset(tests, metrics, details, releaseYears, curated, previous, options);
   validatePlateOverrides(ruleDerived);
   validateCuratedDates(curated, pageDated);
   dir.write('shoes.json', shoesFile);

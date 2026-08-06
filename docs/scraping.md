@@ -164,9 +164,11 @@ means a red workflow and untouched `data/` — never a partial write.
   `metrics.json`. `scraper/test/fleet-drift.test.ts` is the matrix these are
   calibrated against — every bound has a boundary test, and a fleet-wide drift
   of each field has a red one. A **genuine** catalogue shift is a deliberate act:
-  `SHOE_LAB_ALLOW_FLEET_SHIFT=1 npm -w scraper run build:dataset` builds it the
-  way a first run builds, absolute gates only, so the shift lands in one
-  reviewable data commit and the next run is relative to it again.
+  `SHOE_LAB_ALLOW_FLEET_SHIFT=1 npm -w scraper run build:dataset` skips these
+  fleet comparisons, so the shift lands in one reviewable data commit and the
+  next run is relative to it again. It still supplies the previous catalogue to
+  irreversible metadata gates; the override cannot clear a published method
+  retirement.
 
 ## Determinism
 
