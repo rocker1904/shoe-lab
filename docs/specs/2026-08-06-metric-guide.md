@@ -1,6 +1,6 @@
 # Metric guide in the column picker
 
-status: approved, in delivery
+status: delivered and frozen
 
 ## Purpose and scope
 
