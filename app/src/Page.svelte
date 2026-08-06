@@ -706,6 +706,7 @@
            onfilters={() => (showFilters ? closeFilters() : void openFilters())}>
     {#snippet columns()}
       <ColumnPicker tests={data.tests} groups={data.groups} columns={view.columns}
+                    ranges={view.filters.ranges} rows={view.rows}
                     population={considered} {idx} generations={view.generations}
                     onchange={(cols) => setView({ ...($state.snapshot(view) as ViewState), columns: cols })} />
     {/snippet}

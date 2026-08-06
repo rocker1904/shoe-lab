@@ -7,6 +7,8 @@
 
   export interface AddFilterOption {
     key: string; label: string; groupId: string | null; coverage: number; retired: boolean;
+    /** The visible label already identifies a formal predecessor as retired. */
+    lifecycleNamed: boolean;
   }
 
   let { options, groups, onchoose, onclose }: {
@@ -92,7 +94,7 @@
       {#each offers as o (o.key)}
         <div class="offer">
           <button type="button" class="choose" aria-label={o.retired
-                    ? `Add filter: ${o.label}, retired. ${RETIRED_METHOD_CONSEQUENCE}. ${o.coverage}% measured`
+                    ? `Add filter: ${o.label}${o.lifecycleNamed ? '.' : ', retired.'} ${RETIRED_METHOD_CONSEQUENCE}. ${o.coverage}% measured`
                     : `Add filter: ${o.label}, ${o.coverage}% measured`}
                   onclick={() => onchoose(o.key)}></button>
           <span class="name" aria-hidden="true">{o.label}</span>

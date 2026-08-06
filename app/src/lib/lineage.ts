@@ -20,6 +20,31 @@ export type ResolvedMetric =
       parts: { key: string; label: string; units: string; zone: Zone | null; retired: boolean }[];
     };
 
+export type FormalPair = Extract<ResolvedMetric, { kind: 'pair' }>;
+
+/** Every view surface that can make one generation of a formal pair active. */
+export interface GenerationEvidence {
+  generations: Readonly<Record<string, string>>;
+  ranges: Readonly<Record<string, unknown>>;
+  rows: readonly string[];
+  columns: readonly string[];
+}
+
+/**
+ * The generation one formal pair presents everywhere. An explicit retired selection is the only
+ * instruction stronger than active content; otherwise current content wins a hand-written
+ * conflict, retired-only content selects retired, and a pair with no evidence starts current.
+ */
+export function effectiveGeneration(pair: FormalPair, evidence: GenerationEvidence) {
+  if (evidence.generations[pair.current.key] === pair.retired.key) return pair.retired;
+  const active = (key: string) => key in evidence.ranges
+    || evidence.rows.includes(key)
+    || evidence.columns.includes(key);
+  if (active(pair.current.key)) return pair.current;
+  if (active(pair.retired.key)) return pair.retired;
+  return pair.current;
+}
+
 /** Which end of the shoe a reading describes, and which end the runner lands on. */
 export type Zone = 'heel' | 'forefoot';
 /** The two zones, in the order a runtime list of them is built — the type above has no runtime

@@ -480,7 +480,19 @@ describe('FilterSidebar filter set management', () => {
     });
     await open(within(container).getByRole('button', { name: 'Add filter' }));
     expect(within(screen.getByRole('dialog')).getByRole('button', {
-      name: /Add filter: Midsole softness — retired method.*retired.*Not used on newer shoes/i,
+      name: 'Add filter: Midsole softness — retired method. Not used on newer shoes. 0% measured',
+    })).toBeInTheDocument();
+  });
+
+  it('offers the retired generation inferred from a lone retired column', async () => {
+    const view = defaultView();
+    view.columns = ['midsole-softness'];
+    const { container } = render(FilterSidebar, {
+      props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET },
+    });
+    await open(within(container).getByRole('button', { name: 'Add filter' }));
+    expect(within(screen.getByRole('dialog')).getByRole('button', {
+      name: 'Add filter: Midsole softness — retired method. Not used on newer shoes. 0% measured',
     })).toBeInTheDocument();
   });
 
@@ -642,6 +654,23 @@ describe('FilterSidebar metric entries', () => {
     expect(screen.getByRole('group', { name: /Width \/ Fit — retired method/ })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /Width \/ Fit — current method/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Not used on newer shoes')).toBeNull();
+  });
+  it.each([
+    ['range', (view: ReturnType<typeof defaultView>) => {
+      view.filters.ranges['midsole-softness'] = { min: 20 };
+    }],
+    ['row', (view: ReturnType<typeof defaultView>) => {
+      view.rows = ['midsole-softness'];
+    }],
+  ])('infers the retired generation and its own units from a lone retired %s', (_surface, arrange) => {
+    const view = defaultView();
+    arrange(view);
+    const { container } = render(FilterSidebar, {
+      props: { data, view, onchange: vi.fn(), population: FLEET },
+    });
+    const retired = within(container).getByRole('radio', { name: 'Midsole softness, retired method' });
+    expect(retired).toHaveAttribute('aria-checked', 'true');
+    expect(retired).toHaveTextContent('retired method (HA)');
   });
   it('shares one status line across a uniformly retired colocated family', () => {
     const tests = [...TESTS,

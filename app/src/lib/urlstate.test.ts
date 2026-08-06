@@ -275,6 +275,55 @@ describe('generation choice', () => {
   it('drops a choice keyed on a test that does not exist', () => {
     expect(parseView('gen.made-up=midsole-softness', idx).generations).toEqual({});
   });
+  it.each([
+    ['range', 'r.midsole-softness=20~'],
+    ['row', 'rows=midsole-softness'],
+    ['column', 'cols=midsole-softness'],
+  ])('infers a lone retired %s without inventing an explicit selection', (surface, qs) => {
+    const v = parseView(qs, idx);
+    expect(v.generations).toEqual({});
+    if (surface === 'range') expect(v.filters.ranges).toEqual({ 'midsole-softness': { min: 20 } });
+    if (surface === 'row') expect(v.rows).toEqual(['midsole-softness']);
+    if (surface === 'column') expect(v.columns).toEqual(['midsole-softness']);
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  it('normalises every surface to current when current and retired evidence conflict', () => {
+    const v = parseView([
+      'rows=midsole-softness-22,midsole-softness',
+      'r.midsole-softness-22=30~',
+      'r.midsole-softness=20~',
+      'cols=midsole-softness,midsole-softness-22',
+    ].join('&'), idx);
+    expect(v.generations).toEqual({});
+    expect(v.rows).toEqual(['midsole-softness-22']);
+    expect(v.filters.ranges).toEqual({ 'midsole-softness-22': { min: 30 } });
+    expect(v.columns).toEqual(['midsole-softness-22']);
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  it('normalises every surface to retired when an explicit retired selection conflicts', () => {
+    const v = parseView([
+      'gen.midsole-softness-22=midsole-softness',
+      'rows=midsole-softness-22,midsole-softness',
+      'r.midsole-softness-22=30~',
+      'r.midsole-softness=20~',
+      'cols=midsole-softness-22,midsole-softness',
+    ].join('&'), idx);
+    expect(v.generations).toEqual({ 'midsole-softness-22': 'midsole-softness' });
+    expect(v.rows).toEqual(['midsole-softness']);
+    expect(v.filters.ranges).toEqual({ 'midsole-softness': { min: 20 } });
+    expect(v.columns).toEqual(['midsole-softness']);
+    expect(parseView(serializeView(v), idx)).toEqual(v);
+  });
+  it('drops retired-only surfaces when a current key is active elsewhere', () => {
+    const v = parseView([
+      'rows=midsole-softness-22',
+      'r.midsole-softness=20~',
+      'cols=midsole-softness',
+    ].join('&'), idx);
+    expect(v.rows).toEqual(['midsole-softness-22']);
+    expect(v.filters.ranges).toEqual({});
+    expect(v.columns).toEqual([]);
+  });
   it('round-trips show-missing and omits it when unset', () => {
     const v = defaultView();
     v.filters.showMissing = true;
@@ -289,6 +338,10 @@ describe('generation choice', () => {
   it('never admits both generations of a pair as columns at once', () => {
     const v = parseView('cols=midsole-softness,midsole-softness-22', idx);
     expect(v.columns).toEqual(['midsole-softness-22']);
+  });
+  it('never admits both generations of a pair as rows at once', () => {
+    const v = parseView('rows=midsole-softness,midsole-softness-22', idx);
+    expect(v.rows).toEqual(['midsole-softness-22']);
   });
 });
 

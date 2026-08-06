@@ -8,10 +8,12 @@
   import { dismissOnFocusLeave, dismissOnOutsidePress } from '../lib/dismiss';
   import { ICON_PATHS } from './icons';
   import { columnLabel } from '../lib/labels';
-  import { DERIVED_ZONE_PAIRS, metricEntries, type ResolvedMetric } from '../lib/lineage';
+  import { DERIVED_ZONE_PAIRS, effectiveGeneration, metricEntries, type ResolvedMetric } from '../lib/lineage';
+  import type { RangeBound } from '../lib/filters';
 
-  let { tests, groups, columns, onchange, population, idx, generations }: {
+  let { tests, groups, columns, ranges, rows, onchange, population, idx, generations }: {
     tests: LabTest[]; groups: Record<string, string>; columns: string[];
+    ranges: Record<string, RangeBound>; rows: string[];
     onchange: (cols: string[]) => void;
     /** Coverage denominator, matching the sidebar's (docs/app.md §Coverage). */
     population: Shoe[]; idx: TestIndex;
@@ -37,7 +39,7 @@
       return [{ key: e.key, label: unpairedLabel(e.label, e.retired), retired: e.retired }];
     }
     if (e.kind === 'pair') {
-      const g = generations[e.current.key] === e.retired.key ? e.retired : e.current;
+      const g = effectiveGeneration(e, { generations, ranges, rows, columns });
       return [{ key: g.key, label: `${e.label} (${g.generation})`, retired: g.retired }];
     }
     return e.parts.map((p) => ({ key: p.key, label: unpairedLabel(p.label, p.retired), retired: p.retired }));

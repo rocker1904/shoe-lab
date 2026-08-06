@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
 
 const options = [
-  { key: 'heel-stack', label: 'Stack — Heel', groupId: '3', coverage: 80, retired: false },
-  { key: 'stiffness', label: 'Stiffness (N)', groupId: null, coverage: 12, retired: false },
+  { key: 'heel-stack', label: 'Stack — Heel', groupId: '3', coverage: 80, retired: false, lifecycleNamed: false },
+  { key: 'stiffness', label: 'Stiffness (N)', groupId: null, coverage: 12, retired: false, lifecycleNamed: false },
 ];
 const groups = { '3': 'Cushioning' };
 
@@ -40,18 +40,28 @@ describe('AddFilterDialog', () => {
   });
   it('marks a retired option visibly and in the existing action name', () => {
     setup({ options: [
-      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true },
+      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true,
+        lifecycleNamed: false },
     ] });
     expect(screen.getByText('Not used on newer shoes')).toBeInTheDocument();
-    expect(screen.getByRole('button', {
-      name: /Add filter: Outsole hardness.*retired.*Not used on newer shoes.*80% measured/i,
-    })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Add filter:/ })).toHaveAccessibleName(
+      'Add filter: Outsole hardness, retired. Not used on newer shoes. 80% measured');
     expect(screen.queryByRole('status')).toBeNull();
+  });
+  it('does not speak retirement twice when a formal lifecycle label already says it', () => {
+    setup({ options: [
+      { key: 'midsole-softness', label: 'Midsole softness — retired method', groupId: '3', coverage: 0,
+        retired: true, lifecycleNamed: true },
+    ] });
+    expect(screen.getByRole('button', { name: /^Add filter:/ })).toHaveAccessibleName(
+      'Add filter: Midsole softness — retired method. Not used on newer shoes. 0% measured');
   });
   it('searches retired status and its visible consequence without matching an unretired option', async () => {
     setup({ options: [
-      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true },
-      { key: 'future-test', label: 'Future test', groupId: null, coverage: 5, retired: false },
+      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true,
+        lifecycleNamed: false },
+      { key: 'future-test', label: 'Future test', groupId: null, coverage: 5, retired: false,
+        lifecycleNamed: false },
     ] });
     const search = screen.getByLabelText('Filter metrics');
     for (const query of ['retired', 'not used on newer shoes']) {
@@ -99,7 +109,8 @@ describe('AddFilterDialog', () => {
 
   it('adds no focus stop for a retired status line', () => {
     setup({ options: [
-      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true },
+      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true,
+        lifecycleNamed: false },
     ] });
     const offer = screen.getByText('Not used on newer shoes').closest('.offer') as HTMLElement;
     expect(within(offer).getAllByRole('button')).toHaveLength(2);
@@ -117,7 +128,8 @@ describe('AddFilterDialog', () => {
   });
 
   it('keeps an unknown option addable without a help target or empty gap', () => {
-    setup({ options: [{ key: 'future-test', label: 'Future test', groupId: null, coverage: 0, retired: false }] });
+    setup({ options: [{ key: 'future-test', label: 'Future test', groupId: null, coverage: 0, retired: false,
+      lifecycleNamed: false }] });
     expect(screen.getByRole('button', { name: /^Add filter: Future test/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Help for Future test' })).toBeNull();
     expect(document.querySelector('.offer')?.children).toHaveLength(5);

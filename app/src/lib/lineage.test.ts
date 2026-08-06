@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NUMERIC_TEST_TYPES } from './dataset';
 import {
-  CURATED_RANGE_KEYS, generationLabel, metricEntries, ZONE_PAIRS, zoneKey, swapZone, type ResolvedMetric,
+  CURATED_RANGE_KEYS, effectiveGeneration, generationLabel, metricEntries, ZONE_PAIRS, zoneKey,
+  swapZone, type GenerationEvidence, type ResolvedMetric,
 } from './lineage';
 import { labTest } from './test-fixtures';
 import type { LabTest } from '../../../shared/types.js';
@@ -24,6 +25,43 @@ describe('generationLabel', () => {
   it('does not read a trailing number that is not a plausible method year', () => {
     expect(generationLabel('shoe-test-5', 'current')).toBe('current method');
     expect(generationLabel('some-test-99', 'retired')).toBe('retired method');
+  });
+});
+
+describe('effectiveGeneration', () => {
+  const pair = metricEntries([
+    labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', updateId: 70 }),
+    labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', previousId: 11 }),
+  ])[0]! as Extract<ResolvedMetric, { kind: 'pair' }>;
+  const evidence = (over: Partial<GenerationEvidence> = {}): GenerationEvidence => ({
+    generations: {}, ranges: {}, rows: [], columns: [], ...over,
+  });
+
+  it('defaults to current with no evidence', () => {
+    expect(effectiveGeneration(pair, evidence()).key).toBe('midsole-softness-22');
+  });
+
+  it.each([
+    ['range', { ranges: { 'midsole-softness': { min: 20 } } }],
+    ['row', { rows: ['midsole-softness'] }],
+    ['column', { columns: ['midsole-softness'] }],
+  ] as const)('infers retired from a lone retired %s', (_surface, over) => {
+    expect(effectiveGeneration(pair, evidence(over)).key).toBe('midsole-softness');
+  });
+
+  it('lets any current active key win a cross-surface conflict', () => {
+    expect(effectiveGeneration(pair, evidence({
+      rows: ['midsole-softness-22'], ranges: { 'midsole-softness': { min: 20 } },
+      columns: ['midsole-softness'],
+    })).key).toBe('midsole-softness-22');
+  });
+
+  it('lets an explicit retired selection win even when current keys are active', () => {
+    expect(effectiveGeneration(pair, evidence({
+      generations: { 'midsole-softness-22': 'midsole-softness' },
+      ranges: { 'midsole-softness-22': { min: 20 } }, rows: ['midsole-softness-22'],
+      columns: ['midsole-softness-22'],
+    })).key).toBe('midsole-softness');
   });
 });
 

@@ -5,7 +5,7 @@
   import { indexTests, isoYearsAgo, numericValue } from '../lib/dataset';
   import { startOfMonth } from '../lib/release-date';
   import { type RangeBound } from '../lib/filters';
-  import { CURATED_RANGE_KEYS, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
+  import { CURATED_RANGE_KEYS, effectiveGeneration, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
   import { stableBrandCounts, stableFacetCounts } from '../lib/population';
   import { excludedBy } from '../lib/relax';
   import type { ViewState } from '../lib/view';
@@ -49,15 +49,15 @@
     e.kind === 'single' ? [e.key] : e.kind === 'pair' ? [e.current.key, e.retired.key] : e.parts.map((p) => p.key);
   const byKey = $derived(new Map(entries.flatMap((e) => keysOf(e).map((k) => [k, e] as const))));
 
-  const held = (key: string) => key in view.filters.ranges || view.rows.includes(key);
   const chosenKey = (e: ResolvedMetric): string => {
     if (e.kind === 'single') return e.key;
     if (e.kind === 'colocated') return e.parts[0]!.key;
-    const explicit = view.generations[e.current.key];
-    if (explicit) return explicit;
-    // A hand-written URL can carry a lone range on the retired generation; presenting the pair as
-    // switched to it is what keeps that filter visible and clearable.
-    return held(e.retired.key) && !held(e.current.key) ? e.retired.key : e.current.key;
+    return effectiveGeneration(e, {
+      generations: view.generations,
+      ranges: view.filters.ranges,
+      rows: view.rows,
+      columns: view.columns,
+    }).key;
   };
   /** **Every** part of a zone pair gets a row, always: the sidebar must not change shape with the
    *  zone (docs/app.md §Filters). A superseded pair still offers one generation at a time. */
@@ -123,7 +123,10 @@
     const rows = shown.includes(e) ? rowKeysOf(e) : [];
     return (e.kind === 'colocated' ? e.parts.map((p) => p.key) : [chosenKey(e)])
       .filter((k) => !rows.includes(k) && !ALIASED_BY_A_FIELD.has(k))
-      .map((k) => ({ key: k, label: nameFor(e, k), groupId: e.groupId, retired: retiredFor(e, k) }));
+      .map((k) => ({
+        key: k, label: nameFor(e, k), groupId: e.groupId, retired: retiredFor(e, k),
+        lifecycleNamed: e.kind === 'pair',
+      }));
   }));
   const withCoverage = (): AddFilterOption[] => addable.map((o) => ({ ...o, coverage: pctOf(o.key) }));
   let adding = $state(false);

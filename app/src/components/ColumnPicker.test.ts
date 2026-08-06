@@ -7,7 +7,10 @@ import { EASY } from '../lib/score-defs';
 import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
 
 const idx = indexTests(TESTS);
-const base = { tests: TESTS, groups: { '3': 'Cushioning' }, population: FLEET, idx, generations: {} };
+const base = {
+  tests: TESTS, groups: { '3': 'Cushioning' }, population: FLEET, idx,
+  generations: {}, ranges: {}, rows: [],
+};
 
 describe('ColumnPicker', () => {
   it('toggles columns on and off via checkboxes', async () => {
@@ -57,6 +60,16 @@ describe('ColumnPicker metric entries', () => {
     expect(softness).toHaveLength(1);
     expect(softness[0]).toHaveAccessibleName('Midsole softness (retired method)');
     expect(softness[0]).not.toHaveAccessibleName(/retired method.*retired/i);
+  });
+  it('offers and unticks the retired generation inferred from its lone column', async () => {
+    const onchange = vi.fn();
+    render(ColumnPicker, {
+      props: { ...base, columns: ['midsole-softness'], onchange },
+    });
+    const softness = screen.getByRole('checkbox', { name: 'Midsole softness (retired method)' });
+    expect(softness).toBeChecked();
+    await fireEvent.click(softness);
+    expect(onchange).toHaveBeenCalledExactlyOnceWith([]);
   });
   it('appends retirement once to an unpaired numeric offer', () => {
     render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });

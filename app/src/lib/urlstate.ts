@@ -1,7 +1,10 @@
 import type { Plate } from '../../../shared/types.js';
 import { isCategorical } from './categorical';
 import { FIELD_RANGE_KEYS, NUMERIC_TEST_TYPES, type TestIndex } from './dataset';
-import { CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, metricEntries, ZONES, zoneOfKey, type Zone } from './lineage';
+import {
+  CURATED_RANGE_KEYS, DERIVED_ZONE_PAIRS, effectiveGeneration, metricEntries, ZONES, zoneOfKey,
+  type FormalPair, type Zone,
+} from './lineage';
 import { applyPreset, PRESETS } from './presets';
 import { startOfMonth } from './release-date';
 import { defForKey } from './score-defs';
@@ -63,11 +66,11 @@ export function upToColumnOrder(v: ViewState, target: ViewState): ViewState {
   return sameValue(sorted(v), sorted(target)) ? v : target;
 }
 
-/** Current-generation slug to retired-generation slug, for every pair the catalogue resolves. */
-function pairsOf(idx: TestIndex): Map<string, string> {
-  const pairs = new Map<string, string>();
+/** Every formal pair the catalogue resolves. */
+function pairsOf(idx: TestIndex): FormalPair[] {
+  const pairs: FormalPair[] = [];
   for (const e of metricEntries([...idx.byId.values()])) {
-    if (e.kind === 'pair') pairs.set(e.current.key, e.retired.key);
+    if (e.kind === 'pair') pairs.push(e);
   }
   return pairs;
 }
@@ -334,12 +337,23 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     // `isDefaultView` false forever (docs/app.md §Filters) — every list-valued token's rule.
     if (kept.length) v.filters.categorical[slug] = kept;
   }
-  // A URL is the one place both generations of a pair can arrive together, so exclusion is settled
-  // here rather than trusted from the caller. The current generation wins; the other is dropped.
-  for (const [current, retired] of pairsOf(idx)) {
-    if (genRaw.get(current) === retired) v.generations[current] = retired;
-    if (v.filters.ranges[current] && v.filters.ranges[retired]) delete v.filters.ranges[retired];
-    if (v.columns.includes(current) && v.columns.includes(retired)) v.columns = v.columns.filter((c) => c !== retired);
+  // A URL is the one place opposing generations can arrive on different surfaces, so settle the
+  // shared choice here. Explicit retired wins; without it any current evidence wins a conflict,
+  // then retired-only evidence infers retired. A bound never crosses methods during normalisation.
+  for (const pair of pairsOf(idx)) {
+    if (genRaw.get(pair.current.key) === pair.retired.key) {
+      v.generations[pair.current.key] = pair.retired.key;
+    }
+    const selected = effectiveGeneration(pair, {
+      generations: v.generations,
+      ranges: v.filters.ranges,
+      rows: v.rows,
+      columns: v.columns,
+    });
+    const sibling = selected.key === pair.current.key ? pair.retired.key : pair.current.key;
+    delete v.filters.ranges[sibling];
+    v.rows = v.rows.filter((key) => key !== sibling);
+    v.columns = v.columns.filter((key) => key !== sibling);
   }
   // A row on screen only because it is active must be listed, or clearing it would delete the key
   // and leave it neither active nor listed — making clear silently mean remove for exactly the rows

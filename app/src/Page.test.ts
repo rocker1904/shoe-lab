@@ -673,6 +673,81 @@ describe('Page', () => {
   });
 });
 
+describe('Page resolves hand-written formal-generation links', () => {
+  it.each([
+    ['range', 'r.midsole-softness=20~'],
+    ['row', 'rows=midsole-softness'],
+  ])('shows the retired generation and its HA units for a lone retired %s', (surface, qs) => {
+    history.replaceState(null, '', `/?${qs}`);
+    render(Page, { props: { data } });
+
+    const retired = screen.getByRole('radio', { name: 'Midsole softness, retired method' });
+    expect(retired).toHaveAttribute('aria-checked', 'true');
+    expect(retired).toHaveTextContent('retired method (HA)');
+    expect(screen.getByRole('checkbox', { name: /^Midsole softness \(retired method\)/ }))
+      .not.toBeChecked();
+    if (surface === 'range') {
+      expect(screen.getByRole('spinbutton', {
+        name: 'Midsole softness — retired method minimum',
+      })).toHaveValue(20);
+    }
+  });
+
+  it('offers, checks and unticks a lone retired column', async () => {
+    history.replaceState(null, '', '/?cols=midsole-softness');
+    render(Page, { props: { data } });
+
+    const retired = screen.getByRole('checkbox', { name: /^Midsole softness \(retired method\)/ });
+    expect(retired).toBeChecked();
+    await fireEvent.click(retired);
+    expect(screen.getByRole('checkbox', { name: /^Midsole softness \(2022 · current\)/ }))
+      .not.toBeChecked();
+    settle();
+    expect(parseView(location.search.slice(1), idx).columns).toEqual([]);
+  });
+
+  it('normalises cross-surface conflicts to current without an explicit selection', () => {
+    history.replaceState(null, '', [
+      '/?rows=midsole-softness-22',
+      'r.midsole-softness=20~',
+      'cols=midsole-softness',
+    ].join('&'));
+    render(Page, { props: { data } });
+
+    expect(screen.getByRole('radio', { name: 'Midsole softness, 2022 · current' }))
+      .toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('checkbox', { name: /^Midsole softness \(2022 · current\)/ }))
+      .not.toBeChecked();
+    const canonical = parseView(location.search.slice(1), idx);
+    expect(canonical.rows).toEqual(['midsole-softness-22']);
+    expect(canonical.filters.ranges).toEqual({});
+    expect(canonical.columns).toEqual([]);
+  });
+
+  it('normalises every conflicting surface to an explicit retired selection', () => {
+    history.replaceState(null, '', [
+      '/?gen.midsole-softness-22=midsole-softness',
+      'rows=midsole-softness-22,midsole-softness',
+      'r.midsole-softness-22=30~',
+      'r.midsole-softness=20~',
+      'cols=midsole-softness-22,midsole-softness',
+    ].join('&'));
+    render(Page, { props: { data } });
+
+    expect(screen.getByRole('radio', { name: 'Midsole softness, retired method' }))
+      .toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('checkbox', { name: /^Midsole softness \(retired method\)/ }))
+      .toBeChecked();
+    expect(screen.getByRole('spinbutton', {
+      name: 'Midsole softness — retired method minimum',
+    })).toHaveValue(20);
+    const canonical = parseView(location.search.slice(1), idx);
+    expect(canonical.rows).toEqual(['midsole-softness']);
+    expect(canonical.filters.ranges).toEqual({ 'midsole-softness': { min: 20 } });
+    expect(canonical.columns).toEqual(['midsole-softness']);
+  });
+});
+
 /** The setup strip on a first arrival; `SetupStrip.test.ts` owns when it shows and when it goes. */
 const strip = () => screen.queryByTestId('setup-strip');
 /**

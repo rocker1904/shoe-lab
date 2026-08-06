@@ -399,12 +399,18 @@ allowlisted. A `c.` bool carrying both values collapses that key to absent: the
 tri-state has no state that shows both, and a state no control can display is
 what `parseView` exists to refuse.
 
-The two generations of a pair are mutually exclusive, and `parseView` is where
-that is enforced for URLs — the one place both can arrive together. When a
-range or a column names both, the current generation is kept and the other is
-dropped. Only about 40% of shoes carry both readings, so ANDing them collapses
-the fleet for no visible reason. The click path enforces the same invariant
-itself (docs/app.md §Columns and sorting).
+The two generations of a pair are mutually exclusive across rows, ranges and
+columns, and `parseView` is where that is enforced for URLs — the one place
+opposing generations can arrive on different surfaces. One effective-generation
+rule drives that normalisation and both controls: an explicit retired `gen.`
+choice wins; otherwise any active current key wins a mixed-generation conflict;
+retired-only evidence selects retired; with no evidence the pair defaults current.
+The opposing keys are dropped from all three surfaces, and a range bound is
+never transferred between methods. A retired generation inferred from content
+does not invent a `gen.` token, so unticking its last active key returns the
+offer to current. Only about 40% of shoes carry both readings, so ANDing them
+collapses the fleet for no visible reason. The click path enforces the same
+invariant itself (docs/app.md §Columns and sorting).
 
 ## Filters
 
@@ -491,12 +497,15 @@ not a badge, control, live region or new focus stop. A uniformly retired
 colocated family shares one line. A superseded pair does not: each radio already
 states its own lifecycle, so a pair-wide line would make the current generation
 sound retired. Its retired generation does receive the Add-filter consequence
-when it is the selected generation being offered.
+when it is the selected generation being offered. Its lifecycle-explicit label
+already says `retired`, so the action's accessible name speaks that word once
+and then the consequence; unpaired labels still add `retired` explicitly.
 
 The usual Add-filter row measures 32.8px at both 360px and 1200px; the retired
-second line takes the tallest row to 41.4px. The browser guard therefore permits
-42px while requiring every row to remain at least 32px and free of horizontal
-overflow. The 288px
+second line takes the tallest row to 41.4px. The browser guard keeps ordinary
+rows to at most 40px at 360px and 34px at 1200px, and grants 42px only to rows
+that actually carry the retirement line; every row remains at least 32px and
+free of horizontal overflow. The 288px
 panel keeps an 8px viewport allowance, both target scrollports retain zero
 horizontal overflow, and the three-engine suite checks first, middle and last
 triggers in both surfaces at those widths. The panel is also a boundary for the
@@ -1127,9 +1136,12 @@ single-half cases it must degrade rather than reject — and a throwing validato
 would take the app down with them. When that assertion fires, read
 docs/operations.md §Contract-drift runbook.
 
-A pair offers exactly one generation — the chosen one, current by default. The
-click path enforces that: choosing a generation drops the sibling's range and
-its column in the same `setView` call, matching what `parseView` does to a URL
+A pair offers exactly one generation — the effective one, current by default.
+The sidebar and Columns use the same resolver as URL normalisation, so a lone
+retired row, range or column presents retired on both surfaces and opposing
+keys cannot remain active behind an offer for the other method. The click path
+enforces that: choosing a generation drops the sibling's range and its column
+in the same `setView` call, matching what `parseView` does to a URL
 (docs/app.md §URL encoding). `metricEntries` takes `LabTest[]`, so the sidebar
 constructs `score` and `msrpGbp` as entries itself; they are shoe fields, and
 without that the price filter would disappear.

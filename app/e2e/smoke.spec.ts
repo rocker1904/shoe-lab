@@ -1073,16 +1073,29 @@ test('keeps metric help and both filter surfaces inside their measured bounds', 
     const rows = await dialog.locator('.offer').evaluateAll((offers) => offers.map((offer) => {
       const box = offer.getBoundingClientRect();
       return { name: offer.querySelector('.name')?.textContent ?? '', height: box.height,
+               retired: offer.querySelector('.method-status') !== null,
                overflow: offer.scrollWidth - offer.clientWidth };
     }));
     expect(Math.min(...rows.map((row) => row.height))).toBeGreaterThanOrEqual(32);
-    const tallest = rows.reduce((a, b) => a.height >= b.height ? a : b);
-    expect(tallest.height, `${tallest.name} is the tallest Add-filter row at ${width}px`)
-      .toBeLessThanOrEqual(42);
+    const ordinary = rows.filter((row) => !row.retired);
+    const retired = rows.filter((row) => row.retired);
+    expect(ordinary.length).toBeGreaterThan(0);
+    expect(retired.length).toBeGreaterThan(0);
+    for (const row of ordinary) {
+      expect(row.height, `${row.name} ordinary Add-filter row at ${width}px`)
+        .toBeLessThanOrEqual(width === 360 ? 40 : 34);
+    }
+    for (const row of retired) {
+      expect(row.height, `${row.name} retired Add-filter row at ${width}px`).toBeLessThanOrEqual(42);
+    }
     expect(rows.every((row) => row.overflow === 0)).toBe(true);
     expect(await dialog.locator('.list').evaluate((port) => port.scrollWidth - port.clientWidth)).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-    const percentage = await dialog.locator('.offer').first().locator('.pct').boundingBox();
+    // The production-complete formal-method fixture makes this list taller than the sampled help
+    // walk above, so return the row to the scrollport before pressing through its painted figure.
+    const firstOffer = dialog.locator('.offer').first();
+    await firstOffer.scrollIntoViewIfNeeded();
+    const percentage = await firstOffer.locator('.pct').boundingBox();
     await page.mouse.click(percentage!.x + percentage!.width / 2, percentage!.y + percentage!.height / 2);
     await expect(dialog).toHaveCount(0);
   }

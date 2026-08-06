@@ -1,10 +1,38 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import type { LabTest, ShoesFile } from '../../shared/types.js';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
+import { generationLabel } from '../src/lib/lineage';
 import {
   awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, routeWindowFleet,
   setLayoutWidth, sweepDeclaredColumns, sweepPhoneGroupHeights, sweepRowHeights, twoPaints,
   WINDOW_FLEET_SIZE,
 } from './fit-support';
+
+const productionTests = (JSON.parse(
+  readFileSync(new URL('../../data/tests.json', import.meta.url), 'utf8'),
+) as { tests: LabTest[] }).tests;
+const productionById = new Map(productionTests.map((test) => [test.id, test]));
+const formalTests = new Map<number, LabTest>();
+const PRODUCTION_FORMAL_PAIRS = productionTests
+  .filter((test) => test.updateId !== null)
+  .map((retired) => {
+    const current = productionById.get(retired.updateId!);
+    if (!current) throw new Error(`Formal test ${retired.slug} has no update ${retired.updateId}`);
+    formalTests.set(retired.id, { ...retired, methodStatus: 'retired' });
+    formalTests.set(current.id, { ...current, methodStatus: null });
+    return {
+      current: { key: current.slug, label: `${current.name} (${generationLabel(current.slug, 'current')})` },
+      retired: { key: retired.slug, label: `${current.name} (${generationLabel(retired.slug, 'retired')})` },
+    };
+  });
+const baseFixture = JSON.parse(
+  readFileSync(new URL('./fixtures/shoes.json', import.meta.url), 'utf8'),
+) as ShoesFile;
+const FORMAL_PAIR_FIXTURE: ShoesFile = {
+  ...baseFixture,
+  tests: [...baseFixture.tests.filter((test) => !formalTests.has(test.id)), ...formalTests.values()],
+};
 
 /**
  * Firefox and WebKit implement none of `input type="month"` — both reflect the type back as `text`,
@@ -213,6 +241,7 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
 
 test('holds retired method labels inside every choice surface', async ({ page, browserName }, testInfo) => {
   test.slow();
+  await page.route('**/shoes.json*', async (route) => { await route.fulfill({ json: FORMAL_PAIR_FIXTURE }); });
   const textMeasure = (locator: Locator) => locator.evaluate((node) => {
     const range = document.createRange();
     range.selectNodeContents(node);
@@ -233,6 +262,20 @@ test('holds retired method labels inside every choice surface', async ({ page, b
   await awaitFacesLoaded(page);
   const picker = page.locator('details.picker');
   const pickerPanel = picker.locator('.panel');
+  const measureFormalLabels = async (lifecycle: 'current' | 'retired') => {
+    const result: Record<string, Awaited<ReturnType<typeof textMeasure>>> = {};
+    for (const pair of PRODUCTION_FORMAL_PAIRS) {
+      const label = pair[lifecycle].label;
+      const name = pickerPanel.getByText(label, { exact: true });
+      await expect(name, `${label} is absent from the production picker fixture`).toHaveCount(1);
+      const measured = await textMeasure(name);
+      result[label] = measured;
+      expect(measured.lines, `${label} exceeded two lines at 360px`).toBeLessThanOrEqual(2);
+      expect(measured.lineHeight, `${label} exceeded its 16px name line`).toBeLessThanOrEqual(16.5);
+    }
+    expect(Object.keys(result)).toHaveLength(PRODUCTION_FORMAL_PAIRS.length);
+    return result;
+  };
   await picker.locator('summary').click();
   await expect(pickerPanel).toBeVisible();
 
@@ -252,12 +295,9 @@ test('holds retired method labels inside every choice surface', async ({ page, b
     expect(measured.lines, `${label} wrapped at 360px`).toBe(1);
     expect(measured.lineHeight, `${label} exceeded its 16px name line`).toBeLessThanOrEqual(16.5);
   }
-  const currentName = pickerPanel.getByText('Midsole softness (2022 · current)', { exact: true });
-  const currentMeasure = await textMeasure(currentName);
-  expect(currentMeasure.lines).toBeLessThanOrEqual(2);
-  expect(currentMeasure.lineHeight).toBeLessThanOrEqual(16.5);
+  const currentFormalMeasures = await measureFormalLabels('current');
   expect(await pickerPanel.evaluate((panel) => panel.scrollWidth - panel.clientWidth)).toBeLessThanOrEqual(0);
-  measurements.columns = { retired: retiredColumnMeasures, current: currentMeasure };
+  measurements.columns = { retired: retiredColumnMeasures, formal: { current: currentFormalMeasures } };
 
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
@@ -277,7 +317,19 @@ test('holds retired method labels inside every choice surface', async ({ page, b
   await expect(pickerPanel.getByText('Midsole softness (retired method) (retired)', { exact: true }))
     .toHaveCount(0);
   expect(await pickerPanel.evaluate((panel) => panel.scrollWidth - panel.clientWidth)).toBeLessThanOrEqual(0);
-  (measurements.columns as Record<string, unknown>).retiredGeneration = retiredGenerationMeasure;
+  (measurements.columns as Record<string, unknown>).interactiveRetiredGeneration = retiredGenerationMeasure;
+  await page.keyboard.press('Escape');
+
+  const retiredParams = new URLSearchParams(PRODUCTION_FORMAL_PAIRS.map((pair) =>
+    [`gen.${pair.current.key}`, pair.retired.key]));
+  await page.goto(`/?${retiredParams}`);
+  await awaitFacesLoaded(page);
+  await picker.locator('summary').click();
+  await expect(pickerPanel).toBeVisible();
+  const retiredFormalMeasures = await measureFormalLabels('retired');
+  expect(await pickerPanel.evaluate((panel) => panel.scrollWidth - panel.clientWidth)).toBeLessThanOrEqual(0);
+  ((measurements.columns as Record<string, unknown>).formal as Record<string, unknown>).retired =
+    retiredFormalMeasures;
   await page.keyboard.press('Escape');
 
   await page.goto('/');

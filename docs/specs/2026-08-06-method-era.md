@@ -120,9 +120,13 @@ Columns keeps parentheses around it, and the sidebar's generation radio uses
 the modifier directly. Those wrappers are surface grammar; the modifier itself
 has one owner.
 
-The selected generation remains the only one Add filter and Columns offer
-(docs/app.md §Columns and sorting). Switching to the predecessor makes that
-same row say retired; it does not add a second entry or change URL semantics.
+The effective generation remains the only one Add filter and Columns offer
+(docs/app.md §Columns and sorting). Both use the same resolver as permissive URL
+normalisation: explicit retired wins, then current evidence wins a conflict,
+then retired-only evidence selects retired, and no evidence defaults current.
+Opposing rows, ranges and columns are dropped without transferring a bound.
+Switching to the predecessor makes the same row say retired; it does not add a
+second entry, and app-generated valid URLs keep their existing spelling.
 
 ### Retired singles use the room each surface has
 
@@ -142,7 +146,9 @@ and the sidebar adds no duplicate status line under the whole pair. If its
 retired generation is the one Add filter currently offers, that row also shows
 `Not used on newer shoes`; in Columns, `retired method` or
 `2022 · retired` already supplies the parenthetical and `(retired)` is not
-repeated.
+repeated. The Add action likewise does not add a second spoken `retired` after
+the lifecycle-explicit label; it proceeds directly to the consequence. Singles
+still add the word explicitly.
 
 The Add-filter search treats `retired` and the visible consequence as searchable
 metadata in addition to the metric name. A runner can therefore ask for the
@@ -197,8 +203,9 @@ homes.
   row's only focus stop and keeps its checked state and coverage in its
   accessible name.
 - At 360px in every supported engine, the three initial `(retired)` Columns
-  labels stay on one 16px name line, every lifecycle-modified Columns label
-  stays within two such lines, and the picker has no horizontal overflow.
+  labels stay on one 16px name line. Both generations of every formal pair
+  mechanically derived from the committed catalogue stay within two such
+  lines, and the picker has no horizontal overflow.
 - At 360px, `Not used on newer shoes` stays on one line in Add filter with the
   help trigger, coverage bar and percentage still visible, while the reserved
   direction column retains its width. The
@@ -207,9 +214,12 @@ homes.
 - On the 228px permanent-sidebar track, the status line stays on one line and
   does not collide with the heading, help trigger or coverage count. It adds no
   horizontal overflow at the 360px drawer either.
-- The current-generation defaults, generation switch, range/column mutual
-  exclusion, URL round trip, filtering results, coverage calculations, table
-  labels and announcements are unchanged apart from the specified words.
+- Ordinary Add-filter rows stay at or below 40px at 360px and 34px at 1200px;
+  only a row carrying `.method-status` may use the 42px retired-row allowance.
+- The current-generation defaults, generation switch, cross-surface
+  row/range/column mutual exclusion, URL round trip, filtering results,
+  coverage calculations, table labels and announcements are unchanged apart
+  from the specified words.
 - Focused suites, `npm run verify`, and the complete three-engine e2e command
   are green with no live network access.
 
