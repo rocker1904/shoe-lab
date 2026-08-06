@@ -37,9 +37,10 @@ const FORMAL_PAIR_FIXTURE: ShoesFile = {
 /**
  * Firefox and WebKit implement none of `input type="month"` — both reflect the type back as `text`,
  * so the control that Chromium renders as a picker is a bare box there, and a Chromium-only suite
- * reported it working. Most tests here run in those two engines only; the segmented registry also
- * runs in Chromium. Layout assertions in `smoke.spec.ts` stay on one engine, where a single set of
- * font metrics keeps them meaningful.
+ * reported it working. Most tests here run in those two engines only; the segmented registry and
+ * the column-guide path also run in Chromium. Numeric layout stays in `smoke.spec.ts` except where
+ * the compatibility contract itself names all three engines: shared segments, retirement labels
+ * and the picker guide's supported-floor and on-screen bounds.
  *
  * This file owns cross-engine compatibility seams: native controls and the shared segmented
  * registry. The column picker's `<details>` is here for the same reason as the month input.
@@ -239,6 +240,199 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
   await expect(panel, 'the picker survived a forwards keyboard exit').toBeHidden();
 });
 
+test('drives the column picker guide keyboard path and restores Back state', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto('/');
+  const picker = page.locator('details.picker');
+  const summary = picker.locator('summary');
+  const panel = picker.locator('.panel');
+  await summary.focus();
+  await summary.press('Enter');
+  await expect(panel).toBeVisible();
+
+  const list = picker.locator('.list');
+  const scoreColumn = picker.getByRole('checkbox', { name: /RunRepeat Score/ });
+  const scoreInitiallyChecked = await scoreColumn.isChecked();
+  const savedScroll = await list.evaluate((node) => {
+    node.scrollTop = Math.min(173, node.scrollHeight - node.clientHeight);
+    return node.scrollTop;
+  });
+  expect(savedScroll, 'the checklist fixture does not overflow enough to prove restoration')
+    .toBeGreaterThan(0);
+
+  const entry = picker.getByRole('button', { name: 'Metric guide' });
+  await entry.click();
+  const heading = picker.getByRole('heading', { name: 'Metric guide' });
+  const search = picker.getByRole('searchbox', { name: 'Search metrics' });
+  const back = picker.getByRole('button', { name: 'Back' });
+  await expect(heading, 'guide entry did not announce its new context through focus').toBeFocused();
+  await expect(search, 'guide entry opened the software-keyboard target').not.toBeFocused();
+
+  await page.keyboard.press('Tab');
+  await expect(search, 'forward Tab from the heading did not reach search').toBeFocused();
+  await heading.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(back, 'reverse Tab from the heading did not reach Back').toBeFocused();
+
+  const score = picker.getByRole('button', { name: 'RunRepeat Score' });
+  const price = picker.getByRole('button', { name: 'Price' });
+  await score.click();
+  await expect(score).toHaveAttribute('aria-expanded', 'true');
+  await price.click();
+  await expect(score, 'opening Price left the previous fact expanded').toHaveAttribute('aria-expanded', 'false');
+  await expect(price).toHaveAttribute('aria-expanded', 'true');
+  await expect(picker.locator('button[aria-expanded="true"]'), 'more than one guide fact is expanded')
+    .toHaveCount(1);
+  const source = picker.getByRole('link', { name: /RunRepeat price guide/ });
+  await expect(source).toBeVisible();
+  await price.focus();
+  await page.keyboard.press('Tab');
+  await expect(source, 'the expanded fact source is not on the forward keyboard route').toBeFocused();
+
+  await back.click();
+  await expect(entry, 'Back did not restore focus to the guide entry').toBeFocused();
+  expect(await list.evaluate((node) => node.scrollTop), 'Back did not restore the real checklist scroll')
+    .toBe(savedScroll);
+  expect(await scoreColumn.isChecked(), 'the read-only guide changed the selected columns')
+    .toBe(scoreInitiallyChecked);
+});
+
+for (const exit of ['Escape', 'outside press', 'forward focus exit', 'backward focus exit'] as const) {
+  test(`dismisses the column picker guide on ${exit} and resets its mode`, async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto('/');
+    const picker = page.locator('details.picker');
+    const summary = picker.locator('summary');
+    const panel = picker.locator('.panel');
+    await summary.focus();
+    await summary.press('Enter');
+    await picker.getByRole('button', { name: 'Metric guide' }).click();
+    await expect(picker.getByRole('heading', { name: 'Metric guide' })).toBeFocused();
+
+    if (exit === 'Escape') {
+      await page.keyboard.press('Escape');
+      await expect(summary, 'Escape did not hand focus back to Columns').toBeFocused();
+    } else if (exit === 'outside press') {
+      await page.getByRole('heading', { name: 'Search' }).click();
+    } else if (exit === 'forward focus exit') {
+      await picker.locator('.results button').last().focus();
+      await page.keyboard.press('Tab');
+    } else {
+      const back = picker.getByRole('button', { name: 'Back' });
+      await back.focus();
+      await page.keyboard.press('Shift+Tab');
+      await expect(summary, 'the backward route skipped the summary inside the picker boundary')
+        .toBeFocused();
+      await expect(panel, 'reaching the summary incorrectly counted as leaving the picker').toBeVisible();
+      await page.keyboard.press('Shift+Tab');
+    }
+    await expect(panel, `guide survived ${exit}`).toBeHidden();
+
+    if (exit !== 'Escape') {
+      expect(await picker.evaluate((node) => node.contains(document.activeElement)),
+        `${exit} left focus inside the closed picker`).toBe(false);
+    }
+    await summary.focus();
+    await summary.press('Enter');
+    await expect(panel).toBeVisible();
+    await expect(picker.locator('.list'), `${exit} reopened the stale guide mode`).toBeVisible();
+    await expect(picker.locator('.results')).toHaveCount(0);
+  });
+}
+
+test('keeps the column picker guide on screen across the picker width sweep', async ({
+  page, browserName,
+}, testInfo) => {
+  test.slow();
+  const measurements: { width: number; checklist: unknown; guide: unknown; expandedGuide?: unknown }[] = [];
+  for (const width of [320, 360, 390, 700, 800, 801, 1200]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/');
+    await awaitFacesLoaded(page);
+    const picker = page.locator('details.picker');
+    await picker.locator('summary').click();
+    const checklist = await picker.evaluate((node) => {
+      const panel = node.querySelector<HTMLElement>('.panel')!;
+      const box = panel.getBoundingClientRect();
+      const port = panel.querySelector<HTMLElement>('.list')!;
+      return {
+        width: Math.round(box.width * 100) / 100,
+        height: Math.round(box.height * 100) / 100,
+        left: Math.round(box.left),
+        right: Math.round(document.documentElement.clientWidth - box.right),
+        portOverflow: port.scrollWidth - port.clientWidth,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    await picker.getByRole('button', { name: 'Metric guide' }).click();
+    const guide = await picker.evaluate((node) => {
+      const panel = node.querySelector<HTMLElement>('.panel')!;
+      const box = panel.getBoundingClientRect();
+      const port = panel.querySelector<HTMLElement>('.results')!;
+      return {
+        width: Math.round(box.width * 100) / 100,
+        height: Math.round(box.height * 100) / 100,
+        left: Math.round(box.left),
+        right: Math.round(document.documentElement.clientWidth - box.right),
+        portOverflow: port.scrollWidth - port.clientWidth,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    let expandedGuide: typeof guide | undefined;
+    if (width === 360) {
+      await picker.getByRole('button', { name: 'Price' }).click();
+      await expect(picker.getByRole('link', { name: /RunRepeat price guide/ })).toBeVisible();
+      expandedGuide = await picker.evaluate((node) => {
+        const panel = node.querySelector<HTMLElement>('.panel')!;
+        const box = panel.getBoundingClientRect();
+        const port = panel.querySelector<HTMLElement>('.results')!;
+        return {
+          width: Math.round(box.width * 100) / 100,
+          height: Math.round(box.height * 100) / 100,
+          left: Math.round(box.left),
+          right: Math.round(document.documentElement.clientWidth - box.right),
+          portOverflow: port.scrollWidth - port.clientWidth,
+          documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      expect(expandedGuide.height, `${browserName} expanded guide exceeds 402px at the supported floor`)
+        .toBeLessThanOrEqual(402);
+      expect(expandedGuide.portOverflow, `${browserName} expanded guide scrolls sideways at 360px`)
+        .toBeLessThanOrEqual(0);
+      expect(expandedGuide.documentOverflow, `${browserName} expanded guide takes the page sideways at 360px`)
+        .toBeLessThanOrEqual(0);
+    }
+    measurements.push({ width, checklist, guide, ...(expandedGuide ? { expandedGuide } : {}) });
+
+    for (const [mode, seen] of [['checklist', checklist], ['guide', guide]] as const) {
+      expect(seen.left, `${browserName} ${mode} hangs off the left edge at ${width}px`)
+        .toBeGreaterThanOrEqual(0);
+      expect(seen.right, `${browserName} ${mode} hangs off the right edge at ${width}px`)
+        .toBeGreaterThanOrEqual(0);
+      expect(seen.portOverflow, `${browserName} ${mode} scrolls sideways at ${width}px`)
+        .toBeLessThanOrEqual(0);
+      if (width >= 360) {
+        expect(seen.documentOverflow, `${browserName} ${mode} takes the page sideways at ${width}px`)
+          .toBeLessThanOrEqual(0);
+      }
+    }
+    expect(guide.documentOverflow, `${browserName} guide adds page overflow at ${width}px`)
+      .toBeLessThanOrEqual(checklist.documentOverflow);
+    if (width === 360) {
+      for (const [mode, seen] of [['checklist', checklist], ['guide', guide]] as const) {
+        expect(seen.width, `${browserName} ${mode} exceeds 346px at the supported floor`)
+          .toBeLessThanOrEqual(346);
+        expect(seen.height, `${browserName} ${mode} exceeds 402px at the supported floor`)
+          .toBeLessThanOrEqual(402);
+      }
+    }
+  }
+  await testInfo.attach('column-guide-widths', {
+    body: Buffer.from(JSON.stringify({ engine: browserName, measurements }, null, 2)),
+    contentType: 'application/json',
+  });
+});
+
 test('holds retired method labels inside every choice surface', async ({ page, browserName }, testInfo) => {
   test.slow();
   await page.route('**/shoes.json*', async (route) => { await route.fulfill({ json: FORMAL_PAIR_FIXTURE }); });
@@ -296,8 +490,23 @@ test('holds retired method labels inside every choice surface', async ({ page, b
     expect(measured.lineHeight, `${label} exceeded its 16px name line`).toBeLessThanOrEqual(16.5);
   }
   const currentFormalMeasures = await measureFormalLabels('current');
+  const currentName = pickerPanel.getByText('Midsole softness (2022 · current)', { exact: true });
+  const currentMeasure = currentFormalMeasures['Midsole softness (2022 · current)']!;
+  const checklistGeometry = await currentName.locator('..').evaluate((row) => ({
+    rowWidth: Math.round(row.getBoundingClientRect().width * 100) / 100,
+    nameWidth: Math.round(row.querySelector<HTMLElement>('.name')!.getBoundingClientRect().width * 100) / 100,
+  }));
+  expect(Math.abs(checklistGeometry.rowWidth - 320), `${browserName} moved the 320px checklist row`)
+    .toBeLessThanOrEqual(0.5);
+  expect(Math.abs(checklistGeometry.nameWidth - 182.8),
+    `${browserName} moved the 182.8px checklist name track`).toBeLessThanOrEqual(1);
   expect(await pickerPanel.evaluate((panel) => panel.scrollWidth - panel.clientWidth)).toBeLessThanOrEqual(0);
-  measurements.columns = { retired: retiredColumnMeasures, formal: { current: currentFormalMeasures } };
+  measurements.columns = {
+    retired: retiredColumnMeasures,
+    current: currentMeasure,
+    formal: { current: currentFormalMeasures },
+    geometry: checklistGeometry,
+  };
 
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Filters', exact: true }).click();

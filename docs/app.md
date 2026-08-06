@@ -1133,6 +1133,18 @@ to checklist mode, so reopening never restores a stale search or expanded fact.
 The two modes never mount together, which also keeps checklist coverage passes
 out of a read-only guide (docs/app.md §What a drag may recompute).
 
+At the 360px support floor, Chromium, Firefox and WebKit all measure the outer
+checklist at **346×402px** and the guide at **346×378px**; expanding the Price
+fact and its source keeps the guide at that height. The checklist row remains
+**320px**, with its name track measuring 182.60–182.81px across the engines, so
+the lifecycle labels retain the same one- or two-line bounds. Both active
+scrollports and the document have zero horizontal overflow there. Across the
+existing below-floor-to-desktop width sweep the guide stays on screen wherever
+the checklist does; at the unsupported 320px case each inherits the document's
+existing 26px overflow rather than adding any of its own. The guide is therefore
+deliberately shorter by the legend it does not render — do not equalise the two
+heights by adding empty space.
+
 The picker and the sidebar both offer `metricEntries` (`app/src/lib/lineage.ts`)
 rather than the raw catalogue, so a superseded pair is one entry and a
 heel/forefoot split is one entry. The picker groups by the dataset's test

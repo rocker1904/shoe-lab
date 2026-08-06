@@ -17,6 +17,32 @@ const utilitiesSettled = (page: Page, width: number) => expect(
   page.locator(width <= 800 ? '[data-testid="toolbar"]' : 'header')
     .getByRole('button', { name: 'Copy link' })).toHaveCount(1);
 
+type PickerMode = 'checklist' | 'guide';
+
+async function openScrollableSurfaces(page: Page, mode: PickerMode) {
+  await page.setViewportSize({ width: 1440, height: 560 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Add filter/ }).click();
+  await page.evaluate(() => {
+    // A synthetic click fires no `pointerdown`, so Display and the picker can stay open behind the
+    // modal scrim long enough for the enumeration to inspect every independent port at once.
+    for (const details of document.querySelectorAll<HTMLDetailsElement>('details')) details.open = true;
+    document.querySelector<HTMLElement>('[data-testid="display-trigger"]')!.click();
+  });
+  await expect(page.locator('details.picker .panel')).toBeVisible();
+  // Setting native `<details>.open` queues `toggle` as a task. Enter only after the binding receives
+  // it, or the real close-reset invariant correctly rejects a guide mode inside a closed picker.
+  await twoPaints(page);
+  if (mode === 'guide') {
+    await page.evaluate(() => {
+      document.querySelector<HTMLButtonElement>('details.picker .guide-entry')!.click();
+    });
+  }
+  const active = page.locator(`details.picker ${mode === 'guide' ? '.results' : '.list'}`);
+  await expect(active, `the ${mode} scrollport was not the active picker mode`).toBeVisible();
+  await expect(page.locator(`details.picker ${mode === 'guide' ? '.list' : '.results'}`)).toHaveCount(0);
+}
+
 
 test('loads, filters via preset, expands details, exports csv, restores url state', async ({ page }) => {
   await page.goto('/');
@@ -1534,77 +1560,75 @@ test('puts the skip link first and makes each radiogroup one tab stop', async ({
  * exist at rest.
  */
 test('leaves every scrollport room for the focus ring it draws', async ({ page }) => {
-  // Short enough that the sidebar is forced to scroll, so the `scroll-padding` half is exercised
-  // rather than assumed: the 5-shoe fixture cannot fill a list on its own.
-  await page.setViewportSize({ width: 1440, height: 560 });
-  await page.goto('/');
-
-  // Both `<details>` opened without a press: an outside `pointerdown` is a dismissal, so clicking
-  // one to open it would shut the other and the ports could never be measured in one pass.
-  await page.getByRole('button', { name: /^Add filter/ }).click();
-  await page.evaluate(() => {
-    for (const d of document.querySelectorAll<HTMLDetailsElement>('details')) d.open = true;
-    // `el.click()` and not a real press: a synthetic click fires no `pointerdown`, so the Display
-    // panel opens without dismissing the two `<details>` — and it reaches a trigger the open
-    // dialog's scrim would otherwise intercept. Five ports have to be measurable in ONE pass.
-    document.querySelector<HTMLElement>('[data-testid="display-trigger"]')!.click();
-  });
-
-  const ports = await page.evaluate(() => {
-    const out = [];
-    for (const el of document.querySelectorAll<HTMLElement>('*')) {
-      const cs = getComputedStyle(el);
-      if (!/auto|scroll/.test(cs.overflowX + ' ' + cs.overflowY)) continue;
-      const rows = [...el.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, summary, [tabindex]')];
-      if (!rows.length) continue;
-      const box = () => el.getBoundingClientRect();
-      // Opening the dialog pressed a button at the foot of the sidebar, which scrolled it: at rest
-      // means unscrolled, and the first row is only the top row from there.
-      el.scrollTop = 0;
-      const first = rows[0]!.getBoundingClientRect();
-      const b = box();
-      const port = {
-        name: el.getAttribute('id') ?? el.getAttribute('aria-label')
-          ?? el.closest('[aria-label]')?.getAttribute('aria-label') ?? el.tagName.toLowerCase(),
-        scrollPadding: cs.scrollPaddingTop,
-        rest: { left: Math.round(first.left - b.left), right: Math.round(b.right - first.right),
-                top: Math.round(first.top - b.top) },
-        scrolled: null as null | { top: number; bottom: number },
-      };
-      if (el.scrollHeight > el.clientHeight) {
-        const last = rows[rows.length - 1]!;
-        last.focus();
-        const a = box();
-        const r = last.getBoundingClientRect();
-        port.scrolled = { top: Math.round(r.top - a.top), bottom: Math.round(a.bottom - r.bottom) };
+  for (const mode of ['checklist', 'guide'] as const) {
+    // Short enough that the sidebar is forced to scroll, so the `scroll-padding` half is exercised
+    // rather than assumed: the 5-shoe fixture cannot fill a list on its own.
+    await openScrollableSurfaces(page, mode);
+    const ports = await page.evaluate(() => {
+      const out = [];
+      for (const el of document.querySelectorAll<HTMLElement>('*')) {
+        const cs = getComputedStyle(el);
+        if (!/auto|scroll/.test(cs.overflowX + ' ' + cs.overflowY)) continue;
+        const rows = [...el.querySelectorAll<HTMLElement>(
+          'a[href], button, input, select, textarea, summary, [tabindex]',
+        )];
+        if (!rows.length) continue;
+        const box = () => el.getBoundingClientRect();
+        // Opening the dialog pressed a button at the foot of the sidebar, which scrolled it: at
+        // rest means unscrolled, and the first row is only the top row from there.
+        el.scrollTop = 0;
+        const first = rows[0]!.getBoundingClientRect();
+        const b = box();
+        const port = {
+          name: el.getAttribute('id') ?? el.getAttribute('aria-label')
+            ?? el.closest('[aria-label]')?.getAttribute('aria-label') ?? el.tagName.toLowerCase(),
+          picker: el.matches('details.picker .list, details.picker .results'),
+          scrollPadding: cs.scrollPaddingTop,
+          rest: { left: Math.round(first.left - b.left), right: Math.round(b.right - first.right),
+                  top: Math.round(first.top - b.top) },
+          scrolled: null as null | { top: number; bottom: number },
+        };
+        if (el.scrollHeight > el.clientHeight) {
+          const last = rows[rows.length - 1]!;
+          last.focus();
+          const a = box();
+          const r = last.getBoundingClientRect();
+          port.scrolled = { top: Math.round(r.top - a.top), bottom: Math.round(a.bottom - r.bottom) };
+        }
+        out.push(port);
       }
-      out.push(port);
+      return out;
+    });
+
+    // Enumerated rather than listed: the way this rule was got wrong was a scrollport nobody had
+    // counted, so a new one that forgets `.scrollport` has to fail on the day it is added.
+    expect(ports.length, `${mode}: no scrollport found — the enumeration has gone stale`)
+      .toBeGreaterThanOrEqual(5);
+    expect(ports.filter((port) => port.picker), `${mode}: active picker port escaped enumeration`)
+      .toHaveLength(1);
+
+    // 4px is the ring's outer radius; anything less and it is drawn cropped.
+    for (const p of ports) {
+      expect(p.scrollPadding, `${mode} ${p.name}: reserves nothing for a control Tab scrolls to`)
+        .toBe('4px');
+      expect(p.rest.left, `${mode} ${p.name}: ring clipped on the left`).toBeGreaterThanOrEqual(4);
+      expect(p.rest.right, `${mode} ${p.name}: ring clipped on the right`).toBeGreaterThanOrEqual(4);
+      expect(p.rest.top, `${mode} ${p.name}: ring clipped at the top`).toBeGreaterThanOrEqual(4);
+      if (!p.scrolled) continue;
+      expect(p.scrolled.top, `${mode} ${p.name}: ring clipped at the top once scrolled`)
+        .toBeGreaterThanOrEqual(4);
+      expect(p.scrolled.bottom, `${mode} ${p.name}: ring clipped at the foot once scrolled`)
+        .toBeGreaterThanOrEqual(4);
     }
-    return out;
-  });
-
-  // Enumerated rather than listed: the way this rule was got wrong was a scrollport nobody had
-  // counted, so a new one that forgets `.scrollport` has to fail here on the day it is added.
-  expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(5);
-
-  // 4px is the ring's outer radius; anything less and it is drawn cropped.
-  for (const p of ports) {
-    expect(p.scrollPadding, `${p.name}: reserves nothing for a control Tab scrolls to`).toBe('4px');
-    expect(p.rest.left, `${p.name}: ring clipped on the left`).toBeGreaterThanOrEqual(4);
-    expect(p.rest.right, `${p.name}: ring clipped on the right`).toBeGreaterThanOrEqual(4);
-    expect(p.rest.top, `${p.name}: ring clipped at the top`).toBeGreaterThanOrEqual(4);
-    if (!p.scrolled) continue;
-    expect(p.scrolled.top, `${p.name}: ring clipped at the top once scrolled`).toBeGreaterThanOrEqual(4);
-    expect(p.scrolled.bottom, `${p.name}: ring clipped at the foot once scrolled`).toBeGreaterThanOrEqual(4);
   }
 });
 
 /**
  * The scrollbar's room, which is a different fact from the ring's and was reserved by neither. A
- * scrolling port draws its bar at the inline end, and the two ports whose rows END in a number —
- * the column picker's coverage figures and the Display panel's outputs — put that number flush
- * against it: 4px of air, so the bar reads as touching the figure where it takes layout and is
- * painted straight over it where it is an overlay, which is Firefox's own default on Linux.
+ * scrolling port draws its bar at the inline end, and the ports whose rows END in a number — the
+ * column picker checklist's coverage figures and the Display panel's outputs — put that number
+ * flush against it: 4px of air, so the bar reads as touching the figure where it takes layout and
+ * is painted straight over it where it is an overlay, which is Firefox's own default on Linux.
  *
  * Measured as the distance from the right-most painted thing to where the bar is drawn, which is
  * the same number in both regimes — headless Playwright only ever gives the overlay one
@@ -1612,52 +1636,53 @@ test('leaves every scrollport room for the focus ring it draws', async ({ page }
  * added later has to answer for it too.
  */
 test('leaves every scrollport room for the scrollbar it draws over no text', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 560 });
-  await page.goto('/');
-  await page.getByRole('button', { name: /^Add filter/ }).click();
-  await page.evaluate(() => {
-    for (const d of document.querySelectorAll<HTMLDetailsElement>('details')) d.open = true;
-    document.querySelector<HTMLElement>('[data-testid="display-trigger"]')!.click();
-  });
-
-  const ports = await page.evaluate(() => {
-    const out = [];
-    for (const el of document.querySelectorAll<HTMLElement>('.scrollport')) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0) continue;
-      const cs = getComputedStyle(el);
-      const bar = el.offsetWidth - el.clientWidth
-        - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
-      // TEXT-bearing leaves only, and that is the claim rather than a convenience. A bar drawn over
-      // a figure makes it unreadable, which is the whole defect; a decoration that reaches the same
-      // edge — `RangeFilter`'s `aria-hidden` bound markers overhang their track by 5px and clear
-      // the sidebar's bar by 7 — is bounded by the port's own padding and is a different question
-      // (docs/app.md §Theming records it).
-      let worst = -Infinity;
-      let who = '';
-      for (const node of el.querySelectorAll<HTMLElement>('*')) {
-        if (node.children.length) continue;
-        const text = (node.textContent ?? '').trim();
-        if (!text) continue;
-        const r = node.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) continue;
-        if (r.right > worst) { worst = r.right; who = text.slice(0, 16); }
+  for (const mode of ['checklist', 'guide'] as const) {
+    await openScrollableSurfaces(page, mode);
+    const ports = await page.evaluate(() => {
+      const out = [];
+      for (const el of document.querySelectorAll<HTMLElement>('.scrollport')) {
+        const b = el.getBoundingClientRect();
+        if (b.width === 0) continue;
+        const cs = getComputedStyle(el);
+        const bar = el.offsetWidth - el.clientWidth
+          - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
+        // TEXT-bearing leaves only, and that is the claim rather than a convenience. A bar drawn
+        // over a figure makes it unreadable, which is the whole defect; a decoration that reaches
+        // the same edge is bounded by the port's own padding and is a different question
+        // (docs/app.md §Theming records it).
+        let worst = -Infinity;
+        let who = '';
+        for (const node of el.querySelectorAll<HTMLElement>('*')) {
+          if (node.children.length) continue;
+          const text = (node.textContent ?? '').trim();
+          if (!text) continue;
+          const r = node.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) continue;
+          if (r.right > worst) { worst = r.right; who = text.slice(0, 16); }
+        }
+        out.push({
+          name: el.getAttribute('id') ?? el.className.split(/\s+/)[0] ?? el.tagName.toLowerCase(),
+          picker: el.matches('details.picker .list, details.picker .results'),
+          // Null where the port paints no text at all — counted as a port, exempt from the bound.
+          air: worst === -Infinity
+            ? null
+            : Math.round(b.right - parseFloat(cs.borderRightWidth) - bar - worst),
+          who,
+        });
       }
-      out.push({
-        name: el.getAttribute('id') ?? el.className.split(/\s+/)[0] ?? el.tagName.toLowerCase(),
-        // Null where the port paints no text at all — counted as a port, exempt from the bound.
-        air: worst === -Infinity ? null : Math.round(b.right - parseFloat(cs.borderRightWidth) - bar - worst),
-        who,
-      });
-    }
-    return out;
-  });
+      return out;
+    });
 
-  expect(ports.length, 'no scrollport found — the enumeration has gone stale').toBeGreaterThanOrEqual(5);
-  // One classic bar on the engines this project measures on: 12px on a GTK Firefox.
-  for (const p of ports) {
-    if (p.air === null) continue;
-    expect(p.air, `${p.name}: the scrollbar is drawn over "${p.who}"`).toBeGreaterThanOrEqual(12);
+    expect(ports.length, `${mode}: no scrollport found — the enumeration has gone stale`)
+      .toBeGreaterThanOrEqual(5);
+    expect(ports.filter((port) => port.picker), `${mode}: active picker port escaped enumeration`)
+      .toHaveLength(1);
+    // One classic bar on the engines this project measures on: 12px on a GTK Firefox.
+    for (const p of ports) {
+      if (p.air === null) continue;
+      expect(p.air, `${mode} ${p.name}: the scrollbar is drawn over "${p.who}"`)
+        .toBeGreaterThanOrEqual(12);
+    }
   }
 });
 
@@ -1668,30 +1693,109 @@ test('leaves every scrollport room for the scrollbar it draws over no text', asy
  * the viewport instead. Both bands, because the anchor differs across 800px
  * (docs/app.md §Stacking order).
  */
-test('opens the column picker fully on screen at every width', async ({ page }) => {
+test('keeps both column picker modes inside the current panel footprint at every width', async ({ page }) => {
   for (const width of [320, 360, 390, 700, 800, 801, 1200]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
-    await page.locator('details.picker summary').click();
-    const seen = await page.evaluate(() => {
+    const picker = page.locator('details.picker');
+    await picker.locator('summary').click();
+    const checklist = await page.evaluate(() => {
       const panel = document.querySelector('details.picker .panel')!;
       const box = panel.getBoundingClientRect();
       const vw = document.documentElement.clientWidth;
       const first = panel.querySelector('input[type=checkbox]')!.getBoundingClientRect();
       const legend = panel.querySelector('.legend')!;
       const line = legend.querySelector('span')!.getBoundingClientRect().height;
+      const list = panel.querySelector<HTMLElement>('.list')!;
+      const retired = [...panel.querySelectorAll<HTMLElement>('.name')]
+        .find((name) => name.textContent === 'Outsole hardness (retired)')!;
+      const row = retired.closest('label')!.getBoundingClientRect();
+      const name = retired.getBoundingClientRect();
       return {
+        width: Math.round(box.width * 100) / 100,
+        height: Math.round(box.height * 100) / 100,
         left: Math.round(box.left), right: Math.round(vw - box.right),
         hit: panel.contains(document.elementFromPoint(first.x + first.width / 2, first.y + first.height / 2)),
         legendLines: Math.round(legend.getBoundingClientRect().height / line),
+        portOverflow: list.scrollWidth - list.clientWidth,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        rowWidth: Math.round(row.width * 100) / 100,
+        nameWidth: Math.round(name.width * 100) / 100,
       };
     });
-    expect(seen.left, `the picker panel hangs off the left edge at ${width}px`).toBeGreaterThanOrEqual(0);
-    expect(seen.right, `the picker panel hangs off the right edge at ${width}px`).toBeGreaterThanOrEqual(0);
-    expect(seen.hit, `the first checkbox is not reachable at ${width}px`).toBe(true);
+    expect(checklist.left, `the checklist panel hangs off the left edge at ${width}px`)
+      .toBeGreaterThanOrEqual(0);
+    expect(checklist.right, `the checklist panel hangs off the right edge at ${width}px`)
+      .toBeGreaterThanOrEqual(0);
+    expect(checklist.hit, `the first checkbox is not reachable at ${width}px`).toBe(true);
+    expect(checklist.portOverflow, `the checklist scrolls sideways at ${width}px`)
+      .toBeLessThanOrEqual(0);
     // 320px is the one width where the 20rem cannot fit and the panel clamps to the screen instead
     // (docs/app.md §Stacking order); everywhere above it the direction legend holds one line.
-    if (width >= 360) expect(seen.legendLines, `the direction legend wrapped at ${width}px`).toBe(1);
+    if (width >= 360) {
+      expect(checklist.legendLines, `the direction legend wrapped at ${width}px`).toBe(1);
+      expect(checklist.documentOverflow, `the checklist takes the document sideways at ${width}px`)
+        .toBeLessThanOrEqual(0);
+    }
+    if (width === 360) {
+      expect(checklist.width, 'the 360px checklist panel grew wider than its 346px baseline')
+        .toBeLessThanOrEqual(346);
+      expect(checklist.height, 'the 360px checklist panel grew taller than its 402px baseline')
+        .toBeLessThanOrEqual(402);
+      expect(Math.abs(checklist.rowWidth - 320), 'the checklist row is no longer 320px wide')
+        .toBeLessThanOrEqual(0.5);
+      expect(Math.abs(checklist.nameWidth - 182.8), 'the checklist name track moved from 182.8px')
+        .toBeLessThanOrEqual(1);
+    }
+
+    await picker.getByRole('button', { name: 'Metric guide' }).click();
+    const guide = await page.evaluate(() => {
+      const panel = document.querySelector('details.picker .panel')!;
+      const box = panel.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      const first = panel.querySelector('button.disclosure')!.getBoundingClientRect();
+      const results = panel.querySelector<HTMLElement>('.results')!;
+      return {
+        width: Math.round(box.width * 100) / 100,
+        height: Math.round(box.height * 100) / 100,
+        left: Math.round(box.left), right: Math.round(vw - box.right),
+        hit: panel.contains(document.elementFromPoint(first.x + first.width / 2, first.y + first.height / 2)),
+        portOverflow: results.scrollWidth - results.clientWidth,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    expect(guide.left, `the guide panel hangs off the left edge at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(guide.right, `the guide panel hangs off the right edge at ${width}px`).toBeGreaterThanOrEqual(0);
+    expect(guide.hit, `the first guide row is not reachable at ${width}px`).toBe(true);
+    expect(guide.portOverflow, `the guide scrolls sideways at ${width}px`).toBeLessThanOrEqual(0);
+    expect(guide.documentOverflow, `the guide adds horizontal document overflow at ${width}px`)
+      .toBeLessThanOrEqual(checklist.documentOverflow);
+    if (width >= 360) {
+      expect(guide.documentOverflow, `the guide takes the document sideways at ${width}px`)
+        .toBeLessThanOrEqual(0);
+    }
+    if (width === 360) {
+      expect(guide.width, 'the 360px guide panel grew wider than 346px').toBeLessThanOrEqual(346);
+      expect(guide.height, 'the collapsed 360px guide panel grew taller than 402px')
+        .toBeLessThanOrEqual(402);
+      await picker.getByRole('button', { name: 'Price' }).click();
+      await expect(picker.getByRole('link', { name: /RunRepeat price guide/ })).toBeVisible();
+      const expanded = await page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>('details.picker .panel')!;
+        const results = panel.querySelector<HTMLElement>('.results')!;
+        return {
+          height: Math.round(panel.getBoundingClientRect().height * 100) / 100,
+          portOverflow: results.scrollWidth - results.clientWidth,
+          documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      expect(expanded.height, 'an expanded 360px guide grew taller than 402px')
+        .toBeLessThanOrEqual(402);
+      expect(expanded.portOverflow, 'expanded guide prose takes its scrollport sideways')
+        .toBeLessThanOrEqual(0);
+      expect(expanded.documentOverflow, 'expanded guide prose takes the document sideways')
+        .toBeLessThanOrEqual(0);
+    }
   }
 });
 
@@ -1701,9 +1805,9 @@ test('opens the column picker fully on screen at every width', async ({ page }) 
  * this suite makes passes while the whole thing sits at a negative x (docs/app.md §Stacking order).
  * Both bands, because the utilities change host across 800px and the panel's anchor goes with them.
  *
- * The height is measured too, which the picker's is not: this panel is the only floating box in the
- * app that opens BELOW the chrome on a short phone, so a body that outgrew its `max-height` would
- * put `Reset` past the bottom of the screen with no way to scroll to it.
+ * Height has its own reason here: this panel is the only floating box in the app that opens BELOW
+ * the chrome on a short phone, so a body that outgrew its `max-height` would put `Reset` past the
+ * bottom of the screen with no way to scroll to it.
  */
 test('opens the Display panel fully on screen at every width', async ({ page }) => {
   for (const width of [320, 360, 390, 700, 800, 801, 1000, 1440]) {
