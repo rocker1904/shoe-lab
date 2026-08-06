@@ -52,14 +52,23 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
   return index;
 }
 
+function validatedCatalogueIndex(tests: TestsFile, previousTests?: TestsFile | null): Map<string, CatalogueEntry> {
+  validateMethodStatuses(tests.tests, previousTests?.tests);
+  return indexCatalogue(tests.tests);
+}
+
+/** The live crawl calls this before readings so a known-invalid catalogue spends no lab-list requests. */
+export function validateCatalogue(tests: TestsFile, previousTests?: TestsFile | null): void {
+  validatedCatalogueIndex(tests, previousTests);
+}
+
 /**
  * Every reading names a test the catalogue has, and matches that test's declared type. Separate
  * from the floors below because the catalogue can be rewritten without the readings moving —
  * `scrape:metrics --from-corpus` does exactly that (docs/scraping.md §Re-extracting from a corpus).
  */
 export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], tests: TestsFile, previousTests?: TestsFile | null): void {
-  validateMethodStatuses(tests.tests, previousTests?.tests);
-  const index = indexCatalogue(tests.tests);
+  const index = validatedCatalogueIndex(tests, previousTests);
   for (const [slug, shoe] of Object.entries(shoes)) {
     for (const [testId, value] of Object.entries(shoe.values)) {
       const t = index.get(testId)?.type;

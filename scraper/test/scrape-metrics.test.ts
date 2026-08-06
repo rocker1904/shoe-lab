@@ -13,9 +13,10 @@ import { extractTestCatalogue } from '../src/test-catalogue.js';
 const azuraHtml = readFileSync(new URL('./fixtures/raw/azura.html', import.meta.url), 'utf8');
 const labtest5 = readFileSync(new URL('./fixtures/raw/labtest5.json', import.meta.url), 'utf8');
 
-function fakeFetch(seedHtml = azuraHtml): typeof fetch {
+function fakeFetch(seedHtml = azuraHtml, requested: string[] = []): typeof fetch {
   return (async (url: RequestInfo | URL) => {
     const u = String(url);
+    requested.push(u);
     if (u.endsWith('/robots.txt')) return new Response('User-agent: *\nDisallow: /search*\n');
     if (u.includes('/uk/saucony-endorphin-azura')) return new Response(seedHtml);
     if (u.includes('/api/product/lab-test-list/')) {
@@ -39,13 +40,25 @@ function previousCatalogue(): TestsFile {
   return extractTestCatalogue(page.pageData, 'saucony-endorphin-azura', '2026-01-01T00:00:00Z');
 }
 
-function withoutFormalUpdate(html: string, testSlug: string): string {
+function mutateTest(html: string, testSlug: string, mutate: (flat: any[], test: any) => void): string {
   const flat = JSON.parse(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html)![1]!) as any[];
   const slugNode = flat.indexOf(testSlug);
   const test = flat.find((node) => node && !Array.isArray(node) && typeof node === 'object'
     && node.slug === slugNode && typeof node.id === 'number');
-  test.update_id = flat.indexOf(null);
+  mutate(flat, test);
   return `<script id="__NUXT_DATA__">${JSON.stringify(flat)}</script>`;
+}
+
+function withoutFormalUpdate(html: string, testSlug: string): string {
+  return mutateTest(html, testSlug, (flat, test) => { test.update_id = flat.indexOf(null); });
+}
+
+function withRenamedTest(html: string, testSlug: string, replacement: string): string {
+  return mutateTest(html, testSlug, (flat, test) => { test.slug = flat.push(replacement) - 1; });
+}
+
+function withFormalUpdate(html: string, testSlug: string, updateId: number): string {
+  return mutateTest(html, testSlug, (flat, test) => { test.update_id = flat.push(updateId) - 1; });
 }
 
 describe('scrapeMetrics', () => {
@@ -81,7 +94,28 @@ describe('scrapeMetrics', () => {
     expect(dir.read('tests.json')).toBeNull();
     expect(dir.read('metrics.json')).toBeNull();
   });
-  it('preserves both previous files when a published retirement would be lost', async () => {
+  it.each([
+    [
+      'a curated slug is stale',
+      withRenamedTest(azuraHtml, 'outsole-hardness', 'outsole-hardness-renamed'),
+      /curated method outsole-hardness/,
+    ],
+    [
+      'a curated entry has become redundant',
+      withFormalUpdate(azuraHtml, 'outsole-hardness', 999),
+      /outsole-hardness.*updateId|redundant/,
+    ],
+    [
+      'a published retirement would be lost',
+      withoutFormalUpdate(azuraHtml, 'midsole-softness'),
+      /midsole-softness.*retired/,
+    ],
+    [
+      'the catalogue repeats an option value',
+      withRepeatedOption(azuraHtml, 'tongue-gusset-type'),
+      /tongue-gusset-type.*declares option.*twice/,
+    ],
+  ])('stops before lab-list requests when %s', async (_case, seedHtml, message) => {
     const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
     const previousTests = previousCatalogue();
     const previousMetrics: MetricsFile = {
@@ -90,9 +124,13 @@ describe('scrapeMetrics', () => {
     };
     dir.write('tests.json', previousTests);
     dir.write('metrics.json', previousMetrics);
-    const http = new PoliteHttp({ fetchImpl: fakeFetch(withoutFormalUpdate(azuraHtml, 'midsole-softness')), sleep: async () => {}, now: (() => { let t = 0; return () => (t += 2000); })() });
+    const requested: string[] = [];
+    const messages: string[] = [];
+    const http = new PoliteHttp({ fetchImpl: fakeFetch(seedHtml, requested), sleep: async () => {}, now: (() => { let t = 0; return () => (t += 2000); })() });
 
-    await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' })).rejects.toThrow(/midsole-softness.*retired/);
+    await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura', log: (line) => messages.push(line) })).rejects.toThrow(message);
+    expect(requested.filter((url) => url.includes('/api/product/lab-test-list/'))).toEqual([]);
+    expect(messages).toEqual([]);
     expect(dir.read<TestsFile>('tests.json')).toEqual(previousTests);
     expect(dir.read<MetricsFile>('metrics.json')).toEqual(previousMetrics);
   });
@@ -115,12 +153,10 @@ describe('scrapeMetrics', () => {
  * that: the same option node listed twice inside one test's options.
  */
 function withRepeatedOption(html: string, testSlug: string): string {
-  const flat = JSON.parse(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html)![1]!) as any[];
-  const slugNode = flat.indexOf(testSlug);
-  const test = flat.find((n) => n && !Array.isArray(n) && typeof n === 'object' && n.slug === slugNode);
-  const options = flat[flat[test.config].options] as number[];
-  options.push(options[0]!);
-  return `<script id="__NUXT_DATA__">${JSON.stringify(flat)}</script>`;
+  return mutateTest(html, testSlug, (flat, test) => {
+    const options = flat[flat[test.config].options] as number[];
+    options.push(options[0]!);
+  });
 }
 
 // Catalogue-only, offline: the readings live behind the API and cannot be replayed from disk,

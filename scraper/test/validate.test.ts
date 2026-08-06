@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ValidationError, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile, validateValuesAgainstCatalogue } from '../src/validate.js';
+import { ValidationError, validateCatalogue, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile, validateValuesAgainstCatalogue } from '../src/validate.js';
 import type { DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { methodStatusOf } from '../src/method-status.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
@@ -125,6 +125,37 @@ describe('method status catalogue gates', () => {
     const previous = structuredClone(tests);
     delete (previous.tests[4] as any).methodStatus;
     expect(() => validateMetrics(makeMetrics(400), null, tests, previous)).not.toThrow();
+  });
+});
+
+describe('validateCatalogue', () => {
+  it('accepts a complete catalogue without needing readings', () => {
+    expect(() => validateCatalogue(tests)).not.toThrow();
+  });
+
+  it('rejects a lost published retirement without needing readings', () => {
+    const previous = structuredClone(tests);
+    previous.tests[4]!.methodStatus = 'retired';
+    expect(() => validateCatalogue(tests, previous)).toThrow(/t5.*retired/);
+  });
+
+  it('rejects structural faults without needing readings', () => {
+    const duplicateId = { ...tests, tests: [...tests.tests, labTest({ id: 5, slug: 'heel-stack-clone' })] };
+    expect(() => validateCatalogue(duplicateId)).toThrow(/test id 5 declared twice/);
+
+    const duplicateOption = {
+      ...tests,
+      tests: [...tests.tests, labTest({
+        id: 139,
+        slug: 'tongue-gusset-type',
+        type: 'option',
+        options: [
+          { value: 'both-sides-semi', name: 'Both sides (semi)' },
+          { value: 'both-sides-semi', name: 'Both sides, semi' },
+        ],
+      })],
+    };
+    expect(() => validateCatalogue(duplicateOption)).toThrow(/tongue-gusset-type.*"both-sides-semi"/);
   });
 });
 

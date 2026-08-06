@@ -8,7 +8,7 @@ import { parseLabTestList } from './lab-test-list.js';
 import { extractPagePayload, PayloadError } from './page-payload.js';
 import { isPathAllowed, parseRobots } from './robots.js';
 import { extractTestCatalogue } from './test-catalogue.js';
-import { validateMetrics, validateValuesAgainstCatalogue } from './validate.js';
+import { validateCatalogue, validateMetrics, validateValuesAgainstCatalogue } from './validate.js';
 
 const BASE = 'https://runrepeat.com';
 const API = 'https://api.runrepeat.com';
@@ -58,6 +58,7 @@ export async function scrapeMetrics({ http, dataDir, seed, corpusDir, log = () =
   const scrapedAt = new Date().toISOString();
   const tests = extractTestCatalogue(page.pageData, seed, scrapedAt);
   const previousTests = dataDir.read<TestsFile>('tests.json');
+  validateCatalogue(tests, previousTests);
 
   const next: MetricsFile = { scrapedAt, shoes: {} };
   const fetchable = tests.tests.filter((t) => METRIC_TYPES.has(t.type));

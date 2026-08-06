@@ -83,7 +83,9 @@ robots.txt, is docs/decisions.md §Be a good citizen toward RunRepeat.
   **last** character is `$` — only the last, because a `$` anywhere else is a
   literal dollar sign in the implementation RFC 9309 codifies. A disallowed
   path fails closed by aborting the run.
-- **Request budget**, today: metrics ≈ 60 (1 robots + 1 seed page + 58 tests),
+- **Request budget**, today: a valid metrics run ≈ 60 (1 robots + 1 seed page +
+  58 tests); a catalogue-only failure stops at 2 (robots + seed page) and makes
+  no lab-test-list request,
   details incremental = 1 robots + one page per uncrawled slug,
   `--force-all` ≈ 465 (one page per catalogued shoe) or 0 with `--from-corpus`,
   releases ≈ 21 (20 full pages + the empty one that stops the loop),
@@ -99,6 +101,11 @@ robots.txt, is docs/decisions.md §Be a good citizen toward RunRepeat.
 
 `scraper/src/validate.ts`, run before anything is written, so a failed gate
 means a red workflow and untouched `data/` — never a partial write.
+On a live metrics run, every invariant knowable from the next and previous
+catalogues runs immediately after the seed-page extraction and before the
+first lab-test-list request. The complete catalogue-and-values gate runs again
+after the crawl, retaining the final check on the exact files about to be
+written and the reading/fleet invariants that cannot run earlier.
 
 - **Absolute floors:** fewer than 300 shoes or fewer than 50 tests fails. The
   catalogue extractor enforces the same 50 independently, so a gutted
@@ -106,17 +113,20 @@ means a red workflow and untouched `data/` — never a partial write.
 - **Test slugs are one ID-reference token:** empty slugs and ASCII whitespace
   are fatal. Categorical facet headings use the slug as an HTML id and
   `aria-labelledby` target, where whitespace would split one reference into a
-  list of missing ids. The extractor applies the gate before the per-test API
-  crawl; the shared catalogue index repeats it on every path that can write or
-  join a catalogue. Other punctuation is valid and must not be rejected merely
-  because today's upstream slugs use lowercase letters and hyphens.
+  list of missing ids. The extractor and pre-crawl catalogue gate apply it
+  before the per-test API crawl; the shared catalogue index repeats it on every
+  path that can write or join a catalogue. Other punctuation is valid and must
+  not be rejected merely because today's upstream slugs use lowercase letters
+  and hyphens.
 - **Method status is source-resolved catalogue metadata:** every published
   field must equal the answer from §Test lineage. A curated slug must resolve
   exactly once and remain unlinked; a missing or now-formally-linked entry is
   stale curation and fails. A retirement already published for a slug present
-  in the next catalogue cannot disappear silently. The live crawl, corpus
-  catalogue rewrite and join all apply the gate before writing; a previous
-  catalogue with no field is pre-feature input, not a retirement claim.
+  in the next catalogue cannot disappear silently. The live crawl applies the
+  gate before its first lab-test-list request and repeats it before writing;
+  the corpus catalogue rewrite and join apply their corresponding gate before
+  writing. A previous catalogue with no field is pre-feature input, not a
+  retirement claim.
 - **Type matching:** every value must match its test's declared type
   (numeric family → number, `bool` → boolean, everything else → string), and
   a value for a test id absent from the catalogue is fatal. Checked wherever
