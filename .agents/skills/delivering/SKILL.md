@@ -39,6 +39,11 @@ reasons to stop are BLOCKED, a DISCOVERY that moves behaviour, or done.
   task that earns it and let the trailing task keep only what belongs to
   no single one — a dated decision entry, a policy line, a backlog
   closure.
+- Resolve every relative path from the command's **actual** working directory
+  before execution. Wrappers can change it: `npm -w <workspace> run ...` runs
+  the script from that workspace, not the repository root. If this contradicts
+  a frozen build-sheet command, treat it as a reality-correction discovery,
+  amend the spec, and record the executable command in the ledger.
 
 ## Choosing the execution mode
 
@@ -185,6 +190,11 @@ tree nobody has checked is worth no more than no verdict at all.
    yourself a loop). Do not mutate the worktree — commits, suite runs,
    doc edits — while a dispatched agent is verifying in it; a moving
    tree voids its evidence and yours.
+   A nominally read-only test may still need writable caches, temporary config,
+   IPC sockets or browser artifacts. Do not weaken the frozen-tree rule to make
+   it run: let the reviewer use the complete recorded evidence, or have the
+   controller provide a disposable writable copy when a fresh rerun is material
+   to the verdict. State the limitation and which evidence the verdict used.
 5. Fix loop, on spec ❌ or Critical/Important findings. Crew: resume the
    implementer for rounds 1–3; rounds 4–5 dispatch a fresh implementer
    on a stronger model (this rotation replaces any planned reuse —
