@@ -126,6 +126,9 @@ export const CURATED_RANGE_KEYS = [
   'toebox-width-widest-part', 'toebox-width-big-toe', 'toebox-height',
 ];
 
+/** The consequence shown wherever an unpaired retired method can be chosen or bounded. */
+export const RETIRED_METHOD_CONSEQUENCE = 'Not used on newer shoes';
+
 /** RunRepeat suffixes a revised method with its two-digit year. 20–29 only: a bare trailing number is a body part or a size, not a year. */
 const METHOD_YEAR = /-(2\d)$/;
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Coverage } from '../lib/coverage';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
-  import type { ResolvedMetric } from '../lib/lineage';
+  import { RETIRED_METHOD_CONSEQUENCE, type ResolvedMetric } from '../lib/lineage';
   import { roving } from '../lib/roving';
   import MetricHelp from './MetricHelp.svelte';
 
@@ -53,6 +53,12 @@
     metric.kind === 'single' ? bounded(metric.key)
     : metric.kind === 'colocated' ? metric.parts.some((p) => bounded(p.key))
     : bounded(chosen));
+  /** A formal pair states lifecycle on each generation; only an unpaired shape can truthfully put
+   *  one consequence under the heading for the whole metric. */
+  const retired = $derived(
+    metric.kind === 'single' ? metric.retired
+    : metric.kind === 'colocated' ? metric.parts.every((p) => p.retired)
+    : false);
 </script>
 
 <div class="metric">
@@ -68,6 +74,8 @@
     </div>
     {#if headCoverage}<span class="cov">{headCoverage}</span>{/if}
   </div>
+
+  {#if retired}<p class="method-status">{RETIRED_METHOD_CONSEQUENCE}</p>{/if}
 
   {#if metric.kind === 'pair'}
     <div class="gens" role="radiogroup" aria-label={metric.label} data-segmented-control use:roving>
@@ -90,6 +98,8 @@
   .title { display: flex; align-items: center; gap: var(--s1); min-width: 0; }
   h4 { font-size: var(--t-sm); color: var(--text-dim); margin: 0; font-weight: 600; }
   h4.on { color: var(--text); font-weight: 700; }
+  .method-status { margin: 0; color: var(--text-dim); font-size: var(--t-xs);
+                   line-height: 1rem; white-space: nowrap; }
   /* The same mono glyph the two pickers draw, at the same size and dimmed the same way — a
      direction mark that read differently on three surfaces would be three marks. Empty for a
      neutral metric, so the margin goes with it rather than leaving a gap after the name. */

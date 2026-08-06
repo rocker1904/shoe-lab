@@ -483,10 +483,20 @@ visual row behind its label, direction, coverage bar and percentage; only the
 `?` sits above it and owns its own press. An unknown key emits neither button nor
 layout box from `MetricHelp`, so the row and range remain fully usable.
 
-The usual Add-filter row measures 32.8px at both 360px and 1200px; a long
-method-era label in the compact fixture wraps to 40px at the phone floor. The
-browser guard therefore permits 40px at 360px and 34px at 1200px while requiring
-every row to remain at least 32px and free of horizontal overflow. The 288px
+An explicitly retired unpaired method says **Not used on newer shoes** on a dim
+second line in Add filter and below its heading for as long as its range row is
+shown. The Add action names it as retired and repeats that consequence; its
+search matches both `retired` and the visible sentence. The line is static text,
+not a badge, control, live region or new focus stop. A uniformly retired
+colocated family shares one line. A superseded pair does not: each radio already
+states its own lifecycle, so a pair-wide line would make the current generation
+sound retired. Its retired generation does receive the Add-filter consequence
+when it is the selected generation being offered.
+
+The usual Add-filter row measures 32.8px at both 360px and 1200px; the retired
+second line takes the tallest row to 41.4px. The browser guard therefore permits
+42px while requiring every row to remain at least 32px and free of horizontal
+overflow. The 288px
 panel keeps an 8px viewport allowance, both target scrollports retain zero
 horizontal overflow, and the three-engine suite checks first, middle and last
 triggers in both surfaces at those widths. The panel is also a boundary for the
@@ -1140,6 +1150,14 @@ one is `current method` or `retired method`. These replace `20YY method`,
 selecting its predecessor changes the same resolved row to the retired
 modifier. The selection continues to use the existing `generations` mapping,
 so method status adds no URL or view-state field.
+
+Columns appends `(retired)` to every retired test-shaped offer that is not a
+formal superseded generation, categorical tests included. A formal generation
+keeps only its lifecycle modifier in parentheses, so `retired method` and
+`20YY · retired` never gain a second suffix. The checkbox remains the row's only
+focus stop and keeps coverage and checked state in its accessible name. The
+table, receipt, ordering note and expanded row carry no lifecycle treatment;
+choosing a retired column changes presentation only, not the fleet.
 
 Sorting reads numbers, with missing values always last and score as the
 tie-break, so a sort never silently reorders the tail. `releasedAt` sorts as
@@ -4191,21 +4209,13 @@ exclusive by nature, zones are two measurements of two parts of a shoe
 
 ### There is no sparse warning
 
-The live count is the whole treatment: **do not add a badge that classifies a
-metric as thin.** Coverage by release year shows every sparse metric is
-**era-shaped**, not sporadic — each is either *arriving* (a clean adoption ramp
-from nothing, like `breathability-25`) or *retiring* (near-total coverage then a
-cliff, like `stiffness`). Not one is uniformly thin, so "this test is rarely
-run" is a sentence that is false about every metric it would be shown on. The
-per-year shares are not quoted here on purpose: curating release months moves
-shoes between years, so any figure written down goes stale on the next curation
-pass rather than on the next scrape.
-
-Any such classifier needs a notion of **era per test**, which the dataset does
-not carry; that is a BACKLOG.md item, not something to approximate from the age
-of the oldest reading. Meanwhile the count **demonstrates** the answer as the
-runner filters: narrow to recent shoes and an arriving metric fills in while a
-retiring one empties out, which is more than a static label could have said.
+The live count is the whole coverage treatment: **do not add a badge that
+classifies a metric as thin.** Sparse coverage is era-shaped rather than
+sporadic, so `rarely run` is false about the metrics it would mark. Retirement
+comes only from the catalogue's exact `methodStatus: "retired"`; coverage,
+release dates, `isNew`, the current time and the loaded fleet never produce or
+clear it. The static consequence beside an unpaired retired range is lifecycle
+metadata, not a coverage warning, and remains even when the live count is high.
 
 `SPARSE_BELOW` and `isSparse` stay, redefined: they are a **preset-safety**
 threshold, not a warning threshold. Nothing on screen reads them; their

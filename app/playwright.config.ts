@@ -8,13 +8,14 @@ export default defineConfig({
   /**
    * The smoke suite is Chromium-only. Most of `cross-browser.spec.ts` is the Firefox/WebKit half
    * of that suite; its segmented registry is the exception and has a small Chromium project so
-   * those quantified contracts run in all three engines. `features.spec.ts` runs in all three for
+   * those quantified contracts and the retired-method surface bounds run in all three engines.
+   * `features.spec.ts` runs in all three for
    * disclosure and mounted shared-radio behaviour that jsdom cannot resolve.
    */
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' }, testIgnore: /cross-browser/ },
     { name: 'chromium-segmented', use: { browserName: 'chromium' }, testMatch: /cross-browser/,
-      grep: /holds every shared segment|holds every segment and generation choice|holds the complete touch registry/ },
+      grep: /holds every shared segment|holds every segment and generation choice|holds the complete touch registry|holds retired method labels/ },
     { name: 'firefox', use: { browserName: 'firefox' }, testMatch: /cross-browser|features/ },
     { name: 'webkit', use: { browserName: 'webkit' }, testMatch: /cross-browser|features/ },
   ],

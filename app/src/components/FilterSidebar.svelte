@@ -164,7 +164,7 @@
   /** The facets the catalogue describes, by the same rule that decides which of these can be a
    *  column: an upstream categorical test arrives with a control the way it arrives with a cell.
    *  `isCategorical` is that rule and the shared door — `categoricalEntries` is the picker's
-   *  projection of it (`{key,label,groupId}`), not the rule itself, which is why this filters the
+   *  projection of catalogue fields, not the rule itself, which is why this filters the
    *  tests directly rather than calling it. */
   const featureTests = $derived(data.tests.filter((t) => isCategorical(t)));
   /** One reader per facet, made once and kept: each figure is a walk of the population, and a reader

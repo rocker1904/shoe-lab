@@ -29,15 +29,18 @@
     ['score', 'RunRepeat Score'], ['msrpGbp', 'Price'], ['plate', 'Plate']];
 
   interface Offer { key: string; label: string; retired: boolean }
+  const unpairedLabel = (label: string, retired: boolean) => retired ? `${label} (retired)` : label;
   // A pair offers whichever generation is chosen and never both; a colocated metric offers both
   // halves, which is what keeps them independently sortable (docs/app.md §Columns and sorting).
   const offersOf = (e: ResolvedMetric): Offer[] => {
-    if (e.kind === 'single') return [{ key: e.key, label: e.label, retired: e.retired }];
+    if (e.kind === 'single') {
+      return [{ key: e.key, label: unpairedLabel(e.label, e.retired), retired: e.retired }];
+    }
     if (e.kind === 'pair') {
       const g = generations[e.current.key] === e.retired.key ? e.retired : e.current;
       return [{ key: g.key, label: `${e.label} (${g.generation})`, retired: g.retired }];
     }
-    return e.parts.map((p) => ({ key: p.key, label: p.label, retired: p.retired }));
+    return e.parts.map((p) => ({ key: p.key, label: unpairedLabel(p.label, p.retired), retired: p.retired }));
   };
   const grouped = $derived.by(() => {
     const m = new Map<string, Offer[]>();

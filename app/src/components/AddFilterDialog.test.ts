@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
 
@@ -38,6 +38,28 @@ describe('AddFilterDialog', () => {
     expect(screen.queryByRole('button', { name: /^Add filter: Stack — Heel/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Cushioning' })).not.toBeInTheDocument();
   });
+  it('marks a retired option visibly and in the existing action name', () => {
+    setup({ options: [
+      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true },
+    ] });
+    expect(screen.getByText('Not used on newer shoes')).toBeInTheDocument();
+    expect(screen.getByRole('button', {
+      name: /Add filter: Outsole hardness.*retired.*Not used on newer shoes.*80% measured/i,
+    })).toBeInTheDocument();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+  it('searches retired status and its visible consequence without matching an unretired option', async () => {
+    setup({ options: [
+      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true },
+      { key: 'future-test', label: 'Future test', groupId: null, coverage: 5, retired: false },
+    ] });
+    const search = screen.getByLabelText('Filter metrics');
+    for (const query of ['retired', 'not used on newer shoes']) {
+      await fireEvent.input(search, { target: { value: query } });
+      expect(screen.getByRole('button', { name: /Add filter: Outsole hardness/ })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Add filter: Future test/ })).toBeNull();
+    }
+  });
   /**
    * The same sentence the brand list one control away already renders, in the same form and the
    * same place. A zero match here collapsed the dialog to its legend and its Close button, which
@@ -73,6 +95,14 @@ describe('AddFilterDialog', () => {
     expect(screen.getByRole('note', { name: 'Stack — Heel metric help' })).toBeInTheDocument();
     expect(onchoose).not.toHaveBeenCalled();
     expect(onclose).not.toHaveBeenCalled();
+  });
+
+  it('adds no focus stop for a retired status line', () => {
+    setup({ options: [
+      { key: 'outsole-hardness', label: 'Outsole hardness', groupId: null, coverage: 80, retired: true },
+    ] });
+    const offer = screen.getByText('Not used on newer shoes').closest('.offer') as HTMLElement;
+    expect(within(offer).getAllByRole('button')).toHaveLength(2);
   });
 
   it('lets Escape close help without closing its owning dialog', async () => {

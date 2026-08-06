@@ -451,6 +451,39 @@ describe('FilterSidebar filter set management', () => {
     expect(screen.getByRole('group', { name: /^Stiffness/ })).toBeInTheDocument();
   });
 
+  it('warns before adding a retired single and keeps the warning on its added row', async () => {
+    const onchange = vi.fn();
+    const { container } = render(FilterSidebar, {
+      props: { data: dataPlus, view: defaultView(), onchange, population: FLEET },
+    });
+    await open(within(container).getByRole('button', { name: 'Add filter' }));
+    const dialog = within(screen.getByRole('dialog'));
+    const option = dialog.getByRole('button', {
+      name: /Add filter: Outsole hardness.*retired.*Not used on newer shoes/i,
+    });
+    expect(dialog.getByText('Not used on newer shoes')).toBeInTheDocument();
+    await fireEvent.click(option);
+    const next = onchange.mock.lastCall![0];
+    expect(next.rows).toContain('outsole-hardness');
+
+    const active = render(FilterSidebar, {
+      props: { data: dataPlus, view: next, onchange: vi.fn(), population: FLEET },
+    });
+    expect(within(active.container).getByText('Not used on newer shoes')).toBeInTheDocument();
+  });
+
+  it('warns when Add filter currently offers a retired generation', async () => {
+    const view = defaultView();
+    view.generations['midsole-softness-22'] = 'midsole-softness';
+    const { container } = render(FilterSidebar, {
+      props: { data: dataPlus, view, onchange: vi.fn(), population: FLEET },
+    });
+    await open(within(container).getByRole('button', { name: 'Add filter' }));
+    expect(within(screen.getByRole('dialog')).getByRole('button', {
+      name: /Add filter: Midsole softness — retired method.*retired.*Not used on newer shoes/i,
+    })).toBeInTheDocument();
+  });
+
   it('preserves sibling filters and leaves the view prop unmutated', async () => {
     const onchange = vi.fn();
     const view = defaultView();
@@ -608,6 +641,19 @@ describe('FilterSidebar metric entries', () => {
     render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
     expect(screen.getByRole('group', { name: /Width \/ Fit — retired method/ })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /Width \/ Fit — current method/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Not used on newer shoes')).toBeNull();
+  });
+  it('shares one status line across a uniformly retired colocated family', () => {
+    const tests = [...TESTS,
+      labTest({ id: 101, slug: 'retired-family', name: 'Retired family', chartLabel: 'Retired family', secondaryTestIds: [102], methodStatus: 'retired' }),
+      labTest({ id: 102, slug: 'retired-family-other', name: 'Retired family other', primaryTestId: 101, methodStatus: 'retired' }),
+    ];
+    const view = defaultView();
+    view.rows = ['retired-family'];
+    const { container } = render(FilterSidebar, { props: {
+      data: { ...data, tests }, view, onchange: vi.fn(), population: FLEET,
+    } });
+    expect(within(container).getAllByText('Not used on newer shoes')).toHaveLength(1);
   });
 });
 

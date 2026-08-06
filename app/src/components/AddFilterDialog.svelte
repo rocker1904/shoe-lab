@@ -3,6 +3,7 @@
   import DirectionLegend from './DirectionLegend.svelte';
   import MetricHelp from './MetricHelp.svelte';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
+  import { RETIRED_METHOD_CONSEQUENCE } from '../lib/lineage';
 
   export interface AddFilterOption {
     key: string; label: string; groupId: string | null; coverage: number; retired: boolean;
@@ -21,7 +22,8 @@
     const q = query.trim().toLowerCase();
     const m = new Map<string, AddFilterOption[]>();
     for (const o of options) {
-      if (q && !o.label.toLowerCase().includes(q)) continue;
+      const searchable = `${o.label} ${o.retired ? `retired ${RETIRED_METHOD_CONSEQUENCE}` : ''}`.toLowerCase();
+      if (q && !searchable.includes(q)) continue;
       const g = (o.groupId && groups[o.groupId]) || 'Other';
       m.set(g, [...(m.get(g) ?? []), o]);
     }
@@ -89,10 +91,13 @@
       <h4>{group}</h4>
       {#each offers as o (o.key)}
         <div class="offer">
-          <button type="button" class="choose" aria-label={`Add filter: ${o.label}, ${o.coverage}% measured`}
+          <button type="button" class="choose" aria-label={o.retired
+                    ? `Add filter: ${o.label}, retired. ${RETIRED_METHOD_CONSEQUENCE}. ${o.coverage}% measured`
+                    : `Add filter: ${o.label}, ${o.coverage}% measured`}
                   onclick={() => onchoose(o.key)}></button>
           <span class="name" aria-hidden="true">{o.label}</span>
           <MetricHelp metricKey={o.key} label={o.label} />
+          {#if o.retired}<span class="method-status" aria-hidden="true">{RETIRED_METHOD_CONSEQUENCE}</span>{/if}
           <span class="dir" aria-hidden="true">{DIRECTION_ARROW[directionOf(o.key)]}</span>
           <!-- A bar, which is what the `select` this replaced could never hold (docs/app.md §Filters). -->
           <span class="bar" aria-hidden="true"><span class="fill" style:width="{o.coverage}%"></span></span>
@@ -159,9 +164,13 @@
             border: 1px solid transparent; border-radius: var(--r-sm); background: none;
             cursor: pointer; font: inherit; }
   .choose:hover { border-color: var(--accent); background: var(--accent-dim); }
-  .name, .dir, .bar, .pct { position: relative; z-index: 1; pointer-events: none; }
-  .name { min-width: 0; }
-  :global(.offer > .metric-help) { position: relative; z-index: 2; margin-left: var(--s1); }
+  .name, .method-status, .dir, .bar, .pct { position: relative; z-index: 1; pointer-events: none; }
+  .name, .dir, .bar, .pct { grid-row: 1; }
+  .name { grid-column: 1; min-width: 0; }
+  .method-status { grid-row: 2; grid-column: 1 / 4; color: var(--text-dim);
+                   font-size: var(--t-xs); white-space: nowrap; }
+  :global(.offer > .metric-help) { position: relative; z-index: 2; grid-row: 1; grid-column: 2;
+                                   margin-left: var(--s1); }
   /* Separated, and the same rule and the same margin as the column picker's: the three clauses are
      one sentence and read as three headings without them. */
   .dir { grid-column: 4; margin-left: var(--s2); font-family: var(--font-mono);
@@ -169,10 +178,10 @@
   /* Track and fill must be DIFFERENT neutrals, or the bar is a featureless pill: --hist-dim is the
      mark, --border-soft the groove it sits in. Neutral rather than accent because accent means
      "you selected this" in a CONTROL, and a dialog row is a control (docs/app.md §Theming). */
-  .bar { display: block; height: 6px; margin-left: var(--s2); border-radius: var(--r-full);
+  .bar { grid-column: 5; display: block; height: 6px; margin-left: var(--s2); border-radius: var(--r-full);
          background: var(--border-soft); overflow: hidden; }
   .fill { display: block; height: 100%; background: var(--hist-dim); }
-  .pct { margin-left: var(--s2); font-size: var(--t-xs); color: var(--text-dim);
+  .pct { grid-column: 6; margin-left: var(--s2); font-size: var(--t-xs); color: var(--text-dim);
          text-align: right; font-variant-numeric: tabular-nums; }
   /* `margin: 0`, where `BrandFilter`'s carries one: the dialog is a flex column with its own gap,
      so a top margin here would double the space the sentence sits in. */

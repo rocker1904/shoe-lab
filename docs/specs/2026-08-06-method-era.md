@@ -200,7 +200,8 @@ homes.
   labels stay on one 16px name line, every lifecycle-modified Columns label
   stays within two such lines, and the picker has no horizontal overflow.
 - At 360px, `Not used on newer shoes` stays on one line in Add filter with the
-  help trigger, direction, coverage bar and percentage still visible. The
+  help trigger, coverage bar and percentage still visible, while the reserved
+  direction column retains its width. The
   measured Chromium probe gives the line 147px and uses 122px; the browser gate
   holds the result rather than those implementation measurements.
 - On the 228px permanent-sidebar track, the status line stays on one line and

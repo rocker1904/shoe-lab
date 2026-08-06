@@ -1072,10 +1072,13 @@ test('keeps metric help and both filter surfaces inside their measured bounds', 
 
     const rows = await dialog.locator('.offer').evaluateAll((offers) => offers.map((offer) => {
       const box = offer.getBoundingClientRect();
-      return { height: box.height, overflow: offer.scrollWidth - offer.clientWidth };
+      return { name: offer.querySelector('.name')?.textContent ?? '', height: box.height,
+               overflow: offer.scrollWidth - offer.clientWidth };
     }));
     expect(Math.min(...rows.map((row) => row.height))).toBeGreaterThanOrEqual(32);
-    expect(Math.max(...rows.map((row) => row.height))).toBeLessThanOrEqual(width === 360 ? 40 : 34);
+    const tallest = rows.reduce((a, b) => a.height >= b.height ? a : b);
+    expect(tallest.height, `${tallest.name} is the tallest Add-filter row at ${width}px`)
+      .toBeLessThanOrEqual(42);
     expect(rows.every((row) => row.overflow === 0)).toBe(true);
     expect(await dialog.locator('.list').evaluate((port) => port.scrollWidth - port.clientWidth)).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
@@ -1777,13 +1780,23 @@ test('renders a superseded pair once and keeps colocated halves independently so
   const gens = page.getByRole('radio', { name: /Midsole softness/ });
   await expect(gens).toHaveCount(2);
   await expect(gens.first()).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByRole('group', { name: 'Midsole softness — 2022 method' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Midsole softness — 2022 · current' })).toBeVisible();
+  const picker = page.locator('details.picker');
+  const pickerPanel = picker.locator('.panel');
+  await picker.locator('summary').click();
+  await expect(pickerPanel.getByRole('checkbox', { name: /^Midsole softness \(2022 · current\)/ })).toHaveCount(1);
+  await expect(page.getByText('Not used on newer shoes', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
 
   // switching generation releases the other one rather than ANDing the two
   await gens.nth(1).click();
   await expect(page).toHaveURL(/gen\.midsole-softness-22=midsole-softness/);
-  await expect(page.getByRole('group', { name: 'Midsole softness — original' })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Midsole softness — 2022 method' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Midsole softness — retired method' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Midsole softness — 2022 · current' })).toHaveCount(0);
+  await picker.locator('summary').click();
+  await expect(pickerPanel.getByRole('checkbox', { name: /^Midsole softness \(retired method\)/ })).toHaveCount(1);
+  await expect(pickerPanel.getByRole('checkbox', { name: /retired method.*\(retired\)/i })).toHaveCount(0);
+  await expect(page.getByText('Not used on newer shoes', { exact: true })).toHaveCount(0);
 
   // both halves of the colocated metric sort on their own key
   await page.goto('/?cols=score,energy-return-heel,energy-return-forefoot');

@@ -2,7 +2,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { FIT_SLACK_PX, SIDEBAR_PERMANENT_PX } from '../src/lib/fit';
 import {
   awaitFacesLoaded, FIT_DROPPED_COLS, FIT_SETS, FIT_TOLERANCE_PX, measureFit, routeWindowFleet,
-  sweepDeclaredColumns, sweepPhoneGroupHeights, sweepRowHeights, twoPaints, WINDOW_FLEET_SIZE,
+  setLayoutWidth, sweepDeclaredColumns, sweepPhoneGroupHeights, sweepRowHeights, twoPaints,
+  WINDOW_FLEET_SIZE,
 } from './fit-support';
 
 /**
@@ -208,6 +209,156 @@ test('closes the column picker every way out, and hands focus back', async ({ pa
   await panel.locator('input[type=checkbox]').last().focus();
   await page.keyboard.press('Tab');
   await expect(panel, 'the picker survived a forwards keyboard exit').toBeHidden();
+});
+
+test('holds retired method labels inside every choice surface', async ({ page, browserName }, testInfo) => {
+  test.slow();
+  const textMeasure = (locator: Locator) => locator.evaluate((node) => {
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const textRects = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
+    const box = node.getBoundingClientRect();
+    return {
+      lines: textRects.length,
+      boxWidth: Math.round(box.width * 100) / 100,
+      boxHeight: Math.round(box.height * 100) / 100,
+      usedWidth: Math.round(Math.max(0, ...textRects.map((rect) => rect.width)) * 100) / 100,
+      lineHeight: Math.round(Math.max(0, ...textRects.map((rect) => rect.height)) * 100) / 100,
+    };
+  });
+  const measurements: Record<string, unknown> = { engine: browserName };
+
+  await page.setViewportSize({ width: 360, height: 844 });
+  await page.goto('/?rows=midsole-softness-22');
+  await awaitFacesLoaded(page);
+  const picker = page.locator('details.picker');
+  const pickerPanel = picker.locator('.panel');
+  await picker.locator('summary').click();
+  await expect(pickerPanel).toBeVisible();
+
+  const retiredLabels = [
+    'Outsole hardness (retired)',
+    'Stiffness in cold (retired)',
+    'Stiffness in cold (%) (retired)',
+  ];
+  const retiredColumnMeasures: Record<string, Awaited<ReturnType<typeof textMeasure>>> = {};
+  for (const label of retiredLabels) {
+    const name = pickerPanel.getByText(label, { exact: true });
+    const row = name.locator('..');
+    await expect(row.getByRole('checkbox')).toHaveCount(1);
+    await expect(row.locator('input, button, a[href], [tabindex]:not([tabindex="-1"])')).toHaveCount(1);
+    const measured = await textMeasure(name);
+    retiredColumnMeasures[label] = measured;
+    expect(measured.lines, `${label} wrapped at 360px`).toBe(1);
+    expect(measured.lineHeight, `${label} exceeded its 16px name line`).toBeLessThanOrEqual(16.5);
+  }
+  const currentName = pickerPanel.getByText('Midsole softness (2022 · current)', { exact: true });
+  const currentMeasure = await textMeasure(currentName);
+  expect(currentMeasure.lines).toBeLessThanOrEqual(2);
+  expect(currentMeasure.lineHeight).toBeLessThanOrEqual(16.5);
+  expect(await pickerPanel.evaluate((panel) => panel.scrollWidth - panel.clientWidth)).toBeLessThanOrEqual(0);
+  measurements.columns = { retired: retiredColumnMeasures, current: currentMeasure };
+
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  const current = page.getByRole('radio', { name: 'Midsole softness, 2022 · current' });
+  const retired = page.getByRole('radio', { name: 'Midsole softness, retired method' });
+  await expect(current).toHaveAttribute('aria-checked', 'true');
+  await retired.click();
+  await expect(retired).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('Not used on newer shoes', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+
+  await picker.locator('summary').click();
+  const retiredGeneration = pickerPanel.getByText('Midsole softness (retired method)', { exact: true });
+  const retiredGenerationMeasure = await textMeasure(retiredGeneration);
+  expect(retiredGenerationMeasure.lines).toBeLessThanOrEqual(2);
+  expect(retiredGenerationMeasure.lineHeight).toBeLessThanOrEqual(16.5);
+  await expect(pickerPanel.getByText('Midsole softness (retired method) (retired)', { exact: true }))
+    .toHaveCount(0);
+  expect(await pickerPanel.evaluate((panel) => panel.scrollWidth - panel.clientWidth)).toBeLessThanOrEqual(0);
+  (measurements.columns as Record<string, unknown>).retiredGeneration = retiredGenerationMeasure;
+  await page.keyboard.press('Escape');
+
+  await page.goto('/');
+  await awaitFacesLoaded(page);
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Add filter', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add filter' });
+  await dialog.getByRole('searchbox', { name: 'Filter metrics' }).fill('outsole hardness');
+  const add = dialog.getByRole('button', {
+    name: /Add filter: Outsole hardness.*retired.*Not used on newer shoes.*60% measured/i,
+  });
+  const offer = add.locator('..');
+  const addStatus = offer.getByText('Not used on newer shoes', { exact: true });
+  const addMeasure = await textMeasure(addStatus);
+  const addNameMeasure = await textMeasure(offer.locator('.name'));
+  const addRowGeometry = await offer.evaluate((row) => {
+    const box = row.getBoundingClientRect();
+    return { height: Math.round(box.height * 100) / 100,
+             rows: getComputedStyle(row).gridTemplateRows };
+  });
+  expect(addMeasure.lines).toBe(1);
+  expect(addMeasure.lineHeight).toBeLessThanOrEqual(16.5);
+  const help = offer.getByRole('button', { name: 'Help for Outsole hardness' });
+  await expect(help).toBeVisible();
+  const directionWidth = await offer.locator('.dir').evaluate((slot) => slot.getBoundingClientRect().width);
+  expect(directionWidth, 'the reserved neutral direction column collapsed').toBeGreaterThan(0);
+  await expect(offer.locator('.bar')).toBeVisible();
+  await expect(offer.locator('.pct')).toHaveText('60%');
+  await expect(offer.getByRole('button')).toHaveCount(2);
+  await expect(offer.locator('[role="status"], [aria-live]')).toHaveCount(0);
+  expect(await dialog.locator('.list').evaluate((list) => list.scrollWidth - list.clientWidth))
+    .toBeLessThanOrEqual(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth))
+    .toBeLessThanOrEqual(0);
+  measurements.addFilter = { status: addMeasure, name: addNameMeasure,
+                             row: addRowGeometry, directionWidth };
+
+  const addBox = (await add.boundingBox())!;
+  await add.click({ position: { x: addBox.width - 2, y: addBox.height / 2 } });
+  await expect(dialog).toHaveCount(0);
+  const drawerStatus = page.locator('.sidebar .method-status').filter({ hasText: 'Not used on newer shoes' });
+  const drawerMeasure = await textMeasure(drawerStatus);
+  expect(drawerMeasure.lines).toBe(1);
+  const drawerMetric = drawerStatus.locator('..');
+  expect(await drawerMetric.evaluate((metric) => metric.scrollWidth - metric.clientWidth)).toBeLessThanOrEqual(0);
+  expect(await page.locator('.sidebar').evaluate((sidebar) => sidebar.scrollWidth - sidebar.clientWidth))
+    .toBeLessThanOrEqual(0);
+  measurements.drawer = drawerMeasure;
+
+  await page.goto('/?rows=outsole-hardness');
+  await awaitFacesLoaded(page);
+  expect(await setLayoutWidth(page, SIDEBAR_PERMANENT_PX, 844)).toBe(SIDEBAR_PERMANENT_PX);
+  await expect(page.getByRole('button', { name: 'Filters', exact: true })).toHaveCount(0);
+  const permanentStatus = page.locator('.sidebar .method-status').filter({ hasText: 'Not used on newer shoes' });
+  const permanentMeasure = await textMeasure(permanentStatus);
+  const permanentMetric = permanentStatus.locator('..');
+  const permanentGeometry = await permanentMetric.evaluate((metric) => {
+    const status = metric.querySelector<HTMLElement>('.method-status')!.getBoundingClientRect();
+    const head = metric.querySelector<HTMLElement>('.head')!.getBoundingClientRect();
+    const box = metric.getBoundingClientRect();
+    return {
+      width: Math.round(box.width * 100) / 100,
+      statusGap: Math.round((status.top - head.bottom) * 100) / 100,
+      overflow: metric.scrollWidth - metric.clientWidth,
+      helpVisible: metric.querySelector<HTMLElement>('.metric-help')!.offsetParent !== null,
+      coverageVisible: metric.querySelector<HTMLElement>('.cov')!.offsetParent !== null,
+    };
+  });
+  expect(permanentMeasure.lines).toBe(1);
+  expect(permanentMeasure.lineHeight).toBeLessThanOrEqual(16.5);
+  expect(Math.abs(permanentGeometry.width - 228), 'the permanent metric track is not 228px').toBeLessThanOrEqual(1);
+  expect(permanentGeometry.statusGap, 'the status collides with its heading row').toBeGreaterThanOrEqual(3);
+  expect(permanentGeometry.overflow).toBeLessThanOrEqual(0);
+  expect(permanentGeometry.helpVisible).toBe(true);
+  expect(permanentGeometry.coverageVisible).toBe(true);
+  measurements.permanentSidebar = { ...permanentMeasure, ...permanentGeometry };
+
+  testInfo.annotations.push({ type: 'method-era-measurements', description: JSON.stringify(measurements) });
+  await testInfo.attach('method-era-measurements', {
+    body: Buffer.from(JSON.stringify(measurements, null, 2)), contentType: 'application/json',
+  });
 });
 
 /**

@@ -47,7 +47,7 @@ describe('ColumnPicker metric entries', () => {
     render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
     const softness = screen.getAllByRole('checkbox', { name: /Midsole softness/ });
     expect(softness).toHaveLength(1);
-    expect(softness[0]).toHaveAccessibleName(/2022 · current/);
+    expect(softness[0]).toHaveAccessibleName('Midsole softness (2022 · current)');
   });
   it('offers the retired generation once it is the chosen one', () => {
     render(ColumnPicker, {
@@ -55,7 +55,23 @@ describe('ColumnPicker metric entries', () => {
     });
     const softness = screen.getAllByRole('checkbox', { name: /Midsole softness/ });
     expect(softness).toHaveLength(1);
-    expect(softness[0]).toHaveAccessibleName(/retired method/);
+    expect(softness[0]).toHaveAccessibleName('Midsole softness (retired method)');
+    expect(softness[0]).not.toHaveAccessibleName(/retired method.*retired/i);
+  });
+  it('appends retirement once to an unpaired numeric offer', () => {
+    render(ColumnPicker, { props: { ...base, columns: [], onchange: vi.fn() } });
+    expect(screen.getByRole('checkbox', { name: 'Outsole hardness (retired)' })).toBeInTheDocument();
+  });
+  it('appends retirement to a categorical catalogue offer', () => {
+    const retiredCategorical = labTest({
+      id: 101, slug: 'retired-category', name: 'Retired category', type: 'option', methodStatus: 'retired',
+      options: [{ value: 'one', name: 'One' }],
+    });
+    const tests = [...TESTS, retiredCategorical];
+    render(ColumnPicker, { props: {
+      ...base, tests, idx: indexTests(tests), columns: [], onchange: vi.fn(),
+    } });
+    expect(screen.getByRole('checkbox', { name: 'Retired category (retired)' })).toBeInTheDocument();
   });
   it('files a colocated half under its primary group and keeps it separately selectable', async () => {
     const tests = [

@@ -9,8 +9,11 @@ const cov = (fraction: number): Coverage => ({ n: Math.round(fraction * 100), to
 const flat = (fraction: number) => () => cov(fraction);
 
 const single = metricEntries([labTest({ id: 6, slug: 'heel-stack', name: 'Heel stack', units: 'mm' })])[0]!;
+const retiredSingle = metricEntries([
+  labTest({ id: 10, slug: 'outsole-hardness', name: 'Outsole hardness', units: 'HC', methodStatus: 'retired' }),
+])[0]!;
 const pair = metricEntries([
-  labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', updateId: 70 }),
+  labTest({ id: 11, slug: 'midsole-softness', name: 'Midsole softness', units: 'HA', updateId: 70, methodStatus: 'retired' }),
   labTest({ id: 70, slug: 'midsole-softness-22', name: 'Midsole softness', units: 'AC', previousId: 11 }),
 ])[0]!;
 // The pair whose slugs carry no year and whose name and units match on both zones: the label is the
@@ -23,6 +26,14 @@ const yearless = metricEntries([
 const colocated = metricEntries([
   labTest({ id: 65, slug: 'energy-return-heel', name: 'Energy return heel', chartLabel: 'Energy return', secondaryTestIds: [66] }),
   labTest({ id: 66, slug: 'energy-return-forefoot', name: 'Energy return forefoot', primaryTestId: 65 }),
+])[0]!;
+const retiredColocated = metricEntries([
+  labTest({ id: 101, slug: 'retired-family', name: 'Retired family', chartLabel: 'Retired family', secondaryTestIds: [102], methodStatus: 'retired' }),
+  labTest({ id: 102, slug: 'retired-family-other', name: 'Retired family other', primaryTestId: 101, methodStatus: 'retired' }),
+])[0]!;
+const mixedColocated = metricEntries([
+  labTest({ id: 103, slug: 'mixed-family', name: 'Mixed family', chartLabel: 'Mixed family', secondaryTestIds: [104], methodStatus: 'retired' }),
+  labTest({ id: 104, slug: 'mixed-family-other', name: 'Mixed family other', primaryTestId: 103 }),
 ])[0]!;
 // Dremel dent depth in mm, so lower is the more durable shoe — the metric the sidebar was silent
 // about while the phone header renames it `Outsole wear` for exactly that reason.
@@ -61,6 +72,17 @@ describe('MetricRow single', () => {
   it('says nothing at all when every shoe has a reading', () => {
     setup(single, { coverage: () => ({ n: 5, total: 5, fraction: 1 }) });
     expect(screen.queryByText(/measured/)).toBeNull();
+  });
+  it('keeps an unpaired retirement consequence below the heading as static text', () => {
+    const { container } = render(MetricRow, {
+      props: { metric: retiredSingle, coverage: flat(0.8), chosen: 'outsole-hardness',
+               helpKey: 'outsole-hardness', bounded: () => false, onchoose: vi.fn() },
+    });
+    const status = screen.getByText('Not used on newer shoes');
+    expect(status.previousElementSibling).toHaveClass('head');
+    expect(status.closest('button')).toBeNull();
+    expect(container.querySelector('[aria-live]')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });
 
@@ -138,6 +160,12 @@ describe('MetricRow pair', () => {
     expect(screen.getByText('51 / 100 measured')).toBeInTheDocument();
     expect(screen.getByText('83 / 100 measured')).toBeInTheDocument();
   });
+  it('uses lifecycle names without a pair-wide retirement consequence', () => {
+    setup(pair, { chosen: 'midsole-softness' });
+    expect(screen.getByRole('radio', { name: 'Midsole softness, 2022 · current' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Midsole softness, retired method' })).toBeInTheDocument();
+    expect(screen.queryByText('Not used on newer shoes')).toBeNull();
+  });
 });
 
 // The sidebar is where a runner types a bound, and it was the one surface carrying no direction at
@@ -190,6 +218,14 @@ describe('MetricRow colocated', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.queryByText('Forefoot')).toBeNull();
     expect(screen.queryByText('Heel')).toBeNull();
+  });
+  it('shares one retirement consequence only when every part has retired', () => {
+    setup(retiredColocated, { chosen: 'retired-family' });
+    expect(screen.getAllByText('Not used on newer shoes')).toHaveLength(1);
+
+    cleanup();
+    setup(mixedColocated, { chosen: 'mixed-family' });
+    expect(screen.queryByText('Not used on newer shoes')).toBeNull();
   });
 });
 
