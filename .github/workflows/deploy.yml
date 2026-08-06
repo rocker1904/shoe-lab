@@ -18,7 +18,7 @@ jobs:
   deploy:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -38,3 +38,5 @@ jobs:
           path: app/dist
       - id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          timeout: 1800000
