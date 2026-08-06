@@ -304,6 +304,13 @@ left by an earlier attempt.
 
 ## Decisions
 
+### Workflow actions are immutable and maintained automatically (2026-08-06)
+Every GitHub-owned action is referenced by a full commit SHA, with its release
+line left beside it for humans. A moving tag would let upstream code change
+inside the privileged build and deploy chain without any repository diff;
+Dependabot owns the update path instead, and `check:workflows` rejects either an
+unpinned action or a pinned fleet with no updater.
+
 ### Refresh commits are pushed with GITHUB_TOKEN and dispatch CI
 Pushing as `github-actions[bot]` with the default token is what keeps the
 refresh credential-free — no PAT, no deploy key, no App to rotate. The

@@ -45,6 +45,33 @@ const FORMAL_PAIR_FIXTURE: ShoesFile = {
  * This file owns cross-engine compatibility seams: native controls and the shared segmented
  * registry. The column picker's `<details>` is here for the same reason as the month input.
  */
+test('loads inside its content security policy and rejects inline script', async ({ page }) => {
+  await page.addInitScript(() => {
+    const target = window as unknown as { __shoeLabCspViolations: string[] };
+    target.__shoeLabCspViolations = [];
+    document.addEventListener('securitypolicyviolation', (event) => {
+      target.__shoeLabCspViolations.push(event.effectiveDirective);
+    });
+  });
+  await page.goto('/');
+  await expect(page.getByTestId('receipt')).toContainText('Showing 5 of the 5 shoes');
+  await awaitFacesLoaded(page);
+  expect(await page.evaluate(() =>
+    (window as unknown as { __shoeLabCspViolations: string[] }).__shoeLabCspViolations)).toEqual([]);
+
+  const probe = await page.evaluate(async () => {
+    const marker = '__shoeLabCspProbe';
+    const script = document.createElement('script');
+    script.textContent = `window.${marker} = true`;
+    document.head.append(script);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const target = window as unknown as Record<string, unknown> & { __shoeLabCspViolations: string[] };
+    return { ran: Boolean(target[marker]), violations: target.__shoeLabCspViolations };
+  });
+  expect(probe.ran).toBe(false);
+  expect(probe.violations.some((directive) => directive.startsWith('script-src'))).toBe(true);
+});
+
 test('bounds the fleet by release month without a native month input', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');

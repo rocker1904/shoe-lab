@@ -51,6 +51,22 @@ it('gives a shared link a title and an icon to preview', () => {
   expect(readFileSync(join(appDir, 'public/favicon.svg'), 'utf8')).toContain('<svg');
 });
 
+it('pins the browser resource boundary in a content security policy', () => {
+  const html = readFileSync(join(appDir, 'index.html'), 'utf8');
+  const policy = [
+    "default-src 'none'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https://cdn.runrepeat.com",
+    "font-src 'self'",
+    "connect-src 'self' ws:",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ].join('; ');
+  expect(html).toContain(`<meta http-equiv="Content-Security-Policy" content="${policy}" />`);
+});
+
 it('shapes the skeleton like the table that replaces it', async () => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   // Never resolves: the point is what is on screen while the fetch is still outstanding.

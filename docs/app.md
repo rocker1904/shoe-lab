@@ -262,6 +262,13 @@ disable, so it cannot see a deliberate one added with a disable attached;
 Neither is redundant — a change satisfying only one of them is a change to this
 boundary, and needs the decision above.
 
+The document's Content Security Policy is a second boundary, not a replacement
+for sanitising those fields. It denies resources by default and admits only what
+the app and its development server use; the inline-style and WebSocket allowances
+exist for Svelte's layout values and Vite hot reload, and do not admit inline
+script. `App.test.ts` pins the policy, while the browser smoke loads the real
+resources and proves an injected inline script cannot execute.
+
 ## URL encoding
 
 Compact and default-omitting, so a shared link carries only what was changed:
