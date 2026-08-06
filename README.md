@@ -134,7 +134,5 @@ with.
 - **Release dates are month-precise at best**, and a good many are year-only — stored as
   `YYYY-01-01` and shown as the bare year. The rest come from RunRepeat's own date or from
   hand-researched months in `curated/`, and render as `March 2024`; the day is never shown.
-- **Plate detection is carbon-shaped**: non-carbon plates (nylon, PEBA) mostly read as "none".
 
-Both are properties of the upstream data, explained in docs/scraping.md §Data quirks; fixes are
-tracked in `BACKLOG.md`.
+This is a property of the upstream data, explained in docs/scraping.md §Data quirks.

@@ -296,6 +296,12 @@ from a branch — `deploy.yml` uploads `app/dist` as the Pages artifact and
 has passed and the deploy has run — a few minutes, and a red CI deploys nothing
 — which is why the repo has no separate live-state doc.
 
+The privileged deploy accepts only CI runs from this repository whose source
+event was a push or a trusted workflow dispatch; a pull-request CI run never
+reaches code execution with Pages permissions. Each retry also names its own
+immutable artifact, so rerunning a deployment cannot collide with the artifact
+left by an earlier attempt.
+
 ## Decisions
 
 ### Refresh commits are pushed with GITHUB_TOKEN and dispatch CI
