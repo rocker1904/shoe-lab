@@ -1,6 +1,6 @@
 ---
 name: designing
-description: Use before any creative work — a new feature, component, or behaviour change. Interview, decide, then write one spec with a build-sheet tail.
+description: Use before any creative work — a new feature, component, or behaviour change. Interview, decide, then write one spec with a build-sheet tail, except for explicitly waived tiny fixes whose existing contract and single obvious correction meet the skill's strict bypass.
 ---
 
 # Designing
@@ -14,9 +14,27 @@ deciding about.
 **Announce at start:** "Using designing to shape <the idea>."
 
 <HARD-GATE>
-No implementation — no code, no scaffolding — until the spec is approved.
-Low-fidelity exploration (below) is not implementation.
+No implementation — no code, no scaffolding — until the spec is approved,
+unless every condition in the tiny-fix exception below holds. Low-fidelity
+exploration (below) is not implementation.
 </HARD-GATE>
+
+## Tiny-fix exception
+
+Skip the interview, spec, approval, and `delivering` handoff only when every
+condition below holds:
+
+- The work repairs a diagnosed defect whose desired behaviour is already
+  stated by an existing contract, test, or owning doc.
+- The correction is local, has one clear implementation, and introduces no
+  new interface, product behaviour, policy, vocabulary, or architectural
+  choice.
+- The user explicitly calls the work tiny or asks to skip the spec.
+
+Announce that the tiny-fix exception applies, then implement under the repo's
+ordinary test, documentation, worktree, verification, and landing rules. If
+investigation reveals a choice or broader change, stop and resume the full
+design flow before implementing that expanded scope.
 
 ## Before anything
 
