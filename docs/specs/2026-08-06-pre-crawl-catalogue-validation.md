@@ -1,6 +1,6 @@
 # Pre-crawl catalogue validation
 
-status: approved, in delivery
+status: delivered-and-frozen
 
 ## Purpose and scope
 
