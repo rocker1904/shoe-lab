@@ -91,7 +91,7 @@
         <p>{entry.fact.text}</p>
         <p class="interpretation">{metricInterpretation(entry.key)}</p>
         {#if entry.fact.source}
-          <a href={entry.fact.source.href} target="_blank" rel="noopener">
+          <a href={entry.fact.source.href} target="_blank" rel="noopener" tabindex="0">
             {entry.fact.source.label} ↗
           </a>
         {/if}

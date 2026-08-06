@@ -101,7 +101,7 @@ describe('MetricGuide', () => {
     expect(heading.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('opens at most one owned fact, direction sentence and optional source', async () => {
+  it('opens at most one owned fact and keeps its optional source on the Tab route', async () => {
     render(MetricGuide, {
       props: {
         sections: [{
@@ -123,7 +123,9 @@ describe('MetricGuide', () => {
     expect(stack).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText(metricHelpOf('heel-stack')!.text)).toBeInTheDocument();
     expect(screen.getByText(metricInterpretation('heel-stack'))).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /RunRepeat method/ })).toBeInTheDocument();
+    const source = screen.getByRole('link', { name: /RunRepeat method/ });
+    expect(source).toBeInTheDocument();
+    expect(source).toHaveAttribute('tabindex', '0');
 
     await fireEvent.click(score);
     expect(stack).toHaveAttribute('aria-expanded', 'false');

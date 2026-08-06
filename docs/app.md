@@ -1133,6 +1133,13 @@ to checklist mode, so reopening never restores a stale search or expanded fact.
 The two modes never mount together, which also keeps checklist coverage passes
 out of a read-only guide (docs/app.md §What a drag may recompute).
 
+An expanded fact's source link is an explicit zero-order Tab stop. Cocoa
+WebKit otherwise applies its embedder preference and skips an ordinary link
+even when macOS keyboard navigation includes every control, while the GTK and
+WPE ports include it by default. The authored `tabindex` keeps the guide's
+sequential route the same across the three supported engines without scripting
+focus or changing document order.
+
 At the 360px support floor, Chromium, Firefox and WebKit all measure the outer
 checklist at **346×402px** and the guide at **346×378px**; expanding the Price
 fact and its source keeps the guide at that height. The checklist row remains
