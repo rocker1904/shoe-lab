@@ -1,6 +1,6 @@
 # Explicit retirement for lab-test methods
 
-status: approved, in delivery
+status: delivered-and-frozen
 
 ## Purpose and scope
 
@@ -272,7 +272,7 @@ status guard; coverage alone cannot clear it.
 | announcement exemption table | unchanged: status adds no control or action and therefore no exemption row |
 | URL token grammar and arrival registries | unchanged: `methodStatus` is dataset metadata and no `ViewState` field is added |
 | CSV headers and in-app export | unchanged by decision; mutation evidence proves the per-shoe schemas do not absorb test status |
-| BACKLOG.md item 2 | removed only in the final post-regeneration task |
+| BACKLOG.md item **Method era: say when a reading is being retired** | removed only in the final post-regeneration task |
 
 ## Build sheet
 
@@ -313,7 +313,7 @@ status guard; coverage alone cannot clear it.
 | 3 | `docs/app.md` | Replace the backlog-era coverage text and own the Add/sidebar/Columns presentation with the behaviour commit. |
 | 4 | `data/tests.json` | Re-extract the catalogue once from the local corpus in the primary checkout after landing. |
 | 4 | `data/shoes.json` | Rebuild once from the updated catalogue in the primary checkout after landing. |
-| 4 | `BACKLOG.md` | Remove the delivered item and renumber the remaining list. |
+| 4 | `BACKLOG.md` | Remove **Finish the release-date curation** and **Method era: say when a reading is being retired**, add the review-routed pre-crawl hardening item, and renumber once. |
 | 4 | `docs/specs/2026-08-06-method-era.md` | Freeze the delivered spec through the delivery skill's finish step. |
 
 The file map is a hypothesis. Task 1 begins by sweeping direct `LabTest`
@@ -379,11 +379,13 @@ registry.
 4. **Land, materialise and close.** After implementation review, rebase the
    code-only branch onto local `main`, fast-forward it, then in the primary
    checkout run
-   `npm -w scraper run scrape:metrics -- --from-corpus .corpus/pages` and then
+   `npm -w scraper run scrape:metrics -- --from-corpus ../.corpus/pages` and then
    `npm -w scraper run build:dataset` exactly once. Review the metadata-only
-   diff, remove BACKLOG.md item 2,
-   freeze this spec, run the complete gate and commit the primary data/closure
-   change. Acceptance: `data/tests.json` and `data/shoes.json` contain the
+   diff, remove BACKLOG.md items **Finish the release-date curation** and
+   **Method era: say when a reading is being retired**, add the pre-crawl
+   method-status hardening item, freeze this spec, run the complete gate and
+   commit the primary data/closure change. Acceptance: `data/tests.json` and
+   `data/shoes.json` contain the
    resolved statuses, `data/metrics.json`, `data/details.json` and
    `data/shoes.csv` have no diff, `npm run verify` and the complete three-engine
    `npm -w app run e2e` are green, and local `main` contains the linear finished
