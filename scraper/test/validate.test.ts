@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ValidationError, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile, validateValuesAgainstCatalogue } from '../src/validate.js';
 import type { DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
+import { methodStatusOf } from '../src/method-status.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
 import { detailRecord, labTest, shoe } from './helpers.js';
 
@@ -17,7 +18,13 @@ function makeMetrics(shoeCount: number, testIds: number[] = [5, 6]): MetricsFile
 }
 const tests: TestsFile = {
   scrapedAt: '2026-07-26T00:00:00Z', seedSlug: 's', groups: {},
-  tests: Array.from({ length: 55 }, (_, i) => labTest({ id: i + 1, slug: `t${i + 1}`, name: `T${i + 1}`, units: 'mm' })),
+  tests: Array.from({ length: 55 }, (_, i) => {
+    const curated = ['outsole-hardness', 'stiffness-in-cold', 'difference-in-stiffness-in-cold'][i];
+    return labTest({
+      id: i + 1, slug: curated ?? `t${i + 1}`, name: `T${i + 1}`, units: 'mm',
+      methodStatus: curated === undefined ? null : 'retired',
+    });
+  }),
 };
 
 describe('validateMetrics', () => {
@@ -95,6 +102,32 @@ describe('validateMetrics boundaries', () => {
   });
 });
 
+describe('method status catalogue gates', () => {
+  it('rejects malformed status on the corpus catalogue gate', () => {
+    const malformed = structuredClone(tests);
+    (malformed.tests[4] as any).methodStatus = 'current';
+    expect(() => validateValuesAgainstCatalogue({}, malformed)).toThrow(/methodStatus.*current/);
+  });
+
+  it('rejects a formal source disagreement on the live metrics gate', () => {
+    const mismatched = structuredClone(tests);
+    mismatched.tests[4]!.updateId = 999;
+    expect(() => validateMetrics(makeMetrics(400), null, mismatched)).toThrow(/methodStatus/);
+  });
+
+  it('rejects loss of a retirement from the previous live catalogue', () => {
+    const previous = structuredClone(tests);
+    previous.tests[4]!.methodStatus = 'retired';
+    expect(() => validateMetrics(makeMetrics(400), null, tests, previous)).toThrow(/t5.*retired/);
+  });
+
+  it('ignores absent status in a pre-feature previous catalogue', () => {
+    const previous = structuredClone(tests);
+    delete (previous.tests[4] as any).methodStatus;
+    expect(() => validateMetrics(makeMetrics(400), null, tests, previous)).not.toThrow();
+  });
+});
+
 // Every path that writes a catalogue indexes it through the same gate, because the shape is fatal
 // downstream and the metrics paths see tests no shoe reads yet
 // (docs/scraping.md §A duplicate option value fails the run).
@@ -155,6 +188,7 @@ describe('duplicate tests in the catalogue', () => {
   // of the payload change that deserves it.
   it('accepts the committed catalogue', () => {
     const real = JSON.parse(readFileSync(new URL('../../data/tests.json', import.meta.url), 'utf8')) as TestsFile;
+    for (const test of real.tests) test.methodStatus = methodStatusOf(test);
     expect(() => validateValuesAgainstCatalogue({}, real)).not.toThrow();
   });
 });
@@ -162,7 +196,7 @@ describe('duplicate tests in the catalogue', () => {
 describe('test slugs in the catalogue', () => {
   it('rejects empty or ASCII-whitespace slugs on every catalogue validation path', () => {
     for (const slug of ['', 'heel stack', 'heel\tstack', 'heel\nstack', 'heel\fstack', 'heel\rstack']) {
-      const malformed = { ...tests, tests: tests.tests.map((t, i) => i ? t : { ...t, slug }) };
+      const malformed = { ...tests, tests: tests.tests.map((t, i) => i !== 4 ? t : { ...t, slug }) };
       expect(() => validateValuesAgainstCatalogue({}, malformed), JSON.stringify(slug))
         .toThrow(/invalid slug/);
     }
@@ -170,7 +204,7 @@ describe('test slugs in the catalogue', () => {
 
   it('accepts punctuation and non-ASCII space that remain one id reference', () => {
     for (const slug of ['heel_stack.v2', 'heel\u00a0stack']) {
-      const valid = { ...tests, tests: tests.tests.map((t, i) => i ? t : { ...t, slug }) };
+      const valid = { ...tests, tests: tests.tests.map((t, i) => i !== 4 ? t : { ...t, slug }) };
       expect(() => validateValuesAgainstCatalogue({}, valid), JSON.stringify(slug)).not.toThrow();
     }
   });
@@ -200,6 +234,11 @@ describe('validateShoesFile', () => {
     const bad = structuredClone(good);
     (bad.shoes[0] as any).plate = 'titanium';
     expect(() => validateShoesFile(bad)).toThrow(ValidationError);
+  });
+  it('rejects malformed method status in the joined catalogue', () => {
+    const bad = structuredClone(good);
+    (bad.tests[4] as any).methodStatus = 'current';
+    expect(() => validateShoesFile(bad)).toThrow(/methodStatus.*current/);
   });
   it('rejects missing name/slug/values', () => {
     const bad = structuredClone(good);

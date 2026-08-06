@@ -1,6 +1,7 @@
 import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, ReleaseDateSource, ReleaseYearsFile, Shoe, ShoesFile, TestsFile, Tombstone, VersionRef } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { csvLine } from './csv.js';
+import { validateMethodStatuses } from './method-status.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
 import { REVIEW_LANGUAGE_OVERRIDES } from './review-language-overrides.js';
 import { MIN_SHOES, ValidationError, validateFleetAgainstPrevious, validateShoesFile } from './validate.js';
@@ -59,6 +60,7 @@ function publishedTests(tests: LabTest[], shoes: Shoe[], testGroups: Record<stri
  * null means a first run, and the absolute gates stand alone (docs/scraping.md §Validation gates).
  */
 export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: DetailsFile, releaseYears?: ReleaseYearsFile, curated?: Map<string, string>, previous?: ShoesFile | null): { shoesFile: ShoesFile; csv: string; ruleDerived: Map<string, Plate>; pageDated: Map<string, boolean> } {
+  validateMethodStatuses(tests.tests, previous?.tests);
   let builtAt = metrics.scrapedAt;
   for (const rec of Object.values(details.shoes)) {
     if (rec.scrapedAt > builtAt) builtAt = rec.scrapedAt;

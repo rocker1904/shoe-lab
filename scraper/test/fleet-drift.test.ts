@@ -32,6 +32,9 @@ const tests: TestsFile = {
     labTest({ id: 39, slug: 'tongue-gusset-type', type: 'option', options: [{ value: 'both-sides-semi', name: 'Both sides' }] }),
     labTest({ id: 45, slug: 'reflective-elements', type: 'bool' }),
     labTest({ id: 55, slug: 'insulation' }), // hiking-only, so the exclusion empties it
+    labTest({ id: 10, slug: 'outsole-hardness', methodStatus: 'retired' }),
+    labTest({ id: 15, slug: 'stiffness-in-cold', methodStatus: 'retired' }),
+    labTest({ id: 16, slug: 'difference-in-stiffness-in-cold', methodStatus: 'retired' }),
   ],
 };
 

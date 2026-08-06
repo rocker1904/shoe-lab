@@ -6,16 +6,18 @@ import { describe, expect, it } from 'vitest';
 import type { MetricsFile, TestsFile } from '../../shared/types.js';
 import { dataDir } from '../src/data-files.js';
 import { PoliteHttp } from '../src/http.js';
+import { extractPagePayload } from '../src/page-payload.js';
 import { scrapeMetrics } from '../src/scrape-metrics-main.js';
+import { extractTestCatalogue } from '../src/test-catalogue.js';
 
 const azuraHtml = readFileSync(new URL('./fixtures/raw/azura.html', import.meta.url), 'utf8');
 const labtest5 = readFileSync(new URL('./fixtures/raw/labtest5.json', import.meta.url), 'utf8');
 
-function fakeFetch(): typeof fetch {
+function fakeFetch(seedHtml = azuraHtml): typeof fetch {
   return (async (url: RequestInfo | URL) => {
     const u = String(url);
     if (u.endsWith('/robots.txt')) return new Response('User-agent: *\nDisallow: /search*\n');
-    if (u.includes('/uk/saucony-endorphin-azura')) return new Response(azuraHtml);
+    if (u.includes('/uk/saucony-endorphin-azura')) return new Response(seedHtml);
     if (u.includes('/api/product/lab-test-list/')) {
       expect(u).toContain('product_id=41068');
       // Bool-typed tests (removable-insole 41, reflective-elements 45, plate 69) must get
@@ -30,6 +32,20 @@ function fakeFetch(): typeof fetch {
     }
     throw new Error(`unexpected url ${u}`);
   }) as typeof fetch;
+}
+
+function previousCatalogue(): TestsFile {
+  const page = extractPagePayload(azuraHtml);
+  return extractTestCatalogue(page.pageData, 'saucony-endorphin-azura', '2026-01-01T00:00:00Z');
+}
+
+function withoutFormalUpdate(html: string, testSlug: string): string {
+  const flat = JSON.parse(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html)![1]!) as any[];
+  const slugNode = flat.indexOf(testSlug);
+  const test = flat.find((node) => node && !Array.isArray(node) && typeof node === 'object'
+    && node.slug === slugNode && typeof node.id === 'number');
+  test.update_id = flat.indexOf(null);
+  return `<script id="__NUXT_DATA__">${JSON.stringify(flat)}</script>`;
 }
 
 describe('scrapeMetrics', () => {
@@ -64,6 +80,21 @@ describe('scrapeMetrics', () => {
     await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' })).rejects.toThrow(/<300/);
     expect(dir.read('tests.json')).toBeNull();
     expect(dir.read('metrics.json')).toBeNull();
+  });
+  it('preserves both previous files when a published retirement would be lost', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const previousTests = previousCatalogue();
+    const previousMetrics: MetricsFile = {
+      scrapedAt: '2026-01-01T00:00:00Z',
+      shoes: { sentinel: { name: 'Sentinel', url: 'u', values: {} } },
+    };
+    dir.write('tests.json', previousTests);
+    dir.write('metrics.json', previousMetrics);
+    const http = new PoliteHttp({ fetchImpl: fakeFetch(withoutFormalUpdate(azuraHtml, 'midsole-softness')), sleep: async () => {}, now: (() => { let t = 0; return () => (t += 2000); })() });
+
+    await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' })).rejects.toThrow(/midsole-softness.*retired/);
+    expect(dir.read<TestsFile>('tests.json')).toEqual(previousTests);
+    expect(dir.read<MetricsFile>('metrics.json')).toEqual(previousMetrics);
   });
 
   it('aborts before any scraping when robots disallows our paths', async () => {
@@ -114,6 +145,22 @@ describe('scrapeMetrics from a corpus', () => {
     expect(res.shoeCount).toBe(1);
     expect(dir.read<MetricsFile>('metrics.json')).toEqual(metrics);
     expect(dir.read<TestsFile>('tests.json')!.scrapedAt).toBe('2026-02-02T00:00:00Z');
+  });
+  it('preserves both previous files when a corpus rewrite would lose a retirement', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const previousTests = previousCatalogue();
+    const previousMetrics: MetricsFile = {
+      scrapedAt: '2026-01-01T00:00:00Z',
+      shoes: { sentinel: { name: 'Sentinel', url: 'u', values: {} } },
+    };
+    dir.write('tests.json', previousTests);
+    dir.write('metrics.json', previousMetrics);
+    const doctored = mkdtempSync(join(tmpdir(), 'shoe-lab-corpus-'));
+    writeFileSync(join(doctored, 'azura.html'), withoutFormalUpdate(azuraHtml, 'midsole-softness'));
+
+    await expect(scrapeMetrics({ dataDir: dir, seed: 'azura', corpusDir: doctored })).rejects.toThrow(/midsole-softness.*retired/);
+    expect(dir.read<TestsFile>('tests.json')).toEqual(previousTests);
+    expect(dir.read<MetricsFile>('metrics.json')).toEqual(previousMetrics);
   });
   // The catalogue is rewritten while the readings stay put, so this path is the one that can
   // orphan them — a seed that dropped a test, or a --seed pointed at another shoe.

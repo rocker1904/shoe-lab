@@ -30,16 +30,17 @@ function catalogueFromCorpus(dataDir: DataDir, corpusDir: string, seed: string):
   const file = join(corpusDir, `${seed}.html`);
   if (!existsSync(file)) throw new Error(`seed page not in corpus: ${file}`);
   const page = extractPagePayload(readFileSync(file, 'utf8'));
+  const previousTests = dataDir.read<TestsFile>('tests.json');
   // Re-reading disk is not reading RunRepeat, so the recorded timestamp stands
   // (docs/scraping.md §Determinism).
-  const scrapedAt = dataDir.read<TestsFile>('tests.json')?.scrapedAt ?? new Date().toISOString();
+  const scrapedAt = previousTests?.scrapedAt ?? new Date().toISOString();
   const tests = extractTestCatalogue(page.pageData, seed, scrapedAt);
   const metrics = dataDir.read<MetricsFile>('metrics.json');
   // The readings stay where they are, so a catalogue that no longer names one of them orphans it
   // — the rule holds on this path too (docs/scraping.md §Validation gates). Called with no
   // readings as readily as with them: the catalogue's own shape is checked in there, and this
   // path writes tests.json either way.
-  validateValuesAgainstCatalogue(metrics?.shoes ?? {}, tests);
+  validateValuesAgainstCatalogue(metrics?.shoes ?? {}, tests, previousTests);
   dataDir.write('tests.json', tests);
   return { shoeCount: Object.keys(metrics?.shoes ?? {}).length, testCount: tests.tests.length };
 }
@@ -56,6 +57,7 @@ export async function scrapeMetrics({ http, dataDir, seed, corpusDir, log = () =
   if (page.entityId === null) throw new PayloadError('seed page has no entity id');
   const scrapedAt = new Date().toISOString();
   const tests = extractTestCatalogue(page.pageData, seed, scrapedAt);
+  const previousTests = dataDir.read<TestsFile>('tests.json');
 
   const next: MetricsFile = { scrapedAt, shoes: {} };
   const fetchable = tests.tests.filter((t) => METRIC_TYPES.has(t.type));
@@ -72,7 +74,7 @@ export async function scrapeMetrics({ http, dataDir, seed, corpusDir, log = () =
   }
 
   const prev = dataDir.read<MetricsFile>('metrics.json');
-  validateMetrics(next, prev, tests);
+  validateMetrics(next, prev, tests, previousTests);
   dataDir.write('tests.json', tests);
   dataDir.write('metrics.json', next);
   return { shoeCount: Object.keys(next.shoes).length, testCount: tests.tests.length };

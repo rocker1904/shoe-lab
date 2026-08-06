@@ -7,6 +7,7 @@ export function labTest(over: Partial<LabTest> & Pick<LabTest, 'id' | 'slug'>): 
   return {
     name: over.slug, type: 'float', units: '', groupId: null,
     chartLabel: null, isNew: false, previousId: null, updateId: null,
+    methodStatus: null,
     primaryTestId: null, secondaryTestIds: [], options: null,
     ...over,
   };

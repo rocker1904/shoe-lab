@@ -43,7 +43,7 @@ workflow and **no commit** — the previous data stays live.
 
 | File | Written by | Contents |
 |---|---|---|
-| `data/tests.json` | `scrape:metrics` | Lab-test catalogue — id, slug, display name, type, units, group |
+| `data/tests.json` | `scrape:metrics` | Lab-test catalogue and validated lineage metadata (docs/scraping.md §Test lineage) |
 | `data/metrics.json` | `scrape:metrics` | Per-shoe measured values, keyed `slug → testId → value` |
 | `data/details.json` | `scrape:details` | Per-shoe editorial: pros/cons, intro, who-should(-not)-buy, features, price, score, release date |
 | `data/release-years.json` | `scrape:releases` | Release-year supplement, filling the gap where a shoe page gives no date at all |

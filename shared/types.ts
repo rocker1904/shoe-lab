@@ -1,4 +1,5 @@
 export type TestType = 'float' | 'score' | 'percent' | 'bool' | 'rating' | 'option' | 'text';
+export type MethodStatus = 'retired' | null;
 /**
  * `previousId`/`updateId` are RunRepeat's own supersession chain and `primaryTestId`/
  * `secondaryTestIds` its heel/forefoot pairing; both are carried raw for a later presentation
@@ -8,6 +9,7 @@ export interface LabTest {
   id: number; slug: string; name: string; type: TestType; units: string; groupId: string | null;
   chartLabel: string | null; isNew: boolean;
   previousId: number | null; updateId: number | null;
+  methodStatus: MethodStatus;
   primaryTestId: number | null; secondaryTestIds: number[];
   /** Declared choices for an `option` test. Readings store the `value` slug, so this is what turns
    *  `both-sides-semi` into "Both sides (semi)" (docs/scraping.md §Readings taken from the page). */

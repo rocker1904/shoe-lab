@@ -1,6 +1,7 @@
 import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, Shoe, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
 import { isTombstone } from '../../shared/types.js';
 import { isIdReferenceToken } from '../../shared/id-reference.js';
+import { methodStatusOf, validateMethodStatuses } from './method-status.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
 
 export class ValidationError extends Error {}
@@ -24,6 +25,13 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
   const index = new Map<string, CatalogueEntry>();
   const slugs = new Set<string>();
   for (const t of tests) {
+    if (t.methodStatus !== null && t.methodStatus !== 'retired') {
+      throw new ValidationError(`${t.slug}: invalid methodStatus ${JSON.stringify(t.methodStatus)}`);
+    }
+    const resolvedStatus = methodStatusOf(t);
+    if (t.methodStatus !== resolvedStatus) {
+      throw new ValidationError(`${t.slug}: methodStatus ${JSON.stringify(t.methodStatus)} disagrees with resolved ${JSON.stringify(resolvedStatus)}`);
+    }
     if (!isIdReferenceToken(t.slug)) {
       throw new ValidationError(`test id ${t.id} has invalid slug ${JSON.stringify(t.slug)}`);
     }
@@ -49,7 +57,8 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
  * from the floors below because the catalogue can be rewritten without the readings moving —
  * `scrape:metrics --from-corpus` does exactly that (docs/scraping.md §Re-extracting from a corpus).
  */
-export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], tests: TestsFile): void {
+export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], tests: TestsFile, previousTests?: TestsFile | null): void {
+  validateMethodStatuses(tests.tests, previousTests?.tests);
   const index = indexCatalogue(tests.tests);
   for (const [slug, shoe] of Object.entries(shoes)) {
     for (const [testId, value] of Object.entries(shoe.values)) {
@@ -63,11 +72,11 @@ export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], test
   }
 }
 
-export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tests: TestsFile): void {
+export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tests: TestsFile, previousTests?: TestsFile | null): void {
   const count = Object.keys(next.shoes).length;
   if (count < MIN_SHOES) throw new ValidationError(`only ${count} shoes (<${MIN_SHOES})`);
   if (tests.tests.length < 50) throw new ValidationError(`only ${tests.tests.length} tests (<50)`);
-  validateValuesAgainstCatalogue(next.shoes, tests);
+  validateValuesAgainstCatalogue(next.shoes, tests, previousTests);
   if (prev) {
     const prevCount = Object.keys(prev.shoes).length;
     if (prevCount > 0 && count < prevCount * 0.9) {

@@ -16,7 +16,13 @@ const tests: TestsFile = {
     // Ungrouped by the seed but grouped by other pages, and never read by any shoe: the two
     // build-time catalogue rules (group overlay, empty-test drop) both bite here.
     labTest({ id: 17, slug: 'torsional-rigidity', name: 'Torsional rigidity', type: 'score' }),
-    ...Array.from({ length: 52 }, (_, i) => labTest({ id: 100 + i, slug: `t${i}`, name: `T${i}` })),
+    ...Array.from({ length: 52 }, (_, i) => {
+      const curated = ['outsole-hardness', 'stiffness-in-cold', 'difference-in-stiffness-in-cold'][i];
+      return labTest({
+        id: 100 + i, slug: curated ?? `t${i}`, name: `T${i}`,
+        methodStatus: curated === undefined ? null : 'retired',
+      });
+    }),
   ],
 };
 
@@ -121,10 +127,28 @@ describe('buildDataset', () => {
     expect(header).toContain('heel-stack');
     expect(header).not.toContain('tongue-gusset-type'); // option type excluded
     expect(header).not.toContain('plate,plate');
+    expect(header).not.toContain('methodStatus');
     expect(lines).toHaveLength(1 + 320);
     const zeroLine = lines.find((l) => l.startsWith('shoe-000,'))!;
     expect(zeroLine).toContain('Shoe Zero Deluxe');
     expect(zeroLine).toContain('carbon');
+  });
+  it('preserves valid status on populated tests and rejects corrupt input metadata', () => {
+    const { metrics, details } = baseInputs();
+    const built = buildDataset(tests, metrics, details).shoesFile;
+    expect(built.tests.find((t) => t.slug === 'outsole-hardness')?.methodStatus).toBe('retired');
+    expect(built.tests.find((t) => t.slug === 'heel-stack')?.methodStatus).toBeNull();
+
+    const corrupt = structuredClone(tests);
+    corrupt.tests.find((t) => t.slug === 'outsole-hardness')!.methodStatus = null;
+    expect(() => buildDataset(corrupt, metrics, details)).toThrow(/outsole-hardness.*methodStatus/);
+  });
+
+  it('rejects loss of status from a previously joined catalogue', () => {
+    const { metrics, details } = baseInputs();
+    const previous = buildDataset(tests, metrics, details).shoesFile;
+    previous.tests.find((t) => t.slug === 'heel-stack')!.methodStatus = 'retired';
+    expect(() => buildDataset(tests, metrics, details, undefined, undefined, previous)).toThrow(/heel-stack.*retired/);
   });
   it('returns the rule-only plate for every shoe, before overrides', () => {
     const { metrics, details } = baseInputs();
@@ -340,8 +364,8 @@ describe('buildDataset CSV cells', () => {
     expect(csv).not.toContain('\r');
 
     const header = lines[0]!.split(',');
-    // heel-stack and t0: every other catalogue test is either non-numeric or read by no shoe
-    expect(header.slice(9)).toEqual(['heel-stack', 't0']);
+    // heel-stack and outsole-hardness: every other catalogue test is either non-numeric or read by no shoe
+    expect(header.slice(9)).toEqual(['heel-stack', 'outsole-hardness']);
     expect(new Set(header).size).toBe(header.length); // no duplicate column names
 
     const zero = lines.find((l) => l.startsWith('shoe-000,'))!;

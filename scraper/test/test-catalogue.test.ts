@@ -39,8 +39,8 @@ describe('extractTestCatalogue lineage', () => {
   const byId = (id: number) => tf.tests.find((t) => t.id === id)!;
 
   it('carries the supersession chain in both directions', () => {
-    expect(byId(11)).toMatchObject({ slug: 'midsole-softness', updateId: 70, previousId: null });
-    expect(byId(70)).toMatchObject({ slug: 'midsole-softness-22', previousId: 11, updateId: null });
+    expect(byId(11)).toMatchObject({ slug: 'midsole-softness', updateId: 70, previousId: null, methodStatus: 'retired' });
+    expect(byId(70)).toMatchObject({ slug: 'midsole-softness-22', previousId: 11, updateId: null, methodStatus: null });
   });
   it('agrees with itself: every updateId has a matching previousId', () => {
     for (const t of tf.tests) {
@@ -64,10 +64,22 @@ describe('extractTestCatalogue lineage', () => {
     expect(byId(55)).toMatchObject({ previousId: 27, updateId: null, isNew: false });
     expect(byId(14).isNew).toBe(false);
   });
+  it('publishes curated retirement without deriving it from coverage', () => {
+    expect(tf.tests.filter((t) => [
+      'outsole-hardness',
+      'stiffness-in-cold',
+      'difference-in-stiffness-in-cold',
+    ].includes(t.slug))).toMatchObject([
+      { slug: 'outsole-hardness', updateId: null, methodStatus: 'retired' },
+      { slug: 'stiffness-in-cold', updateId: null, methodStatus: 'retired' },
+      { slug: 'difference-in-stiffness-in-cold', updateId: null, methodStatus: 'retired' },
+    ]);
+    expect(byId(6).methodStatus).toBeNull();
+  });
   it('defaults every lineage field when the payload omits them', () => {
     const bare = Object.fromEntries(Array.from({ length: 55 }, (_, i) => [i, { id: i + 1, slug: `t${i}`, name: `T${i}`, type: 'float', units: '' }]));
     const t = extractTestCatalogue({ lab_tests: { tests: bare, groups: {} } }, 's', 't').tests[0]!;
-    expect(t).toMatchObject({ chartLabel: null, isNew: false, previousId: null, updateId: null, primaryTestId: null, secondaryTestIds: [] });
+    expect(t).toMatchObject({ chartLabel: null, isNew: false, previousId: null, updateId: null, primaryTestId: null, secondaryTestIds: [], methodStatus: null });
   });
 });
 

@@ -110,6 +110,13 @@ means a red workflow and untouched `data/` — never a partial write.
   crawl; the shared catalogue index repeats it on every path that can write or
   join a catalogue. Other punctuation is valid and must not be rejected merely
   because today's upstream slugs use lowercase letters and hyphens.
+- **Method status is source-resolved catalogue metadata:** every published
+  field must equal the answer from §Test lineage. A curated slug must resolve
+  exactly once and remain unlinked; a missing or now-formally-linked entry is
+  stale curation and fails. A retirement already published for a slug present
+  in the next catalogue cannot disappear silently. The live crawl, corpus
+  catalogue rewrite and join all apply the gate before writing; a previous
+  catalogue with no field is pre-feature input, not a retirement claim.
 - **Type matching:** every value must match its test's declared type
   (numeric family → number, `bool` → boolean, everything else → string), and
   a value for a test id absent from the catalogue is fatal. Checked wherever
@@ -181,6 +188,11 @@ which is also what keeps its data commit legible.
 Nothing derived from *today* is stored, for the same reason: any age-from-now
 field would make the build depend on the wall clock. Where the app needs one —
 the sidebar's "released after" chips — it computes it at render time.
+
+Method status likewise depends only on raw catalogue lineage and the curated
+slug registry. Coverage, release dates and the extraction date do not enter its
+resolution, so a corpus re-extraction cannot change it merely because time
+passed.
 
 ## Release-year supplement
 
@@ -322,8 +334,8 @@ editor's classification, not a lab reading.
 
 ## Test lineage
 
-The catalogue entry for each test carries RunRepeat's own relationships, kept
-raw for a later presentation pass:
+The catalogue keeps RunRepeat's relationships raw and publishes Shoe Lab's
+resolved method status beside them:
 
 - **`previousId` / `updateId`** — the supersession chain, consistent in both
   directions, over nine pairs. **Readings are not comparable across it.** The
@@ -343,6 +355,12 @@ raw for a later presentation pass:
   predecessors do. Only `previousId`/`updateId` settle which reading is
   current. Pinned in `scraper/test/test-catalogue.test.ts`, so if upstream ever
   fixes this the assertion fails and the claim can be retired.
+- **`methodStatus` is Shoe Lab's published lifecycle claim.** It is `retired`
+  when the test's own `updateId` names a successor or its slug is in the curated
+  retirement registry; `null` makes no retirement claim and does not mean the
+  method was proved current. The registry covers retired outputs RunRepeat did
+  not formally link. It is authored source, never inferred from `isNew`, fleet
+  coverage, release dates or the clock.
 
 ## Test groups
 
@@ -464,7 +482,8 @@ still makes no request;
 `metrics.json` untouched, because the readings live behind the API and cannot
 be replayed from a page — so it validates those readings against the catalogue
 it is about to write, a seed that has dropped a test being the one way to
-orphan them (§Validation gates). Neither path constructs a request, so neither passes
+orphan them, and compares resolved method status with the previous catalogue
+(§Validation gates). Neither path constructs a request, so neither passes
 through the robots gate. Recorded `scrapedAt` values stand: re-reading disk is
 not reading RunRepeat (§Determinism).
 

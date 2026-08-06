@@ -1,5 +1,6 @@
 import type { LabTest, TestsFile, TestType } from '../../shared/types.js';
 import { isIdReferenceToken } from '../../shared/id-reference.js';
+import { methodStatusOf } from './method-status.js';
 import { PayloadError } from './page-payload.js';
 
 const numOrNull = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
@@ -29,9 +30,11 @@ export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: st
       if (typeof t?.slug !== 'string' || !isIdReferenceToken(t.slug)) {
         throw new PayloadError(`test ${String(t?.id)} has invalid slug ${JSON.stringify(t?.slug)}`);
       }
+      const slug = String(t.slug);
+      const updateId = numOrNull(t.update_id);
       return {
         id: Number(t.id),
-        slug: String(t.slug),
+        slug,
         name: String(t.name),
         type: String(t.type) as TestType,
         units: String(t.units ?? ''),
@@ -41,7 +44,8 @@ export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: st
         chartLabel: t.chart_label ? String(t.chart_label) : null,
         isNew: t.is_new === true,
         previousId: numOrNull(t.previous_id),
-        updateId: numOrNull(t.update_id),
+        updateId,
+        methodStatus: methodStatusOf({ slug, updateId }),
         primaryTestId: numOrNull(t.primary_test_id),
         secondaryTestIds: Array.isArray(t.secondary_test_ids)
           ? t.secondary_test_ids.filter((x: unknown) => typeof x === 'number')
