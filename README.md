@@ -1,7 +1,7 @@
 # Shoe Lab
 
 A personal running-shoe comparison tool: a static single-page app for filtering, sorting and
-comparing running shoes on **exact lab-measured numbers** — heel stack, midsole softness, energy
+comparing running shoes on **lab-measured numbers** — heel stack, midsole softness, energy
 return, toebox width, weight, torsional rigidity and ~50 more — instead of marketing copy.
 
 It exists to answer questions like *"most-cushioned shoes released in the last two years, wide
