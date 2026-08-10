@@ -28055,6 +28055,61 @@
       "whoShouldBuy": "<p>We recommend the Cloudgo as a good choice for: </p>\n<ul>\n<li>Casual and/or advanced runners who prioritise comfort in their <a href=\"https://runrepeat.com/uk/catalog/daily-running-running-shoes\" rel=\"noopener\" target=\"_blank\">daily trainers </a></li>\n<li>Runners who want a speedy shoe that isn’t stiff</li>\n<li>Runners who need a neutral/stable shoe that offsets pronating strides. </li>\n<li>Those looking for a road shoe that’s comfy and stylish enough for walking around town</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The Cloudgo’s midsole is too firm to comfortably facilitate long-distance efforts. Instead, we recommend the <a href=\"https://runrepeat.com/uk/on-cloudmonster\" rel=\"noopener\" target=\"_blank\">On Cloudmonster</a> which provides more impact protection for longer runs. </p>\n\n    \n    \n\n<p>The Cloudgo is quite a toasty ride, so for runners in hot climates or prone to sweaty feet, we suggest looking at the more breathable <a href=\"https://runrepeat.com/uk/saucony-triumph-20\" rel=\"noopener\" target=\"_blank\">Saucony Triumph 20</a> instead.</p>\n<p></p>"
     },
+    "on-cloudhorizon-2-waterproof": {
+      "brand": "On",
+      "categorySlug": "hiking-shoes",
+      "cons": [
+        "Poor breathability",
+        "Expensive for its use case"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Lightweight",
+        "Removable insole",
+        "Orthotic friendly"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41332/on-cloudhorizon-2-waterproof-lab-test-and-review-25329628-720.jpg",
+      "intro": "Aside from making the Cloudhorizon 2 Waterproof visually cleaner, On made this casual hiker a bit better equipped for real trail use by deepening and sharpening its lugs. We were particularly impressed by this shoe's high traction results in our lab! But all things considered, we still believe that city-to-trail use remains this shoe's sweet spot with its thick-foamed cushioning and comfort-oriented build.",
+      "latestVersion": null,
+      "msrpGbp": 200,
+      "name": "On Cloudhorizon 2 Waterproof",
+      "pageValues": {
+        "39": "both-sides-full",
+        "40": "finger-loop",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "On Cloudhorizon Waterproof",
+        "slug": "on-cloudhorizon-waterproof"
+      },
+      "productId": 41332,
+      "pros": [
+        "Abundant shock absorption",
+        "Lighter than average",
+        "Excellent stability for moderate terrain",
+        "Tacky grip on smooth and wet surfaces",
+        "Deeper lugs for mixed terrain",
+        "Secure lockdown and fit",
+        "True to medium width"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/on-cloudhorizon-2-waterproof",
+      "score": 75,
+      "scrapedAt": "2026-08-10T07:49:13.014Z",
+      "whoShouldBuy": "<p>The Cloudhorizon 2 Waterproof is not a cheap buy, but it can be worth it if:</p>\n<ul>\n<li>you are a fan of On's refined aesthetics and standout CloudTec midsole design</li>\n<li>you need a versatile sneaker that feels at home on both city streets and moderate trails</li>\n<li>you value cushioning and impact protection above anything else</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>If you're planning day hikes on less predictable trails that call for highly stable, durable, and adaptable shoes, the Cloudrock Low Waterproof is not your best bet.</p>\n\n    \n    \n\n<p>For the same price or lower, you can get a more technical Cloudrock Low Waterproof from On, as well as the highly regarded <a href=\"https://runrepeat.com/uk/adidas-terrex-free-hiker-2-0-low-gtx\" rel=\"noopener\" target=\"_blank\">adidas Terrex Free Hiker 2.0 Low GTX</a> and the <a href=\"https://runrepeat.com/uk/salomon-x-ultra-5-gtx\" rel=\"noopener\" target=\"_blank\">Salomon X Ultra 5 GTX</a>.</p>\n<p></p>"
+    },
     "on-cloudmonster": {
       "brand": "On",
       "categorySlug": "running-shoes",
@@ -31612,6 +31667,62 @@
       "scrapedAt": "2026-07-26T22:01:56.603Z",
       "whoShouldBuy": "<p>After testing the Salomon Aero Glide 4, we think that:</p>\n<ul>\n<li>It’s perfect for runners chasing massive bounce without premium-level prices.</li>\n<li>Fans of the <a href=\"https://runrepeat.com/uk/salomon-aero-glide-3\" rel=\"noopener\" target=\"_blank\">Aero Glide 3</a> should upgrade immediately.</li>\n<li>Heel strikers wanting a higher-drop EVO SL alternative will love this shoe.</li>\n<li>Marathoners seeking long-run protection and high energy return will enjoy it.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the Aero Glide 4 may frustrate runners who land farther forward on their feet, as we really felt the towering heel and high-drop geometry. Shoes like the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or the <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a> deliver a single-digit drop while still offering explosive bounce for daily runs.</p>\n\n    \n    \n\n<p>We also believe the Aero Glide 4 is not the best option for runners who prioritise room for toe splay. We found in the lab that the tapered forefoot limits space up front, so some runners may feel restricted. In this case, the <a href=\"https://runrepeat.com/uk/on-cloudboom-max\" rel=\"noopener\" target=\"_blank\">On Cloudboom Max</a> feels like a smarter alternative.</p>\n<p></p>"
+    },
+    "salomon-quest-5-gtx": {
+      "brand": "Salomon",
+      "categorySlug": "hiking-boots",
+      "cons": [
+        "Heavier than average",
+        "Poor breathability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Removable insole",
+        "Heel brake",
+        "Orthotic friendly",
+        "Ankle support"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41216/salomon-quest-5-gtx-lab-test-and-review-25313051-720.jpg",
+      "intro": "Even though it was released 5 years after the previous version, the Salomon Quest 5 GTX didn't receive any fundamental updates. Our lab tests showed that the boot keeps building on the strong features of its predecessor, with stability as its main highlight. We are happy to see the new Quest remaining just as reliable and confidence-inspiring on challenging terrain as we've come to expect!",
+      "latestVersion": null,
+      "msrpGbp": 240,
+      "name": "Salomon Quest 5 GTX",
+      "pageValues": {
+        "39": "both-sides-full",
+        "40": "finger-loop",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Salomon Quest 4 GTX",
+        "slug": "salomon-quest-4-gtx"
+      },
+      "productId": 41216,
+      "pros": [
+        "Fantastic stability for technical terrain",
+        "Excellent grip on various surfaces",
+        "Flexible forefoot for a backpacking boot",
+        "Highly secure lockdown and containment",
+        "Durable materials and construction",
+        "Stays warm in cold weather",
+        "Effective waterproofing"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/salomon-quest-5-gtx",
+      "score": 90,
+      "scrapedAt": "2026-08-10T07:49:13.934Z",
+      "whoShouldBuy": "<p>The Salomon Quest 5 GTX is one of the top-performing boots that suits hikers who:</p>\n<ul>\n<li>want a highly stable backpacking boot for demanding multi-day hikes</li>\n<li>don't mind less cushioning in exchange for higher stability</li>\n<li>need a warm, waterproof boot for colder seasons</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>We don't think it makes sense to invest in the Quest 5 GTX if you need a boot for day hikes or fast-paced adventures. The <a href=\"https://runrepeat.com/uk/salomon-x-ultra-5-mid-gtx\" rel=\"noopener\" target=\"_blank\">Salomon X Ultra 5 Mid GTX</a> fits that use case much better with its lighter build.</p>\n\n    \n    \n\n<p>And if you do need a multi-day boot but feel like this Salomon boot could feel too harsh and bare-bones, the <a href=\"https://runrepeat.com/uk/hoka-kaha-3-gtx\" rel=\"noopener\" target=\"_blank\">HOKA Kaha 3 GTX</a> will treat your legs to exceptional cushioning and impact protection.</p>\n<p></p>"
     },
     "salomon-s-lab-phantasm-2": {
       "brand": "Salomon",
