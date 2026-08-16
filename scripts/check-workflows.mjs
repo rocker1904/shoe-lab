@@ -25,7 +25,10 @@ const block = (text, key, indent) => {
 };
 const keysAt = (text, indent) => {
   const key = new RegExp(`^ {${indent}}([A-Za-z0-9_-]+):(?:\\s.*)?$`);
-  return text.split('\n').flatMap((line) => key.exec(line)?.[1] ?? []);
+  return text.split('\n').flatMap((line) => {
+    if (!line.trim() || line.trimStart().startsWith('#') || indentOf(line) !== indent) return [];
+    return [key.exec(line)?.[1] ?? '<unparsed mapping key>'];
+  });
 };
 const sameMembers = (actual, expected) => (
   actual.length === expected.length && actual.every((value) => expected.includes(value))
@@ -58,6 +61,9 @@ const requireIn = (file, scope, text, reason) => {
 const ci = read('ci.yml');
 const ciTopLevel = keysAt(ci, 0);
 const ciJobs = keysAt(block(ci, 'jobs', 0), 2);
+const ciGateKeys = ciJobs
+  .filter((name) => name !== 'dispatch-deploy')
+  .map((name) => keysAt(block(ci, name, 2), 4));
 const dispatch = block(ci, 'dispatch-deploy', 2);
 const dispatchKeys = keysAt(dispatch, 4);
 const needsBlock = block(dispatch, 'needs', 4);
@@ -75,13 +81,19 @@ if (!ciJobs.includes('dispatch-deploy')
     || !sameMembers(needs, ciJobs.filter((name) => name !== 'dispatch-deploy'))) {
   errors.push('ci.yml: deploy dispatch must wait for every other CI job');
 }
+if (ciGateKeys.some((keys) => !sameMembers(keys, ['runs-on', 'timeout-minutes', 'steps']))) {
+  errors.push('ci.yml: every CI gate must use only approved failure-propagating job controls');
+}
 if (!sameMembers(dispatchKeys, ['if', 'needs', 'permissions', 'runs-on', 'steps'])) {
   errors.push('ci.yml: the deploy dispatch job must use only approved job controls');
 }
-requireIn('ci.yml', dispatch, [
-  "      github.ref == 'refs/heads/main' &&",
-  "      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')",
-].join('\n'), 'only eligible main CI runs may dispatch deploy');
+if (!matchesShape(block(dispatch, 'if', 4), [
+  'if: >-',
+  "github.ref == 'refs/heads/main' &&",
+  "(github.event_name == 'push' || github.event_name == 'workflow_dispatch')",
+])) {
+  errors.push('ci.yml: only eligible main CI runs may dispatch deploy');
+}
 requireIn('ci.yml', dispatch, [
   '    permissions:',
   '      actions: write',
@@ -104,9 +116,6 @@ if (count(ci, /gh workflow run deploy\.yml/g) !== 1) {
 }
 if (count(ci, /^\s+actions: write$/gm) !== 1 || /^(?:\s+)?(?:pages|id-token): write$/m.test(ci)) {
   errors.push('ci.yml: CI permissions must be limited to the one Actions dispatch grant');
-}
-if (/^\s+continue-on-error:/m.test(ci) || /^\s*defaults:/m.test(ci)) {
-  errors.push('ci.yml: CI gates may not mask failures with continuation or shell defaults');
 }
 for (const file of ['refresh-metrics.yml', 'refresh-details.yml']) {
   requireText(file, 'gh workflow run ci.yml --ref main', 'a changed refresh must dispatch CI');
@@ -229,11 +238,13 @@ if (validateSteps.length !== 1 || !matchesShape(validateSteps[0], [
 }
 requireIn('deploy.yml', deploy, '    needs: validate',
   'the Pages-privileged job must wait for source validation');
-requireIn('deploy.yml', deploy, [
-  '    if: >-',
-  "      needs.validate.result == 'success' &&",
-  "      needs.validate.outputs.sha != ''",
-].join('\n'), 'publication must fail closed unless validation succeeds with a SHA');
+if (!matchesShape(block(deploy, 'if', 4), [
+  'if: >-',
+  "needs.validate.result == 'success' &&",
+  "needs.validate.outputs.sha != ''",
+])) {
+  errors.push('deploy.yml: publication must fail closed unless validation succeeds with a SHA');
+}
 requireIn('deploy.yml', deploy, [
   '    permissions:',
   '      contents: read',
