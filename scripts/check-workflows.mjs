@@ -199,14 +199,14 @@ requireIn('ci.yml', dispatch, [
 ].join('\n'), 'only the dispatch job may receive Actions write access');
 requireIn('ci.yml', dispatch, [
   '          SOURCE_RUN_ID: ${{ github.run_id }}',
-  '        run: gh workflow run deploy.yml --ref main -f source_run_id="$SOURCE_RUN_ID"',
+  '        run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main -f source_run_id="$SOURCE_RUN_ID"',
 ].join('\n'), 'successful main CI must dispatch deploy with its own run ID');
 if (dispatchSteps.length !== 1 || !matchesShape(dispatchSteps[0], [
   '- name: Dispatch the proved CI run',
   'env:',
   'GH_TOKEN: ${{ github.token }}',
   'SOURCE_RUN_ID: ${{ github.run_id }}',
-  'run: gh workflow run deploy.yml --ref main -f source_run_id="$SOURCE_RUN_ID"',
+  'run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main -f source_run_id="$SOURCE_RUN_ID"',
 ])) {
   errors.push('ci.yml: the dispatch job must contain only the proved Deploy dispatch');
 }
