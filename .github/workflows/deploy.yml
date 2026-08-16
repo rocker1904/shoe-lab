@@ -57,6 +57,10 @@ jobs:
 
   deploy:
     needs: validate
+    # checkout treats an empty ref as the event SHA, so validation success alone is insufficient.
+    if: >-
+      needs.validate.result == 'success' &&
+      needs.validate.outputs.sha != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

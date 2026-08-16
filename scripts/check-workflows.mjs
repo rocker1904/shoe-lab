@@ -56,8 +56,10 @@ const requireIn = (file, scope, text, reason) => {
 };
 
 const ci = read('ci.yml');
+const ciTopLevel = keysAt(ci, 0);
 const ciJobs = keysAt(block(ci, 'jobs', 0), 2);
 const dispatch = block(ci, 'dispatch-deploy', 2);
+const dispatchKeys = keysAt(dispatch, 4);
 const needsBlock = block(dispatch, 'needs', 4);
 const inlineNeeds = /^ {4}needs:\s*\[([^\]]*)\]\s*$/m.exec(needsBlock)?.[1];
 const needs = inlineNeeds === undefined
@@ -66,9 +68,15 @@ const needs = inlineNeeds === undefined
 const dispatchSteps = listItemsAt(block(dispatch, 'steps', 4), 6);
 
 requireText('ci.yml', '  workflow_dispatch:', 'CI must be dispatchable by token-authored refreshes');
+if (!sameMembers(ciTopLevel, ['name', 'on', 'permissions', 'concurrency', 'jobs'])) {
+  errors.push('ci.yml: CI workflow-level controls must stay on the approved surface');
+}
 if (!ciJobs.includes('dispatch-deploy')
     || !sameMembers(needs, ciJobs.filter((name) => name !== 'dispatch-deploy'))) {
   errors.push('ci.yml: deploy dispatch must wait for every other CI job');
+}
+if (!sameMembers(dispatchKeys, ['if', 'needs', 'permissions', 'runs-on', 'steps'])) {
+  errors.push('ci.yml: the deploy dispatch job must use only approved job controls');
 }
 requireIn('ci.yml', dispatch, [
   "      github.ref == 'refs/heads/main' &&",
@@ -97,6 +105,9 @@ if (count(ci, /gh workflow run deploy\.yml/g) !== 1) {
 if (count(ci, /^\s+actions: write$/gm) !== 1 || /^(?:\s+)?(?:pages|id-token): write$/m.test(ci)) {
   errors.push('ci.yml: CI permissions must be limited to the one Actions dispatch grant');
 }
+if (/^\s+continue-on-error:/m.test(ci) || /^\s*defaults:/m.test(ci)) {
+  errors.push('ci.yml: CI gates may not mask failures with continuation or shell defaults');
+}
 for (const file of ['refresh-metrics.yml', 'refresh-details.yml']) {
   requireText(file, 'gh workflow run ci.yml --ref main', 'a changed refresh must dispatch CI');
   if (read(file).includes('gh workflow run deploy.yml')) {
@@ -105,16 +116,26 @@ for (const file of ['refresh-metrics.yml', 'refresh-details.yml']) {
 }
 
 const deployWorkflow = read('deploy.yml');
+const deployTopLevel = keysAt(deployWorkflow, 0);
 const deployTriggers = keysAt(block(deployWorkflow, 'on', 0), 2);
 const deployInputs = keysAt(block(deployWorkflow, 'inputs', 4), 6);
 const deployJobs = keysAt(block(deployWorkflow, 'jobs', 0), 2);
 const validate = block(deployWorkflow, 'validate', 2);
 const deploy = block(deployWorkflow, 'deploy', 2);
+const validateKeys = keysAt(validate, 4);
+const deployKeys = keysAt(deploy, 4);
+const validatePermissions = keysAt(block(validate, 'permissions', 4), 6);
+const validateOutputs = keysAt(block(validate, 'outputs', 4), 6);
+const deployPermissions = keysAt(block(deploy, 'permissions', 4), 6);
+const deployEnvironment = keysAt(block(deploy, 'environment', 4), 6);
 const validateSteps = listItemsAt(block(validate, 'steps', 4), 6);
 const deploySteps = listItemsAt(block(deploy, 'steps', 4), 6);
 
 if (/^  workflow_run:/m.test(deployWorkflow)) {
   errors.push('deploy.yml: token-dispatched CI cannot hand off through workflow_run');
+}
+if (!sameMembers(deployTopLevel, ['name', 'on', 'permissions', 'concurrency', 'jobs'])) {
+  errors.push('deploy.yml: Deploy workflow-level controls must stay on the approved surface');
 }
 if (!sameMembers(deployTriggers, ['workflow_dispatch'])) {
   errors.push('deploy.yml: Deploy must expose only the proved workflow dispatch trigger');
@@ -124,6 +145,17 @@ if (!sameMembers(deployInputs, ['source_run_id'])) {
 }
 if (!sameMembers(deployJobs, ['validate', 'deploy'])) {
   errors.push('deploy.yml: Deploy must contain only validation and publication jobs');
+}
+if (!sameMembers(validateKeys, ['runs-on', 'timeout-minutes', 'permissions', 'outputs', 'steps'])
+    || !sameMembers(validatePermissions, ['actions'])
+    || !sameMembers(validateOutputs, ['sha'])) {
+  errors.push('deploy.yml: validation must use only approved job controls, permissions and output');
+}
+if (!sameMembers(deployKeys,
+  ['needs', 'if', 'runs-on', 'timeout-minutes', 'permissions', 'environment', 'steps'])
+    || !sameMembers(deployPermissions, ['contents', 'pages', 'id-token'])
+    || !sameMembers(deployEnvironment, ['name', 'url'])) {
+  errors.push('deploy.yml: publication must use only approved job controls and Pages grants');
 }
 requireIn('deploy.yml', block(deployWorkflow, 'source_run_id', 6), [
   '        required: true',
@@ -197,6 +229,11 @@ if (validateSteps.length !== 1 || !matchesShape(validateSteps[0], [
 }
 requireIn('deploy.yml', deploy, '    needs: validate',
   'the Pages-privileged job must wait for source validation');
+requireIn('deploy.yml', deploy, [
+  '    if: >-',
+  "      needs.validate.result == 'success' &&",
+  "      needs.validate.outputs.sha != ''",
+].join('\n'), 'publication must fail closed unless validation succeeds with a SHA');
 requireIn('deploy.yml', deploy, [
   '    permissions:',
   '      contents: read',
