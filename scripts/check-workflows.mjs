@@ -66,6 +66,8 @@ const matchesShape = (text, shape) => {
       typeof shape[i] === 'string' ? line === shape[i] : shape[i].test(line)
     ));
 };
+const pinnedAction = (name) => new RegExp(`^- uses: actions/${name}@[0-9a-f]{40} # v\\d+(?:\\.\\d+\\.\\d+)?$`);
+const pinnedNestedAction = (name) => new RegExp(`^uses: actions/${name}@[0-9a-f]{40} # v\\d+(?:\\.\\d+\\.\\d+)?$`);
 const requireIn = (file, scope, text, reason) => {
   if (!scope.includes(text)) errors.push(`${file}: ${reason}`);
 };
@@ -73,6 +75,9 @@ const requireIn = (file, scope, text, reason) => {
 const ci = read('ci.yml');
 const ciTopLevel = keysAt(ci, 0);
 const ciJobs = keysAt(block(ci, 'jobs', 0), 2);
+const ciPermissions = block(ci, 'permissions', 0);
+const fullSuite = block(ci, 'full-suite', 2);
+const classicScrollbars = block(ci, 'classic-scrollbars', 2);
 const ciGateKeys = ciJobs
   .filter((name) => name !== 'dispatch-deploy')
   .map((name) => keysAt(block(ci, name, 2), 4));
@@ -82,6 +87,7 @@ const ciGateSteps = ciJobs
     .map((step) => ({ job, step, keys: listMappingKeysAt(step, 6) })));
 const dispatch = block(ci, 'dispatch-deploy', 2);
 const dispatchKeys = keysAt(dispatch, 4);
+const dispatchPermissions = block(dispatch, 'permissions', 4);
 const needsBlock = block(dispatch, 'needs', 4);
 const inlineNeeds = /^ {4}needs:\s*\[([^\]]*)\]\s*$/m.exec(needsBlock)?.[1];
 const needs = inlineNeeds === undefined
@@ -93,9 +99,13 @@ requireText('ci.yml', '  workflow_dispatch:', 'CI must be dispatchable by token-
 if (!sameKeys(ciTopLevel, ['name', 'on', 'permissions', 'concurrency', 'jobs'])) {
   errors.push('ci.yml: CI workflow-level controls must stay on the approved surface');
 }
-if (!ciJobs.includes('dispatch-deploy')
-    || !sameKeys(needs, ciJobs.filter((name) => name !== 'dispatch-deploy'))) {
-  errors.push('ci.yml: deploy dispatch must wait for every other CI job');
+if (!sameKeys(ciJobs, ['full-suite', 'classic-scrollbars', 'dispatch-deploy'])
+    || !sameKeys(needs, ['full-suite', 'classic-scrollbars'])) {
+  errors.push('ci.yml: deploy dispatch must wait for the complete approved CI gate');
+}
+if (!matchesShape(ciPermissions, ['permissions:', 'contents: read'])
+    || !matchesShape(dispatchPermissions, ['permissions:', 'actions: write'])) {
+  errors.push('ci.yml: CI permissions must be exactly read-only contents plus the dispatch grant');
 }
 if (ciGateKeys.some((keys) => !sameKeys(keys, ['runs-on', 'timeout-minutes', 'steps']))) {
   errors.push('ci.yml: every CI gate must use only approved failure-propagating job controls');
@@ -110,6 +120,68 @@ for (const { job, step, keys } of ciGateSteps) {
   if (!unconditionalStep && !failureArtifact) {
     errors.push(`ci.yml: ${job} steps must propagate failure except for failure-only artifact upload`);
   }
+}
+const fullSuiteSteps = listItemsAt(block(fullSuite, 'steps', 4), 6);
+if (!matchesShape(block(fullSuite, 'runs-on', 4), ['runs-on: ubuntu-latest'])
+    || !matchesShape(block(fullSuite, 'timeout-minutes', 4), ['timeout-minutes: 20'])
+    || fullSuiteSteps.length !== 7
+    || !matchesShape(fullSuiteSteps[0], [pinnedAction('checkout')])
+    || !matchesShape(fullSuiteSteps[1], [
+      pinnedAction('setup-node'),
+      'with:',
+      'node-version-file: .nvmrc',
+      'cache: npm',
+    ])
+    || !matchesShape(fullSuiteSteps[2], ['- run: npm ci'])
+    || !matchesShape(fullSuiteSteps[3], ['- run: npm run verify'])
+    || !matchesShape(fullSuiteSteps[4], [
+      '- run: npx playwright install chromium firefox webkit --with-deps',
+    ])
+    || !matchesShape(fullSuiteSteps[5], ['- run: npm -w app run e2e'])
+    || !matchesShape(fullSuiteSteps[6], [
+      '- if: failure()',
+      pinnedNestedAction('upload-artifact'),
+      'with:',
+      'name: playwright-report',
+      'path: app/playwright-report/',
+      'retention-days: 7',
+      'if-no-files-found: ignore',
+    ])) {
+  errors.push('ci.yml: full-suite must run the complete approved verification gate');
+}
+const classicSteps = listItemsAt(block(classicScrollbars, 'steps', 4), 6);
+if (!matchesShape(block(classicScrollbars, 'runs-on', 4), ['runs-on: macos-latest'])
+    || !matchesShape(block(classicScrollbars, 'timeout-minutes', 4), ['timeout-minutes: 15'])
+    || classicSteps.length !== 9
+    || !matchesShape(classicSteps[0], [pinnedAction('checkout')])
+    || !matchesShape(classicSteps[1], [
+      pinnedAction('setup-node'),
+      'with:',
+      'node-version-file: .nvmrc',
+      'cache: npm',
+    ])
+    || !matchesShape(classicSteps[2], ['- run: npm ci'])
+    || !matchesShape(classicSteps[3], [
+      '- run: defaults write -g AppleShowScrollBars -string Always',
+    ])
+    || !matchesShape(classicSteps[4], [
+      '- run: defaults write -g AppleKeyboardUIMode -int 2',
+    ])
+    || !matchesShape(classicSteps[5], ['- run: npx playwright install webkit'])
+    || !matchesShape(classicSteps[6], ['- run: node hunt/fit-boundary.mjs webkit'])
+    || !matchesShape(classicSteps[7], [
+      '- run: npm -w app run e2e -- --project=webkit --headed',
+    ])
+    || !matchesShape(classicSteps[8], [
+      '- if: failure()',
+      pinnedNestedAction('upload-artifact'),
+      'with:',
+      'name: playwright-report-macos',
+      'path: app/playwright-report/',
+      'retention-days: 7',
+      'if-no-files-found: ignore',
+    ])) {
+  errors.push('ci.yml: classic-scrollbars must run the complete approved macOS gate');
 }
 if (!sameKeys(dispatchKeys, ['if', 'needs', 'permissions', 'runs-on', 'steps'])) {
   errors.push('ci.yml: the deploy dispatch job must use only approved job controls');
@@ -172,6 +244,13 @@ if (/^  workflow_run:/m.test(deployWorkflow)) {
 }
 if (!sameKeys(deployTopLevel, ['name', 'on', 'permissions', 'concurrency', 'jobs'])) {
   errors.push('deploy.yml: Deploy workflow-level controls must stay on the approved surface');
+}
+if (!matchesShape(block(deployWorkflow, 'concurrency', 0), [
+  'concurrency:',
+  'group: pages',
+  'cancel-in-progress: false',
+])) {
+  errors.push('deploy.yml: Pages concurrency must never cancel an in-flight deployment');
 }
 if (!sameKeys(deployTriggers, ['workflow_dispatch'])) {
   errors.push('deploy.yml: Deploy must expose only the proved workflow dispatch trigger');
@@ -299,7 +378,6 @@ if (count(deployWorkflow, /uses:\s+actions\/upload-pages-artifact@/g) !== 1
     || !deploy.includes('uses: actions/deploy-pages@')) {
   errors.push('deploy.yml: the validated job must own the only Pages publication path');
 }
-const pinnedAction = (name) => new RegExp(`^- uses: actions/${name}@[0-9a-f]{40} # v\\d+(?:\\.\\d+\\.\\d+)?$`);
 if (deploySteps.length !== 6
     || !matchesShape(deploySteps[0], [
       pinnedAction('checkout'),
