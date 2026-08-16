@@ -30,6 +30,27 @@ const keysAt = (text, indent) => {
 const sameMembers = (actual, expected) => (
   actual.length === expected.length && actual.every((value) => expected.includes(value))
 );
+const listValuesAt = (text, indent) => {
+  const item = new RegExp(`^ {${indent}}- ([A-Za-z0-9_-]+)\\s*$`);
+  return text.split('\n').flatMap((line) => item.exec(line)?.[1] ?? []);
+};
+const listItemsAt = (text, indent) => {
+  const lines = text.split('\n');
+  const starts = lines.flatMap((line, i) => (
+    new RegExp(`^ {${indent}}- `).test(line) ? [i] : []
+  ));
+  return starts.map((start, i) => lines.slice(start, starts[i + 1] ?? lines.length).join('\n'));
+};
+const significant = (text) => text.split('\n')
+  .map((line) => line.trim())
+  .filter((line) => line && !line.startsWith('#'));
+const matchesShape = (text, shape) => {
+  const actual = significant(text);
+  return actual.length === shape.length
+    && actual.every((line, i) => (
+      typeof shape[i] === 'string' ? line === shape[i] : shape[i].test(line)
+    ));
+};
 const requireIn = (file, scope, text, reason) => {
   if (!scope.includes(text)) errors.push(`${file}: ${reason}`);
 };
@@ -37,8 +58,12 @@ const requireIn = (file, scope, text, reason) => {
 const ci = read('ci.yml');
 const ciJobs = keysAt(block(ci, 'jobs', 0), 2);
 const dispatch = block(ci, 'dispatch-deploy', 2);
-const needs = /^ {4}needs:\s*\[([^\]]*)\]\s*$/m.exec(dispatch)?.[1]
-  .split(',').map((name) => name.trim()).filter(Boolean) ?? [];
+const needsBlock = block(dispatch, 'needs', 4);
+const inlineNeeds = /^ {4}needs:\s*\[([^\]]*)\]\s*$/m.exec(needsBlock)?.[1];
+const needs = inlineNeeds === undefined
+  ? listValuesAt(needsBlock, 6)
+  : inlineNeeds.split(',').map((name) => name.trim()).filter(Boolean);
+const dispatchSteps = listItemsAt(block(dispatch, 'steps', 4), 6);
 
 requireText('ci.yml', '  workflow_dispatch:', 'CI must be dispatchable by token-authored refreshes');
 if (!ciJobs.includes('dispatch-deploy')
@@ -57,6 +82,15 @@ requireIn('ci.yml', dispatch, [
   '          SOURCE_RUN_ID: ${{ github.run_id }}',
   '        run: gh workflow run deploy.yml --ref main -f source_run_id="$SOURCE_RUN_ID"',
 ].join('\n'), 'successful main CI must dispatch deploy with its own run ID');
+if (dispatchSteps.length !== 1 || !matchesShape(dispatchSteps[0], [
+  '- name: Dispatch the proved CI run',
+  'env:',
+  'GH_TOKEN: ${{ github.token }}',
+  'SOURCE_RUN_ID: ${{ github.run_id }}',
+  'run: gh workflow run deploy.yml --ref main -f source_run_id="$SOURCE_RUN_ID"',
+])) {
+  errors.push('ci.yml: the dispatch job must contain only the proved Deploy dispatch');
+}
 if (count(ci, /gh workflow run deploy\.yml/g) !== 1) {
   errors.push('ci.yml: CI must have exactly one Deploy dispatch path');
 }
@@ -76,6 +110,8 @@ const deployInputs = keysAt(block(deployWorkflow, 'inputs', 4), 6);
 const deployJobs = keysAt(block(deployWorkflow, 'jobs', 0), 2);
 const validate = block(deployWorkflow, 'validate', 2);
 const deploy = block(deployWorkflow, 'deploy', 2);
+const validateSteps = listItemsAt(block(validate, 'steps', 4), 6);
+const deploySteps = listItemsAt(block(deploy, 'steps', 4), 6);
 
 if (/^  workflow_run:/m.test(deployWorkflow)) {
   errors.push('deploy.yml: token-dispatched CI cannot hand off through workflow_run');
@@ -126,6 +162,39 @@ requireIn('deploy.yml', validate, [
   '          sha="$(jq -r \'.head_sha\' <<< "$run_json")"',
   '          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then',
 ].join('\n'), 'deploy must derive and validate the source run head SHA');
+if (validateSteps.length !== 1 || !matchesShape(validateSteps[0], [
+  '- name: Verify successful CI source',
+  'id: source',
+  'env:',
+  'GH_TOKEN: ${{ github.token }}',
+  'SOURCE_RUN_ID: ${{ inputs.source_run_id }}',
+  'run: |',
+  'if [[ ! "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then',
+  "echo 'source_run_id must be a numeric Actions run ID' >&2",
+  'exit 1',
+  'fi',
+  'run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"',
+  'jq -e --arg repo "$GITHUB_REPOSITORY" \'',
+  '.path == ".github/workflows/ci.yml" and',
+  '.head_branch == "main" and',
+  '.head_repository.full_name == $repo and',
+  '(.event == "push" or .event == "workflow_dispatch")',
+  '\' <<< "$run_json" > /dev/null',
+  'gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status',
+  'run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"',
+  'jq -e \'',
+  '.status == "completed" and',
+  '.conclusion == "success"',
+  '\' <<< "$run_json" > /dev/null',
+  'sha="$(jq -r \'.head_sha\' <<< "$run_json")"',
+  'if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then',
+  "echo 'validated CI run returned an invalid head SHA' >&2",
+  'exit 1',
+  'fi',
+  'echo "sha=$sha" >> "$GITHUB_OUTPUT"',
+])) {
+  errors.push('deploy.yml: validation must have one exact source-proof step');
+}
 requireIn('deploy.yml', deploy, '    needs: validate',
   'the Pages-privileged job must wait for source validation');
 requireIn('deploy.yml', deploy, [
@@ -154,6 +223,36 @@ if (count(deployWorkflow, /uses:\s+actions\/upload-pages-artifact@/g) !== 1
     || !deploy.includes('uses: actions/upload-pages-artifact@')
     || !deploy.includes('uses: actions/deploy-pages@')) {
   errors.push('deploy.yml: the validated job must own the only Pages publication path');
+}
+const pinnedAction = (name) => new RegExp(`^- uses: actions/${name}@[0-9a-f]{40} # v\\d+(?:\\.\\d+\\.\\d+)?$`);
+if (deploySteps.length !== 6
+    || !matchesShape(deploySteps[0], [
+      pinnedAction('checkout'),
+      'with:',
+      'ref: ${{ needs.validate.outputs.sha }}',
+    ])
+    || !matchesShape(deploySteps[1], [
+      pinnedAction('setup-node'),
+      'with:',
+      'node-version-file: .nvmrc',
+      'cache: npm',
+    ])
+    || !matchesShape(deploySteps[2], ['- run: npm ci'])
+    || !matchesShape(deploySteps[3], ['- run: npm -w app run build'])
+    || !matchesShape(deploySteps[4], [
+      pinnedAction('upload-pages-artifact'),
+      'with:',
+      'name: github-pages-${{ github.run_attempt }}',
+      'path: app/dist',
+    ])
+    || !matchesShape(deploySteps[5], [
+      '- id: deployment',
+      /^uses: actions\/deploy-pages@[0-9a-f]{40} # v\d+(?:\.\d+\.\d+)?$/,
+      'with:',
+      'artifact_name: github-pages-${{ github.run_attempt }}',
+      'timeout: 600000',
+    ])) {
+  errors.push('deploy.yml: publication must use only the verified checkout and approved build/deploy steps');
 }
 
 for (const file of readdirSync('.github/workflows').filter((name) => /\.ya?ml$/.test(name))) {
