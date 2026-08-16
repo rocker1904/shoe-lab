@@ -33,6 +33,9 @@ const keysAt = (text, indent) => {
 const sameMembers = (actual, expected) => (
   actual.length === expected.length && actual.every((value) => expected.includes(value))
 );
+const sameKeys = (actual, expected) => (
+  sameMembers(actual, expected) && expected.every((value) => actual.includes(value))
+);
 const listValuesAt = (text, indent) => {
   const item = new RegExp(`^ {${indent}}- ([A-Za-z0-9_-]+)\\s*$`);
   return text.split('\n').flatMap((line) => item.exec(line)?.[1] ?? []);
@@ -98,15 +101,14 @@ if (!ciJobs.includes('dispatch-deploy')
 if (ciGateKeys.some((keys) => !sameMembers(keys, ['runs-on', 'timeout-minutes', 'steps']))) {
   errors.push('ci.yml: every CI gate must use only approved failure-propagating job controls');
 }
-const ciGateStepKeys = [
-  'name', 'id', 'env', 'uses', 'run', 'with', 'shell', 'working-directory', 'timeout-minutes', 'if',
-];
 for (const { job, step, keys } of ciGateSteps) {
-  const failureArtifact = sameMembers(keys, ['if', 'uses', 'with'])
+  const unconditionalStep = sameKeys(keys, ['run'])
+    || sameKeys(keys, ['uses'])
+    || sameKeys(keys, ['uses', 'with']);
+  const failureArtifact = sameKeys(keys, ['if', 'uses', 'with'])
     && significant(step)[0] === '- if: failure()'
     && /^ {8}uses: actions\/upload-artifact@[0-9a-f]{40} # v\d+(?:\.\d+\.\d+)?$/m.test(step);
-  if (keys.some((key) => !ciGateStepKeys.includes(key))
-      || (keys.includes('if') && !failureArtifact)) {
+  if (!unconditionalStep && !failureArtifact) {
     errors.push(`ci.yml: ${job} steps must propagate failure except for failure-only artifact upload`);
   }
 }
