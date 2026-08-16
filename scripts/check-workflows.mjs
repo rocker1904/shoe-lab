@@ -44,6 +44,16 @@ const listItemsAt = (text, indent) => {
   ));
   return starts.map((start, i) => lines.slice(start, starts[i + 1] ?? lines.length).join('\n'));
 };
+const listMappingKeysAt = (text, indent) => {
+  const firstKey = new RegExp(`^ {${indent}}- ([A-Za-z0-9_-]+):(?:\\s.*)?$`);
+  const nextKey = new RegExp(`^ {${indent + 2}}([A-Za-z0-9_-]+):(?:\\s.*)?$`);
+  return text.split('\n').flatMap((line) => {
+    if (!line.trim() || line.trimStart().startsWith('#')) return [];
+    if (indentOf(line) === indent) return [firstKey.exec(line)?.[1] ?? '<unparsed mapping key>'];
+    if (indentOf(line) === indent + 2) return [nextKey.exec(line)?.[1] ?? '<unparsed mapping key>'];
+    return [];
+  });
+};
 const significant = (text) => text.split('\n')
   .map((line) => line.trim())
   .filter((line) => line && !line.startsWith('#'));
@@ -64,6 +74,10 @@ const ciJobs = keysAt(block(ci, 'jobs', 0), 2);
 const ciGateKeys = ciJobs
   .filter((name) => name !== 'dispatch-deploy')
   .map((name) => keysAt(block(ci, name, 2), 4));
+const ciGateSteps = ciJobs
+  .filter((name) => name !== 'dispatch-deploy')
+  .flatMap((job) => listItemsAt(block(block(ci, job, 2), 'steps', 4), 6)
+    .map((step) => ({ job, step, keys: listMappingKeysAt(step, 6) })));
 const dispatch = block(ci, 'dispatch-deploy', 2);
 const dispatchKeys = keysAt(dispatch, 4);
 const needsBlock = block(dispatch, 'needs', 4);
@@ -83,6 +97,18 @@ if (!ciJobs.includes('dispatch-deploy')
 }
 if (ciGateKeys.some((keys) => !sameMembers(keys, ['runs-on', 'timeout-minutes', 'steps']))) {
   errors.push('ci.yml: every CI gate must use only approved failure-propagating job controls');
+}
+const ciGateStepKeys = [
+  'name', 'id', 'env', 'uses', 'run', 'with', 'shell', 'working-directory', 'timeout-minutes', 'if',
+];
+for (const { job, step, keys } of ciGateSteps) {
+  const failureArtifact = sameMembers(keys, ['if', 'uses', 'with'])
+    && significant(step)[0] === '- if: failure()'
+    && /^ {8}uses: actions\/upload-artifact@[0-9a-f]{40} # v\d+(?:\.\d+\.\d+)?$/m.test(step);
+  if (keys.some((key) => !ciGateStepKeys.includes(key))
+      || (keys.includes('if') && !failureArtifact)) {
+    errors.push(`ci.yml: ${job} steps must propagate failure except for failure-only artifact upload`);
+  }
 }
 if (!sameMembers(dispatchKeys, ['if', 'needs', 'permissions', 'runs-on', 'steps'])) {
   errors.push('ci.yml: the deploy dispatch job must use only approved job controls');
