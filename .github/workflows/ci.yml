@@ -52,7 +52,7 @@ jobs:
   # all and this job covers WebKit's layout rather than the classic regime — which is worth knowing,
   # and worth keeping either way.
   #
-  # It gates the deploy, like every job here: `deploy.yml` waits on this WORKFLOW's conclusion
+  # It gates the deploy, like every job here: the dispatch job needs this one to succeed
   # (docs/operations.md §Deploy).
   classic-scrollbars:
     runs-on: macos-latest
@@ -94,3 +94,18 @@ jobs:
           path: app/playwright-report/
           retention-days: 7
           if-no-files-found: ignore
+
+  dispatch-deploy:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [full-suite, classic-scrollbars]
+    permissions:
+      actions: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch the proved CI run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+        run: gh workflow run deploy.yml --ref main -f source_run_id="$SOURCE_RUN_ID"

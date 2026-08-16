@@ -1,27 +1,68 @@
 name: Deploy
 on:
-  # Gated on CI rather than firing on push: code pushes trigger CI normally and refresh workflows
-  # dispatch CI after their token-authored data push. Both arrive here through the same proof.
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+  # CI dispatches this explicitly because a GITHUB_TOKEN-dispatched CI run emits no workflow_run.
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful main-branch CI run to verify and deploy
+        required: true
+        type: string
+permissions: {}
 concurrency:
   group: pages
   # A deployment is never killed mid-flight (docs/operations.md §Concurrency).
   cancel-in-progress: false
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Verify successful CI source
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          if [[ ! "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo 'source_run_id must be a numeric Actions run ID' >&2
+            exit 1
+          fi
+
+          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"
+          jq -e --arg repo "$GITHUB_REPOSITORY" '
+            .path == ".github/workflows/ci.yml" and
+            .head_branch == "main" and
+            .head_repository.full_name == $repo and
+            (.event == "push" or .event == "workflow_dispatch")
+          ' <<< "$run_json" > /dev/null
+
+          # Deploy can start before CI's dispatch job exits, so completion must be observed here.
+          gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
+          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"
+          jq -e '
+            .status == "completed" and
+            .conclusion == "success"
+          ' <<< "$run_json" > /dev/null
+
+          sha="$(jq -r '.head_sha' <<< "$run_json")"
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'validated CI run returned an invalid head SHA' >&2
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
   deploy:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_repository.full_name == github.repository &&
-      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch')
+    needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -29,7 +70,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Deploy exactly the commit CI proved, not whatever main means by checkout time.
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ needs.validate.outputs.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc

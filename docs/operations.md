@@ -7,10 +7,10 @@ docs/scraping.md.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | two jobs: `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, and the three-engine Playwright matrix below — and `classic-scrollbars` on `macos-latest` (§The classic-scrollbar job) |
+| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, and the three-engine Playwright matrix below — plus `classic-scrollbars` on `macos-latest`; successful eligible runs dispatch Deploy (§The classic-scrollbar job) |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
-| `deploy.yml` | After `CI` succeeds on `main`, including a refresh-dispatched CI run; deploys that exact commit (§The refresh chain) | builds the app, publishes to Pages |
+| `deploy.yml` | Dispatch from a successful `CI` run on `main`, including refresh-dispatched CI; verifies the run and deploys its exact commit (§The refresh chain) | builds the app, publishes to Pages |
 | `contract-drift.yml` | 1st of the month 07:00 UTC + dispatch | `check:live`, files or comments on an issue when it fails |
 
 ## The e2e run needs three browsers
@@ -90,8 +90,8 @@ assumed.** The rig measures the bar and names the width it found for each regime
 on its closing line, so `0px bar` there means macOS served an overlay after all
 and the job is covering WebKit's layout rather than the classic regime.
 
-It gates the deploy like every job in this workflow — `deploy.yml` waits on the
-whole workflow's conclusion (§Deploy).
+It gates the deploy like every job in this workflow — CI's final dispatch job
+needs it to succeed (§Deploy).
 
 ## The refresh chain
 
@@ -104,12 +104,15 @@ build is deterministic (docs/scraping.md §Determinism), "no diff" genuinely
 means "nothing moved upstream", so an unchanged week costs one workflow run
 and no commit.
 
-*CI is dispatched explicitly*, with `gh workflow run ci.yml`, and the job
-carries `actions: write` for it. This is not belt-and-braces: pushes made with
-`GITHUB_TOKEN` do not trigger push-event workflows. Dispatching the same CI
-workflow code changes use makes data compatibility guards run before
-`deploy.yml` sees the successful `workflow_run`; dispatching deploy directly
-would publish a refresh that can fail the app suite (§Decisions).
+*CI is dispatched explicitly*, with `gh workflow run ci.yml`, and the refresh
+job carries `actions: write` for it. This is not belt-and-braces: pushes made
+with `GITHUB_TOKEN` do not trigger push-event workflows. The same recursion
+guard also suppresses `workflow_run` after a token-dispatched CI run, so CI's
+final job explicitly dispatches Deploy after every gate passes. Deploy accepts
+the CI run ID, independently verifies its identity, branch, repository, source
+event and successful conclusion, then derives the checkout SHA from that run.
+The refresh never dispatches Deploy and therefore cannot bypass the app's
+data-compatibility gate (§Decisions).
 
 ## The weekly release supplement
 
@@ -296,11 +299,15 @@ from a branch — `deploy.yml` uploads `app/dist` as the Pages artifact and
 has passed and the deploy has run — a few minutes, and a red CI deploys nothing
 — which is why the repo has no separate live-state doc.
 
-The privileged deploy accepts only CI runs from this repository whose source
-event was a push or a trusted workflow dispatch; a pull-request CI run never
-reaches code execution with Pages permissions. Each retry also names its own
-immutable artifact, so rerunning a deployment cannot collide with the artifact
-left by an earlier attempt.
+CI's final job dispatches Deploy with its own run ID only after every gate
+passes. Deploy first checks that the source is this repository's `CI` workflow
+on `main`, started by a push or workflow dispatch, and waits for its successful
+conclusion. That read-only validation job derives the source run's SHA; only
+then can the separate Pages-privileged job execute and check out that SHA. A
+pull-request, failed, cancelled, foreign-workflow or foreign-repository run
+cannot reach Pages permissions. Each retry also names its own immutable
+artifact, so rerunning a deployment cannot collide with the artifact left by
+an earlier attempt.
 
 ## Decisions
 
@@ -315,10 +322,13 @@ unpinned action or a pinned fleet with no updater.
 Pushing as `github-actions[bot]` with the default token is what keeps the
 refresh credential-free — no PAT, no deploy key, no App to rotate. The
 documented consequence is that such pushes trigger no push-event workflows, so
-each changed refresh dispatches `ci.yml`; a successful run triggers
-`deploy.yml` exactly as a code push does. Do not "fix" the missing push trigger
-by introducing a PAT, and do not dispatch deploy directly — the explicit CI
-dispatch is the cheaper half of the trade and the app's data-compatibility gate.
+each changed refresh dispatches `ci.yml`. Token-dispatched workflows do not
+then emit the `workflow_run` event a second handoff would need, so every
+successful main-branch CI run explicitly dispatches Deploy with its own run ID;
+Deploy revalidates that proof and derives the commit rather than trusting a
+caller-supplied SHA. Do not "fix" the missing push trigger by introducing a PAT,
+and do not dispatch Deploy from a refresh — the explicit CI dispatch is the
+credential-free gate that keeps incompatible data out of the app.
 
 ### Repo access is the gate on who may trigger a refresh
 Both refresh workflows are `workflow_dispatch` only, so triggering one takes
