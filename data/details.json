@@ -2086,6 +2086,86 @@
       "whoShouldBuy": "<p>In our view, the adidas Galaxy 7 works best for:</p>\n<ul>\n<li>Midfoot strikers who want an affordable option without a high 10+ mm drop.</li>\n<li>New runners who are just starting out and want a simple, cheap shoe.</li>\n<li>Runners who enjoy a rockered feel but don’t want to spend much.</li>\n<li>Those in colder climates looking for a dependable shoe for walks and light runs.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the adidas Galaxy 7 is not the best choice for runners who care about weight, as we found in the lab that it features a heavy build despite some improvements. For a lighter, more agile option, we recommend the <a href=\"https://runrepeat.com/uk/asics-gel-pulse-16\" rel=\"noopener\" target=\"_blank\">ASICS Gel Pulse 16</a>.</p>\n\n    \n    \n\n<p>We also believe it’s not ideal for hot-weather runs, since we measured limited airflow in its warm-retaining upper. Instead, the <a href=\"https://runrepeat.com/uk/adidas-duramo-speed-2\" rel=\"noopener\" target=\"_blank\">adidas Duramo Speed 2</a> offers a more breathable design at a reasonable price, making it a better choice for summer training.</p>\n<p></p>"
     },
+    "adidas-galaxy-8": {
+      "brand": "adidas",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Heavy shoe",
+        "Upper is not durable",
+        "Tight toebox fit"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41390/adidas-galaxy-8-25300974-720.jpg",
+      "intro": "The adidas Galaxy 8 delivers a comfortable, beginner-friendly ride with a strong focus on value and everyday usability. Adidas pushed this shoe further, especially in breathability and outsole durability, although we again noticed that the Galaxy line needs a weight reduction. The improved shock absorption plus a natural-feeling drop make it a genuinely welcoming shoe for new runners. We also noticed that the upper wears very quickly and the toebox is on the tighter side. However, none of that feels unreasonable given how little it costs. For casual daily running, it's a lot of shoe for the money!",
+      "latestVersion": null,
+      "msrpGbp": 55,
+      "name": "adidas Galaxy 8",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "adidas Galaxy 7",
+        "slug": "adidas-galaxy-7"
+      },
+      "productId": 41390,
+      "pros": [
+        "Super affordable price",
+        "Improved shock absorption",
+        "Foam behaves well in cold weather",
+        "Balanced drop feels very natural",
+        "Very breathable shoe",
+        "Ideal for new runners",
+        "Durable outsole",
+        "Overall amazing value-for-money"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-galaxy-8",
+      "score": 75,
+      "scrapedAt": "2026-08-17T07:03:31.533Z",
+      "whoShouldBuy": "<p>In our view, the Adidas Galaxy 8 is ideal for:</p>\n<ul>\n<li>Beginner runners looking for an affordable daily trainer with a comfortable, forgiving ride and a natural-feeling drop.</li>\n<li>Runners who prioritise value and want a surprisingly complete package.</li>\n<li>Easy-mile runners who don't need a highly energetic or responsive ride.</li>\n<li>Those who prioritise breathability, as the 95 BR score is outstanding for a budget shoe.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The Adidas Galaxy 8 is a heavy shoe by all standards, which can be a deal-breaker for some runners. If you prefer a lighter budget-friendly daily trainer, take a look at the <a href=\"https://runrepeat.com/uk/nike-interact-run\" rel=\"noopener\" target=\"_blank\">Nike Interact Run</a> or the <a href=\"https://runrepeat.com/uk/new-balance-fresh-foam-680-v9\" rel=\"noopener\" target=\"_blank\">New Balance Fresh Foam 680 v9</a>.</p>\n\n    \n    \n\n<p>We also think the Galaxy 8 will disappoint runners looking for a highly-durable upper, as it sacrifices durability for breathability. Instead, check out the <a href=\"https://runrepeat.com/uk/adidas-pureboost-5\" rel=\"noopener\" target=\"_blank\">Adidas Pureboost 5</a>.</p>\n<p></p>"
+    },
     "adidas-hyperboost-edge": {
       "brand": "adidas",
       "categorySlug": "running-shoes",
@@ -3887,6 +3967,58 @@
       "scrapedAt": "2026-07-26T21:56:14.250Z",
       "whoShouldBuy": "<p>We believe that the adidas Supernova Solution 3 is a good choice if you:</p>\n<ul>\n<li>Want a daily trainer with mild stability that feels natural and not too intrusive.</li>\n<li>Enjoy adidas’ new design language and are looking for a more supportive option than the Supernova Rise series.</li>\n<li>Prefer moderate-stack shoes that stay flexible but need a bit of guidance, all without moving into full stability models.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think that runners looking for a light, fast-paced shoe may find the Supernova Solution 3 a bit heavy. In our testing, it doesn’t feel very quick, so we believe options like the <a href=\"https://runrepeat.com/uk/hoka-arahi-8\" rel=\"noopener\" target=\"_blank\">HOKA Arahi 8</a> offer a more agile running experience.</p>\n\n    \n    \n\n<p>We also believe that runners needing strong support may come up short here. The Solution 3 stays on the mild side, so we recommend the <a href=\"https://runrepeat.com/uk/hoka-gaviota-5\" rel=\"noopener\" target=\"_blank\">HOKA Gaviota 5</a> or <a href=\"https://runrepeat.com/uk/asics-gel-kayano-32\" rel=\"noopener\" target=\"_blank\">ASICS Gel Kayano 32</a> for a more supportive ride.</p>\n<p></p>"
+    },
+    "adidas-terrex-anylander-rain-rdy": {
+      "brand": "adidas",
+      "categorySlug": "hiking-shoes",
+      "cons": [
+        "Tight pointy toebox",
+        "Poor breathability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Lightweight",
+        "Removable insole",
+        "Orthotic friendly"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/40749/adidas-terrex-anylander-rain-rdy-lab-test-and-review-25336659-720.jpg",
+      "intro": "With the Terrex Anylander Rain.Rdy, adidas made sure that even a tight budget can get you a functional hiking shoe to stay confident on light-to-moderate hikes. After testing it with the same protocols we use for the more expensive options, we were pleased with the Anylander's performance across the board. Stable, grippy, and sufficiently durable, it offers great value for money!",
+      "latestVersion": null,
+      "msrpGbp": 85,
+      "name": "adidas Terrex Anylander Rain.Rdy",
+      "pageValues": {
+        "39": "both-sides-full",
+        "40": "finger-loop",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 40749,
+      "pros": [
+        "Stable and grounded platform",
+        "Excellent grip on smooth and wet surfaces",
+        "Sturdy foothold and lockdown",
+        "Lighter than average",
+        "Great durability for the price",
+        "Effective Rain.Rdy waterproofing",
+        "Warm for transition seasons"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-terrex-anylander-rain-rdy",
+      "score": 80,
+      "scrapedAt": "2026-08-17T07:03:33.895Z",
+      "whoShouldBuy": "<p>The adidas Terrex Anylander Rain.Rdy can fit the bill if:</p>\n<ul>\n<li>you are after a budget-friendly shoe for light-to-moderate terrain</li>\n<li>you don't mind a firmer shoe in exchange for a stable and grounded platform</li>\n<li>you need a sufficiently warm and waterproof outdoor shoe for the shoulder season</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The aggressively tapered toebox shape of this adidas shoe can be a deal-breaker for many people. If you need a more accommodating, true-to-medium-width hiking shoe, try the <a href=\"https://runrepeat.com/uk/merrell-tempo-sol\" rel=\"noopener\" target=\"_blank\">Merrell Tempo Sol</a>.</p>\n\n    \n    \n\n<p>Another reason to stay away from the Anylander is if breathability is high up your priority list in an outdoor shoe. In that case, consider the <a href=\"https://runrepeat.com/uk/asics-gel-venture-11\" rel=\"noopener\" target=\"_blank\">ASICS Gel Venture 11</a>.</p>\n<p></p>"
     },
     "adidas-terrex-trailmaker": {
       "brand": "adidas",
@@ -26193,6 +26325,78 @@
       "scrapedAt": "2026-07-26T22:00:46.942Z",
       "whoShouldBuy": "<p>We tested the Nike Vomero 18 and found that:</p>\n<ul>\n<li>Runners dreaming of a max-stack Vomero finally got their wish.</li>\n<li>It shines during long runs and slow-paced jogs, offering deep, comfort-focused cushioning.</li>\n<li>Nike’s price cut makes it more accessible, great news for those who hesitated in the past.</li>\n<li>Heel strikers looking for plush landings and ultra-soft comfort will feel right at home in this shoe.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the Vomero 18 isn’t the best pick for runners who want a lightweight running shoe. It’s on the heavier end, and based on our test runs, it lacks the agility needed for fast-paced sessions. From our perspective, shoes like the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> or <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> offer similar cushioning in much lighter packages.</p>\n\n    \n    \n\n<p>We’re also convinced that the narrow toebox is a real drawback for many. It doesn’t allow natural toe splay, which could become a dealbreaker for runners with wider feet. Instead, we’d go with the <a href=\"https://runrepeat.com/uk/topo-athletic-atmos\" rel=\"noopener\" target=\"_blank\">Topo Atmos</a> or <a href=\"https://runrepeat.com/uk/mizuno-wave-sky-8\" rel=\"noopener\" target=\"_blank\">Mizuno Wave Sky 8</a>.</p>\n<p></p>"
+    },
+    "nike-vomero-18-gtx": {
+      "brand": "Nike",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Heavy",
+        "Weak energy return",
+        "Cramped toebox height"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41168/nike-vomero-18-gtx-25309810-720.jpg",
+      "intro": "The Nike Vomero 18 GTX is a true protector of the legs, built for runners who want to keep logging easy miles when the weather turns cold. We found that its high stack and plush ZoomX foam deliver amazing comfort, while the GORE-TEX upper and upgraded Storm-Tread outsole handle wet conditions with confidence. It is a heavy, inflexible shoe, but for heel strikers seeking warmth, protection, and cushioning on their slow winter miles, the Vomero 18 GTX is hard to fault.",
+      "latestVersion": null,
+      "msrpGbp": 180,
+      "name": "Nike Vomero 18 GTX",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "finger-loop",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41168,
+      "pros": [
+        "Excellent leg protection",
+        "Plush, natural ride",
+        "Outstanding cold-weather foam",
+        "Genuinely waterproof",
+        "Highly durable outsole",
+        "Heel-striker-friendly geometry",
+        "Roomier than the standard version",
+        "Top-rated heel padding durability"
+      ],
+      "releasedAt": "2025-10-01",
+      "runrepeatUrl": "https://runrepeat.com/uk/nike-vomero-18-gtx",
+      "score": 85,
+      "scrapedAt": "2026-08-17T07:03:35.748Z",
+      "whoShouldBuy": "<p>After cutting the Vomero 18 GTX in half, we found that it is perfect for:</p>\n<ul>\n<li>Heel strikers who want a high cushioned trainer for slow, easy miles.</li>\n<li>Runners in cold or wet climates, who need a shoe made for harsher conditions.</li>\n<li>Those with a neutral gait, who just want a touch of stability without moving to a dedicated stability shoe.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>We don't think the Vomero 18 GTX is the right pick for runners seeking a light, responsive ride. It is a heavy shoe that provides little spring to your step. A couple of alternatives that offer similar protection while adding some energy to your runs are the <a href=\"https://runrepeat.com/uk/puma-magnify-nitro-3\" rel=\"noopener\" target=\"_blank\">PUMA Magnify Nitro 3</a> or the <a href=\"https://runrepeat.com/uk/nike-pegasus-premium\" rel=\"noopener\" target=\"_blank\">Nike Pegasus Premium</a>.</p>\n\n    \n    \n\n<p>We would also steer warm weather runners away from it. This GORE-TEX upper makes the shoe excel in cold, wet conditions but traps heat as the temperatures climb. So if the weather where you usually run is hot, you'll be better off with the standard version of the <a href=\"https://runrepeat.com/uk/nike-vomero-18\" rel=\"noopener\" target=\"_blank\">Nike Vomero 18</a>.</p>\n<p></p>"
     },
     "nike-vomero-plus": {
       "brand": "Nike",

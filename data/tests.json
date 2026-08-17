@@ -12,7 +12,7 @@
     "10": "Weight",
     "11": "Price"
   },
-  "scrapedAt": "2026-08-10T07:48:11.208Z",
+  "scrapedAt": "2026-08-17T07:02:22.645Z",
   "seedSlug": "saucony-endorphin-azura",
   "tests": [
     {
@@ -64,7 +64,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Outsole wear",
+      "chartLabel": "Outsole wear (good to bad)",
       "groupId": "2",
       "id": 4,
       "isNew": false,
@@ -160,7 +160,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Midsole softness (soft to firm)",
+      "chartLabel": "Soft ←→ Firm",
       "groupId": null,
       "id": 11,
       "isNew": false,
@@ -208,7 +208,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Flexibility ←→ Stiffness",
+      "chartLabel": "Flexible ←→ Stiff",
       "groupId": null,
       "id": 14,
       "isNew": false,
@@ -603,7 +603,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Secondary foam softness (soft to firm)",
+      "chartLabel": "Soft ←→ Firm",
       "groupId": null,
       "id": 48,
       "isNew": false,
@@ -619,7 +619,7 @@
       "updateId": 72
     },
     {
-      "chartLabel": null,
+      "chartLabel": "Soft ←→ Firm",
       "groupId": null,
       "id": 49,
       "isNew": false,
@@ -780,7 +780,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Flexibility ←→ Stiffness",
+      "chartLabel": "Flexible ←→ Stiff",
       "groupId": "4",
       "id": 59,
       "isNew": false,
@@ -946,7 +946,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Midsole softness (soft to firm)",
+      "chartLabel": "Soft ←→ Firm",
       "groupId": "3",
       "id": 70,
       "isNew": false,
@@ -978,7 +978,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Secondary foam (soft to firm)",
+      "chartLabel": "Soft ←→ Firm",
       "groupId": null,
       "id": 72,
       "isNew": false,
@@ -994,7 +994,7 @@
       "updateId": null
     },
     {
-      "chartLabel": null,
+      "chartLabel": "Soft ←→ Firm",
       "groupId": null,
       "id": 73,
       "isNew": false,
