@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       source_run_id:
-        description: Successful main-branch CI run to verify and deploy
+        description: Main-branch CI run whose gate jobs must be verified
         required: true
         type: string
 permissions: {}
@@ -40,13 +40,20 @@ jobs:
             (.event == "push" or .event == "workflow_dispatch")
           ' <<< "$run_json" > /dev/null
 
-          # Deploy can start before CI's dispatch job exits, so completion must be observed here.
-          gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
-          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"
+          # Check only the named deployment gates. Observability jobs in the same
+          # run must never delay or determine deployment eligibility.
+          jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?filter=latest&per_page=100")"
           jq -e '
-            .status == "completed" and
-            .conclusion == "success"
-          ' <<< "$run_json" > /dev/null
+            [.jobs[] | select(
+              .name == "full-suite" or
+              .name == "classic-scrollbars"
+            )] as $gates |
+            ($gates | length) == 2 and
+            all($gates[];
+              .status == "completed" and
+              .conclusion == "success"
+            )
+          ' <<< "$jobs_json" > /dev/null
 
           sha="$(jq -r '.head_sha' <<< "$run_json")"
           if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then

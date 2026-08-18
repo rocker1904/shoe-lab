@@ -349,13 +349,22 @@ requireIn('deploy.yml', validate, [
   '            .head_repository.full_name == $repo and',
   '            (.event == "push" or .event == "workflow_dispatch")',
 ].join('\n'), 'deploy must admit only push/dispatch CI runs from main in this repository');
-requireIn('deploy.yml', validate, [
-  '            .status == "completed" and',
-  '            .conclusion == "success"',
-].join('\n'), 'deploy must require its source CI run to succeed');
 requireIn('deploy.yml', validate,
-  'gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status',
-  'deploy must observe the source CI run completing successfully');
+  'jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?filter=latest&per_page=100")"',
+  'deploy must inspect the source CI jobs directly');
+requireIn('deploy.yml', validate, [
+  '              .name == "full-suite" or',
+  '              .name == "classic-scrollbars"',
+  '            )] as $gates |',
+  '            ($gates | length) == 2 and',
+  '            all($gates[];',
+  '              .status == "completed" and',
+  '              .conclusion == "success"',
+].join('\n'), 'deploy must require both named CI gate jobs to complete successfully');
+if (validate.includes('gh run watch')
+    || validate.includes('.status == "completed" and\n            .conclusion == "success"')) {
+  errors.push('deploy.yml: validation must not wait for the reporter through whole-run success');
+}
 requireIn('deploy.yml', validate, [
   '          sha="$(jq -r \'.head_sha\' <<< "$run_json")"',
   '          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then',
@@ -378,12 +387,18 @@ if (validateSteps.length !== 1 || !matchesShape(validateSteps[0], [
   '.head_repository.full_name == $repo and',
   '(.event == "push" or .event == "workflow_dispatch")',
   '\' <<< "$run_json" > /dev/null',
-  'gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status',
-  'run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"',
+  'jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?filter=latest&per_page=100")"',
   'jq -e \'',
+  '[.jobs[] | select(',
+  '.name == "full-suite" or',
+  '.name == "classic-scrollbars"',
+  ')] as $gates |',
+  '($gates | length) == 2 and',
+  'all($gates[];',
   '.status == "completed" and',
   '.conclusion == "success"',
-  '\' <<< "$run_json" > /dev/null',
+  ')',
+  '\' <<< "$jobs_json" > /dev/null',
   'sha="$(jq -r \'.head_sha\' <<< "$run_json")"',
   'if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then',
   "echo 'validated CI run returned an invalid head SHA' >&2",

@@ -109,8 +109,11 @@ job carries `actions: write` for it. This is not belt-and-braces: pushes made
 with `GITHUB_TOKEN` do not trigger push-event workflows. The same recursion
 guard also suppresses `workflow_run` after a token-dispatched CI run, so CI's
 final job explicitly dispatches Deploy after every gate passes. Deploy accepts
-the CI run ID, independently verifies its identity, branch, repository, source
-event and successful conclusion, then derives the checkout SHA from that run.
+the CI run ID, independently verifies its identity, branch, repository and
+source event, then directly verifies that `full-suite` and
+`classic-scrollbars` completed successfully and derives the checkout SHA from
+that run. It deliberately does not wait for the whole CI run, so the status
+reporter cannot delay deployment.
 The refresh never dispatches Deploy and therefore cannot bypass the app's
 data-compatibility gate (§Decisions).
 
@@ -306,19 +309,20 @@ captures are regional — so treat a lone hit as a bound recorded in `notes`.
 Pages is configured to publish from the workflow (build type: workflow), not
 from a branch — `deploy.yml` uploads `app/dist` as the Pages artifact and
 `deploy-pages` publishes it. Nothing else writes to Pages, and there is no
-`gh-pages` branch to keep in sync. Merged `main` is live once **every** CI job
-has passed and the deploy has run — a few minutes, and a red CI deploys nothing
-— which is why the repo has no separate live-state doc.
+`gh-pages` branch to keep in sync. Merged `main` is live once **both CI gate
+jobs** have passed and the deploy has run — a few minutes, and a red gate
+deploys nothing — which is why the repo has no separate live-state doc.
 
 CI's final job dispatches Deploy with its own run ID only after every gate
 passes. Deploy first checks that the source is this repository's `CI` workflow
-on `main`, started by a push or workflow dispatch, and waits for its successful
-conclusion. That read-only validation job derives the source run's SHA; only
-then can the separate Pages-privileged job execute and check out that SHA. A
-pull-request, failed, cancelled, foreign-workflow or foreign-repository run
-cannot reach Pages permissions. Each retry also names its own immutable
-artifact, so rerunning a deployment cannot collide with the artifact left by
-an earlier attempt.
+on `main`, started by a push or workflow dispatch, and requires exactly the two
+named gate jobs to have completed successfully. It does not wait for unrelated
+jobs. That read-only validation job derives the source run's SHA; only then can
+the separate Pages-privileged job execute and check out that SHA. A pull-request,
+failed or cancelled gate, foreign workflow, or foreign repository run cannot
+reach Pages permissions. Each retry also names its own immutable artifact, so
+rerunning a deployment cannot collide with the artifact left by an earlier
+attempt.
 
 ## Decisions
 
