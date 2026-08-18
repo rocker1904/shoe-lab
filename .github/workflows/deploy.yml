@@ -48,7 +48,7 @@ jobs:
               .name == "full-suite" or
               .name == "classic-scrollbars"
             )] as $gates |
-            ($gates | length) == 2 and
+            ($gates | map(.name) | sort) == ["classic-scrollbars", "full-suite"] and
             all($gates[];
               .status == "completed" and
               .conclusion == "success"

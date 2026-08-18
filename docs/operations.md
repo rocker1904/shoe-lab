@@ -90,8 +90,8 @@ assumed.** The rig measures the bar and names the width it found for each regime
 on its closing line, so `0px bar` there means macOS served an overlay after all
 and the job is covering WebKit's layout rather than the classic regime.
 
-It gates the deploy like every job in this workflow — CI's final dispatch job
-needs it to succeed (§Deploy).
+It is one of the two deploy gates — CI's final dispatch job needs it to succeed;
+the commit-status reporter does not gate Deploy (§Deploy).
 
 ## The refresh chain
 

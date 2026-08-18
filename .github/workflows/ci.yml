@@ -52,8 +52,8 @@ jobs:
   # all and this job covers WebKit's layout rather than the classic regime — which is worth knowing,
   # and worth keeping either way.
   #
-  # It gates the deploy, like every job here: the dispatch job needs this one to succeed
-  # (docs/operations.md §Deploy).
+  # It is one of the two deploy gates: the dispatch job needs this one to succeed
+  # (docs/operations.md §Deploy). The status reporter is deliberately not a gate.
   classic-scrollbars:
     runs-on: macos-latest
     timeout-minutes: 15
