@@ -109,3 +109,61 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.run_id }}
         run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main -f source_run_id="$SOURCE_RUN_ID"
+
+  report-statuses:
+    if: >-
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch'
+    needs: [full-suite, classic-scrollbars, dispatch-deploy]
+    continue-on-error: true
+    permissions:
+      statuses: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report full-suite status
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs['full-suite'].result }}
+          CONTEXT: CI / full-suite
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          state=failure
+          if [ "$RESULT" = success ]; then state=success; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context="$CONTEXT" \
+            -f description="$CONTEXT: $RESULT" \
+            -f target_url="$RUN_URL"
+      - name: Report classic-scrollbars status
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs['classic-scrollbars'].result }}
+          CONTEXT: CI / classic-scrollbars
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          state=failure
+          if [ "$RESULT" = success ]; then state=success; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context="$CONTEXT" \
+            -f description="$CONTEXT: $RESULT" \
+            -f target_url="$RUN_URL"
+      - name: Report deploy-handoff status
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs['dispatch-deploy'].result }}
+          CONTEXT: CI / deploy-handoff
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          state=failure
+          if [ "$RESULT" = success ]; then state=success; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context="$CONTEXT" \
+            -f description="$CONTEXT: $RESULT" \
+            -f target_url="$RUN_URL"

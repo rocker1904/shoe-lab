@@ -7,7 +7,7 @@ docs/scraping.md.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, and the three-engine Playwright matrix below — plus `classic-scrollbars` on `macos-latest`; successful eligible runs dispatch Deploy (§The classic-scrollbar job) |
+| `ci.yml` | PRs, pushes to `main`, + dispatch from a changed refresh | `full-suite` on `ubuntu-latest` — typecheck, lint, doc and workflow checks, both suites with coverage, and the three-engine Playwright matrix below — plus `classic-scrollbars` on `macos-latest`; successful eligible runs dispatch Deploy, and refresh-dispatched runs mirror their three outcomes into the commit status rollup (§The classic-scrollbar job) |
 | `refresh-metrics.yml` | Mondays 06:00 UTC + dispatch | the refresh chain, starting from `scrape:metrics` |
 | `refresh-details.yml` | Dispatch only, inputs `force_all` (bool) and `slug` | the refresh chain, starting from `scrape:details` |
 | `deploy.yml` | Dispatch from a successful `CI` run on `main`, including refresh-dispatched CI; verifies the run and deploys its exact commit (§The refresh chain) | builds the app, publishes to Pages |
@@ -114,6 +114,13 @@ event and successful conclusion, then derives the checkout SHA from that run.
 The refresh never dispatches Deploy and therefore cannot bypass the app's
 data-compatibility gate (§Decisions).
 
+GitHub does not include a `workflow_dispatch` run's check suite in the commit
+list's status rollup, even though the checks remain attached to the SHA. CI
+therefore mirrors `full-suite`, `classic-scrollbars` and the Deploy handoff as
+three legacy commit statuses after they finish. This is display-only: the
+reporter runs regardless of those conclusions, Deploy does not depend on it,
+and status API failures cannot change CI or deployment eligibility.
+
 ## The weekly release supplement
 
 `scrape:releases` is not a weekly cost. The Monday job runs it only when
@@ -129,7 +136,7 @@ they are never left undated. The manual details refresh always runs it.
 completed crawl must survive a cheap failed step, and never weakens the
 validation gates, which still abort their own run before writing anything.
 `grep -rn continue-on-error .github/workflows` is the exhaustive list; what it
-finds outside the refresh chain is the drift reporter
+finds outside the refresh chain is commit-status reporting and the drift reporter
 (§Drift is reported, never enforced).
 
 - **`refresh-metrics.yml`, `scrape:details`** — that CLI exits 1 if *any*
@@ -142,6 +149,10 @@ finds outside the refresh chain is the drift reporter
   docs/scraping.md §Politeness). `build:dataset` works without
   `release-years.json`, and shoes already dated by it keep their previous
   values.
+- **`ci.yml`, `report-statuses`** — the job and each independent status write
+  are non-fatal because commit-list visibility must neither block Deploy nor
+  discard the other contexts when one API call fails. The Actions run and
+  deployment remain the source of truth.
 
 ## Concurrency
 

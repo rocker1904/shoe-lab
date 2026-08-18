@@ -39,6 +39,13 @@ const listValuesAt = (text, indent) => {
   const item = new RegExp(`^ {${indent}}- ([A-Za-z0-9_-]+)\\s*$`);
   return text.split('\n').flatMap((line) => item.exec(line)?.[1] ?? []);
 };
+const jobNeeds = (job) => {
+  const needsBlock = block(job, 'needs', 4);
+  const inlineNeeds = /^ {4}needs:\s*\[([^\]]*)\]\s*$/m.exec(needsBlock)?.[1];
+  return inlineNeeds === undefined
+    ? listValuesAt(needsBlock, 6)
+    : inlineNeeds.split(',').map((name) => name.trim()).filter(Boolean);
+};
 const listItemsAt = (text, indent) => {
   const lines = text.split('\n');
   const starts = lines.flatMap((line, i) => (
@@ -78,28 +85,28 @@ const ciJobs = keysAt(block(ci, 'jobs', 0), 2);
 const ciPermissions = block(ci, 'permissions', 0);
 const fullSuite = block(ci, 'full-suite', 2);
 const classicScrollbars = block(ci, 'classic-scrollbars', 2);
-const ciGateKeys = ciJobs
-  .filter((name) => name !== 'dispatch-deploy')
+const gateJobs = ['full-suite', 'classic-scrollbars'];
+const ciGateKeys = gateJobs
   .map((name) => keysAt(block(ci, name, 2), 4));
-const ciGateSteps = ciJobs
-  .filter((name) => name !== 'dispatch-deploy')
+const ciGateSteps = gateJobs
   .flatMap((job) => listItemsAt(block(block(ci, job, 2), 'steps', 4), 6)
     .map((step) => ({ job, step, keys: listMappingKeysAt(step, 6) })));
 const dispatch = block(ci, 'dispatch-deploy', 2);
 const dispatchKeys = keysAt(dispatch, 4);
 const dispatchPermissions = block(dispatch, 'permissions', 4);
-const needsBlock = block(dispatch, 'needs', 4);
-const inlineNeeds = /^ {4}needs:\s*\[([^\]]*)\]\s*$/m.exec(needsBlock)?.[1];
-const needs = inlineNeeds === undefined
-  ? listValuesAt(needsBlock, 6)
-  : inlineNeeds.split(',').map((name) => name.trim()).filter(Boolean);
+const needs = jobNeeds(dispatch);
 const dispatchSteps = listItemsAt(block(dispatch, 'steps', 4), 6);
+const reporter = block(ci, 'report-statuses', 2);
+const reporterKeys = keysAt(reporter, 4);
+const reporterNeeds = jobNeeds(reporter);
+const reporterPermissions = block(reporter, 'permissions', 4);
+const reporterSteps = listItemsAt(block(reporter, 'steps', 4), 6);
 
 requireText('ci.yml', '  workflow_dispatch:', 'CI must be dispatchable by token-authored refreshes');
 if (!sameKeys(ciTopLevel, ['name', 'on', 'permissions', 'concurrency', 'jobs'])) {
   errors.push('ci.yml: CI workflow-level controls must stay on the approved surface');
 }
-if (!sameKeys(ciJobs, ['full-suite', 'classic-scrollbars', 'dispatch-deploy'])
+if (!sameKeys(ciJobs, ['full-suite', 'classic-scrollbars', 'dispatch-deploy', 'report-statuses'])
     || !sameKeys(needs, ['full-suite', 'classic-scrollbars'])) {
   errors.push('ci.yml: deploy dispatch must wait for the complete approved CI gate');
 }
@@ -213,8 +220,52 @@ if (dispatchSteps.length !== 1 || !matchesShape(dispatchSteps[0], [
 if (count(ci, /gh workflow run deploy\.yml/g) !== 1) {
   errors.push('ci.yml: CI must have exactly one Deploy dispatch path');
 }
-if (count(ci, /^\s+actions: write$/gm) !== 1 || /^(?:\s+)?(?:pages|id-token): write$/m.test(ci)) {
-  errors.push('ci.yml: CI permissions must be limited to the one Actions dispatch grant');
+if (!sameKeys(reporterKeys,
+  ['if', 'needs', 'continue-on-error', 'permissions', 'runs-on', 'timeout-minutes', 'steps'])
+    || !sameKeys(reporterNeeds, ['full-suite', 'classic-scrollbars', 'dispatch-deploy'])
+    || !matchesShape(reporterPermissions, ['permissions:', 'statuses: write'])
+    || !matchesShape(block(reporter, 'continue-on-error', 4), ['continue-on-error: true'])
+    || !matchesShape(block(reporter, 'runs-on', 4), ['runs-on: ubuntu-latest'])
+    || !matchesShape(block(reporter, 'timeout-minutes', 4), ['timeout-minutes: 5'])) {
+  errors.push('ci.yml: the status reporter must be non-blocking and isolated from Deploy permissions');
+}
+if (!matchesShape(block(reporter, 'if', 4), [
+  'if: >-',
+  'always() &&',
+  "github.ref == 'refs/heads/main' &&",
+  "github.event_name == 'workflow_dispatch'",
+])) {
+  errors.push('ci.yml: synthetic statuses must cover every dispatched main CI conclusion only');
+}
+const statusShape = (name, result, context) => [
+  `- name: Report ${name} status`,
+  'continue-on-error: true',
+  'env:',
+  'GH_TOKEN: ${{ github.token }}',
+  `RESULT: \${{ needs['${result}'].result }}`,
+  `CONTEXT: CI / ${context}`,
+  'RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+  'run: |',
+  'state=failure',
+  'if [ "$RESULT" = success ]; then state=success; fi',
+  'gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \\',
+  '-f state="$state" \\',
+  '-f context="$CONTEXT" \\',
+  '-f description="$CONTEXT: $RESULT" \\',
+  '-f target_url="$RUN_URL"',
+];
+if (reporterSteps.length !== 3
+    || !matchesShape(reporterSteps[0], statusShape('full-suite', 'full-suite', 'full-suite'))
+    || !matchesShape(reporterSteps[1],
+      statusShape('classic-scrollbars', 'classic-scrollbars', 'classic-scrollbars'))
+    || !matchesShape(reporterSteps[2],
+      statusShape('deploy-handoff', 'dispatch-deploy', 'deploy-handoff'))) {
+  errors.push('ci.yml: dispatched CI must publish the exact three non-blocking status contexts');
+}
+if (count(ci, /^\s+actions: write$/gm) !== 1
+    || count(ci, /^\s+statuses: write$/gm) !== 1
+    || /^(?:\s+)?(?:pages|id-token): write$/m.test(ci)) {
+  errors.push('ci.yml: CI permissions must be limited to dispatch and status reporting grants');
 }
 for (const file of ['refresh-metrics.yml', 'refresh-details.yml']) {
   requireText(file, 'gh workflow run ci.yml --ref main', 'a changed refresh must dispatch CI');
