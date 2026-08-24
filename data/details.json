@@ -2710,6 +2710,84 @@
       "whoShouldBuy": "<p>We recommend the adidas Racer TR21 for:</p>\n<ul>\n<li>Heel strikers looking for a budget-friendly roomy shoe that aren't concerned about its heavier weight.</li>\n<li>Individuals seeking a comfortable shoe for daily commuting, strolling around town, or walking the dog around the neighbourhood, in addition to one or two slow runs a week.</li>\n<li>Runners specifically seeking environmentally-friendly running shoes.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>If you're a forefoot or midfoot striker, you might want to look elsewhere—this shoe doesn't offer enough cushioning in those areas as it's designed for heel strikers. If you're in the market for an affordable running shoe suitable for those footstrikes, we recommend checking out the <a href=\"https://runrepeat.com/uk/saucony-axon-2\" rel=\"noopener\" target=\"_blank\">Saucony Axon 2</a>.</p>\n\n    \n    \n\n<p>Also, for serious runners looking to log heavy mileage or intense training, be aware: the Racer TR21 won't meet your needs.</p>\n<p>It's clunky and lacks responsiveness, making it far from the ideal training partner. And despite its potentially misleading name, don't consider it if you're in the market for a dedicated <a href=\"https://runrepeat.com/uk/catalog/competition-running-shoes\" rel=\"noopener\" target=\"_blank\">racing shoe</a>. For that purpose, we feel that the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-pro-3\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios Pro 3</a> is a better pick.</p>\n<p></p>"
     },
+    "adidas-response-2": {
+      "brand": "adidas",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "A bit heavy",
+        "Lacks flexibility",
+        "Low energy return"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/40537/adidas-response-2-25378983-720.jpg",
+      "intro": "The adidas Response 2 surprised us with how comfortable a budget shoe can feel. We found in the lab that its soft midsole, generous cushioning, and broad platform create an ideal setup for everyday running. We also really liked the roomy fit, especially for those who often struggle with narrow shoes. However, the shoe feels far from fast, and its rigid construction won't suit everyone. In our view, it performs best when the goal is simple: easy miles, steady comfort, and keeping your spending under control.",
+      "latestVersion": null,
+      "msrpGbp": 70,
+      "name": "adidas Response 2",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 40537,
+      "pros": [
+        "Solid cushioning",
+        "Stable platform for neutral runners",
+        "Improved design",
+        "Comfortable fit with generous interior space",
+        "Strong outsole durability",
+        "Plush tongue delivers good step-in comfort",
+        "Excellent value for budget-conscious runners",
+        "Good option for beginners",
+        "Smooth rocker promotes easy forward motion"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-response-2",
+      "score": 78,
+      "scrapedAt": "2026-08-24T07:05:57.246Z",
+      "whoShouldBuy": "<p>We believe that the adidas Response 2 is a good match for:</p>\n<ul>\n<li>Runners on a tight budget seeking reliable daily mileage.</li>\n<li>Those wanting better cushioning and a wide fit from an affordable adidas shoe.</li>\n<li>Beginners who don't need a highly responsive ride.</li>\n<li>Anyone who prefers (or needs) a very stiff, rigid shoe.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The adidas Response 2 may not deliver the energy return you're looking for, as its foam lacks much bounce. If you want a more energetic ride, we recommend spending a little more on the <a href=\"https://runrepeat.com/uk/adidas-pureboost-5\" rel=\"noopener\" target=\"_blank\">adidas Pureboost 5</a> or <a href=\"https://runrepeat.com/uk/puma-velocity-nitro-4\" rel=\"noopener\" target=\"_blank\">PUMA Velocity Nitro 4</a>.</p>\n\n    \n    \n\n<p>We also think the Response 2 may feel heavy and bulky for some runners. If that's a concern, the <a href=\"https://runrepeat.com/uk/nike-interact-run\" rel=\"noopener\" target=\"_blank\">Nike Interact Run</a> or <a href=\"https://runrepeat.com/uk/brooks-revel-8\" rel=\"noopener\" target=\"_blank\">Brooks Revel 8</a> are worth a look.</p>\n<p></p>"
+    },
     "adidas-runfalcon": {
       "brand": "adidas",
       "categorySlug": "running-shoes",
@@ -3736,6 +3814,85 @@
       "scrapedAt": "2026-07-26T21:56:10.963Z",
       "whoShouldBuy": "<p>Our lab testing and running experience show that the Supernova Rise 3 is ideal for:</p>\n<ul>\n<li>Runners who enjoyed earlier versions but wanted more cushioning and a softer underfoot feel.</li>\n<li>Anyone seeking a reliable daily trainer that blends comfort, grip, and strong overall value.</li>\n<li>Marathoners who need a durable, cost-effective option for building mileage on short to mid-distance runs.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We found in the lab that the new Dreamstrike+ foam feels less lively, and runners chasing a springy feel underfoot may be disappointed. In our view, there are better choices for that energetic feel, like the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or the <a href=\"https://runrepeat.com/uk/puma-velocity-nitro-4\" rel=\"noopener\" target=\"_blank\">PUMA Velocity Nitro 4</a>.</p>\n\n    \n    \n\n<p>We also think the added stiffness and bulkier build move it away from the smooth-flex, natural ride some loved before. In our experience, if you value a more flexible trainer, we do not recommend this version—consider the <a href=\"https://runrepeat.com/uk/altra-experience-flow-2\" rel=\"noopener\" target=\"_blank\">Altra Experience Flow 2</a> instead.</p>\n<p></p>"
+    },
+    "adidas-supernova-rise-3-adaptive": {
+      "brand": "adidas",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "A bit heavier than the Rise 3",
+        "Less lively when running faster",
+        "We still expect more bounce from Dreamstrike+﻿"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41404/adidas-supernova-rise-3-adaptive-25393541-720.jpg",
+      "intro": "With the Supernova Rise 3 Adaptive, adidas builds on the strengths of the regular version with thoughtful accessibility-focused features. In our lab tests, we found excellent traction, strong durability, and well-balanced cushioning, while the magnetic lacing system and finger-loop heel tab now make entry remarkably easy. However, the added features increase the weight a bit, and the shoe now feels less lively at faster paces. But it's still an excellent daily trainer for those who need its adaptive features or simply prefer this convenient lacing system.",
+      "latestVersion": null,
+      "msrpGbp": 140,
+      "name": "adidas Supernova Rise 3 Adaptive",
+      "pageValues": {
+        "39": "both-sides-full",
+        "40": "finger-loop",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41404,
+      "pros": [
+        "Excellent grip across dry and wet surfaces",
+        "Adaptive features for runners with disabilities",
+        "Good durability from top to bottom",
+        "Versatile design works for casual wear",
+        "Comfortable upper",
+        "Easy entry with two finger-loop tabs",
+        "Thicker tongue for extra comfort",
+        "Keeps the same price as regular version",
+        "Works very well for heel strikers and beginners",
+        "Shines at easy, daily miles﻿"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-supernova-rise-3-adaptive",
+      "score": 88,
+      "scrapedAt": "2026-08-24T07:05:58.225Z",
+      "whoShouldBuy": "<p>The adidas Supernova Rise 3 Adaptive is an interesting option for:</p>\n<ul>\n<li>Those who already own the Rise 3 but want a more convenient and faster lacing system.</li>\n<li>Runners with disabilities who need a running shoe with adaptive features for easier entry and a more secure fit.</li>\n<li>Anyone looking for a quick-lacing, durable, and dependable daily trainer at a reasonable price.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The adidas Supernova Rise 3 Adaptive is an interesting shoe, but it won't suit runners looking for a lightweight daily trainer, as it's even heavier than the regular version.</p>\n\n    \n    \n\n<p>If you can pass on the adaptive features, we suggest checking out the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> from adidas, or the <a href=\"https://runrepeat.com/uk/asics-novablast-6\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 6</a> if you're open to another brand.</p>\n<p></p>"
     },
     "adidas-supernova-solution": {
       "brand": "adidas",
@@ -4847,6 +5004,87 @@
       "scrapedAt": "2026-07-26T21:56:25.082Z",
       "whoShouldBuy": "<p>After testing the ALLSWIFIT Active5K, we found that:</p>\n<ul>\n<li>It is a great pick for beginners who want to start with a high-stack, well-cushioned running shoe right away.</li>\n<li>Runners on a tight budget under £90 looking for a shoe for long runs will find amazing value here.</li>\n<li>Heel strikers who want an affordable, responsive, and dependable daily trainer will enjoy this shoe.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The biggest drawback of the ALLSWIFIT Active5K is clearly its high weight. It may not bother some runners, but those who dislike a bulky feel will not enjoy this model. While it shows above-average energy return, this did not match our experience running in the shoe. If you prefer a lighter feel, we suggest the <a href=\"https://runrepeat.com/uk/asics-gel-pulse-16\" rel=\"noopener\" target=\"_blank\">ASICS Gel Pulse 16</a>, which is slightly more expensive but noticeably lighter.</p>\n\n    \n    \n\n<p>We also think the maximalist stack height may not suit many beginners or runners who do not need that much foam underfoot. If that sounds like you, we recommend the <a href=\"https://runrepeat.com/uk/brooks-revel-8\" rel=\"noopener\" target=\"_blank\">Brooks Revel 8</a> or the <a href=\"https://runrepeat.com/uk/asics-versablast-4\" rel=\"noopener\" target=\"_blank\">ASICS Versablast 4</a> instead.</p>\n<p></p>"
+    },
+    "allswifit-active-rise": {
+      "brand": "ALLSWIFIT",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Not ideal for longer distances",
+        "Thin outsole may concern some runners",
+        "Ultra-stiff carbon plate"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          },
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Carbon plate",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41400/allswifit-active-rise-25339669-720.jpg",
+      "intro": "The ALLSWIFIT ActiveRise exceeded our expectations in several ways. We found in the lab that its energetic supercritical foam delivers an impressively lively ride, while the lightweight design and excellent upper help the shoe perform wonderfully during fast workouts. We were also impressed by the outstanding traction, which inspires confidence even in wet conditions. The stiff carbon plate won't suit everyone, but this shoe is one of the strongest performance bargains available today, and perhaps ever.",
+      "latestVersion": null,
+      "msrpGbp": 120,
+      "name": "ALLSWIFIT ActiveRise+",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41400,
+      "pros": [
+        "Insane value for the money",
+        "Exceptionally bouncy foam",
+        "Lightweight build",
+        "Feels fun and fast",
+        "Strong and durable woven upper",
+        "Good choice for beginners",
+        "Secure lockdown with premium laces",
+        "Excellent grip even on wet surfaces",
+        "Versatile for tempo runs and competitions",
+        "Excellent outsole coverage",
+        "Perforated insole"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/allswifit-active-rise",
+      "score": 87,
+      "scrapedAt": "2026-08-24T07:05:59.402Z",
+      "whoShouldBuy": "<p>We tested the ALLSWIFIT ActiveRise+ both on the road and in the lab, and we recommend it for:</p>\n<ul>\n<li>Runners on a budget who want performance that rivals far more expensive shoes.</li>\n<li>Athletes looking for one shoe that can handle both speed workouts and race day.</li>\n<li>Anyone buying their first carbon-plated shoe thanks to its approachable and predictable ride.</li>\n<li>Those interested in trying a high-performing alternative to the major running brands.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The ActiveRise+ offers solid versatility, but we think runners looking for a daily training shoe should consider the <a href=\"https://runrepeat.com/uk/allswifit-active-5-k\" rel=\"noopener\" target=\"_blank\">ALLSWIFIT Active5K</a> instead. While it's not as fast, its higher stack height makes it a better choice for comfortably handling easy runs.</p>\n\n    \n    \n\n<p>We also don't recommend the ActiveRise+ for runners seeking a true super shoe. Its geometry is less aggressive and better suited for training than all-out racing. If you're after a more race-focused option that's still approachable for a wide range of runners, including beginners, the <a href=\"https://runrepeat.com/uk/saucony-endorphin-pro-5\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Pro 5</a> is a stronger choice.</p>\n<p></p>"
     },
     "altra-escalante-3": {
       "brand": "Altra",
@@ -23591,6 +23829,90 @@
       "scrapedAt": "2026-07-26T22:00:13.078Z",
       "whoShouldBuy": "<p>We believe the New Balance FuelCell Rebel v4 is a fantastic choice for:</p>\n<ul>\n<li>Those who loved the previous Rebels and desired a roomier upper, as we believe they will find this version to be a perfect fit.</li>\n<li>Runners looking for a lightweight, stable, and fun shoe that delivers on all fronts while still being priced at just £130.</li>\n<li>Individuals who need a shoe for daily runs and speed workouts but prefer to avoid stiffer models with a plate.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The New Balance FuelCell Rebel v4 might not satisfy those who prefer maximalist running shoes due to its sub-30-mm stack height.</p>\n\n    \n    \n\n<p>We believe there are better choices for runners seeking more cushioning at a similar price and weight. The <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> offers a thicker platform, making it a more suitable alternative. Additionally, if budget isn't a constraint and you desire even more cushioning, we recommend checking out the <a href=\"https://runrepeat.com/uk/asics-superblast-2\" rel=\"noopener\" target=\"_blank\">ASICS Superblast 2</a>.</p>\n<p></p>\n<p>We also think that the Rebel v4 is not the best option for runners with narrow feet. Our lab tests have shown it's quite wide, which may lead to a less secure fit. We do not recommend this shoe for such runners—instead, the <a href=\"https://runrepeat.com/uk/new-balance-fuel-cell-rebel-v-3\" rel=\"noopener\" target=\"_blank\">NB Rebel v3</a> or the <a href=\"https://runrepeat.com/uk/hoka-mach-5\" rel=\"noopener\" target=\"_blank\">HOKA Mach 5</a> would provide better lockdown and overall fit.</p>"
+    },
+    "new-balance-super-comp-elite-v-6": {
+      "brand": "New Balance",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "High price increase feels hard to justify",
+        "Unstable heel",
+        "Forefoot stack is much lower than stated"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Carbon plate",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41418/new-balance-super-comp-elite-v-6-25398423-720.jpg",
+      "intro": "New Balance has made its biggest improvement yet with the SuperComp Elite v6, and we think this is by far the best Elite to date... but it still trails the top racing shoes by a small margin. We loved the new A-TPU foam, lighter build, and solid traction, while the excellent breathability makes it a strong choice for any season. However, the aggressive heel design remains a concern for runners who need even a little support, while the substantial price increase makes it harder to choose over such strong competition.",
+      "latestVersion": null,
+      "msrpGbp": 275,
+      "name": "New Balance SuperComp Elite v6",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41418,
+      "pros": [
+        "Excellent energy return",
+        "Top-tier breathability",
+        "Improved weight over predecessors",
+        "Solid traction on wet surfaces",
+        "Ideal for narrow feet",
+        "New foam improves the ride",
+        "Interesting option for slower marathoners",
+        "Versatile for multiple distance (Mile to marathon)",
+        "No heel slippage at all",
+        "Fantastic upper design and performance"
+      ],
+      "releasedAt": "2026-08-06",
+      "runrepeatUrl": "https://runrepeat.com/uk/new-balance-super-comp-elite-v-6",
+      "score": 87,
+      "scrapedAt": "2026-08-24T07:06:00.161Z",
+      "whoShouldBuy": "<p>After testing the New Balance SuperComp Elite v6 in the lab and on the road, we concluded that:</p>\n<ul>\n<li>Owners of previous Elites will find a clear upgrade, with lower weight and better energy return.</li>\n<li>Runners who need a high-drop super shoe should go for it.</li>\n<li>Those with narrow feet that prefer a more classic racing fit will love what New Balance has done here.</li>\n<li>Marathoners who struggle with sweaty feet should check this one out, as it delivers exceptional breathability.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>Despite shedding some weight compared to its predecessors, the Elite v6 still has some catching up to do. If a lightweight super shoe is a top priority for you, we'd suggest the <a href=\"https://runrepeat.com/uk/asics-metaspeed-edge-tokyo\" rel=\"noopener\" target=\"_blank\">ASICS Metaspeed Edge Tokyo</a> or <a href=\"https://runrepeat.com/uk/nike-vaporfly-4\" rel=\"noopener\" target=\"_blank\">Nike Vaporfly 4</a> instead, as both come at a similar price.</p>\n\n    \n    \n\n<p>We also think the unstable heel could be a deal-breaker for some runners. Instead, we'd recommend the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a> if you want a more stable, set-and-forget feel, especially for marathon racing.</p>\n<p></p>"
     },
     "nike-air-zoom-alphafly-next-2": {
       "brand": "Nike",
