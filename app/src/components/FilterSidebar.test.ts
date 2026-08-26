@@ -780,16 +780,20 @@ const orderOf = (container: HTMLElement) => {
 };
 
 describe('FilterSidebar order', () => {
-  it('renders one fixed order, identical across every zone and story', () => {
-    // The cross product is the only place the order can break: a story under forefoot is what would
-    // otherwise introduce a row the heel renders did not have.
-    for (const zone of ['heel', 'forefoot'] as Zone[]) {
-      for (const view of [projectZone(defaultView(), zone), ...PRESETS.map((p) => applyPreset(p.id, zone, false))]) {
-        const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
-        expect(orderOf(container).headings, `${zone} ${JSON.stringify(view.sort)}`).toEqual(HEADINGS);
-        expect(orderOf(container).groups, `${zone} ${JSON.stringify(view.sort)}`).toEqual(GROUPS);
-      }
-    }
+  // The cross product is the only place the order can break: a story under forefoot is what would
+  // otherwise introduce a row the heel renders did not have. One case per test lets the standard
+  // cleanup unmount each sidebar before the next accessibility-tree walk begins.
+  it.each((['heel', 'forefoot'] as Zone[]).flatMap((zone) => [
+    { zone, story: 'plain' },
+    ...PRESETS.map(({ id: story }) => ({ zone, story })),
+  ]))('renders one fixed order for $zone/$story', ({ zone, story }) => {
+    const view = story === 'plain'
+      ? projectZone(defaultView(), zone)
+      : applyPreset(story, zone, false);
+    const { container } = render(FilterSidebar, { props: { data, view, onchange: vi.fn(), population: FLEET } });
+    const order = orderOf(container);
+    expect(order.headings).toEqual(HEADINGS);
+    expect(order.groups).toEqual(GROUPS);
   });
   /**
    * The heading is only honest if it scopes the rows and stops there: the foot's two buttons act on
