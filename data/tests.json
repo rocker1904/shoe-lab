@@ -12,7 +12,7 @@
     "10": "Weight",
     "11": "Price"
   },
-  "scrapedAt": "2026-08-24T07:04:52.607Z",
+  "scrapedAt": "2026-08-31T13:07:58.856Z",
   "seedSlug": "saucony-endorphin-azura",
   "tests": [
     {
@@ -64,7 +64,7 @@
       "updateId": null
     },
     {
-      "chartLabel": "Outsole wear (good to bad)",
+      "chartLabel": "Outsole wear (Good ←→ Bad)",
       "groupId": "2",
       "id": 4,
       "isNew": false,
@@ -176,7 +176,7 @@
       "updateId": 70
     },
     {
-      "chartLabel": "Midsole softness in cold (soft to firm)",
+      "chartLabel": "Soft ←→ Firm",
       "groupId": null,
       "id": 12,
       "isNew": false,
@@ -192,15 +192,15 @@
       "updateId": 71
     },
     {
-      "chartLabel": null,
-      "groupId": "8",
+      "chartLabel": "Soft ←→ Firm",
+      "groupId": null,
       "id": 13,
       "isNew": false,
       "methodStatus": null,
       "name": "Midsole softness in cold (%)",
       "options": null,
       "previousId": null,
-      "primaryTestId": null,
+      "primaryTestId": 70,
       "secondaryTestIds": [],
       "slug": "difference-in-midsole-softness-in-cold",
       "type": "percent",
@@ -256,7 +256,7 @@
       "updateId": null
     },
     {
-      "chartLabel": null,
+      "chartLabel": "Flexible ←→ Rigid",
       "groupId": null,
       "id": 17,
       "isNew": false,
@@ -955,15 +955,18 @@
       "options": null,
       "previousId": 11,
       "primaryTestId": null,
-      "secondaryTestIds": [],
+      "secondaryTestIds": [
+        13,
+        72
+      ],
       "slug": "midsole-softness-22",
       "type": "float",
       "units": "AC",
       "updateId": null
     },
     {
-      "chartLabel": "Midsole softness in cold (soft to firm)",
-      "groupId": "8",
+      "chartLabel": "Soft ←→ Firm",
+      "groupId": null,
       "id": 71,
       "isNew": false,
       "methodStatus": null,
@@ -986,7 +989,7 @@
       "name": "Secondary foam softness",
       "options": null,
       "previousId": 48,
-      "primaryTestId": null,
+      "primaryTestId": 70,
       "secondaryTestIds": [],
       "slug": "secondary-foam-softness-22",
       "type": "float",
@@ -1010,7 +1013,7 @@
       "updateId": null
     },
     {
-      "chartLabel": null,
+      "chartLabel": "Flexible ←→ Rigid",
       "groupId": "5",
       "id": 74,
       "isNew": true,

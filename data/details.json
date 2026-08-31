@@ -4177,6 +4177,59 @@
       "whoShouldBuy": "<p>The adidas Terrex Anylander Rain.Rdy can fit the bill if:</p>\n<ul>\n<li>you are after a budget-friendly shoe for light-to-moderate terrain</li>\n<li>you don't mind a firmer shoe in exchange for a stable and grounded platform</li>\n<li>you need a sufficiently warm and waterproof outdoor shoe for the shoulder season</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The aggressively tapered toebox shape of this adidas shoe can be a deal-breaker for many people. If you need a more accommodating, true-to-medium-width hiking shoe, try the <a href=\"https://runrepeat.com/uk/merrell-tempo-sol\" rel=\"noopener\" target=\"_blank\">Merrell Tempo Sol</a>.</p>\n\n    \n    \n\n<p>Another reason to stay away from the Anylander is if breathability is high up your priority list in an outdoor shoe. In that case, consider the <a href=\"https://runrepeat.com/uk/asics-gel-venture-11\" rel=\"noopener\" target=\"_blank\">ASICS Gel Venture 11</a>.</p>\n<p></p>"
     },
+    "adidas-terrex-freehiker-3-ultra-gtx": {
+      "brand": "adidas",
+      "categorySlug": "hiking-shoes",
+      "cons": [
+        "Zero ground feel",
+        "Low breathability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Lightweight",
+        "Removable insole",
+        "Orthotic friendly"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41377/adidas-terrex-freehiker-3-ultra-gtx-lab-test-and-review-25405787-720.jpg",
+      "intro": "As adidas's flagship hiking shoe, we are happy to report that the Terrex Freehiker 3 Ultra GTX lived up to our high expectations in the lab! Its thick platform with advanced Hyperboost Pro and Dreamstrike+ foams set a new shock absorption record, offering luxurious comfort for long hours of wear, be it in the city or the great outdoors. The rest of our lab tests further confirmed the shoe's high-performance features, justifying its premium price. And its distinctive sock-like collar is an undeniable bonus for keeping trail debris and elements at bay.",
+      "latestVersion": null,
+      "msrpGbp": 220,
+      "name": "adidas Terrex Freehiker 3 Ultra GTX",
+      "pageValues": {
+        "39": "bootie",
+        "40": "finger-loop",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41377,
+      "pros": [
+        "Outstanding cushioning for all-day hikes and walks",
+        "Excellent traction even on wet surfaces",
+        "Much lighter than the Freehiker 2",
+        "Dries quickly for a GTX shoe",
+        "Stays warm in cooler weather",
+        "High collar acts as a gaiter",
+        "True to size and medium width",
+        "Convenient Speed lacing"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-terrex-freehiker-3-ultra-gtx",
+      "score": 88,
+      "scrapedAt": "2026-08-31T13:09:14.529Z",
+      "whoShouldBuy": "<p>We believe that the Terrex Freehiker 3 Ultra GTX is well worth the investment if:</p>\n<ul>\n<li>you prioritise comfort and impact protection in your hiking (or gorpcore) shoes</li>\n<li>you want waterproofing and debris control of a hiking boot in a sneaker-like silhouette</li>\n<li>you are willing to pay more for high-end materials and shoe quality</li>\n<li>you need an ouotdoorsy shoe for both city streets and light-to-moderate trails</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>If you adore max-cushioned shoes but need something more hiking-oriented, the <a href=\"https://runrepeat.com/uk/hoka-kaha-3-low-gtx\" rel=\"noopener\" target=\"_blank\">HOKA Kaha 3 Low GTX</a> is a no-brainer. We found it much better equipped for technical terrain and even backpacking trips. The <a href=\"https://runrepeat.com/uk/danner-n45\" rel=\"noopener\" target=\"_blank\">Danner N45</a> is another great premium option to consider, especially for thru-hikes.</p>\n\n    \n    \n\n<p>And if you want something well-cushioned but lighter and more speed-oriented, you might as well consider the Terrex Freehiker SL GTX. Alternatively, we've got a wide array of <a href=\"https://runrepeat.com/uk/guides/best-hiking-running-shoes\" rel=\"noopener\" target=\"_blank\">trail running shoes</a> to pick from.</p>\n<p></p>"
+    },
     "adidas-terrex-trailmaker": {
       "brand": "adidas",
       "categorySlug": "hiking-shoes",
@@ -5237,6 +5290,91 @@
       "scrapedAt": "2026-07-26T21:56:27.113Z",
       "whoShouldBuy": "<p>We believe the Altra Escalante 4 is a fantastic running shoe for:</p>\n<ul>\n<li>Zero drop enthusiasts seeking a stable shoe that delivers an awesome ground feel.</li>\n<li>Those in need of a versatile, low-drop shoe ideal for walking, some gym activities and, of course, running!</li>\n<li>Loyal fans of the Escalante series who were let down by the previous model, as this version returns to the beloved features of the 1.5.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>As a zero-drop shoe, the Escalante 4 may not suit runners with recurring Achilles or calf issues. If that's you, we suggest the <a href=\"https://runrepeat.com/uk/nike-flex-experience-run-12\" rel=\"noopener\" target=\"_blank\">Nike Flex Experience Run 12</a>, which offers a flexible ride paired with a higher drop—ideal for better heel support.</p>\n\n    \n    \n\n<p>If you’re chasing a low-stack shoe that really pops with bounce, we think that the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-9\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios 9</a> would be a stronger pick. </p>\n<p></p>"
+    },
+    "altra-escalante-5": {
+      "brand": "Altra",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Heavier than expected for its size",
+        "Lacks a gusseted tongue",
+        "Poor heel padding durability",
+        "Traction could be better"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41416/altra-escalante-5-25409579-720.jpg",
+      "intro": "It took Altra a while to release the Escalante 5, but we think the wait was worth it. We were impressed by the improved energy return, comfortable and breathable knit upper, and the expected roomy toebox from Altra. It's not the perfect Escalante that some runners were waiting for, as it still needs some work in areas like traction and weight. However, in our view, it's easily the best version yet.",
+      "latestVersion": null,
+      "msrpGbp": 140,
+      "name": "Altra Escalante 5",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Altra Escalante 4",
+        "slug": "altra-escalante-4"
+      },
+      "productId": 41416,
+      "pros": [
+        "Excellent fit for wide-footed runners",
+        "Improved energy return",
+        "Comfortable for walking and running",
+        "Stable platform for midfoot and forefoot strikers",
+        "Natural ride",
+        "Thick, durable outsole handles heavy use",
+        "Breathable for hot summer days",
+        "Excellent knit upper",
+        "Versatile for different paces",
+        "Promotes natural foot movement"
+      ],
+      "releasedAt": "2026-07-01",
+      "runrepeatUrl": "https://runrepeat.com/uk/altra-escalante-5",
+      "score": 84,
+      "scrapedAt": "2026-08-31T13:09:15.503Z",
+      "whoShouldBuy": "<p>We tested the Altra Escalante 5 and found out that it's ideal for those that:</p>\n<ul>\n<li>Need a wide-foot-friendly shoe that feels comfortable for both walking and running.</li>\n<li>Loved previous Escalantes but were waiting for a more breathable design.</li>\n<li>Prefer to avoid high stack heights but still want a shoe for daily runs.</li>\n<li>Strike with the forefoot or midfoot and want a low-stack shoe for both slow and fast runs.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>We also think heel strikers may not pair well with the Escalante 5's zero-drop geometry. Instead, take a look at the <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> if you want a versatile shoe with a wide toebox but a higher drop.</p>\n\n    \n    \n\n<p>We also found the Escalante 5 to be heavier than expected for its size, which is a bit of a letdown. If you're after a featherweight shoe with a low stack height, we highly recommend the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-9\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios 9</a>. It's extremely bouncy and also better suited to heel strikers.</p>\n<p></p>"
     },
     "altra-escalante-racer": {
       "brand": "Altra",
@@ -16851,6 +16989,94 @@
       "whoShouldBuy": "<p>After testing the HOKA Clifton 10 in the lab and on the road, we believe it's perfect for:</p>\n<ul>\n<li>Runners who found the <a href=\"https://runrepeat.com/uk/hoka-clifton-9\" rel=\"noopener\" target=\"_blank\">Clifton 9</a> undercushioned and wanted a thicker, more protective ride.  </li>\n<li>Heel strikers needing a stable, hard-wearing daily trainer with a comfort-first design.  </li>\n<li>Marathoners looking for a go-to option for long, slow miles that works for casual use too.</li>\n<li>Those who skipped past versions of the Clifton due to a narrow toebox—this one finally fixes that.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The biggest letdown of the Clifton 10 is its midsole. Over two years since version 9, it still relies on plain CMEVA foam while rivals move toward high-performance compounds like those in the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> or <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a>.</p>\n\n    \n    \n\n<p>We also feel HOKA may have overdone the stack, pushing it past 40 mm. That’s a big leap from earlier versions, and many runners might prefer something more balanced like the <a href=\"https://runrepeat.com/uk/nike-pegasus-41\" rel=\"noopener\" target=\"_blank\">Nike Pegasus 41</a> or <a href=\"https://runrepeat.com/uk/saucony-ride-18\" rel=\"noopener\" target=\"_blank\">Saucony Ride 18</a>.</p>\n<p></p>\n<p>On top of that, the extra foam brings noticeable weight gain. For runners who prioritise a lightweight feel, the <a href=\"https://runrepeat.com/uk/hoka-mach-6\" rel=\"noopener\" target=\"_blank\">HOKA Mach 6</a> might actually be the Clifton 10 that never existed.</p>"
     },
+    "hoka-clifton-11": {
+      "brand": "HOKA",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Very low energy return (again)",
+        "Max-stack design can feel bulky for some",
+        "Narrow, tapered toebox",
+        "Non-gusseted tongue"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41105/hoka-clifton-11-25398510-720.jpg",
+      "intro": "The Clifton 11 is a better Clifton in several ways, but we still think HOKA missed its biggest opportunity by not upgrading the foam. We found in the lab that the CMEVA midsole still delivers low energy return, which clearly holds the shoe back at faster paces. On the other hand, we were pleasantly surprised by its lighter build, excellent breathability, and improved flexibility. In our experience, the Clifton 11 works best as a comfort-first daily trainer for easy miles and all-day use, but the outdated foam tech makes its price difficult to justify for some runners.",
+      "latestVersion": null,
+      "msrpGbp": 155,
+      "name": "HOKA Clifton 11",
+      "pageValues": {
+        "39": "none",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "HOKA Clifton 10",
+        "slug": "hoka-clifton-10"
+      },
+      "productId": 41105,
+      "pros": [
+        "Plush cushioning for easy miles",
+        "Protective ride for heel strikers",
+        "Excellent breathability",
+        "Improved flexibility over the previous Clifton",
+        "Durable outsole",
+        "Great choice for everyday comfort",
+        "Stable platform",
+        "Smooth transitions from heel to forefoot",
+        "Build quality has improved",
+        "360º reflectivity",
+        "Lower weight"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/hoka-clifton-11",
+      "score": 85,
+      "scrapedAt": "2026-08-31T13:09:16.479Z",
+      "whoShouldBuy": "<p>We think that the HOKA Clifton 11 can be a good option for:</p>\n<ul>\n<li>Those who liked version 10 and want minor updates without changing the overall Clifton feel.</li>\n<li>Runners who focus on easy paces and prefer a snug fit with plenty of everyday comfort.</li>\n<li>Heel strikers looking for a stable, protective shoe with a high drop.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>HOKA unfortunately sticks with the CMEVA midsole in the Clifton 11, and that means limited bounce, period. If energy return is important to you, we recommend checking out the <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a> or <a href=\"https://runrepeat.com/uk/adidas-supernova-prima-3\" rel=\"noopener\" target=\"_blank\">adidas Supernova Prima 3</a> instead.</p>\n\n    \n    \n\n<p>We also think the high stack of the Clifton 11 won’t suit runners who dislike max-stack shoes. For them, the <a href=\"https://runrepeat.com/uk/hoka-mach-7\" rel=\"noopener\" target=\"_blank\">HOKA Mach 7</a> is a great alternative that offers more bounce while also being a more versatile option.</p>\n<p></p>"
+    },
     "hoka-clifton-9": {
       "brand": "HOKA",
       "categorySlug": "running-shoes",
@@ -23913,6 +24139,96 @@
       "scrapedAt": "2026-08-24T07:06:00.161Z",
       "whoShouldBuy": "<p>After testing the New Balance SuperComp Elite v6 in the lab and on the road, we concluded that:</p>\n<ul>\n<li>Owners of previous Elites will find a clear upgrade, with lower weight and better energy return.</li>\n<li>Runners who need a high-drop super shoe should go for it.</li>\n<li>Those with narrow feet that prefer a more classic racing fit will love what New Balance has done here.</li>\n<li>Marathoners who struggle with sweaty feet should check this one out, as it delivers exceptional breathability.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>Despite shedding some weight compared to its predecessors, the Elite v6 still has some catching up to do. If a lightweight super shoe is a top priority for you, we'd suggest the <a href=\"https://runrepeat.com/uk/asics-metaspeed-edge-tokyo\" rel=\"noopener\" target=\"_blank\">ASICS Metaspeed Edge Tokyo</a> or <a href=\"https://runrepeat.com/uk/nike-vaporfly-4\" rel=\"noopener\" target=\"_blank\">Nike Vaporfly 4</a> instead, as both come at a similar price.</p>\n\n    \n    \n\n<p>We also think the unstable heel could be a deal-breaker for some runners. Instead, we'd recommend the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a> if you want a more stable, set-and-forget feel, especially for marathon racing.</p>\n<p></p>"
+    },
+    "new-balance-super-comp-rebel": {
+      "brand": "New Balance",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Not the most stable super trainer",
+        "Low-volume upper may bother some",
+        "Different drop than stated by NB",
+        "High price﻿"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Carbon plate",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41475/new-balance-super-comp-rebel-25437549-720.jpg",
+      "intro": "The best things in life are often unexpected, and the New Balance SuperComp Rebel surprised us in the best possible way. We were amazed by how much this super trainer delivers: a bouncy, protective ride with impressive versatility, strong traction, a secure upper, and a featherlight build. We found in the lab that the new foam is a huge step forward for the brand, bringing energy return that can rival super shoes. In our experience, it works best for soft-foam lovers and runners without wide feet, but with this shoe, New Balance has finally reached the top tier of performance running.",
+      "latestVersion": null,
+      "msrpGbp": 200,
+      "name": "New Balance SuperComp Rebel",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41475,
+      "pros": [
+        "Impressive bounce from new foam",
+        "Clever plate design",
+        "Plenty of cushioning without excessive bulk",
+        "Incredible versatility for all kind of paces",
+        "Dependable traction on dry and wet surfaces",
+        "Lightweight build enhances its fast-feeling ride",
+        "Secure fit with zero heel slip",
+        "Wide size available in select markets",
+        "Excellent as do-it-all running shoe",
+        "Outsole resists abrasion surprisingly well",
+        "Good super trainer for beginners"
+      ],
+      "releasedAt": "2026-08-06",
+      "runrepeatUrl": "https://runrepeat.com/uk/new-balance-super-comp-rebel",
+      "score": 94,
+      "scrapedAt": "2026-08-31T13:09:17.650Z",
+      "whoShouldBuy": "<p>After testing the New Balance SuperComp Rebel in the lab, we recommend it for:</p>\n<ul>\n<li>Those looking for a super trainer that delivers impressive agility and fun.</li>\n<li>Anyone who enjoys a soft, bouncy, and protective ride without the bulk of most super trainers.</li>\n<li>Neutral runners who prefer a snug, race-ready fit and an agile platform over maximum stability.</li>\n<li>Runners seeking one shoe that can do it all, from daily miles to tempo runs and even road races.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>Those who frown at shoes priced around £180 won’t be thrilled with the SuperComp Rebel’s price. Instead, we suggest checking out the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a>, as both come surprisingly close in performance while costing less.</p>\n\n    \n    \n\n<p>We also think the SuperComp Rebel’s incredible versatility comes at the cost of not being as fast as a true super shoe. The obvious step up is the <a href=\"https://runrepeat.com/uk/new-balance-super-comp-elite-v-6\" rel=\"noopener\" target=\"_blank\">New Balance SuperComp Elite v6</a>, which shares the same foam but is built exclusively for racing and features a full-length carbon plate.</p>\n<p></p>"
     },
     "nike-air-zoom-alphafly-next-2": {
       "brand": "Nike",
