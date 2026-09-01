@@ -1171,6 +1171,14 @@ halves beside their heel counterparts. Both halves stay separately checkable
 and separately sortable: a forefoot striker wants the forefoot number, and
 merging them would destroy the distinction.
 
+The two catalogue relationships can overlap. A complete supersession pair is
+authoritative: its tests stay in the generation control and are excluded when
+colocated families are assembled, because readings across that pair are not
+comparable (docs/scraping.md §Test lineage). The remaining family members still
+resolve, degrading to singles where only one remains. `lineage.test.ts` holds
+the published catalogue to the stronger result: every numeric test resolves
+exactly once.
+
 The four heel/forefoot pairs — stack, energy return, shock absorption, midsole
 width — are **declared** in `ZONE_PAIRS`, because the catalogue links only two
 of them and carries no notion of zone at all. The declaration is authoritative

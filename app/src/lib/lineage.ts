@@ -174,6 +174,16 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
   const byId = new Map(numeric.map((t) => [t.id, t]));
   const bySlug = new Map(numeric.map((t) => [t.slug, t]));
   const at = (id: number | null): LabTest | undefined => (id === null ? undefined : byId.get(id));
+  // A supersession pair's readings are not comparable, so its generation control stays
+  // authoritative when upstream also places either test in a colocated family
+  // (docs/app.md §Columns and sorting).
+  const generationIds = new Set<number>();
+  for (const t of numeric) {
+    const relative = at(t.updateId) ?? at(t.previousId);
+    if (!relative) continue;
+    generationIds.add(t.id);
+    generationIds.add(relative.id);
+  }
 
   const out: ResolvedMetric[] = [];
   const claimed = new Set<number>();
@@ -223,8 +233,8 @@ export function metricEntries(tests: LabTest[]): ResolvedMetric[] {
 
     const primary = at(t.primaryTestId) ?? t;
     const secondaries = primary.secondaryTestIds.map(at).filter((s): s is LabTest => s !== undefined);
-    if (secondaries.length) {
-      const parts = [primary, ...secondaries];
+    const parts = [primary, ...secondaries].filter((part) => !generationIds.has(part.id));
+    if (parts.length > 1) {
       for (const p of parts) claimed.add(p.id);
       out.push({
         kind: 'colocated', label: primary.chartLabel ?? primary.name, groupId: primary.groupId,

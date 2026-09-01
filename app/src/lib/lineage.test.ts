@@ -231,6 +231,31 @@ describe('metricEntries', () => {
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys).toHaveLength(5);
   });
+  it('keeps supersession authoritative when current tests are also colocated', () => {
+    const entries = metricEntries([
+      labTest({ id: 11, slug: 'softness', name: 'Softness', updateId: 70 }),
+      labTest({ id: 13, slug: 'cold-difference', name: 'Cold difference', primaryTestId: 70 }),
+      labTest({ id: 48, slug: 'secondary-softness', name: 'Secondary softness', updateId: 72 }),
+      labTest({
+        id: 70, slug: 'softness-22', name: 'Softness', previousId: 11, secondaryTestIds: [13, 72],
+      }),
+      labTest({
+        id: 72, slug: 'secondary-softness-22', name: 'Secondary softness', previousId: 48,
+        primaryTestId: 70,
+      }),
+    ]);
+
+    expect(entries.map((entry) => entry.kind === 'single'
+      ? [entry.kind, entry.key]
+      : entry.kind === 'pair'
+        ? [entry.kind, entry.current.key, entry.retired.key]
+        : [entry.kind, ...entry.parts.map((part) => part.key)]))
+      .toEqual([
+        ['pair', 'softness-22', 'softness'],
+        ['single', 'cold-difference'],
+        ['pair', 'secondary-softness-22', 'secondary-softness'],
+      ]);
+  });
 });
 
 describe('zone pairs', () => {
@@ -318,5 +343,14 @@ describe('declared zone pairs against the published catalogue', () => {
       if (entry.kind !== 'colocated') continue;
       expect(new Set(entry.parts.map((p) => p.retired)).size, `${entry.label} has mixed method status`).toBe(1);
     }
+  });
+  it('resolves every published numeric test exactly once', () => {
+    const keys = metricEntries(tests).flatMap((entry) => entry.kind === 'single'
+      ? [entry.key]
+      : entry.kind === 'pair'
+        ? [entry.current.key, entry.retired.key]
+        : entry.parts.map((part) => part.key));
+    const numeric = tests.filter((test) => NUMERIC_TEST_TYPES.has(test.type)).map((test) => test.slug);
+    expect([...keys].sort()).toEqual([...numeric].sort());
   });
 });

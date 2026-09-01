@@ -356,8 +356,10 @@ resolved method status beside them:
   Coalescing or averaging the two generations invents measurements. What the
   chain is for is saying which column is the current method and pairing the two
   in the UI.
-- **`primaryTestId` / `secondaryTestIds`** — the heel/forefoot halves of one
-  measurement (traction, energy return, shock absorption).
+- **`primaryTestId` / `secondaryTestIds`** — readings RunRepeat colocates in
+  one chart: heel/forefoot measurements and a multi-reading softness family.
+  This relationship is independent of supersession, so one test can belong to
+  both.
 - **`chartLabel`** — the shared family name for such a pair ("Shock
   absorption", "Energy return"). It does **not** disambiguate a supersession:
   both generations of a pair carry the same label, or none.
