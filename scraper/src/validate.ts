@@ -1,17 +1,193 @@
 import type { DetailRecord, DetailsFile, LabTest, MetricsFile, Plate, Shoe, ShoesFile, TestsFile, Tombstone } from '../../shared/types.js';
-import { isTombstone } from '../../shared/types.js';
 import { isIdReferenceToken } from '../../shared/id-reference.js';
 import { methodStatusOf, validateMethodStatuses } from './method-status.js';
 import { PLATE_OVERRIDES } from './plate-overrides.js';
+import { sanitizeHtml } from './sanitize.js';
 
 export class ValidationError extends Error {}
 
 const NUMERIC = new Set(['float', 'score', 'percent', 'rating']);
+const TEST_TYPES = new Set(['float', 'score', 'percent', 'bool', 'rating', 'option', 'text']);
+const RELEASE_SOURCES = new Set(['page', 'curated', 'page-estimated', 'listing']);
 
 /** The absolute shoe-count floor, applied both before and after the join (docs/scraping.md §Validation gates). */
 export const MIN_SHOES = 300;
 
 interface CatalogueEntry { type: LabTest['type']; choices: Set<string> | null }
+
+type JsonObject = Record<string, unknown>;
+
+function objectAt(value: unknown, path: string): JsonObject {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new ValidationError(`${path} must be an object`);
+  }
+  return value as JsonObject;
+}
+
+function stringAt(value: unknown, path: string, nonEmpty = false): string {
+  if (typeof value !== 'string' || (nonEmpty && value === '')) {
+    throw new ValidationError(`${path} must be ${nonEmpty ? 'a non-empty string' : 'a string'}`);
+  }
+  return value;
+}
+
+function nullableStringAt(value: unknown, path: string): string | null {
+  if (value === null) return null;
+  return stringAt(value, path);
+}
+
+function booleanAt(value: unknown, path: string): boolean {
+  if (typeof value !== 'boolean') throw new ValidationError(`${path} must be a boolean`);
+  return value;
+}
+
+function finiteNumberAt(value: unknown, path: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new ValidationError(`${path} must be a finite number`);
+  }
+  return value;
+}
+
+function nullableFiniteNumberAt(value: unknown, path: string): number | null {
+  if (value === null) return null;
+  return finiteNumberAt(value, path);
+}
+
+function positiveIntegerAt(value: unknown, path: string): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new ValidationError(`${path} must be a positive integer`);
+  }
+  return value;
+}
+
+function nullablePositiveIntegerAt(value: unknown, path: string): number | null {
+  if (value === null) return null;
+  return positiveIntegerAt(value, path);
+}
+
+function arrayAt(value: unknown, path: string): unknown[] {
+  if (!Array.isArray(value)) throw new ValidationError(`${path} must be an array`);
+  return value;
+}
+
+function stringArrayAt(value: unknown, path: string): string[] {
+  const values = arrayAt(value, path);
+  for (let i = 0; i < values.length; i++) stringAt(values[i], `${path}[${i}]`);
+  return values as string[];
+}
+
+function stringRecordAt(value: unknown, path: string): Record<string, string> {
+  const record = objectAt(value, path);
+  for (const [key, item] of Object.entries(record)) stringAt(item, `${path}.${key}`);
+  return record as Record<string, string>;
+}
+
+function isGregorianDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+  if (year < 1 || month < 1 || month > 12) return false;
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day >= 1 && day <= days[month - 1]!;
+}
+
+function nullableDateAt(value: unknown, path: string): string | null {
+  if (value === null) return null;
+  const date = stringAt(value, path);
+  if (!isGregorianDate(date)) throw new ValidationError(`${path} must be a real YYYY-MM-DD`);
+  return date;
+}
+
+function nullableSanitizedHtmlAt(value: unknown, path: string): string | null {
+  const html = nullableStringAt(value, path);
+  if (html !== null && sanitizeHtml(html) !== html) {
+    throw new ValidationError(`${path} must already be sanitised HTML`);
+  }
+  return html;
+}
+
+function versionRefAt(value: unknown, path: string): void {
+  if (value === null) return;
+  const ref = objectAt(value, path);
+  stringAt(ref.slug, `${path}.slug`, true);
+  stringAt(ref.name, `${path}.name`, true);
+}
+
+function factsAt(value: unknown, path: string): void {
+  const facts = objectAt(value, path);
+  for (const [factSlug, rawValues] of Object.entries(facts)) {
+    const values = arrayAt(rawValues, `${path}.${factSlug}`);
+    const slugs = new Set<string>();
+    for (let i = 0; i < values.length; i++) {
+      const factPath = `${path}.${factSlug}[${i}]`;
+      const fact = objectAt(values[i], factPath);
+      const slug = stringAt(fact.slug, `${path}.${factSlug}.slug`, true);
+      stringAt(fact.text, `${path}.${factSlug}.text`, true);
+      if (slugs.has(slug)) throw new ValidationError(`${path}.${factSlug}.slug ${JSON.stringify(slug)} declared twice`);
+      slugs.add(slug);
+    }
+  }
+}
+
+function validateLabTests(value: unknown, groups: Record<string, string>, path: string): LabTest[] {
+  const rawTests = arrayAt(value, path);
+  const tests = rawTests as LabTest[];
+  for (let i = 0; i < rawTests.length; i++) {
+    const testPath = `${path}[${i}]`;
+    const test = objectAt(rawTests[i], testPath);
+    const id = positiveIntegerAt(test.id, `${testPath}.id`);
+    if (typeof test.slug !== 'string' || !isIdReferenceToken(test.slug)) {
+      throw new ValidationError(`test id ${id} has invalid slug ${JSON.stringify(test.slug)}`);
+    }
+    const slug = test.slug;
+    stringAt(test.name, `${testPath}.name`);
+    const type = stringAt(test.type, `${testPath}.type`);
+    if (!TEST_TYPES.has(type)) throw new ValidationError(`${testPath}.type has invalid value ${JSON.stringify(type)}`);
+    stringAt(test.units, `${testPath}.units`);
+    const groupId = nullableStringAt(test.groupId, `${testPath}.groupId`);
+    if (groupId !== null && !Object.hasOwn(groups, groupId)) {
+      throw new ValidationError(`${testPath}.groupId ${JSON.stringify(groupId)} is not declared`);
+    }
+    nullableStringAt(test.chartLabel, `${testPath}.chartLabel`);
+    booleanAt(test.isNew, `${testPath}.isNew`);
+    nullablePositiveIntegerAt(test.previousId, `${testPath}.previousId`);
+    nullablePositiveIntegerAt(test.updateId, `${testPath}.updateId`);
+    if (test.methodStatus !== null && test.methodStatus !== 'retired') {
+      throw new ValidationError(`${testPath}.methodStatus has invalid value ${JSON.stringify(test.methodStatus)}`);
+    }
+    nullablePositiveIntegerAt(test.primaryTestId, `${testPath}.primaryTestId`);
+    const secondary = arrayAt(test.secondaryTestIds, `${testPath}.secondaryTestIds`);
+    const secondaryIds = new Set<number>();
+    for (let j = 0; j < secondary.length; j++) {
+      const secondaryId = positiveIntegerAt(secondary[j], `${testPath}.secondaryTestIds[${j}]`);
+      if (secondaryId === id) throw new ValidationError(`${testPath}.secondaryTestIds names its own test id ${id}`);
+      if (secondaryIds.has(secondaryId)) throw new ValidationError(`${testPath}.secondaryTestIds repeats ${secondaryId}`);
+      secondaryIds.add(secondaryId);
+    }
+    if (test.options !== null) {
+      const options = arrayAt(test.options, `${testPath}.options`);
+      if (type !== 'option') throw new ValidationError(`${testPath}.options is present on non-option test ${slug}`);
+      for (let j = 0; j < options.length; j++) {
+        const optionPath = `${testPath}.options[${j}]`;
+        const option = objectAt(options[j], optionPath);
+        stringAt(option.value, `${optionPath}.value`, true);
+        stringAt(option.name, `${optionPath}.name`);
+      }
+    }
+  }
+
+  return tests;
+}
+
+function validateTestsFileShape(value: unknown): TestsFile {
+  const file = objectAt(value, 'catalogue');
+  stringAt(file.scrapedAt, 'catalogue.scrapedAt');
+  stringAt(file.seedSlug, 'catalogue.seedSlug');
+  const groups = stringRecordAt(file.groups, 'catalogue.groups');
+  validateLabTests(file.tests, groups, 'catalogue.tests');
+  return value as TestsFile;
+}
 
 /**
  * The by-test-id index every value gate needs, built so that a catalogue no index can represent
@@ -25,15 +201,9 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
   const index = new Map<string, CatalogueEntry>();
   const slugs = new Set<string>();
   for (const t of tests) {
-    if (t.methodStatus !== null && t.methodStatus !== 'retired') {
-      throw new ValidationError(`${t.slug}: invalid methodStatus ${JSON.stringify(t.methodStatus)}`);
-    }
     const resolvedStatus = methodStatusOf(t);
     if (t.methodStatus !== resolvedStatus) {
       throw new ValidationError(`${t.slug}: methodStatus ${JSON.stringify(t.methodStatus)} disagrees with resolved ${JSON.stringify(resolvedStatus)}`);
-    }
-    if (!isIdReferenceToken(t.slug)) {
-      throw new ValidationError(`test id ${t.id} has invalid slug ${JSON.stringify(t.slug)}`);
     }
     // The repeated id is the fault nothing downstream reports (docs/scraping.md §A test declared twice fails the run).
     if (index.has(String(t.id))) throw new ValidationError(`test id ${t.id} declared twice (${t.slug})`);
@@ -53,6 +223,7 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
 }
 
 function validatedCatalogueIndex(tests: TestsFile, previousTests?: TestsFile | null): Map<string, CatalogueEntry> {
+  validateTestsFileShape(tests);
   validateMethodStatuses(tests.tests, previousTests?.tests);
   return indexCatalogue(tests.tests);
 }
@@ -69,23 +240,37 @@ export function validateCatalogue(tests: TestsFile, previousTests?: TestsFile | 
  */
 export function validateValuesAgainstCatalogue(shoes: MetricsFile['shoes'], tests: TestsFile, previousTests?: TestsFile | null): void {
   const index = validatedCatalogueIndex(tests, previousTests);
-  for (const [slug, shoe] of Object.entries(shoes)) {
-    for (const [testId, value] of Object.entries(shoe.values)) {
-      const t = index.get(testId)?.type;
-      if (!t) throw new ValidationError(`${slug}: value for unknown test ${testId}`);
-      const ok = NUMERIC.has(t) ? typeof value === 'number'
-        : t === 'bool' ? typeof value === 'boolean'
-        : typeof value === 'string';
-      if (!ok) throw new ValidationError(`${slug}: test ${testId} has ${typeof value}, expected ${t}`);
+  const records = objectAt(shoes, 'shoes');
+  for (const [slug, rawShoe] of Object.entries(records)) {
+    if (slug === '') throw new ValidationError('shoe slug must be non-empty');
+    const shoe = objectAt(rawShoe, `${slug}`);
+    stringAt(shoe.name, `${slug}.name`, true);
+    stringAt(shoe.url, `${slug}.url`, true);
+    const values = objectAt(shoe.values, `${slug}.values`);
+    for (const [testId, value] of Object.entries(values)) {
+      const entry = index.get(testId);
+      if (!entry) throw new ValidationError(`${slug}: value for unknown test ${testId}`);
+      validateReading(value, entry, `${slug}: test ${testId}`);
     }
   }
 }
 
+function validateReading(value: unknown, entry: CatalogueEntry, path: string): void {
+  const type = entry.type;
+  const ok = NUMERIC.has(type) ? typeof value === 'number' && Number.isFinite(value)
+    : type === 'bool' ? typeof value === 'boolean'
+    : typeof value === 'string';
+  if (!ok) throw new ValidationError(`${path} has invalid value, expected ${type}`);
+}
+
 export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tests: TestsFile, previousTests?: TestsFile | null): void {
+  const file = objectAt(next, 'metrics');
+  stringAt(file.scrapedAt, 'metrics.scrapedAt');
+  objectAt(file.shoes, 'metrics.shoes');
+  validateValuesAgainstCatalogue(next.shoes, tests, previousTests);
   const count = Object.keys(next.shoes).length;
   if (count < MIN_SHOES) throw new ValidationError(`only ${count} shoes (<${MIN_SHOES})`);
   if (tests.tests.length < 50) throw new ValidationError(`only ${tests.tests.length} tests (<50)`);
-  validateValuesAgainstCatalogue(next.shoes, tests, previousTests);
   if (prev) {
     const prevCount = Object.keys(prev.shoes).length;
     if (prevCount > 0 && count < prevCount * 0.9) {
@@ -106,33 +291,108 @@ export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tes
 }
 
 export function validateDetailsRecord(rec: DetailRecord | Tombstone, slug: string): void {
-  if (isTombstone(rec)) return;
-  if (!rec.name) throw new ValidationError(`${slug}: empty name`);
-  if (!Number.isInteger(rec.productId) || rec.productId <= 0) throw new ValidationError(`${slug}: bad productId`);
+  const record = objectAt(rec, slug);
+  if (record.gone === true) {
+    stringAt(record.scrapedAt, `${slug}.scrapedAt`);
+    return;
+  }
+  stringAt(record.scrapedAt, `${slug}.scrapedAt`);
+  positiveIntegerAt(record.productId, `${slug}.productId`);
+  stringAt(record.name, `${slug}.name`, true);
+  nullableStringAt(record.brand, `${slug}.brand`);
+  nullableDateAt(record.releasedAt, `${slug}.releasedAt`);
+  booleanAt(record.preciseReleaseDate, `${slug}.preciseReleaseDate`);
+  nullableFiniteNumberAt(record.score, `${slug}.score`);
+  nullableFiniteNumberAt(record.msrpGbp, `${slug}.msrpGbp`);
+  booleanAt(record.discontinued, `${slug}.discontinued`);
+  nullableStringAt(record.imageUrl, `${slug}.imageUrl`);
+  stringAt(record.runrepeatUrl, `${slug}.runrepeatUrl`, true);
+  stringArrayAt(record.features, `${slug}.features`);
+  stringArrayAt(record.pros, `${slug}.pros`);
+  stringArrayAt(record.cons, `${slug}.cons`);
+  stringAt(record.intro, `${slug}.intro`);
+  booleanAt(record.hasPlateSection, `${slug}.hasPlateSection`);
+  nullableSanitizedHtmlAt(record.whoShouldBuy, `${slug}.whoShouldBuy`);
+  nullableSanitizedHtmlAt(record.whoShouldNotBuy, `${slug}.whoShouldNotBuy`);
+  nullableStringAt(record.categorySlug, `${slug}.categorySlug`);
+  factsAt(record.facts, `${slug}.facts`);
+  const pageValues = objectAt(record.pageValues, `${slug}.pageValues`);
+  for (const [testId, value] of Object.entries(pageValues)) {
+    if (typeof value !== 'string' && typeof value !== 'boolean') {
+      throw new ValidationError(`${slug}.pageValues.${testId} must be a string or boolean`);
+    }
+  }
+  versionRefAt(record.previousVersion, `${slug}.previousVersion`);
+  versionRefAt(record.latestVersion, `${slug}.latestVersion`);
 }
 
 const PLATES = new Set(['carbon', 'plated-other', 'none']);
 
 export function validateShoesFile(f: ShoesFile): void {
-  if (!f.builtAt) throw new ValidationError('builtAt missing');
-  if (!Array.isArray(f.tests) || !Array.isArray(f.shoes)) throw new ValidationError('tests/shoes must be arrays');
+  const file = objectAt(f, 'shoes file');
+  stringAt(file.builtAt, 'builtAt', true);
+  if (file.source !== 'RunRepeat') throw new ValidationError(`source must be "RunRepeat"`);
+  const groups = stringRecordAt(file.groups, 'groups');
+  const tests = validateLabTests(file.tests, groups, 'tests');
+  const shoes = arrayAt(file.shoes, 'shoes');
   // A published `option` reading has to name one of the choices its test declares, or the app
   // prints a value it cannot label and offers it as a filter beside the vocabulary it is not in.
   // The index is the same one the metrics paths build, so the join cannot publish a catalogue
   // shape they would have refused to write.
-  const index = indexCatalogue(f.tests);
-  for (const s of f.shoes) {
-    if (!s.slug || !s.name) throw new ValidationError(`shoe missing slug/name: ${JSON.stringify(s.slug)}`);
-    if (!s.values || typeof s.values !== 'object') throw new ValidationError(`${s.slug}: values missing`);
-    if (!PLATES.has(s.plate)) throw new ValidationError(`${s.slug}: bad plate ${String(s.plate)}`);
-    for (const [testId, value] of Object.entries(s.values)) {
+  const index = indexCatalogue(tests);
+  const slugs = new Set<string>();
+  for (let i = 0; i < shoes.length; i++) {
+    const rawShoe = objectAt(shoes[i], `shoes[${i}]`);
+    const slug = stringAt(rawShoe.slug, `shoes[${i}].slug`, true);
+    if (slugs.has(slug)) throw new ValidationError(`shoe slug ${JSON.stringify(slug)} declared twice`);
+    slugs.add(slug);
+    stringAt(rawShoe.name, `${slug}.name`, true);
+    nullableStringAt(rawShoe.brand, `${slug}.brand`);
+    stringAt(rawShoe.url, `${slug}.url`, true);
+    const releasedAt = nullableDateAt(rawShoe.releasedAt, `${slug}.releasedAt`);
+    const releaseSource = rawShoe.releaseDateSource;
+    if (releaseSource !== null && (typeof releaseSource !== 'string' || !RELEASE_SOURCES.has(releaseSource))) {
+      throw new ValidationError(`${slug}.releaseDateSource has invalid value ${JSON.stringify(releaseSource)}`);
+    }
+    if (releasedAt !== null && releaseSource === null) throw new ValidationError(`${slug}.releaseDateSource is null for a date`);
+    if (releasedAt === null && releaseSource !== null) throw new ValidationError(`${slug}.releasedAt is null for source ${releaseSource}`);
+    if (releaseSource === 'curated' && !releasedAt!.endsWith('-01')) {
+      throw new ValidationError(`${slug}: curated releasedAt must be the first of a month`);
+    }
+    if (releaseSource === 'listing' && !releasedAt!.endsWith('-01-01')) {
+      throw new ValidationError(`${slug}: listing releasedAt must be the first of a year`);
+    }
+    nullableFiniteNumberAt(rawShoe.score, `${slug}.score`);
+    nullableFiniteNumberAt(rawShoe.msrpGbp, `${slug}.msrpGbp`);
+    booleanAt(rawShoe.discontinued, `${slug}.discontinued`);
+    if (typeof rawShoe.plate !== 'string' || !PLATES.has(rawShoe.plate)) {
+      throw new ValidationError(`${slug}.plate has invalid value ${String(rawShoe.plate)}`);
+    }
+    nullableStringAt(rawShoe.imageUrl, `${slug}.imageUrl`);
+    const values = objectAt(rawShoe.values, `${slug}.values`);
+    if (rawShoe.details !== null) {
+      const details = objectAt(rawShoe.details, `${slug}.details`);
+      stringArrayAt(details.pros, `${slug}.details.pros`);
+      stringArrayAt(details.cons, `${slug}.details.cons`);
+      stringAt(details.intro, `${slug}.details.intro`);
+      nullableSanitizedHtmlAt(details.whoShouldBuy, `${slug}.details.whoShouldBuy`);
+      nullableSanitizedHtmlAt(details.whoShouldNotBuy, `${slug}.details.whoShouldNotBuy`);
+      stringArrayAt(details.features, `${slug}.details.features`);
+    }
+    factsAt(rawShoe.facts, `${slug}.facts`);
+    versionRefAt(rawShoe.previousVersion, `${slug}.previousVersion`);
+    versionRefAt(rawShoe.nextVersion, `${slug}.nextVersion`);
+    versionRefAt(rawShoe.latestVersion, `${slug}.latestVersion`);
+    nullableStringAt(rawShoe.reviewLanguage, `${slug}.reviewLanguage`);
+    for (const [testId, value] of Object.entries(values)) {
       // Published tests are the catalogue's, filtered to those with a reading — so a reading no
       // published test claims is one the catalogue itself has lost.
       const entry = index.get(testId);
-      if (!entry) throw new ValidationError(`${s.slug}: value for unknown test ${testId}`);
+      if (!entry) throw new ValidationError(`${slug}: value for unknown test ${testId}`);
+      validateReading(value, entry, `${slug}: test ${testId}`);
       const choices = entry.choices;
       if (choices && !choices.has(String(value))) {
-        throw new ValidationError(`${s.slug}: test ${testId} has ${JSON.stringify(value)}, not a declared option`);
+        throw new ValidationError(`${slug}: test ${testId} has ${JSON.stringify(value)}, not a declared option`);
       }
     }
   }

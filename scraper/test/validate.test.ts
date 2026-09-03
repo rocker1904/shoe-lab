@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ValidationError, validateCatalogue, validateDetailsRecord, validateFleetAgainstPrevious, validateMetrics, validatePlateOverrides, validateShoesFile, validateValuesAgainstCatalogue } from '../src/validate.js';
-import type { DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
+import type { DetailRecord, DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { methodStatusOf } from '../src/method-status.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
 import { detailRecord, labTest, shoe } from './helpers.js';
@@ -26,6 +26,214 @@ const tests: TestsFile = {
     });
   }),
 };
+
+function expectMutationRejected<T>(
+  base: T,
+  validate: (value: T) => void,
+  cases: Array<[field: string, mutate: (value: any) => void]>,
+): void {
+  for (const [field, mutate] of cases) {
+    const malformed = structuredClone(base);
+    mutate(malformed);
+    expect(() => validate(malformed), field).toThrow(new RegExp(field));
+  }
+}
+
+describe('complete runtime schemas', () => {
+  it('rejects every malformed TestsFile and LabTest field at the catalogue gate', () => {
+    expectMutationRejected(tests, (value) => validateCatalogue(value), [
+      ['scrapedAt', (f) => { f.scrapedAt = 1; }],
+      ['seedSlug', (f) => { f.seedSlug = null; }],
+      ['groups', (f) => { f.groups = []; }],
+      ['groups', (f) => { f.groups.g = 1; }],
+      ['tests', (f) => { f.tests = {}; }],
+      ['id', (f) => { f.tests[4].id = Number.NaN; }],
+      ['slug', (f) => { f.tests[4].slug = 7; }],
+      ['name', (f) => { f.tests[4].name = null; }],
+      ['type', (f) => { f.tests[4].type = 'numeric'; }],
+      ['units', (f) => { f.tests[4].units = false; }],
+      ['groupId', (f) => { f.tests[4].groupId = 1; }],
+      ['groupId', (f) => { f.tests[4].groupId = 'missing'; }],
+      ['chartLabel', (f) => { f.tests[4].chartLabel = 1; }],
+      ['isNew', (f) => { f.tests[4].isNew = 'false'; }],
+      ['previousId', (f) => { f.tests[4].previousId = '4'; }],
+      ['updateId', (f) => { f.tests[4].updateId = 1.5; }],
+      ['methodStatus', (f) => { delete f.tests[4].methodStatus; }],
+      ['primaryTestId', (f) => { f.tests[4].primaryTestId = 0; }],
+      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = null; }],
+      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = [6, 6]; }],
+      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = [5]; }],
+      ['options', (f) => { f.tests[4].options = {}; }],
+      ['options', (f) => { f.tests[4].options = [{ value: 'one', name: 'One' }]; }],
+      ['options', (f) => { f.tests[4].type = 'option'; f.tests[4].options = [{ value: 1, name: 'One' }]; }],
+      ['options', (f) => { f.tests[4].type = 'option'; f.tests[4].options = [{ value: 'one', name: 1 }]; }],
+    ]);
+  });
+
+  it('rejects malformed complete metric records and non-finite readings', () => {
+    const base = makeMetrics(400);
+    expectMutationRejected(base, (value) => validateMetrics(value, null, tests), [
+      ['scrapedAt', (f) => { f.scrapedAt = false; }],
+      ['shoes', (f) => { f.shoes = []; }],
+      ['slug', (f) => { f.shoes[''] = f.shoes['shoe-0']; delete f.shoes['shoe-0']; }],
+      ['name', (f) => { f.shoes['shoe-0'].name = 1; }],
+      ['url', (f) => { f.shoes['shoe-0'].url = null; }],
+      ['values', (f) => { f.shoes['shoe-0'].values = []; }],
+      ['test 5', (f) => { f.shoes['shoe-0'].values['5'] = Number.POSITIVE_INFINITY; }],
+    ]);
+  });
+
+  it('checks the complete metric-shoe shape on the catalogue-only rewrite path', () => {
+    const base = { one: { name: 'One', url: 'https://runrepeat.com/one', values: { '5': 1 } } };
+    expectMutationRejected(base, (value) => validateValuesAgainstCatalogue(value, tests), [
+      ['one', (f) => { Object.assign(f, { one: null }); }],
+      ['name', (f) => { f.one.name = null; }],
+      ['url', (f) => { f.one.url = 1; }],
+      ['values', (f) => { f.one.values = null; }],
+      ['test 5', (f) => { f.one.values['5'] = Number.NaN; }],
+    ]);
+  });
+
+  it('rejects every malformed DetailRecord and Tombstone field', () => {
+    const base = detailRecord({
+      releasedAt: '2024-02-29', score: 150, msrpGbp: -1,
+      imageUrl: 'https://cdn.runrepeat.com/a.jpg', categorySlug: 'running-shoes',
+      whoShouldBuy: '<p>Runner</p>', whoShouldNotBuy: '<p>Walker</p>',
+      facts: { pace: [{ slug: 'daily-running', text: 'Daily running' }] },
+      pageValues: { '39': 'none', '45': false },
+      previousVersion: { slug: 'shoe-1', name: 'Shoe 1' },
+      latestVersion: { slug: 'shoe-3', name: 'Shoe 3' },
+    });
+    const check = (value: DetailRecord) => validateDetailsRecord(value, 'shoe');
+    expectMutationRejected(base, check, [
+      ['scrapedAt', (r) => { r.scrapedAt = null; }],
+      ['productId', (r) => { r.productId = Number.NaN; }],
+      ['name', (r) => { r.name = 1; }],
+      ['brand', (r) => { r.brand = false; }],
+      ['releasedAt', (r) => { r.releasedAt = '2023-02-29'; }],
+      ['preciseReleaseDate', (r) => { r.preciseReleaseDate = 1; }],
+      ['score', (r) => { r.score = Number.POSITIVE_INFINITY; }],
+      ['msrpGbp', (r) => { r.msrpGbp = Number.NaN; }],
+      ['discontinued', (r) => { r.discontinued = 'false'; }],
+      ['imageUrl', (r) => { r.imageUrl = 1; }],
+      ['runrepeatUrl', (r) => { r.runrepeatUrl = false; }],
+      ['features', (r) => { r.features = [1]; }],
+      ['pros', (r) => { r.pros = null; }],
+      ['cons', (r) => { r.cons = [false]; }],
+      ['intro', (r) => { r.intro = null; }],
+      ['hasPlateSection', (r) => { r.hasPlateSection = 0; }],
+      ['whoShouldBuy', (r) => { r.whoShouldBuy = '<script>bad()</script>'; }],
+      ['whoShouldNotBuy', (r) => { r.whoShouldNotBuy = 1; }],
+      ['categorySlug', (r) => { r.categorySlug = 1; }],
+      ['facts', (r) => { r.facts = []; }],
+      ['facts.pace.slug', (r) => { r.facts.pace[0].slug = ''; }],
+      ['facts.pace.text', (r) => { r.facts.pace[0].text = 1; }],
+      ['facts.pace.slug', (r) => { r.facts.pace.push({ slug: 'daily-running', text: 'Daily' }); }],
+      ['pageValues', (r) => { r.pageValues = []; }],
+      ['pageValues.39', (r) => { r.pageValues['39'] = 1; }],
+      ['previousVersion.slug', (r) => { r.previousVersion.slug = ''; }],
+      ['latestVersion.name', (r) => { r.latestVersion.name = null; }],
+    ]);
+    expect(() => validateDetailsRecord({ gone: true, scrapedAt: 1 } as any, 'gone'))
+      .toThrow(/gone.*scrapedAt/);
+  });
+
+  it('rejects every malformed ShoesFile, Shoe and ShoeDetails field', () => {
+    const base: ShoesFile = {
+      builtAt: '2026-07-26T00:00:00Z', source: 'RunRepeat', groups: {}, tests: tests.tests,
+      shoes: [shoe({
+        slug: 'a', name: 'A', brand: 'Brand', url: 'https://runrepeat.com/a',
+        releasedAt: '2024-02-29', releaseDateSource: 'page', score: 150, msrpGbp: -1,
+        imageUrl: 'https://cdn.runrepeat.com/a.jpg', values: { '5': 1 },
+        details: { pros: ['P'], cons: ['C'], intro: 'I', whoShouldBuy: '<p>Runner</p>', whoShouldNotBuy: null, features: ['F'] },
+        facts: { pace: [{ slug: 'daily-running', text: 'Daily running' }] },
+        previousVersion: { slug: 'prev', name: 'Previous' }, nextVersion: { slug: 'next', name: 'Next' },
+        latestVersion: { slug: 'latest', name: 'Latest' }, reviewLanguage: 'es',
+      })],
+    };
+    expectMutationRejected(base, validateShoesFile, [
+      ['builtAt', (f) => { f.builtAt = null; }],
+      ['source', (f) => { f.source = 'Elsewhere'; }],
+      ['groups', (f) => { f.groups = []; }],
+      ['groups', (f) => { f.groups.g = false; }],
+      ['tests', (f) => { f.tests = {}; }],
+      ['methodStatus', (f) => { f.tests[4].updateId = 6; }],
+      ['shoes', (f) => { f.shoes = {}; }],
+      ['slug', (f) => { f.shoes[0].slug = 1; }],
+      ['name', (f) => { f.shoes[0].name = null; }],
+      ['brand', (f) => { f.shoes[0].brand = false; }],
+      ['url', (f) => { f.shoes[0].url = 1; }],
+      ['releasedAt', (f) => { f.shoes[0].releasedAt = '2024-04-31'; }],
+      ['releaseDateSource', (f) => { f.shoes[0].releaseDateSource = 'estimate'; }],
+      ['releaseDateSource', (f) => { f.shoes[0].releaseDateSource = null; }],
+      ['releasedAt', (f) => { f.shoes[0].releasedAt = null; }],
+      ['curated', (f) => { f.shoes[0].releaseDateSource = 'curated'; f.shoes[0].releasedAt = '2024-02-02'; }],
+      ['listing', (f) => { f.shoes[0].releaseDateSource = 'listing'; f.shoes[0].releasedAt = '2024-02-01'; }],
+      ['score', (f) => { f.shoes[0].score = Number.NaN; }],
+      ['msrpGbp', (f) => { f.shoes[0].msrpGbp = Number.POSITIVE_INFINITY; }],
+      ['discontinued', (f) => { f.shoes[0].discontinued = 0; }],
+      ['plate', (f) => { f.shoes[0].plate = 'metal'; }],
+      ['imageUrl', (f) => { f.shoes[0].imageUrl = 1; }],
+      ['values', (f) => { f.shoes[0].values = []; }],
+      ['test 5', (f) => { f.shoes[0].values['5'] = Number.NEGATIVE_INFINITY; }],
+      ['details', (f) => { f.shoes[0].details = {}; }],
+      ['details.pros', (f) => { f.shoes[0].details.pros = [1]; }],
+      ['details.cons', (f) => { f.shoes[0].details.cons = null; }],
+      ['details.intro', (f) => { f.shoes[0].details.intro = 1; }],
+      ['details.whoShouldBuy', (f) => { f.shoes[0].details.whoShouldBuy = '<iframe></iframe>'; }],
+      ['details.whoShouldNotBuy', (f) => { f.shoes[0].details.whoShouldNotBuy = 1; }],
+      ['details.features', (f) => { f.shoes[0].details.features = [false]; }],
+      ['facts', (f) => { f.shoes[0].facts = null; }],
+      ['facts.pace.slug', (f) => { f.shoes[0].facts.pace[0].slug = ''; }],
+      ['facts.pace.text', (f) => { f.shoes[0].facts.pace[0].text = null; }],
+      ['facts.pace.slug', (f) => { f.shoes[0].facts.pace.push({ slug: 'daily-running', text: 'Daily' }); }],
+      ['previousVersion.slug', (f) => { f.shoes[0].previousVersion.slug = ''; }],
+      ['nextVersion.name', (f) => { f.shoes[0].nextVersion.name = 1; }],
+      ['latestVersion', (f) => { f.shoes[0].latestVersion = {}; }],
+      ['reviewLanguage', (f) => { f.shoes[0].reviewLanguage = 1; }],
+    ]);
+    const duplicate = structuredClone(base);
+    duplicate.shoes.push(structuredClone(duplicate.shoes[0]!));
+    expect(() => validateShoesFile(duplicate)).toThrow(/slug.*twice/);
+  });
+
+  it('accepts null optional content, extra properties and finite values outside familiar ranges', () => {
+    const catalogue = structuredClone(tests) as any;
+    catalogue.extra = true;
+    catalogue.tests[4].extra = true;
+    validateCatalogue(catalogue);
+
+    const metrics = makeMetrics(400) as any;
+    metrics.extra = true;
+    metrics.shoes['shoe-0'].extra = true;
+    metrics.shoes['shoe-0'].values['5'] = -1e200;
+    validateMetrics(metrics, null, tests);
+
+    const detail = detailRecord({ score: 150, msrpGbp: -1 }) as any;
+    detail.extra = true;
+    validateDetailsRecord(detail, 'shoe');
+
+    const file: ShoesFile = {
+      builtAt: 't', source: 'RunRepeat', groups: {}, tests: tests.tests,
+      shoes: [shoe({ slug: 'shoe', score: 150, msrpGbp: -1, values: { '5': 1e200 } })],
+    };
+    (file as any).extra = true;
+    (file.shoes[0] as any).extra = true;
+    validateShoesFile(file);
+  });
+
+  it('accepts every committed file at its owning validation entry point', () => {
+    const catalogue = JSON.parse(readFileSync(new URL('../../data/tests.json', import.meta.url), 'utf8')) as TestsFile;
+    const metrics = JSON.parse(readFileSync(new URL('../../data/metrics.json', import.meta.url), 'utf8')) as MetricsFile;
+    const details = JSON.parse(readFileSync(new URL('../../data/details.json', import.meta.url), 'utf8')) as DetailsFile;
+    const shoes = JSON.parse(readFileSync(new URL('../../data/shoes.json', import.meta.url), 'utf8')) as ShoesFile;
+    validateCatalogue(catalogue);
+    validateValuesAgainstCatalogue(metrics.shoes, catalogue);
+    validateMetrics(metrics, null, catalogue);
+    for (const [slug, record] of Object.entries(details.shoes)) validateDetailsRecord(record, slug);
+    validateShoesFile(shoes);
+  });
+});
 
 describe('validateMetrics', () => {
   it('passes a healthy first run', () => {
@@ -248,10 +456,12 @@ describe('validateDetailsRecord', () => {
     expect(() => validateDetailsRecord({ scrapedAt: 't', productId: 5, name: '' } as any, 's')).toThrow(ValidationError);
   });
   it('accepts a real record and rejects non-integer or negative productIds', () => {
-    expect(() => validateDetailsRecord({ scrapedAt: 't', productId: 1, name: 'X' } as any, 's')).not.toThrow();
-    expect(() => validateDetailsRecord({ scrapedAt: 't', productId: 1.5, name: 'X' } as any, 's')).toThrow(ValidationError);
-    expect(() => validateDetailsRecord({ scrapedAt: 't', productId: -3, name: 'X' } as any, 's')).toThrow(ValidationError);
-    expect(() => validateDetailsRecord({ scrapedAt: 't', name: 'X' } as any, 's')).toThrow(ValidationError);
+    expect(() => validateDetailsRecord(detailRecord({ productId: 1, name: 'X' }), 's')).not.toThrow();
+    expect(() => validateDetailsRecord(detailRecord({ productId: 1.5, name: 'X' }), 's')).toThrow(ValidationError);
+    expect(() => validateDetailsRecord(detailRecord({ productId: -3, name: 'X' }), 's')).toThrow(ValidationError);
+    const missing = detailRecord({ name: 'X' }) as any;
+    delete missing.productId;
+    expect(() => validateDetailsRecord(missing, 's')).toThrow(ValidationError);
   });
 });
 

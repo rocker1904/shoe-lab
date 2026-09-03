@@ -107,6 +107,14 @@ first lab-test-list request. The complete catalogue-and-values gate runs again
 after the crawl, retaining the final check on the exact files about to be
 written and the reading/fleet invariants that cannot run earlier.
 
+Every validation entry point checks the complete shared type shape it receives,
+not only the field needed by its next operation. Extra object properties remain
+forward-compatible, while every declared numeric value must be finite; optional
+content keeps its existing null state, with no range invented for scores, prices,
+years or measurements. Errors name the owning shoe, test and field. Detail and
+published-shoe checks also require fact-value identity, complete model references
+and already-sanitised HTML at the two HTML boundaries.
+
 - **Absolute floors:** fewer than 300 shoes or fewer than 50 tests fails. The
   catalogue extractor enforces the same 50 independently, so a gutted
   `lab_tests` payload fails before a single API call is spent.
@@ -142,12 +150,13 @@ written and the reading/fleet invariants that cannot run earlier.
   absolute-only by construction, not by a flag.
 - **Release supplement** carries its own floors: 300 slugs seen, 100 years
   found.
-- **Post-join:** `build:dataset` re-validates the assembled `shoes.json`
-  (builtAt present, arrays, slug/name present, plate within the enum, and every
-  `option` reading naming one of its test's declared choices) before
-  writing, so a bad join cannot reach the app either. The absolute shoe floor is
-  re-applied after the category exclusion (§Non-running shoes), so a renamed
-  category fails the run instead of quietly emptying the dataset.
+- **Post-join:** `build:dataset` re-validates the complete assembled `shoes.json`
+  before writing, including unique shoe slugs, catalogue value types, option
+  vocabulary and release-date provenance. Date and source are either both null or
+  both present; every date is a real `YYYY-MM-DD`, `curated` is the first of a
+  month and `listing` the first of a year (§Release-date provenance). The absolute
+  shoe floor is re-applied after the category exclusion (§Non-running shoes), so
+  a renamed category fails the run instead of quietly emptying the dataset.
 - **Fleet gates, against the last published `shoes.json`.** No absolute gate can
   see a fleet-wide payload drift: `extractDetails` degrades field by field on
   purpose, so a renamed or moved block arrives as an empty field on every shoe
