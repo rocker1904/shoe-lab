@@ -4,6 +4,7 @@
   import MetricHelp from './MetricHelp.svelte';
   import { directionOf, DIRECTION_ARROW } from '../lib/direction';
   import { RETIRED_METHOD_CONSEQUENCE } from '../lib/lineage';
+  import { ownValue } from '../lib/record';
 
   export interface AddFilterOption {
     key: string; label: string; groupId: string | null; coverage: number; retired: boolean;
@@ -26,7 +27,7 @@
     for (const o of options) {
       const searchable = `${o.label} ${o.retired ? `retired ${RETIRED_METHOD_CONSEQUENCE}` : ''}`.toLowerCase();
       if (q && !searchable.includes(q)) continue;
-      const g = (o.groupId && groups[o.groupId]) || 'Other';
+      const g = (o.groupId && ownValue(groups, o.groupId)) || 'Other';
       m.set(g, [...(m.get(g) ?? []), o]);
     }
     return [...m.entries()];

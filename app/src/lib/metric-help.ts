@@ -1,4 +1,5 @@
 import { directionOf, type Direction } from './direction';
+import { ownValue } from './record';
 
 export interface MetricHelpFact {
   text: string;
@@ -109,7 +110,7 @@ metricHelp.price = metricHelp.msrpGbp!;
 export const METRIC_HELP: Readonly<Record<string, MetricHelpFact>> = metricHelp;
 
 export function metricHelpOf(key: string): MetricHelpFact | undefined {
-  return METRIC_HELP[key];
+  return ownValue(METRIC_HELP, key);
 }
 
 const INTERPRETATION: Record<Direction, string> = {

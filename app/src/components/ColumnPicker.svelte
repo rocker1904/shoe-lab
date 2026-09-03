@@ -12,6 +12,7 @@
   import { DERIVED_ZONE_PAIRS, effectiveGeneration, metricEntries, type ResolvedMetric } from '../lib/lineage';
   import type { RangeBound } from '../lib/filters';
   import { metricHelpOf } from '../lib/metric-help';
+  import { ownValue } from '../lib/record';
   import MetricGuide, { type MetricGuideSection } from './MetricGuide.svelte';
 
   let { tests, groups, columns, ranges, rows, onchange, population, idx, generations }: {
@@ -55,7 +56,7 @@
     for (const e of [...metricEntries(tests), ...categoricalEntries(tests).map((c) => ({
       kind: 'single' as const, key: c.key, label: c.label, units: '', groupId: c.groupId, retired: c.retired,
     }))]) {
-      const g = (e.groupId && groups[e.groupId]) || 'Other';
+      const g = (e.groupId && ownValue(groups, e.groupId)) || 'Other';
       m.set(g, [...(m.get(g) ?? []), ...offersOf(e)]);
     }
     return [...m.entries()];

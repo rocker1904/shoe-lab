@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LabTest } from '../../../shared/types.js';
 import { isIdReferenceToken } from '../../../shared/id-reference.js';
 import { isCategorical } from '../lib/categorical';
-import { labTest } from '../lib/test-fixtures';
+import { labTest, OBJECT_PROTOTYPE_KEYS } from '../lib/test-fixtures';
 import FeaturesFilter from './FeaturesFilter.svelte';
 
 const gusset = labTest({ id: 39, slug: 'tongue-gusset-type', name: 'Tongue gusset', type: 'option', groupId: '3',
@@ -37,6 +37,30 @@ const rowText = (container: HTMLElement) =>
   [...container.querySelectorAll('li')].map((li) => li.textContent?.trim());
 
 describe('FeaturesFilter', () => {
+  it('reads prototype-named selections only when they are own facet data', () => {
+    const tests = OBJECT_PROTOTYPE_KEYS.map((slug, i) => labTest({
+      id: 1_000 + i, slug, name: `Feature ${i}`, type: 'option',
+      options: [{ value: 'yes', name: `Choice ${i}` }],
+    }));
+    const selections = Object.fromEntries(OBJECT_PROTOTYPE_KEYS.map((slug) => [slug, ['yes']]));
+    const { unmount } = render(FeaturesFilter, { props: {
+      tests, selections, countsFor: () => new Map([['yes', 1]]), onchange: vi.fn(),
+    } });
+    expect(screen.getByText(`${OBJECT_PROTOTYPE_KEYS.length} selected`)).toBeInTheDocument();
+    for (let i = 0; i < OBJECT_PROTOTYPE_KEYS.length; i++) {
+      expect(screen.getByLabelText(`Choice ${i} (1)`), OBJECT_PROTOTYPE_KEYS[i]).toBeChecked();
+    }
+    unmount();
+
+    render(FeaturesFilter, { props: {
+      tests, selections: {}, countsFor: () => new Map([['yes', 1]]), onchange: vi.fn(),
+    } });
+    expect(screen.getByText('Any feature')).toBeInTheDocument();
+    for (let i = 0; i < OBJECT_PROTOTYPE_KEYS.length; i++) {
+      expect(screen.getByLabelText(`Choice ${i} (1)`), OBJECT_PROTOTYPE_KEYS[i]).not.toBeChecked();
+    }
+  });
+
   it('is one collapsed section named for what it holds', () => {
     const { container } = mount();
     const details = container.querySelector('details')!;

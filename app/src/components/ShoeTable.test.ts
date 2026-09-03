@@ -12,8 +12,9 @@ import { EASY } from '../lib/score-defs';
 import { percentileMap } from '../lib/stats';
 import { defaultView, type ViewState } from '../lib/view';
 import { DEFAULT_PAINT, washCellClass } from '../lib/wash';
-import { FLEET, TESTS, shoe } from '../lib/test-fixtures';
+import { FLEET, OBJECT_PROTOTYPE_KEYS, TESTS, shoe } from '../lib/test-fixtures';
 import type { Shoe, ShoesFile } from '../../../shared/types.js';
+import { fireResizeObservers } from '../test-setup';
 
 /**
  * **The row measurement is stubbed, and its default is exactly what the real module already does
@@ -406,6 +407,27 @@ describe('ShoeTable windows the body', () => {
   const spacerPx = (table: HTMLElement) =>
     [...table.querySelectorAll<HTMLElement>('tr.spacer > td')]
       .reduce((total, td) => total + parseFloat(td.style.height), 0);
+
+  it('accounts for measured panels under every prototype-named shoe slug', async () => {
+    for (const key of OBJECT_PROTOTYPE_KEYS) {
+      rig.measure = () => BIG.map(() => ROW_PX);
+      const shoes = BIG.map((s, i) => i === 0 ? { ...s, slug: key, name: `Prototype ${key}` } : s);
+      const rendered = setup({ data: { ...bigData, shoes }, shoes, open: [key] }).rendered;
+      const table = rendered.container.querySelector<HTMLElement>('table:not(.proto)')!;
+      await tick();
+      const panel = table.querySelector<HTMLElement>(`tr.expand[data-slug="${CSS.escape(key)}"]`)!;
+      expect(panel, key).not.toBeNull();
+      panel.getBoundingClientRect = () => ({ height: 321 }) as DOMRect;
+      fireResizeObservers();
+      await tick();
+      await waitFor(() => expect(table.querySelectorAll('tr.spacer').length, key).toBeGreaterThan(0));
+      expect(table.querySelectorAll('tbody tr.shoe').length, key).toBe(48);
+      for (const cell of table.querySelectorAll<HTMLElement>('tr.spacer > td')) {
+        expect(Number.isFinite(parseFloat(cell.style.height)), key).toBe(true);
+      }
+      rendered.unmount();
+    }
+  });
 
   /**
    * **Every spacer's OWN height, against the shoes that spacer stands for — and the total is not

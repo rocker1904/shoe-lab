@@ -1,5 +1,6 @@
 import type { Shoe } from '../../../shared/types.js';
 import { facetValues, isCategorical } from './categorical';
+import { ownValue } from './record';
 import type { TestIndex } from './dataset';
 import { applyFilters, type FilterState } from './filters';
 
@@ -95,7 +96,9 @@ export function stableFacetCounts(slug: string): (shoes: Shoe[], f: FilterState,
   const poolOf = stableConsidered();
   let last: { pool: Shoe[]; selected: string; counts: Map<string, number> } | undefined;
   return (shoes, f, idx) => {
-    const { [slug]: mine, ...others } = f.categorical;
+    const mine = ownValue(f.categorical, slug);
+    const others = { ...f.categorical };
+    delete others[slug];
     const pool = poolOf(shoes, { ...f, categorical: others }, idx);
     // The pool key drops this facet, so its selection is keyed here — as a value rather than a join,
     // or one value carrying the separator keys the same as two values.

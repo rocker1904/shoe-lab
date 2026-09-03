@@ -1,5 +1,6 @@
 import type { LabTest } from '../../../shared/types.js';
 import { DERIVED_ZONE_PAIRS } from './lineage';
+import { ownValue } from './record';
 
 /** Derived rather than listed, so a further story needs no edit here. It depends on every derived
  *  pair's label ending in " score" — which is why `labels.test.ts` keeps one exact pin beside the
@@ -193,7 +194,7 @@ export function lineCount(label: string, maxPx: number = MAX_LABEL_PX): number {
 }
 
 export function shortLabel(key: string, fallback: string): string {
-  return SHORT_LABELS[key] ?? fallback;
+  return ownValue(SHORT_LABELS, key) ?? fallback;
 }
 
 /**
@@ -267,5 +268,5 @@ const CHIP_LABELS: Record<string, string> = {
 };
 
 export function chipLabel(key: string, test: LabTest | undefined): string {
-  return CHIP_LABELS[key] ?? columnLabel(key, test);
+  return ownValue(CHIP_LABELS, key) ?? columnLabel(key, test);
 }

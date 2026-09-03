@@ -8,6 +8,7 @@
   import { CURATED_RANGE_KEYS, effectiveGeneration, metricEntries, type ResolvedMetric, type Zone } from '../lib/lineage';
   import { stableBrandCounts, stableFacetCounts } from '../lib/population';
   import { excludedBy } from '../lib/relax';
+  import { ownValue, setOwn } from '../lib/record';
   import type { ViewState } from '../lib/view';
   import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
   import BrandFilter from './BrandFilter.svelte';
@@ -155,7 +156,7 @@
    * applied to it. Undefined on an open row, where there is nothing to relax (docs/app.md §Filters).
    */
   const excludedFor = (key: string): number | undefined => {
-    const b = view.filters.ranges[key];
+    const b = ownValue(view.filters.ranges, key);
     if (!b || (b.min === undefined && b.max === undefined)) return undefined;
     return excludedBy(data.shoes, view.filters, key, idx);
   };
@@ -205,7 +206,7 @@
       // returned true again and the entry band could never re-open; the row survives because it is
       // listed in `view.rows`, not because a hollow key props it up (docs/app.md §Filters).
       if (next.min === undefined && next.max === undefined) delete v.filters.ranges[key];
-      else v.filters.ranges[key] = next;
+      else setOwn(v.filters.ranges, key, next);
     });
   }
   // Anything not curated is removable, rather than only what is in `rows`. A row can also be on
@@ -227,7 +228,7 @@
     patch((v) => {
       const sibling = key === e.current.key ? e.retired.key : e.current.key;
       if (key === e.current.key) delete v.generations[e.current.key];
-      else v.generations[e.current.key] = key;
+      else setOwn(v.generations, e.current.key, key);
       // Selecting one generation releases the other. Readings are not comparable across a
       // supersession, so the bound is dropped rather than carried over (docs/app.md §URL encoding).
       delete v.filters.ranges[sibling];
@@ -298,7 +299,7 @@
                       // An empty selection deletes its key, the ranges rule and for the ranges
                       // reason: a leftover `[]` keeps `isDefaultView` false forever and All unlit
                       // (docs/app.md §Filters).
-                      if (values?.length) v.filters.categorical[slug] = values;
+                      if (values?.length) setOwn(v.filters.categorical, slug, values);
                       else delete v.filters.categorical[slug];
                     })} />
   </section>
@@ -325,10 +326,10 @@
         <MetricRow metric={e} chosen={chosenKey(e)} onchoose={(k) => choose(e, k)}
                    helpKey={chosenKey(e)}
                    coverage={(k) => coverageOf(population, k, idx)}
-                   bounded={(k) => k in view.filters.ranges} />
+                   bounded={(k) => Object.hasOwn(view.filters.ranges, k)} />
         {#each rowKeysOf(e) as key (key)}
           <RangeFilter label={legendFor(e, key)} units="" name={nameFor(e, key)} values={valuesFor(key)}
-                       bound={view.filters.ranges[key] ?? {}} onchange={(b) => setRange(key, b)}
+                       bound={ownValue(view.filters.ranges, key) ?? {}} onchange={(b) => setRange(key, b)}
                        excluded={excludedFor(key)}
                        onremove={removable(key) ? () => removeRow(key) : undefined} />
         {/each}

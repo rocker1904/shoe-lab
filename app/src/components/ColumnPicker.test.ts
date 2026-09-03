@@ -6,7 +6,7 @@ import { coverageOf } from '../lib/coverage';
 import { indexTests } from '../lib/dataset';
 import { metricHelpOf } from '../lib/metric-help';
 import { EASY } from '../lib/score-defs';
-import { FLEET, TESTS, labTest } from '../lib/test-fixtures';
+import { FLEET, OBJECT_PROTOTYPE_KEYS, TESTS, labTest } from '../lib/test-fixtures';
 import type { Shoe } from '../../../shared/types.js';
 
 vi.mock('../lib/coverage', async (importOriginal) => {
@@ -43,6 +43,26 @@ async function renderGuide(overrides: Partial<PickerProps> = {}) {
 }
 
 describe('ColumnPicker', () => {
+  it('uses only own prototype-named catalogue group labels', () => {
+    const tests = OBJECT_PROTOTYPE_KEYS.map((groupId, i) => labTest({
+      id: 1_000 + i, slug: `metric-${i}`, name: `Metric ${i}`, groupId,
+    }));
+    const groups = Object.fromEntries(OBJECT_PROTOTYPE_KEYS.map((key, i) => [key, `Group ${i}`]));
+    const own = render(ColumnPicker, { props: {
+      ...base, tests, groups, idx: indexTests(tests), columns: [], onchange: vi.fn(),
+    } });
+    for (let i = 0; i < OBJECT_PROTOTYPE_KEYS.length; i++) {
+      expect(screen.getByText(`Group ${i}`), OBJECT_PROTOTYPE_KEYS[i]).toBeInTheDocument();
+    }
+    own.unmount();
+
+    render(ColumnPicker, { props: {
+      ...base, tests, groups: {}, idx: indexTests(tests), columns: [], onchange: vi.fn(),
+    } });
+    expect(screen.getAllByText('Other')).toHaveLength(1);
+    expect(screen.getAllByRole('checkbox', { name: /^Metric/ })).toHaveLength(OBJECT_PROTOTYPE_KEYS.length);
+  });
+
   it('toggles columns on and off via checkboxes', async () => {
     const onchange = vi.fn();
     render(ColumnPicker, { props: { ...base, columns: ['score'], onchange } });

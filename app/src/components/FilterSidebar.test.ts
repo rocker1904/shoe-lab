@@ -7,7 +7,7 @@ import { applyPreset, PRESETS } from '../lib/presets';
 import { projectZone } from '../lib/zone';
 import { parseView, sameValue } from '../lib/urlstate';
 import { defaultView } from '../lib/view';
-import { FLEET, TESTS, labTest, shoe } from '../lib/test-fixtures';
+import { FLEET, OBJECT_PROTOTYPE_KEYS, TESTS, labTest, shoe } from '../lib/test-fixtures';
 import type { Zone } from '../lib/lineage';
 import type { ShoesFile } from '../../../shared/types.js';
 
@@ -351,6 +351,23 @@ describe('the features section', () => {
       .toEqual({ 'tongue-gusset-type': ['both-sides-semi'] });
   });
 
+  it('writes a __proto__ feature slug as own view data', async () => {
+    const test = labTest({
+      id: 900, slug: '__proto__', name: 'Prototype feature', type: 'option',
+      options: [{ value: 'yes', name: 'Yes' }],
+    });
+    const fleet = [shoe({ slug: 'prototype-feature-shoe', values: { '900': 'yes' } })];
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: {
+      data: { ...data, tests: [test], shoes: fleet }, view: defaultView(), onchange, population: fleet,
+    } });
+    await fireEvent.click(sectionNamed('Features').getByLabelText('Yes (1)'));
+    const categorical = onchange.mock.lastCall![0].filters.categorical;
+    expect(Object.hasOwn(categorical, '__proto__')).toBe(true);
+    expect(categorical['__proto__']).toEqual(['yes']);
+    expect(Object.getPrototypeOf(categorical)).toBe(Object.prototype);
+  });
+
   it('deletes the key when the last value goes, so All can light again', async () => {
     const view = defaultView();
     view.filters.categorical = { 'tongue-gusset-type': ['none'] };
@@ -397,6 +414,25 @@ const extraTest = labTest({ id: 99, slug: 'stiffness', name: 'Stiffness', units:
 const dataPlus: ShoesFile = { ...data, tests: [...TESTS, extraTest] };
 
 describe('FilterSidebar filter set management', () => {
+  it('writes every prototype-named range as an own view key', async () => {
+    const hostileTests = OBJECT_PROTOTYPE_KEYS.map((slug, i) => labTest({
+      id: 1_000 + i, slug, name: `Prototype metric ${i}`, units: 'u',
+    }));
+    const hostileData: ShoesFile = { ...data, tests: hostileTests };
+    const view = defaultView();
+    view.rows = [...OBJECT_PROTOTYPE_KEYS];
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: { data: hostileData, view, onchange, population: FLEET } });
+
+    for (const [i, key] of OBJECT_PROTOTYPE_KEYS.entries()) {
+      const group = screen.getByRole('group', { name: `Prototype metric ${i} (u)` });
+      await fireEvent.input(within(group).getByLabelText(/minimum$/), { target: { value: String(i + 1) } });
+      const ranges = onchange.mock.lastCall![0].filters.ranges;
+      expect(Object.hasOwn(ranges, key), key).toBe(true);
+      expect(ranges[key], key).toEqual({ min: i + 1 });
+    }
+  });
+
   it('offers only what is not already on screen, and adds the chosen one', async () => {
     const onchange = vi.fn();
     const { container } = render(FilterSidebar, { props: { data: dataPlus, view: defaultView(), onchange, population: FLEET } });

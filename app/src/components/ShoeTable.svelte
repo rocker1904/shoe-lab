@@ -8,6 +8,7 @@
   import { displayReleaseDate } from '../lib/release-date';
   import { columnWidths, fitModel } from '../lib/fit';
   import { columnLabel } from '../lib/labels';
+  import { ownValue, setOwn } from '../lib/record';
   import { createRowHeights, type NameEntry } from '../lib/row-height';
   import type { ScoreColumns } from '../lib/score';
   import { nextSort } from '../lib/sort';
@@ -172,9 +173,9 @@
         const el = entry.target as HTMLElement;
         const slug = el.dataset['slug'];
         const px = el.getBoundingClientRect().height;
-        if (!slug || panelPx[slug] === px) continue;
+        if (!slug || ownValue(panelPx, slug) === px) continue;
         next ??= { ...panelPx };
-        next[slug] = px;
+        setOwn(next, slug, px);
       }
       if (next) panelPx = next;
     });
@@ -235,7 +236,7 @@
 
   const items = $derived.by<VirtualItem[]>(() => shoes.map((s) => ({
     key: s.slug,
-    height: (heightBySlug.get(s.slug) ?? 0) + (open.has(s.slug) ? (panelPx[s.slug] ?? 0) : 0),
+    height: (heightBySlug.get(s.slug) ?? 0) + (open.has(s.slug) ? (ownValue(panelPx, s.slug) ?? 0) : 0),
   })));
 
   /**

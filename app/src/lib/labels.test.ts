@@ -9,7 +9,7 @@ import { headerUnits } from './units';
 import type { LabTest } from '../../../shared/types.js';
 import type { Zone } from './lineage';
 import { EASY, SCORE_DEFS } from './score-defs';
-import { labTest } from './test-fixtures';
+import { labTest, OBJECT_PROTOTYPE_KEYS } from './test-fixtures';
 
 const ZONES: Zone[] = ['heel', 'forefoot'];
 
@@ -67,6 +67,13 @@ describe('shortLabel', () => {
 
   it('falls back to the real name when it already fits', () => {
     expect(shortLabel('heel-stack', 'Heel stack')).toBe('Heel stack');
+  });
+
+  it('does not inherit labels for object-prototype property names', () => {
+    for (const key of OBJECT_PROTOTYPE_KEYS) {
+      expect(shortLabel(key, `Fallback ${key}`), key).toBe(`Fallback ${key}`);
+      expect(chipLabel(key, undefined), key).toBe(columnLabel(key, undefined));
+    }
   });
 
   it('measures an unlisted character at the fallback rather than as zero width', () => {

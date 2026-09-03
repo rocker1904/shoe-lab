@@ -2,6 +2,7 @@
   import type { LabTest } from '../../../shared/types.js';
   import { BOOL_LABELS, facetLabel, facetValues } from '../lib/categorical';
   import { chipLabel } from '../lib/labels';
+  import { ownValue } from '../lib/record';
   import CategoricalDisclosure from './CategoricalDisclosure.svelte';
   import SegmentedControl, { type SegmentOption } from './SegmentedControl.svelte';
 
@@ -17,7 +18,7 @@
   // display a bool holding both values, so a record `parseView` cannot produce — `['true','false']`
   // — would read "2 selected" with nothing lit. The asymmetry is deliberate: the summary is a count
   // of what is held, and the tri-state is a picture of what can be shown.
-  const selectedCount = $derived(tests.reduce((n, t) => n + (selections[t.slug]?.length ?? 0), 0));
+  const selectedCount = $derived(tests.reduce((n, t) => n + (ownValue(selections, t.slug)?.length ?? 0), 0));
 
   /**
    * The declared choices in display order, then whatever else the counts map carries — a value the
@@ -35,7 +36,7 @@
   }
 
   function toggle(test: LabTest, value: string) {
-    const held = selections[test.slug] ?? [];
+    const held = ownValue(selections, test.slug) ?? [];
     const next = held.includes(value) ? held.filter((v) => v !== value) : [...held, value];
     // Emitted in the order the rows are drawn, never the order they were clicked, so one selection
     // has one spelling in the address whoever built it (docs/app.md §URL encoding). A value with no
@@ -60,7 +61,7 @@
 
   /** Anything a tri-state cannot display reads as Any, rather than lighting one half of it. */
   function triOf(slug: string): 'true' | 'false' | undefined {
-    const held = selections[slug] ?? [];
+    const held = ownValue(selections, slug) ?? [];
     return held.length === 1 && (held[0] === 'true' || held[0] === 'false') ? held[0] : undefined;
   }
 </script>
@@ -87,7 +88,7 @@
             <!-- A value at zero stays, greyed and still clickable: the list must not reflow under
                  the cursor, and a 0 is an answer (docs/app.md §Filters). -->
             <li class:empty={row.n === 0}>
-              <label><input type="checkbox" checked={(selections[test.slug] ?? []).includes(row.value)}
+              <label><input type="checkbox" checked={(ownValue(selections, test.slug) ?? []).includes(row.value)}
                             onchange={() => toggle(test, row.value)} /> {row.label} ({row.n})</label>
             </li>
           {/each}

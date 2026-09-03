@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import AddFilterDialog, { type AddFilterOption } from './AddFilterDialog.svelte';
+import { OBJECT_PROTOTYPE_KEYS } from '../lib/test-fixtures';
 
 const options = [
   { key: 'heel-stack', label: 'Stack — Heel', groupId: '3', coverage: 80, retired: false, lifecycleNamed: false },
@@ -19,6 +20,23 @@ function setup(over: Partial<{
 }
 
 describe('AddFilterDialog', () => {
+  it('uses only own prototype-named group labels and otherwise files them under Other', () => {
+    const hostileOptions = OBJECT_PROTOTYPE_KEYS.map((groupId, i) => ({
+      key: `metric-${i}`, label: `Metric ${i}`, groupId, coverage: 1, retired: false,
+      lifecycleNamed: false,
+    }));
+    const ownGroups = Object.fromEntries(OBJECT_PROTOTYPE_KEYS.map((key, i) => [key, `Group ${i}`]));
+    const own = setup({ options: hostileOptions, groups: ownGroups });
+    for (let i = 0; i < OBJECT_PROTOTYPE_KEYS.length; i++) {
+      expect(screen.getByRole('heading', { name: `Group ${i}` }), OBJECT_PROTOTYPE_KEYS[i]).toBeInTheDocument();
+    }
+    own.rendered.unmount();
+
+    setup({ options: hostileOptions, groups: {} });
+    expect(screen.getAllByRole('heading', { name: 'Other' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Add filter: Metric/ })).toHaveLength(OBJECT_PROTOTYPE_KEYS.length);
+  });
+
   it('groups what it offers and shows coverage as a bar, not just a number', () => {
     setup();
     const dialog = screen.getByRole('dialog');

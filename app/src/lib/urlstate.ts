@@ -9,6 +9,7 @@ import { applyPreset, PRESETS } from './presets';
 import { startOfMonth } from './release-date';
 import { defForKey } from './score-defs';
 import { DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
+import { ownValue, setOwn } from './record';
 
 /**
  * Every value a shoe's `plate` can hold, in the order a selection is written. Both the filter UI
@@ -48,7 +49,8 @@ export function sameValue(a: unknown, b: unknown): boolean {
   }
   if (a && b && typeof a === 'object' && typeof b === 'object') {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-    return [...keys].every((k) => sameValue((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+    return [...keys].every((k) => sameValue(
+      ownValue(a as Record<string, unknown>, k), ownValue(b as Record<string, unknown>, k)));
   }
   return false;
 }
@@ -261,7 +263,7 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
       const b: { min?: number; max?: number } = {};
       if (min !== undefined) b.min = min;
       if (max !== undefined) b.max = max;
-      if (b.min !== undefined || b.max !== undefined) v.filters.ranges[target] = b;
+      if (b.min !== undefined || b.max !== undefined) setOwn(v.filters.ranges, target, b);
     } else if (key.startsWith('c.')) {
       // Collected rather than resolved here: one selection can arrive spelled as two keys, and every
       // rule below is applied to the merged values so that none of them depends on the spelling.
@@ -335,14 +337,14 @@ export function parseView(qs: string, idx: TestIndex): ViewState {
     if (test.type === 'bool' && kept.length !== 1) continue;
     // Nothing left stays absent rather than becoming an empty selection, which would keep
     // `isDefaultView` false forever (docs/app.md §Filters) — every list-valued token's rule.
-    if (kept.length) v.filters.categorical[slug] = kept;
+    if (kept.length) setOwn(v.filters.categorical, slug, kept);
   }
   // A URL is the one place opposing generations can arrive on different surfaces, so settle the
   // shared choice here. Explicit retired wins; without it any current evidence wins a conflict,
   // then retired-only evidence infers retired. A bound never crosses methods during normalisation.
   for (const pair of pairsOf(idx)) {
     if (genRaw.get(pair.current.key) === pair.retired.key) {
-      v.generations[pair.current.key] = pair.retired.key;
+      setOwn(v.generations, pair.current.key, pair.retired.key);
     }
     const selected = effectiveGeneration(pair, {
       generations: v.generations,

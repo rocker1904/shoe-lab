@@ -6,6 +6,7 @@ import { NUMERIC_TEST_TYPES } from './dataset';
 import { DIRECTION, directionOf } from './direction';
 import type { Zone } from './lineage';
 import { SCORE_DEFS } from './score-defs';
+import { OBJECT_PROTOTYPE_KEYS } from './test-fixtures';
 
 const ZONES: Zone[] = ['heel', 'forefoot'];
 
@@ -43,11 +44,15 @@ describe('directionOf', () => {
     expect(directionOf('not-a-real-test')).toBe('neutral');
   });
 
+  it('does not inherit directions for object-prototype property names', () => {
+    for (const key of OBJECT_PROTOTYPE_KEYS) expect(directionOf(key), key).toBe('neutral');
+  });
+
   it('classifies every numeric test in the scraped catalogue', () => {
     const unclassified = catalogue.tests
       .filter((t) => NUMERIC_TEST_TYPES.has(t.type))
       .map((t) => t.slug)
-      .filter((slug) => !(slug in DIRECTION));
+      .filter((slug) => !Object.hasOwn(DIRECTION, slug));
     expect(unclassified).toEqual([]);
   });
 });

@@ -7,9 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ShoeTableMobile from './ShoeTableMobile.svelte';
 import { defaultView, type ViewState } from '../lib/view';
-import { FLEET, TESTS, labTest, shoe } from '../lib/test-fixtures';
+import { FLEET, OBJECT_PROTOTYPE_KEYS, TESTS, labTest, shoe } from '../lib/test-fixtures';
 import type { ScoreColumns } from '../lib/score';
 import type { LabTest, Shoe, ShoesFile } from '../../../shared/types.js';
+import { fireResizeObservers } from '../test-setup';
 
 const rig = vi.hoisted(() => ({
   measure: null as ((entries: readonly unknown[]) => number[] | null) | null,
@@ -156,6 +157,28 @@ describe('ShoeTableMobile windows whole shoe groups', () => {
     await waitFor(() => expect(table.querySelectorAll('tr.spacer').length).toBeGreaterThan(0));
     return { rendered, table };
   }
+
+  it('accounts for measured panels under every prototype-named shoe slug', async () => {
+    for (const key of OBJECT_PROTOTYPE_KEYS) {
+      rig.measure = () => [...CONTENT_HEIGHTS];
+      rig.rulePx = 1;
+      const shoes = BIG.map((s, i) => i === 0 ? { ...s, slug: key, name: `Prototype ${key}` } : s);
+      const rendered = setup({ data: { ...bigData, shoes }, shoes, open: [key] }).rendered;
+      const table = rendered.container.querySelector<HTMLTableElement>('table[data-testid="shoe-table-mobile"]')!;
+      await tick();
+      const panel = table.querySelector<HTMLElement>(`tr.expand[data-slug="${CSS.escape(key)}"]`)!;
+      expect(panel, key).not.toBeNull();
+      panel.getBoundingClientRect = () => ({ height: 321 }) as DOMRect;
+      fireResizeObservers();
+      await tick();
+      await waitFor(() => expect(table.querySelectorAll('tr.spacer').length, key).toBeGreaterThan(0));
+      expect(table.querySelectorAll('tbody tr.shoe').length, key).toBe(26);
+      for (const cell of table.querySelectorAll<HTMLElement>('tr.spacer > td')) {
+        expect(Number.isFinite(parseFloat(cell.style.height)), key).toBe(true);
+      }
+      rendered.unmount();
+    }
+  });
 
   it('renders the fleet while nothing is measurable and keeps a permanent prototype outside it', () => {
     const { rendered } = setup({ data: bigData, shoes: BIG });

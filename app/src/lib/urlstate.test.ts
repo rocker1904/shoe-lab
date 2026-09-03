@@ -7,7 +7,7 @@ import { SCORE_DEFS } from './score-defs';
 import { parseOpen, parseView, sameValue, serializeOpen, serializeView, upToColumnOrder } from './urlstate';
 import { DEFAULT_ZONE, defaultColumns, defaultView, type ViewState } from './view';
 import type { FilterState } from './filters';
-import { FLEET, TESTS, labTest } from './test-fixtures';
+import { FLEET, OBJECT_PROTOTYPE_KEYS, TESTS, labTest } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -101,6 +101,62 @@ describe('urlstate', () => {
 });
 
 describe('urlstate hostile input', () => {
+  it('keeps every object-prototype name as own URL state when the catalogue declares it', () => {
+    for (const [i, key] of OBJECT_PROTOTYPE_KEYS.entries()) {
+      const numeric = labTest({ id: 10_000 + i, slug: key, name: `Metric ${i}` });
+      const hostileIdx = indexTests([numeric]);
+      const params = new URLSearchParams();
+      params.set(`r.${key}`, '1~2');
+      params.set('cols', key);
+      params.set('sort', key);
+      const parsed = parseView(params.toString(), hostileIdx);
+      expect(Object.hasOwn(parsed.filters.ranges, key), key).toBe(true);
+      expect(parsed.filters.ranges[key], key).toEqual({ min: 1, max: 2 });
+      expect(parsed.columns, key).toEqual([key]);
+      expect(parsed.sort, key).toEqual({ key, dir: 'asc' });
+      expect(parseView(serializeView(parsed), hostileIdx), key).toEqual(parsed);
+    }
+  });
+
+  it('keeps prototype-named categorical and generation choices as own state, never inherited state', () => {
+    for (const [i, key] of OBJECT_PROTOTYPE_KEYS.entries()) {
+      const option = labTest({
+        id: 20_000 + i, slug: key, name: `Feature ${i}`, type: 'option',
+        options: [{ value: 'held', name: 'Held' }],
+      });
+      const retired = labTest({ id: 30_000 + i * 2, slug: `retired-${i}`, name: `Generation ${i}`, updateId: 30_001 + i * 2 });
+      const current = labTest({ id: 30_001 + i * 2, slug: key, name: `Generation ${i}`, previousId: 30_000 + i * 2 });
+
+      const facetParams = new URLSearchParams([[`c.${key}`, 'held']]);
+      const facet = parseView(facetParams.toString(), indexTests([option]));
+      expect(Object.hasOwn(facet.filters.categorical, key), key).toBe(true);
+      expect(facet.filters.categorical[key], key).toEqual(['held']);
+      expect(parseView(serializeView(facet), indexTests([option])), key).toEqual(facet);
+
+      const generationParams = new URLSearchParams([[`gen.${key}`, retired.slug]]);
+      const generation = parseView(generationParams.toString(), indexTests([retired, current]));
+      expect(Object.hasOwn(generation.generations, key), key).toBe(true);
+      expect(generation.generations[key], key).toBe(retired.slug);
+      expect(parseView(serializeView(generation), indexTests([retired, current])), key).toEqual(generation);
+    }
+
+    const absent = defaultView();
+    for (const key of OBJECT_PROTOTYPE_KEYS) {
+      expect(Object.hasOwn(absent.filters.ranges, key), key).toBe(false);
+      expect(Object.hasOwn(absent.filters.categorical, key), key).toBe(false);
+      expect(Object.hasOwn(absent.generations, key), key).toBe(false);
+    }
+  });
+
+  it('compares prototype-named entries without reading absent inherited values', () => {
+    for (const key of OBJECT_PROTOTYPE_KEYS) {
+      expect(sameValue({}, Object.fromEntries([[key, undefined]])), key).toBe(true);
+      expect(sameValue({}, Object.fromEntries([[key, 'held']])), key).toBe(false);
+      expect(sameValue(
+        Object.fromEntries([[key, 'held']]), Object.fromEntries([[key, 'held']])), key).toBe(true);
+    }
+  });
+
   it('parses an empty or leading-? query string as the default view', () => {
     expect(parseView('', idx)).toEqual(defaultView());
     expect(parseView('?sort=name', idx).sort).toEqual({ key: 'name', dir: 'asc' });

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { ShoesFile } from '../../../shared/types.js';
 import { METRIC_HELP, metricHelpOf, metricInterpretation } from './metric-help';
+import { OBJECT_PROTOTYPE_KEYS } from './test-fixtures';
 
 const published = JSON.parse(readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../../../data/shoes.json'), 'utf8')) as ShoesFile;
@@ -16,6 +17,10 @@ const validKeys = new Set([
 describe('metricHelpOf', () => {
   it('returns no metadata for an unknown future metric', () => {
     expect(metricHelpOf('future-upstream-test')).toBeUndefined();
+  });
+
+  it('returns no inherited metadata for object-prototype property names', () => {
+    for (const key of OBJECT_PROTOTYPE_KEYS) expect(metricHelpOf(key), key).toBeUndefined();
   });
 
   it('keeps every authored fact non-empty and every source on RunRepeat HTTPS', () => {

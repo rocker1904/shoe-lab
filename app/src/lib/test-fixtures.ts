@@ -1,5 +1,10 @@
 import type { LabTest, Shoe } from '../../../shared/types.js';
 
+export const OBJECT_PROTOTYPE_KEYS = [...new Set([
+  ...Object.getOwnPropertyNames(Object.prototype),
+  '__proto__',
+])];
+
 export function labTest(over: Partial<LabTest> & Pick<LabTest, 'id' | 'slug' | 'name'>): LabTest {
   return {
     type: 'float', units: '', groupId: null, chartLabel: null, isNew: false,

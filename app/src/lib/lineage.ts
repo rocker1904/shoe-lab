@@ -1,5 +1,6 @@
 import type { LabTest } from '../../../shared/types.js';
 import { NUMERIC_TEST_TYPES } from './dataset';
+import { ownValue } from './record';
 
 /**
  * One choosable thing in the metric surface. Named `ResolvedMetric` rather than `MetricEntry`
@@ -36,8 +37,8 @@ export interface GenerationEvidence {
  * conflict, retired-only content selects retired, and a pair with no evidence starts current.
  */
 export function effectiveGeneration(pair: FormalPair, evidence: GenerationEvidence) {
-  if (evidence.generations[pair.current.key] === pair.retired.key) return pair.retired;
-  const active = (key: string) => key in evidence.ranges
+  if (ownValue(evidence.generations, pair.current.key) === pair.retired.key) return pair.retired;
+  const active = (key: string) => Object.hasOwn(evidence.ranges, key)
     || evidence.rows.includes(key)
     || evidence.columns.includes(key);
   if (active(pair.current.key)) return pair.current;

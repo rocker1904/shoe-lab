@@ -1,4 +1,5 @@
 import { DERIVED_ZONE_PAIRS } from './lineage';
+import { ownValue } from './record';
 
 export type Direction = 'higher' | 'lower' | 'neutral';
 
@@ -57,7 +58,7 @@ export const DIRECTION: Record<string, Direction> = {
 };
 
 export function directionOf(key: string): Direction {
-  return DIRECTION[key] ?? 'neutral';
+  return ownValue(DIRECTION, key) ?? 'neutral';
 }
 
 /** Blue means "better", so a metric with no direction gets the neutral grey ramp instead. */

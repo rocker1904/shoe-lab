@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
 import { applyFilters, EMPTY_FILTERS, type FilterState } from './filters';
 import { stableBrandCounts, stableConsidered, stableFacetCounts } from './population';
-import { FLEET, TESTS, shoe } from './test-fixtures';
+import { FLEET, OBJECT_PROTOTYPE_KEYS, TESTS, labTest, shoe } from './test-fixtures';
 
 const idx = indexTests(TESTS);
 
@@ -70,6 +70,23 @@ describe('stableFacetCounts', () => {
   const c = shoe({ slug: 'c', brand: 'Other', values: { '39': 'both-sides-semi', '40': 'none' } });
   const unread = shoe({ slug: 'unread', values: {} });
   const FEATURED = [a, b, c, unread];
+
+  it('treats prototype-named facet selections as own data, not inherited state', () => {
+    for (const [i, slug] of OBJECT_PROTOTYPE_KEYS.entries()) {
+      const test = labTest({
+        id: 1_000 + i, slug, name: `Feature ${i}`, type: 'option',
+        options: [{ value: 'yes', name: 'Yes' }],
+      });
+      const hostileIdx = indexTests([test]);
+      const fleet = [shoe({ slug: `shoe-${i}`, values: { [String(test.id)]: 'yes' } })];
+      expect(stableFacetCounts(slug)(fleet, { ranges: {}, categorical: {} }, hostileIdx).get('yes'), slug)
+        .toBe(1);
+      const categorical = Object.fromEntries([[slug, ['stale']]]) as Record<string, string[]>;
+      const counts = stableFacetCounts(slug)(fleet, { ranges: {}, categorical }, hostileIdx);
+      expect(counts.get('yes'), slug).toBe(1);
+      expect(counts.get('stale'), slug).toBe(0);
+    }
+  });
 
   it('counts the population with that one facet removed', () => {
     const counts = stableFacetCounts(GUSSET)(FEATURED, { ranges: {}, categorical: { [GUSSET]: ['both-sides-semi'] } }, idx);

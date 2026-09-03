@@ -4,6 +4,7 @@ import { columnLabel } from './labels';
 import type { SortState } from './sort';
 import { isFigure } from './units';
 import { DEFAULT_SORT, type ViewState } from './view';
+import { ownValue } from './record';
 
 /**
  * How the app *words* an ordering — one home, because two surfaces state it: the line under the
@@ -35,7 +36,7 @@ function orderWords(key: string, dir: SortState['dir'], idx: TestIndex): string 
 
 /** `release date, newest first` — the phrase both surfaces embed in a sentence of their own. */
 export function sortPhrase(sort: SortState, idx: TestIndex): string {
-  const noun = SORT_NOUNS[sort.key] ?? columnLabel(sort.key, idx.bySlug.get(sort.key));
+  const noun = ownValue(SORT_NOUNS, sort.key) ?? columnLabel(sort.key, idx.bySlug.get(sort.key));
   return `${noun}, ${orderWords(sort.key, sort.dir, idx)}`;
 }
 

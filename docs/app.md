@@ -390,6 +390,11 @@ its key names the current generation of a resolved pair and its value names
 that pair's retired generation. Bound serialisation accepts everything
 `String(number)` emits, exponent form included, so round-trips are lossless.
 
+Every catalogue key that survives those rules remains own view data: object
+prototype property names are neither inherited defaults nor special mutation
+instructions. The same own-data rule binds catalogue vocabulary and shoe-keyed
+rendering state throughout the app (docs/policies.md §Vocabulary).
+
 **`brands` is the deliberate exception, and it is not an oversight.** The names
 are kept verbatim rather than filtered against the current catalogue, because
 `data/` is regenerated on a schedule and dropping a name here would change what

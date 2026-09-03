@@ -7,6 +7,7 @@
   import { categoricalValue, isNegativeReading, PLATE_LABELS } from '../lib/categorical';
   import { displayReleaseDate } from '../lib/release-date';
   import { chipLabel, columnLabel, shortLabel } from '../lib/labels';
+  import { ownValue, setOwn } from '../lib/record';
   import {
     createRowHeights,
     measurePhoneGroupHeights,
@@ -182,9 +183,9 @@
         const el = entry.target as HTMLElement;
         const slug = el.dataset['slug'];
         const px = el.getBoundingClientRect().height;
-        if (!slug || panelPx[slug] === px) continue;
+        if (!slug || ownValue(panelPx, slug) === px) continue;
         next ??= { ...panelPx };
-        next[slug] = px;
+        setOwn(next, slug, px);
       }
       if (next) panelPx = next;
     });
@@ -225,7 +226,7 @@
   const items = $derived.by<VirtualItem[]>(() => shoes.map((s, index) => ({
     key: s.slug,
     height: (heightBySlug.get(s.slug) ?? 0) + (index > 0 ? (rulePx ?? 0) : 0)
-      + (open.has(s.slug) ? (panelPx[s.slug] ?? 0) : 0),
+      + (open.has(s.slug) ? (ownValue(panelPx, s.slug) ?? 0) : 0),
   })));
   function planFor(list: VirtualItem[], window: {
     scrollTopPx: number; viewportPx: number; overscanPx: number; kept: ReadonlySet<string>;

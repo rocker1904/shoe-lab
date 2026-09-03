@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { indexTests } from './dataset';
+import { columnLabel } from './labels';
 import { orderingNote, sortPhrase } from './ordering';
 import { EASY } from './score-defs';
-import { TESTS, labTest } from './test-fixtures';
+import { OBJECT_PROTOTYPE_KEYS, TESTS, labTest } from './test-fixtures';
 import { defaultColumns, defaultView, type ViewState } from './view';
 
 const idx = indexTests([...TESTS, labTest({ id: 40, slug: 'heel-tab', name: 'Heel tab', type: 'option' })]);
@@ -35,6 +36,13 @@ describe('sortPhrase', () => {
     expect(sortPhrase({ key: 'msrpGbp', dir: 'desc' }, idx)).toBe('price, highest first');
     expect(sortPhrase({ key: 'score', dir: 'desc' }, idx)).toBe('RunRepeat Score, highest first');
     expect(sortPhrase({ key: EASY.keys.heel, dir: 'desc' }, idx)).toBe('Easy heel score, highest first');
+  });
+  it('does not inherit nouns for object-prototype property names', () => {
+    const empty = indexTests([]);
+    for (const key of OBJECT_PROTOTYPE_KEYS) {
+      expect(sortPhrase({ key, dir: 'desc' }, empty), key)
+        .toBe(`${columnLabel(key, undefined)}, highest first`);
+    }
   });
 });
 

@@ -7,7 +7,7 @@ import {
   CURATED_RANGE_KEYS, effectiveGeneration, generationLabel, metricEntries, ZONE_PAIRS, zoneKey,
   swapZone, type GenerationEvidence, type ResolvedMetric,
 } from './lineage';
-import { labTest } from './test-fixtures';
+import { labTest, OBJECT_PROTOTYPE_KEYS } from './test-fixtures';
 import type { LabTest } from '../../../shared/types.js';
 
 const colocatedOf = (e: ResolvedMetric) => e as Extract<ResolvedMetric, { kind: 'colocated' }>;
@@ -62,6 +62,28 @@ describe('effectiveGeneration', () => {
       ranges: { 'midsole-softness-22': { min: 20 } }, rows: ['midsole-softness-22'],
       columns: ['midsole-softness-22'],
     })).key).toBe('midsole-softness');
+  });
+
+  it('distinguishes own prototype-named evidence from absent inherited properties', () => {
+    for (const [i, key] of OBJECT_PROTOTYPE_KEYS.entries()) {
+      const hostilePair = {
+        ...pair,
+        current: { ...pair.current, key: `current-${i}` },
+        retired: { ...pair.retired, key },
+      };
+      expect(effectiveGeneration(hostilePair, evidence()).key, key).toBe(`current-${i}`);
+      const ranges = Object.fromEntries([[key, { min: 1 }]]);
+      expect(effectiveGeneration(hostilePair, evidence({ ranges })).key, key).toBe(key);
+
+      const currentHostile = {
+        ...hostilePair,
+        current: { ...hostilePair.current, key },
+        retired: { ...hostilePair.retired, key: `retired-${i}` },
+      };
+      const generations = Object.fromEntries([[key, `retired-${i}`]]);
+      expect(Object.hasOwn(generations, key), key).toBe(true);
+      expect(effectiveGeneration(currentHostile, evidence({ generations })).key, key).toBe(`retired-${i}`);
+    }
   });
 });
 
