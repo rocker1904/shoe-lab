@@ -1,6 +1,6 @@
 # Dataset-boundary hardening
 
-*2026-09-03 · status: **approved, in delivery**.*
+*2026-09-03 · status: **delivered, frozen**.*
 
 ## Outcome
 
