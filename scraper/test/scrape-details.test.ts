@@ -6,6 +6,7 @@ import { dataDir } from '../src/data-files.js';
 import { PoliteHttp } from '../src/http.js';
 import { scrapeDetails } from '../src/scrape-details-main.js';
 import type { DetailsFile, MetricsFile } from '../../shared/types.js';
+import { prototypePropertyNames } from './helpers.js';
 
 const azuraHtml = readFileSync(new URL('./fixtures/raw/azura.html', import.meta.url), 'utf8');
 
@@ -42,6 +43,29 @@ describe('scrapeDetails', () => {
     expect((details.shoes['saucony-endorphin-azura'] as any).productId).toBe(41068);
     expect(details.shoes['gone-shoe']).toEqual({ gone: true, scrapedAt: 'T0' });
     expect(details.shoes['broken-shoe']).toBeUndefined();
+  });
+  it('does not mistake inherited shoe slugs for existing records', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const keys = prototypePropertyNames();
+    const shoes = Object.fromEntries(keys.map((slug) => [slug, {
+      name: `Hostile ${slug}`, url: `https://runrepeat.com/${slug}`, values: {},
+    }])) as MetricsFile['shoes'];
+    dir.write('metrics.json', { scrapedAt: 't', shoes } satisfies MetricsFile);
+    const fetchImpl = (async (url: RequestInfo | URL) => {
+      if (String(url).endsWith('/robots.txt')) return new Response('User-agent: *\nDisallow: /search*\n');
+      return new Response(azuraHtml);
+    }) as typeof fetch;
+    const http = new PoliteHttp({ fetchImpl, sleep: async () => {} });
+
+    const result = await scrapeDetails({ http, dataDir: dir, now: () => 'T0' });
+
+    expect(result.fetched).toEqual([...keys].sort());
+    const records = dir.read<DetailsFile>('details.json')!.shoes;
+    for (const key of keys) {
+      expect(Object.hasOwn(records, key), key).toBe(true);
+      expect((records[key] as any).scrapedAt, key).toBe('T0');
+    }
+    expect(Object.hasOwn(records, 'not-a-source-slug')).toBe(false);
   });
   it('is incremental: second run fetches nothing', async () => {
     const { dir, http } = setup();

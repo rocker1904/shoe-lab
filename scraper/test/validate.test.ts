@@ -4,7 +4,7 @@ import { ValidationError, validateCatalogue, validateDetailsRecord, validateFlee
 import type { DetailRecord, DetailsFile, MetricsFile, Plate, Shoe, ShoesFile, TestsFile } from '../../shared/types.js';
 import { methodStatusOf } from '../src/method-status.js';
 import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
-import { detailRecord, labTest, shoe } from './helpers.js';
+import { detailRecord, labTest, prototypePropertyNames, shoe } from './helpers.js';
 
 function makeMetrics(shoeCount: number, testIds: number[] = [5, 6]): MetricsFile {
   const shoes: MetricsFile['shoes'] = {};
@@ -110,6 +110,26 @@ describe('complete runtime schemas', () => {
       ['values', (f) => { f.shoes['shoe-0'].values = []; }],
       ['test 5', (f) => { f.shoes['shoe-0'].values['5'] = Number.POSITIVE_INFINITY; }],
     ]);
+  });
+
+  it('does not let inherited shoe records hide vanished prototype-shaped metric pairs', () => {
+    const keys = prototypePropertyNames();
+    const values = Object.fromEntries(tests.tests.map((test) => [String(test.id), 1]));
+    const normal = makeMetrics(300, []);
+    const prev: MetricsFile = {
+      scrapedAt: '2026-07-25T00:00:00Z',
+      shoes: Object.fromEntries([
+        ...Object.entries(normal.shoes),
+        ...keys.map((slug) => [slug, { name: `Hostile ${slug}`, url: `https://runrepeat.com/${slug}`, values }]),
+      ]),
+    };
+    const inherited = Object.fromEntries(keys.map((slug) => [slug, { values }]));
+    const next: MetricsFile = {
+      scrapedAt: '2026-07-26T00:00:00Z',
+      shoes: Object.assign(Object.create(inherited), normal.shoes),
+    };
+
+    expect(() => validateMetrics(next, prev, tests)).toThrow(/published|pairs vanished/);
   });
 
   it('checks the complete metric-shoe shape on the catalogue-only rewrite path', () => {
@@ -609,6 +629,19 @@ describe('validateFleetAgainstPrevious boundaries', () => {
     const over = structuredClone(exact);
     delete over.shoes[100]!.values['9'];
     expect(() => check(over, prev)).toThrow(ValidationError);
+  });
+
+  it('treats every prototype-shaped slug as present only when the next fleet owns it', () => {
+    const keys = prototypePropertyNames();
+    const values = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [String(i + 1), i]));
+    for (const key of keys) {
+      const unchanged = fleetOf(399, () => ({ values: {} }));
+      unchanged.shoes.push(shoe({ slug: key, values }));
+      expect(() => check(unchanged, structuredClone(unchanged)), key).not.toThrow();
+
+      const next = fleetOf(400, () => ({ values: {} }));
+      expect(() => check(next, unchanged), key).toThrow(/100\/100.*pairs vanished/);
+    }
   });
 
   it('accepts a plate class at exactly 75% of its previous count and rejects one below', () => {

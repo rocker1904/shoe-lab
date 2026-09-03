@@ -9,6 +9,7 @@ import { PoliteHttp } from '../src/http.js';
 import { extractPagePayload } from '../src/page-payload.js';
 import { scrapeMetrics } from '../src/scrape-metrics-main.js';
 import { extractTestCatalogue } from '../src/test-catalogue.js';
+import { prototypePropertyNames } from './helpers.js';
 
 const azuraHtml = readFileSync(new URL('./fixtures/raw/azura.html', import.meta.url), 'utf8');
 const labtest5 = readFileSync(new URL('./fixtures/raw/labtest5.json', import.meta.url), 'utf8');
@@ -93,6 +94,37 @@ describe('scrapeMetrics', () => {
     await expect(scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' })).rejects.toThrow(/<300/);
     expect(dir.read('tests.json')).toBeNull();
     expect(dir.read('metrics.json')).toBeNull();
+  });
+  it('accumulates every prototype-shaped shoe slug as an own record', async () => {
+    const dir = dataDir(mkdtempSync(join(tmpdir(), 'shoe-lab-')));
+    const keys = prototypePropertyNames();
+    const rows = [
+      ...Array.from({ length: 300 }, (_, i) => [
+        { value: '1' },
+        { text: `Shoe ${i}`, url: `https://runrepeat.com/shoe-${i}` },
+      ]),
+      ...keys.map((slug) => [
+        { value: '1' },
+        { text: `Hostile ${slug}`, url: `https://runrepeat.com/${slug}` },
+      ]),
+    ];
+    const fetchImpl = (async (url: RequestInfo | URL) => {
+      const u = String(url);
+      if (u.endsWith('/robots.txt')) return new Response('User-agent: *\nDisallow: /search*\n');
+      if (u.includes('/uk/saucony-endorphin-azura')) return new Response(azuraHtml);
+      if (u.includes('/api/product/lab-test-list/')) return new Response(JSON.stringify({ headers: ['X', 'Name'], rows }));
+      throw new Error(`unexpected url ${u}`);
+    }) as typeof fetch;
+    const http = new PoliteHttp({ fetchImpl, sleep: async () => {}, now: (() => { let t = 0; return () => (t += 2000); })() });
+
+    await scrapeMetrics({ http, dataDir: dir, seed: 'saucony-endorphin-azura' });
+
+    const shoes = dir.read<MetricsFile>('metrics.json')!.shoes;
+    for (const key of keys) {
+      expect(Object.hasOwn(shoes, key), key).toBe(true);
+      expect(shoes[key]!.name, key).toBe(`Hostile ${key}`);
+    }
+    expect(Object.hasOwn(shoes, 'not-a-source-slug')).toBe(false);
   });
   it.each([
     [

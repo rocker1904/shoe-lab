@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { canonicalJson } from '../src/canonical.js';
 import { PayloadError } from '../src/page-payload.js';
 import { extractTestCatalogue, extractTestGroups } from '../src/test-catalogue.js';
-import { loadAzuraPageData } from './helpers.js';
+import { loadAzuraPageData, prototypePropertyNames } from './helpers.js';
 
 describe('extractTestCatalogue', () => {
   it('extracts all tests with group mapping from the real fixture', () => {
@@ -29,6 +30,28 @@ describe('extractTestCatalogue', () => {
     const first = Object.values<any>(page.lab_tests.tests)[0]!;
     first.slug = 'heel_stack.v2';
     expect(extractTestCatalogue(page, 's', 't').tests[0]!.slug).toBe('heel_stack.v2');
+  });
+  it('keeps every prototype-shaped group id as own catalogue data', () => {
+    const page = structuredClone(loadAzuraPageData());
+    const keys = prototypePropertyNames();
+    const sourceTests = Object.values<any>(page.lab_tests.tests).slice(0, keys.length);
+    page.lab_tests.groups = Object.fromEntries(keys.map((groupId, i) => [groupId, {
+      name: `Group ${groupId}`,
+      tests: [{ id: sourceTests[i]!.id }],
+    }]));
+
+    const catalogue = extractTestCatalogue(page, 's', 't');
+    const roundTripped = JSON.parse(canonicalJson(catalogue)) as typeof catalogue;
+    const groupByTest = extractTestGroups(page);
+    for (const [i, key] of keys.entries()) {
+      expect(Object.hasOwn(catalogue.groups, key), key).toBe(true);
+      expect(catalogue.groups[key], key).toBe(`Group ${key}`);
+      expect(Object.hasOwn(roundTripped.groups, key), key).toBe(true);
+      expect(roundTripped.groups[key], key).toBe(`Group ${key}`);
+      expect(catalogue.tests.find((test) => test.id === sourceTests[i]!.id)!.groupId, key).toBe(key);
+      expect(groupByTest[String(sourceTests[i]!.id)], key).toBe(key);
+    }
+    expect(Object.hasOwn(catalogue.groups, 'not-a-source-group')).toBe(false);
   });
 });
 

@@ -34,13 +34,14 @@ export async function scrapeDetails(opts: ScrapeDetailsOptions): Promise<ScrapeD
   const metrics = dataDir.read<MetricsFile>('metrics.json');
   if (!metrics) throw new Error('metrics.json missing — run scrape:metrics first');
   const details = dataDir.read<DetailsFile>('details.json') ?? { shoes: {} };
+  details.shoes = Object.assign(Object.create(null) as DetailsFile['shoes'], details.shoes);
 
   const allSlugs = Object.keys(metrics.shoes).sort();
   const targets = opts.slug
     ? [opts.slug]
     : opts.forceAll
       ? allSlugs
-      : allSlugs.filter((s) => details.shoes[s] === undefined);
+      : allSlugs.filter((s) => !Object.hasOwn(details.shoes, s));
 
   const result: ScrapeDetailsResult = { fetched: [], tombstoned: [], failed: [], skipped: allSlugs.length - targets.length };
   // The corpus path reads from disk and must never construct a request, so the robots gate —
@@ -63,7 +64,7 @@ export async function scrapeDetails(opts: ScrapeDetailsOptions): Promise<ScrapeD
         html = readFileSync(file, 'utf8');
         // `scrapedAt` records when RunRepeat was read, and re-reading disk is not reading
         // RunRepeat — so the original timestamp stands (docs/scraping.md §Determinism).
-        const prior = details.shoes[slug];
+        const prior = Object.hasOwn(details.shoes, slug) ? details.shoes[slug] : undefined;
         if (prior && !isTombstone(prior)) scrapedAt = prior.scrapedAt;
       } else {
         html = await http!.getText(`${BASE}/uk/${slug}`);

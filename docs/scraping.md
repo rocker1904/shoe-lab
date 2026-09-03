@@ -47,6 +47,12 @@ round-trip as strings anyway. Test *slugs* are the stable public key (CSV
 headers, URL state); display names are neither unique nor stable, see
 §Data quirks.
 
+Those source strings stay data even when they spell an `Object.prototype`
+property or `__proto__`. Scraper dictionaries use own-property storage and
+lookups (or `Map`) throughout decoding, accumulation, validation and joining,
+so an inherited property is never a shoe, test group or override and every
+source key survives canonical JSON unchanged.
+
 ## Which tests are fetched
 
 The catalogue comes from the seed shoe's page (`--seed`, default

@@ -38,7 +38,7 @@ export interface ScrapeReleasesOptions {
 }
 
 export async function scrapeReleases({ http, dataDir, log = () => {} }: ScrapeReleasesOptions): Promise<{ shoeCount: number; yearCount: number }> {
-  const years: Record<string, number> = {};
+  const years = Object.create(null) as Record<string, number>;
   const slugs = new Set<string>();
 
   for (let page = 0; page < MAX_PAGES; page++) {

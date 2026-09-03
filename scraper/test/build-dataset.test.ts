@@ -4,7 +4,7 @@ import { PLATE_OVERRIDES } from '../src/plate-overrides.js';
 import { REVIEW_LANGUAGE_OVERRIDES } from '../src/review-language-overrides.js';
 import { ValidationError } from '../src/validate.js';
 import type { DetailRecord, DetailsFile, MetricsFile, ReleaseYearsFile, ShoesFile, TestsFile } from '../../shared/types.js';
-import { detailRecord, labTest } from './helpers.js';
+import { detailRecord, labTest, prototypePropertyNames } from './helpers.js';
 
 const tests: TestsFile = {
   scrapedAt: '2026-07-20T00:00:00Z', seedSlug: 's',
@@ -406,15 +406,35 @@ describe('buildDataset empty-test drop', () => {
     expect(buildDataset(tests, metrics, details).shoesFile.tests.map((t) => t.id)).not.toContain(17);
   });
 
-  // A slug is a URL path segment, so nothing stops one naming an Object.prototype key. Read off
-  // a plain object it would publish the prototype's value — a shoe dated "function Object()".
-  it('reads no shoe field off the prototype chain', () => {
+  it('rebuilds every prototype-shaped shoe slug without inherited records or overrides', () => {
     const { metrics, details } = baseInputs();
-    metrics.shoes['constructor'] = { name: 'Constructor', url: 'https://runrepeat.com/uk/constructor', values: { '6': 30 } };
+    const keys = prototypePropertyNames();
+    metrics.shoes = Object.fromEntries([
+      ...Object.entries(metrics.shoes),
+      ...keys.map((slug) => [slug, { name: `Hostile ${slug}`, url: `https://runrepeat.com/uk/${slug}`, values: { '6': 30 } }]),
+    ]);
     const years: ReleaseYearsFile = { scrapedAt: '2026-07-20T00:00:00Z', years: {} };
-    const built = buildDataset(tests, metrics, details, years).shoesFile.shoes.find((s) => s.slug === 'constructor')!;
-    expect(built.releasedAt).toBeNull();
-    expect(built.details).toBeNull();
+    const plateDescriptor = Object.getOwnPropertyDescriptor(Object.prototype, 'plate');
+    const languageDescriptor = Object.getOwnPropertyDescriptor(Object.prototype, 'language');
+    Object.defineProperty(Object.prototype, 'plate', { configurable: true, value: 'carbon' });
+    Object.defineProperty(Object.prototype, 'language', { configurable: true, value: 'es' });
+    try {
+      const built = buildDataset(tests, metrics, details, years).shoesFile.shoes;
+      for (const key of keys) {
+        const shoe = built.find((candidate) => candidate.slug === key)!;
+        expect(shoe, key).toBeDefined();
+        expect(shoe.releasedAt, key).toBeNull();
+        expect(shoe.details, key).toBeNull();
+        expect(shoe.plate, key).toBe('none');
+        expect(shoe.reviewLanguage, key).toBeNull();
+      }
+      expect(built.some((shoe) => shoe.slug === 'not-a-source-slug')).toBe(false);
+    } finally {
+      if (plateDescriptor) Object.defineProperty(Object.prototype, 'plate', plateDescriptor);
+      else delete (Object.prototype as any).plate;
+      if (languageDescriptor) Object.defineProperty(Object.prototype, 'language', languageDescriptor);
+      else delete (Object.prototype as any).language;
+    }
   });
 
   // A catalogue rewrite can drop a test the readings on disk still name. Dropping it from

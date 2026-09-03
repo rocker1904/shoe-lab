@@ -48,3 +48,7 @@ export function loadAzuraPageData(): Record<string, any> {
 export function loadJsonFixture(name: string): any {
   return JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
 }
+
+export function prototypePropertyNames(): string[] {
+  return [...new Set([...Object.getOwnPropertyNames(Object.prototype), '__proto__'])];
+}

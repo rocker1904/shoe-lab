@@ -6,7 +6,7 @@ import type { ReleaseYearsFile } from '../../shared/types.js';
 import { dataDir } from '../src/data-files.js';
 import { PoliteHttp } from '../src/http.js';
 import { parseReleaseYear, scrapeReleases } from '../src/release-dates.js';
-import { loadJsonFixture } from './helpers.js';
+import { loadJsonFixture, prototypePropertyNames } from './helpers.js';
 
 const catdocs = loadJsonFixture('raw/catdocs.json');
 
@@ -98,6 +98,27 @@ describe('scrapeReleases', () => {
     expect(file.years['synth-1']).toBe(2020);
     expect(file.years['synth-3']).toBeUndefined();   // no release-date fact
     expect(file.scrapedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('writes every prototype-shaped slug as an own release-year key', async () => {
+    const dir = tmpDir();
+    const keys = prototypePropertyNames();
+    const hostile = keys.map((slug) => ({
+      slug,
+      facts: { 'release-date': { value: [{ name: '2024' }] } },
+    }));
+    const { fetchImpl } = paging((from) => from === 0
+      ? { products: [...synth(0, 300), ...hostile] }
+      : { products: [] });
+
+    await scrapeReleases({ http: http(fetchImpl), dataDir: dir });
+
+    const years = dir.read<ReleaseYearsFile>('release-years.json')!.years;
+    for (const key of keys) {
+      expect(Object.hasOwn(years, key), key).toBe(true);
+      expect(years[key], key).toBe(2024);
+    }
+    expect(Object.hasOwn(years, 'not-a-source-slug')).toBe(false);
   });
 
   it('stops when a page has no products key at all', async () => {

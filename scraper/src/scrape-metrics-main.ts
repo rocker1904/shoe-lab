@@ -60,7 +60,7 @@ export async function scrapeMetrics({ http, dataDir, seed, corpusDir, log = () =
   const previousTests = dataDir.read<TestsFile>('tests.json');
   validateCatalogue(tests, previousTests);
 
-  const next: MetricsFile = { scrapedAt, shoes: {} };
+  const next: MetricsFile = { scrapedAt, shoes: Object.create(null) as MetricsFile['shoes'] };
   const fetchable = tests.tests.filter((t) => METRIC_TYPES.has(t.type));
   for (const test of fetchable) {
     log(`test ${test.id} (${test.slug})`);
@@ -69,7 +69,14 @@ export async function scrapeMetrics({ http, dataDir, seed, corpusDir, log = () =
       test,
     );
     for (const [slug, row] of rows) {
-      const shoe = (next.shoes[slug] ??= { name: row.name, url: row.url, values: {} });
+      if (!Object.hasOwn(next.shoes, slug)) {
+        next.shoes[slug] = {
+          name: row.name,
+          url: row.url,
+          values: Object.create(null) as MetricsFile['shoes'][string]['values'],
+        };
+      }
+      const shoe = next.shoes[slug]!;
       shoe.values[String(test.id)] = row.value;
     }
   }

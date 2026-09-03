@@ -311,7 +311,7 @@ export function validateMetrics(next: MetricsFile, prev: MetricsFile | null, tes
     for (const [slug, shoe] of Object.entries(prev.shoes)) {
       for (const testId of Object.keys(shoe.values)) {
         prevPairs++;
-        if (next.shoes[slug]?.values[testId] === undefined) vanished++;
+        if (!Object.hasOwn(next.shoes, slug) || next.shoes[slug]!.values[testId] === undefined) vanished++;
       }
     }
     if (prevPairs > 0 && vanished / prevPairs > 0.2) {

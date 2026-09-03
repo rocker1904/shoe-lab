@@ -13,6 +13,10 @@ const SPECIALS = new Map<number, unknown>([
 
 export class DevalueError extends Error {}
 
+function dataRecord(): Record<string, unknown> {
+  return Object.create(null) as Record<string, unknown>;
+}
+
 export function decodeDevalue(payload: unknown[]): unknown {
   if (!Array.isArray(payload) || payload.length === 0) {
     throw new DevalueError('payload must be a non-empty array');
@@ -41,7 +45,7 @@ export function decodeDevalue(payload: unknown[]): unknown {
       } else if (tag === 'Set') {
         out = v.slice(1).map((i) => resolve(i));
       } else if (tag === 'Map') {
-        const m: Record<string, unknown> = {};
+        const m = dataRecord();
         for (let i = 1; i + 1 < v.length; i += 2) m[String(resolve(v[i]))] = resolve(v[i + 1]);
         out = m;
       } else if (tag === 'Date' && v.length === 2 && typeof v[1] === 'string') {
@@ -50,7 +54,9 @@ export function decodeDevalue(payload: unknown[]): unknown {
         out = v.map((i) => resolve(i));
       }
     } else if (v && typeof v === 'object') {
-      out = Object.fromEntries(Object.entries(v).map(([k, i]) => [k, resolve(i)]));
+      const record = dataRecord();
+      for (const [key, index] of Object.entries(v)) record[key] = resolve(index);
+      out = record;
     } else {
       out = v;
     }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decodeDevalue, DevalueError } from '../src/devalue.js';
+import { prototypePropertyNames } from './helpers.js';
 
 describe('decodeDevalue', () => {
   it('resolves objects, arrays and literals', () => {
@@ -39,5 +40,38 @@ describe('decodeDevalue', () => {
     const out = decodeDevalue(payload) as { x: object; y: object };
     expect(out.x).toEqual({ deep: 'v' });
     expect(out.y).toBe(out.x);
+  });
+
+  it('keeps every prototype-shaped object key as own data and leaves missing keys absent', () => {
+    const keys = prototypePropertyNames();
+    const encoded = Object.fromEntries(keys.map((key, i) => [key, i + 1]));
+    const out = decodeDevalue([encoded, ...keys.map((key) => `value:${key}`)]) as Record<string, unknown>;
+    for (const key of keys) {
+      expect(Object.hasOwn(out, key), key).toBe(true);
+      expect(out[key], key).toBe(`value:${key}`);
+    }
+
+    const missing = decodeDevalue([{}]) as Record<string, unknown>;
+    for (const key of keys) {
+      expect(Object.hasOwn(missing, key), key).toBe(false);
+      expect(missing[key], key).toBeUndefined();
+    }
+  });
+
+  it('keeps every prototype-shaped tagged Map key as own data and leaves missing keys absent', () => {
+    const keys = prototypePropertyNames();
+    const entries = keys.flatMap((key, i) => [i * 2 + 1, i * 2 + 2]);
+    const payload = [['Map', ...entries], ...keys.flatMap((key) => [key, `value:${key}`])];
+    const out = decodeDevalue(payload) as Record<string, unknown>;
+    for (const key of keys) {
+      expect(Object.hasOwn(out, key), key).toBe(true);
+      expect(out[key], key).toBe(`value:${key}`);
+    }
+
+    const missing = decodeDevalue([['Map']]) as Record<string, unknown>;
+    for (const key of keys) {
+      expect(Object.hasOwn(missing, key), key).toBe(false);
+      expect(missing[key], key).toBeUndefined();
+    }
   });
 });

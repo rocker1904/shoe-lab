@@ -33,7 +33,7 @@ function optionsOf(t: any): { value: string; name: string }[] | null {
 export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: string, scrapedAt: string): TestsFile {
   const lt = pageData?.lab_tests;
   if (!lt?.tests || typeof lt.tests !== 'object') throw new PayloadError('lab_tests.tests missing');
-  const groups: Record<string, string> = {};
+  const groups = Object.create(null) as Record<string, string>;
   for (const [gid, g] of Object.entries<any>(lt.groups ?? {})) groups[gid] = String(g?.name ?? '');
   const groupOfTest = extractTestGroups(pageData);
 
@@ -74,7 +74,7 @@ export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: st
  * them all, which is what makes the fleet-wide union free (docs/scraping.md §Test groups).
  */
 export function extractTestGroups(pageData: Record<string, any>): Record<string, string> {
-  const out: Record<string, string> = {};
+  const out = Object.create(null) as Record<string, string>;
   for (const [gid, g] of Object.entries<any>(pageData?.lab_tests?.groups ?? {})) {
     for (const t of Array.isArray(g?.tests) ? g.tests : []) {
       if (typeof t?.id === 'number') out[String(t.id)] = gid;

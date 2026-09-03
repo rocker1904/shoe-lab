@@ -25,7 +25,8 @@ export function plateFromRules(features: string[], hasPlateSection: boolean): Pl
 }
 
 export function derivePlate(slug: string, features: string[], hasPlateSection: boolean): Plate {
-  return PLATE_OVERRIDES[slug]?.plate ?? plateFromRules(features, hasPlateSection);
+  const override = Object.hasOwn(PLATE_OVERRIDES, slug) ? PLATE_OVERRIDES[slug] : undefined;
+  return override?.plate ?? plateFromRules(features, hasPlateSection);
 }
 
 /**
@@ -131,7 +132,7 @@ export function buildDataset(tests: TestsFile, metrics: MetricsFile, details: De
       previousVersion: det?.previousVersion ?? null,
       nextVersion: null, // filled by inversion once the whole fleet is known
       latestVersion: det?.latestVersion ?? null,
-      reviewLanguage: REVIEW_LANGUAGE_OVERRIDES[slug]?.language ?? null,
+      reviewLanguage: (Object.hasOwn(REVIEW_LANGUAGE_OVERRIDES, slug) ? REVIEW_LANGUAGE_OVERRIDES[slug] : undefined)?.language ?? null,
     };
   });
 
