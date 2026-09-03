@@ -426,6 +426,7 @@ describe('FilterSidebar filter set management', () => {
 
     for (const [i, key] of OBJECT_PROTOTYPE_KEYS.entries()) {
       const group = screen.getByRole('group', { name: `Prototype metric ${i} (u)` });
+      expect(screen.getByRole('heading', { name: `Prototype metric ${i} (u)` }), key).not.toHaveClass('on');
       await fireEvent.input(within(group).getByLabelText(/minimum$/), { target: { value: String(i + 1) } });
       const ranges = onchange.mock.lastCall![0].filters.ranges;
       expect(Object.hasOwn(ranges, key), key).toBe(true);
@@ -669,6 +670,35 @@ describe('FilterSidebar metric entries', () => {
     expect(next.columns).toEqual(['score']);
     const after = render(FilterSidebar, { props: { data, view: next, onchange: vi.fn(), population: FLEET } });
     expect(within(after.container).getByRole('group', { name: /Width \/ Fit — retired method/ })).toBeInTheDocument();
+  });
+  it('writes every prototype-named generation choice as ordinary own view data', async () => {
+    const tests = OBJECT_PROTOTYPE_KEYS.flatMap((slug, i) => {
+      const retiredId = 2_000 + i * 2;
+      const currentId = retiredId + 1;
+      return [
+        labTest({
+          id: retiredId, slug: `retired-${i}`, name: `Prototype generation ${i}`,
+          updateId: currentId, methodStatus: 'retired',
+        }),
+        labTest({
+          id: currentId, slug, name: `Prototype generation ${i}`, previousId: retiredId,
+        }),
+      ];
+    });
+    const hostileData: ShoesFile = { ...data, tests };
+    const view = defaultView();
+    view.rows = [...OBJECT_PROTOTYPE_KEYS];
+    const onchange = vi.fn();
+    render(FilterSidebar, { props: { data: hostileData, view, onchange, population: FLEET } });
+
+    for (const [i, key] of OBJECT_PROTOTYPE_KEYS.entries()) {
+      const choices = screen.getByRole('radiogroup', { name: `Prototype generation ${i}` });
+      await fireEvent.click(within(choices).getAllByRole('radio')[1]!);
+      const generations = onchange.mock.lastCall![0].generations;
+      expect(Object.hasOwn(generations, key), key).toBe(true);
+      expect(generations[key], key).toBe(`retired-${i}`);
+      expect(Object.getPrototypeOf(generations), key).toBe(Object.prototype);
+    }
   });
   it('moves a hand-added pair\'s row to the generation it switches to', async () => {
     const pairPlus: ShoesFile = { ...data, tests: [
