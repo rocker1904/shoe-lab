@@ -135,6 +135,11 @@ and already-sanitised HTML at the two HTML boundaries.
   the corpus catalogue rewrite and join apply their corresponding gate before
   writing. A previous catalogue with no field is pre-feature input, not a
   retirement claim.
+- **Full-catalogue relationships are graphs, not loose ids:** every supersession
+  and chart-family target must exist, and both sides must name each other as
+  §Test lineage declares. The app-facing catalogue is a filtered subset
+  (§Empty tests), so its relationship scalars remain checked but a reference to
+  an empty test omitted from that subset is valid.
 - **Type matching:** every value must match its test's declared type
   (numeric family → number, `bool` → boolean, everything else → string), and
   a value for a test id absent from the catalogue is fatal. Checked wherever

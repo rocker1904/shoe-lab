@@ -134,13 +134,14 @@ function validateLabTests(value: unknown, groups: Record<string, string>, path: 
   const rawTests = arrayAt(value, path);
   const tests = rawTests as LabTest[];
   for (let i = 0; i < rawTests.length; i++) {
-    const testPath = `${path}[${i}]`;
-    const test = objectAt(rawTests[i], testPath);
-    const id = positiveIntegerAt(test.id, `${testPath}.id`);
+    const position = `${path}[${i}]`;
+    const test = objectAt(rawTests[i], position);
+    const id = positiveIntegerAt(test.id, `${position}.id`);
     if (typeof test.slug !== 'string' || !isIdReferenceToken(test.slug)) {
-      throw new ValidationError(`test id ${id} has invalid slug ${JSON.stringify(test.slug)}`);
+      throw new ValidationError(`test id ${id} has invalid slug at ${position}.slug: ${JSON.stringify(test.slug)}`);
     }
     const slug = test.slug;
+    const testPath = `test ${slug} (id ${id})`;
     stringAt(test.name, `${testPath}.name`);
     const type = stringAt(test.type, `${testPath}.type`);
     if (!TEST_TYPES.has(type)) throw new ValidationError(`${testPath}.type has invalid value ${JSON.stringify(type)}`);
@@ -178,6 +179,34 @@ function validateLabTests(value: unknown, groups: Record<string, string>, path: 
   }
 
   return tests;
+}
+
+function validateCatalogueRelationships(tests: LabTest[]): void {
+  const byId = new Map(tests.map((test) => [test.id, test]));
+  for (const test of tests) {
+    const testPath = `test ${test.slug} (id ${test.id})`;
+    for (const field of ['previousId', 'updateId', 'primaryTestId'] as const) {
+      const id = test[field];
+      if (id !== null && !byId.has(id)) throw new ValidationError(`${testPath}.${field} names unknown test ${id}`);
+    }
+    for (const id of test.secondaryTestIds) {
+      if (!byId.has(id)) throw new ValidationError(`${testPath}.secondaryTestIds names unknown test ${id}`);
+    }
+    if (test.updateId !== null && byId.get(test.updateId)!.previousId !== test.id) {
+      throw new ValidationError(`${testPath}.updateId ${test.updateId} has no reciprocal previousId`);
+    }
+    if (test.previousId !== null && byId.get(test.previousId)!.updateId !== test.id) {
+      throw new ValidationError(`${testPath}.previousId ${test.previousId} has no reciprocal updateId`);
+    }
+    if (test.primaryTestId !== null && !byId.get(test.primaryTestId)!.secondaryTestIds.includes(test.id)) {
+      throw new ValidationError(`${testPath}.primaryTestId ${test.primaryTestId} has no reciprocal secondaryTestIds entry`);
+    }
+    for (const id of test.secondaryTestIds) {
+      if (byId.get(id)!.primaryTestId !== test.id) {
+        throw new ValidationError(`${testPath}.secondaryTestIds entry ${id} has no reciprocal primaryTestId`);
+      }
+    }
+  }
 }
 
 function validateTestsFileShape(value: unknown): TestsFile {
@@ -225,6 +254,7 @@ function indexCatalogue(tests: LabTest[]): Map<string, CatalogueEntry> {
 function validatedCatalogueIndex(tests: TestsFile, previousTests?: TestsFile | null): Map<string, CatalogueEntry> {
   validateTestsFileShape(tests);
   validateMethodStatuses(tests.tests, previousTests?.tests);
+  validateCatalogueRelationships(tests.tests);
   return indexCatalogue(tests.tests);
 }
 

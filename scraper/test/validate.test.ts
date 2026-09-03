@@ -30,12 +30,12 @@ const tests: TestsFile = {
 function expectMutationRejected<T>(
   base: T,
   validate: (value: T) => void,
-  cases: Array<[field: string, mutate: (value: any) => void]>,
+  cases: Array<[field: string, mutate: (value: any) => void, owner?: string]>,
 ): void {
-  for (const [field, mutate] of cases) {
+  for (const [field, mutate, owner] of cases) {
     const malformed = structuredClone(base);
     mutate(malformed);
-    expect(() => validate(malformed), field).toThrow(new RegExp(field));
+    expect(() => validate(malformed), field).toThrow(new RegExp(owner ? `${owner}.*${field}` : field));
   }
 }
 
@@ -49,25 +49,54 @@ describe('complete runtime schemas', () => {
       ['tests', (f) => { f.tests = {}; }],
       ['id', (f) => { f.tests[4].id = Number.NaN; }],
       ['slug', (f) => { f.tests[4].slug = 7; }],
-      ['name', (f) => { f.tests[4].name = null; }],
-      ['type', (f) => { f.tests[4].type = 'numeric'; }],
-      ['units', (f) => { f.tests[4].units = false; }],
-      ['groupId', (f) => { f.tests[4].groupId = 1; }],
-      ['groupId', (f) => { f.tests[4].groupId = 'missing'; }],
-      ['chartLabel', (f) => { f.tests[4].chartLabel = 1; }],
-      ['isNew', (f) => { f.tests[4].isNew = 'false'; }],
-      ['previousId', (f) => { f.tests[4].previousId = '4'; }],
-      ['updateId', (f) => { f.tests[4].updateId = 1.5; }],
-      ['methodStatus', (f) => { delete f.tests[4].methodStatus; }],
-      ['primaryTestId', (f) => { f.tests[4].primaryTestId = 0; }],
-      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = null; }],
-      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = [6, 6]; }],
-      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = [5]; }],
-      ['options', (f) => { f.tests[4].options = {}; }],
-      ['options', (f) => { f.tests[4].options = [{ value: 'one', name: 'One' }]; }],
-      ['options', (f) => { f.tests[4].type = 'option'; f.tests[4].options = [{ value: 1, name: 'One' }]; }],
-      ['options', (f) => { f.tests[4].type = 'option'; f.tests[4].options = [{ value: 'one', name: 1 }]; }],
+      ['name', (f) => { f.tests[4].name = null; }, 'test t5'],
+      ['type', (f) => { f.tests[4].type = 'numeric'; }, 'test t5'],
+      ['units', (f) => { f.tests[4].units = false; }, 'test t5'],
+      ['groupId', (f) => { f.tests[4].groupId = 1; }, 'test t5'],
+      ['groupId', (f) => { f.tests[4].groupId = 'missing'; }, 'test t5'],
+      ['chartLabel', (f) => { f.tests[4].chartLabel = 1; }, 'test t5'],
+      ['isNew', (f) => { f.tests[4].isNew = 'false'; }, 'test t5'],
+      ['previousId', (f) => { f.tests[4].previousId = '4'; }, 'test t5'],
+      ['updateId', (f) => { f.tests[4].updateId = 1.5; }, 'test t5'],
+      ['methodStatus', (f) => { delete f.tests[4].methodStatus; }, 'test t5'],
+      ['primaryTestId', (f) => { f.tests[4].primaryTestId = 0; }, 'test t5'],
+      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = null; }, 'test t5'],
+      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = [6, 6]; }, 'test t5'],
+      ['secondaryTestIds', (f) => { f.tests[4].secondaryTestIds = [5]; }, 'test t5'],
+      ['options', (f) => { f.tests[4].options = {}; }, 'test t5'],
+      ['options', (f) => { f.tests[4].options = [{ value: 'one', name: 'One' }]; }, 'test t5'],
+      ['options', (f) => { f.tests[4].type = 'option'; f.tests[4].options = [{ value: 1, name: 'One' }]; }, 'test t5'],
+      ['options', (f) => { f.tests[4].type = 'option'; f.tests[4].options = [{ value: 'one', name: 1 }]; }, 'test t5'],
     ]);
+  });
+
+  it('rejects dangling and non-reciprocal relationships in a full catalogue', () => {
+    const base = structuredClone(tests);
+    base.tests[4]!.updateId = 6;
+    base.tests[4]!.methodStatus = 'retired';
+    base.tests[5]!.previousId = 5;
+    base.tests[6]!.secondaryTestIds = [8];
+    base.tests[7]!.primaryTestId = 7;
+    expect(() => validateCatalogue(base)).not.toThrow();
+    expectMutationRejected(base, validateCatalogue, [
+      ['previousId', (f) => { f.tests[4].updateId = null; f.tests[4].methodStatus = null; f.tests[5].previousId = 999; }, 'test t6'],
+      ['updateId', (f) => { f.tests[4].updateId = 999; f.tests[5].previousId = null; }, 'test t5'],
+      ['updateId', (f) => { f.tests[5].previousId = null; }, 'test t5'],
+      ['previousId', (f) => { f.tests[4].updateId = null; f.tests[4].methodStatus = null; }, 'test t6'],
+      ['primaryTestId', (f) => { f.tests[6].secondaryTestIds = []; f.tests[7].primaryTestId = 999; }, 'test t8'],
+      ['secondaryTestIds', (f) => { f.tests[6].secondaryTestIds = [999]; f.tests[7].primaryTestId = null; }, 'test t7'],
+      ['primaryTestId', (f) => { f.tests[6].secondaryTestIds = []; }, 'test t8'],
+      ['secondaryTestIds', (f) => { f.tests[7].primaryTestId = null; }, 'test t7'],
+    ]);
+  });
+
+  it('allows the published catalogue subset to reference an empty test that was dropped', () => {
+    const file: ShoesFile = {
+      builtAt: 't', source: 'RunRepeat', groups: {},
+      tests: [labTest({ id: 60, slug: 'forefoot-traction', secondaryTestIds: [61] })],
+      shoes: [shoe({ slug: 'shoe', values: { '60': 1 } })],
+    };
+    expect(() => validateShoesFile(file)).not.toThrow();
   });
 
   it('rejects malformed complete metric records and non-finite readings', () => {
