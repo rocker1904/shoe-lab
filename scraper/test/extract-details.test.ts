@@ -38,12 +38,42 @@ describe('extractDetails', () => {
     expect(rec.imageUrl).not.toContain('{SIZE}');
   });
   it('returns no image rather than an unresolvable template', () => {
-    const templated = { product: { id: 1, name: 'X', image: { url: 'https://x/y-{SIZE}.jpg' } } };
+    const templated = { product: { id: 1, name: 'X', image: { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg' } } };
     expect(extractDetails(templated, 'x', 't').imageUrl).toBeNull();
   });
-  it('keeps a url that carries no size token at all', () => {
-    const plain = { product: { id: 1, name: 'X', image: { url: 'https://x/y.jpg' } } };
-    expect(extractDetails(plain, 'x', 't').imageUrl).toBe('https://x/y.jpg');
+  it('keeps only a usable URL on the image origin the app permits', () => {
+    const extractImage = (image: unknown) => extractDetails({ product: { id: 1, name: 'X', image } }, 'x', 't').imageUrl;
+    expect(extractImage({ url: 'https://cdn.runrepeat.com/y.jpg' })).toBe('https://cdn.runrepeat.com/y.jpg');
+    expect(extractImage({ url: 'https://cdn.runrepeat.com/y-{SIZE}-{SIZE}.jpg', size: 720 }))
+      .toBe('https://cdn.runrepeat.com/y-720-720.jpg');
+    for (const image of [
+      { url: 'http://cdn.runrepeat.com/y.jpg' },
+      { url: 'https://example.com/y.jpg' },
+      { url: 'not a url' },
+      { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg', size: 0 },
+      { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg', size: -1 },
+      { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg', size: 1.5 },
+      { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg', size: Number.POSITIVE_INFINITY },
+    ]) expect(extractImage(image)).toBeNull();
+  });
+  it('keeps only real release dates, including the prefix of an ISO timestamp', () => {
+    const extractDate = (released_at: unknown) => extractDetails({ product: { id: 1, name: 'X', released_at } }, 'x', 't').releasedAt;
+    expect(extractDate('2024-02-29')).toBe('2024-02-29');
+    expect(extractDate('2024-02-29T12:34:56Z')).toBe('2024-02-29');
+    expect(extractDate('2024-02-29T12:34:56')).toBe('2024-02-29');
+    for (const value of ['2023-02-29', '2024-13-01', '2024-01-32', '2024-01-01junk', '', 20240101]) {
+      expect(extractDate(value)).toBeNull();
+    }
+  });
+  it('degrades non-finite score and price independently', () => {
+    const valid = extractDetails({ product: { id: 1, name: 'X', score: 0, price: -25 } }, 'x', 't');
+    expect(valid).toMatchObject({ score: 0, msrpGbp: -25 });
+    for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      expect(extractDetails({ product: { id: 1, name: 'X', score: value, price: 50 } }, 'x', 't'))
+        .toMatchObject({ score: null, msrpGbp: 50 });
+      expect(extractDetails({ product: { id: 1, name: 'X', score: 90, price: value } }, 'x', 't'))
+        .toMatchObject({ score: 90, msrpGbp: null });
+    }
   });
   it('throws PayloadError when product is missing', () => {
     expect(() => extractDetails({}, 'x', 't')).toThrow(PayloadError);

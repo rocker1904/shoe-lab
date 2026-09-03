@@ -55,6 +55,13 @@ describe('extractTestCatalogue lineage', () => {
     expect(byId(67).chartLabel).toBe('Shock absorption');
     expect(byId(68).chartLabel).toBe('Shock absorption');
   });
+  it('keeps distinct positive secondary ids in source order and excludes the test itself', () => {
+    const page = loadAzuraPageData();
+    const test = Object.values<any>(page.lab_tests.tests).find((t) => t.id === 67)!;
+    test.secondary_test_ids = [68, 68, 67, 0, -1, 69.5, '69', Number.NaN, 69];
+    expect(extractTestCatalogue(page, 's', 't').tests.find((t) => t.id === 67)!.secondaryTestIds)
+      .toEqual([68, 69]);
+  });
   it('records isNew, which does NOT track which generation is current', () => {
     // Recheck if this ever changes upstream: #59 and #55 are the current-method tests of their
     // pairs (#14 and #27 name them as their update) yet both read isNew false, while their

@@ -5,6 +5,18 @@ import { PayloadError } from './page-payload.js';
 
 const numOrNull = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
+function secondaryIds(values: unknown, selfId: number): number[] {
+  if (!Array.isArray(values)) return [];
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const value of values) {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0 || value === selfId || seen.has(value)) continue;
+    seen.add(value);
+    out.push(value);
+  }
+  return out;
+}
+
 /**
  * Only `option` tests declare choices, and only their English labels are kept — `config` also
  * carries per-locale translations and scoring weights, neither of which the app reads.
@@ -47,9 +59,7 @@ export function extractTestCatalogue(pageData: Record<string, any>, seedSlug: st
         updateId,
         methodStatus: methodStatusOf({ slug, updateId }),
         primaryTestId: numOrNull(t.primary_test_id),
-        secondaryTestIds: Array.isArray(t.secondary_test_ids)
-          ? t.secondary_test_ids.filter((x: unknown) => typeof x === 'number')
-          : [],
+        secondaryTestIds: secondaryIds(t.secondary_test_ids, Number(t.id)),
         options: optionsOf(t),
       };
     })

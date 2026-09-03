@@ -62,8 +62,18 @@ describe('factValues', () => {
     const dupes = [{ slug: 'w', text: [{ slug: 'standard', text: 'Normal' }, { slug: 'standard', text: 'Normal' }, { slug: 'wide', text: 'Wide' }] }];
     expect(factValues(dupes)).toEqual([{ slug: 'standard', text: 'Normal' }, { slug: 'wide', text: 'Wide' }]);
   });
+  it('dedupes by slug even when a later label differs', () => {
+    expect(factValues([
+      { slug: 'standard', text: 'Normal' },
+      { slug: 'standard', text: 'Standard' },
+      { slug: 'wide', text: 'Wide' },
+    ])).toEqual([{ slug: 'standard', text: 'Normal' }, { slug: 'wide', text: 'Wide' }]);
+  });
   it('falls back to a slugified text when the value carries no slug', () => {
     expect(factValues([{ text: 'For beginners' }])).toEqual([{ slug: 'for-beginners', text: 'For beginners' }]);
+  });
+  it('drops values that cannot produce a non-empty slug', () => {
+    expect(factValues([{ text: '!!!' }, { slug: '', text: '---' }, { slug: '   ', text: 'Label' }])).toEqual([]);
   });
   it('returns an empty array for a missing or non-array fact', () => {
     expect(factValues(undefined)).toEqual([]);

@@ -30,8 +30,31 @@ function versionRef(v: any): VersionRef | null {
 function resolveImageUrl(image: any): string | null {
   const url = typeof image?.url === 'string' && image.url !== '' ? image.url : null;
   if (url === null) return null;
-  if (!url.includes('{SIZE}')) return url;
-  return typeof image.size === 'number' ? url.replace('{SIZE}', String(image.size)) : null;
+  let resolved = url;
+  if (resolved.includes('{SIZE}')) {
+    if (!Number.isInteger(image.size) || image.size <= 0) return null;
+    resolved = resolved.replaceAll('{SIZE}', String(image.size));
+  }
+  if (resolved.includes('{SIZE}')) return null;
+  try {
+    const parsed = new URL(resolved);
+    return parsed.protocol === 'https:' && parsed.hostname === 'cdn.runrepeat.com' ? resolved : null;
+  } catch {
+    return null;
+  }
+}
+
+function releaseDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})(.*)$/.exec(value);
+  if (!match) return null;
+  const yearText = match[1]!, monthText = match[2]!, dayText = match[3]!, suffix = match[4]!;
+  if (suffix !== '' && (!suffix.startsWith('T') || !Number.isFinite(Date.parse(value)))) return null;
+  const year = Number(yearText), month = Number(monthText), day = Number(dayText);
+  if (year < 1 || month < 1 || month > 12) return null;
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day >= 1 && day <= days[month - 1]! ? `${yearText}-${monthText}-${dayText}` : null;
 }
 
 export function extractDetails(pageData: Record<string, any>, slug: string, scrapedAt: string): DetailRecord {
@@ -92,10 +115,10 @@ export function extractDetails(pageData: Record<string, any>, slug: string, scra
     productId: p.id,
     name: decodeEntities(String(p.name)),
     brand: p.brand_name ? decodeEntities(String(p.brand_name)) : null,
-    releasedAt: p.released_at ? String(p.released_at).slice(0, 10) : null,
+    releasedAt: releaseDate(p.released_at),
     preciseReleaseDate: Boolean(p.precise_released_at),
-    score: typeof p.score === 'number' ? p.score : null,
-    msrpGbp: typeof p.price === 'number' ? p.price : null, // GBP list price on /uk pages
+    score: typeof p.score === 'number' && Number.isFinite(p.score) ? p.score : null,
+    msrpGbp: typeof p.price === 'number' && Number.isFinite(p.price) ? p.price : null, // GBP list price on /uk pages
     discontinued: Boolean(p.discontinued),
     imageUrl: resolveImageUrl(p.image),
     runrepeatUrl: `https://runrepeat.com/uk/${slug}`,

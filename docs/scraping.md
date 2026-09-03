@@ -240,6 +240,10 @@ also the one a CSV consumer needs, so `releaseDateSource` is a column in
 
 Precedence is the table order.
 
+The page extractor admits only a real Gregorian `YYYY-MM-DD`, either bare or
+prefixing an ISO timestamp. A malformed page value is absence, so it cannot block
+the curated or listing fallbacks.
+
 ## Curated release months
 
 `curated/release-dates.jsonl` holds hand-researched months, one JSON object per
@@ -314,6 +318,11 @@ Expensive to discover, invisible in the code:
   through with twelve significant figures where every other test gives one or
   two decimals. Stored as received; trimmed for display only
   (docs/app.md §Number display).
+- **Optional product metadata degrades field by field.** Score and GBP list price
+  must be finite numbers. An image must resolve every `{SIZE}` token with the
+  payload's positive integer size and produce an HTTPS `cdn.runrepeat.com` URL,
+  the only remote image origin the app permits. A malformed value becomes null
+  without discarding the shoe or another valid field.
 
 ## Fact values
 
@@ -322,9 +331,11 @@ A value's `text` is a bare string on some facts (`terrain`, `features`) and an
 **array of link objects** on others (`pace`, `width`, `material`, `collection`)
 — the nested form carries the useful slugs one level down. `factValues` in
 `scraper/src/page-text.ts` flattens the nested form onto its own entries and
-dedupes, because values repeat: the `width` fact lists a SKU width once per
-size run. A `String(value.text)` cast yields `"[object Object]"` on the nested
-shape, which is why every fact read goes through that helper.
+dedupes by the published slug, because values repeat: the `width` fact lists a
+SKU width once per size run. The first non-empty label owns a slug; later labels
+for it and values that cannot supply or derive a non-empty slug are dropped. A
+`String(value.text)` cast yields `"[object Object]"` on the nested shape, which is
+why every fact read goes through that helper.
 
 ## Editorial facts
 
@@ -359,7 +370,8 @@ resolved method status beside them:
 - **`primaryTestId` / `secondaryTestIds`** — readings RunRepeat colocates in
   one chart: heel/forefoot measurements and a multi-reading softness family.
   This relationship is independent of supersession, so one test can belong to
-  both.
+  both. Secondary ids preserve source order but keep only distinct positive
+  integers and never name their own test.
 - **`chartLabel`** — the shared family name for such a pair ("Shock
   absorption", "Energy return"). It does **not** disambiguate a supersession:
   both generations of a pair carry the same label, or none.
