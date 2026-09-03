@@ -38,7 +38,7 @@ function resolveImageUrl(image: any): string | null {
   if (resolved.includes('{SIZE}')) return null;
   try {
     const parsed = new URL(resolved);
-    return parsed.protocol === 'https:' && parsed.hostname === 'cdn.runrepeat.com' ? resolved : null;
+    return parsed.origin === 'https://cdn.runrepeat.com' ? resolved : null;
   } catch {
     return null;
   }

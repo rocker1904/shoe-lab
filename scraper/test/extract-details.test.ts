@@ -49,6 +49,7 @@ describe('extractDetails', () => {
     for (const image of [
       { url: 'http://cdn.runrepeat.com/y.jpg' },
       { url: 'https://example.com/y.jpg' },
+      { url: 'https://cdn.runrepeat.com:444/y.jpg' },
       { url: 'not a url' },
       { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg', size: 0 },
       { url: 'https://cdn.runrepeat.com/y-{SIZE}.jpg', size: -1 },
