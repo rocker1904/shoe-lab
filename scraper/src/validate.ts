@@ -207,6 +207,24 @@ function validateCatalogueRelationships(tests: LabTest[]): void {
       }
     }
   }
+
+  for (const start of tests) {
+    const positions = new Map<number, number>();
+    const chain: number[] = [];
+    let current = start;
+    while (current.updateId !== null) {
+      const cycleStart = positions.get(current.id);
+      if (cycleStart !== undefined) {
+        const cycle = [...chain.slice(cycleStart), current.id];
+        throw new ValidationError(
+          `test ${start.slug} (id ${start.id}) supersession chain cycles: ${cycle.join(' -> ')}`,
+        );
+      }
+      positions.set(current.id, chain.length);
+      chain.push(current.id);
+      current = byId.get(current.updateId)!;
+    }
+  }
 }
 
 function validateTestsFileShape(value: unknown): TestsFile {

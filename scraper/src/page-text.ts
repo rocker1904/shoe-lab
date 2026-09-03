@@ -30,7 +30,7 @@ const MAX_CODE_POINT = 0x10ffff;
 export function decodeEntities(text: string): string {
   if (!text.includes('&')) return text;
   return text.replace(ENTITY, (match, hex: string | undefined, dec: string | undefined, name: string | undefined) => {
-    if (name !== undefined) return NAMED[name] ?? match;
+    if (name !== undefined) return Object.hasOwn(NAMED, name) ? NAMED[name]! : match;
     const code = Number.parseInt(hex ?? dec!, hex !== undefined ? 16 : 10);
     // Surrogate halves are not characters; `String.fromCodePoint` would emit a lone one.
     if (!Number.isFinite(code) || code <= 0 || code > MAX_CODE_POINT || (code >= 0xd800 && code <= 0xdfff)) return match;

@@ -26,6 +26,12 @@ describe('decodeEntities', () => {
     expect(decodeEntities('&#xZZ;')).toBe('&#xZZ;');
     expect(decodeEntities('bare & ampersand')).toBe('bare & ampersand');
   });
+  it('leaves Object.prototype-shaped unknown named entities untouched', () => {
+    const names = Object.getOwnPropertyNames(Object.prototype)
+      .filter((name) => /^[a-zA-Z][a-zA-Z0-9]*$/.test(name));
+    const encoded = names.map((name) => `&${name};`).join(' ');
+    expect(decodeEntities(encoded)).toBe(encoded);
+  });
   it('rejects out-of-range code points rather than throwing', () => {
     expect(decodeEntities('&#1114112;')).toBe('&#1114112;');
     expect(decodeEntities('&#xD800;')).toBe('&#xD800;');

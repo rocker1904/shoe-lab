@@ -143,7 +143,8 @@ and already-sanitised HTML at the two HTML boundaries.
   retirement claim.
 - **Full-catalogue relationships are graphs, not loose ids:** every supersession
   and chart-family target must exist, and both sides must name each other as
-  §Test lineage declares. The app-facing catalogue is a filtered subset
+  §Test lineage declares; a supersession cannot name itself or form a cycle.
+  The app-facing catalogue is a filtered subset
   (§Empty tests), so its relationship scalars remain checked but a reference to
   an empty test omitted from that subset is valid.
 - **Type matching:** every value must match its test's declared type
@@ -380,8 +381,9 @@ editor's classification, not a lab reading.
 The catalogue keeps RunRepeat's relationships raw and publishes Shoe Lab's
 resolved method status beside them:
 
-- **`previousId` / `updateId`** — the supersession chain, consistent in both
-  directions, over nine pairs. **Readings are not comparable across it.** The
+- **`previousId` / `updateId`** — the acyclic supersession chain, never
+  self-referential and consistent in both directions, over nine pairs.
+  **Readings are not comparable across it.** The
   unit changes on most (HA→AC durometer scales) and even the same-unit pairs
   shift systematically: 27→55 moves the mean 3.4 mm, 14→59 moves it 12 N.
   Coalescing or averaging the two generations invents measurements. What the

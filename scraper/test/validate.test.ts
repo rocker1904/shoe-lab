@@ -90,6 +90,23 @@ describe('complete runtime schemas', () => {
     ]);
   });
 
+  it('rejects self-referential and cyclic supersession chains in a full catalogue', () => {
+    const selfLoop = structuredClone(tests);
+    selfLoop.tests[4]!.previousId = 5;
+    selfLoop.tests[4]!.updateId = 5;
+    selfLoop.tests[4]!.methodStatus = 'retired';
+    expect(() => validateCatalogue(selfLoop)).toThrow(/test t5 \(id 5\).*supersession.*5.*5/);
+
+    const reciprocalCycle = structuredClone(tests);
+    reciprocalCycle.tests[4]!.previousId = 6;
+    reciprocalCycle.tests[4]!.updateId = 6;
+    reciprocalCycle.tests[4]!.methodStatus = 'retired';
+    reciprocalCycle.tests[5]!.previousId = 5;
+    reciprocalCycle.tests[5]!.updateId = 5;
+    reciprocalCycle.tests[5]!.methodStatus = 'retired';
+    expect(() => validateCatalogue(reciprocalCycle)).toThrow(/supersession.*5.*6.*5/);
+  });
+
   it('allows the published catalogue subset to reference an empty test that was dropped', () => {
     const file: ShoesFile = {
       builtAt: 't', source: 'RunRepeat', groups: {},
