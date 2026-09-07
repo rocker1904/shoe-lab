@@ -12859,6 +12859,97 @@
       "whoShouldBuy": "<p>The Brooks Ghost 18 is a great match for:</p>\n<ul>\n<li>Long-time Ghost fans who want the same familiar ride, fit, and overall experience they've enjoyed for years.</li>\n<li>Heel strikers looking for a comfortable and easy-to-run-in daily trainer with proven durability and a stable feel.</li>\n<li>Casual runners who want one shoe for running, walking, travel, and everyday wear.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think that runners looking for a bouncy and energetic ride will be disappointed by the Ghost 18. Brooks still uses the same DNA Loft v3 foam, and we found in the lab that it delivers below-average rebound. If you want a daily trainer that feels more lively and responsive, we believe the <a href=\"https://runrepeat.com/uk/puma-velocity-nitro-4\" rel=\"noopener\" target=\"_blank\">PUMA Velocity Nitro 4</a> is a better choice.</p>\n\n    \n    \n\n<p>We also do not recommend the Ghost 18 for runners who want the highest level of cushioning possible. In our view, the <a href=\"https://runrepeat.com/uk/brooks-ghost-max-3\" rel=\"noopener\" target=\"_blank\">Ghost Max 3</a> is the obvious pick inside Brooks, while the <a href=\"https://runrepeat.com/uk/nike-vomero-18\" rel=\"noopener\" target=\"_blank\">Nike Vomero 18</a> is another excellent alternative.</p>\n<p></p>"
     },
+    "brooks-ghost-amp": {
+      "brand": "Brooks",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Foam lacks the expected energy return",
+        "Tapered toebox restricts natural toe splay",
+        "Bad cold-weather performance﻿"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "narrow",
+            "text": "Narrow"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41102/brooks-ghost-amp-25472792-720.jpg",
+      "intro": "The Ghost Amp has a clear goal: challenge the new wave of responsive daily trainers led by the EVO SL. However, we found that Brooks missed the mark where it matters most: the foam. We really liked the premium knit upper, excellent comfort, and beautiful design, but the new midsole simply doesn’t deliver enough bounce. Our lab testing confirmed this with low energy return, making the shoe feel less exciting than its main rivals. Ultimately, it’s an enhanced Ghost at a fair price, but Brooks needs to add more pop to the midsole for the Amp to truly stand out.",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "Brooks Ghost Amp",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41102,
+      "pros": [
+        "Lighter, faster than the regular Ghost",
+        "Stylish design works well as trainers",
+        "Comfortable knit upper feels premium",
+        "Excellent fit and lockdown",
+        "Surprisingly good durability",
+        "Fair price for the overall package",
+        "Can handle short and long runs",
+        "Impressive flexibility",
+        "Outsole provides generous rubber coverage",
+        "Ideal as ﻿first shoe for beginners"
+      ],
+      "releasedAt": "2026-07-01",
+      "runrepeatUrl": "https://runrepeat.com/uk/brooks-ghost-amp",
+      "score": 86,
+      "scrapedAt": "2026-09-07T12:00:50.511Z",
+      "whoShouldBuy": "<p>In our opinion, the Brooks Ghost Amp is a very good pick for runners that:</p>\n<ul>\n<li>Found the regular Ghost heavy and/or boring, and want a lighter shoe with a lower drop.</li>\n<li>Want a stylish, well-made, and comfortable daily trainer that can also handle occasional tempo runs.</li>\n<li>Love knit uppers but don’t want to spend a fortune on a premium-priced shoe.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The biggest letdown of the Ghost Amp is the foam, as it falls short of the expectations created by Brooks. If you want top-tier energy return at a daily-trainer price, we recommend the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or the <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a>.</p>\n\n    \n    \n\n<p>We also think runners with wide feet may struggle with the Ghost Amp due to its tight fit. Instead, we suggest checking out the <a href=\"https://runrepeat.com/uk/topo-athletic-specter-2\" rel=\"noopener\" target=\"_blank\">Topo Spectre 2</a>.</p>\n<p></p>"
+    },
     "brooks-ghost-max": {
       "brand": "Brooks",
       "categorySlug": "running-shoes",
@@ -17235,6 +17326,90 @@
       "scrapedAt": "2026-07-26T21:58:50.140Z",
       "whoShouldBuy": "<p>We highly recommend the Clifton 9 GTX for:</p>\n<ul>\n<li>Fans of HOKA seeking a waterproof running shoe for wet conditions.</li>\n<li>Anyone looking for a cushioned daily trainer enhanced with Gore-Tex.</li>\n<li>Runners in the hunt for a lightweight, waterproof shoe that isn't designed specifically for trail running.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>While this shoe offers decent breathability through the tongue, we hold the view that it's not the best choice for summer runs. The toebox is completely sealed and lacks ventilation. For warmer weather, opt for the regular <a href=\"https://runrepeat.com/uk/hoka-clifton-9\" rel=\"noopener\" target=\"_blank\">Clifton 9</a>, which is also lighter and £10 cheaper.</p>\n\n    \n    \n\n<p>Furthermore, if you're planning mountain adventures, our conclusion is that it's better to skip the Clifton. Although it can handle fire roads or smooth trails occasionally, there are several superior trail running shoes with Gore-Tex. Consider options like the <a href=\"https://runrepeat.com/uk/salomon-speedcross-6-gtx\" rel=\"noopener\" target=\"_blank\">Salomon Speedcross 6 GTX</a> or the <a href=\"https://runrepeat.com/uk/hoka-speedgoat-5-gtx\" rel=\"noopener\" target=\"_blank\">HOKA Speedgoat 5 GTX</a> for a more suitable, trail-proof experience.</p>\n<p></p>"
+    },
+    "hoka-clifton-pro": {
+      "brand": "HOKA",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Still not enough bounce",
+        "Pointy toebox",
+        "Limited traction on rainy days"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "narrow",
+            "text": "Narrow"
+          },
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41361/hoka-clifton-pro-25467846-720.jpg",
+      "intro": "The HOKA Clifton PRO is what we wish the regular Clifton had become, but the PRO name sets expectations that the shoe doesn't fully meet. We found in the lab enhanced energy return, but it still doesn't feel PRO enough, while the limited traction is another PRO...blem. We really liked the comfortable upper and its excellent breathability, making the shoe especially appealing for hot-weather days. However, the higher price is a tough ask, and we think HOKA needs stronger tech to make this a shoe truly worthy of its name.",
+      "latestVersion": null,
+      "msrpGbp": 165,
+      "name": "HOKA Clifton PRO",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41361,
+      "pros": [
+        "Impressive comfort",
+        "Excellent shock absorption",
+        "More energy return than the Clifton 11",
+        "Improved tongue",
+        "Good outsole durability",
+        "Ideal for heel strikers",
+        "Top pick for hot weather",
+        "Stable platform despite max-stack build",
+        "Lightweight for its size",
+        "Good daily driver for everyday use",
+        "A beast for long runs"
+      ],
+      "releasedAt": "2026-07-09",
+      "runrepeatUrl": "https://runrepeat.com/uk/hoka-clifton-pro",
+      "score": 86,
+      "scrapedAt": "2026-09-07T12:00:51.606Z",
+      "whoShouldBuy": "<p>We tested the HOKA Clifton PRO and found it ideal for:</p>\n<ul>\n<li>Runners who wanted the <a href=\"https://runrepeat.com/uk/hoka-clifton-11\" rel=\"noopener\" target=\"_blank\">Clifton 11</a> to offer a bit more energy return but were pleased with everything else.</li>\n<li>Anyone looking for a max-stack, comfort-focused shoe for easy miles.</li>\n<li>Midfoot or heel strikers who need a high-drop shoe that also works well for everyday use.</li>\n<li>Those who live in hot climates and need a shoe with excellent breathability.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>While the new PROGLIDE+ foam is a real improvement over the old CMEVA foam, energy return remains limited and well below what we expect from a modern running shoe. If bounce worries you, take a look at the <a href=\"https://runrepeat.com/uk/puma-magnify-nitro-3\" rel=\"noopener\" target=\"_blank\">PUMA Magnify Nitro 3</a> or the <a href=\"https://runrepeat.com/uk/nike-vomero-plus\" rel=\"noopener\" target=\"_blank\">Nike Vomero Plus</a>.</p>\n\n    \n    \n\n<p>We also think the ultra-high stack of the Clifton PRO won't suit very light runners or those who simply prefer a closer-to-the-ground feel. Instead, the <a href=\"https://runrepeat.com/uk/hoka-mach-7\" rel=\"noopener\" target=\"_blank\">HOKA Mach 7</a> is the obvious pick.</p>\n<p></p>"
     },
     "hoka-gaviota-5": {
       "brand": "HOKA",
@@ -34655,6 +34830,52 @@
       "scrapedAt": "2026-07-26T22:02:22.609Z",
       "whoShouldBuy": "<p>The Saucony Hurricane 25 is an excellent choice for:</p>\n<ul>\n<li>Runners who enjoyed previous versions but wanted a lighter, more energetic ride. Saucony truly delivered!</li>\n<li>Those seeking a daily trainer that combines top-tier stability with plush comfort.</li>\n<li>Heel strikers needing solid support in a shoe that performs well at both easy and moderate paces, across short or long distances.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the Hurricane 25 might not be the best pick for runners who value agility and a streamlined feel. It’s a massive shoe—both tall and wide—that can feel clunky during transitions. We’re convinced that those who prefer compact trainers will find better options in models like the <a href=\"https://runrepeat.com/uk/nike-structure-26\" rel=\"noopener\" target=\"_blank\">Nike Structure 26</a> or the <a href=\"https://runrepeat.com/uk/brooks-adrenaline-gts-24\" rel=\"noopener\" target=\"_blank\">Brooks Adrenaline GTS 24</a>, both long-standing and highly reliable choices.</p>\n\n    \n    \n\n<p>We also believe the steep price tag makes the Hurricane 25 less appealing for runners seeking stability on a budget. From our perspective, shoes like the <a href=\"https://runrepeat.com/uk/asics-gt-1000-14\" rel=\"noopener\" target=\"_blank\">ASICS GT 1000 14</a> or the <a href=\"https://runrepeat.com/uk/adidas-supernova-solution\" rel=\"noopener\" target=\"_blank\">adidas Supernova Solution</a> offer good support and comfort without the premium price.</p>\n<p></p>"
+    },
+    "saucony-hurricane-26": {
+      "brand": "Saucony",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Insanely broad﻿ midsole may feel overly bulky",
+        "Price can be a real hurdle",
+        "Slightly less stable than top rivals"
+      ],
+      "discontinued": false,
+      "facts": {},
+      "features": [],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41117/saucony-hurricane-26-25477745-720.jpg",
+      "intro": "Saucony is on a serious foam-tech streak. We found in the lab that the Hurricane 26 delivers an impressive mix of softness, bounce, and energy return, making this one of the most exciting stability shoes we've tested. We really liked the upgraded traction, premium feel and long-run comfort, but the ultra-broad platform creates a huge underfoot experience that won't suit everyone. In our view, this is a dream shoe for runners who want maximum support with a lively ride, as long as they don't mind its oversized design.",
+      "latestVersion": null,
+      "msrpGbp": 170,
+      "name": "Saucony Hurricane 26",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41117,
+      "pros": [
+        "Excellent energy return from brand-new foam",
+        "Great choice for marathon training",
+        "Perfect for long runs",
+        "Smooth heel-to-toe transitions",
+        "Breathable design",
+        "Supportive platform without excessive stiffness",
+        "Traction is better than ever before",
+        "Surprisingly lightweight for its gargantuan size",
+        "Good durability scores",
+        "Premium comfort",
+        "A super-trainer stability shoe!"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/saucony-hurricane-26",
+      "score": 91,
+      "scrapedAt": "2026-09-07T12:00:52.621Z",
+      "whoShouldBuy": "<p>After testing the Saucony Hurricane 26 in the lab, we found that it's:</p>\n<ul>\n<li>A top-tier stability shoe for runners who want a softer, bouncier ride.</li>\n<li>Ideal for tech-focused pronators who love to try out new foams.</li>\n<li>A great pick for marathoners looking for a stable shoe built for long runs.</li>\n<li>A safe choice for runners who upgrade their Hurricane every 1 or 2 years.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The massive size of the Saucony Hurricane 26 can be a problem for runners who dislike bulky, oversized shoes. For a more streamlined stability shoe that feels less imposing, check out the <a href=\"https://runrepeat.com/uk/brooks-adrenaline-gts-25\" rel=\"noopener\" target=\"_blank\">Brooks Adrenaline GTS 25</a> or the <a href=\"https://runrepeat.com/uk/nike-structure-plus\" rel=\"noopener\" target=\"_blank\">Nike Structure Plus</a>.</p>\n\n    \n    \n\n<p>We also think the Hurricane 26's high price may deter some runners. If your budget is tighter, the <a href=\"https://runrepeat.com/uk/asics-gt-1000-15\" rel=\"noopener\" target=\"_blank\">ASICS GT 1000 15</a> is a more affordable option.</p>\n<p></p>"
     },
     "saucony-kinvara-14": {
       "brand": "Saucony",

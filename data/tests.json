@@ -12,7 +12,7 @@
     "10": "Weight",
     "11": "Price"
   },
-  "scrapedAt": "2026-08-31T13:07:58.856Z",
+  "scrapedAt": "2026-09-07T11:59:49.409Z",
   "seedSlug": "saucony-endorphin-azura",
   "tests": [
     {
@@ -192,8 +192,8 @@
       "updateId": 71
     },
     {
-      "chartLabel": "Soft ←→ Firm",
-      "groupId": null,
+      "chartLabel": "%-change in softness in cold",
+      "groupId": "8",
       "id": 13,
       "isNew": false,
       "methodStatus": null,
@@ -966,7 +966,7 @@
     },
     {
       "chartLabel": "Soft ←→ Firm",
-      "groupId": null,
+      "groupId": "8",
       "id": 71,
       "isNew": false,
       "methodStatus": null,
@@ -1016,7 +1016,7 @@
       "chartLabel": "Flexible ←→ Rigid",
       "groupId": "5",
       "id": 74,
-      "isNew": true,
+      "isNew": false,
       "methodStatus": null,
       "name": "Torsional rigidity",
       "options": null,
