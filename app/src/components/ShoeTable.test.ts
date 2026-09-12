@@ -408,8 +408,8 @@ describe('ShoeTable windows the body', () => {
     [...table.querySelectorAll<HTMLElement>('tr.spacer > td')]
       .reduce((total, td) => total + parseFloat(td.style.height), 0);
 
-  it('accounts for measured panels under every prototype-named shoe slug', async () => {
-    for (const key of OBJECT_PROTOTYPE_KEYS) {
+  it.each(OBJECT_PROTOTYPE_KEYS)(
+    'accounts for measured panels under prototype-named shoe slug %s', async (key) => {
       rig.measure = () => BIG.map(() => ROW_PX);
       const shoes = BIG.map((s, i) => i === 0 ? { ...s, slug: key, name: `Prototype ${key}` } : s);
       const rendered = setup({ data: { ...bigData, shoes }, shoes, open: [key] }).rendered;
@@ -426,8 +426,8 @@ describe('ShoeTable windows the body', () => {
         expect(Number.isFinite(parseFloat(cell.style.height)), key).toBe(true);
       }
       rendered.unmount();
-    }
-  });
+    },
+  );
 
   /**
    * **Every spacer's OWN height, against the shoes that spacer stands for — and the total is not
