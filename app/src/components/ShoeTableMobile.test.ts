@@ -158,8 +158,8 @@ describe('ShoeTableMobile windows whole shoe groups', () => {
     return { rendered, table };
   }
 
-  it('accounts for measured panels under every prototype-named shoe slug', async () => {
-    for (const key of OBJECT_PROTOTYPE_KEYS) {
+  it.each(OBJECT_PROTOTYPE_KEYS)(
+    'accounts for measured panels under prototype-named shoe slug %s', async (key) => {
       rig.measure = () => [...CONTENT_HEIGHTS];
       rig.rulePx = 1;
       const shoes = BIG.map((s, i) => i === 0 ? { ...s, slug: key, name: `Prototype ${key}` } : s);
@@ -177,8 +177,8 @@ describe('ShoeTableMobile windows whole shoe groups', () => {
         expect(Number.isFinite(parseFloat(cell.style.height)), key).toBe(true);
       }
       rendered.unmount();
-    }
-  });
+    },
+  );
 
   it('renders the fleet while nothing is measurable and keeps a permanent prototype outside it', () => {
     const { rendered } = setup({ data: bigData, shoes: BIG });
