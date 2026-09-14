@@ -12,7 +12,7 @@
     "10": "Weight",
     "11": "Price"
   },
-  "scrapedAt": "2026-09-07T11:59:49.409Z",
+  "scrapedAt": "2026-09-14T12:14:45.010Z",
   "seedSlug": "saucony-endorphin-azura",
   "tests": [
     {
@@ -193,7 +193,7 @@
     },
     {
       "chartLabel": "%-change in softness in cold",
-      "groupId": "8",
+      "groupId": null,
       "id": 13,
       "isNew": false,
       "methodStatus": null,
@@ -966,7 +966,7 @@
     },
     {
       "chartLabel": "Soft ←→ Firm",
-      "groupId": "8",
+      "groupId": null,
       "id": 71,
       "isNew": false,
       "methodStatus": null,

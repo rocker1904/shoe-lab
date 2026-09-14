@@ -5759,6 +5759,85 @@
       "whoShouldBuy": "<p>In our view, the Altra Experience Flow 3 works for:</p>\n<ul>\n<li>Runners moving toward zero drop who need a reliable daily trainer during the transition phase.</li>\n<li>Fans of the previous Flow who accept less bounce in exchange for a more comfortable upper and a wider platform.</li>\n<li>Those looking for a flexible and durable shoe that handles daily miles and casual wear with ease.</li>\n<li>Wide-footed runners who need extra room for natural toe splay in a daily trainer.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We found in the lab that the EGO P35 midsole delivers underwhelming energy return, which limits its appeal for fast-paced running. Instead, the <a href=\"https://runrepeat.com/uk/altra-experience-flow-2\" rel=\"noopener\" target=\"_blank\">Altra Experience Flow 2</a> (while stock lasts) and the <a href=\"https://runrepeat.com/uk/topo-athletic-cyclone-2\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 2</a> offer a more energetic ride while keeping a foot-shaped fit.</p>\n\n    \n    \n\n<p>We also believe that zero-drop purists may not enjoy the Experience line. In our view, the 4 mm offset shifts away from Altra’s original DNA, making it a poor pick for those seeking a true flat midsole. Instead, the <a href=\"https://runrepeat.com/uk/altra-escalante-4\" rel=\"noopener\" target=\"_blank\">Altra Escalante 4</a> (low stack height) and the <a href=\"https://runrepeat.com/uk/altra-torin-8\" rel=\"noopener\" target=\"_blank\">Altra Torin 8</a> (moderate stack height) deliver a real zero-drop experience.</p>\n<p></p>"
     },
+    "altra-experience-flow-st": {
+      "brand": "Altra",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Tongue can slide a bit",
+        "Low-volume feet may struggle here",
+        "Limited stability won't suit overpronators",
+        "Outsole durability is a real concern"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "stability",
+            "text": "Stability"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41229/altra-experience-flow-st-25528613-720.jpg",
+      "intro": "The Experience Flow ST shows that Altra really wants to reach runners who aren't ready for zero-drop shoes. We really liked its soft midsole, lightweight build, durable upper, and easygoing ride for both walks and daily runs. Our experience with the shoe confirmed that it provides useful support without feeling overly controlling or firm, making it a great fit for many runners. That said, we found clear weaknesses in outsole durability and fit. Even so, it's a clear step forward for the Experience line and a better shoe than the Form it replaces.",
+      "latestVersion": null,
+      "msrpGbp": 145,
+      "name": "Altra Experience Flow ST",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41229,
+      "pros": [
+        "Ideal for runners with wide feet",
+        "Soft yet stable",
+        "Lightweight build",
+        "Improved traction",
+        "Moderate drop works for more runners",
+        "Durable upper",
+        "Classic, non-aggressive rocker",
+        "Perfect for mild pronators",
+        "Works well for walking too",
+        "Fair price matches the overall package"
+      ],
+      "releasedAt": "2026-02-27",
+      "runrepeatUrl": "https://runrepeat.com/uk/altra-experience-flow-st",
+      "score": 82,
+      "scrapedAt": "2026-09-14T12:15:45.804Z",
+      "whoShouldBuy": "<p>After doing our usual batch of tests and some runs, we recommend the Altra Experience Flow ST for:</p>\n<ul>\n<li>Those with wide feet who want a lightweight daily trainer with added support.</li>\n<li>Runners who are hesitant to try Altra because of its zero-drop shoes, as this model uses a moderate-drop geometry.</li>\n<li>Individuals looking for a stability shoe with plenty of room for natural toe splay and a soft midsole feel.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>If you're a neutral runner, the Experience Flow ST isn't the best pick from Altra. Instead, go straight for the <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> if you want a zero-drop shoe, or choose the <a href=\"https://runrepeat.com/uk/altra-experience-flow-3\" rel=\"noopener\" target=\"_blank\">Altra Experience Flow 3</a> for the same platform without GuideRail support.</p>\n\n    \n    \n\n<p>We also think Altra purists who are loyal to zero-drop shoes will be better off with the <a href=\"https://runrepeat.com/uk/altra-paradigm-8\" rel=\"noopener\" target=\"_blank\">Altra Paradigm 8</a> instead of this model.</p>\n<p></p>"
+    },
     "altra-experience-form": {
       "brand": "Altra",
       "categorySlug": "running-shoes",
@@ -30568,6 +30647,82 @@
       "scrapedAt": "2026-07-26T22:01:29.718Z",
       "whoShouldBuy": "<p>The On Cloudswift 4 is a solid choice if you:</p>\n<ul>\n<li>Are a heel striker looking for a shoe with a moderate stack height and willing to pay a little extra for a premium-quality upper.</li>\n<li>Want a shoe for daily wear that can also handle light weekend runs.</li>\n<li>Enjoyed the Cloudswift 3, as this update keeps the same feel with subtle refinements from heel to toe for a smoother experience.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the biggest problem with the Cloudswift 4 is its high price paired with low energy return. In our lab tests, we found that cheaper shoes like the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-2\" rel=\"noopener\" target=\"_blank\">adidas Supernova Rise 2</a> or <a href=\"https://runrepeat.com/uk/new-balance-fuel-cell-rebel-v-5\" rel=\"noopener\" target=\"_blank\">New Balance FuelCell Rebel v5</a> deliver a springier, more responsive ride. From our perspective, that makes the Cloudswift 4 a poor value choice for serious runners.</p>\n\n    \n    \n\n<p>We also believe that cushioning falls short, especially for forefoot strikers. In our experience, shoes like the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> or <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> are much better options. Both offer max-stack comfort, stronger energy return... and lower prices too!</p>\n<p></p>"
+    },
+    "on-light-spray-cloudboom-strike-2": {
+      "brand": "On",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Still very expensive",
+        "LightSpray fit and feel can be polarising",
+        "Not for heel strikers",
+        "Expensive"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Cushioned",
+        "Carbon plate",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41472/on-light-spray-cloudboom-strike-2-25532676-720.jpg",
+      "intro": "The LightSpray Cloudboom Strike 2 is a clear showcase of On's ambition. We were impressed by its ultra-light build, lively foam, and truly unique LightSpray upper. We found that it combines these strengths with excellent shock absorption and strong traction, making it a serious marathon racer. However, the non-adjustable fit can be a major issue for some runners, while heel strikers may want more support. That said, On has created a bold, cutting-edge super shoe that definitely stands out from the crowd.",
+      "latestVersion": null,
+      "msrpGbp": 310,
+      "name": "On LightSpray Cloudboom Strike 2",
+      "pageValues": {
+        "39": "sock-like",
+        "40": "none",
+        "41": false,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41472,
+      "pros": [
+        "Incredible LightSpray upper",
+        "Ideal for marathon racing",
+        "Responsive PEBA foam",
+        "Soft midsole provides comfort",
+        "Ideal for fans of bootie-style uppers",
+        "Good traction for rainy races",
+        "Can handle 5K/10K races too",
+        "Low weight",
+        "Impressive full-length rubber coverage",
+        "Cheaper than its predecessor",
+        "Top-tier build quality﻿"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/on-light-spray-cloudboom-strike-2",
+      "score": 88,
+      "scrapedAt": "2026-09-14T12:15:46.786Z",
+      "whoShouldBuy": "<p>After testing the On LightSpray Cloudboom Strike 2, we find it ideal for runners that:</p>\n<ul>\n<li>Enjoy trying the latest tech and want to experience the incredible LightSpray upper.</li>\n<li>Prefer a super shoe with full-length rubber coverage instead of the usual less-protected designs.</li>\n<li>Run marathons and strike with the forefoot, as our testing shows this shoe is fully tailored for that.</li>\n<li>Love On as a brand and simply want their best racer, no matter the price.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The LightSpray upper can deliver an incredible, seamless fit, but it simply doesn't work for everyone. Unlike traditional shoes, there's no way to fine-tune the fit. For a more classic upper, the <a href=\"https://runrepeat.com/uk/asics-metaspeed-edge-tokyo\" rel=\"noopener\" target=\"_blank\">ASICS Metaspeed Edge Tokyo</a> or <a href=\"https://runrepeat.com/uk/new-balance-super-comp-elite-v-6\" rel=\"noopener\" target=\"_blank\">New Balance SuperComp Elite v6</a> are excellent options.</p>\n\n    \n    \n\n<p>We also think heel strikers will find limited support, as this shoe is tailored more toward runners who land on the front half of the foot. Instead, check out the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a>.</p>\n<p></p>"
     },
     "ortuseight-solar-2-0": {
       "brand": "Ortuseight",
