@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-09-14T12:15:46.786Z",
+  "builtAt": "2026-09-21T12:24:04.848Z",
   "groups": {
     "1": "Breathability",
     "2": "Durability",
@@ -118,7 +118,7 @@
         "41": true,
         "45": true,
         "52": 130,
-        "54": 3.1,
+        "54": 3.14,
         "55": 95,
         "56": 72.6,
         "57": 26.5,
@@ -1273,7 +1273,7 @@
         "45": false,
         "48": 14.5,
         "52": 160,
-        "54": 2.85,
+        "54": 2.86,
         "55": 97.3,
         "56": 70.6,
         "57": 28.3,
@@ -1399,7 +1399,7 @@
         "41": true,
         "45": false,
         "52": 150,
-        "54": 2.84,
+        "54": 2.83,
         "55": 97.5,
         "56": 71.6,
         "57": 28.1,
@@ -1521,7 +1521,7 @@
         "41": true,
         "45": false,
         "52": 160,
-        "54": 3.1,
+        "54": 3.13,
         "55": 97.7,
         "56": 72.8,
         "57": 27.4,
@@ -3278,7 +3278,7 @@
         "41": true,
         "45": false,
         "52": 200,
-        "54": 3.2,
+        "54": 3.18,
         "55": 97.4,
         "56": 71.4,
         "57": 24.8,
@@ -3392,7 +3392,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 3.13,
+        "54": 3.17,
         "55": 96.9,
         "56": 73.6,
         "57": 23.7,
@@ -6103,7 +6103,7 @@
         "40": "extended-heel-collar",
         "41": true,
         "52": 180,
-        "54": 2.78,
+        "54": 2.77,
         "65": 66.91,
         "66": 65.56,
         "67": 122.00775969352,
@@ -6769,7 +6769,7 @@
         "41": true,
         "45": false,
         "52": 80,
-        "54": 2.98,
+        "54": 2.96,
         "55": 97.6,
         "56": 74.7,
         "57": 27.5,
@@ -7545,7 +7545,7 @@
         "41": true,
         "45": false,
         "52": 140,
-        "54": 2.3,
+        "54": 2.36,
         "55": 99.1,
         "56": 80.8,
         "57": 26.9,
@@ -8539,7 +8539,7 @@
         "41": true,
         "45": true,
         "52": 165,
-        "54": 3.09,
+        "54": 3.05,
         "55": 101.4,
         "56": 82.4,
         "57": 26.4,
@@ -8878,7 +8878,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 3.21
+        "54": 3.2
       }
     },
     {
@@ -9757,7 +9757,7 @@
         "41": true,
         "45": false,
         "52": 120,
-        "54": 3.08,
+        "54": 3.07,
         "55": 95.8,
         "56": 73.7,
         "57": 26.2,
@@ -9868,7 +9868,7 @@
         "41": true,
         "45": false,
         "52": 115,
-        "54": 2.84,
+        "54": 2.83,
         "55": 96.5,
         "56": 75.7,
         "57": 28.9,
@@ -10446,7 +10446,7 @@
         "41": true,
         "45": false,
         "52": 70,
-        "54": 2.7,
+        "54": 2.71,
         "55": 96.9,
         "56": 74.1,
         "57": 27.1,
@@ -10835,7 +10835,7 @@
         "45": true,
         "48": 27.4,
         "52": 140,
-        "54": 3.13,
+        "54": 3.11,
         "55": 93.9,
         "56": 71.1,
         "57": 29.7,
@@ -11695,7 +11695,7 @@
         "41": true,
         "45": true,
         "52": 165,
-        "54": 3,
+        "54": 2.99,
         "55": 98.9,
         "56": 74.8,
         "57": 27.2,
@@ -11951,7 +11951,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 3.1,
+        "54": 3.06,
         "55": 95.9,
         "56": 72.4,
         "57": 28.6,
@@ -12575,7 +12575,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 3.02,
+        "54": 3.03,
         "55": 97.6,
         "56": 72.5,
         "57": 22.7,
@@ -12919,7 +12919,7 @@
         "41": true,
         "45": false,
         "52": 100,
-        "54": 2.91,
+        "54": 3,
         "55": 94.6,
         "56": 70.2,
         "57": 29,
@@ -13528,7 +13528,7 @@
         "41": true,
         "45": false,
         "52": 110,
-        "54": 2.64,
+        "54": 2.65,
         "55": 97.5,
         "56": 74.1,
         "57": 26.2,
@@ -14029,7 +14029,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.89,
+        "54": 2.9,
         "55": 96,
         "56": 73.3,
         "57": 24.6,
@@ -14118,7 +14118,10 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "ASICS GT 2000 14",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "ASICS GT 2000 15",
+        "slug": "asics-gt-2000-15"
+      },
       "plate": "none",
       "previousVersion": {
         "name": "ASICS GT 2000 13",
@@ -14154,7 +14157,7 @@
         "41": true,
         "45": false,
         "52": 140,
-        "54": 3.03,
+        "54": 3.06,
         "55": 94.5,
         "56": 68.4,
         "57": 24.9,
@@ -14171,6 +14174,132 @@
         "78": 31,
         "79": 63,
         "80": 60
+      }
+    },
+    {
+      "brand": "ASICS",
+      "details": {
+        "cons": [
+          "Small price hike",
+          "Toebox can feel a bit cramped",
+          "Not for max-cushioned haters"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole",
+          "Rocker"
+        ],
+        "intro": "The GT 2000 15 has always been an easy shoe to recommend, but this version makes the decision even easier for us. We found in the lab that ASICS improved durability, energy return, weight, flexibility, and traction while keeping the stable feel that defines the series. The lighter, more energetic ride makes daily miles and faster efforts more enjoyable. It's a bit pricier, and the snug fit and moderate support won't work for every foot, but in our view, this is a huge leap forward for the series.",
+        "pros": [
+          "Stunning durability﻿",
+          "Improved energy return",
+          "Fantastic weight loss",
+          "Comfortable for all-day wear",
+          "More flexible than v14",
+          "Great choice for heel strikers",
+          "Excellent traction on dry and wet roads",
+          "Ready for long runs",
+          "Picks up the pace with ease",
+          "Looks better!",
+          "Available in D, 2E and 4E widths"
+        ],
+        "whoShouldBuy": "<p>In our opinion, the ASICS GT 2000 15 is a must-buy for:</p>\n<ul>\n<li>Runners who need a stability boost in a dependable daily trainer that offers strong durability.</li>\n<li>Anyone who wished for a more energetic GT 2000, with a bouncier ride and lighter weight that feels more amazing when picking up the pace.</li>\n<li>Those who tried the Novablast series and wished for a slightly more stable ride.</li>\n<li>Heel strikers who want a well-cushioned and stable running shoe that provides plenty of protection and comfort for long miles.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>Runners who need more than a slight boost of support may find that the GT 2000 15 falls a bit short of their needs, especially with its softer foam. Instead, the natural upgrade is the <a href=\"https://runrepeat.com/uk/asics-gel-kayano-33\" rel=\"noopener\" target=\"_blank\">ASICS Gel Kayano 33</a>.</p>\n\n    \n    \n\n<p>Those with wide feet may also have some issues with the GT 2000 15, as its tapered toebox won't suit everyone. Instead, take a look at the <a href=\"https://runrepeat.com/uk/altra-experience-flow-st\" rel=\"noopener\" target=\"_blank\">Altra Experience Flow ST</a> or <a href=\"https://runrepeat.com/uk/topo-ultrafly-5\" rel=\"noopener\" target=\"_blank\">Topo Ultrafly 5</a> for a wide-foot-friendly stability shoe.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "stability",
+            "text": "Stability"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "narrow",
+            "text": "Narrow"
+          },
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41405/asics-gt-2000-15-25565609-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "ASICS GT 2000 15",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": {
+        "name": "ASICS GT 2000 14",
+        "slug": "asics-gt-2000-14"
+      },
+      "releaseDateSource": "listing",
+      "releasedAt": "2026-01-01",
+      "reviewLanguage": null,
+      "score": 91,
+      "slug": "asics-gt-2000-15",
+      "url": "https://runrepeat.com/uk/asics-gt-2000-15",
+      "values": {
+        "2": 4,
+        "3": 5,
+        "4": 0.4,
+        "5": 30,
+        "6": 38.2,
+        "8": 8.2,
+        "9": 4.4,
+        "13": 13.1,
+        "19": 4,
+        "24": 252,
+        "25": 117.2,
+        "26": 95.7,
+        "32": 272.4,
+        "37": 4.1,
+        "38": 4.7,
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true,
+        "52": 150,
+        "54": 3.11,
+        "55": 95.9,
+        "56": 71.3,
+        "57": 24.7,
+        "59": 13.1,
+        "60": 0.99,
+        "65": 63.52,
+        "66": 67.69,
+        "67": 142.940865364,
+        "68": 119.28903733747,
+        "70": 30.6,
+        "71": 34.6,
+        "74": 14.8
       }
     },
     {
@@ -14404,7 +14533,7 @@
         "45": false,
         "48": 21.1,
         "52": 160,
-        "54": 2.46,
+        "54": 2.44,
         "59": 18.2,
         "60": 0.77,
         "65": 56.52,
@@ -14530,7 +14659,7 @@
         "45": false,
         "48": 18.13,
         "52": 170,
-        "54": 2.94,
+        "54": 2.93,
         "55": 93.6,
         "56": 74.3,
         "57": 26.1,
@@ -14656,7 +14785,7 @@
         "45": false,
         "48": 20.5,
         "52": 180,
-        "54": 3.05,
+        "54": 3.02,
         "55": 95.1,
         "56": 71.9,
         "57": 25.7,
@@ -14778,7 +14907,7 @@
         "41": true,
         "45": true,
         "52": 225,
-        "54": 2.98,
+        "54": 2.96,
         "55": 93.7,
         "56": 74.3,
         "57": 24.2,
@@ -15333,7 +15462,7 @@
         "45": false,
         "48": 19.5,
         "52": 270,
-        "54": 3.04,
+        "54": 3.02,
         "55": 90.5,
         "56": 70.1,
         "57": 30.6,
@@ -15689,7 +15818,7 @@
         "41": true,
         "45": false,
         "52": 135,
-        "54": 2.15,
+        "54": 2.16,
         "55": 98.6,
         "56": 77.3,
         "57": 31.2,
@@ -16293,7 +16422,7 @@
         "45": false,
         "48": 17.8,
         "52": 200,
-        "54": 3.19,
+        "54": 3.15,
         "55": 93,
         "56": 70.5,
         "57": 28,
@@ -16782,7 +16911,7 @@
         "41": true,
         "45": true,
         "52": 200,
-        "54": 3.12,
+        "54": 3.16,
         "55": 95.7,
         "56": 71.6,
         "57": 25.1,
@@ -16899,7 +17028,7 @@
         "41": true,
         "45": false,
         "52": 80,
-        "54": 2.84,
+        "54": 2.82,
         "55": 92.6,
         "56": 69,
         "57": 30.3,
@@ -17239,7 +17368,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.95,
+        "54": 2.96,
         "59": 10.4,
         "60": 0.47,
         "65": 53.87,
@@ -18455,7 +18584,7 @@
         "41": true,
         "45": false,
         "52": 150,
-        "54": 2.73,
+        "54": 2.86,
         "55": 94.4,
         "56": 71,
         "57": 27.2,
@@ -18963,7 +19092,7 @@
         "41": true,
         "45": false,
         "52": 165,
-        "54": 3,
+        "54": 2.93,
         "55": 93.4,
         "56": 71.3,
         "57": 26.8,
@@ -19567,7 +19696,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 2.83,
+        "54": 2.88,
         "55": 93.9,
         "56": 69.1,
         "57": 25.7,
@@ -21198,7 +21327,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 2.97,
+        "54": 2.98,
         "59": 13.5,
         "60": 0.35,
         "65": 50.7,
@@ -21435,7 +21564,7 @@
         "45": true,
         "48": 22.9,
         "52": 200,
-        "54": 2.77,
+        "54": 2.85,
         "55": 94.9,
         "56": 72.6,
         "57": 25,
@@ -21551,7 +21680,7 @@
         "41": true,
         "45": false,
         "52": 200,
-        "54": 2.75,
+        "54": 2.77,
         "55": 92.7,
         "56": 71.7,
         "57": 23.1,
@@ -22047,7 +22176,7 @@
         "41": true,
         "45": false,
         "52": 120,
-        "54": 3.1,
+        "54": 3.09,
         "55": 94,
         "56": 70.1,
         "57": 23.2,
@@ -22357,7 +22486,10 @@
       "latestVersion": null,
       "msrpGbp": 100,
       "name": "Brooks Revel 8",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "Brooks Revel 9",
+        "slug": "brooks-revel-9"
+      },
       "plate": "none",
       "previousVersion": {
         "name": "Brooks Revel 7",
@@ -22404,6 +22536,227 @@
         "67": 116.17100371747,
         "68": 87.842586085734,
         "74": 11
+      }
+    },
+    {
+      "brand": "Brooks",
+      "details": {
+        "cons": [
+          "Heavier than v8",
+          "Less exciting than before",
+          "Limited toe room",
+          "Maybe a touch stiffer than we wanted﻿"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole"
+        ],
+        "intro": "The Brooks Revel 9 is one of the easiest shoes we can recommend to beginners. We really liked its comfortable ride, dependable traction, and durable build, especially at such a budget-friendly price. In our experience, it handles daily runs and walks with a simple, no-fuss feel that works for most runners. We found that the wider platform makes it more stable than before, but that extra security comes with a trade-off: it's now less versatile than previous versions, making it a better choice for easy miles than faster training.",
+        "pros": [
+          "Incredible value for money",
+          "More stable than ever before",
+          "Impressive durability scores",
+          "Reliable choice for beginners",
+          "Comfortable upper",
+          "Smooth ride for easy-paced training",
+          "Wide version available",
+          "Improved traction",
+          "No price hike",
+          "No price hike"
+        ],
+        "whoShouldBuy": "<p>In our opinion, the Brooks Revel 9 is an interesting shoe for:</p>\n<ul>\n<li>Beginners looking for a dependable, value-friendly shoe to start their running journey.</li>\n<li>Budget-conscious runners who want a reliable and durable shoe for everyday miles.</li>\n<li>Heel strikers looking for an affordable shoe with a stable, secure ride.</li>\n<li>Runners who dislike max-stack shoes and prefer a lower midsole.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>The Revel 9 feels less agile than its predecessor, and the weight gain we found in the lab confirms it. Therefore, if this really matters to you, we'd recommend the <a href=\"https://runrepeat.com/uk/nike-interact-run\" rel=\"noopener\" target=\"_blank\">Nike Interact Run</a> or the <a href=\"https://runrepeat.com/uk/adidas-adizero-sl2\" rel=\"noopener\" target=\"_blank\">adidas Adizero SL2</a> instead.</p>\n\n    \n    \n\n<p>We also think runners looking for more performance should spend a little more and go for the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-9\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios 9</a>. It has a similarly sized midsole, but delivers a much faster ride.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41428/brooks-revel-9-25557080-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 100,
+      "name": "Brooks Revel 9",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": {
+        "name": "Brooks Revel 8",
+        "slug": "brooks-revel-8"
+      },
+      "releaseDateSource": "listing",
+      "releasedAt": "2026-01-01",
+      "reviewLanguage": null,
+      "score": 80,
+      "slug": "brooks-revel-9",
+      "url": "https://runrepeat.com/uk/brooks-revel-9",
+      "values": {
+        "2": 3,
+        "3": 4,
+        "4": 0.5,
+        "5": 24.1,
+        "6": 32.7,
+        "8": 8.6,
+        "9": 3.2,
+        "13": 24.1,
+        "19": 4,
+        "24": 264,
+        "25": 116.1,
+        "26": 94.2,
+        "32": 269.7,
+        "37": 5,
+        "38": 11.7,
+        "39": "none",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true,
+        "52": 100,
+        "55": 95.4,
+        "56": 71.9,
+        "57": 24.7,
+        "59": 15.3,
+        "60": 0.65,
+        "65": 50.2,
+        "66": 60.57,
+        "67": 127.16660096392,
+        "68": 91.737227884448,
+        "70": 34,
+        "71": 42.2,
+        "74": 14.8
+      }
+    },
+    {
+      "brand": "Brooks",
+      "details": {
+        "cons": [
+          "Narrow toebox may bother wide feet",
+          "Maybe a bit too rigid",
+          "Heavier than the regular Revel series",
+          "Higher drop than stated"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole"
+        ],
+        "intro": "The Brooks Revel Max is a clear product of today's running shoe trend toward higher stacks, but Brooks took a different route than simply making the Revel taller. We found that it blends the DNA of the Revel and Ghost Max into a surprisingly cohesive package. In our experience, the high drop, plush foam, and beginner-friendly geometry make it especially appealing to heel strikers who want a protective, cheap daily trainer. We really liked the tough outsole and comfortable knit upper too, although the narrow fit limits its appeal for runners with wider feet.",
+        "pros": [
+          "Excellent cushioning for an entry-level shoe",
+          "Plush foam for easy miles",
+          "Strong value",
+          "Ideal max-stack option for beginners",
+          "Comfortable knit upper",
+          "Solid durability scores",
+          "Generous outsole coverage",
+          "Effective lacing system manages pressure well",
+          "Reasonable weight",
+          "Tailored for heel strikers"
+        ],
+        "whoShouldBuy": "<p>We believe that the Brooks Revel Max is an interesting pick for runners that:</p>\n<ul>\n<li>Strike heel-first and want an affordable shoe with plenty of foam underfoot for added protection and a stable, cushioned ride.</li>\n<li>Prefer the comfort and feel of a knit upper but don't want to spend premium prices on a daily running shoe.</li>\n<li>Enjoy the Revel series but want a taller, more protective midsole for long runs and easier miles.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>For runners who prefer a more versatile shoe that's also more comfortable for everyday wear, we think the <a href=\"https://runrepeat.com/uk/brooks-revel-9\" rel=\"noopener\" target=\"_blank\">Brooks Revel 9</a> is the better pick. It's also cheaper, making it an even more appealing option for budget-conscious runners.</p>\n\n    \n    \n\n<p>We also think the Revel Max's tapered toebox could be an issue for some runners. Instead, we suggest trying the <a href=\"https://runrepeat.com/uk/nike-winflo-12\" rel=\"noopener\" target=\"_blank\">Nike Winflo 12</a>, which isn't extremely wide but offers more room than the Revel Max while occupying a similar spot in the market as an affordable yet cushioned shoe.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41103/brooks-revel-max-25560223-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 120,
+      "name": "Brooks Revel Max",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": null,
+      "releaseDateSource": "listing",
+      "releasedAt": "2026-01-01",
+      "reviewLanguage": null,
+      "score": 81,
+      "slug": "brooks-revel-max",
+      "url": "https://runrepeat.com/uk/brooks-revel-max",
+      "values": {
+        "2": 2,
+        "3": 4,
+        "4": 0.46,
+        "5": 26,
+        "6": 38.5,
+        "8": 12.5,
+        "9": 3.1,
+        "13": 24.2,
+        "19": 5,
+        "24": 281,
+        "25": 114.4,
+        "26": 97.2,
+        "32": 271.6,
+        "37": 4.8,
+        "38": 5,
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false,
+        "52": 120,
+        "55": 94.3,
+        "56": 70.8,
+        "57": 26.6,
+        "59": 18.3,
+        "60": 0.59,
+        "65": 56.6,
+        "66": 61.2,
+        "67": 133.9405304045,
+        "68": 109.58904109589,
+        "70": 23.6,
+        "71": 29.3,
+        "74": 16.2
       }
     },
     {
@@ -23270,6 +23623,114 @@
       }
     },
     {
+      "brand": "HIRACER",
+      "details": {
+        "cons": [
+          "Upper durability is a real concern",
+          "Not for high-volume feet",
+          "Limited availability in third-party retailers",
+          "Not for slower runners"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Carbon plate",
+          "Removable insole",
+          "Rocker"
+        ],
+        "intro": "The HIRACER HIWINGS PRO brings almost everything we want from a modern super shoe without the usual premium price. We were impressed by its responsive foam, lightweight build, and aggressive rocker that keeps every stride moving forward. We found in the lab that its energy return is a real highlight, while the outsole also showed strong traction and durability. However, its narrow fit and fragile upper can limit its appeal. In our experience, it's an exciting, race-focused option best suited to faster runners chasing cutting-edge shoe tech without breaking the bank.",
+        "pros": [
+          "World-class energy return",
+          "Solid cushioning for marathon racing",
+          "Outsole offers both durability and grip",
+          "Sock-like upper prevents tongue movement",
+          "Affordable price for a super shoe",
+          "Excellent foot lockdown",
+          "Full-length rubber coverage",
+          "Head-turning design",
+          "Competitive weight",
+          "Premium insole",
+          "Premium insole"
+        ],
+        "whoShouldBuy": "<p>The HIRACER HIWINGS PRO is a very interesting option for:</p>\n<ul>\n<li>Fast runners looking for an aggressive super shoe with insane energy return that keeps rolling them forward.</li>\n<li>Those on a limited budget who want high-level super shoe performance without paying the usual premium prices.</li>\n<li>Marathoners eager to try a Chinese brand that's gaining attention with bold designs and impressive foam technology.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>If you prefer a more traditional ride from a super shoe, the HIRACER HIWINGS PRO may not be for you, due to its wave-shaped plate and aggressive midsole rocker. Instead, we suggest going with the <a href=\"https://runrepeat.com/uk/nike-vaporfly-4\" rel=\"noopener\" target=\"_blank\">Nike Vaporfly 4</a> or the <a href=\"https://runrepeat.com/uk/puma-deviate-nitro-elite-4\" rel=\"noopener\" target=\"_blank\">PUMA Deviate Nitro Elite 4</a>.</p>\n\n    \n    \n\n<p>We also think heel strikers may prefer a racing shoe with a bit more lateral support in the rear. For that, we suggest the <a href=\"https://runrepeat.com/uk/saucony-endorphin-pro-5\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Pro 5</a> or the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a>.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41435/hiracer-hiwings-pro-25542515-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 180,
+      "name": "HIRACER HIWINGS PRO",
+      "nextVersion": null,
+      "plate": "carbon",
+      "previousVersion": null,
+      "releaseDateSource": "listing",
+      "releasedAt": "2026-01-01",
+      "reviewLanguage": null,
+      "score": 89,
+      "slug": "hiracer-hiwings-pro",
+      "url": "https://runrepeat.com/uk/hiracer-hiwings-pro",
+      "values": {
+        "2": 1,
+        "3": 1,
+        "4": 0.76,
+        "5": 30.3,
+        "6": 37.1,
+        "8": 6.8,
+        "9": 1.6,
+        "13": 9.1,
+        "19": 1,
+        "24": 184,
+        "25": 111.9,
+        "26": 82.1,
+        "32": 269.1,
+        "37": 3.1,
+        "38": 2.9,
+        "39": "sock-like",
+        "40": "finger-loop",
+        "41": true,
+        "45": true,
+        "52": 180,
+        "55": 91.3,
+        "56": 71.5,
+        "57": 23.6,
+        "59": 19.4,
+        "60": 0.76,
+        "65": 76.58,
+        "66": 83.13,
+        "67": 148.41199168893,
+        "68": 121.39163368861,
+        "70": 33,
+        "71": 36,
+        "74": 10.5
+      }
+    },
+    {
       "brand": "HOKA",
       "details": {
         "cons": [
@@ -23457,7 +23918,10 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "HOKA Arahi 8",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "HOKA Arahi 9",
+        "slug": "hoka-arahi-9"
+      },
       "plate": "none",
       "previousVersion": {
         "name": "HOKA Arahi 7",
@@ -23507,6 +23971,127 @@
         "70": 35.8,
         "72": 44.1,
         "74": 19.5
+      }
+    },
+    {
+      "brand": "HOKA",
+      "details": {
+        "cons": [
+          "Disappointing energy return (again)",
+          "Price increase feels difficult to justify",
+          "Heavier than its predecessor",
+          "Non-gusseted tongue is a miss"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole"
+        ],
+        "intro": "The HOKA Arahi 9 delivers excellent stability, comfort, and insane outsole durability for easy daily miles. We found that its broad platform and H-Frame system provide secure support without excessive rigidity, while the upper remains comfortable and handles all-day wear with ease. However, the higher weight and poor energy return are major drawbacks, especially when competitors offer more advanced technology at a similar or even lower price.",
+        "pros": [
+          "Stable support without a rigid feel",
+          "Improved traction on wet roads",
+          "Very good durability",
+          "Ideal for easy miles",
+          "Works for runners with Haglund's",
+          "Smooth heel-to-toe transitions",
+          "Enhanced upper",
+          "Can handle daily use without any issue",
+          "Available in D, 2E and 4E widths",
+          "Clever lacing system"
+        ],
+        "whoShouldBuy": "<p>In our view, the HOKA Arahi 9 is built for:</p>\n<ul>\n<li>Runners who need a stable, highly-durable shoe for easy daily miles.</li>\n<li>Heel strikers with overpronation who want reliable support and comfort.</li>\n<li>Those who tried the Arahi 8 and disliked the upper. The redesigned upper is the main change here.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>If you put energy return high on your list of priorities, the HOKA Arahi 9 is going to be a major letdown. It's simply not built for speed, and the weight gain over version 8 makes matters worse. Instead, we recommend the <a href=\"https://runrepeat.com/uk/asics-gt-2000-15\" rel=\"noopener\" target=\"_blank\">ASICS GT 2000 15</a>, which delivers much more bounce while still providing solid support.</p>\n\n    \n    \n\n<p>We also think that runners with severe overpronation may find the Arahi 9 a bit limited. In that case, the natural step up is the <a href=\"https://runrepeat.com/uk/hoka-gaviota-6\" rel=\"noopener\" target=\"_blank\">HOKA Gaviota 6</a>.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "stability",
+            "text": "Stability"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          },
+          {
+            "slug": "narrow",
+            "text": "Narrow"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41104/hoka-arahi-9-25586019-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 155,
+      "name": "HOKA Arahi 9",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": {
+        "name": "HOKA Arahi 8",
+        "slug": "hoka-arahi-8"
+      },
+      "releaseDateSource": "page",
+      "releasedAt": "2026-07-01",
+      "reviewLanguage": null,
+      "score": 79,
+      "slug": "hoka-arahi-9",
+      "url": "https://runrepeat.com/uk/hoka-arahi-9",
+      "values": {
+        "2": 3,
+        "3": 4,
+        "4": 0.3,
+        "5": 27.7,
+        "6": 38,
+        "8": 10.3,
+        "9": 3.5,
+        "13": 23.4,
+        "19": 3,
+        "24": 278,
+        "25": 117.3,
+        "26": 96,
+        "32": 271.6,
+        "37": 4.4,
+        "38": 8,
+        "39": "none",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true,
+        "52": 155,
+        "55": 97,
+        "56": 70.5,
+        "57": 28.9,
+        "59": 15.5,
+        "60": 0.64,
+        "65": 46.97,
+        "66": 55.53,
+        "67": 138.16734829225,
+        "68": 107.65305573199,
+        "70": 32.9,
+        "71": 40.6,
+        "72": 46.2,
+        "74": 11.8
       }
     },
     {
@@ -23743,7 +24328,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 2.83,
+        "54": 2.82,
         "55": 94.1,
         "56": 72.5,
         "57": 29.6,
@@ -23971,7 +24556,7 @@
         "45": false,
         "48": 13.5,
         "52": 275,
-        "54": 2.75,
+        "54": 2.73,
         "55": 90.6,
         "56": 71.3,
         "57": 26.3,
@@ -24082,7 +24667,7 @@
         "41": true,
         "45": false,
         "52": 275,
-        "54": 2.14,
+        "54": 2.13,
         "55": 91.4,
         "56": 70.4,
         "57": 25.1,
@@ -25522,7 +26107,7 @@
         "41": true,
         "45": true,
         "52": 145,
-        "54": 2.54,
+        "54": 2.51,
         "55": 92.5,
         "56": 72.9,
         "57": 29.1,
@@ -25895,7 +26480,7 @@
         "45": true,
         "48": 20.4,
         "52": 190,
-        "54": 2.68,
+        "54": 2.66,
         "55": 91.6,
         "56": 70.8,
         "57": 28.5,
@@ -26367,7 +26952,7 @@
         "45": false,
         "48": 15.5,
         "52": 250,
-        "54": 2.41,
+        "54": 2.4,
         "55": 92,
         "56": 70,
         "57": 26.9,
@@ -26488,7 +27073,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 3.12,
+        "54": 3.11,
         "55": 94.3,
         "56": 69.5,
         "57": 27.1,
@@ -27377,7 +27962,7 @@
         "41": true,
         "45": true,
         "52": 250,
-        "54": 2.83,
+        "54": 2.85,
         "55": 95.6,
         "56": 69.7,
         "57": 26.8,
@@ -27962,7 +28547,7 @@
         "45": true,
         "48": 20,
         "52": 200,
-        "54": 3.93,
+        "54": 3.94,
         "55": 96.5,
         "56": 72.9,
         "57": 29.2,
@@ -28080,7 +28665,7 @@
         "41": true,
         "45": true,
         "52": 200,
-        "54": 3.38,
+        "54": 3.41,
         "55": 95.2,
         "56": 71.7,
         "57": 29.4,
@@ -28203,7 +28788,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 3.34,
+        "54": 3.35,
         "55": 93.7,
         "56": 73.4,
         "57": 27,
@@ -29330,7 +29915,7 @@
         "41": true,
         "45": true,
         "52": 250,
-        "54": 2.56,
+        "54": 2.59,
         "55": 96.6,
         "56": 72.8,
         "57": 25.4,
@@ -30162,7 +30747,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 3.11,
+        "54": 3.09,
         "55": 94.8,
         "56": 73.2,
         "57": 27.1,
@@ -30290,7 +30875,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.83,
+        "54": 2.82,
         "55": 95.4,
         "56": 73.8,
         "57": 26.6,
@@ -30535,7 +31120,7 @@
         "41": true,
         "45": false,
         "52": 85,
-        "54": 3,
+        "54": 3.06,
         "55": 93.7,
         "56": 73.1,
         "57": 26.4,
@@ -31141,7 +31726,7 @@
         "41": true,
         "45": true,
         "52": 165,
-        "54": 2.8,
+        "54": 2.81,
         "59": 13.1,
         "60": 0.54,
         "65": 58.05,
@@ -31381,7 +31966,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 2.34,
+        "54": 2.37,
         "55": 93.6,
         "56": 75.1,
         "57": 27.8,
@@ -33090,7 +33675,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.87,
+        "54": 2.88,
         "55": 96.1,
         "56": 75,
         "57": 27.9,
@@ -33333,7 +33918,7 @@
         "45": false,
         "48": 15,
         "52": 265,
-        "54": 2.83,
+        "54": 2.84,
         "55": 93.8,
         "56": 74.5,
         "57": 26.4,
@@ -33695,7 +34280,7 @@
         "41": true,
         "45": false,
         "52": 180,
-        "54": 2.58,
+        "54": 2.57,
         "55": 95.9,
         "56": 73.5,
         "57": 25.9,
@@ -34172,7 +34757,7 @@
         "41": true,
         "45": true,
         "52": 275,
-        "54": 2.27,
+        "54": 2.33,
         "55": 90.7,
         "56": 71.4,
         "57": 26.8,
@@ -34295,7 +34880,7 @@
         "41": true,
         "45": true,
         "52": 200,
-        "54": 2.49,
+        "54": 2.41,
         "55": 94.1,
         "56": 71.2,
         "57": 24.8,
@@ -34513,7 +35098,7 @@
         "41": true,
         "45": false,
         "52": 130,
-        "54": 2.84,
+        "54": 2.85,
         "65": 54.89,
         "66": 56.57,
         "67": 115.96892032935,
@@ -34626,7 +35211,7 @@
         "45": false,
         "48": 29.3,
         "52": 285,
-        "54": 2.55,
+        "54": 2.54,
         "55": 93.3,
         "56": 75.3,
         "57": 33.7,
@@ -37741,7 +38326,7 @@
         "41": true,
         "45": true,
         "52": 145,
-        "54": 2.34,
+        "54": 2.33,
         "55": 93.7,
         "56": 71.9,
         "57": 25.7,
@@ -37855,7 +38440,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 2.84,
+        "54": 2.88,
         "55": 93.4,
         "56": 72.5,
         "57": 26,
@@ -38316,7 +38901,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 2.35,
+        "54": 2.33,
         "55": 96.9,
         "56": 73.1,
         "57": 24.1,
@@ -38559,7 +39144,7 @@
         "41": true,
         "45": true,
         "52": 230,
-        "54": 3.12,
+        "54": 3.13,
         "55": 94.6,
         "56": 68.6,
         "57": 30.8,
@@ -39264,7 +39849,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 2.95,
+        "54": 2.94,
         "59": 12.1,
         "60": 0.48,
         "65": 68.11,
@@ -40208,7 +40793,7 @@
         "45": true,
         "48": 31.5,
         "52": 230,
-        "54": 2.85,
+        "54": 2.79,
         "55": 94.6,
         "56": 76.9,
         "57": 28.1,
@@ -40320,7 +40905,7 @@
         "45": false,
         "48": 24.38,
         "52": 280,
-        "54": 3.1,
+        "54": 3.12,
         "55": 95.6,
         "56": 73.4,
         "57": 27.2,
@@ -41474,7 +42059,7 @@
         "41": true,
         "45": false,
         "52": 220,
-        "54": 3.18,
+        "54": 3.13,
         "55": 95,
         "56": 72.8,
         "57": 27.5,
@@ -42171,7 +42756,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.84,
+        "54": 2.88,
         "55": 95.5,
         "56": 71,
         "57": 25.2,
@@ -42521,7 +43106,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.53,
+        "54": 2.52,
         "55": 93.6,
         "56": 73.5,
         "57": 28,
@@ -43311,6 +43896,7 @@
         "41": true,
         "45": false,
         "52": 130,
+        "54": 3.4,
         "55": 91.9,
         "56": 71.9,
         "57": 28.8,
@@ -44119,7 +44705,7 @@
         "41": true,
         "45": false,
         "52": 250,
-        "54": 2.92,
+        "54": 2.9,
         "55": 93.6,
         "56": 74.8,
         "57": 26.5,
@@ -44348,7 +44934,7 @@
         "45": false,
         "48": 19.8,
         "52": 300,
-        "54": 3.1,
+        "54": 3.14,
         "55": 92.9,
         "56": 72.3,
         "57": 26.3,
@@ -44692,7 +45278,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 3,
+        "54": 2.9,
         "55": 93.4,
         "56": 70.4,
         "57": 29.3,
@@ -45044,7 +45630,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 3.3,
+        "54": 3.29,
         "55": 96,
         "56": 72.3,
         "57": 26,
@@ -46248,7 +46834,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.7,
+        "54": 2.71,
         "55": 95.7,
         "56": 71.2,
         "57": 28.1,
@@ -46904,7 +47490,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 3.27,
+        "54": 3.24,
         "55": 94,
         "56": 72.2,
         "57": 28.3,
@@ -47254,7 +47840,7 @@
         "41": true,
         "45": true,
         "52": 290,
-        "54": 2.56,
+        "54": 2.5,
         "55": 93.8,
         "56": 71.8,
         "57": 27.5,
@@ -47378,7 +47964,7 @@
         "45": false,
         "48": 18.5,
         "52": 225,
-        "54": 2.79,
+        "54": 2.8,
         "55": 96.5,
         "56": 72.5,
         "57": 27.7,
@@ -48050,7 +48636,7 @@
         "41": true,
         "45": true,
         "52": 175,
-        "54": 2.63,
+        "54": 2.66,
         "55": 93.8,
         "56": 72.9,
         "57": 29.3,
@@ -48855,7 +49441,7 @@
         "45": true,
         "48": 22.75,
         "52": 160,
-        "54": 2.41,
+        "54": 2.4,
         "55": 97.9,
         "56": 73.7,
         "57": 26.6,
@@ -48969,7 +49555,7 @@
         "45": false,
         "48": 21,
         "52": 170,
-        "54": 2.91,
+        "54": 2.86,
         "55": 95.1,
         "56": 72.9,
         "57": 28.1,
@@ -49876,7 +50462,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.94,
+        "54": 2.93,
         "55": 94.4,
         "56": 73,
         "57": 32,
@@ -50112,7 +50698,7 @@
         "41": true,
         "45": false,
         "52": 150,
-        "54": 2.5
+        "54": 2.52
       }
     },
     {
@@ -50331,7 +50917,7 @@
         "45": true,
         "48": 35,
         "52": 160,
-        "54": 2.67,
+        "54": 2.68,
         "55": 92.5,
         "56": 70.8,
         "57": 31.9,
@@ -50760,7 +51346,10 @@
       "latestVersion": null,
       "msrpGbp": 170,
       "name": "Saucony Triumph 23",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "Saucony Triumph 24",
+        "slug": "saucony-triumph-24"
+      },
       "plate": "none",
       "previousVersion": {
         "name": "Saucony Triumph 22",
@@ -50813,6 +51402,114 @@
         "78": 32,
         "79": 63,
         "80": 59
+      }
+    },
+    {
+      "brand": "Saucony",
+      "details": {
+        "cons": [
+          "Less stable than v23",
+          "Fit could be too snug for some",
+          "Wide footprint feels less agile than others"
+        ],
+        "features": [
+          "Rocker"
+        ],
+        "intro": "We were surprised by how much the Saucony Triumph 24 feels like a super trainer at a lower price than most of these shoes. The foam delivers outstanding bounce, while the lightweight build keeps the ride lively and versatile, making it ready for tempo days or marathon-pace efforts during long runs. We also found that the excellent traction and premium-feeling upper add even more value. The main drawbacks are the less stable feel and snug forefoot for wide feet, although these are minor quirks in one of the best daily trainers ever made, not just by Saucony, but by any brand.",
+        "pros": [
+          "Exceptional foam technology",
+          "Lightweight for its size",
+          "Excellent traction across all surfaces",
+          "Comfortable upper",
+          "Secure fit with zero heel slippage",
+          "Premium materials",
+          "Smooth rocker for heel strikers",
+          "Incredible cushion for long runs",
+          "Superb value for its top-tier tech",
+          "Handles slow and fast paces with ease",
+          "Ideal for heavier runners"
+        ],
+        "whoShouldBuy": "<p>We tested everything on the Saucony Triumph 24 and found it ideal for:</p>\n<ul>\n<li>Runners addicted to the Triumph. This is the best version yet.</li>\n<li>Long-distance runners looking for a super trainer without spending £180 or more.</li>\n<li>Those who love the <a href=\"https://runrepeat.com/uk/saucony-endorphin-elite-3\" rel=\"noopener\" target=\"_blank\">Endorphin Elite 3</a> and want a highly-capable training companion for daily miles.</li>\n<li>Anyone who want the latest foam technology in a daily-training shoe.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>The usual snug-fitting upper from Saucony is present here, which may be a problem for runners who prefer more room in the forefoot. Instead, we suggest the <a href=\"https://runrepeat.com/uk/topo-athletic-specter-2\" rel=\"noopener\" target=\"_blank\">Topo Spectre 2</a> or the <a href=\"https://runrepeat.com/uk/adidas-ultraboost-5\" rel=\"noopener\" target=\"_blank\">adidas Ultraboost 5</a>.</p>\n\n    \n    \n\n<p>We also think the new foam makes this Triumph slightly less stable than its predecessor. If you loved the exceptional stability of the previous version, we'd suggest going straight for the <a href=\"https://runrepeat.com/uk/saucony-hurricane-26\" rel=\"noopener\" target=\"_blank\">Saucony Hurricane 26</a>. It's very similar to the Triumph 24 and also uses incrediLUX, but it's designed with a stronger focus on support.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41337/saucony-triumph-24-25595220-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 170,
+      "name": "Saucony Triumph 24",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": {
+        "name": "Saucony Triumph 23",
+        "slug": "saucony-triumph-23"
+      },
+      "releaseDateSource": "listing",
+      "releasedAt": "2026-01-01",
+      "reviewLanguage": null,
+      "score": 92,
+      "slug": "saucony-triumph-24",
+      "url": "https://runrepeat.com/uk/saucony-triumph-24",
+      "values": {
+        "2": 3,
+        "3": 5,
+        "4": 0.6,
+        "5": 33.6,
+        "6": 41.6,
+        "8": 8,
+        "9": 3.3,
+        "13": 7.2,
+        "19": 4,
+        "24": 258,
+        "25": 126.5,
+        "26": 101.6,
+        "32": 274.2,
+        "37": 6.3,
+        "38": 8.3,
+        "39": "both-sides-semi",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true,
+        "52": 170,
+        "55": 93.4,
+        "56": 71.4,
+        "57": 26.1,
+        "59": 16.6,
+        "60": 0.86,
+        "65": 71.95,
+        "66": 78.53,
+        "67": 151.95489978574,
+        "68": 137.51564240432,
+        "70": 37.5,
+        "71": 40.2,
+        "74": 12
       }
     },
     {
@@ -53494,7 +54191,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.28,
+        "54": 2.27,
         "55": 95,
         "56": 71.9,
         "57": 27.9,

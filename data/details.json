@@ -10012,6 +10012,101 @@
       "whoShouldBuy": "<p>In our view, the ASICS GT 2000 14 is a strong option if you:</p>\n<ul>\n<li>Have narrow feet and want a daily trainer that feels stable with every step.</li>\n<li>Disliked the flat feel of FF Blast+ in earlier GT 2000 versions, since the new FF Blast Max offers a better underfoot experience.</li>\n<li>Need a shoe that provides a supportive ride, excellent outsole durability plus versatility for everyday use.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the ASICS GT 2000 14 is not the best option for heavier runners or those who crave maximum underfoot cushioning. In our experience, its setup feels modest for today’s standards—especially for forefoot strikers or heavier runners—so we recommend the <a href=\"https://runrepeat.com/uk/asics-gel-kayano-32\" rel=\"noopener\" target=\"_blank\">ASICS Gel Kayano 32</a> as a cushy alternative.</p>\n\n    \n    \n\n<p>Additionally, we believe the tapered toebox could be a limiting factor. After testing in the lab, we discovered it's a bit restrictive, which makes it unsuitable for those who need extra room for toe splay. For a more roomy fit, we suggest the <a href=\"https://runrepeat.com/uk/altra-experience-form\" rel=\"noopener\" target=\"_blank\">Altra Experience Form</a> or the <a href=\"https://runrepeat.com/uk/adidas-supernova-solution\" rel=\"noopener\" target=\"_blank\">adidas Supernova Solution</a>.</p>\n<p></p>"
     },
+    "asics-gt-2000-15": {
+      "brand": "ASICS",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Small price hike",
+        "Toebox can feel a bit cramped",
+        "Not for max-cushioned haters"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "stability",
+            "text": "Stability"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "narrow",
+            "text": "Narrow"
+          },
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41405/asics-gt-2000-15-25565609-720.jpg",
+      "intro": "The GT 2000 15 has always been an easy shoe to recommend, but this version makes the decision even easier for us. We found in the lab that ASICS improved durability, energy return, weight, flexibility, and traction while keeping the stable feel that defines the series. The lighter, more energetic ride makes daily miles and faster efforts more enjoyable. It's a bit pricier, and the snug fit and moderate support won't work for every foot, but in our view, this is a huge leap forward for the series.",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "ASICS GT 2000 15",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "ASICS GT 2000 14",
+        "slug": "asics-gt-2000-14"
+      },
+      "productId": 41405,
+      "pros": [
+        "Stunning durability﻿",
+        "Improved energy return",
+        "Fantastic weight loss",
+        "Comfortable for all-day wear",
+        "More flexible than v14",
+        "Great choice for heel strikers",
+        "Excellent traction on dry and wet roads",
+        "Ready for long runs",
+        "Picks up the pace with ease",
+        "Looks better!",
+        "Available in D, 2E and 4E widths"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/asics-gt-2000-15",
+      "score": 91,
+      "scrapedAt": "2026-09-21T12:23:59.908Z",
+      "whoShouldBuy": "<p>In our opinion, the ASICS GT 2000 15 is a must-buy for:</p>\n<ul>\n<li>Runners who need a stability boost in a dependable daily trainer that offers strong durability.</li>\n<li>Anyone who wished for a more energetic GT 2000, with a bouncier ride and lighter weight that feels more amazing when picking up the pace.</li>\n<li>Those who tried the Novablast series and wished for a slightly more stable ride.</li>\n<li>Heel strikers who want a well-cushioned and stable running shoe that provides plenty of protection and comfort for long miles.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>Runners who need more than a slight boost of support may find that the GT 2000 15 falls a bit short of their needs, especially with its softer foam. Instead, the natural upgrade is the <a href=\"https://runrepeat.com/uk/asics-gel-kayano-33\" rel=\"noopener\" target=\"_blank\">ASICS Gel Kayano 33</a>.</p>\n\n    \n    \n\n<p>Those with wide feet may also have some issues with the GT 2000 15, as its tapered toebox won't suit everyone. Instead, take a look at the <a href=\"https://runrepeat.com/uk/altra-experience-flow-st\" rel=\"noopener\" target=\"_blank\">Altra Experience Flow ST</a> or <a href=\"https://runrepeat.com/uk/topo-ultrafly-5\" rel=\"noopener\" target=\"_blank\">Topo Ultrafly 5</a> for a wide-foot-friendly stability shoe.</p>\n<p></p>"
+    },
     "asics-jolt-4": {
       "brand": "ASICS",
       "categorySlug": "running-shoes",
@@ -15743,6 +15838,167 @@
       "whoShouldBuy": "<p>After completing our lab measurements and putting in several runs, we found that the Brooks Revel 8 is a solid pick for:</p>\n<ul>\n<li>Beginners who want a simple, no-frills shoe for a few short runs each week.</li>\n<li>Runners on a tight budget who need a model that performs well without a high price.</li>\n<li>Those who dislike max-stack shoes and want to experience a grounded, agile feel for both easy days and light tempo work.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the Revel 8 isn’t the best choice if you want a higher-stack shoe. Its low forefoot height gives a closer-to-the-ground feel that, in our experience, won’t suit everyone. If you prefer a fuller, more cushioned front, we believe the <a href=\"https://runrepeat.com/uk/nike-winflo-11\" rel=\"noopener\" target=\"_blank\">Nike Winflo 11</a> or the <a href=\"https://runrepeat.com/uk/new-balance-fresh-foam-680-v8\" rel=\"noopener\" target=\"_blank\">New Balance Fresh Foam 680 v8</a> offer better value.</p>\n\n    \n    \n\n<p>We also found that the energy return feels modest for fast-paced efforts, and from our perspective this limits its performance for tempo days. If you can stretch your budget a bit, the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or the <a href=\"https://runrepeat.com/uk/new-balance-fuel-cell-rebel-v-5\" rel=\"noopener\" target=\"_blank\">New Balance FuelCell Rebel v5</a> provide a faster running experience.</p>\n<p></p>"
     },
+    "brooks-revel-9": {
+      "brand": "Brooks",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Heavier than v8",
+        "Less exciting than before",
+        "Limited toe room",
+        "Maybe a touch stiffer than we wanted﻿"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41428/brooks-revel-9-25557080-720.jpg",
+      "intro": "The Brooks Revel 9 is one of the easiest shoes we can recommend to beginners. We really liked its comfortable ride, dependable traction, and durable build, especially at such a budget-friendly price. In our experience, it handles daily runs and walks with a simple, no-fuss feel that works for most runners. We found that the wider platform makes it more stable than before, but that extra security comes with a trade-off: it's now less versatile than previous versions, making it a better choice for easy miles than faster training.",
+      "latestVersion": null,
+      "msrpGbp": 100,
+      "name": "Brooks Revel 9",
+      "pageValues": {
+        "39": "none",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Brooks Revel 8",
+        "slug": "brooks-revel-8"
+      },
+      "productId": 41428,
+      "pros": [
+        "Incredible value for money",
+        "More stable than ever before",
+        "Impressive durability scores",
+        "Reliable choice for beginners",
+        "Comfortable upper",
+        "Smooth ride for easy-paced training",
+        "Wide version available",
+        "Improved traction",
+        "No price hike",
+        "No price hike"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/brooks-revel-9",
+      "score": 80,
+      "scrapedAt": "2026-09-21T12:24:00.781Z",
+      "whoShouldBuy": "<p>In our opinion, the Brooks Revel 9 is an interesting shoe for:</p>\n<ul>\n<li>Beginners looking for a dependable, value-friendly shoe to start their running journey.</li>\n<li>Budget-conscious runners who want a reliable and durable shoe for everyday miles.</li>\n<li>Heel strikers looking for an affordable shoe with a stable, secure ride.</li>\n<li>Runners who dislike max-stack shoes and prefer a lower midsole.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The Revel 9 feels less agile than its predecessor, and the weight gain we found in the lab confirms it. Therefore, if this really matters to you, we'd recommend the <a href=\"https://runrepeat.com/uk/nike-interact-run\" rel=\"noopener\" target=\"_blank\">Nike Interact Run</a> or the <a href=\"https://runrepeat.com/uk/adidas-adizero-sl2\" rel=\"noopener\" target=\"_blank\">adidas Adizero SL2</a> instead.</p>\n\n    \n    \n\n<p>We also think runners looking for more performance should spend a little more and go for the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-9\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios 9</a>. It has a similarly sized midsole, but delivers a much faster ride.</p>\n<p></p>"
+    },
+    "brooks-revel-max": {
+      "brand": "Brooks",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Narrow toebox may bother wide feet",
+        "Maybe a bit too rigid",
+        "Heavier than the regular Revel series",
+        "Higher drop than stated"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41103/brooks-revel-max-25560223-720.jpg",
+      "intro": "The Brooks Revel Max is a clear product of today's running shoe trend toward higher stacks, but Brooks took a different route than simply making the Revel taller. We found that it blends the DNA of the Revel and Ghost Max into a surprisingly cohesive package. In our experience, the high drop, plush foam, and beginner-friendly geometry make it especially appealing to heel strikers who want a protective, cheap daily trainer. We really liked the tough outsole and comfortable knit upper too, although the narrow fit limits its appeal for runners with wider feet.",
+      "latestVersion": null,
+      "msrpGbp": 120,
+      "name": "Brooks Revel Max",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41103,
+      "pros": [
+        "Excellent cushioning for an entry-level shoe",
+        "Plush foam for easy miles",
+        "Strong value",
+        "Ideal max-stack option for beginners",
+        "Comfortable knit upper",
+        "Solid durability scores",
+        "Generous outsole coverage",
+        "Effective lacing system manages pressure well",
+        "Reasonable weight",
+        "Tailored for heel strikers"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/brooks-revel-max",
+      "score": 81,
+      "scrapedAt": "2026-09-21T12:24:01.850Z",
+      "whoShouldBuy": "<p>We believe that the Brooks Revel Max is an interesting pick for runners that:</p>\n<ul>\n<li>Strike heel-first and want an affordable shoe with plenty of foam underfoot for added protection and a stable, cushioned ride.</li>\n<li>Prefer the comfort and feel of a knit upper but don't want to spend premium prices on a daily running shoe.</li>\n<li>Enjoy the Revel series but want a taller, more protective midsole for long runs and easier miles.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>For runners who prefer a more versatile shoe that's also more comfortable for everyday wear, we think the <a href=\"https://runrepeat.com/uk/brooks-revel-9\" rel=\"noopener\" target=\"_blank\">Brooks Revel 9</a> is the better pick. It's also cheaper, making it an even more appealing option for budget-conscious runners.</p>\n\n    \n    \n\n<p>We also think the Revel Max's tapered toebox could be an issue for some runners. Instead, we suggest trying the <a href=\"https://runrepeat.com/uk/nike-winflo-12\" rel=\"noopener\" target=\"_blank\">Nike Winflo 12</a>, which isn't extremely wide but offers more room than the Revel Max while occupying a similar spot in the market as an affordable yet cushioned shoe.</p>\n<p></p>"
+    },
     "brooks-trace-3": {
       "brand": "Brooks",
       "categorySlug": "running-shoes",
@@ -16411,6 +16667,84 @@
       "whoShouldBuy": "<p>The Diadora Nucleo 2 is a solid choice for:</p>\n<ul>\n<li>Runners seeking an off-the-radar daily trainer that also works well as a lifestyle shoe.</li>\n<li>Those who value premium-quality materials and strong craftsmanship, and want to try a brand beyond the usual names like <a href=\"https://runrepeat.com/uk/catalog/on-running-shoes\" rel=\"noopener\" target=\"_blank\">On</a>.</li>\n<li>Diadora fans wanting a daily trainer built with stability and shock absorption in mind.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We found in the lab that the Nucleo 2 feels lifeless underfoot, delivering one of the lowest energy return results when factoring in its higher price. Luckily for you, the market is currently packed with bouncy daily trainers like the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-2\" rel=\"noopener\" target=\"_blank\">adidas Supernova Rise 2</a> or the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a>, both of which bring a much higher energy return.</p>\n\n    \n    \n\n<p>We also think that the Nucleo 2’s price tag may push some runners away, as it doesn’t match the performance offered. From our perspective, the <a href=\"https://runrepeat.com/uk/new-balance-fuel-cell-rebel-v-5\" rel=\"noopener\" target=\"_blank\">New Balance FuelCell Rebel v5</a> is a good alternative—it feels more responsive, much more fun to run in, and offers better value overall.</p>\n<p></p>"
     },
+    "hiracer-hiwings-pro": {
+      "brand": "HIRACER",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Upper durability is a real concern",
+        "Not for high-volume feet",
+        "Limited availability in third-party retailers",
+        "Not for slower runners"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Carbon plate",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41435/hiracer-hiwings-pro-25542515-720.jpg",
+      "intro": "The HIRACER HIWINGS PRO brings almost everything we want from a modern super shoe without the usual premium price. We were impressed by its responsive foam, lightweight build, and aggressive rocker that keeps every stride moving forward. We found in the lab that its energy return is a real highlight, while the outsole also showed strong traction and durability. However, its narrow fit and fragile upper can limit its appeal. In our experience, it's an exciting, race-focused option best suited to faster runners chasing cutting-edge shoe tech without breaking the bank.",
+      "latestVersion": null,
+      "msrpGbp": 180,
+      "name": "HIRACER HIWINGS PRO",
+      "pageValues": {
+        "39": "sock-like",
+        "40": "finger-loop",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41435,
+      "pros": [
+        "World-class energy return",
+        "Solid cushioning for marathon racing",
+        "Outsole offers both durability and grip",
+        "Sock-like upper prevents tongue movement",
+        "Affordable price for a super shoe",
+        "Excellent foot lockdown",
+        "Full-length rubber coverage",
+        "Head-turning design",
+        "Competitive weight",
+        "Premium insole",
+        "Premium insole"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/hiracer-hiwings-pro",
+      "score": 89,
+      "scrapedAt": "2026-09-21T12:24:02.844Z",
+      "whoShouldBuy": "<p>The HIRACER HIWINGS PRO is a very interesting option for:</p>\n<ul>\n<li>Fast runners looking for an aggressive super shoe with insane energy return that keeps rolling them forward.</li>\n<li>Those on a limited budget who want high-level super shoe performance without paying the usual premium prices.</li>\n<li>Marathoners eager to try a Chinese brand that's gaining attention with bold designs and impressive foam technology.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>If you prefer a more traditional ride from a super shoe, the HIRACER HIWINGS PRO may not be for you, due to its wave-shaped plate and aggressive midsole rocker. Instead, we suggest going with the <a href=\"https://runrepeat.com/uk/nike-vaporfly-4\" rel=\"noopener\" target=\"_blank\">Nike Vaporfly 4</a> or the <a href=\"https://runrepeat.com/uk/puma-deviate-nitro-elite-4\" rel=\"noopener\" target=\"_blank\">PUMA Deviate Nitro Elite 4</a>.</p>\n\n    \n    \n\n<p>We also think heel strikers may prefer a racing shoe with a bit more lateral support in the rear. For that, we suggest the <a href=\"https://runrepeat.com/uk/saucony-endorphin-pro-5\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Pro 5</a> or the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a>.</p>\n<p></p>"
+    },
     "hoka-arahi-7": {
       "brand": "HOKA",
       "categorySlug": "running-shoes",
@@ -16574,6 +16908,96 @@
       "scrapedAt": "2026-07-26T21:58:40.806Z",
       "whoShouldBuy": "<p>In our opinion, the HOKA Arahi 8 is a great choice for:</p>\n<ul>\n<li>Runners who found the <a href=\"https://runrepeat.com/uk/hoka-arahi-7\" rel=\"noopener\" target=\"_blank\">Arahi 7</a> too firm and lacking in cushioning, since both issues are improved here.</li>\n<li>Anyone looking for a mild stability shoe that feels light underfoot.</li>\n<li>Heel strikers who avoided the low drop of previous versions.</li>\n<li>Those who want one shoe that’s comfortable (and stable) for daily wear and a few runs each week.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We believe that the HOKA Arahi 8 is not the best choice for runners training in hot climates. In our lab, the shoe’s poor airflow was clear, and a light colorway is not going to fix it. For a breathable alternative with mild stability, we recommend the <a href=\"https://runrepeat.com/uk/asics-gt-2000-13\" rel=\"noopener\" target=\"_blank\">ASICS GT 2000 13</a> or the <a href=\"https://runrepeat.com/uk/brooks-adrenaline-gts-23\" rel=\"noopener\" target=\"_blank\">Brooks Adrenaline GTS 23</a>.</p>\n\n    \n    \n\n<p>We also think the Arahi 8 falls short in outsole grip. Based on our findings, it was a bit underwhelming on wet surfaces. If this is important for you, the <a href=\"https://runrepeat.com/uk/puma-foreverrun-nitro-2\" rel=\"noopener\" target=\"_blank\">PUMA ForeverRun Nitro 2</a> is a far superior option, offering a more confidence-inspiring traction in all conditions.</p>\n<p></p>"
+    },
+    "hoka-arahi-9": {
+      "brand": "HOKA",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Disappointing energy return (again)",
+        "Price increase feels difficult to justify",
+        "Heavier than its predecessor",
+        "Non-gusseted tongue is a miss"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "stability",
+            "text": "Stability"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          },
+          {
+            "slug": "narrow",
+            "text": "Narrow"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41104/hoka-arahi-9-25586019-720.jpg",
+      "intro": "The HOKA Arahi 9 delivers excellent stability, comfort, and insane outsole durability for easy daily miles. We found that its broad platform and H-Frame system provide secure support without excessive rigidity, while the upper remains comfortable and handles all-day wear with ease. However, the higher weight and poor energy return are major drawbacks, especially when competitors offer more advanced technology at a similar or even lower price.",
+      "latestVersion": null,
+      "msrpGbp": 155,
+      "name": "HOKA Arahi 9",
+      "pageValues": {
+        "39": "none",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": true,
+      "previousVersion": {
+        "name": "HOKA Arahi 8",
+        "slug": "hoka-arahi-8"
+      },
+      "productId": 41104,
+      "pros": [
+        "Stable support without a rigid feel",
+        "Improved traction on wet roads",
+        "Very good durability",
+        "Ideal for easy miles",
+        "Works for runners with Haglund's",
+        "Smooth heel-to-toe transitions",
+        "Enhanced upper",
+        "Can handle daily use without any issue",
+        "Available in D, 2E and 4E widths",
+        "Clever lacing system"
+      ],
+      "releasedAt": "2026-07-01",
+      "runrepeatUrl": "https://runrepeat.com/uk/hoka-arahi-9",
+      "score": 79,
+      "scrapedAt": "2026-09-21T12:24:03.818Z",
+      "whoShouldBuy": "<p>In our view, the HOKA Arahi 9 is built for:</p>\n<ul>\n<li>Runners who need a stable, highly-durable shoe for easy daily miles.</li>\n<li>Heel strikers with overpronation who want reliable support and comfort.</li>\n<li>Those who tried the Arahi 8 and disliked the upper. The redesigned upper is the main change here.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>If you put energy return high on your list of priorities, the HOKA Arahi 9 is going to be a major letdown. It's simply not built for speed, and the weight gain over version 8 makes matters worse. Instead, we recommend the <a href=\"https://runrepeat.com/uk/asics-gt-2000-15\" rel=\"noopener\" target=\"_blank\">ASICS GT 2000 15</a>, which delivers much more bounce while still providing solid support.</p>\n\n    \n    \n\n<p>We also think that runners with severe overpronation may find the Arahi 9 a bit limited. In that case, the natural step up is the <a href=\"https://runrepeat.com/uk/hoka-gaviota-6\" rel=\"noopener\" target=\"_blank\">HOKA Gaviota 6</a>.</p>\n<p></p>"
     },
     "hoka-bondi-8": {
       "brand": "HOKA",
@@ -36253,6 +36677,84 @@
       "scrapedAt": "2026-07-26T22:02:37.763Z",
       "whoShouldBuy": "<p>We believe the Saucony Triumph 23 is an excellent choice for:</p>\n<ul>\n<li>Saucony fans who found version 22 disappointing, as this update improves in every key area.</li>\n<li>Runners looking for a reliable shoe for long runs over 1.5 hours, thanks to its strong energy return and amazing shock absorption.</li>\n<li>Those seeking a premium daily trainer with a durable upper, a grippy outsole, and lively bounce.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the Triumph 23 isn’t the best option for runners who dislike oversized shoes. In our experience, it has grown bulkier with each update, and for those who prefer a classic feel, the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-2\" rel=\"noopener\" target=\"_blank\">adidas Supernova Rise 2</a> is a more streamlined yet high-quality daily trainer.</p>\n\n    \n    \n\n<p>We also believe the PWRRUN PB foam may not appeal to everyone. Our assessment is that its firmer feel won’t satisfy fans of plush midsoles. If softness is what you seek, the <a href=\"https://runrepeat.com/uk/new-balance-fresh-foam-x-more-v-6\" rel=\"noopener\" target=\"_blank\">New Balance Fresh Foam X More v6</a> is your max-stack shoe, guaranteed. Or go for the <a href=\"https://runrepeat.com/uk/nike-vomero-plus\" rel=\"noopener\" target=\"_blank\">Nike Vomero Plus</a> if you prefer a more balanced ride that still leans toward a softer feel underfoot.</p>\n<p></p>"
+    },
+    "saucony-triumph-24": {
+      "brand": "Saucony",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Less stable than v23",
+        "Fit could be too snug for some",
+        "Wide footprint feels less agile than others"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Rocker"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41337/saucony-triumph-24-25595220-720.jpg",
+      "intro": "We were surprised by how much the Saucony Triumph 24 feels like a super trainer at a lower price than most of these shoes. The foam delivers outstanding bounce, while the lightweight build keeps the ride lively and versatile, making it ready for tempo days or marathon-pace efforts during long runs. We also found that the excellent traction and premium-feeling upper add even more value. The main drawbacks are the less stable feel and snug forefoot for wide feet, although these are minor quirks in one of the best daily trainers ever made, not just by Saucony, but by any brand.",
+      "latestVersion": null,
+      "msrpGbp": 170,
+      "name": "Saucony Triumph 24",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "extended-heel-collar",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Saucony Triumph 23",
+        "slug": "saucony-triumph-23"
+      },
+      "productId": 41337,
+      "pros": [
+        "Exceptional foam technology",
+        "Lightweight for its size",
+        "Excellent traction across all surfaces",
+        "Comfortable upper",
+        "Secure fit with zero heel slippage",
+        "Premium materials",
+        "Smooth rocker for heel strikers",
+        "Incredible cushion for long runs",
+        "Superb value for its top-tier tech",
+        "Handles slow and fast paces with ease",
+        "Ideal for heavier runners"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/saucony-triumph-24",
+      "score": 92,
+      "scrapedAt": "2026-09-21T12:24:04.848Z",
+      "whoShouldBuy": "<p>We tested everything on the Saucony Triumph 24 and found it ideal for:</p>\n<ul>\n<li>Runners addicted to the Triumph. This is the best version yet.</li>\n<li>Long-distance runners looking for a super trainer without spending £180 or more.</li>\n<li>Those who love the <a href=\"https://runrepeat.com/uk/saucony-endorphin-elite-3\" rel=\"noopener\" target=\"_blank\">Endorphin Elite 3</a> and want a highly-capable training companion for daily miles.</li>\n<li>Anyone who want the latest foam technology in a daily-training shoe.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The usual snug-fitting upper from Saucony is present here, which may be a problem for runners who prefer more room in the forefoot. Instead, we suggest the <a href=\"https://runrepeat.com/uk/topo-athletic-specter-2\" rel=\"noopener\" target=\"_blank\">Topo Spectre 2</a> or the <a href=\"https://runrepeat.com/uk/adidas-ultraboost-5\" rel=\"noopener\" target=\"_blank\">adidas Ultraboost 5</a>.</p>\n\n    \n    \n\n<p>We also think the new foam makes this Triumph slightly less stable than its predecessor. If you loved the exceptional stability of the previous version, we'd suggest going straight for the <a href=\"https://runrepeat.com/uk/saucony-hurricane-26\" rel=\"noopener\" target=\"_blank\">Saucony Hurricane 26</a>. It's very similar to the Triumph 24 and also uses incrediLUX, but it's designed with a stronger focus on support.</p>\n<p></p>"
     },
     "scarpa-boreas-gtx": {
       "brand": "Scarpa",
