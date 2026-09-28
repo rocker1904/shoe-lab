@@ -6536,6 +6536,91 @@
       "whoShouldBuy": "<p>The Altra Torin 8 is a solid upgrade that feels great for:</p>\n<ul>\n<li>Any zero-drop aficionado looking for a reliable daily trainer with long-lasting durability.</li>\n<li>Those who felt the Torin 7 was an awkward version—this update feels better on foot with an improved upper and more secure heel lockdown.</li>\n<li>Midfoot or forefoot strikers needing a shoe for easy-paced miles that can also double as a casual, all-day walking option.</li>\n<li>Runners aiming to transition toward minimalist footwear and want an in-between step that still offers a true zero-drop platform.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We think the Torin 8 isn’t the best option if you're after responsiveness—it gained weight over the previous version, and with its low-energy return midsole, that extra bulk feels even harder to justify. From our evaluation, both the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> and <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> feel significantly faster underfoot. Both shoes lighter, snappier, and priced at a similar or even lower point.</p>\n\n    \n    \n\n<p>Our perspective is that the Torin 8’s stack height may turn off runners looking for a more natural experience. If you're seeking a flexible, ground-connected feel, we believe the <a href=\"https://runrepeat.com/uk/altra-escalante-4\" rel=\"noopener\" target=\"_blank\">Altra Escalante 4</a> or <a href=\"https://runrepeat.com/uk/topo-athletic-cyclone-2\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 2</a> are far better choices.</p>\n<p></p>"
     },
+    "altra-torin-9": {
+      "brand": "Altra",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Feels a bit overpriced",
+        "Low energy return",
+        "Non-gusseted tongue",
+        "Not for heel strikers"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41427/altra-torin-9-25644149-720.jpg",
+      "intro": "Altra had the chance to make a banger with the Torin 9, but it ended up only halfway there. The missing piece is the foam, which delivers far less bounce than we expected. On the other hand, we found in the lab that the shoe brings some welcome improvements: a lighter build, better stability, more flexibility, and a brand-new Vibram outsole for road running that makes its debut with this shoe. These are all steps in the right direction, but that bittersweet taste is still hard to shake.",
+      "latestVersion": null,
+      "msrpGbp": 160,
+      "name": "Altra Torin 9",
+      "pageValues": {
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Altra Torin 8",
+        "slug": "altra-torin-8"
+      },
+      "productId": 41427,
+      "pros": [
+        "Wide toebox allows natural toe splay",
+        "Real zero-drop geometry",
+        "Vibram outsole delivers dependable traction",
+        "Good protection without excessive stack height",
+        "More flexible than its predecessor",
+        "Stability improvements",
+        "Improved upper",
+        "Ideal for midfoot and forefoot strikers",
+        "Enhanced, modernised design",
+        "New lacing system handles pressure well﻿"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/altra-torin-9",
+      "score": 81,
+      "scrapedAt": "2026-09-28T13:20:51.594Z",
+      "whoShouldBuy": "<p>The Altra Torin 9 is a very interesting running shoe for runners that:</p>\n<ul>\n<li>Want a zero-drop shoe for daily runs, walking, or all-day wear.</li>\n<li>Are midfoot or forefoot strikers looking for a stable daily trainer.</li>\n<li>Love the wide toebox that define the Torin series.</li>\n<li>Want to try the first road running shoe with a Vibram outsole.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The Torin 9 is a step forward in several areas, but it also takes a step back when it comes to energy return. The new midsole delivers less bounce and feels clearly underwhelming. If that sounds like a deal-breaker, the <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> is worth considering instead.</p>\n\n    \n    \n\n<p>We also don't think heel strikers will get the most out of this shoe, given its zero-drop geometry and narrow heel. For these runners, the <a href=\"https://runrepeat.com/uk/topo-atmos-2\" rel=\"noopener\" target=\"_blank\">Topo Atmos 2</a> is a better option that also delivers a wide toebox.</p>\n<p></p>"
+    },
     "altra-vanish-carbon": {
       "brand": "Altra",
       "categorySlug": "running-shoes",
@@ -21700,6 +21785,93 @@
       "whoShouldBuy": "<p>In our opinion, the Mizuno Wave Rider 29 fits perfectly for:</p>\n<ul>\n<li>Runners who prefer an old-school daily trainer without a pronounced rocker or ultra-plush midsoles. This is the dependable shoe that works for almost anyone.</li>\n<li>Midfoot and heel strikers who want a workhorse with a bit of added stability.</li>\n<li>Those who liked the Wave Rider series but were put off by its very high drop. Mizuno finally reduced the offset from heel to toe.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>From our perspective, we do not recommend the Wave Rider 29 if you want strong energy return. After testing, we discovered that its midsole still feels flat compared to faster daily trainers, and we believe that shoes like the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-2\" rel=\"noopener\" target=\"_blank\">adidas Supernova Rise 2</a> or the <a href=\"https://runrepeat.com/uk/hoka-mach-6\" rel=\"noopener\" target=\"_blank\">HOKA Mach 6</a> offer a more lively, fast-paced ride at a similar price.</p>\n\n    \n    \n\n<p>We also think it’s not the best option for runners who want a daily trainer that looks and feels modern. In fact, this shoe is quite the opposite, as it aims to stay simple and unnoticed. If you prefer a bolder design with a more modern feel underfoot, models like <a href=\"https://runrepeat.com/uk/mizuno-neo-zen\" rel=\"noopener\" target=\"_blank\">Mizuno Neo Zen</a> or the <a href=\"https://runrepeat.com/uk/asics-novablast-5\" rel=\"noopener\" target=\"_blank\">ASICS Novablast 5</a> are better choices.</p>\n<p></p>"
     },
+    "mizuno-wave-rider-30": {
+      "brand": "Mizuno",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Maybe too much stack height?",
+        "Ride feels less natural than before",
+        "Durability falls short of expectations",
+        "Low energy return"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41365/mizuno-wave-rider-30-25655674-720.jpg",
+      "intro": "Mizuno went back to the drawing board and changed almost everything in the Wave Rider for its 30th edition. We found a softer midsole, a full-length Wave Plate, better traction, and a much more modern look. The shoe is more protective than ever before, but the limited energy return and durability were two clear disappointments for us. Furthermore, the higher stack and added stiffness also move it away from the classic Wave Rider feel, which could be a divisive change for loyal fans.",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "Mizuno Wave Rider 30",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "finger-loop",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "Mizuno Wave Rider 29",
+        "slug": "mizuno-wave-rider-29"
+      },
+      "productId": 41365,
+      "pros": [
+        "Modernises the Wave Rider experience",
+        "Excellent cushioning for long miles",
+        "Stable ride despite taller platform",
+        "Improved grip compared to previous version",
+        "Clear design upgrade",
+        "Softer foam",
+        "Minimal weight gain despite higher stack",
+        "Secure fit with gusseted tongue",
+        "Good choice for bigger runners",
+        "Interesting shoe for those with hallux rigidus﻿"
+      ],
+      "releasedAt": "2026-06-16",
+      "runrepeatUrl": "https://runrepeat.com/uk/mizuno-wave-rider-30",
+      "score": 83,
+      "scrapedAt": "2026-09-28T13:20:52.626Z",
+      "whoShouldBuy": "<p>In our view, the Mizuno Wave Rider 30 is a good option for:</p>\n<ul>\n<li>Runners who have been waiting for a more modern ride and feel from the Wave Rider.</li>\n<li>Those seeking a max-cushioned shoe for easy runs that still feels stable underfoot.</li>\n<li>Neutral runners who need a bit of extra support from the full-length Wave Plate.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The energy return of the Mizuno Wave Rider 30 is simply disappointing, and there's no way to sugarcoat it. For runners who prefer a more agile and versatile ride, we'd recommend looking at the <a href=\"https://runrepeat.com/uk/saucony-triumph-24\" rel=\"noopener\" target=\"_blank\">Saucony Triumph 24</a> or the <a href=\"https://runrepeat.com/uk/puma-deviate-pure-nitro\" rel=\"noopener\" target=\"_blank\">PUMA Deviate Pure Nitro</a> instead.</p>\n\n    \n    \n\n<p>We also think the higher stack height may push some Wave Rider fans away, as it can feel like too much of a change. If you prefer a more classic ride, the <a href=\"https://runrepeat.com/uk/nike-pegasus-42\" rel=\"noopener\" target=\"_blank\">Nike Pegasus 42</a> or the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-3\" rel=\"noopener\" target=\"_blank\">adidas Supernova Rise 3</a> are better options.</p>\n<p></p>"
+    },
     "mizuno-wave-sky-8": {
       "brand": "Mizuno",
       "categorySlug": "running-shoes",
@@ -31790,6 +31962,94 @@
       "whoShouldBuy": "<p>The PUMA Deviate Nitro Elite 4 is a top pick for:</p>\n<ul>\n<li>Runners coming from version 3 who wanted the same fast and bouncy ride, but in a much lighter and more refined package.</li>\n<li>Marathon racers searching for a solid super shoe with excellent grip, strong energy return, and a smooth race-ready geometry.</li>\n<li>Those who miss the feel of the OG Nike Vaporfly Next%, as this shoe reminded us more than almost any current rival of that iconic racer.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>We found in the lab that the updated outsole design of the PUMA Deviate Nitro Elite 4 may create durability concerns for many heel strikers. Based on our lab tests, the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-pro-4\" rel=\"noopener\" target=\"_blank\">adidas Adizero Adios Pro 4</a> is a more long-lasting option... and also a great super shoe.</p>\n\n    \n    \n\n<p>We also think that the narrow heel is not the best match for runners seeking extra stability. In our experience, the minimal heel counter and compact rear platform feel quite aggressive, and we believe the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a> or <a href=\"https://runrepeat.com/uk/saucony-endorphin-pro-5\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Pro 5</a> offer a more confidence-inspiring ride.</p>\n<p></p>"
     },
+    "puma-deviate-pure-nitro": {
+      "brand": "PUMA",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Limited stability compared to some rivals",
+        "Low toebox height may be restrictive",
+        "Upper durability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41339/puma-deviate-pure-nitro-25639661-720.jpg",
+      "intro": "With the Deviate Pure Nitro, PUMA has created a real EVO SL alternative on its first try. We found in the lab that its excellent foam delivers strong energy return, while the low weight, reliable traction, and agile ride make it incredibly versatile. We also loved the roomier fit compared with most PUMA shoes, plus the good-looking, simple design. The upper could be more durable, and the moderate stability may not suit everyone, but it's impossible to find this much fun and versatility at a lower price.",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "PUMA Deviate Pure Nitro",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "pull-tab",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41339,
+      "pros": [
+        "Excellent versatility for slow and fast runs",
+        "High energy return",
+        "Insane value",
+        "Good-quality upper",
+        "Roomier fit than most PUMA shoes",
+        "Natural ride suits beginners",
+        "Secure tongue fit",
+        "Agile, fun and fast",
+        "Classic feel suits unplated shoe fans",
+        "Ideal for tempo workouts",
+        "Dependable traction﻿"
+      ],
+      "releasedAt": "2026-06-04",
+      "runrepeatUrl": "https://runrepeat.com/uk/puma-deviate-pure-nitro",
+      "score": 93,
+      "scrapedAt": "2026-09-28T13:20:53.499Z",
+      "whoShouldBuy": "<p>The PUMA Deviate Pure Nitro is a very good option for:</p>\n<ul>\n<li>PUMA fans who don't want to hear about adidas but loved the EVO SL concept and want a similar lightweight, versatile shoe from their fav brand.</li>\n<li>Runners who want a versatile, fun, speedy, and good-looking daily trainer that can handle everything from easy runs to tempo sessions.</li>\n<li>Beginners looking for a shoe that can handle daily runs, some quality work, and the occasional race while keeping the price at a fair level.</li>\n<li>Anyone fond of classic running shoes but still eager for a fast, lightweight, and performance-focused ride.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The PUMA Deviate Pure Nitro isn't the most stable shoe we've tested, as its moderate midsole width adds to its fun, agile ride but limits support. If stability is a priority, we think its two main rivals, the <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a> and <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a>, are worth considering instead.</p>\n\n    \n    \n\n<p>We also think that, despite having a roomier upper than other PUMA shoes, wide-footed runners will be better served by a shoe like the <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> or <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a>.</p>\n<p></p>"
+    },
     "puma-fast-r-nitro-elite-2": {
       "brand": "PUMA",
       "categorySlug": "running-shoes",
@@ -32662,6 +32922,91 @@
       "scrapedAt": "2026-07-26T22:01:48.689Z",
       "whoShouldBuy": "<p>The PUMA Velocity Nitro 4 is:</p>\n<ul>\n<li>Ideal for runners who want a classic daily trainer with strong energy return without paying premium prices.</li>\n<li>A sure bet for runners who need solid grip when running in wet conditions or on dirt roads.</li>\n<li>Perfect for short and medium-distance runs if you want one shoe for everything.</li>\n<li>A solid choice for those who dislike maximalist shoes and prefer a grounded, versatile stack height.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>In our view, the Velocity Nitro 4 is not the best option for runners who crave tonnes of foam underfoot or forefoot strikers needing strong shock absorption up front. After testing, we found the cushioning limited in these areas, so we suggest the <a href=\"https://runrepeat.com/uk/puma-magmax-nitro\" rel=\"noopener\" target=\"_blank\">PUMA MagMax Nitro</a> or even the <a href=\"https://runrepeat.com/uk/nike-vomero-18\" rel=\"noopener\" target=\"_blank\">Nike Vomero 18</a> for a more cushion-focused alternative.</p>\n\n    \n    \n\n<p>We also believe this shoe isn’t well-suited for those with stability concerns. Our assessment is that the neutral and compact platform provides little support, making the <a href=\"https://runrepeat.com/uk/puma-foreverrun-nitro-2\" rel=\"noopener\" target=\"_blank\">PUMA ForeverRun Nitro 2</a> or the <a href=\"https://runrepeat.com/uk/nike-structure-26\" rel=\"noopener\" target=\"_blank\">Nike Structure 26</a> much better choices for daily runs.</p>\n<p></p>"
+    },
+    "puma-velocity-nitro-5": {
+      "brand": "PUMA",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Slightly lower energy return",
+        "Small weight increase",
+        "Not for wide feet"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41457/puma-velocity-nitro-5-25662222-720.jpg",
+      "intro": "PUMA set the bar incredibly high with version 4, so the Velocity Nitro 5 had a tough act to follow. We really liked its bouncy ride, comfortable upper, agile feel, and versatile performance across different paces. However, we found in the lab that the small weight increase and lower energy return take away some of the magic from v4. And as usual, the snug fit won't suit runners with wide feet. Even so, we think the shoe remains a fantastic value, and it's one of the best daily trainers you can buy today.",
+      "latestVersion": null,
+      "msrpGbp": 140,
+      "name": "PUMA Velocity Nitro 5",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "pull-tab",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "PUMA Velocity Nitro 4",
+        "slug": "puma-velocity-nitro-4"
+      },
+      "productId": 41457,
+      "pros": [
+        "Responsive and fun",
+        "Improved traction on wet and dry surfaces",
+        "Strong energy return",
+        "Flexible, natural running experience",
+        "Secure lockdown",
+        "Good durability from top to bottom",
+        "Impressive value for the price",
+        "Lightweight",
+        "Can handle tempo work with ease",
+        "Comfort upgrade﻿"
+      ],
+      "releasedAt": "2026-07-09",
+      "runrepeatUrl": "https://runrepeat.com/uk/puma-velocity-nitro-5",
+      "score": 89,
+      "scrapedAt": "2026-09-28T13:20:54.580Z",
+      "whoShouldBuy": "<p>The PUMA Velocity Nitro 5 is a really interesting running shoe for:</p>\n<ul>\n<li>Anyone who wants a responsive, affordable, and fun daily trainer.</li>\n<li>Runners who love PUMA's snug fit and excellent traction.</li>\n<li>Lighter runners who don't need a maximalist shoe and prefer a more agile design.</li>\n<li>Beginners looking for a versatile shoe that's comfortable for both running and everyday life.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The Velocity Nitro 5 is a fast shoe, but it's no longer at the top of the charts. For runners who want a daily running shoe with state-of-the-art energy return, we recommend two options: the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or, if you can still find it in stock, the <a href=\"https://runrepeat.com/uk/puma-velocity-nitro-4\" rel=\"noopener\" target=\"_blank\">PUMA Velocity Nitro 4</a>.</p>\n\n    \n    \n\n<p>We also think the snug fit won't work for runners who need a more spacious forefoot. Instead, the <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> is a good alternative if you don't mind a zero-drop shoe, while the <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> is an interesting alternative that also packs a foot-shaped toebox.</p>\n<p></p>"
     },
     "reebok-floatride-energy-5": {
       "brand": "Reebok",

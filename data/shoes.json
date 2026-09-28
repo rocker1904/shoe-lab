@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-09-21T12:24:04.848Z",
+  "builtAt": "2026-09-28T13:20:54.580Z",
   "groups": {
     "1": "Breathability",
     "2": "Durability",
@@ -228,7 +228,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 3.24,
+        "54": 3.28,
         "55": 95.4,
         "56": 73.8,
         "57": 27.8,
@@ -805,7 +805,7 @@
         "41": true,
         "45": false,
         "52": 250,
-        "54": 2.38,
+        "54": 2.36,
         "55": 93.2,
         "56": 69.5,
         "57": 28.3,
@@ -1273,7 +1273,7 @@
         "45": false,
         "48": 14.5,
         "52": 160,
-        "54": 2.86,
+        "54": 2.85,
         "55": 97.3,
         "56": 70.6,
         "57": 28.3,
@@ -1521,7 +1521,7 @@
         "41": true,
         "45": false,
         "52": 160,
-        "54": 3.13,
+        "54": 3.09,
         "55": 97.7,
         "56": 72.8,
         "57": 27.4,
@@ -2267,7 +2267,7 @@
         "45": false,
         "48": 16.5,
         "52": 180,
-        "54": 3,
+        "54": 2.95,
         "55": 93.4,
         "56": 71.4,
         "57": 27.3,
@@ -3049,7 +3049,7 @@
         "41": true,
         "45": false,
         "52": 60,
-        "54": 2.75,
+        "54": 2.73,
         "55": 99.1,
         "56": 73.1,
         "57": 27.5,
@@ -3160,7 +3160,7 @@
         "41": true,
         "45": false,
         "52": 55,
-        "54": 2.58,
+        "54": 2.77,
         "55": 97.5,
         "56": 70.8,
         "57": 28.8,
@@ -3278,7 +3278,7 @@
         "41": true,
         "45": false,
         "52": 200,
-        "54": 3.18,
+        "54": 3.19,
         "55": 97.4,
         "56": 71.4,
         "57": 24.8,
@@ -3392,7 +3392,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 3.17,
+        "54": 3.21,
         "55": 96.9,
         "56": 73.6,
         "57": 23.7,
@@ -5417,7 +5417,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.93,
+        "54": 2.94,
         "55": 98.7,
         "56": 77.7,
         "57": 28.4,
@@ -5530,7 +5530,7 @@
         "41": true,
         "45": false,
         "52": 140,
-        "54": 2.61,
+        "54": 2.65,
         "55": 97.6,
         "56": 74.5,
         "57": 29,
@@ -8103,7 +8103,7 @@
         "41": true,
         "45": true,
         "52": 145,
-        "54": 3,
+        "54": 2.89,
         "55": 99.3,
         "56": 79.3,
         "57": 26,
@@ -8431,7 +8431,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.62,
+        "54": 2.61,
         "55": 100,
         "56": 84.5,
         "57": 29.1,
@@ -8770,7 +8770,7 @@
         "41": true,
         "45": false,
         "52": 170,
-        "54": 2.78,
+        "54": 2.73,
         "55": 95.8,
         "56": 82.3,
         "57": 26.2,
@@ -9180,7 +9180,10 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Altra Torin 8",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "Altra Torin 9",
+        "slug": "altra-torin-9"
+      },
       "plate": "none",
       "previousVersion": {
         "name": "Altra Torin 7",
@@ -9228,6 +9231,123 @@
         "67": 109.91909954274,
         "68": 109.24663520364,
         "70": 36.6
+      }
+    },
+    {
+      "brand": "Altra",
+      "details": {
+        "cons": [
+          "Feels a bit overpriced",
+          "Low energy return",
+          "Non-gusseted tongue",
+          "Not for heel strikers"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Removable insole"
+        ],
+        "intro": "Altra had the chance to make a banger with the Torin 9, but it ended up only halfway there. The missing piece is the foam, which delivers far less bounce than we expected. On the other hand, we found in the lab that the shoe brings some welcome improvements: a lighter build, better stability, more flexibility, and a brand-new Vibram outsole for road running that makes its debut with this shoe. These are all steps in the right direction, but that bittersweet taste is still hard to shake.",
+        "pros": [
+          "Wide toebox allows natural toe splay",
+          "Real zero-drop geometry",
+          "Vibram outsole delivers dependable traction",
+          "Good protection without excessive stack height",
+          "More flexible than its predecessor",
+          "Stability improvements",
+          "Improved upper",
+          "Ideal for midfoot and forefoot strikers",
+          "Enhanced, modernised design",
+          "New lacing system handles pressure well﻿"
+        ],
+        "whoShouldBuy": "<p>The Altra Torin 9 is a very interesting running shoe for runners that:</p>\n<ul>\n<li>Want a zero-drop shoe for daily runs, walking, or all-day wear.</li>\n<li>Are midfoot or forefoot strikers looking for a stable daily trainer.</li>\n<li>Love the wide toebox that define the Torin series.</li>\n<li>Want to try the first road running shoe with a Vibram outsole.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>The Torin 9 is a step forward in several areas, but it also takes a step back when it comes to energy return. The new midsole delivers less bounce and feels clearly underwhelming. If that sounds like a deal-breaker, the <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> is worth considering instead.</p>\n\n    \n    \n\n<p>We also don't think heel strikers will get the most out of this shoe, given its zero-drop geometry and narrow heel. For these runners, the <a href=\"https://runrepeat.com/uk/topo-atmos-2\" rel=\"noopener\" target=\"_blank\">Topo Atmos 2</a> is a better option that also delivers a wide toebox.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          },
+          {
+            "slug": "extra-wide",
+            "text": "X-Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41427/altra-torin-9-25644149-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 160,
+      "name": "Altra Torin 9",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": {
+        "name": "Altra Torin 8",
+        "slug": "altra-torin-8"
+      },
+      "releaseDateSource": "listing",
+      "releasedAt": "2026-01-01",
+      "reviewLanguage": null,
+      "score": 81,
+      "slug": "altra-torin-9",
+      "url": "https://runrepeat.com/uk/altra-torin-9",
+      "values": {
+        "2": 3,
+        "3": 3,
+        "4": 1,
+        "5": 25.5,
+        "6": 25.8,
+        "8": 0.3,
+        "9": 3.6,
+        "13": 9.8,
+        "19": 2,
+        "24": 264,
+        "25": 117.6,
+        "26": 85.4,
+        "32": 265,
+        "37": 4.4,
+        "38": 5.3,
+        "39": "none",
+        "40": "none",
+        "41": true,
+        "45": false,
+        "52": 160,
+        "54": 2.29,
+        "55": 97.7,
+        "56": 82.2,
+        "57": 25.8,
+        "59": 11.6,
+        "60": 0.73,
+        "65": 48.83,
+        "66": 54.73,
+        "67": 108.125641996,
+        "68": 103.50681074815,
+        "70": 31.5,
+        "71": 34.6,
+        "72": 43.7,
+        "74": 11.4
       }
     },
     {
@@ -9340,7 +9460,7 @@
         "45": false,
         "48": 34.3,
         "52": 240,
-        "54": 2.35
+        "54": 2.29
       }
     },
     {
@@ -9868,7 +9988,7 @@
         "41": true,
         "45": false,
         "52": 115,
-        "54": 2.83,
+        "54": 2.84,
         "55": 96.5,
         "56": 75.7,
         "57": 28.9,
@@ -10835,7 +10955,7 @@
         "45": true,
         "48": 27.4,
         "52": 140,
-        "54": 3.11,
+        "54": 3.12,
         "55": 93.9,
         "56": 71.1,
         "57": 29.7,
@@ -10956,7 +11076,7 @@
         "41": true,
         "45": true,
         "52": 145,
-        "54": 2.93,
+        "54": 2.87,
         "55": 94.5,
         "56": 74.4,
         "57": 29.1,
@@ -11210,7 +11330,7 @@
         "41": true,
         "45": false,
         "52": 90,
-        "54": 2.52,
+        "54": 2.53,
         "55": 96.5,
         "56": 71.2,
         "57": 26.8,
@@ -11446,7 +11566,7 @@
         "40": "none",
         "41": true,
         "52": 160,
-        "54": 2.48,
+        "54": 2.53,
         "59": 10.9,
         "60": 0.32,
         "65": 49.56,
@@ -11823,7 +11943,7 @@
         "41": true,
         "45": true,
         "52": 165,
-        "54": 3.04,
+        "54": 3.03,
         "55": 96.6,
         "56": 73.9,
         "57": 27.5,
@@ -11951,7 +12071,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 3.06,
+        "54": 3.03,
         "55": 95.9,
         "56": 72.4,
         "57": 28.6,
@@ -12700,7 +12820,7 @@
         "41": true,
         "45": false,
         "52": 100,
-        "54": 2.83,
+        "54": 2.82,
         "55": 96.2,
         "56": 73.1,
         "57": 27.8,
@@ -13647,7 +13767,7 @@
         "40": "none",
         "41": true,
         "45": false,
-        "52": 110,
+        "52": 115,
         "55": 96.9,
         "56": 73.3,
         "57": 27.4,
@@ -14287,7 +14407,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 3.11,
+        "54": 3.04,
         "55": 95.9,
         "56": 71.3,
         "57": 24.7,
@@ -14907,7 +15027,7 @@
         "41": true,
         "45": true,
         "52": 225,
-        "54": 2.96,
+        "54": 2.93,
         "55": 93.7,
         "56": 74.3,
         "57": 24.2,
@@ -16184,7 +16304,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 3.03,
+        "54": 3.02,
         "55": 97.5,
         "56": 74.4,
         "57": 27.2,
@@ -16911,7 +17031,7 @@
         "41": true,
         "45": true,
         "52": 200,
-        "54": 3.16,
+        "54": 3.14,
         "55": 95.7,
         "56": 71.6,
         "57": 25.1,
@@ -17610,7 +17730,7 @@
         "41": true,
         "45": false,
         "52": 145,
-        "54": 2.91,
+        "54": 2.93,
         "55": 96,
         "56": 72.8,
         "57": 26.6,
@@ -18460,7 +18580,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 3.15,
+        "54": 3.17,
         "55": 96,
         "56": 70.6,
         "57": 25.8,
@@ -18971,7 +19091,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.81,
+        "54": 2.82,
         "55": 95.3,
         "56": 73.4,
         "57": 28.1,
@@ -19092,7 +19212,7 @@
         "41": true,
         "45": false,
         "52": 165,
-        "54": 2.93,
+        "54": 2.87,
         "55": 93.4,
         "56": 71.3,
         "57": 26.8,
@@ -25035,7 +25155,7 @@
         "41": true,
         "45": true,
         "52": 155,
-        "54": 2.73,
+        "54": 2.75,
         "55": 94.7,
         "56": 70.9,
         "57": 27.4,
@@ -25387,7 +25507,7 @@
         "41": true,
         "45": true,
         "52": 165,
-        "54": 2.82,
+        "54": 2.93,
         "55": 97.1,
         "56": 70.3,
         "57": 26.5,
@@ -26107,7 +26227,7 @@
         "41": true,
         "45": true,
         "52": 145,
-        "54": 2.51,
+        "54": 2.39,
         "55": 92.5,
         "56": 72.9,
         "57": 29.1,
@@ -27307,7 +27427,7 @@
         "41": true,
         "45": true,
         "52": 225,
-        "54": 2.37,
+        "54": 2.41,
         "55": 94.6,
         "56": 72.7,
         "57": 28.4,
@@ -28547,7 +28667,7 @@
         "45": true,
         "48": 20,
         "52": 200,
-        "54": 3.94,
+        "54": 3.91,
         "55": 96.5,
         "56": 72.9,
         "57": 29.2,
@@ -28900,7 +29020,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 3.18,
+        "54": 3.17,
         "55": 92.2,
         "56": 68.3,
         "57": 25.1,
@@ -29359,8 +29479,8 @@
         "40": "extended-heel-collar",
         "41": true,
         "45": true,
-        "52": 140,
-        "54": 3.06,
+        "52": 150,
+        "54": 3.18,
         "55": 97.3,
         "56": 72.7,
         "57": 27.7,
@@ -30161,7 +30281,7 @@
         "45": true,
         "48": 20.2,
         "52": 140,
-        "54": 2.34,
+        "54": 2.33,
         "55": 96.7,
         "56": 77.2,
         "57": 33.8,
@@ -30243,7 +30363,10 @@
       "latestVersion": null,
       "msrpGbp": 150,
       "name": "Mizuno Wave Rider 29",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "Mizuno Wave Rider 30",
+        "slug": "mizuno-wave-rider-30"
+      },
       "plate": "plated-other",
       "previousVersion": {
         "name": "Mizuno Wave Rider 28",
@@ -30293,6 +30416,125 @@
         "70": 36.1,
         "72": 41.5,
         "74": 9.4
+      }
+    },
+    {
+      "brand": "Mizuno",
+      "details": {
+        "cons": [
+          "Maybe too much stack height?",
+          "Ride feels less natural than before",
+          "Durability falls short of expectations",
+          "Low energy return"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole",
+          "Rocker"
+        ],
+        "intro": "Mizuno went back to the drawing board and changed almost everything in the Wave Rider for its 30th edition. We found a softer midsole, a full-length Wave Plate, better traction, and a much more modern look. The shoe is more protective than ever before, but the limited energy return and durability were two clear disappointments for us. Furthermore, the higher stack and added stiffness also move it away from the classic Wave Rider feel, which could be a divisive change for loyal fans.",
+        "pros": [
+          "Modernises the Wave Rider experience",
+          "Excellent cushioning for long miles",
+          "Stable ride despite taller platform",
+          "Improved grip compared to previous version",
+          "Clear design upgrade",
+          "Softer foam",
+          "Minimal weight gain despite higher stack",
+          "Secure fit with gusseted tongue",
+          "Good choice for bigger runners",
+          "Interesting shoe for those with hallux rigidus﻿"
+        ],
+        "whoShouldBuy": "<p>In our view, the Mizuno Wave Rider 30 is a good option for:</p>\n<ul>\n<li>Runners who have been waiting for a more modern ride and feel from the Wave Rider.</li>\n<li>Those seeking a max-cushioned shoe for easy runs that still feels stable underfoot.</li>\n<li>Neutral runners who need a bit of extra support from the full-length Wave Plate.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>The energy return of the Mizuno Wave Rider 30 is simply disappointing, and there's no way to sugarcoat it. For runners who prefer a more agile and versatile ride, we'd recommend looking at the <a href=\"https://runrepeat.com/uk/saucony-triumph-24\" rel=\"noopener\" target=\"_blank\">Saucony Triumph 24</a> or the <a href=\"https://runrepeat.com/uk/puma-deviate-pure-nitro\" rel=\"noopener\" target=\"_blank\">PUMA Deviate Pure Nitro</a> instead.</p>\n\n    \n    \n\n<p>We also think the higher stack height may push some Wave Rider fans away, as it can feel like too much of a change. If you prefer a more classic ride, the <a href=\"https://runrepeat.com/uk/nike-pegasus-42\" rel=\"noopener\" target=\"_blank\">Nike Pegasus 42</a> or the <a href=\"https://runrepeat.com/uk/adidas-supernova-rise-3\" rel=\"noopener\" target=\"_blank\">adidas Supernova Rise 3</a> are better options.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41365/mizuno-wave-rider-30-25655674-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "Mizuno Wave Rider 30",
+      "nextVersion": null,
+      "plate": "plated-other",
+      "previousVersion": {
+        "name": "Mizuno Wave Rider 29",
+        "slug": "mizuno-wave-rider-29"
+      },
+      "releaseDateSource": "page-estimated",
+      "releasedAt": "2026-06-16",
+      "reviewLanguage": null,
+      "score": 83,
+      "slug": "mizuno-wave-rider-30",
+      "url": "https://runrepeat.com/uk/mizuno-wave-rider-30",
+      "values": {
+        "2": 1,
+        "3": 3,
+        "4": 1.6,
+        "5": 33.7,
+        "6": 42.8,
+        "8": 9.1,
+        "9": 2.7,
+        "13": 11.3,
+        "19": 3,
+        "24": 266,
+        "25": 117.2,
+        "26": 90.6,
+        "32": 273.6,
+        "37": 5.3,
+        "38": 7.9,
+        "39": "both-sides-semi",
+        "40": "finger-loop",
+        "41": true,
+        "45": true,
+        "52": 150,
+        "54": 3.17,
+        "55": 95.3,
+        "56": 73.3,
+        "57": 25,
+        "59": 18.2,
+        "60": 0.73,
+        "65": 49.44,
+        "66": 50.6,
+        "67": 151.75427947068,
+        "68": 127.1811568398,
+        "70": 33.7,
+        "71": 37.5,
+        "72": 31,
+        "74": 15.2
       }
     },
     {
@@ -30747,7 +30989,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 3.09,
+        "54": 3.06,
         "55": 94.8,
         "56": 73.2,
         "57": 27.1,
@@ -30875,7 +31117,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.82,
+        "54": 2.8,
         "55": 95.4,
         "56": 73.8,
         "57": 26.6,
@@ -31120,7 +31362,7 @@
         "41": true,
         "45": false,
         "52": 85,
-        "54": 3.06,
+        "54": 2.97,
         "55": 93.7,
         "56": 73.1,
         "57": 26.4,
@@ -31966,7 +32208,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 2.37,
+        "54": 2.36,
         "55": 93.6,
         "56": 75.1,
         "57": 27.8,
@@ -32237,7 +32479,7 @@
         "41": true,
         "45": false,
         "52": 140,
-        "54": 2.56,
+        "54": 2.57,
         "55": 96.8,
         "56": 76.2,
         "57": 28.5,
@@ -33071,7 +33313,7 @@
         "41": true,
         "45": true,
         "52": 155,
-        "54": 2.96,
+        "54": 2.95,
         "55": 93.5,
         "56": 71.3,
         "57": 24.4,
@@ -33802,7 +34044,7 @@
         "45": false,
         "48": 31.5,
         "52": 250,
-        "54": 2.33,
+        "54": 2.34,
         "55": 96,
         "56": 78.4,
         "57": 27.3,
@@ -33918,7 +34160,7 @@
         "45": false,
         "48": 15,
         "52": 265,
-        "54": 2.84,
+        "54": 2.8,
         "55": 93.8,
         "56": 74.5,
         "57": 26.4,
@@ -34280,7 +34522,7 @@
         "41": true,
         "45": false,
         "52": 180,
-        "54": 2.57,
+        "54": 2.56,
         "55": 95.9,
         "56": 73.5,
         "57": 25.9,
@@ -34757,7 +34999,7 @@
         "41": true,
         "45": true,
         "52": 275,
-        "54": 2.33,
+        "54": 2.32,
         "55": 90.7,
         "56": 71.4,
         "57": 26.8,
@@ -34880,7 +35122,7 @@
         "41": true,
         "45": true,
         "52": 200,
-        "54": 2.41,
+        "54": 2.36,
         "55": 94.1,
         "56": 71.2,
         "57": 24.8,
@@ -35579,7 +35821,7 @@
         "41": true,
         "45": false,
         "52": 80,
-        "54": 2.97,
+        "54": 3.05,
         "55": 91.2,
         "56": 71.3,
         "57": 27.3,
@@ -37876,7 +38118,7 @@
         "41": true,
         "45": false,
         "52": 70,
-        "54": 2.61,
+        "54": 2.59,
         "55": 93.1,
         "56": 71.3,
         "57": 23.4,
@@ -38326,7 +38568,7 @@
         "41": true,
         "45": true,
         "52": 145,
-        "54": 2.33,
+        "54": 2.34,
         "55": 93.7,
         "56": 71.9,
         "57": 25.7,
@@ -38559,7 +38801,7 @@
         "45": false,
         "48": 20,
         "52": 260,
-        "54": 2.78,
+        "54": 2.77,
         "55": 91.7,
         "56": 73.2,
         "57": 27.3,
@@ -38901,7 +39143,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 2.33,
+        "54": 2.32,
         "55": 96.9,
         "56": 73.1,
         "57": 24.1,
@@ -39026,7 +39268,7 @@
         "41": true,
         "45": true,
         "52": 180,
-        "54": 3.07,
+        "54": 3.06,
         "55": 94.6,
         "56": 71.1,
         "57": 26.2,
@@ -40793,7 +41035,7 @@
         "45": true,
         "48": 31.5,
         "52": 230,
-        "54": 2.79,
+        "54": 2.8,
         "55": 94.6,
         "56": 76.9,
         "57": 28.1,
@@ -41707,7 +41949,7 @@
         "41": true,
         "45": false,
         "52": 170,
-        "54": 2.54,
+        "54": 2.53,
         "59": 17,
         "60": 0.46,
         "65": 56.99,
@@ -41824,7 +42066,7 @@
         "45": false,
         "48": 40,
         "52": 180,
-        "54": 3.5,
+        "54": 3.51,
         "55": 98.5,
         "56": 74.5,
         "57": 25.3,
@@ -41939,7 +42181,7 @@
         "41": true,
         "45": true,
         "52": 190,
-        "54": 2.85,
+        "54": 2.93,
         "55": 94.3,
         "56": 71,
         "57": 25.4,
@@ -42059,7 +42301,7 @@
         "41": true,
         "45": false,
         "52": 220,
-        "54": 3.13,
+        "54": 3.23,
         "55": 95,
         "56": 72.8,
         "57": 27.5,
@@ -42756,7 +42998,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 2.88,
+        "54": 2.89,
         "55": 95.5,
         "56": 71,
         "57": 25.2,
@@ -43335,7 +43577,7 @@
         "41": true,
         "45": false,
         "52": 180,
-        "54": 2.75,
+        "54": 2.73,
         "55": 96.1,
         "56": 71.4,
         "57": 26.2,
@@ -43679,7 +43921,7 @@
         "45": true,
         "48": 26,
         "52": 170,
-        "54": 3.04,
+        "54": 3.08,
         "55": 93.8,
         "56": 68.9,
         "57": 33.5,
@@ -43785,6 +44027,7 @@
         "41": false,
         "45": false,
         "52": 310,
+        "54": 3,
         "55": 91.5,
         "56": 69,
         "57": 33.1,
@@ -44347,7 +44590,7 @@
         "41": true,
         "45": true,
         "52": 170,
-        "54": 3.1,
+        "54": 3.06,
         "55": 93.8,
         "56": 70.6,
         "57": 26.1,
@@ -44593,7 +44836,7 @@
         "45": false,
         "48": 18.25,
         "52": 230,
-        "54": 3.02,
+        "54": 3.04,
         "55": 94.4,
         "56": 69.5,
         "57": 26.5,
@@ -44705,7 +44948,7 @@
         "41": true,
         "45": false,
         "52": 250,
-        "54": 2.9,
+        "54": 2.81,
         "55": 93.6,
         "56": 74.8,
         "57": 26.5,
@@ -44718,6 +44961,125 @@
         "70": 37,
         "71": 39.1,
         "74": 16.7
+      }
+    },
+    {
+      "brand": "PUMA",
+      "details": {
+        "cons": [
+          "Limited stability compared to some rivals",
+          "Low toebox height may be restrictive",
+          "Upper durability"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole",
+          "Rocker"
+        ],
+        "intro": "With the Deviate Pure Nitro, PUMA has created a real EVO SL alternative on its first try. We found in the lab that its excellent foam delivers strong energy return, while the low weight, reliable traction, and agile ride make it incredibly versatile. We also loved the roomier fit compared with most PUMA shoes, plus the good-looking, simple design. The upper could be more durable, and the moderate stability may not suit everyone, but it's impossible to find this much fun and versatility at a lower price.",
+        "pros": [
+          "Excellent versatility for slow and fast runs",
+          "High energy return",
+          "Insane value",
+          "Good-quality upper",
+          "Roomier fit than most PUMA shoes",
+          "Natural ride suits beginners",
+          "Secure tongue fit",
+          "Agile, fun and fast",
+          "Classic feel suits unplated shoe fans",
+          "Ideal for tempo workouts",
+          "Dependable traction﻿"
+        ],
+        "whoShouldBuy": "<p>The PUMA Deviate Pure Nitro is a very good option for:</p>\n<ul>\n<li>PUMA fans who don't want to hear about adidas but loved the EVO SL concept and want a similar lightweight, versatile shoe from their fav brand.</li>\n<li>Runners who want a versatile, fun, speedy, and good-looking daily trainer that can handle everything from easy runs to tempo sessions.</li>\n<li>Beginners looking for a shoe that can handle daily runs, some quality work, and the occasional race while keeping the price at a fair level.</li>\n<li>Anyone fond of classic running shoes but still eager for a fast, lightweight, and performance-focused ride.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>The PUMA Deviate Pure Nitro isn't the most stable shoe we've tested, as its moderate midsole width adds to its fun, agile ride but limits support. If stability is a priority, we think its two main rivals, the <a href=\"https://runrepeat.com/uk/saucony-endorphin-azura\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Azura</a> and <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a>, are worth considering instead.</p>\n\n    \n    \n\n<p>We also think that, despite having a roomier upper than other PUMA shoes, wide-footed runners will be better served by a shoe like the <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> or <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a>.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "heel-strike",
+            "text": "Heel strike"
+          },
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41339/puma-deviate-pure-nitro-25639661-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 150,
+      "name": "PUMA Deviate Pure Nitro",
+      "nextVersion": null,
+      "plate": "plated-other",
+      "previousVersion": null,
+      "releaseDateSource": "page-estimated",
+      "releasedAt": "2026-06-04",
+      "reviewLanguage": null,
+      "score": 93,
+      "slug": "puma-deviate-pure-nitro",
+      "url": "https://runrepeat.com/uk/puma-deviate-pure-nitro",
+      "values": {
+        "2": 1,
+        "3": 3,
+        "4": 0.7,
+        "5": 27.6,
+        "6": 37.2,
+        "8": 9.6,
+        "9": 2.4,
+        "13": 1.8,
+        "19": 3,
+        "24": 215,
+        "25": 114.6,
+        "26": 90.3,
+        "32": 270.3,
+        "37": 4.4,
+        "38": 3.3,
+        "39": "both-sides-semi",
+        "40": "pull-tab",
+        "41": true,
+        "45": true,
+        "52": 150,
+        "54": 3.29,
+        "55": 95.3,
+        "56": 74,
+        "57": 23.3,
+        "59": 13.5,
+        "60": 0.71,
+        "65": 68.87,
+        "66": 72.91,
+        "67": 141.33276800226,
+        "68": 112.22462881704,
+        "70": 38.6,
+        "71": 39.3,
+        "74": 12
       }
     },
     {
@@ -44934,7 +45296,7 @@
         "45": false,
         "48": 19.8,
         "52": 300,
-        "54": 3.14,
+        "54": 3.17,
         "55": 92.9,
         "56": 72.3,
         "57": 26.3,
@@ -45630,7 +45992,7 @@
         "41": true,
         "45": true,
         "52": 160,
-        "54": 3.29,
+        "54": 3.32,
         "55": 96,
         "56": 72.3,
         "57": 26,
@@ -45937,7 +46299,10 @@
       "latestVersion": null,
       "msrpGbp": 140,
       "name": "PUMA Velocity Nitro 4",
-      "nextVersion": null,
+      "nextVersion": {
+        "name": "PUMA Velocity Nitro 5",
+        "slug": "puma-velocity-nitro-5"
+      },
       "plate": "none",
       "previousVersion": {
         "name": "PUMA Velocity Nitro 3",
@@ -45973,7 +46338,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.89,
+        "54": 2.91,
         "55": 93,
         "56": 71.6,
         "57": 25.9,
@@ -45985,6 +46350,122 @@
         "68": 99.860195725984,
         "70": 41.8,
         "74": 7.8
+      }
+    },
+    {
+      "brand": "PUMA",
+      "details": {
+        "cons": [
+          "Slightly lower energy return",
+          "Small weight increase",
+          "Not for wide feet"
+        ],
+        "features": [
+          "Orthotic friendly",
+          "Cushioned",
+          "Removable insole"
+        ],
+        "intro": "PUMA set the bar incredibly high with version 4, so the Velocity Nitro 5 had a tough act to follow. We really liked its bouncy ride, comfortable upper, agile feel, and versatile performance across different paces. However, we found in the lab that the small weight increase and lower energy return take away some of the magic from v4. And as usual, the snug fit won't suit runners with wide feet. Even so, we think the shoe remains a fantastic value, and it's one of the best daily trainers you can buy today.",
+        "pros": [
+          "Responsive and fun",
+          "Improved traction on wet and dry surfaces",
+          "Strong energy return",
+          "Flexible, natural running experience",
+          "Secure lockdown",
+          "Good durability from top to bottom",
+          "Impressive value for the price",
+          "Lightweight",
+          "Can handle tempo work with ease",
+          "Comfort upgrade﻿"
+        ],
+        "whoShouldBuy": "<p>The PUMA Velocity Nitro 5 is a really interesting running shoe for:</p>\n<ul>\n<li>Anyone who wants a responsive, affordable, and fun daily trainer.</li>\n<li>Runners who love PUMA's snug fit and excellent traction.</li>\n<li>Lighter runners who don't need a maximalist shoe and prefer a more agile design.</li>\n<li>Beginners looking for a versatile shoe that's comfortable for both running and everyday life.</li>\n</ul>\n<p></p>",
+        "whoShouldNotBuy": "<p>The Velocity Nitro 5 is a fast shoe, but it's no longer at the top of the charts. For runners who want a daily running shoe with state-of-the-art energy return, we recommend two options: the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> or, if you can still find it in stock, the <a href=\"https://runrepeat.com/uk/puma-velocity-nitro-4\" rel=\"noopener\" target=\"_blank\">PUMA Velocity Nitro 4</a>.</p>\n\n    \n    \n\n<p>We also think the snug fit won't work for runners who need a more spacious forefoot. Instead, the <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> is a good alternative if you don't mind a zero-drop shoe, while the <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> is an interesting alternative that also packs a foot-shaped toebox.</p>\n<p></p>"
+      },
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          },
+          {
+            "slug": "tempo",
+            "text": "Tempo"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          },
+          {
+            "slug": "wide",
+            "text": "Wide"
+          }
+        ]
+      },
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41457/puma-velocity-nitro-5-25662222-720.jpg",
+      "latestVersion": null,
+      "msrpGbp": 140,
+      "name": "PUMA Velocity Nitro 5",
+      "nextVersion": null,
+      "plate": "none",
+      "previousVersion": {
+        "name": "PUMA Velocity Nitro 4",
+        "slug": "puma-velocity-nitro-4"
+      },
+      "releaseDateSource": "page-estimated",
+      "releasedAt": "2026-07-09",
+      "reviewLanguage": null,
+      "score": 89,
+      "slug": "puma-velocity-nitro-5",
+      "url": "https://runrepeat.com/uk/puma-velocity-nitro-5",
+      "values": {
+        "2": 3,
+        "3": 5,
+        "4": 0.9,
+        "5": 26.1,
+        "6": 31.3,
+        "8": 5.2,
+        "9": 3.6,
+        "13": 10.1,
+        "19": 2,
+        "24": 238,
+        "25": 111,
+        "26": 91.3,
+        "32": 267.6,
+        "37": 4.4,
+        "38": 9.3,
+        "39": "both-sides-semi",
+        "40": "pull-tab",
+        "41": true,
+        "45": true,
+        "52": 140,
+        "55": 92.6,
+        "56": 72.1,
+        "57": 26.3,
+        "59": 9.3,
+        "60": 0.78,
+        "65": 63.99,
+        "66": 69.34,
+        "67": 129.20397431425,
+        "68": 100.80543542908,
+        "70": 40.5,
+        "71": 44.6,
+        "72": 34.9,
+        "74": 7.4
       }
     },
     {
@@ -47490,7 +47971,7 @@
         "41": true,
         "45": true,
         "52": 150,
-        "54": 3.24,
+        "54": 3.26,
         "55": 94,
         "56": 72.2,
         "57": 28.3,
@@ -47840,7 +48321,7 @@
         "41": true,
         "45": true,
         "52": 290,
-        "54": 2.5,
+        "54": 2.52,
         "55": 93.8,
         "56": 71.8,
         "57": 27.5,
@@ -47964,7 +48445,7 @@
         "45": false,
         "48": 18.5,
         "52": 225,
-        "54": 2.8,
+        "54": 2.79,
         "55": 96.5,
         "56": 72.5,
         "57": 27.7,
@@ -48077,7 +48558,7 @@
         "41": true,
         "45": false,
         "52": 225,
-        "54": 2.71,
+        "54": 2.66,
         "55": 95.2,
         "56": 69.3,
         "57": 27.8,
@@ -48636,7 +49117,7 @@
         "41": true,
         "45": true,
         "52": 175,
-        "54": 2.66,
+        "54": 2.62,
         "55": 93.8,
         "56": 72.9,
         "57": 29.3,
@@ -49312,7 +49793,7 @@
         "40": "none",
         "41": true,
         "45": false,
-        "52": 140,
+        "52": 150,
         "54": 3.04,
         "55": 96.2,
         "56": 72.8,
@@ -49994,7 +50475,7 @@
         "41": true,
         "45": true,
         "52": 130,
-        "54": 2.82,
+        "54": 2.94,
         "55": 94,
         "56": 70.8,
         "57": 28.9,
@@ -50917,7 +51398,7 @@
         "45": true,
         "48": 35,
         "52": 160,
-        "54": 2.68,
+        "54": 2.67,
         "55": 92.5,
         "56": 70.8,
         "57": 31.9,
@@ -51498,6 +51979,7 @@
         "41": true,
         "45": true,
         "52": 170,
+        "54": 3.25,
         "55": 93.4,
         "56": 71.4,
         "57": 26.1,
@@ -51725,7 +52207,7 @@
         "41": true,
         "45": true,
         "52": 140,
-        "54": 2.81,
+        "54": 2.82,
         "55": 94.5,
         "56": 71.1,
         "57": 25.4,
@@ -54527,7 +55009,7 @@
         "41": true,
         "45": false,
         "52": 65,
-        "54": 2.54,
+        "54": 2.52,
         "55": 98.5,
         "56": 73.2,
         "57": 24.5,
