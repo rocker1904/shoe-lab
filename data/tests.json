@@ -12,7 +12,7 @@
     "10": "Weight",
     "11": "Price"
   },
-  "scrapedAt": "2026-10-05T14:02:45.010Z",
+  "scrapedAt": "2026-10-12T14:51:51.198Z",
   "seedSlug": "saucony-endorphin-azura",
   "tests": [
     {
@@ -863,17 +863,15 @@
     },
     {
       "chartLabel": "Energy return",
-      "groupId": "3",
+      "groupId": null,
       "id": 65,
       "isNew": false,
       "methodStatus": null,
       "name": "Energy return heel",
       "options": null,
       "previousId": null,
-      "primaryTestId": null,
-      "secondaryTestIds": [
-        66
-      ],
+      "primaryTestId": 66,
+      "secondaryTestIds": [],
       "slug": "energy-return-heel",
       "type": "percent",
       "units": "",
@@ -881,15 +879,17 @@
     },
     {
       "chartLabel": "Energy return",
-      "groupId": null,
+      "groupId": "3",
       "id": 66,
       "isNew": false,
       "methodStatus": null,
       "name": "Energy return forefoot",
       "options": null,
       "previousId": null,
-      "primaryTestId": 65,
-      "secondaryTestIds": [],
+      "primaryTestId": null,
+      "secondaryTestIds": [
+        65
+      ],
       "slug": "energy-return-forefoot",
       "type": "percent",
       "units": "",

@@ -545,6 +545,86 @@
       "whoShouldBuy": "<p>From our evaluation, the highly-anticipated Adios Pro 4 is an ideal choice for:</p>\n<ul>\n<li>Runners who found the Adios Pro 3 too firm, disliked its upper, or struggled with its heel lockdown.</li>\n<li>Anyone in need of a responsive-and-grippy super shoe that excels across every race distance from 5k to marathons.</li>\n<li>Midfoot and forefoot strikers looking for a plush super shoe.</li>\n<li>Runners who prefer a more flexible racing shoe over ultra-stiff options.</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>The Adios Pro 4 brings exciting updates, but we believe it also introduces some drawbacks worth considering. The fit, for instance, now features a tapered-toebox design that sacrifices the wide-foot comfort of the <a href=\"https://runrepeat.com/uk/adidas-adizero-adios-pro-3\" rel=\"noopener\" target=\"_blank\">Adios Pro 3</a>, which we found more accommodating. If that’s a concern, we recommend the <a href=\"https://runrepeat.com/uk/nike-alphafly-3\" rel=\"noopener\" target=\"_blank\">Nike Alphafly 3</a> for its spacious fit and superior comfort over long distances.</p>\n\n    \n    \n\n<p>Additionally, heel strikers may find the Adios Pro 4 really unstable due to its exceptionally narrow heel. For a more supportive option, we suggest the <a href=\"https://runrepeat.com/uk/saucony-endorphin-pro-4\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Pro 4</a>.</p>\n<p></p>\n<p>For those who find the price or stiffness of traditional super shoes off-putting, we’re convinced the <a href=\"https://runrepeat.com/uk/adidas-adizero-evo-sl\" rel=\"noopener\" target=\"_blank\">adidas Adizero EVO SL</a> is a smarter choice. It retains much of the Adios Pro 3’s performance without the carbon plate, offering a forgiving ride that’s much easier on the wallet.</p>"
     },
+    "adidas-adizero-adios-pro-5": {
+      "brand": "adidas",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Big price hike",
+        "Narrow fit can be a problem for some",
+        "Can feel less stable than previous APs",
+        "Uncertainty over durability issues"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "competition",
+            "text": "Competition"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Cushioned",
+        "Carbon plate",
+        "Removable insole",
+        "Rocker"
+      ],
+      "hasPlateSection": true,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41086/adidas-adizero-adios-pro-5-25714379-720.jpg",
+      "intro": "The Pro Evo grabs the headlines, but the regular Adios Pro is the shoe that actually brings money into adidas. After testing version 5, we were impressed by how much it improves, with a featherlight build, better grip, a more comfortable upper, and a softer ride. We also liked seeing race-proven ENERGYRIM technology arrive from the Evo series. On the other hand, the price has gone up, the fit remains narrow, and the durability concerns create some real uncertainty around an otherwise excellent super shoe.",
+      "latestVersion": null,
+      "msrpGbp": 275,
+      "name": "adidas Adizero Adios Pro 5",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": false
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": {
+        "name": "adidas Adizero Adios Pro 4",
+        "slug": "adidas-adizero-adios-pro-4"
+      },
+      "productId": 41086,
+      "pros": [
+        "Massive weight loss from v3 and v4",
+        "Excellent forefoot energy return",
+        "Improved traction",
+        "Upper gets a comfort upgrade",
+        "ENERGYRIM feels innovative and effective",
+        "Versatile for short and long distance racing",
+        "Improved midfoot hold",
+        "Beautiful design from heel to toe",
+        "Gusseted tongue prevents shifting",
+        "Sawtooth laces (finally)"
+      ],
+      "releasedAt": "2026-09-22",
+      "runrepeatUrl": "https://runrepeat.com/uk/adidas-adizero-adios-pro-5",
+      "score": 91,
+      "scrapedAt": "2026-10-12T14:52:52.079Z",
+      "whoShouldBuy": "<p>We tested the Adios Pro 5 in the lab and on the roads, and found that it’s:</p>\n<ul>\n<li>Ideal for runners who want a super shoe that feels softer and more forgiving than most carbon-plated options.</li>\n<li>The best Adios Pro yet for runners who previously found the series too heavy.</li>\n<li>A versatile choice for runners who want one super shoe for racing anything from the mile to the marathon.</li>\n<li>A more affordable way to experience the ENERGYRIM technology that adidas introduced with the Evo 3.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>We think this shoe is a poor choice for heel strikers, as its geometry clearly favours runners who land on the forefoot or midfoot. If you’re a heel-first runner, we suggest checking out the <a href=\"https://runrepeat.com/uk/saucony-endorphin-pro-5\" rel=\"noopener\" target=\"_blank\">Saucony Endorphin Pro 5</a> instead.</p>\n\n    \n    \n\n<p>We also think runners may have real durability concerns with the new outsole design of the Adios Pro 5. If you want to play it safe, the <a href=\"https://runrepeat.com/uk/asics-metaspeed-sky-tokyo\" rel=\"noopener\" target=\"_blank\">ASICS Metaspeed Sky Tokyo</a> or <a href=\"https://runrepeat.com/uk/puma-deviate-nitro-elite-4\" rel=\"noopener\" target=\"_blank\">PUMA Deviate Nitro Elite 4</a> are better options.</p>\n<p></p>"
+    },
     "adidas-adizero-adios-pro-evo-2": {
       "brand": "adidas",
       "categorySlug": "running-shoes",
@@ -20274,6 +20354,154 @@
       "whoShouldBuy": "<p>We believe that the La Sportiva Ultra Raptor 3 is a must to consider if you:</p>\n<ul>\n<li>need a highly stable yet agile beast for technical terrain</li>\n<li>prefer lighter shoes for fast-paced hikes</li>\n<li>found the Ultra Raptor 2's fit too snug</li>\n</ul>\n<p></p>",
       "whoShouldNotBuy": "<p>La Sportiva positions the non-GTX version of the Ultra Raptor 3 as a perfect summer-ready hiking shoe, but our own breathability tests contradict that statement. If you want to keep your feet fresh and dry while tackling rocky trails in summer heat, try the <a href=\"https://runrepeat.com/uk/la-sportiva-prodigio-max\" rel=\"noopener\" target=\"_blank\">La Sportiva Prodigio Max</a> instead.</p>\n\n    \n    \n\n<p>Another reason to look away from the Ultra Raptor 3 is if your outdoor adventures involve less challenging trails and you could use more comfort and cushioning for longer distances. In that case, you might prefer shoes like the <a href=\"https://runrepeat.com/uk/danner-trail-2650\" rel=\"noopener\" target=\"_blank\">Danner Trail 2650</a> or the cheaper <a href=\"https://runrepeat.com/uk/merrell-moab-speed-2\" rel=\"noopener\" target=\"_blank\">Merrell Moab Speed 2</a>.</p>\n<p></p>"
     },
+    "lems-zenspeed": {
+      "brand": "Lems",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Energy return is disappointingly low",
+        "Narrow toebox (for a Lems shoe)",
+        "High price",
+        "Firm ride may feel harsh"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41479/lems-zenspeed-25670025-720.jpg",
+      "intro": "The Lems ZENSPEED+ is an interesting first attempt at a dedicated running shoe from a brand better known for casual and minimalist footwear. We really liked its stable, grounded ride, comfortable upper, and natural feel, while its versatile design works nicely for easy runs and everyday wear. Conversely, its surprisingly poor energy return takes away most of the fun, and the toebox, while roomy, isn't as wide as we expected from Lems. The high price also limits its appeal, but it remains a unique, down-to-earth option for runners who value comfort and simplicity.",
+      "latestVersion": null,
+      "msrpGbp": 175,
+      "name": "Lems ZENSPEED+",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41479,
+      "pros": [
+        "Stable ride for daily miles",
+        "Perfect for casual wear and daily life",
+        "Moderate stack height offers enough protection",
+        "Secure fit for a wide range of foot shapes",
+        "Good build quality",
+        "Classic geometry feels natural and familiar",
+        "Strong traction",
+        "Can handle gym sessions",
+        "Lighter than it looks",
+        "No heel slippage"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/lems-zenspeed",
+      "score": 77,
+      "scrapedAt": "2026-10-12T14:52:53.071Z",
+      "whoShouldBuy": "<p>In our opinion, the Lems ZENSPEED+ is an interesting option for:</p>\n<ul>\n<li>Fans of casual/hiking Lems shoes who have been waiting for the brand's first dedicated running shoe.</li>\n<li>Runners seeking a versatile daily trainer that feels comfortable for easy runs while also fitting naturally into everyday wear with jeans.</li>\n<li>Those who dislike maximalist, super-wide running shoes and want a more classic, grounded feel without going too minimalist.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The biggest issue with the Lems ZENSPEED+ is its lack of energy return. If that really matters to you, the <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> is a much better (and cheaper) alternative.</p>\n\n    \n    \n\n<p>We also found that the toebox can work well for many runners with broad feet, but it doesn't have the ultra-wide design we expected from Lems. If you really need a toebox that's as wide as possible, take a look at the <a href=\"https://runrepeat.com/uk/altra-torin-9\" rel=\"noopener\" target=\"_blank\">Altra Torin 9</a>.</p>\n<p></p>"
+    },
+    "lems-zenspeed-lite": {
+      "brand": "Lems",
+      "categorySlug": "running-shoes",
+      "cons": [
+        "Poor energy return limits performance",
+        "Low drop may not suit everyone",
+        "Flat rocker limits fast turnover",
+        "Subpar durability"
+      ],
+      "discontinued": false,
+      "facts": {
+        "arch-support": [
+          {
+            "slug": "neutral",
+            "text": "Neutral"
+          }
+        ],
+        "pace": [
+          {
+            "slug": "daily-running",
+            "text": "Daily running"
+          }
+        ],
+        "strike-pattern": [
+          {
+            "slug": "forefoot-strike",
+            "text": "Forefoot/Midfoot strike"
+          }
+        ],
+        "width": [
+          {
+            "slug": "standard",
+            "text": "Normal"
+          }
+        ]
+      },
+      "features": [
+        "Orthotic friendly",
+        "Removable insole"
+      ],
+      "hasPlateSection": false,
+      "imageUrl": "https://cdn.runrepeat.com/storage/gallery/product_primary/41480/lems-zenspeed-lite-25682146-720.jpg",
+      "intro": "The Lems ZENSPEED Lite targets a very specific group, and we found that it delivers what these runners are looking for. Its firm, low-stack, non-rockered ride feels simple, stable, and versatile enough for short daily runs, gym sessions, office days, and plenty in between. However, this focused approach also limits its appeal, as the low energy return, limited shock absorption and firm feel make it a questionable choice for faster or more advanced runners.",
+      "latestVersion": null,
+      "msrpGbp": 165,
+      "name": "Lems ZENSPEED Lite",
+      "pageValues": {
+        "39": "both-sides-semi",
+        "40": "none",
+        "41": true,
+        "45": true
+      },
+      "preciseReleaseDate": false,
+      "previousVersion": null,
+      "productId": 41480,
+      "pros": [
+        "Excellent stability without a broad platform",
+        "Low-stack design enhances ground feel",
+        "Strong traction",
+        "Generous toebox works for most feet",
+        "Versatile enough for all-day wear",
+        "Comfortable upper",
+        "Dependable fit with semi-gusseted tongue",
+        "Full-length outsole coverage",
+        "High build quality",
+        "Interesting option for forefoot strikers"
+      ],
+      "releasedAt": null,
+      "runrepeatUrl": "https://runrepeat.com/uk/lems-zenspeed-lite",
+      "score": 78,
+      "scrapedAt": "2026-10-12T14:52:54.097Z",
+      "whoShouldBuy": "<p>In our view, the Lems ZENSPEED Lite is a very interesting shoe for runners that:</p>\n<ul>\n<li>Are loyal to Lems for hiking or casual shoes and have been waiting for the brand to enter the running shoe world.</li>\n<li>Prefer a low-stack design with a firm, highly-stable ride.</li>\n<li>Need a single shoe to handle daily walks, all-day work, gym sessions, and casual runs.</li>\n</ul>\n<p></p>",
+      "whoShouldNotBuy": "<p>The ZENSPEED Lite comes with a very low heel-to-toe drop, which may not suit every runner's natural gait. If you prefer a slightly higher drop, the Lems ZENSPEED+ is a better fit for that preference.</p>\n\n    \n    \n\n<p>We also think the limited energy return holds back the shoe's full potential and range. If you prioritise speed and want a more energetic, bouncy ride, the <a href=\"https://runrepeat.com/uk/topo-cyclone-3\" rel=\"noopener\" target=\"_blank\">Topo Cyclone 3</a> and <a href=\"https://runrepeat.com/uk/altra-escalante-5\" rel=\"noopener\" target=\"_blank\">Altra Escalante 5</a> offer more in this area.</p>\n<p></p>"
+    },
     "merrell-speed-strike-2": {
       "brand": "Merrell",
       "categorySlug": "hiking-shoes",
@@ -39924,6 +40152,7 @@
     "59": "4",
     "60": "7",
     "65": "3",
+    "66": "3",
     "67": "3",
     "69": "3",
     "70": "3",
